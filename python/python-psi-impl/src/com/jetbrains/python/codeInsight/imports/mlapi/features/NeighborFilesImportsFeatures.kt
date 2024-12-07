@@ -5,15 +5,16 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.jetbrains.ml.*
-import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidate
+import com.jetbrains.ml.features.api.feature.*
+import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
+import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
 import com.jetbrains.python.psi.PyFile
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 private const val FILES_TO_WATCH = 8
 
-class NeighborFilesImportsFeatures : FeatureProvider(MLUnitImportCandidate) {
+object NeighborFilesImportsFeatures : ImportCandidateFeatures() {
   object Features {
     val NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX = FeatureDeclaration.int("neighbor_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
     val NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX = FeatureDeclaration.int("neighbor_files_existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
@@ -23,10 +24,10 @@ class NeighborFilesImportsFeatures : FeatureProvider(MLUnitImportCandidate) {
 
   override val featureComputationPolicy = FeatureComputationPolicy(false, true)
 
-  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
+  override val featureDeclarations = extractFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter): List<Feature> = coroutineScope {
-    val importCandidate = units[MLUnitImportCandidate]
+  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = coroutineScope {
+    val importCandidate = instance.candidate
     if (importCandidate.path == null) {
       return@coroutineScope buildList<Feature> {
         add(Features.NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX with 0)

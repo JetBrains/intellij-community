@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.python.community.plugin.java" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.minor" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.modules" />
+    <orderEntry type="library" name="jetbrains.ml.models.python.imports.ranking.model" level="project" />
   </component>
 </module>

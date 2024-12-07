@@ -6,7 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.platform.ml.Tier
 import com.intellij.psi.PsiFile
-import com.jetbrains.ml.MLUnit
+import com.jetbrains.ml.features.api.MLUnit
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
