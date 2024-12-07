@@ -29,6 +29,6 @@ fun URIBuilder.dropLastPathSegment(): URIBuilder {
  * ```
  */
 fun URI.addPathSegment(string: String): URI = URIBuilder(this).addPathSegment(string).build()
-fun URI.getPathSegments(): List<String> = path.split("/")
+fun URI.getPathSegments(): List<String> = (path ?: "").split("/")
 fun URI.dropLastPathSegment(): URI = URIBuilder(this).dropLastPathSegment().build()
 fun URI.addQuery(name: String, value: String): URI = URIBuilder(this).addParameter(name, value).build()

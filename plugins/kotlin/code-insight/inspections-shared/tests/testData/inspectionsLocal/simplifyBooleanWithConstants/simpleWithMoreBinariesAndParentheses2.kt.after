@@ -1,0 +1,6 @@
+// FIX: Simplify boolean expression
+fun foo(y: Boolean) {
+    bar() && y || (y && bar())
+}
+
+fun bar(): Boolean = false

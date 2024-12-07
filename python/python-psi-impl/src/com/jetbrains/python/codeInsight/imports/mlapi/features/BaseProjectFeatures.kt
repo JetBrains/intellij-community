@@ -10,9 +10,10 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.ml.*
+import com.jetbrains.ml.features.api.feature.*
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidatesList
+import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContext
+import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContextFeatures
 import com.jetbrains.python.psi.*
 
 private val interestingClasses = arrayOf(
@@ -31,7 +32,7 @@ enum class FileExtensionType {
   PXI     // .pxi files
 }
 
-class BaseProjectFeatures : FeatureProvider(MLUnitImportCandidatesList) {
+object BaseProjectFeatures : ImportRankingContextFeatures() {
   object Features {
     val NUM_PYTHON_FILES_IN_PROJECT = FeatureDeclaration.int("num_python_files_in_project") {
       "The estimated amount of files in the project (by a power of 2)"
@@ -41,10 +42,10 @@ class BaseProjectFeatures : FeatureProvider(MLUnitImportCandidatesList) {
   }
 
   override val featureComputationPolicy = FeatureComputationPolicy(false, true)
-  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
+  override val featureDeclarations = extractFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter): List<Feature> = buildList {
-    val candidates = units[MLUnitImportCandidatesList]
+  override suspend fun computeFeatures(instance: ImportRankingContext, filter: FeatureFilter): List<Feature>? = buildList {
+    val candidates = instance.candidates
     if (candidates.isEmpty()) return@buildList
 
     val project = candidates[0].importable?.project ?: return@buildList

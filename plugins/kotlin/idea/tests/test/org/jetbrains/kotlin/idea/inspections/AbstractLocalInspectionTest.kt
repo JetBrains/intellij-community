@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.modcommand.ActionContext
@@ -217,16 +216,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val allLocalFixActions:MutableList<IntentionAction> = ArrayList()
+        val allLocalFixActions: MutableList<HighlightInfo.IntentionActionDescriptor> = mutableListOf()
         highlightInfos.forEach { info ->
             info.findRegisteredQuickFix<Any?> { desc, _ ->
-                allLocalFixActions.add(desc.action)
+                allLocalFixActions.add(desc)
                 null
             }
         }
 
         if (allLocalFixActions.isNotEmpty()) {
-            val actions = allLocalFixActions.map { it.text }
+            val actions = allLocalFixActions.map { it.action.text }
             noLocalFixTextStrings.forEach {
                 assertTrue(
                     "Expected no `$it` fix action",
@@ -238,10 +237,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val localFixActions = if (localFixTextString == null || localFixTextString == "none") {
             allLocalFixActions
         } else {
-            allLocalFixActions.filter { fix -> fix.text == localFixTextString }
+            allLocalFixActions
+                .filter { fix -> fix.action.text == localFixTextString }
+                .selectActionsWithMostSpecificRanges()
         }
 
-        val availableDescription = allLocalFixActions.joinToString { "'${it.text}'" }
+        val availableDescription = allLocalFixActions.joinToString { "'${it.action.text}'" }
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
         if (localFixTextString != "none") {
@@ -250,7 +251,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val localFixAction = localFixActions.singleOrNull { it !is EmptyIntentionAction }
+        val localFixAction = localFixActions.singleOrNull { it.action !is EmptyIntentionAction }?.action
         if (localFixTextString == "none") {
             assertTrue("Expected no fix action, actual: `${localFixAction?.text}`", localFixAction == null)
             return false
@@ -295,6 +296,48 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 file, editor, passIdsToIgnore, (file as? KtFile)?.isScript() == true
             ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
         }
+    }
+
+    /**
+     * Selects and returns a list of [HighlightInfo.IntentionActionDescriptor] with the most specific ranges.
+     *
+     * The method sorts the given actions by their start and end offsets, ensuring that within
+     * equal start offsets, the smaller range is preferred.
+     * It then iterates through the sorted list to remove any actions whose ranges are fully
+     * contained within the ranges of other actions, effectively choosing the most specific
+     * range for each set of overlapping ranges.
+     */
+    private fun List<HighlightInfo.IntentionActionDescriptor>.selectActionsWithMostSpecificRanges(): List<HighlightInfo.IntentionActionDescriptor> {
+        val originalActions = this
+
+        val sortedActions = originalActions
+            .sortedWith(compareBy({ it.fixRange.startOffset }, { it.fixRange.endOffset })) // sort by ranges
+            .distinctBy { it.fixRange.startOffset } // if start offsets are equals, the first range is the best possible
+
+        val mostSpecificActions = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
+
+        for (action in sortedActions) {
+            val last = mostSpecificActions.lastOrNull()
+
+            if (last == null) {
+                mostSpecificActions += action
+                continue
+            }
+
+            if (last.fixRange.contains(action.fixRange)) {
+                // this range is more specific
+                mostSpecificActions.removeLast()
+                mostSpecificActions += action
+            } else {
+                require(last.fixRange.startOffset < action.fixRange.startOffset)
+                require(last.fixRange.endOffset < action.fixRange.endOffset)
+
+                // this range only intersects with the previous; it should be considered on its own
+                mostSpecificActions += action
+            }
+        }
+
+        return mostSpecificActions
     }
 
     protected open fun passesToIgnore(): IntArray {
