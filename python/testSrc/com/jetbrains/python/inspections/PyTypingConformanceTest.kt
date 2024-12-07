@@ -16,18 +16,17 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import org.junit.AfterClass
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.nio.file.Files
 import java.nio.file.Path
-import java.util.stream.Stream
 import kotlin.io.path.div
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 private const val CHECK_OPTIONAL_ERRORS = false
-private const val TESTS_DIR = "typing/conformance/tests"
 private const val RUN_ALL_INSPECTIONS = false
 
 private val inspections
@@ -62,7 +61,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     val oldHighlightUnusedImports = settings.HIGHLIGHT_UNUSED_IMPORTS
     settings.HIGHLIGHT_UNUSED_IMPORTS = false
     try {
-      myFixture.configureByFiles(*getFilePaths().toTypedArray())
+      myFixture.configureByFiles(*getFilePaths())
       myFixture.enableInspections(*getInspections())
       checkHighlighting()
     }
@@ -71,22 +70,32 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     }
   }
 
-  private fun getFilePaths(): List<String> {
-    return Stream
-      .concat(Stream.of(testFileName), listTestFileDependencies(testFileName))
+  private fun getFilePaths(): Array<String> {
+    val dependenciesPrefix = "_${FileUtil.getNameWithoutExtension(testFileName)}"
+    val dependencies = TESTS_DIR_ABSOLUTE_PATH.listDirectoryEntries()
+      .asSequence()
+      .map(Path::name)
+      .filter { it.startsWith(dependenciesPrefix) }
+
+    return sequenceOf(testFileName)
+      .plus(dependencies)
       .map { Path.of(TESTS_DIR, it).toString() }
       .toList()
+      .toTypedArray()
   }
 
-  private fun getInspections(): Array<out InspectionProfileEntry> = if (RUN_ALL_INSPECTIONS)
-    sequenceOf(LocalInspectionEP.LOCAL_INSPECTION, LocalInspectionEP.GLOBAL_INSPECTION)
-      .flatMap { it.extensionList }
-      .filter { !IGNORED_INSPECTIONS.contains(it.implementationClass) && it.language == PythonLanguage.INSTANCE.id && it.enabledByDefault }
-      .map(InspectionEP::instantiateTool)
-      .toList()
-      .toTypedArray<InspectionProfileEntry>()
-  else
-    inspections
+  private fun getInspections(): Array<out InspectionProfileEntry> =
+    if (RUN_ALL_INSPECTIONS) {
+      sequenceOf(LocalInspectionEP.LOCAL_INSPECTION, LocalInspectionEP.GLOBAL_INSPECTION)
+        .flatMap { it.extensionList }
+        .filter { !IGNORED_INSPECTIONS.contains(it.implementationClass) && it.language == PythonLanguage.INSTANCE.id && it.enabledByDefault }
+        .map(InspectionEP::instantiateTool)
+        .toList()
+        .toTypedArray()
+    }
+    else {
+      inspections
+    }
 
   private fun checkHighlighting() {
     val document = myFixture.getDocument(myFixture.file)
@@ -158,15 +167,16 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   private data class Errors(val lineToError: Map<Int, Error>, val errorGroups: Map<CharSequence, List<Int>>)
 
   private fun compareErrors(expectedErrors: Errors, actualErrors: Map<Int, @NlsContexts.DetailedDescription String>) {
-    var failure = false
+    var missingErrorsCount = 0
+    var unexpectedErrorsCount = 0
     val failMessage = StringBuilder()
 
     for ((lineNumber, expectedError) in expectedErrors.lineToError) {
       if (CHECK_OPTIONAL_ERRORS || !expectedError.isOptional) {
         val actualError = actualErrors[lineNumber]
         if (actualError == null) {
-          failure = true
-          failMessage.append("Missing error at ").appendLocation(lineNumber)
+          missingErrorsCount++
+          failMessage.append("Expected error at ").appendLocation(lineNumber)
           if (expectedError.message != null) {
             failMessage.append(": ").append(expectedError.message)
           }
@@ -177,8 +187,8 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
 
     for ((tag, lineNumbers) in expectedErrors.errorGroups) {
       if (!lineNumbers.isEmpty() && lineNumbers.all { it !in actualErrors }) {
-        failure = true
-        failMessage.append("Missing error (tag $tag) at ").appendLocation(lineNumbers[0])
+        missingErrorsCount++
+        failMessage.append("Expected error (tag $tag) at ").appendLocation(lineNumbers[0])
         lineNumbers.subList(1, lineNumbers.size).map { it + 1 }.joinTo(failMessage, ", ", "[", "]")
         failMessage.appendLine()
       }
@@ -188,12 +198,13 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
 
     for ((lineNumber, message) in actualErrors) {
       if (lineNumber !in expectedErrors.lineToError && !linesUsedByGroups.contains(lineNumber)) {
-        failure = true
+        unexpectedErrorsCount++
         failMessage.append("Unexpected error at ").appendLocation(lineNumber).append(": ").appendLine(message)
       }
     }
 
-    if (failure) {
+    if (missingErrorsCount != 0 || unexpectedErrorsCount != 0) {
+      allErrors.add(Triple(testFileName, missingErrorsCount, unexpectedErrorsCount))
       fail(failMessage.toString())
     }
   }
@@ -208,23 +219,30 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   }
 
   companion object {
+    private const val TESTS_DIR = "typing/conformance/tests"
     private val TESTS_DIR_ABSOLUTE_PATH = Path.of(PythonTestUtil.getTestDataPath(), TESTS_DIR)
+    private val allErrors = mutableListOf<Triple<String, Int, Int>>()
 
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun parameters(): List<String> {
-      return listAllFiles()
-        .filter { !it.startsWith("_") }
-        .toList()
+      return TESTS_DIR_ABSOLUTE_PATH.listDirectoryEntries()
+        .map(Path::name)
+        .filter { !it.startsWith('_') }
     }
 
-    private fun listTestFileDependencies(testFileName: String): Stream<String> {
-      val dependenciesPrefix = "_${FileUtil.getNameWithoutExtension(testFileName)}"
-      return listAllFiles().filter { it.startsWith(dependenciesPrefix) }
-    }
+    @AfterClass
+    @JvmStatic
+    fun afterClass() {
+      if (allErrors.isNotEmpty()) {
+        val missingErrorsCount = allErrors.sumOf { it.second }
+        val unexpectedErrorsCount = allErrors.sumOf { it.third }
+        println("Test failed: missing errors: $missingErrorsCount; unexpected errors: $unexpectedErrorsCount")
 
-    private fun listAllFiles(): Stream<String> {
-      return Files.list(TESTS_DIR_ABSOLUTE_PATH).map { it.name }
+        allErrors.sortedBy { it.second + it.third }.forEach {
+          println("${it.first} ${it.second} ${it.third}")
+        }
+      }
     }
   }
 }
