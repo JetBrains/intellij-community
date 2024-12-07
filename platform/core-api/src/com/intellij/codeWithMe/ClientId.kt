@@ -21,6 +21,7 @@ import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.CheckReturnValue
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
@@ -267,6 +268,7 @@ data class ClientId(val value: String) {
     @Internal
     @JvmStatic
     @RequiresBlockingContext
+    @CheckReturnValue
     fun withClientId(clientId: ClientId?): AccessToken {
       return withClientId(clientId, errorOnMismatch = true)
     }
