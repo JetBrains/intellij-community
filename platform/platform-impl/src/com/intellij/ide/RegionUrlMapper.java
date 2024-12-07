@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +53,7 @@ public final class RegionUrlMapper {
 
   private static final AsyncLoadingCache<Region, RegionMapping> ourCache = Caffeine.newBuilder()
     .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
-    .buildAsync(RegionUrlMapper::loadMappingOrEmpty);
+    .buildAsync(RegionUrlMapper::doLoadMappingOrThrow);
 
   private RegionUrlMapper() {
   }
@@ -124,11 +125,25 @@ public final class RegionUrlMapper {
    * @return a CompletableFuture that resolves to the adjusted url in case the mapping is configured, or the original url otherwise
    */
   public static @NotNull CompletableFuture<@NotNull String> tryMapUrl(@NotNull String url, @NotNull Region region) {
-    CompletableFuture<@NotNull RegionMapping> mappingFuture = ourCache.get(region);
+    CompletableFuture<@NotNull RegionMapping> mappingFuture = tryLoadMappingOrEmpty(region);
     return mappingFuture.thenApply(mapping -> mapping.apply(url));
   }
 
-  private static @NotNull RegionMapping loadMappingOrEmpty(@NotNull Region reg) {
+  private static @NotNull CompletableFuture<@NotNull RegionMapping> tryLoadMappingOrEmpty(@NotNull Region region) {
+    return loadMapping(region).exceptionally(t -> RegionMapping.empty());
+  }
+
+  /**
+   * Loads or retrieves a cached value of the {@link RegionMapping} corresponding to the specified region.
+   * Loading may fail with an {@link IOException} or {@link JsonParseException}, in which case the resulting future fails with that error.
+   *
+   * @return a {@link CompletableFuture} that resolves to either the requested mapping once it is loaded, or an error during loading
+   */
+  public static @NotNull CompletableFuture<@NotNull RegionMapping> loadMapping(@NotNull Region region) {
+    return ourCache.get(region);
+  }
+
+  private static @NotNull RegionMapping doLoadMappingOrThrow(@NotNull Region reg) throws IOException {
     String configUrl = getConfigUrl(reg);
     try {
       String json = HttpRequests.request(configUrl).readString();
@@ -136,7 +151,7 @@ public final class RegionUrlMapper {
     }
     catch (Throwable e) {
       LOG.info("Failed to load region-specific url mappings : " + e.getMessage());
-      return RegionMapping.empty();
+      throw e;
     }
   }
 
