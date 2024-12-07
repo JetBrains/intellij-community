@@ -4,18 +4,18 @@ package com.intellij.execution.util
 import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.process.*
 import com.intellij.execution.sudo.SudoCommandProvider
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.getOrThrow
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
@@ -25,6 +25,8 @@ import java.io.*
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.Throws
+import kotlin.io.path.pathString
 
 object ExecUtil {
   private val hasGnomeTerminal = PathExecLazyValue.create("gnome-terminal")
@@ -278,6 +280,26 @@ object ExecUtil {
       @Suppress("SpellCheckingInspection")
       commandLine.withExePath("setsid")
       commandLine.parametersList.prependAll(executablePath)
+    }
+  }
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun EelExecApi.startProcessBlockingUsingEel(builder: ProcessBuilder, pty: LocalPtyOptions?): Process {
+    val args = builder.command()
+    val exe = args.first()
+    val rest = args.subList(1, args.size)
+    val env = builder.environment()
+    val workingDir = builder.directory()?.toPath()?.pathString
+
+    val options = EelExecApi.ExecuteProcessOptions.Builder(exe)
+      .args(rest)
+      .workingDirectory(workingDir)
+      .env(env)
+      .pty(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
+
+    return runBlockingMaybeCancellable {
+      execute(options.build()).getOrThrow().convertToJavaProcess()
     }
   }
 }

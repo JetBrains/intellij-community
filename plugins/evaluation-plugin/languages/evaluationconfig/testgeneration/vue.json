@@ -1,7 +1,9 @@
 {
   "language": "Vue",
-  "projectPath": "../../ml-eval/vue3-realworld-example-app",
-  "outputDir": "ml-eval-test-generation-vue-output",
+  "projectPath": "../ml-eval/vue3-realworld-example-app",
+  "repository": "https://github.com/mutoe/vue3-realworld-example-app",
+  "revision": "6dbfbe9d03df96e7c264ea55674529550a2664cc",
+  "outputDir": "bin/ml-eval-test-generation-vue-output",
   "strategy": {
     "collectContextOnly": false
   },

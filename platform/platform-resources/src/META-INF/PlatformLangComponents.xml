@@ -159,8 +159,8 @@
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
 
     <applicationService
-      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo"
-      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingIndentGuideInfo" />
+      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo"
+      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingInlaysInfo" />
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     

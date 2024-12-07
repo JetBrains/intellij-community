@@ -39,7 +39,6 @@ import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.IconManager
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.docking.DockManager
@@ -47,7 +46,6 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
 import com.intellij.util.application
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.KeyboardFocusManager
@@ -108,10 +106,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     fun getExecutorByContent(content: Content): Executor? = content.getUserData(EXECUTOR_KEY)
 
     @JvmStatic
-    fun getLiveIndicator(icon: Icon?): Icon = when (ExperimentalUI.isNewUI()) {
-      true -> IconManager.getInstance().withIconBadge(icon ?: EmptyIcon.ICON_13, JBUI.CurrentTheme.IconBadge.SUCCESS)
-      else -> ExecutionUtil.getLiveIndicator(icon)
-    }
+    fun getLiveIndicator(icon: Icon?): Icon = ExecutionUtil.getLiveIndicator(icon)
   }
 
   // must be called on EDT

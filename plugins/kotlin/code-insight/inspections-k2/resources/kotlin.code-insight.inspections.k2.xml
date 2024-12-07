@@ -111,6 +111,14 @@
                      suppressId="DoubleNegation"
                      key="inspection.kotlin.double.negation.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.ExplicitThisInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.explicit.this.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveSingleExpressionStringTemplateInspection"
             groupPath="Kotlin"
@@ -133,7 +141,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      cleanupTool="true"
-                     level="WEAK WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.nullable.boolean.elvis.display.name" bundle="messages.KotlinBundle"/>
 
@@ -246,6 +254,15 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.enum.values.method.soft.deprecate.migration.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.convert.secondary.constructor.to.primary.display.name" bundle="messages.KotlinBundle"/>
+
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.CascadeIfInspection"
                      groupPath="Kotlin"
@@ -493,8 +510,8 @@
                      language="kotlin"
                      key="inspection.array.in.data.class.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinOptionsToCompilerOptionsInGradleScriptInspection"
-                     shortName="KotlinOptionsToCompilerOptionsInGradleScript"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.scripts.KotlinOptionsToCompilerOptionsInspection"
+                     shortName="KotlinOptionsToCompilerOptions"
                      groupPathKey="group.path.kotlin.migration"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
                      enabledByDefault="true"
@@ -559,6 +576,14 @@
                      language="kotlin"
                      key="inspection.boolean.literal.argument.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.SafeCastWithReturnInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.safe.cast.with.return.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.ReplaceArrayEqualityOpWithArraysEqualsInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
@@ -566,5 +591,21 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.replace.array.equality.op.with.arrays.equals.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedReceiverParameterInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.unused.receiver.parameter.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NestedLambdaShadowedImplicitParameterInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.nested.lambda.shadowed.implicit.parameter.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

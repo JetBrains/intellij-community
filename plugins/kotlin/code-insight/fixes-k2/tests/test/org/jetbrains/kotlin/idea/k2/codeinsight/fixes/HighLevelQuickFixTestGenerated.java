@@ -1455,6 +1455,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheck.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckButFalse.kt")
+        public void testRemoveUselessIsCheckButFalse() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckButFalse.kt");
+        }
+
         @TestMetadata("removeUselessIsCheckForNull.kt")
         public void testRemoveUselessIsCheckForNull() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckForNull.kt");
@@ -1463,6 +1468,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("removeUselessIsCheckInWhen.kt")
         public void testRemoveUselessIsCheckInWhen() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckInWhen.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckInWhenButFalse.kt")
+        public void testRemoveUselessIsCheckInWhenButFalse() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckInWhenButFalse.kt");
         }
 
         @TestMetadata("removeUselessIsCheckInWhenExpressionless.kt")
@@ -1490,9 +1500,19 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckInWhenNegate.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckInWhenNegateButTrue.kt")
+        public void testRemoveUselessIsCheckInWhenNegateButTrue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckInWhenNegateButTrue.kt");
+        }
+
         @TestMetadata("removeUselessIsCheckNegate.kt")
         public void testRemoveUselessIsCheckNegate() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckNegate.kt");
+        }
+
+        @TestMetadata("removeUselessIsCheckNegateButTrue.kt")
+        public void testRemoveUselessIsCheckNegateButTrue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckNegateButTrue.kt");
         }
 
         @TestMetadata("removeUselessIsCheckNegateForNull.kt")
@@ -11832,6 +11852,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("ifThenMultiStatement.kt")
         public void testIfThenMultiStatement() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/smartCastImpossibleInIfThen/ifThenMultiStatement.kt");
+        }
+
+        @TestMetadata("ifThenNotNullNegateClause.kt")
+        public void testIfThenNotNullNegateClause() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/smartCastImpossibleInIfThen/ifThenNotNullNegateClause.kt");
         }
     }
 

@@ -45,7 +45,7 @@ internal sealed class VcsLogDefaultColumn<T>(
    * @return stable name (to identify column in statistics)
    */
   val stableName: String
-    get() = id.toLowerCase(Locale.ROOT)
+    get() = id.lowercase(Locale.ROOT)
 }
 
 internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {

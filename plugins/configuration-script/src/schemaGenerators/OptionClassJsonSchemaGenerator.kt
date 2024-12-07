@@ -10,6 +10,7 @@ import com.intellij.serialization.stateProperties.MapStoredProperty
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.io.JsonObjectBuilder
+import java.util.Locale
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
@@ -129,7 +130,7 @@ private fun JsonObjectBuilder.describeEnum(property: EnumStoredProperty<*>) {
   rawArray("enum") { stringBuilder ->
     val enumConstants = property.clazz.enumConstants
     for (enum in enumConstants) {
-      stringBuilder.append('"').append(enum.toString().toLowerCase()).append('"')
+      stringBuilder.append('"').append(enum.toString().lowercase(Locale.getDefault())).append('"')
       if (enum !== enumConstants.last()) {
         stringBuilder.append(',')
       }

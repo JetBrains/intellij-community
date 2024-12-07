@@ -919,7 +919,7 @@
       "patch.svg": "vcs/patch.svg",
       "push.svg": "vcs/push.svg",
       "changelist.svg": "vcs/changelist.svg",
-      "shelve.svg": "vcs/shelveSilent.svg",
+      "shelve.svg": ["vcs/shelveSilent.svg", "ide/incomingChangesOn.svg"],
       "unshelve.svg": [
         "vcs/Unshelve.svg",
         "vcs/unshelveSilent.svg"

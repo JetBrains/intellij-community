@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.AnActionLink;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -37,7 +38,7 @@ public class CollectionBreakpointPropertiesPanel
     AnActionLink button =
       new AnActionLink(ActionsBundle.message("action.Debugger.ShowCollectionHistory.text"), new MyShowCollectionHistoryAction());
 
-    Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
 
     JPanel panel = JBUI.Panels.simplePanel();
     panel.add(mySaveCollectionHistoryCheckBox, BorderLayout.NORTH);

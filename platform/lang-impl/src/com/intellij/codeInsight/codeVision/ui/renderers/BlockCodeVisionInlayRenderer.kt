@@ -2,6 +2,7 @@ package com.intellij.codeInsight.codeVision.ui.renderers
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
+import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.DocumentUtil
 import com.intellij.util.text.CharArrayUtil
@@ -35,8 +36,8 @@ class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
     val lineStartOffset = DocumentUtil.getLineStartOffset(inlay.offset, editor.document)
 
     val shiftForward = CharArrayUtil.shiftForward(editor.document.immutableCharSequence, lineStartOffset, " \t")
-
-    return editor.offsetToXY(shiftForward, true, false).x
+    val vfmtRightShift = VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, shiftForward, shiftForward)
+    return editor.offsetToXY(shiftForward, false, false).x + vfmtRightShift
   }
 
   override fun getPoint(inlay: Inlay<*>, targetPoint: Point): Point {

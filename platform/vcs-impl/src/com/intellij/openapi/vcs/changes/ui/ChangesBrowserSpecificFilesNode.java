@@ -6,11 +6,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static com.intellij.util.containers.ContainerUtil.count;
+
 public class ChangesBrowserSpecificFilesNode<T> extends ChangesBrowserSpecificNode<T, VirtualFile> {
   protected ChangesBrowserSpecificFilesNode(@NotNull T userObject,
                                             @NotNull Collection<VirtualFile> files,
-                                            int manyDirectoryCount,
                                             @NotNull Runnable shower) {
-    super(userObject, files, manyDirectoryCount, shower);
+    super(userObject, files, count(files, it -> it.isDirectory()), shower);
   }
 }

@@ -6,14 +6,12 @@ import com.intellij.codeInsight.AbstractBasicJavaEnterActionTest;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.LocalTimeCounter;
 
 public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
@@ -1199,24 +1197,5 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                          <caret>) { }
                  """
     );
-  }
-
-  public void testPerformance() {
-    configureByFile("/codeInsight/enterAction/Performance.java");
-    Benchmark.newBenchmark("enter in " + getFile(), () -> {
-      performAction();
-      deleteLine();
-      caretUp();
-    }).start();
-  }
-
-
-  public void testEnterPerformanceAfterDeepTree() {
-    configureFromFileText("a.java", ("class Foo {\n" +
-                                     "  {\n" +
-                                     "    u." +
-                                     StringUtil.repeat("\n      a('b').c(new Some()).", 500)) + "<caret>\n" +
-                                    "      x(); } }");
-    Benchmark.newBenchmark("enter", this::performAction).start();
   }
 }

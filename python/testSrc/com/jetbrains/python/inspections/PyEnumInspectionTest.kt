@@ -7,7 +7,7 @@ class PyEnumInspectionTest : PyInspectionTestCase() {
   fun testEnumWithMembersCannotBeSubclassed() {
     doTestByText(
       """
-        from enum import EnumType
+        from enum import Enum, EnumType
         
         class EnumWithNoMembers(metaclass=EnumType):
           pass
@@ -16,8 +16,14 @@ class PyEnumInspectionTest : PyInspectionTestCase() {
           SQUARE = 1
           CIRCLE = 2
 
-        class <warning descr="Enum class 'Shape' is final and cannot be subclassed">ExtendedShape</warning>(Shape):
+        class ExtendedShape(<error descr="Enum class 'Shape' is final and cannot be subclassed">Shape</error>):
           TRIANGLE = 3
+        
+        class Color(Enum):
+          RED = 1
+        
+        class ShapeAndColor(<error descr="Enum class 'Shape' is final and cannot be subclassed">Shape</error>, EnumWithNoMembers, <error descr="Enum class 'Color' is final and cannot be subclassed">Color</error>):
+          pass
       """.trimIndent()
     )
   }

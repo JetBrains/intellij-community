@@ -2,11 +2,11 @@
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getSuggestionData
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.isIgnoreIdeSuggestion
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import kotlinx.coroutines.runBlocking
@@ -47,13 +47,13 @@ class PluginsAdvertiserTest {
   @Test
   fun suggestedIdeDismissed() = runBlocking {
     preparePluginCache("*.js" to PluginData("JavaScript", isBundled = true))
-    isIgnoreIdeSuggestion = true
+    PropertiesComponent.getInstance().setValue("promo.ignore.suggested.ide", true)
     try {
       val suggestion = getSuggestionData(projectRule.project, "IC", "foo.js", PlainTextFileType.INSTANCE)
       assertEquals(0, suggestion!!.suggestedIdes.size)
     }
     finally {
-      isIgnoreIdeSuggestion = false
+      PropertiesComponent.getInstance().setValue("promo.ignore.suggested.ide", false)
     }
   }
 

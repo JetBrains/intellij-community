@@ -63,7 +63,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     toolbarComponent.setBorder(JBUI.Borders.empty(3, 0));
     toolbarComponent.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
-    JComponent toolbarPanel = JBUI.Panels.simplePanel().addToLeft(new BorderLayoutPanel().addToTop(toolbarComponent));
+    BorderLayoutPanel toolbarPanel = JBUI.Panels.simplePanel().addToLeft(JBUI.Panels.simplePanel().addToTop(toolbarComponent));
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
     JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets",
                                   ExperimentalUI.isNewUI() ? JBUI.insets(3, 8, 3, 10) : JBInsets.create(1, 5));
@@ -72,7 +72,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     toolbarPanel.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
     if (additionalInfo != null) {
-      toolbarPanel.add(additionalInfo, BorderLayout.EAST);
+      toolbarPanel.addToRight(additionalInfo);
     }
 
     // 'empty space' to the right of toolbar
@@ -80,10 +80,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     emptyPanel.setOpaque(false);
     emptyPanel.setPreferredSize(new Dimension());
 
-    JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.setOpaque(false);
-    topPanel.add(toolbarPanel, BorderLayout.WEST);
-    topPanel.add(emptyPanel, BorderLayout.CENTER);
+    JPanel topPanel = JBUI.Panels.simplePanel()
+      .andTransparent()
+      .addToLeft(toolbarPanel)
+      .addToCenter(emptyPanel);
 
     add(topPanel, BorderLayout.NORTH);
     if (myEditorComponent != null) add(myEditorComponent, BorderLayout.CENTER);

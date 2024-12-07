@@ -13,22 +13,27 @@ import org.jetbrains.annotations.Nullable;
 public class DotEnvCommenter implements Commenter, SelfManagingCommenter<CommenterDataHolder> {
     private static final String HASH_COMMENT_PREFIX = "#";
 
+    @Override
     public String getLineCommentPrefix() {
         return HASH_COMMENT_PREFIX;
     }
 
+    @Override
     public String getBlockCommentPrefix() {
         return null;
     }
 
+    @Override
     public String getBlockCommentSuffix() {
         return null;
     }
 
+    @Override
     public String getCommentedBlockCommentPrefix() {
         return null;
     }
 
+    @Override
     public String getCommentedBlockCommentSuffix() {
         return null;
     }

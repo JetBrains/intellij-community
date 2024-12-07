@@ -18,7 +18,7 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
     if (project == null) {
       return;
     }
-    if (!isShowingCoverageInProjectViewEnabled(project)) return;
+    if (!CoverageOptionsProvider.getInstance(project).showInProjectView()) return;
 
     final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     if (manager == null) return;

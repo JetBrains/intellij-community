@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,6 +25,8 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.UIBundle
 import com.intellij.util.UriUtil
+import com.intellij.util.system.OS
+import com.jetbrains.JBRFileDialog
 import java.awt.Component
 import java.awt.FileDialog
 import java.awt.KeyboardFocusManager
@@ -57,8 +58,25 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
   }
 
   fun setNativeDialogProperties() {
-    if (SystemInfo.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       System.setProperty("sun.awt.windows.useCommonItemDialog", "true")
+    }
+  }
+
+  fun setFileFilter(fileDialog: JBRFileDialog, descriptor: FileChooserDescriptor) {
+    val extFilter = descriptor.extensionFilter
+    if (extFilter != null) {
+      val fileTypes = extFilter.second.toTypedArray()
+      if (OS.CURRENT == OS.macOS) {
+        // `NSOpenPanel` doesn't recognize complex extensions (like e.g. "gradle.kts")
+        for (i in fileTypes.indices) {
+          val p = fileTypes[i]!!.lastIndexOf('.')
+          if (p >= 0) {
+            fileTypes[i] = fileTypes[i]!!.substring(p + 1)
+          }
+        }
+      }
+      fileDialog.setFileFilterExtensions(extFilter.first, fileTypes)
     }
   }
 

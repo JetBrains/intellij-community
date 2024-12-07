@@ -15,14 +15,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.getUpdatedStorage
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -40,19 +43,31 @@ import kotlin.script.experimental.jvm.jvm
 class DependentScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) :
     ScriptConfigurationsSource<BaseScriptModel>(project) {
 
-    private val warmUp by lazy {
+    private val loadPersistedConfigurations by lazy {
         val scriptUrls = ScriptsWithLoadedDependenciesStorage.getInstance(project).state.scripts
         val manager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
         val scripts = scriptUrls.mapNotNull { manager.getOrCreateFromUrl(it).virtualFile }.toSet()
 
-        coroutineScope.launch {
+        DependencyResolutionService.getInstance(project).resolveInBackground {
             updateDependenciesAndCreateModules(scripts.map { BaseScriptModel(it) })
         }
     }
 
-    override fun getScriptConfigurations(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
-        warmUp
-        return super.getScriptConfigurations(virtualFile)
+    override fun getConfiguration(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
+        loadPersistedConfigurations
+        val current = data.get().configurations[virtualFile]
+
+        if (current != null) return current
+
+        if (virtualFile.hasNoDependencies()) {
+            DependencyResolutionService.getInstance(project).resolveInBackground {
+                updateDependenciesAndCreateModules(listOf(BaseScriptModel(virtualFile)))
+            }
+
+            return data.get().configurations[virtualFile]
+        }
+
+        return null
     }
 
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
@@ -113,6 +128,11 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
 
     open class KotlinDependentScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) :
         KotlinScriptEntitySource(virtualFileUrl)
+
+    private fun VirtualFile.hasNoDependencies(): Boolean {
+        val ktFile = this.toPsiFile(project) as? KtFile ?: return false
+        return ktFile.annotationEntries.none { it.text.contains("DependsOn") } //TODO use analyze for this
+    }
 }
 
 @Service(Service.Level.PROJECT)

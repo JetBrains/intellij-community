@@ -179,7 +179,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
         isSdkConfigured(project)
       }
       val configureCallbackId = LearningUiManager.addCallback {
-        val module = project.modules.singleOrNull() ?: return@addCallback
+        val module = project.modules.singleOrNull()
         PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
       }
       if (useUserProjects || isLearningProject(project, primaryLanguage)) {

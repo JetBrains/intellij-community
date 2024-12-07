@@ -32,7 +32,8 @@ open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharm
       sequenceOf(
         "intellij.python.community.plugin", // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
-        "intellij.vcs.github.community") +
+        "intellij.vcs.github.community",
+        "intellij.vcs.gitlab.community") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 
     baseDownloadUrl = "https://download.jetbrains.com/python/"

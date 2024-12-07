@@ -7,6 +7,7 @@ import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.net.URISyntaxException
+import java.util.Locale
 
 private val LOG = logger<JBProtocolNavigateCommand>()
 
@@ -23,7 +24,7 @@ fun extractVcsOriginCanonicalPath(originUrl: String?) : String? {
   if (originUrl.isNullOrBlank()) return null
   try {
     val hostAndPath = extractHostAndPath(originUrl)
-    return hostAndPath.toLowerCase().removeSuffix(".git")
+    return hostAndPath.lowercase(Locale.getDefault()).removeSuffix(".git")
   } catch(e: URISyntaxException) {
     LOG.warn("Malformed origin url '$originUrl' in navigate request", e)
     return null

@@ -867,8 +867,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
           doPaintFragmentBackground(g, i, bgColor, (int)offset, 0, (int)fragmentWidth, height);
         }
 
-        Color color;
-        color = isEnabled() ? getActiveTextColor(attributes.getFgColor()) : NamedColorUtil.getInactiveTextColor();
+        boolean enabled = isEnabled();
+        Color color = enabled ? getActiveTextColor(attributes.getFgColor()) : NamedColorUtil.getInactiveTextColor();
+        if (enabled && attributes.useFaded()) {
+          color = ColorUtil.faded(color);
+        }
         g.setColor(color);
 
         final int fragmentAlignment = fragment.alignment;

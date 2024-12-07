@@ -645,6 +645,8 @@
 
     <!-- INTERNAL -->
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
+
+    <properties.extendedUseScopeProvider implementation="org.jetbrains.idea.devkit.references.BundleExtendedUseScopeProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

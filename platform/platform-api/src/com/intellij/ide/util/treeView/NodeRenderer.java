@@ -14,6 +14,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl;
@@ -153,6 +154,9 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   private static SimpleTextAttributes addColorToSimpleTextAttributes(SimpleTextAttributes simpleTextAttributes, Color color) {
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+      if (simpleTextAttributes.useFaded()) {
+         color = ColorUtil.faded(color);
+      }
       textAttributes.setForegroundColor(color);
       simpleTextAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     }

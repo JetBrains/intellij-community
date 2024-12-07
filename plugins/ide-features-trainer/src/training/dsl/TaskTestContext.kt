@@ -189,7 +189,8 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
         val dialog = withPauseWhenNull(timeout = timeout) {
           val allMatchedDialogs = robot.finder().findAll(typeMatcher(JDialog::class.java) {
             it.isFocused &&
-            if (ignoreCaseTitle) predicate(it.title.toLowerCase(), title.toLowerCase()) else predicate(it.title, title)
+            if (ignoreCaseTitle) predicate(it.title.lowercase(Locale.getDefault()),
+                                           title.lowercase(Locale.getDefault())) else predicate(it.title, title)
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
           if (allMatchedDialogs.size > 1) throw Exception(
             "Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")

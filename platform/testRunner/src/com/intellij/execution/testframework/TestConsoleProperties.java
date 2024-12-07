@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -41,6 +41,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
   public static final BooleanProperty SORT_ALPHABETICALLY = new BooleanProperty("sortTestsAlphabetically", false);
   public static final BooleanProperty SORT_BY_DURATION = new BooleanProperty("sortTestsByDuration", false);
+  public static final BooleanProperty SORT_BY_DECLARATION_ORDER = new BooleanProperty("sortTestsByDeclarationOrder", false);
   public static final BooleanProperty SUITES_ALWAYS_ON_TOP = new BooleanProperty("suitesAlwaysOnTop", true);
   public static final BooleanProperty SELECT_FIRST_DEFECT = new BooleanProperty("selectFirtsDefect", false);
   public static final BooleanProperty TRACK_RUNNING_TEST = new BooleanProperty("trackRunningTest", true);

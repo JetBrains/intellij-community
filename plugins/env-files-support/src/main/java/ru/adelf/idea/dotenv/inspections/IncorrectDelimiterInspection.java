@@ -59,6 +59,7 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
             return "Replace delimiter";
         }
 
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
                 PsiElement psiElement = descriptor.getPsiElement();
@@ -72,6 +73,7 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
             }
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
             return getName();

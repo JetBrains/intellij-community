@@ -162,7 +162,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
         assertNull(attachSourcesCallback.error)
       }
     }
-    assertThat(tracker.stdout)
+    assertThat(tracker.output)
       .filteredOn { it.startsWith("Sources were downloaded to") }
       .hasSize(1)
       .allSatisfy(Consumer { assertThat(it).endsWith(dependencySourcesJar) })

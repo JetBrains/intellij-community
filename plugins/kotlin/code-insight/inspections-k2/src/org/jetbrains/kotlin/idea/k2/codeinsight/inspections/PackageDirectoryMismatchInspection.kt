@@ -91,7 +91,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
             val file = descriptor.psiElement as? KtFile ?: return
             val directive = file.packageDirective ?: return
 
-            val sourceRoots = file.module?.findExistingNonGeneratedKotlinSourceRootFiles() ?: getSuitableDestinationSourceRoots(project)
+            val sourceRoots = file.module?.findExistingNonGeneratedKotlinSourceRootFiles()?.takeIf { it.isNotEmpty() } ?: getSuitableDestinationSourceRoots(project)
             val packageWrapper = PackageWrapper(PsiManager.getInstance(project), directive.qualifiedName)
             val fileToMove = directive.containingFile
             val chosenRoot = sourceRoots.singleOrNull()

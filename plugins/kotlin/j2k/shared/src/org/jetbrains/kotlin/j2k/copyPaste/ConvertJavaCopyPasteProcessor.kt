@@ -69,11 +69,11 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         if (!isConversionSupportedAtPosition(targetData.file, targetData.bounds.startOffset)) return
 
         val copiedJavaCode = values.single() as CopiedJavaCode
-        val dataForConversion = DataForConversion.prepare(copiedJavaCode, project)
+        val conversionData = ConversionData.prepare(copiedJavaCode, project)
         val j2kKind = getJ2kKind(targetData.file)
 
         val converter = J2kConverterExtension.extension(j2kKind)
-            .createCopyPasteConverter(project, editor, dataForConversion, targetData)
+            .createCopyPasteConverter(project, editor, conversionData, targetData)
 
         val textLength = copiedJavaCode.startOffsets.indices.sumOf { copiedJavaCode.endOffsets[it] - copiedJavaCode.startOffsets[it] }
         if (textLength < MAX_TEXT_LENGTH_TO_CONVERT_WITHOUT_ASKING_USER && converter.convertAndRestoreReferencesIfTextIsUnchanged()) {
@@ -89,7 +89,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             type = ConversionType.PSI_EXPRESSION,
             isNewJ2k = j2kKind == K1_NEW,
             conversionTime,
-            linesCount = dataForConversion.elementsAndTexts.lineCount(),
+            linesCount = conversionData.elementsAndTexts.lineCount(),
             filesCount = 1
         )
 

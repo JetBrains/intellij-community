@@ -1,10 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -13,6 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 /**
  * For an elvis operation, this class detects and replaces it with a boolean equality check:
@@ -38,6 +43,28 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
         element: KtBinaryExpression,
         context: Unit,
     ): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
+
+    // According to the Kotlin style guide, elvis should not be used in conditional statements, so we leave it as a warning.
+    // All other cases have no highlighting.
+    override fun getProblemHighlightType(element: KtBinaryExpression, context: Unit): ProblemHighlightType {
+        // Don't highlight compound elvis expressions like `a ?: b ?: false` for readability
+        (element.left as? KtBinaryExpression)?.let { leftBinary ->
+            if (leftBinary.operationToken == KtTokens.ELVIS) return INFORMATION
+        }
+
+        val parentIfOrWhile = PsiTreeUtil.getParentOfType(element, KtIfExpression::class.java, KtWhileExpressionBase::class.java)
+        val condition = when (parentIfOrWhile) {
+            is KtIfExpression -> parentIfOrWhile.condition
+            is KtWhileExpressionBase -> parentIfOrWhile.condition
+            else -> PsiTreeUtil.getParentOfType(element, KtWhenCondition::class.java)
+        }
+
+        return if (condition != null && condition in element.parentsWithSelf) {
+            GENERIC_ERROR_OR_WARNING
+        } else {
+            INFORMATION
+        }
+    }
 
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
         listOf(element.operationReference.textRangeInParent)

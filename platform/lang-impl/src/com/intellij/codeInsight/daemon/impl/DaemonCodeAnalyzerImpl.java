@@ -517,6 +517,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                         @Nullable Runnable callbackWhileWaiting) throws Exception {
     ThreadingAssertions.assertEventDispatchThread();
     assert !myDisposed;
+    PsiUtilCore.ensureValid(file);
     assertMyFile(file.getProject(), file);
     assert textEditor.getEditor().getDocument() == document : "Expected document "+document+" but one of the passed TextEditors points to a different document: "+textEditor.getEditor().getDocument();
     Document associatedDocument = PsiDocumentManager.getInstance(myProject).getDocument(file);

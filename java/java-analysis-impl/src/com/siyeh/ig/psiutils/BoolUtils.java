@@ -40,14 +40,14 @@ import static com.intellij.psi.JavaTokenType.*;
 
 public final class BoolUtils {
 
-  private BoolUtils() {}
+  private BoolUtils() { }
 
   public static boolean isNegation(@NotNull PsiExpression expression) {
     if (!(expression instanceof PsiPrefixExpression prefixExp)) {
       return false;
     }
     final IElementType tokenType = prefixExp.getOperationTokenType();
-    return JavaTokenType.EXCL.equals(tokenType);
+    return EXCL.equals(tokenType);
   }
 
   public static boolean isNegated(PsiExpression exp) {
@@ -66,7 +66,7 @@ public final class BoolUtils {
       return null;
     }
     final IElementType tokenType = prefixExpression.getOperationTokenType();
-    if (!JavaTokenType.EXCL.equals(tokenType)) {
+    if (!EXCL.equals(tokenType)) {
       return null;
     }
     final PsiExpression operand = prefixExpression.getOperand();
@@ -102,9 +102,9 @@ public final class BoolUtils {
             || !Arrays.asList(AND, OR).contains(infixExpression.getOperationTokenType()))) {
       return 1;
     }
-    int nbOperands= 0;
+    int nbOperands = 0;
     for (PsiExpression operand : infixExpression.getOperands()) {
-      nbOperands+= getLogicalOperandCount(operand);
+      nbOperands += getLogicalOperandCount(operand);
     }
     return nbOperands;
   }
@@ -138,6 +138,7 @@ public final class BoolUtils {
   }
 
   private static final List<PredicatedReplacement> ourReplacements = new ArrayList<>();
+
   static {
     ourReplacements.add(new PredicatedReplacement("isPresent", OPTIONAL_IS_EMPTY));
     ourReplacements.add(new PredicatedReplacement("isEmpty", OPTIONAL_IS_PRESENT.withLanguageLevelAtLeast(LanguageLevel.JDK_11)));
@@ -177,10 +178,10 @@ public final class BoolUtils {
     if (expression instanceof PsiAssignmentExpression && expression.getParent() instanceof PsiExpressionStatement) {
       String newOp = null;
       IElementType tokenType = ((PsiAssignmentExpression)expression).getOperationTokenType();
-      if (tokenType == JavaTokenType.ANDEQ) {
+      if (tokenType == ANDEQ) {
         newOp = "|=";
       }
-      else if (tokenType == JavaTokenType.OREQ) {
+      else if (tokenType == OREQ) {
         newOp = "&=";
       }
       if (newOp != null) {
@@ -230,10 +231,10 @@ public final class BoolUtils {
         }
         return result.toString();
       }
-      if(tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+      if (tokenType.equals(ANDAND) || tokenType.equals(OROR)) {
         final String targetToken;
         final int newPrecedence;
-        if (tokenType.equals(JavaTokenType.ANDAND)) {
+        if (tokenType.equals(ANDAND)) {
           targetToken = "||";
           newPrecedence = ParenthesesUtils.OR_PRECEDENCE;
         }
@@ -269,7 +270,7 @@ public final class BoolUtils {
       parent = ancestor.getParent();
     }
     if (parent instanceof PsiPrefixExpression prefixAncestor) {
-      if (JavaTokenType.EXCL.equals(prefixAncestor.getOperationTokenType())) {
+      if (EXCL.equals(prefixAncestor.getOperationTokenType())) {
         return prefixAncestor;
       }
     }
@@ -295,7 +296,7 @@ public final class BoolUtils {
     return PsiKeyword.TRUE.equals(expression.getText());
   }
 
-  @Contract(value ="null -> false", pure = true)
+  @Contract(value = "null -> false", pure = true)
   public static boolean isFalse(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
@@ -340,5 +341,30 @@ public final class BoolUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * Evaluates a given {@link PsiExpression} to determine if it references a constant field
+   * within the {@code java.lang.Boolean} class, specifically {@link Boolean#TRUE} or {@link Boolean#FALSE}.
+   *
+   * @param expression the {@code PsiExpression} to be evaluated.
+   * @return {@code Boolean.TRUE} if {@code expression} references the {@code Boolean.TRUE} constant,
+   * {@code Boolean.FALSE} if it references the {@code Boolean.FALSE} constant,
+   * or {@code null} if it does not reference a recognized {@code java.lang.Boolean} constant field.
+   */
+  public static @Nullable Boolean fromBoxedConstantReference(@NotNull PsiExpression expression) {
+    PsiExpression unparenthesizedExpression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (!(unparenthesizedExpression instanceof PsiReferenceExpression referenceExpression)) return null;
+    if (!(referenceExpression.resolve() instanceof PsiField field)) return null;
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return null;
+    if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(field.getContainingClass().getQualifiedName())) {
+      return switch (field.getName()) {
+        case "TRUE" -> true;
+        case "FALSE" -> false;
+        default -> null;
+      };
+    }
+    return null;
   }
 }

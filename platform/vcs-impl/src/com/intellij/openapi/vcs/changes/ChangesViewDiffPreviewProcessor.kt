@@ -85,8 +85,6 @@ private class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMana
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
-  override fun showAllChangesForEmptySelection(): Boolean = false
-
   override fun forceKeepCurrentFileWhileFocused(): Boolean = true
 
   private fun setAllowExcludeFromCommit(value: Boolean) {
@@ -114,6 +112,8 @@ private class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMana
 }
 
 internal object ChangesViewDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
+  override val isShowAllChangesForEmptySelection: Boolean get() = false
+
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     val changesView = tree as? ChangesListView ?: return JBIterable.empty()
     return wrap(tree.project, changesView.selectedChangesNodes, changesView.selectedUnversionedFiles)

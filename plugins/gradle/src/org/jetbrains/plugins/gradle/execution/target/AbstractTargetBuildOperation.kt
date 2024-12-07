@@ -57,11 +57,11 @@ internal abstract class AbstractTargetBuildOperation<This : AbstractTargetBuildO
     if (gradleUserHome != null) {
       targetBuildParametersBuilder.useGradleUserHome(gradleUserHome)
     }
-    val classPathAssembler = GradleServerClasspathInferer()
+    val classloaderHolder = GradleToolingProxyClassloaderHolder()
     for (buildAction in buildActions) {
-      classPathAssembler.add(buildAction)
+      classloaderHolder.add(buildAction)
     }
     val serverRunner = GradleServerRunner(connection, consumerOperationParameters, prepareTaskState)
-    serverRunner.run(classPathAssembler, targetBuildParametersBuilder, handler)
+    serverRunner.run(classloaderHolder, targetBuildParametersBuilder, handler)
   }
 }

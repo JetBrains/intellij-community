@@ -50,7 +50,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.eel.impl.utils.EelProviderUtilsKt;
-import com.intellij.platform.eel.provider.EelApiKey;
+import com.intellij.platform.eel.provider.EelDescriptor;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -69,8 +69,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
-
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiKey;
 
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator, Configurable.WithEpDependencies {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
@@ -577,9 +575,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       modules = myContext.myModulesConfigurator.addNewModule(basePath);
     }
     if (modules != null && !modules.isEmpty()) {
-      EelApiKey eelKey = Registry.is("java.home.finder.use.eel") ? EelProviderUtilsKt.getEelApiKey(myProject) : null;
+      EelDescriptor eelDescriptor = Registry.is("java.home.finder.use.eel") ? EelProviderUtilsKt.getEelDescriptor(myProject) : null;
       //new module wizard may add yet another SDK to the project
-      myProjectStructureConfigurable.getProjectJdksModel().syncSdks(eelKey);
+      myProjectStructureConfigurable.getProjectJdksModel().syncSdks(eelDescriptor);
       for (Module module : modules) {
         addModuleNode(module);
       }

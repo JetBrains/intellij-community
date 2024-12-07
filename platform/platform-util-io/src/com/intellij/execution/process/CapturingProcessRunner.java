@@ -137,6 +137,8 @@ public class CapturingProcessRunner {
     if (!myProcessHandler.isStartNotified()) {
       myProcessHandler.startNotify();
     }
+    // This check mainly avoids warnings about processes that were already terminated.
+    // The process status might still change after the check, but that should be harmless.
     if (!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated()) {
       myProcessHandler.destroyProcess();
     }

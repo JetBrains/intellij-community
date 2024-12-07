@@ -147,6 +147,9 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testGetterVsDirectAccess() { doTest(); }
+  public void testGetterVsDirectAccessRecordOverriddenGetter() { doTest(); }
   public void testGetterVsDirectAccessNonFinal() { doTest(); }
+  public void testGetterVsDirectAccessObjectEquals() { doTest(); }
   public void testSetterAndGetter() { doTest(); }
+  public void testStaticEqualsContract() { doTest(); }
 }

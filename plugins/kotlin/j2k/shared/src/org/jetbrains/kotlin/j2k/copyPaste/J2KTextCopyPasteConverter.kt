@@ -19,12 +19,12 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 internal class J2KTextCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
-    private val dataForConversion: DataForConversion,
-    private val targetData: ConversionTargetData,
+    private val conversionData: ConversionData,
+    private val targetData: TargetData,
     private val j2kKind: J2kConverterExtension.Kind,
 ) {
     fun convert() {
-        val additionalImports = tryToResolveImports(dataForConversion, targetData.file)
+        val additionalImports = tryToResolveImports(conversionData, targetData.file)
         ProgressManager.checkCanceled()
 
         val importsInsertOffset = targetData.file.importList?.endOffset ?: 0
@@ -33,7 +33,7 @@ internal class J2KTextCopyPasteConverter(
             convertedImportsText = "\n" + convertedImportsText
         }
 
-        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetData.file, j2kKind)
+        val conversionResult = conversionData.elementsAndTexts.convertCodeToKotlin(project, targetData.file, j2kKind)
         val convertedText = conversionResult.text
         ProgressManager.checkCanceled()
 
@@ -62,8 +62,8 @@ internal class J2KTextCopyPasteConverter(
         runPostProcessing(project, targetData.file, boundsAfterReplace.asTextRange, conversionResult.converterContext, j2kKind)
     }
 
-    private fun tryToResolveImports(dataForConversion: DataForConversion, targetFile: KtFile): ElementAndTextList {
-        val resolver = J2kConverterExtension.extension(j2kKind).createPlainTextPasteImportResolver(dataForConversion, targetFile)
+    private fun tryToResolveImports(conversionData: ConversionData, targetFile: KtFile): ElementAndTextList {
+        val resolver = J2kConverterExtension.extension(j2kKind).createPlainTextPasteImportResolver(conversionData, targetFile)
         val imports = resolver.generateRequiredImports()
         val newlineSeparatedImports = imports.flatMap { importStatement ->
             listOf("\n", importStatement)

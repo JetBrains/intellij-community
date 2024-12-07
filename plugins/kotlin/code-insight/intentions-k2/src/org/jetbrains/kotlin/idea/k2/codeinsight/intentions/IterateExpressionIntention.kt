@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeIterated
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
-class IterateExpressionIntention : KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
+internal class IterateExpressionIntention : KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
 
     override fun invoke(
         actionContext: ActionContext,

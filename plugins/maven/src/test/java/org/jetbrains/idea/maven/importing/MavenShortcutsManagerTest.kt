@@ -2,13 +2,11 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.assertTrue
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
@@ -268,7 +266,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun assertEmptyKeymap() {
-    UsefulTestCase.assertEmpty(projectActions)
+    assertEmpty(projectActions)
   }
 
   private fun assertKeymapDoesNotContain(pomFile: VirtualFile, goal: String) {

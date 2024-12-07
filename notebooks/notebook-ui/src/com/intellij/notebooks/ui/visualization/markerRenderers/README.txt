@@ -5,6 +5,7 @@ The renderers are to be documented here.
 [NotebookCodeCellBackgroundLineMarkerRenderer] - vertical gray rectangle in the gutter area between the line numbers and the text.
 [NotebookAboveCodeCellGutterLineMarkerRenderer] - little gray rectangle in the gutter area on the left of the above cell panel
 [NotebookBelowCellCellGutterLineMarkerRenderer] - little gray rectangle in the gutter area on the left of the below cell panel
+[NotebookCellHighlighterRenderer] - the cell background itself + clips this highlight under the editor's scroll bar area
 
 [NotebookCellToolbarGutterLineMarkerRenderer] - (?) SQL-cells related
 [NotebookTextCellBackgroundLineMarkerRenderer] - (?) R notebooks related

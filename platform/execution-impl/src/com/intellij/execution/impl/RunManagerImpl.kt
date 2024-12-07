@@ -1194,7 +1194,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
                                ?: emptyList()
       when {
         runningDescriptors.size == 1 -> icon =
-          if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else ExecutionUtil.getLiveIndicator(icon)
+          ExecutionUtil.withLiveIndicator(icon)
         runningDescriptors.size > 1 -> icon =
           if (ExperimentalUI.isNewUI()) newUiRunningIcon(icon) else IconUtil.addText(icon, runningDescriptors.size.toString())
       }

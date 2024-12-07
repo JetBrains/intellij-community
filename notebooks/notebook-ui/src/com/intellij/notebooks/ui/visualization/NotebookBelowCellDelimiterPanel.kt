@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.components.JBBox
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -73,7 +74,7 @@ class NotebookBelowCellDelimiterPanel(
   }
 
   private fun createTagsRow(): Box {
-    val tagsRow = Box.createHorizontalBox()
+    val tagsRow = JBBox.createHorizontalBox()
     val plusActionToolbar = createAddTagButton()
     tagsRow.add(plusActionToolbar)
     tagsRow.add(Box.createHorizontalStrut(tagsSpacing))

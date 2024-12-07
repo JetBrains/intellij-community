@@ -12,6 +12,7 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -64,9 +65,11 @@ private class EelEphemeralRootAwareMapper(
     }
 
     scope.awaitCancellationAndInvoke {
-      when (val result = eelApi.fs.delete(tmpDir, true)) {
-        is EelResult.Ok -> Unit
-        is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
+      withContext(Job()) {
+        when (val result = eelApi.fs.delete(tmpDir, true)) {
+          is EelResult.Ok -> Unit
+          is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
+        }
       }
     }
 
@@ -75,6 +78,10 @@ private class EelEphemeralRootAwareMapper(
 
   override fun toNioPath(path: EelPath.Absolute): Path {
     return ephemeralRoot.resolve(path.toString())
+  }
+
+  override fun pathPrefix(): String {
+    return ephemeralRoot.pathString.trimEnd('/', '\\')
   }
 }
 

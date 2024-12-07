@@ -34,6 +34,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -295,28 +296,10 @@ public final class AutoUnboxingInspection extends BaseInspection {
       if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiField field)) {
-        return null;
-      }
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
-        return null;
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_BOOLEAN.equals(qualifiedName)) {
-        return null;
-      }
-      @NonNls final String name = field.getName();
-      if ("TRUE".equals(name)) {
-        return "true";
-      }
-      else if ("FALSE".equals(name)) {
-        return "false";
-      }
-      else {
-        return null;
-      }
+
+      Boolean bool = BoolUtils.fromBoxedConstantReference(referenceExpression);
+      if (bool == null) return null;
+      return bool.toString();
     }
   }
 

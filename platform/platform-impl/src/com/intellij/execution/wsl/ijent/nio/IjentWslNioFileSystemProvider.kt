@@ -176,7 +176,7 @@ class IjentWslNioFileSystemProvider(
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next().toIjentPath()
 
-            val originalPath = ijentPath.asSequence().map(Path::name).map(::sanitizeFileName).fold(wslLocalRoot, Path::resolve)
+            val originalPath = dir.resolve(sanitizeFileName(ijentPath.eelPath.fileName.toString()))
 
             val cachedAttrs = ijentPath.get() as IjentNioPosixFileAttributes?
             val dosAttributes =

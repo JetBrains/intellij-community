@@ -89,7 +89,10 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
           if (type instanceof PsiClassType) {
             PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) return false;
-            type = TypeConversionUtil.getSuperClassSubstitutor(containingClass, (PsiClassType)inType).substitute(type);
+            var substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(containingClass, psiClass, result.getSubstitutor());
+            if (substitutor != null) {
+              type = substitutor.substitute(type);
+            }
           }
           return outType.isAssignableFrom(type);
         })).orElse(null);

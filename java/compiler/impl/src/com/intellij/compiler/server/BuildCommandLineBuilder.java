@@ -44,7 +44,21 @@ interface BuildCommandLineBuilder {
   default void setupAdditionalVMOptions() {
   }
 
+  /**
+   * @param path a path which is available locally to the IDE
+   * @return a path which points to a copy on a remote machine, and is available to the IDE (but maybe not to the OS of the IDE)
+   * i.e., in case of WSL the original path could be {@code C:\Users\a.zip}, and the returned path would be {@code \\wsl.localhost\home\a.zip}.
+   */
   default @NotNull Path copyPathToTargetIfRequired(@NotNull Path path) {
     return path;
+  }
+
+  /**
+   * @param path a path which is available locally to the IDE
+   * @return a path which points to a copy on a remote machine, and is available to the remote machine (and it does not make sense to the OS of the IDE).
+   * i.e., in case of WSL the original path could be {@code C:\Users\a.zip}, and the returned path would be {@code /home/a.zip}.
+   */
+  default @NotNull String copyPathToHostIfRequired(@NotNull Path path) {
+    return path.toString();
   }
 }

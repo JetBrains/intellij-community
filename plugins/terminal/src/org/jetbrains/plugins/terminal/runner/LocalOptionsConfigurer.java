@@ -32,25 +32,16 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
-import static org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand;
 
 @ApiStatus.Internal
-public class LocalOptionsConfigurer {
+public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
-  private final Project myProject;
+  public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
+    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
+    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project);
 
-  public LocalOptionsConfigurer(Project project) { myProject = project; }
-
-  public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
-    return configureStartupOptions1(baseOptions);
-  }
-
-  private @NotNull ShellStartupOptions configureStartupOptions1(@NotNull ShellStartupOptions baseOptions) {
-    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), myProject);
-    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir);
-
-    List<String> initialCommand = doGetInitialCommand(baseOptions);
+    List<String> initialCommand = getInitialCommand(baseOptions, project);
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);
@@ -83,9 +74,11 @@ public class LocalOptionsConfigurer {
     return SystemProperties.getUserHome();
   }
 
-  private @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs, @NotNull String workingDir) {
+  private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
+                                                                     @NotNull String workingDir,
+                                                                     @NotNull Project project) {
     Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
-    EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
+    EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
       EnvironmentRestorer.restoreOverriddenVars(envs);
@@ -103,8 +96,8 @@ public class LocalOptionsConfigurer {
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
-    if (TrustedProjects.isTrusted(myProject)) {
-      PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
+    if (TrustedProjects.isTrusted(project)) {
+      PathMacroManager macroManager = PathMacroManager.getInstance(project);
       for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
         envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
       }
@@ -115,17 +108,13 @@ public class LocalOptionsConfigurer {
     return envs;
   }
 
-  private @NotNull List<String> doGetInitialCommand(@NotNull ShellStartupOptions options) {
-    return getInitialCommandInternal(options);
+  private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project) {
+    List<String> shellCommand = options.getShellCommand();
+    return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project));
   }
 
-  private @NotNull List<String> getInitialCommandInternal(ShellStartupOptions startupOptions) {
-    List<String> shellCommand = startupOptions != null ? startupOptions.getShellCommand() : null;
-    return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
-  }
-
-  private @NotNull String getShellPath() {
-    return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
+  private static @NotNull String getShellPath(@NotNull Project project) {
+    return TerminalProjectOptionsProvider.getInstance(project).getShellPath();
   }
 
   private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {

@@ -1852,13 +1852,17 @@ f:com.intellij.formatting.DefaultCaretRestorationDecider
 f:com.intellij.formatting.FormatConstants
 - sf:RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS:I
 - s:getReservedLineWrapWidthInColumns(com.intellij.openapi.editor.Editor):I
-com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
-- sf:Companion:com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo$Companion
-- s:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
+com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
+- sf:Companion:com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo$Companion
+- s:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
 - a:getVisualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):java.util.List
 - a:isVirtualFormattingEnabled(com.intellij.openapi.editor.Editor):Z
-f:com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo$Companion
-- f:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
+- s:measureVirtualFormattingInlineInlays(com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo,com.intellij.openapi.editor.Editor,I,I):I
+- s:measureVirtualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):I
+f:com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo$Companion
+- f:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
+- f:measureVirtualFormattingInlineInlays(com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo,com.intellij.openapi.editor.Editor,I,I):I
+- f:measureVirtualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):I
 a:com.intellij.formatting.visualLayer.VisualFormattingLayerService
 - sf:Companion:com.intellij.formatting.visualLayer.VisualFormattingLayerService$Companion
 - <init>():V
@@ -10909,14 +10913,12 @@ f:com.intellij.openapi.updateSettings.impl.UpdateStrategy
 - b:<init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product,com.intellij.openapi.updateSettings.impl.UpdateSettings,com.intellij.openapi.updateSettings.UpdateStrategyCustomization,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:checkForUpdates():com.intellij.openapi.updateSettings.impl.PlatformUpdates
 c:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceImpl
-- sf:Companion:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceImpl$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - collectDependencyUnknownFeatures(Z,kotlin.coroutines.Continuation):java.lang.Object
 - fetch(java.util.List,java.util.Collection,Z,kotlin.coroutines.Continuation):java.lang.Object
 - getAddressedMessagePresentation(java.util.Collection,java.util.Collection,com.intellij.util.containers.MultiMap):java.lang.String
 - rescanDependencies(kotlin.jvm.functions.Function2):V
 - run(java.util.List,java.util.Collection,Z,kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceImpl$Companion
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 - sf:getInstallAndEnableTask(com.intellij.openapi.project.Project,java.util.Set,java.lang.Runnable):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTask
 - sf:getInstallAndEnableTask(com.intellij.openapi.project.Project,java.util.Set,Z,java.lang.Runnable):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTask
@@ -10924,6 +10926,7 @@ f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertise
 - sf:getInstallAndEnableTask(com.intellij.openapi.project.Project,java.util.Set,Z,Z,java.lang.Runnable):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTask
 - bs:getInstallAndEnableTask$default(com.intellij.openapi.project.Project,java.util.Set,Z,Z,com.intellij.openapi.application.ModalityState,java.lang.Runnable,I,java.lang.Object):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTask
 - sf:getNotificationGroup():com.intellij.notification.NotificationGroup
+- sf:getPluginSuggestionNotificationGroup():com.intellij.notification.NotificationGroup
 - sf:installAndEnable(com.intellij.openapi.project.Project,java.util.Set,java.lang.Runnable):V
 - sf:installAndEnable(com.intellij.openapi.project.Project,java.util.Set,Z,java.lang.Runnable):V
 - sf:installAndEnable(com.intellij.openapi.project.Project,java.util.Set,Z,Z,com.intellij.openapi.application.ModalityState,java.lang.Runnable):V
@@ -10931,8 +10934,6 @@ f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertise
 - sf:installAndEnable(java.util.Set,java.lang.Runnable):V
 - bs:installAndEnable$default(com.intellij.openapi.project.Project,java.util.Set,Z,Z,com.intellij.openapi.application.ModalityState,java.lang.Runnable,I,java.lang.Object):V
 - sf:installAndEnablePlugins(java.util.Set,java.lang.Runnable):V
-- sf:isIgnoreIdeSuggestion():Z
-- sf:setIgnoreIdeSuggestion(Z):V
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List):V

@@ -9,11 +9,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -34,20 +36,20 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
         project.scriptDefinitionsSourceOfType<BundledScriptDefinitionSource>()
 
-    override fun getScriptConfigurations(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
-        val currentData = super.getScriptConfigurations(virtualFile)
+    override fun getConfiguration(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
+        val current = data.get().configurations[virtualFile]
 
-        if (currentData is ResultWithDiagnostics.Success) {
-            return currentData
+        if (current is ResultWithDiagnostics.Success) {
+            return current
         }
 
         if (KotlinScriptLazyResolveProhibitionCondition.prohibitLazyResolve(project, virtualFile)) return null
 
-        coroutineScope.launch {
+        DependencyResolutionService.getInstance(project).resolveInBackground {
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
         }
 
-        return super.getScriptConfigurations(virtualFile)
+        return data.get().configurations[virtualFile]
     }
 
     override suspend fun updateConfigurations(scripts: Iterable<BaseScriptModel>) {

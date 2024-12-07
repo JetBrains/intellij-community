@@ -26,7 +26,22 @@ import java.util.stream.Stream;
  */
 public final class MutationSignature {
   private enum Kind {
-    TRANSPARENT, PURE, MUTATES_ANYTHING, OTHER
+    /**
+     * Does not mutate anything, including private fields
+     */
+    TRANSPARENT,
+    /**
+     * Does not mutate publicly visible state, may mutate private fields (e.g., to cache something)
+     */
+    PURE,
+    /**
+     * Mutation signature is unknown: anything can be mutated
+     */
+    MUTATES_ANYTHING,
+    /**
+     * Any other specific case described by other fields (mutates either 'this', or parameters, or io) 
+     */
+    OTHER
   }
   
   public static final String ATTR_MUTATES = "mutates";
@@ -123,7 +138,11 @@ public final class MutationSignature {
 
   @Override
   public int hashCode() {
-    return (myThis ? 4247 : 22661) + (myIo ? 137 : 731) + Arrays.hashCode(myParameters);
+    int result = myKind.hashCode();
+    result = 31 * result + Boolean.hashCode(myThis);
+    result = 31 * result + Boolean.hashCode(myIo);
+    result = 31 * result + Arrays.hashCode(myParameters);
+    return result;
   }
 
   @Override

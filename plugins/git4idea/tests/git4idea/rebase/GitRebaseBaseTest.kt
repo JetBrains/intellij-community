@@ -17,6 +17,7 @@ import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.Locale
 
 abstract class GitRebaseBaseTest : GitPlatformTest() {
   override fun getOpenProjectOptions(): OpenProjectTaskBuilder {
@@ -28,7 +29,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     return Paths.get(FileUtil.getTempDirectory(), "p.ipr")
   }
 
-  private val saved = getDefaultSaveChangesPolicy().name.toLowerCase().let { save ->
+  private val saved = getDefaultSaveChangesPolicy().name.lowercase(Locale.getDefault()).let { save ->
     if (save.endsWith("e")) "${save}d" else "${save}ed"
   }
 
@@ -116,7 +117,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     }
   }
 
-  protected fun assertSuccessfulRebaseNotification(message: String) : Notification {
+  protected fun assertSuccessfulRebaseNotification(message: String): Notification {
     return assertSuccessfulNotification("Rebase successful", message)
   }
 
@@ -157,7 +158,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
     assertEquals("There should be no local changes!", "", gitStatus())
   }
 
-  protected fun GitRepository.hasConflict(file: String) : Boolean {
+  protected fun GitRepository.hasConflict(file: String): Boolean {
     return ("UU $file") == gitStatus()
   }
 
@@ -186,7 +187,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
         """)
   }
 
-  protected fun `assert unknown error notification with link to abort`(afterContinue : Boolean = false) {
+  protected fun `assert unknown error notification with link to abort`(afterContinue: Boolean = false) {
     val expectedTitle = if (afterContinue) "Continue rebase failed" else "Rebase failed"
     assertErrorNotification(expectedTitle,
         """
@@ -215,7 +216,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   inner class LocalChange(val repository: GitRepository, private val filePath: String, val content: String = "Some content") {
-    fun generate() : LocalChange {
+    fun generate(): LocalChange {
       cd(repository)
       val file = repository.file(filePath).create(content)
       file.add()

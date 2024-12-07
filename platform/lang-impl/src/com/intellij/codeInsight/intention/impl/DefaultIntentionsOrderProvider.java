@@ -5,8 +5,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction.Priority;
-import com.intellij.codeInspection.SuppressIntentionActionFromFix;
-import com.intellij.util.ThreeState;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,11 +38,6 @@ public final class DefaultIntentionsOrderProvider implements IntentionsOrderProv
     IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
     if (nonDelegatedAction instanceof PriorityAction) {
       return group + getPriorityWeight(((PriorityAction)nonDelegatedAction).getPriority());
-    }
-    if (nonDelegatedAction instanceof SuppressIntentionActionFromFix) {
-      if (((SuppressIntentionActionFromFix)nonDelegatedAction).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-        return group - 1;
-      }
     }
     return group;
   }

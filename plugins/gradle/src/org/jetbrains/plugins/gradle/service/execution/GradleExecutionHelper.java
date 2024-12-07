@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
@@ -36,6 +35,8 @@ import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptio
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.cmd.jvmArgs.GradleJvmArgument;
+import org.jetbrains.plugins.gradle.util.cmd.jvmArgs.GradleJvmArguments;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
@@ -197,9 +198,52 @@ public final class GradleExecutionHelper {
     }
   }
 
+  @ApiStatus.Internal
   @VisibleForTesting
   public static void setupJvmArguments(
     @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
+    @Nullable BuildEnvironment buildEnvironment
+  ) {
+    var jvmArguments = GradleJvmArguments.EMPTY
+      .plus(getJvmArgumentsFromBuildEnvironment(buildEnvironment))
+      .plus(getJvmArgumentsFromGradleProperties(settings, buildEnvironment))
+      .plus(getJvmArgumentsFromSettings(settings));
+    LOG.debug("Passing JVM args to Gradle Tooling API: " + jvmArguments.getTokens());
+    operation.addJvmArguments(jvmArguments.getTokens());
+  }
+
+  private static @NotNull GradleJvmArguments getJvmArgumentsFromBuildEnvironment(
+    @Nullable BuildEnvironment buildEnvironment
+  ) {
+    if (buildEnvironment != null) {
+      var jvmArguments = GradleJvmArguments.parse(buildEnvironment.getJava().getJvmArguments());
+      return removeAddOpensAndExportsFromJvmArguments(jvmArguments);
+    }
+    return GradleJvmArguments.EMPTY;
+  }
+
+  /**
+   * Remove `--add-opens` and `--add-exports` options, because same options will be added by Gradle producing the option duplicates.
+   * And the daemon will become uncompilable with the CLI invocations.
+   *
+   * @see <a href="https://github.com/gradle/gradle/blob/v5.1.1/subprojects/launcher/src/main/java/org/gradle/launcher/daemon/configuration/DaemonParameters.java#L125">https://github.com/gradle/../DaemonParameters.java</a>
+   */
+  private static @NotNull GradleJvmArguments removeAddOpensAndExportsFromJvmArguments(@NotNull GradleJvmArguments jvmArguments) {
+    var result = new ArrayList<GradleJvmArgument>();
+    for (var jvmArgument : jvmArguments.getArguments()) {
+      if (jvmArgument instanceof GradleJvmArgument.OptionNotation jvmOption) {
+        var jvmOptionName = jvmOption.getOption().getName();
+        if (jvmOptionName.equals("--add-opens") || jvmOptionName.equals("--add-exports")) {
+          continue;
+        }
+      }
+      result.add(jvmArgument);
+    }
+    return new GradleJvmArguments(result);
+  }
+
+  private static @NotNull GradleJvmArguments getJvmArgumentsFromGradleProperties(
     @NotNull GradleExecutionSettings settings,
     @Nullable BuildEnvironment buildEnvironment
   ) {
@@ -208,15 +252,16 @@ public final class GradleExecutionHelper {
       var properties = GradlePropertiesFile.getProperties(settings.getServiceDirectory(), buildRoot);
       var jvmArgsProperty = properties.getJvmOptions();
       if (jvmArgsProperty != null) {
-        var jvmArgs = ParametersListUtil.parse(jvmArgsProperty.getValue());
-        LOG.debug("Passing JVM args from gradle.properties to Gradle Tooling API: " + jvmArgs);
-        operation.addJvmArguments(jvmArgs);
+        return GradleJvmArguments.parse(jvmArgsProperty.getValue());
       }
     }
+    return GradleJvmArguments.EMPTY;
+  }
 
-    var jvmArgs = ContainerUtil.filter(settings.getJvmArguments(), it -> !StringUtil.isEmpty(it));
-    LOG.debug("Passing custom JVM args to Gradle Tooling API: " + jvmArgs);
-    operation.addJvmArguments(jvmArgs);
+  private static @NotNull GradleJvmArguments getJvmArgumentsFromSettings(
+    @NotNull GradleExecutionSettings settings
+  ) {
+    return GradleJvmArguments.parse(settings.getJvmArguments());
   }
 
   private static void setupJavaHome(

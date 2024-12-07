@@ -3664,6 +3664,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/unfolding/returnToIf/ifWithThrow.kt");
                 }
 
+                @TestMetadata("ifWithoutElse.kt")
+                public void testIfWithoutElse() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithoutElse.kt");
+                }
+
+                @TestMetadata("ifWithoutThen.kt")
+                public void testIfWithoutThen() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithoutThen.kt");
+                }
+
                 @TestMetadata("innerIfTransformed.kt")
                 public void testInnerIfTransformed() throws Exception {
                     runTest("testData/intentions/branched/unfolding/returnToIf/innerIfTransformed.kt");
@@ -3672,6 +3682,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 @TestMetadata("labeledReturn.kt")
                 public void testLabeledReturn() throws Exception {
                     runTest("testData/intentions/branched/unfolding/returnToIf/labeledReturn.kt");
+                }
+
+                @TestMetadata("notInApplicableRange.kt")
+                public void testNotInApplicableRange() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToIf/notInApplicableRange.kt");
                 }
 
                 @TestMetadata("simpleIf.kt")
@@ -5658,6 +5673,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     @TestMetadata("array.kt")
                     public void testArray() throws Exception {
                         runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/array.kt");
+                    }
+
+                    @TestMetadata("floatComparison.kt")
+                    public void testFloatComparison() throws Exception {
+                        runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/floatComparison.kt");
                     }
 
                     @TestMetadata("lambdaInParentheses.kt")

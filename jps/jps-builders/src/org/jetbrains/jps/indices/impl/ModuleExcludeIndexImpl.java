@@ -101,20 +101,18 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(model.getProject());
     if (projectExtension != null) {
       String url = projectExtension.getOutputUrl();
-      if (Strings.isEmpty(url)) {
-        return;
-      }
-
-      Path excluded = Path.of(JpsPathUtil.urlToPath(url));
-      Path parent = excluded;
-      while (parent != null) {
-        JpsModule module = contentToModule.get(parent);
-        if (module != null) {
-          myModuleToExcludesMap.get(module).add(excluded);
+      if (!Strings.isEmpty(url)) {
+        Path excluded = Path.of(JpsPathUtil.urlToPath(url));
+        Path parent = excluded;
+        while (parent != null) {
+          JpsModule module = contentToModule.get(parent);
+          if (module != null) {
+            myModuleToExcludesMap.get(module).add(excluded);
+          }
+          parent = parent.getParent();
         }
-        parent = parent.getParent();
+        myExcludedRoots.add(excluded);
       }
-      myExcludedRoots.add(excluded);
     }
 
     List<Path> parents = new ArrayList<>();

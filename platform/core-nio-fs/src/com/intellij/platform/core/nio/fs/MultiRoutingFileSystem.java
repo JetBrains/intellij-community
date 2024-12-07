@@ -193,6 +193,25 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
     return myLocalFS;
   }
 
+  /**
+   * Returns {@code true} if this path will be handled by a registered backend.
+   * It is reasonable to assume that if this method returns {@code false}, then the path will be handled by the local NIO file system.
+   * In some sense, this method is an approximation of a predicate "is this path remote?"
+   */
+  public final boolean isRoutable(@NotNull Path path) {
+    Path root = path.getRoot();
+    if (root == null) {
+      return false;
+    }
+    String rootRepresentation = root.toString();
+    for (Backend backend : myBackends.get()) {
+      if (backend.matchPath(rootRepresentation)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   public WatchService newWatchService() throws IOException {
     // TODO Move it to DelegatingFileSystem.

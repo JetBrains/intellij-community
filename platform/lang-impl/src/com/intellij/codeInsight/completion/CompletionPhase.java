@@ -88,7 +88,8 @@ public abstract class CompletionPhase implements Disposable {
       myTracker.ignoreCurrentDocumentChange();
     }
 
-    private boolean isExpired() {
+    @ApiStatus.Internal
+    public boolean isExpired() {
       return myTracker.hasAnythingHappened() || myRequestCount <= 0;
     }
 

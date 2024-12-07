@@ -111,7 +111,7 @@ sealed class GithubApiRequestExecutor {
           GHPRStatisticsCollector.logApiResponseReceived(
             activity = activity,
             remaining = connection.getHeaderFieldInt("x-ratelimit-remaining", -1),
-            resourceName = connection.getHeaderField("x-ratelimit-resource"),
+            resourceName = connection.getHeaderField("x-ratelimit-resource") ?: "unknown",
             statusCode = connection.responseCode,
           )
 

@@ -304,7 +304,7 @@ object K2CreateFunctionFromUsageUtil {
         qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 
     /**
-     * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use
+     * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null, if can't figure out which type to use
      */
     context (KaSession)
     private fun makeAccessibleInCreationPlace(ktType: KaType, call: KtElement): KaType? {

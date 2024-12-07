@@ -23,6 +23,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
@@ -309,7 +310,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     myRbFieldPrivate.setSelected(true);
     myRbAccessorPublic.setSelected(true);
 
-    Box leftBox = Box.createVerticalBox();
+    JBBox leftBox = JBBox.createVerticalBox();
     myCbEncapsulateGet.setPreferredSize(myCbUseAccessorsWhenAccessible.getPreferredSize());
     leftBox.add(myCbEncapsulateGet);
     leftBox.add(myCbEncapsulateSet);
@@ -334,7 +335,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
     myJavadocPolicy.setVisible(hasJavadoc);
 
-    Box fieldsBox = Box.createVerticalBox();
+    JBBox fieldsBox = JBBox.createVerticalBox();
     fieldsBox.add(myRbFieldPrivate);
     fieldsBox.add(myRbFieldPackageLocal);
     fieldsBox.add(myRbFieldProtected);
@@ -345,7 +346,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     fieldsVisibilityPanel.add(fieldsBox, BorderLayout.CENTER);
     fieldsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
-    Box methodsBox = Box.createVerticalBox();
+    JBBox methodsBox = JBBox.createVerticalBox();
     methodsBox.add(myRbAccessorPublic);
     methodsBox.add(myRbAccessorProtected);
     methodsBox.add(myRbAccessorPackageLocal);
@@ -356,12 +357,12 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     methodsVisibilityPanel.add(methodsBox, BorderLayout.CENTER);
     methodsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
-    Box visibilityBox = Box.createHorizontalBox();
+    JBBox visibilityBox = JBBox.createHorizontalBox();
     visibilityBox.add(fieldsVisibilityPanel);
     visibilityBox.add(Box.createHorizontalStrut(5));
     visibilityBox.add(methodsVisibilityPanel);
 
-    Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
     box.add(encapsulateBox);
     box.add(Box.createVerticalStrut(5));
     box.add(visibilityBox);

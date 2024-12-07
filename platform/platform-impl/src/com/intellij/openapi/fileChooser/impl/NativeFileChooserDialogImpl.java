@@ -8,11 +8,9 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
 import com.jetbrains.JBRFileDialog;
@@ -50,27 +48,12 @@ final class NativeFileChooserDialogImpl implements FileChooserDialog, PathChoose
     if (jbrDialog != null) {
       int hints = jbrDialog.getHints();
       if (myDescriptor.isChooseFolders()) hints |= JBRFileDialog.SELECT_DIRECTORIES_HINT;
-      if (myDescriptor.isChooseFiles() || myDescriptor.isChooseJars() || myDescriptor.isChooseJarContents()) {
-        hints |= JBRFileDialog.SELECT_FILES_HINT;
-      }
+      if (myDescriptor.isChooseFiles() || myDescriptor.isChooseJarContents()) hints |= JBRFileDialog.SELECT_FILES_HINT;
       jbrDialog.setHints(hints);
       jbrDialog.setLocalizationString(JBRFileDialog.OPEN_FILE_BUTTON_KEY, IdeBundle.message("windows.native.common.dialog.open"));
       jbrDialog.setLocalizationString(JBRFileDialog.OPEN_DIRECTORY_BUTTON_KEY, IdeBundle.message("windows.native.common.dialog.select.folder"));
       jbrDialog.setLocalizationString(JBRFileDialog.ALL_FILES_COMBO_KEY, IdeBundle.message("windows.native.common.dialog.all"));
-      var extFilter = myDescriptor.getExtensionFilter();
-      if (extFilter != null) {
-        var fileTypes = ArrayUtil.toStringArray(extFilter.second);
-        if (SystemInfo.isMac) {
-          // `NSOpenPanel` doesn't recognize complex extensions (like e.g. "gradle.kts")
-          for (int i = 0; i < fileTypes.length; i++) {
-            var p = fileTypes[i].lastIndexOf('.');
-            if (p >= 0) {
-              fileTypes[i] = fileTypes[i].substring(p + 1);
-            }
-          }
-        }
-        jbrDialog.setFileFilterExtensions(extFilter.first, fileTypes);
-      }
+      myHelper.setFileFilter(jbrDialog, descriptor);
     }
   }
 

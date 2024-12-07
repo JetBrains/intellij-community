@@ -20,6 +20,6 @@ internal sealed class PredictionData(val predictionToDisplay: Collection<Virtual
     CALCULATION_CANCELED,
     UNEXPECTED_REASON;
 
-    override fun toString() = name.toLowerCase(Locale.ENGLISH)
+    override fun toString() = name.lowercase(Locale.ENGLISH)
   }
 }

@@ -1440,10 +1440,8 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - isChooseFiles():Z
 - isChooseFolders():Z
 - isChooseJarContents():Z
-- isChooseJars():Z
-- isChooseJarsAsFiles():Z
 - isChooseMultiple():Z
-- isFileSelectable(com.intellij.openapi.vfs.VirtualFile):Z
+- F:isFileSelectable(com.intellij.openapi.vfs.VirtualFile):Z
 - F:isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
 - isForcedToUseIdeaFileChooser():Z
 - isHideIgnored():Z

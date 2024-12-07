@@ -17,6 +17,66 @@ import java.util.Map;
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
+  // PY-20710
+  public void testLambdaGenerator() {
+    doTest("Generator[int, Any, Any]", """
+              expr = (lambda: (yield 1))()
+             """);
+  }
+
+  // PY-20710
+  public void testGeneratorDelegatingToLambdaGenerator() {
+    doTest("Generator[int, Any, str]", """
+              def g():
+                  yield from (lambda: (yield 1))()
+                  return "foo"
+              expr = g()
+             """);
+  }
+
+  // PY-20710
+  public void testYieldExpressionTypeFromGeneratorSendTypeHint() {
+    doTest("int", """
+      from typing import Generator
+      
+      def g() -> Generator[str, int, None]:
+          expr = yield "foo"
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromExpressionTypeFromGeneratorReturnTypeHint() {
+    doTest("int", """
+      from typing import Generator, Any
+      
+      def delegate() -> Generator[None, Any, int]:
+          yield
+          return 42
+
+      def g():
+          expr = yield from delegate()
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromLambda() {
+    doTest("Generator[int | str, str | Any, bool]",
+           """
+           from typing import Generator
+           
+           def gen1() -> Generator[int, str, bool]:
+               yield 42
+               return True
+           
+           def gen2():
+               yield "str"
+               return True
+     
+           l = lambda: (yield from gen1()) or (yield from gen2())
+           expr = l()
+           """);
+  }
+
   // PY-6702
   public void testYieldFromType() {
     doTest("str | int | float",
@@ -1216,7 +1276,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInAnnotations() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1229,7 +1289,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInTypeComments() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1246,7 +1306,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInFunctionTypeComment() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1260,7 +1320,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInImportedFile() {
-    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doMultiFileTest("(c: (**P) -> int, **P, **P) -> None", """
       from mod import func
             
       expr = func

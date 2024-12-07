@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.jcef.JBCefApp;
@@ -146,7 +147,7 @@ public final class AboutDialog extends DialogWrapper {
   }
 
   private @NotNull Box getText() {
-    Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
     List<String> lines = new ArrayList<>();
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 

@@ -25,7 +25,9 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2;
-import com.intellij.util.indexing.dependencies.*;
+import com.intellij.util.indexing.dependencies.IncompleteIndexingToken;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.FileIndexingRequest;
@@ -192,7 +194,15 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     SpanBuilder spanBuilder = TelemetryManager.getInstance().getTracer(Indexes)
       .spanBuilder("UnindexedFilesIndexer.performInDumbMode");
     TraceKt.use(spanBuilder, span -> {
-      doPerformInDumbMode(indicator);
+      // indexingQueue.wrapIndexing will try to acquire scanningIndexingMutex, and will wait until scanning is completed.
+      // Set progress text for this "waiting"
+      indicator.setIndeterminate(true);
+      indicator.setText(IndexingBundle.message("progress.indexing.waiting.for.scanning.to.complete"));
+
+      PerProjectIndexingQueue indexingQueue = myProject.getService(PerProjectIndexingQueue.class);
+      indexingQueue.wrapIndexing$intellij_platform_lang_impl(() -> {
+        doPerformInDumbMode(indicator);
+      });
       return null;
     });
   }

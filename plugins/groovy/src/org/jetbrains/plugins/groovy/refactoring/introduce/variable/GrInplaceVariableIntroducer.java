@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.components.JBBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -91,7 +92,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
                                                        new Insets(5, 5, 5, 5), 0, 0));
     }
 
-    panel.add(Box.createVerticalBox(),
+    panel.add(JBBox.createVerticalBox(),
               new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;

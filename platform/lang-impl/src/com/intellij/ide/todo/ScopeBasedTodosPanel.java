@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
@@ -63,7 +64,7 @@ public final class ScopeBasedTodosPanel extends TodoPanel {
 
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.weightx = 1;
-    chooserPanel.add(Box.createHorizontalBox(), gc);
+    chooserPanel.add(JBBox.createHorizontalBox(), gc);
     panel.add(chooserPanel, BorderLayout.NORTH);
     return panel;
   }

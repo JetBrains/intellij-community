@@ -134,6 +134,19 @@ interface UCallExpression : UExpression, UResolvable {
     return names.contains(methodName ?: return false)
   }
 
+  /**
+   * Tries to perform optimized name checking for cases when [classReference] requires reference resolution.
+   *
+   * May perform some heavy resolution inside for some languages (e.g., for Kotlin).
+   *
+   * @see classReference
+   */
+  @ApiStatus.Experimental
+  fun isClassConstructorNameOneOf(names: Collection<String>): Boolean {
+    val classReference = classReference ?: return false
+    val name = classReference.resolvedName
+    return names.contains(name ?: return false)
+  }
 }
 
 @Deprecated("useless since IDEA 2019.2, because getArgumentForParameter moved to UCallExpression", ReplaceWith("UCallExpression"))

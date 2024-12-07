@@ -74,6 +74,7 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
          * @param project    The project that contains the file being edited.
          * @param descriptor A problem found by this inspection.
          */
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
 
             // counting each quote type " AND '. The quickfix will use the most common quote type.
@@ -101,6 +102,7 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
             }
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
             return getName();

@@ -217,7 +217,7 @@ final class FileTrees {
       if (cachedPsi != null) {
         if (stubList != null) {
           // noinspection unchecked
-          ((StubBase)stubList.get(i)).setPsi(cachedPsi);
+          ((StubBase<StubBasedPsiElementBase<?>>)stubList.get(i)).setPsi(cachedPsi);
         }
         if (nodeList != null) {
           nodeList.get(i).setPsi(cachedPsi);
@@ -238,7 +238,7 @@ final class FileTrees {
       }
       else {
         //noinspection unchecked
-        ((StubBase)stub).setPsi(psi);
+        ((StubBase<PsiElement>)stub).setPsi(psi);
       }
     }
   }

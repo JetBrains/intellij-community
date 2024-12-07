@@ -107,6 +107,7 @@ interface NotebookCellLines {
      * Listener shouldn't throw exceptions
      */
     fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {}
+    fun bulkUpdateFinished() {}
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>

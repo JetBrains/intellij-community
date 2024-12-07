@@ -14,6 +14,7 @@ import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.PythonBinary
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.Dispatchers
@@ -21,28 +22,45 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Gradle script installs two types of python: conda and vanilla. Env could be obtained by [getTestEnvironment] which also provides closable
  * to cleanup after the usage
  */
 sealed class PythonType<T : Any>(private val tag: @NonNls String) {
+  private companion object {
+    val cache: MutableMap<Set<String>, List<Path>> = ConcurrentHashMap()
+  }
 
   /**
-   * Returns all test environments: each must be closed after the test.
+   * Returns all test environments ordered from newest (highest) to oldest: each must be closed after the test.
+   * If in doubt, take first
    */
-  suspend fun getTestEnvironments(vararg additionalTags: @NonNls String): Flow<Pair<T, AutoCloseable>> =
-    PyEnvTestSettings
-      .fromEnvVariables()
-      .pythons
-      .asFlow()
-      .map { it.toPath() }
+  suspend fun getTestEnvironments(vararg additionalTags: @NonNls String): Flow<Pair<T, AutoCloseable>> {
+    val key = setOf(*additionalTags)
+    var pythons = cache.getOrPut(key) {
+      PyEnvTestSettings
+        .fromEnvVariables()
+        .pythons
+        .map { it.toPath() }
+        .sortedByDescending {
+          val binary = VirtualEnvReader.Instance.findPythonInPythonRoot(it)
+                       ?: error("No python in $it")
+          val flavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(binary.toString())
+                       ?: error("Unknown flavor: $binary")
+          flavor.getVersionString(binary.toString())?.let { flavor.getLanguageLevelFromVersionString(it) }
+          ?: error("Can't get language level for $flavor , $binary")
+        }
+    }
+    return pythons.asFlow()
       .filter { typeMatchesEnv(it, *additionalTags) }
       .map { envDir ->
         pythonPathToEnvironment(
           VirtualEnvReader.Instance.findPythonInPythonRoot(envDir)
           ?: error("Can't find python binary in $envDir"), envDir) // This is a misconfiguration, hence an error
       }
+  }
 
 
   /**

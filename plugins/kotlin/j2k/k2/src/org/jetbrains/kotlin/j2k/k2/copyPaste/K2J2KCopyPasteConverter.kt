@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind
@@ -20,7 +21,7 @@ internal class K2J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val elementsAndTexts: ElementAndTextList,
-    private val targetData: ConversionTargetData,
+    private val targetData: TargetData,
 ) : J2KCopyPasteConverter {
     /**
      * @property changedText The transformed Kotlin code, or `null` if no conversion occurred (the result is the same as original code).
@@ -35,6 +36,8 @@ internal class K2J2KCopyPasteConverter(
     private lateinit var result: Result
 
     override fun convert() {
+        ThreadingAssertions.assertEventDispatchThread()
+        
         if (!::result.isInitialized && convertAndRestoreReferencesIfTextIsUnchanged()) return
 
         val (changedText, importsToAdd, converterContext) = result
@@ -59,6 +62,8 @@ internal class K2J2KCopyPasteConverter(
     }
 
     override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
+        ThreadingAssertions.assertEventDispatchThread()
+
         val conversionResult = elementsAndTexts.convertCodeToKotlin(project, targetData.file, Kind.K2)
         val (text, _, importsToAdd, isTextChanged, converterContext) = conversionResult
         val changedText = if (isTextChanged) text else null

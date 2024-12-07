@@ -86,6 +86,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
       .setTitle(OptionsBundle.message("tag.button.tooltip"))
       .setShortcut(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), null))
       .installOn(myCloseButton);
+    myCloseButton.getAccessibleContext().setAccessibleName("tag.button.tooltip");
     add(myCloseButton, JLayeredPane.POPUP_LAYER);
 
     layoutButtons();

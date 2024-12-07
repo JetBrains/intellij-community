@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
@@ -41,7 +42,7 @@ context(KaSession)
 fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
-    conversionContext: NewJ2kConverterContext
+    conversionContext: ConverterContext
 ): JKExpression {
     val isPossibleToUseRangeUntil = conversionContext.converter.targetModule?.languageVersionSettings?.isPossibleToUseRangeUntil() == true
     return rangeExpression(
@@ -56,7 +57,7 @@ context(KaSession)
 fun downToExpression(
     from: JKExpression,
     to: JKExpression,
-    conversionContext: NewJ2kConverterContext
+    conversionContext: ConverterContext
 ): JKExpression =
     rangeExpression(
         from,
@@ -82,7 +83,7 @@ fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
     token: JKOperatorToken,
-    conversionContext: NewJ2kConverterContext
+    conversionContext: ConverterContext
 ): JKExpression =
     JKBinaryExpression(
         from,
@@ -143,7 +144,7 @@ fun annotationArgumentStringLiteral(content: String): JKExpression {
 }
 
 context(KaSession)
-fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> {
+fun JKVariable.findUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
     val searcher = object : RecursiveConversion(context) {
@@ -185,7 +186,7 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
     }
 
 context(KaSession)
-fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
+fun JKVariable.hasUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
 
 fun equalsExpression(left: JKExpression, right: JKExpression, typeFactory: JKTypeFactory) =

@@ -24,7 +24,6 @@ import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.query.WebSymbolMatch
-import com.intellij.webSymbols.query.impl.WebSymbolMatchImpl
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
@@ -57,12 +56,10 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   protected open fun shouldShowProblems(element: T): Boolean = true
 
-  protected fun unresolvedSymbol(qualifiedKind: WebSymbolQualifiedKind, name: String) =
-    WebSymbolMatchImpl.create(
-      name,
-      listOf(WebSymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
-      qualifiedKind.namespace, qualifiedKind.kind, WebSymbolOrigin.empty(),
-      null, null
+  protected fun unresolvedSymbol(qualifiedKind: WebSymbolQualifiedKind, name: String): WebSymbolMatch =
+    WebSymbolMatch.create(
+      name, qualifiedKind, WebSymbolOrigin.empty(),
+      WebSymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)
     )
 
   private fun getReferences(element: T): List<PsiSymbolReference> {

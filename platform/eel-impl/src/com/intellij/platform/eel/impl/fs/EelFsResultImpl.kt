@@ -13,9 +13,6 @@ object EelFsResultImpl {
   data class Ok<T>(override val value: T) : EelResult.Ok<T>
   data class Error<E : EelFsError>(override val error: E) : EelResult.Error<E>
 
-  data class BytesReadImpl(override val bytesRead: Int) : EelOpenedFile.Reader.ReadResult.Bytes
-  data object EOFImpl : EelOpenedFile.Reader.ReadResult.EOF
-
   data class DiskInfoImpl(override val totalSpace: ULong, override val availableSpace: ULong) : EelFileSystemApi.DiskInfo
 
   data class FullBytesReadImpl(override val bytes: ByteArray) : EelFileSystemApi.FullReadResult.Bytes

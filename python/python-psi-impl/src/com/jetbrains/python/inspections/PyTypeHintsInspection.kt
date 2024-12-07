@@ -463,7 +463,12 @@ class PyTypeHintsInspection : PyInspection() {
       }
       if (type is PyTypedDictType) {
         registerProblem(base,
-                        PyPsiBundle.message("INSP.type.hints.typed.dict.type.objects.cannot.be.used.in.isinstance.tests"),
+                        PyPsiBundle.message("INSP.type.hints.typed.dict.type.cannot.be.used.in.isinstance.tests"),
+                        ProblemHighlightType.GENERIC_ERROR)
+      }
+      if (type is PyTypingNewType) {
+        registerProblem(base,
+                        PyPsiBundle.message("INSP.type.hints.new.type.type.cannot.be.used.in.isinstance.tests"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }

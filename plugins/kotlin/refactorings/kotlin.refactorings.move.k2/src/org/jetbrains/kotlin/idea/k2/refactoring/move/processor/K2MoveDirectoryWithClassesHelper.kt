@@ -95,10 +95,10 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         moveFileHandler.updateMovedFile(newElement)
     }
 
-    override fun retargetUsages(usages: MutableList<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
+    override fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): List<UsageInfo> {
         val usagesToProcess = usages.filterIsInstance<K2MoveRenameUsageInfo>()
         moveFileHandler.retargetUsages(usagesToProcess, oldToNewMap)
-        usages.removeAll(usagesToProcess)
+        return usages.filter { !usagesToProcess.contains(it) }
     }
 
     override fun postProcessUsages(usages: Array<out UsageInfo>?, newDirMapper: Function<in PsiDirectory, out PsiDirectory>?) {

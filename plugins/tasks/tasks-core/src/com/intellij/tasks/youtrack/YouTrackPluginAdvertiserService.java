@@ -3,7 +3,10 @@ package com.intellij.tasks.youtrack;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginId;
@@ -42,7 +45,7 @@ final class YouTrackPluginAdvertiserService {
     if (PluginManagerCore.isPluginInstalled(pluginId)) {
       return;
     }
-    Notification notification = PluginsAdvertiser.getNotificationGroup()
+    Notification notification = PluginsAdvertiser.getPluginSuggestionNotificationGroup()
       .createNotification(TaskBundle.message("notification.title.more.time.tracking.features"), 
                           TaskBundle.message("notification.content.time.tracking.in.youtrack.plugin"), 
                           NotificationType.INFORMATION)

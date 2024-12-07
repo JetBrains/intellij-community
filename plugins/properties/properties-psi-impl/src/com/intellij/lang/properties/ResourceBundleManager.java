@@ -3,8 +3,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -14,7 +12,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,9 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Dmitry Batkovich
- */
 @Service(Service.Level.PROJECT)
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
 public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState>, Disposable {
@@ -38,9 +32,6 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
-  private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(PluginsAdvertiser.getNotificationGroup().getDisplayId(), 
-                                                                                                      NotificationType.INFORMATION);
-  
   public ResourceBundleManager(@NotNull Project project) {
     PsiManager manager = PsiManager.getInstance(project);
     manager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {

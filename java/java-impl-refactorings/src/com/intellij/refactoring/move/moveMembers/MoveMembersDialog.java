@@ -35,6 +35,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.components.JBBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -147,7 +148,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel _panel;
-    Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
 
     _panel = new JPanel(new BorderLayout());
     JTextField sourceClassField = new JTextField();

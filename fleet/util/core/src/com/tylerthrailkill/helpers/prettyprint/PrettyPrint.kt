@@ -224,7 +224,7 @@ private class PrettyPrinter(val tabSize: Int, val writeTo: Appendable, val wrapp
    */
   private fun writeLine(str: Any? = "") {
     logger.trace { "writing $str" }
-    writeTo.append(str.toString()).appendln()
+    writeTo.append(str.toString()).appendLine()
   }
 
   /**

@@ -43,6 +43,10 @@ internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
   override fun toNioPath(path: EelPath.Absolute): Path {
     return Path.of(path.toString())
   }
+
+  override fun pathPrefix(): String {
+    return ""
+  }
 }
 
 internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {

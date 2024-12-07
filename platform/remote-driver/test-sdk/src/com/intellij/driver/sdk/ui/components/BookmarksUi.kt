@@ -72,8 +72,7 @@ class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
   private val bookmarksTree
     get() = tree("//div[@class='DnDAwareTree']")
 
-  fun getBookmarksList() = bookmarksTree.collectExpandedPaths()
-    .map { it.toString().replace("TreePathToRow{path=[", "").dropLast(2) }
+  fun getBookmarksList() = bookmarksTree.collectExpandedPaths().mapNotNull { it.path.lastOrNull() }
 
   fun clickBookmark(textContains: String, doubleClick: Boolean = false) =
     bookmarksTree.waitAnyTextsContains(text = textContains).first().apply { if (doubleClick) {

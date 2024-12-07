@@ -10,6 +10,7 @@ import com.intellij.vcs.commit.CommitActionsPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,8 @@ import java.util.List;
 @ApiStatus.Internal
 public final class VcsActionPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  @Unmodifiable
+  public List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     ActionManager am = ActionManager.getInstance();
     List<AnAction> reorderedActions = new ArrayList<>(actions);
     List<String> reorderedIds = new ArrayList<>(ContainerUtil.map(reorderedActions, it -> am.getId(it)));

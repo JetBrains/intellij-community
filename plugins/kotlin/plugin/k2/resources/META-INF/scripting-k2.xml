@@ -124,7 +124,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewKotlinScriptHook"/>
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
     <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>

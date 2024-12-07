@@ -13,6 +13,8 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,7 +41,12 @@ public abstract class MoveDirectoryWithClassesHelper {
                                List<? super PsiFile> movedFiles,
                                RefactoringElementListener listener);
 
-  public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) { }
+  /**
+   * @return unprocessed usages
+   */
+  public @NotNull @Unmodifiable List<UsageInfo> retargetUsages(@NotNull @Unmodifiable List<UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
+    return usageInfos;
+  }
 
   public abstract void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper);
 
@@ -88,8 +95,9 @@ public abstract class MoveDirectoryWithClassesHelper {
     }
 
     @Override
-    public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+    public @NotNull @Unmodifiable List<UsageInfo> retargetUsages(@NotNull @Unmodifiable List<UsageInfo> usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
       CommonMoveUtil.retargetUsages(usages.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap);
+      return usages;
     }
 
     @Override

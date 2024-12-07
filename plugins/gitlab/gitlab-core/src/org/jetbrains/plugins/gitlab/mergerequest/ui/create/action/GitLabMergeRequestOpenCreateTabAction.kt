@@ -48,7 +48,7 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   }
 }
 
-// NOTE: no need to register in plugin.xml
+// NOTE: no need to register in plugin.xml (or any xml-file replacing plugin.xml)
 internal class GitLabMergeRequestOpenCreateTabNotificationAction(
   private val project: Project,
   private val projectMapping: GitLabProjectMapping,

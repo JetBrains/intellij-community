@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Comparator;
@@ -38,7 +39,8 @@ public class ToolbarDecoratorActionPromoter implements ActionPromoter {
   });
 
   @Override
-  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  @Unmodifiable
+  public List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     final SortedList<AnAction> result = new SortedList<>(ACTION_BUTTONS_SORTER);
     result.addAll(actions);
     return result;

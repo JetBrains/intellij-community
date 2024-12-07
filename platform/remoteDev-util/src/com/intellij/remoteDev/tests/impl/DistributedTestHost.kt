@@ -2,7 +2,6 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
@@ -196,7 +195,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               val providedContext = contextGetter.invoke()
               val clientId = providedContext.clientId() ?: ClientId.current
 
-              return withContext(providedContext + clientId.asContextElement()) {
+              return withContext(providedContext) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(silent = false)
@@ -221,7 +220,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
           // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId { _, parameters ->
+          session.runNextAction.setSuspendPreserveClientId(Dispatchers.Default) { _, parameters ->
             val actionTitle = parameters.title
             val queue = actionsMap[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
@@ -232,36 +231,28 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
 
-          session.runNextActionGetComponentData.setSuspendPreserveClientId { _, parameters ->
+          session.runNextActionGetComponentData.setSuspendPreserveClientId(Dispatchers.Default) { _, parameters ->
             val actionTitle = parameters.title
-            val queue = dimensionRequests[actionTitle]
-                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val queue = dimensionRequests[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
-            val timeout = action.timeout
 
-            return@setSuspendPreserveClientId runNext(actionTitle, timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
+            return@setSuspendPreserveClientId runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
               action.action(agentContext, parameters.parameters)
             }
           }
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.isResponding.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.visibleFrameNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           Window.getWindows().filter { it.isShowing }.filterIsInstance<Frame>().map { it.title }.also {
             LOG.info("Visible frame names: ${it.joinToString(", ", "[", "]")}")
           }
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.projectsNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.name }.also {
             LOG.info("Projects: ${it.joinToString(", ", "[", "]")}")
@@ -331,22 +322,16 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, silent ->
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             requestFocus(silent)
           }
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.makeScreenshot.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
           makeScreenshot(fileName)
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.projectsAreInitialised.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }

@@ -12,6 +12,7 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil
+import java.util.Locale
 
 class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
 
@@ -66,7 +67,7 @@ private fun getVisibility(element: XmlAttributeValue): JvmModifier {
   val visibility = JavaCodeStyleSettings.getInstance(element.containingFile).VISIBILITY
   if (VisibilityUtil.ESCALATE_VISIBILITY == visibility) return JvmModifier.PRIVATE
   if (visibility == PsiModifier.PACKAGE_LOCAL) return JvmModifier.PACKAGE_LOCAL
-  return JvmModifier.valueOf(visibility.toUpperCase())
+  return JvmModifier.valueOf(visibility.uppercase(Locale.getDefault()))
 }
 
 private fun getEventType(element: XmlAttributeValue): PsiType {

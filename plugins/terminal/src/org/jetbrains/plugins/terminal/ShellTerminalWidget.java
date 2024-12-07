@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
-import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefreshService;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
@@ -37,6 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static org.jetbrains.plugins.terminal.util.TerminalCoroutineKt.terminalProjectScope;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
 
@@ -65,7 +65,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
 
-    ClassicTerminalVfsRefresher refresher = project.getService(ClassicTerminalVfsRefreshService.class).create(this);
+    ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this, terminalProjectScope(project));
     getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
       handleAnyKeyPressed();
@@ -258,22 +258,12 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       TtyConnector connector = starter.getTtyConnector();
       TerminalUtilKt.waitFor(connector, TerminalUtilKt.STOP_EMULATOR_TIMEOUT, () -> {
         if (connector.isConnected()) {
-          LOG.warn("Cannot destroy " + getDebugName(connector));
+          LOG.warn("Cannot destroy " + TerminalUtilKt.getDebugName(connector));
         }
         super.close();
         return Unit.INSTANCE;
       });
     }
-  }
-
-  private static @NotNull String getDebugName(@NotNull TtyConnector connector) {
-    ProcessTtyConnector processTtyConnector = getProcessTtyConnector(connector);
-    String commandLineText = null;
-    if (processTtyConnector != null) {
-      List<String> commandLine = processTtyConnector.getCommandLine();
-      commandLineText = commandLine != null ? Strings.join(commandLine, " ") : null;
-    }
-    return connector.getName() + ": " + Objects.requireNonNullElse(commandLineText, "<no command line>");
   }
 
   @Override

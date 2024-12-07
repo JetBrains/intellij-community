@@ -1,14 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import kotlin.streams.asSequence
+import java.util.Locale
 
-
-// toUpperCase, toLowerCase and capitalize use Locale.getDefault as default locale, but they are deprecated.
-// Hopefully, by the time they are removed, there will be another mechanism to do this in kmp without expect/actual.
-fun String.capitalizeWithCurrentLocale(): String = capitalize()
-fun String.lowercaseWithCurrentLocale(): String = toLowerCase()
-fun String.uppercaseWithCurrentLocale(): String = toUpperCase()
+fun String.capitalizeWithCurrentLocale(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+fun String.lowercaseWithCurrentLocale(): String = lowercase(Locale.getDefault())
+fun String.uppercaseWithCurrentLocale(): String = uppercase(Locale.getDefault())
 
 fun String.capitalizeLocaleAgnostic(): String = replaceFirstChar {
   if (it.isLowerCase()) it.titlecase() else it.toString()

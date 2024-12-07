@@ -1,7 +1,6 @@
 package com.intellij.settingsSync.jba.auth
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.diagnostic.Logger.getInstance
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.SettingsSyncEvents
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
@@ -67,7 +66,7 @@ internal class JBAAuthService : SettingsSyncAuthService {
       if (accountInfoService != null) {
         try {
           val loginSession: JBAccountInfoService.LoginSession? = accountInfoService.startLoginSession(
-            JBAccountInfoService.LoginMode.AUTO, loginMetadata)
+            JBAccountInfoService.LoginMode.AUTO, null, loginMetadata)
 
           loginSession!!.onCompleted().thenAccept(Consumer<JBAccountInfoService.LoginResult> {
               SettingsSyncEvents.getInstance().fireLoginStateChanged()

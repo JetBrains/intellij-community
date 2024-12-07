@@ -34,6 +34,7 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -152,7 +153,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     }).setAsSecondary(true);
 
     panel.add(ActionManager.getInstance().createActionToolbar("ReplaceConstructorWithBuilder", actionGroup, true).getComponent(), BorderLayout.EAST);
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
     return box;

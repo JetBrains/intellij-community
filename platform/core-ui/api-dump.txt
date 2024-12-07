@@ -320,6 +320,7 @@ f:com.intellij.ui.SimpleTextAttributes
 - sf:STYLE_BOLD_DOTTED_LINE:I
 - sf:STYLE_BOLD_UNDERLINE:I
 - sf:STYLE_CLICKABLE:I
+- sf:STYLE_FADED:I
 - sf:STYLE_HOVERED:I
 - sf:STYLE_ITALIC:I
 - sf:STYLE_NO_BORDER:I
@@ -358,6 +359,7 @@ f:com.intellij.ui.SimpleTextAttributes
 - s:merge(com.intellij.ui.SimpleTextAttributes,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.SimpleTextAttributes
 - toTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - useEffectColor():Z
+- useFaded():Z
 @:com.intellij.ui.SimpleTextAttributes$StyleAttributeConstant
 - java.lang.annotation.Annotation
 f:com.intellij.ui.TableCell

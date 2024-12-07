@@ -6,9 +6,11 @@ import com.intellij.pom.java.JavaFeature
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 
 class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_21
@@ -102,6 +104,63 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
       val psiClass = PsiUtil.resolveClassInClassTypeOnly(variableType)
       assertNotNull(psiClass)
       assertEquals(CommonClassNames.JAVA_UTIL_LIST, psiClass!!.qualifiedName)
+    })
+  }
+
+  fun testImplicitWithPackages() {
+    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.minimumLevel, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public final class List {
+        }
+        """.trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+    })
+  }
+
+  fun testImplicitWithPackagesPackagesOverModule() {
+    IdeaTestUtil.withLevel(module, JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.minimumLevel, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public final class List {
+        }
+        """.trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+      val element = psiFile.findElementAt(myFixture.caretOffset)
+      assertEquals("a.b.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
+    })
+  }
+
+
+  fun testImplicitWithSingleImport() {
+    IdeaTestUtil.withLevel(module, JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.minimumLevel, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public final class List {
+        }
+        """.trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+      val element = psiFile.findElementAt(myFixture.caretOffset)
+      assertEquals("a.b.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
+    })
+  }
+
+  fun testImplicitWithSamePackage() {
+    IdeaTestUtil.withLevel(module, JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.minimumLevel, Runnable {
+      myFixture.addClass("""
+        public final class List {
+        }
+        """.trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+      val element = psiFile.findElementAt(myFixture.caretOffset)
+      assertEquals("List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
     })
   }
 

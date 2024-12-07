@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
+import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode.*
 import com.intellij.platform.eel.path.EelPath
@@ -157,13 +158,13 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       nioOptions += StandardOpenOption.READ
       val byteChannel: SeekableByteChannel = nioPath.fileSystem.provider().newByteChannel(nioPath, nioOptions)
       object : EelOpenedFile.ReaderWriter, EelOpenedFile.Writer by LocalEelOpenedFileWriter(this, byteChannel, path) {
-        override suspend fun read(buf: ByteBuffer): EelResult<EelOpenedFile.Reader.ReadResult, EelOpenedFile.Reader.ReadError> =
+        override suspend fun read(buf: ByteBuffer): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
           doRead(this@NioBasedEelFileSystemApi, byteChannel, buf)
 
         override suspend fun read(
           buf: ByteBuffer,
           offset: Long,
-        ): EelResult<EelOpenedFile.Reader.ReadResult, EelOpenedFile.Reader.ReadError> =
+        ): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
           doRead(this@NioBasedEelFileSystemApi, byteChannel, offset, buf)
       }
     }
@@ -208,11 +209,11 @@ private class LocalEelOpenedFileReader(
   private val byteChannel: SeekableByteChannel,
   private val path_: EelPath.Absolute,
 ) : EelOpenedFile.Reader {
-  override suspend fun read(buf: ByteBuffer): EelResult<EelOpenedFile.Reader.ReadResult, EelOpenedFile.Reader.ReadError> =
+  override suspend fun read(buf: ByteBuffer): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
     doRead(eelFs, byteChannel, buf)
 
   override suspend fun read(buf: ByteBuffer, offset: Long): EelResult<
-    EelOpenedFile.Reader.ReadResult,
+    ReadResult,
     EelOpenedFile.Reader.ReadError
     > =
     doRead(eelFs, byteChannel, offset, buf)
@@ -279,12 +280,11 @@ private fun doRead(
   eelFs: NioBasedEelFileSystemApi,
   byteChannel: SeekableByteChannel,
   buf: ByteBuffer,
-): EelResult<EelOpenedFile.Reader.ReadResult, EelOpenedFile.Reader.ReadError> =
+): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
   eelFs.wrapIntoEelResult {
     val read = byteChannel.read(buf)
 
-    if (read >= 0) EelFsResultImpl.BytesReadImpl(read)
-    else EelFsResultImpl.EOFImpl
+    ReadResult.fromNumberOfReadBytes(read)
   }
 
 private fun doRead(
@@ -292,15 +292,14 @@ private fun doRead(
   byteChannel: SeekableByteChannel,
   offset: Long,
   buf: ByteBuffer,
-): EelResult<EelOpenedFile.Reader.ReadResult, EelOpenedFile.Reader.ReadError> =
+): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
   eelFs.wrapIntoEelResult {
     val oldPosition = byteChannel.position()
     byteChannel.position(offset)
     val read = byteChannel.read(buf)
     byteChannel.position(oldPosition)
 
-    if (read >= 0) EelFsResultImpl.BytesReadImpl(read)
-    else EelFsResultImpl.EOFImpl
+    ReadResult.fromNumberOfReadBytes(read)
   }
 
 private fun doSeek(

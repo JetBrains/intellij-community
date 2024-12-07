@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.classic
 
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -16,11 +15,6 @@ import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-
-@Service(Service.Level.PROJECT)
-internal class ClassicTerminalVfsRefreshService(private val coroutineScope: CoroutineScope) {
-  fun create(widget: ShellTerminalWidget): ClassicTerminalVfsRefresher = ClassicTerminalVfsRefresher(widget, coroutineScope)
-}
 
 internal class ClassicTerminalVfsRefresher(private val widget: ShellTerminalWidget, private val coroutineScope: CoroutineScope) {
   private val currentWatcherRef: AtomicReference<CommandRunWatcher?> = AtomicReference()

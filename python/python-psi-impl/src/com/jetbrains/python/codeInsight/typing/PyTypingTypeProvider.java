@@ -357,7 +357,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (returnTypeAnnotation != null) {
         final Ref<PyType> typeRef = getType(returnTypeAnnotation, context);
         if (typeRef != null) {
-          return Ref.create(toAsyncIfNeeded(function, typeRef.get()));
+          // Do not use toAsyncIfNeeded, as it also converts Generators. Here we do not need it.
+          if (function.isAsync() && function.isAsyncAllowed() && !function.isGenerator()) {
+            return Ref.create(wrapInCoroutineType(typeRef.get(), function));
+          }
+          return typeRef;
         }
         // Don't rely on other type providers if a type hint is present, but cannot be resolved.
         return Ref.create();
@@ -2169,8 +2173,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (!function.isGenerator()) {
         return wrapInCoroutineType(returnType, function);
       }
-      else if (returnType instanceof PyCollectionType && isGenerator(returnType)) {
-        return wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), function);
+      var desc = GeneratorTypeDescriptor.create(returnType);
+      if (desc != null) {
+        return desc.withAsync(true).toPyType(function);
       }
     }
 
@@ -2197,15 +2202,77 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
-  public static PyType wrapInGeneratorType(@Nullable PyType elementType, @Nullable PyType returnType, @NotNull PsiElement anchor) {
+  public static PyType wrapInGeneratorType(@Nullable PyType elementType, @Nullable PyType sendType, @Nullable PyType returnType, @NotNull PsiElement anchor) {
     final PyClass generator = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(GENERATOR, anchor);
-    return generator != null ? new PyCollectionTypeImpl(generator, false, Arrays.asList(elementType, null, returnType)) : null;
+    return generator != null ? new PyCollectionTypeImpl(generator, false, Arrays.asList(elementType, sendType, returnType)) : null;
   }
 
-  @Nullable
-  private static PyType wrapInAsyncGeneratorType(@Nullable PyType elementType, @NotNull PsiElement anchor) {
-    final PyClass asyncGenerator = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(ASYNC_GENERATOR, anchor);
-    return asyncGenerator != null ? new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(elementType, null)) : null;
+  public record GeneratorTypeDescriptor(
+    String className,
+    PyType yieldType, // if YieldType is not specified, it is AnyType
+    PyType sendType,  // if SendType is not specified, it is PyNoneType
+    PyType returnType // if ReturnType is not specified, it is PyNoneType
+  ) {
+
+    private static final List<String> SYNC_TYPES = List.of(GENERATOR, "typing.Iterable", "typing.Iterator");
+    private static final List<String> ASYNC_TYPES = List.of(ASYNC_GENERATOR, "typing.AsyncIterable", "typing.AsyncIterator");
+
+    public static @Nullable GeneratorTypeDescriptor create(@Nullable PyType type) {
+      final PyClassType classType = as(type, PyClassType.class);
+      final PyCollectionType genericType = as(type, PyCollectionType.class);
+      if (classType == null) return null;
+
+      final String qName = classType.getClassQName();
+      if (!SYNC_TYPES.contains(qName) && !ASYNC_TYPES.contains(qName)) return null;
+      
+      PyType yieldType = null;
+      PyType sendType = PyNoneType.INSTANCE;
+      PyType returnType = PyNoneType.INSTANCE;
+      
+      if (genericType != null) {
+        yieldType = ContainerUtil.getOrElse(genericType.getElementTypes(), 0, yieldType);
+        if (GENERATOR.equals(qName) || ASYNC_GENERATOR.equals(qName)) {
+          sendType = ContainerUtil.getOrElse(genericType.getElementTypes(), 1, sendType);
+        }
+        if (GENERATOR.equals(qName)) {
+          returnType = ContainerUtil.getOrElse(genericType.getElementTypes(), 2, returnType);
+        }
+      }
+      return new GeneratorTypeDescriptor(qName, yieldType, sendType, returnType);
+    }
+
+    public boolean isAsync() {
+      return ASYNC_TYPES.contains(className);
+    }
+
+    public GeneratorTypeDescriptor withAsync(boolean async) {
+      if (async) {
+        var idx = SYNC_TYPES.indexOf(className);
+        if (idx == -1) return this;
+        return new GeneratorTypeDescriptor(ASYNC_TYPES.get(idx), yieldType, sendType, PyNoneType.INSTANCE);
+      }
+      else {
+        var idx = ASYNC_TYPES.indexOf(className);
+        if (idx == -1) return this;
+        return new GeneratorTypeDescriptor(SYNC_TYPES.get(idx), yieldType, sendType, returnType);
+      }
+    }
+
+    public @Nullable PyType toPyType(@NotNull PsiElement anchor) {
+      final PyClass classType = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(className, anchor);
+      final List<PyType> generics;
+      if (GENERATOR.equals(className)) {
+        generics = Arrays.asList(yieldType, sendType, returnType);
+      }
+      else if (ASYNC_GENERATOR.equals(className)) {
+        generics = Arrays.asList(yieldType, sendType);
+      }
+      else {
+        generics = Collections.singletonList(yieldType);
+      }
+
+      return classType != null ? new PyCollectionTypeImpl(classType, false, generics) : null;
+    }
   }
 
   @Nullable

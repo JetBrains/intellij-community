@@ -33,7 +33,7 @@ class ExternalProjectSystemRegistryImpl : ExternalProjectSystemRegistry {
 
   private class ProjectModelExternalSourceImpl(private val myId: String) : ProjectModelExternalSource {
     //todo specify display name explicitly instead, the current code is copied from ProjectSystemId constructor
-    private val displayName = StringUtil.capitalize(myId.toLowerCase(Locale.US))
+    private val displayName = StringUtil.capitalize(myId.lowercase(Locale.US))
 
     override fun getDisplayName() = displayName
 

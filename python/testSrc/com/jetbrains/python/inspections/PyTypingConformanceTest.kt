@@ -14,6 +14,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import org.junit.Ignore
 import org.junit.Test
@@ -37,9 +38,11 @@ private val inspections
     PyEnumInspection(),
     //PyInitNewSignatureInspection(), // False negative constructors_consistency.py
     PyNewStyleGenericSyntaxInspection(),
+    PyNewTypeInspection(),
     PyTypedDictInspection(),
     PyTypeCheckerInspection(),
     PyTypeHintsInspection(),
+    PyUnresolvedReferencesInspection(),
   )
 
 private val IGNORED_INSPECTIONS = listOf(

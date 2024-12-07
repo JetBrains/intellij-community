@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Common variants of {@link FileChooserDescriptor}.
@@ -30,12 +30,20 @@ public final class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileOrExecutableAppDescriptor() {
-    return new FileChooserDescriptor(true, false, false, false, false, false) {
-      @Override
-      public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return super.isFileSelectable(file) || file != null && SystemInfo.isMac && file.isDirectory() && "app".equals(file.getExtension());
-      }
-    };
+    if (OS.CURRENT == OS.macOS) {
+      return new FileChooserDescriptor(true, true, false, false) {
+        @Override
+        public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception {
+          var file = files[0];
+          if (file.isDirectory() && !"app".equals(file.getExtension())) {
+            throw new Exception(IdeCoreBundle.message("file.chooser.not.app.bundle", file.getPresentableUrl()));
+          }
+        }
+      };
+    }
+    else {
+      return createSingleFileNoJarsDescriptor();
+    }
   }
 
   public static FileChooserDescriptor createSingleLocalFileDescriptor() {

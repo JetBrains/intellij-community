@@ -39,8 +39,8 @@ import java.util.*;
 public final class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageManagerImpl.class);
   static final Object ourInjectionPsiLock = ObjectUtils.sentinel("injectionPsiLock");
-  public static final Object INJECTION_BACKGROUND_TOOL_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
-  public static final Object INJECTION_SYNTAX_TOOL_ID = ObjectUtils.sentinel("INJECTION_SYNTAX_ID");
+  public static final Object INJECTION_BACKGROUND_TOOL_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_TOOL_ID");
+  public static final Object INJECTION_SYNTAX_TOOL_ID = ObjectUtils.sentinel("INJECTION_SYNTAX_TOOL_ID");
   private final Project myProject;
   private final DumbService myDumbService;
   private final PsiDocumentManager myDocManager;

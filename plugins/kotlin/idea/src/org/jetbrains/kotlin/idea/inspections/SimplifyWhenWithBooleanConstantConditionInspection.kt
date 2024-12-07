@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.util.replaceWithBranchAndMoveCaret
 
 class SimplifyWhenWithBooleanConstantConditionInspection : AbstractKotlinInspection() {
 
@@ -60,7 +61,7 @@ private fun KtWhenExpression.deleteFalseEntries(usedAsExpression: Boolean) {
     if (entries.isEmpty() && !usedAsExpression) {
         delete()
     } else if (entries.singleOrNull()?.isElse == true) {
-        elseExpression?.let { replaceWithBranch(it, usedAsExpression) }
+        elseExpression?.let { replaceWithBranchAndMoveCaret(it, usedAsExpression) }
     }
 }
 
@@ -72,7 +73,7 @@ private fun KtWhenExpression.replaceTrueEntry(usedAsExpression: Boolean, closeBr
     val expression = entries[trueIndex].expression ?: return
 
     if (trueIndex == 0) {
-        replaceWithBranch(expression, usedAsExpression)
+        replaceWithBranchAndMoveCaret(expression, usedAsExpression)
     } else {
         val elseEntry = factory.createWhenEntry("else -> ${expression.text}")
         for (entry in entries.subList(trueIndex, entries.size)) {

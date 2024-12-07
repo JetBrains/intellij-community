@@ -144,6 +144,12 @@ public final class KotlinTestUtils {
             return androidSdkRootEnvDir;
         }
 
+        // Try to guess Android SDK location for local development
+        File defaultAndroidSdkLocation = new File(System.getProperty("user.home") + "/Library/Android/sdk");
+        if (defaultAndroidSdkLocation.isDirectory()) {
+            return defaultAndroidSdkLocation;
+        }
+
         throw new RuntimeException(
                 "Unable to get a valid path from 'android.sdk' property (" + androidSdkProp + "), " +
                 "please point it to the android SDK location");

@@ -100,15 +100,22 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
         }
       }
 
+      val scanningIndexingMutex = project.service<PerProjectIndexingQueue>().scanningIndexingMutex
+      val mutexOwner = "scanning"
 
       while (true) {
+        var mutexAcquired = false
         try {
           // first wait for isRunning, otherwise we can find ourselves in a situation
           // isRunning=false, hasScheduledTask=false, but in fact we do have a scheduled task
           // which is about to be running.
           isRunning.first { it == true }
+
+          scanningIndexingMutex.lock(mutexOwner)
+          mutexAcquired = true
+
           if (!nextTaskExecutionAllowed.first()) {
-            continue // to finally block which will clear isRunning flag
+            continue // to finally block which will clear isRunning flag and release scanningIndexingMutex
             // There are no situations where we need isRunning to be cleared, neither we have situations where we need isRunning stay intact.
             // Feel free to adjust this logic as needed. Clearing the flag looks like the "least surprising" behavior to me.
           }
@@ -180,6 +187,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           // (feel free to add WA if you know why finishing is not desired)
           isRunning.value = hasQueuedTasks
           startedOrStoppedEvent.getAndUpdate(Int::inc)
+          if (mutexAcquired) {
+            scanningIndexingMutex.unlock(mutexOwner)
+            mutexAcquired = false
+          }
         }
       }
     }

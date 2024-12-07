@@ -102,6 +102,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionReturnTypePy3() {
     doTest();
   }
+  
+  public void testFunctionYieldTypePy3() {
+    doTest();
+  }
 
   // PY-20770
   public void testAsyncForOverAsyncGenerator() {

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
-import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,6 +71,7 @@ public class ExtraBlankLineInspection extends LocalInspectionTool {
             return "Remove extra blank line";
         }
 
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
                 PsiElement psiElement = descriptor.getPsiElement();
@@ -84,6 +84,7 @@ public class ExtraBlankLineInspection extends LocalInspectionTool {
             }
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
             return getName();

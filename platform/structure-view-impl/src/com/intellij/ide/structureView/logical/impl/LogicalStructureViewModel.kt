@@ -111,9 +111,9 @@ private class ElementsBuilder {
 
       val provider = logicalModel.provider
       if (provider is ContainerElementsProvider<*, *>
-          && LogicalContainerPresentationProvider.getForObject(provider)?.isFlatElements(assembledModel.model) == true) {
-        for (child in assembledModel.getChildren()) {
-          result.add(createViewTreeElement(child))
+          && LogicalContainerPresentationProvider.getForObject(provider)?.isFlatElements(logicalModel) == true) {
+        for (subChild in child.getChildren()) {
+          result.add(createViewTreeElement(subChild))
         }
       }
       else if (provider is PropertyElementProvider<*, *>) {

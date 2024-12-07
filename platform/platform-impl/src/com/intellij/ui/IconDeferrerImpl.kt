@@ -7,6 +7,7 @@ import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.LowMemoryWatcher
@@ -55,30 +56,30 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
   init {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
     connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener {
-      log.debug("clearing icon deferrer cache after psi modification")
+      log.trace("clearing icon deferrer cache after psi modification")
       clearCache()
     })
 
     // update "locked" icon
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        log.debug("clearing icon deferrer cache after vfs events")
+        log.trace("clearing icon deferrer cache after vfs events")
         clearCache()
       }
     })
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
-        log.debug("clearing icon deferrer cache after project closing")
+        log.trace("clearing icon deferrer cache after project closing")
         clearCache()
       }
     })
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, VirtualFileAppearanceListener {
-      log.debug("clearing icon deferrer cache after VirtualFileAppearanceListener event")
+      log.trace("clearing icon deferrer cache after VirtualFileAppearanceListener event")
       clearCache()
     })
 
     val lowMemoryWatcher = LowMemoryWatcher.register {
-      log.debug("Clearing icon deferrer cache because after low memory signal")
+      log.trace("Clearing icon deferrer cache because after low memory signal")
       clearCache()
     }
 
@@ -97,11 +98,11 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
         delay(deferrerCacheClearingCheckPeriod)
         val currentCacheSize = iconCache.size
         if (currentCacheSize > maxCacheSize) {
-          log.debug { "Clearing icon deferrer cache because it's too big: $currentCacheSize > $maxCacheSize" }
+          log.trace { "Clearing icon deferrer cache because it's too big: $currentCacheSize > $maxCacheSize" }
           clearCache()
         }
         else {
-          log.debug { "icon cache size $currentCacheSize" }
+          log.trace { "icon cache size $currentCacheSize" }
         }
       }
     }

@@ -937,7 +937,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return new CefRendering.CefRenderingWithHandler(handler, component);
   }
 
-  private static @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory osrHandlerFactory,
+  static @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory osrHandlerFactory,
                                               @NotNull CefClient client,
                                               @Nullable String url,
                                               @Nullable CefRequestContext context,

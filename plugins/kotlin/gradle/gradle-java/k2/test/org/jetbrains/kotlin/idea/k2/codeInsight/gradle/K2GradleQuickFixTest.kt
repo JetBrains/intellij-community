@@ -55,7 +55,7 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
                             "kotlinx-coroutines-core"
                         )
                     }
-                    ?: error("Not known compatible version for 'kotlinx-coroutines-core' library")
+                    ?: error("Unknown compatible version for 'kotlinx-coroutines-core' library")
 
                 val coroutinesCoordinatesBase = "org.jetbrains.kotlinx:kotlinx-coroutines-core:"
                 text.replace("$coroutinesCoordinatesBase{{coroutines_version}}", coroutinesCoordinatesBase + version)

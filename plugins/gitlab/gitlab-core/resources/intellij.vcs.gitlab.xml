@@ -1,0 +1,222 @@
+<idea-plugin package="org.jetbrains.plugins.gitlab" allow-bundled-update="true">
+  <resource-bundle>messages.GitLabBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="Git4Idea"/>
+    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.platform.collaborationTools"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="intellij.vcs.gitlab.titleGenerator"
+                    interface="org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.api.GitLabApiManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.api.GitLabApiManagerImpl"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.CachingGitLabServersManager"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
+                    serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
+
+    <!--suppress PluginXmlI18n - intentionally suppress the inspection to avoid translating `GitLab` technology name-->
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
+                         instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"
+                         displayName="GitLab"/>
+
+    <!--TODO: correct icon-->
+    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabToolWindow"
+                anchor="left" doNotActivateOnStart="true"
+                factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory"
+                canCloseContents="true"/>
+
+    <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
+    <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
+    <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
+    <fileIconProvider implementation="org.jetbrains.plugins.gitlab.ui.GitlabCiIconProvider"/>
+    <fileTypeUsageSchemaDescriptor schema="gitlab" implementationClass="org.jetbrains.plugins.gitlab.ui.GitlabFileTypeSchemaProvider"/>
+
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
+
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+      id="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneDialogExtension"
+      implementation="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneDialogExtension"
+      order="after org.jetbrains.plugins.github.ui.cloneDialog.GHECloneDialogExtension"/>
+
+    <editorFactoryListener
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
+
+    <registryKey key="vcs.gitlab.connect.silently"
+                 description="Connect to GitLab repository without an explicit user action"
+                 defaultValue="true"/>
+    <registryKey defaultValue="1000" description="Request polling interval in milliseconds" key="gitlab.request.polling.interval.millis"/>
+    <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
+    <registryKey defaultValue="62" description="Days until an entry in the viewed/not viewed state store is considered stale" key="gitlab.viewed.state.stale.timeout"/>
+    <registryKey defaultValue="0" description="The number of merge requests at the top of the list to pre-emptively load and cache" key="gitlab.merge.requests.cached.from.list"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.statistics">
+    <applicationUsagesCollector
+      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
+    <counterUsagesCollector
+      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+    <notificationIdsHolder
+      implementation="org.jetbrains.plugins.gitlab.notification.GitLabNotificationIdsHolder"/>
+    <actionCustomPlaceAllowlist id="GitLabActionCustomPlaceAllowlist"
+                                places="GitLabMergeRequestListPopup;GitLabMergeRequestChangesTreePopup;GitLabMergeRequestDetailsPopup"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Git4Idea">
+    <GitHttpAuthDataProvider id="GitLab.Silent"
+                             implementation="org.jetbrains.plugins.gitlab.git.http.GitLabSilentHttpAuthDataProvider"
+                             order="before GitLab"/>
+    <GitHttpAuthDataProvider id="GitLab"
+                             implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
+    <gitCurrentBranchPresenter
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$BranchPresenter"/>
+    <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationCustomizer"/>
+  </extensions>
+
+  <actions>
+    <action id="GitLab.Merge.Request.Show.List"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestsAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+
+    <action id="GitLab.Merge.Request.List.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="GitLab.Merge.Request.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="GitLab.Merge.Request.Show"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+    <action id="GitLab.Merge.Request.Open.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+    <action id="GitLab.Merge.Request.Copy.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCopyURLAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+    <action id="GitLab.Merge.Request.Create"
+            class="org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabAction"
+            icon="AllIcons.General.Add">
+      <add-to-group group-id="Git.Menu"/>
+    </action>
+
+    <action id="GitLab.Create.Snippet"
+            class="org.jetbrains.plugins.gitlab.snippets.GitLabCreateSnippetAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="EditorTabPopupMenu"/>
+      <add-to-group group-id="ConsoleEditorPopupMenu"/>
+    </action>
+
+    <group id="GitLab.Main.Group" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <reference ref="GitLab.Merge.Request.Show.List"/>
+
+      <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.List.Actions">
+      <reference ref="GitLab.Merge.Request.Show"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
+      <separator/>
+      <reference ref="GitLab.Merge.Request.List.Refresh"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Details.Popup">
+      <reference ref="GitLab.Merge.Request.Refresh"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Timeline.Popup">
+      <action id="GitLab.Merge.Request.Timeline.ShowEvents"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.action.GitLabMergeRequestTimelineShowEventsAction"/>
+      <separator/>
+      <reference ref="GitLab.Merge.Request.Refresh"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Timeline.Error.Popup">
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Changes.Popup">
+      <reference ref="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
+      <reference ref="EditSource"/>
+      <action id="GitLab.Merge.Request.Changes.MarkViewed"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesViewedAction"/>
+      <action id="GitLab.Merge.Request.Changes.MarkNotViewed"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesNotViewedAction"/>
+      <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+        <reference ref="ChangesView.GroupBy"/>
+      </group>
+      <separator/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+      <separator/>
+      <reference ref="GitLab.Merge.Request.Refresh"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
+           class="org.jetbrains.plugins.gitlab.mergerequest.ui.diff.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
+           icon="AllIcons.Actions.Show"
+           popup="true">
+      <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
+                    relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
+                    anchor="before"/>
+    </group>
+    <action id="GitLab.MergeRequest.Review.Submit"
+            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
+
+    <group id="GitLab.Open.In.Browser" class="org.jetbrains.plugins.gitlab.ui.action.GitLabOpenInBrowserActionGroup"
+           icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      <override-text place="EditorTabPopup"/>
+      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <add-to-group group-id="Git.Hosting.Open.In.Browser.Group"/>
+    </group>
+
+    <group id="GitLab.Copy.Link" class="org.jetbrains.plugins.gitlab.ui.action.GitLabCopyLinkActionGroup"
+           icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      <override-text place="CopyReferencePopup"/>
+      <add-to-group group-id="Git.Hosting.Copy.Link.Group"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Review.Editor.Branch.Popup.Actions">
+      <separator/>
+      <action id="GitLab.Merge.Request.Show.In.Toolwindow"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ShowAction"
+              icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      </action>
+      <reference ref="GitLab.MergeRequest.Review.Submit"/>
+      <action id="GitLab.Merge.Request.Branch.Update"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$UpdateAction"
+              icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabWarning">
+      </action>
+      <action id="GitLab.MergeRequest.Review.Mode.Toggle"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ToggleReviewAction">
+      </action>
+      <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Create.Title.Actions"/>
+  </actions>
+</idea-plugin>

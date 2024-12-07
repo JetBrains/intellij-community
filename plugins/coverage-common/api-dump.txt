@@ -4,7 +4,6 @@ a:com.intellij.coverage.AbstractCoverageProjectViewNodeDecorator
 - <init>(com.intellij.openapi.project.Project):V
 - ps:appendCoverageInfo(com.intellij.ui.ColoredTreeCellRenderer,java.lang.String):V
 - pf:getCoverageDataManager(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageDataManager
-- ps:isShowingCoverageInProjectViewEnabled(com.intellij.openapi.project.Project):Z
 a:com.intellij.coverage.BaseCoverageAnnotator
 - com.intellij.coverage.CoverageAnnotator
 - <init>(com.intellij.openapi.project.Project):V

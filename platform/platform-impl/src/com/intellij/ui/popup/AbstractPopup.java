@@ -1211,8 +1211,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Target bounds " + targetBounds);
     }
+    @Nullable AppliedAdjustments adjustments = null;
     if (options.getPopupAnchor() != AnchoredPoint.Anchor.TOP_LEFT) {
-      adjustForAnchor(targetBounds, options, screen);
+      adjustments = adjustForAnchor(targetBounds, options, screen);
     }
     if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
       StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
@@ -1269,10 +1270,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       // targetBounds are "screen" coordinates, which in Wayland means that they
       // are relative to the nearest toplevel (Window).
       // But popups in Wayland are expected to be relative to popup's "owner";
-      // let's re-set the owner to be that window.
+      // let's re-set the owner to be that window and adjust targetBounds to be relative to it.
       popupOwner = popupOwner instanceof Window
                    ? popupOwner
                    : SwingUtilities.getWindowAncestor(popupOwner);
+
+      Point ownerLocation = popupOwner.getLocationOnScreen();
+      targetBounds.x -= ownerLocation.x;
+      targetBounds.y -= ownerLocation.y;
       // The Wayland server may refuse to show a popup whose top-left corner
       // is located outside of parent window's bounds
       Rectangle okBounds = new Rectangle();
@@ -1303,9 +1308,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         LOG.debug("cannot fix size for non-heavy-weight popup because its window is null");
       }
     }
-    if (options.getMinimumHeight() != null) {
+    if (adjustments != null && adjustments.adjustedHeight()) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Settings the size to " + targetBounds.getSize() + " because the popup has a minimum height");
+        LOG.debug("Settings the size to " + targetBounds.getSize() + " because the height of the popup was adjusted");
       }
       setSize(targetBounds.getSize()); // Might need to make it smaller than its preferred size.
     }
@@ -1507,11 +1512,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     afterShowSync();
   }
 
-  private void adjustForAnchor(
+  private record AppliedAdjustments(
+    boolean adjustedHeight
+  ) { }
+
+  private AppliedAdjustments adjustForAnchor(
     @NotNull Rectangle bounds,
     @NotNull PopupShowOptionsImpl options,
     @NotNull Rectangle screen
   ) {
+    var adjustedHeight = false;
     if (LOG.isDebugEnabled()) {
       LOG.debug("Adjusting the bounds " + bounds + " for the screen " + screen + " with the options = " + options);
     }
@@ -1568,6 +1578,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         if (options.getRelativePosition() == PopupRelativePosition.TOP && options.getMinimumHeight() != null) {
           var reducedHeight = bounds.height - shift;
           bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
+          adjustedHeight = true;
           if (LOG.isDebugEnabled()) {
             LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
           }
@@ -1588,6 +1599,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         if (options.getRelativePosition() == PopupRelativePosition.BOTTOM && options.getMinimumHeight() != null) {
           var reducedHeight = bounds.height - shift;
           bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
+          adjustedHeight = true;
           if (LOG.isDebugEnabled()) {
             LOG.debug("The bounds after adjusting height to fit below the owner " + bounds);
           }
@@ -1602,6 +1614,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       }
     }
+    return new AppliedAdjustments(adjustedHeight);
   }
 
   public void notifyListeners() {

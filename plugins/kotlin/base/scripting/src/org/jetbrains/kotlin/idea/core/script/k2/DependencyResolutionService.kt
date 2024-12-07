@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.core.script.k2
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.SequentialProgressReporter
@@ -32,5 +33,9 @@ class DependencyResolutionService(
             }
           }
         }
+    }
+
+    companion object {
+        fun getInstance(project: Project): DependencyResolutionService = project.service<DependencyResolutionService>()
     }
 }

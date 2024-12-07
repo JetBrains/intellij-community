@@ -16,7 +16,7 @@ import java.util.List;
 public final class JavaNextParameterActionPromoter implements ActionPromoter {
   @Override
   @Unmodifiable
-  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  public List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return null;
     if (ContainerUtil.findInstance(actions, NextParameterAction.class) == null) return null;
     // `NextParameterAction` will delegate to `BraceOrQuoteOutAction` (`PrevNextParameterHandler.doExecute`)

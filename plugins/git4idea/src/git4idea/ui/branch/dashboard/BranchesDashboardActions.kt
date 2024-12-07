@@ -43,6 +43,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.*
 import org.jetbrains.annotations.Nls
+import java.util.Locale
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -186,7 +187,7 @@ internal object BranchesDashboardActions {
       val selectedRepositories = selection.repositoriesOfSelectedBranches
 
       val branchNames = branches.map(BranchInfo::branchName)
-      val updateMethodName = GitVcsSettings.getInstance(project).updateMethod.name.toLowerCase()
+      val updateMethodName = GitVcsSettings.getInstance(project).updateMethod.name.lowercase(Locale.getDefault())
       presentation.description = message("action.Git.Update.Selected.description", branches.size, updateMethodName)
       val trackingInfosExist = isTrackingInfosExist(branchNames, selectedRepositories)
       presentation.isEnabled = trackingInfosExist

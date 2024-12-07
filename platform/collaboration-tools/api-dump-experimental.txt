@@ -867,6 +867,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - getTooltipText():java.lang.String
 - getVisibleIcon():javax.swing.Icon
 - setVisibleIcon(javax.swing.Icon):V
+*f:com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
+- f:createCombinedIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+- f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.impl.DiffRequestProcessor
 *f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:createCombinedDiffModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
@@ -919,6 +923,17 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 *:com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
 - com.intellij.diff.chains.DiffRequestProducer
 - a:getScrollRequests():kotlinx.coroutines.flow.Flow
+*:com.intellij.collaboration.ui.codereview.diff.model.AsyncDiffViewModel
+- a:getRequest():kotlinx.coroutines.flow.StateFlow
+- a:reloadRequest():V
+*:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel
+- a:getChanges():kotlinx.coroutines.flow.StateFlow
+- a:showChange(I,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- a:showChange(java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- bs:showChange$default(com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel,I,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+- bs:showChange$default(com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel,java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+*:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel$State
+- a:getSelectedChanges():com.intellij.openapi.ListSelection
 *f:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputer
 - <init>(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
 - *:<init>(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
@@ -942,6 +957,24 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:getProducers():java.util.List
 - f:getSelectedIdx():I
 - hashCode():I
+*:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+- *sf:Companion:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest$Companion
+*f:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest$Companion
+- f:toFirstChange():com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+- f:toLastChange():com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+- f:toLine(kotlin.Pair):com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+*:com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequestProducer
+- a:getScrollRequests():kotlinx.coroutines.flow.Flow
+*:com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
+- *sf:Companion:com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate$Companion
+- a:getChanges():kotlinx.coroutines.flow.Flow
+- a:handleSelection(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- a:showChange(java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- bs:showChange$default(com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate,java.lang.Object,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+- a:showChanges(com.intellij.openapi.ListSelection,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest):V
+- bs:showChanges$default(com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate,com.intellij.openapi.ListSelection,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
+*f:com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate$Companion
+- f:create(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
 *:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - a:sort(java.util.List):java.util.List
 *f:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$Grouping

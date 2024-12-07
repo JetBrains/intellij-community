@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -36,6 +37,8 @@ import static com.intellij.util.ui.UIUtil.*;
 
 @ApiStatus.Internal
 public class ShelfStorageConfigurationDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(ShelfStorageConfigurationDialog.class);
+
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;
   @NotNull private final JBRadioButton myUseCustomShelfDirectory;
@@ -158,6 +161,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     Path toFile = nowCustom ? Paths.get(customPath) : getDefaultShelfPath(myProject);
 
     if (!FileUtil.pathsEqual(fromFile.toString(), toFile.toString())) {
+      LOG.info(String.format("Migrating shelve location from '%s' to '%s'", fromFile, toFile));
+
       myProject.save();
       if (wasCustom) {
         ApplicationManager.getApplication().saveSettings();

@@ -5,6 +5,7 @@ import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
 import java.nio.file.Path
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 internal fun log(msg: String) = println(msg)
@@ -100,7 +101,7 @@ internal fun guessEmail(invalidEmail: String): Collection<String> {
   val (username, domain) = invalidEmail.split("@")
   val guesses = mutableListOf(
     username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain",
-    invalidEmail.toLowerCase()
+    invalidEmail.lowercase(Locale.getDefault())
   )
   if (domain != "jetbrains.com") guesses += "$username@jetbrains.com"
   return guesses

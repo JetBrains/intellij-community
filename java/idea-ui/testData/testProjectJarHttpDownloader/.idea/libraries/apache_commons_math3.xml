@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="apache.commons.math3" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-math3:3.6">
+      <verification>
+        <artifact url="file://$REPOSITORY_LIBRARY_UTILS_TEST_LOCAL_MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar">
+          <sha256sum>79b0baf88d2bc643f652f413e52702d81ac40a9b782d7f00fc431739e8d1c28a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$REPOSITORY_LIBRARY_UTILS_TEST_LOCAL_MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.6/commons-math3-3.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$REPOSITORY_LIBRARY_UTILS_TEST_LOCAL_MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

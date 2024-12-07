@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatement
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.psi.prependDotQualifiedReceiver
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -135,7 +136,11 @@ object IfThenTransformationUtils {
 
         // every usage is expected to have smart cast info;
         // if smart cast is unstable, replacing usage with `it` can break code logic
-        if (!acceptUnstableSmartCasts && collectTextBasedUsages(data).any { it.doesNotHaveStableSmartCast() }) return null
+        if (acceptUnstableSmartCasts) {
+            if (data.negatedClause != null && !data.negatedClause.isNullExpression()) return null
+        } else {
+            if (collectTextBasedUsages(data).any { it.doesNotHaveStableSmartCast() }) return null
+        }
 
         if (conditionIsSenseless(data)) return null
 

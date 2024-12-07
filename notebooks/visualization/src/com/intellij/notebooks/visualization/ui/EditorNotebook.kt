@@ -6,13 +6,15 @@ import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellCreated
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellRemoved
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.register
+import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import kotlin.reflect.KClass
 
-class EditorNotebook(private val editor: EditorImpl): Disposable {
+class EditorNotebook(private val editor: EditorImpl) : Disposable {
 
   private var _cells = mutableListOf<EditorCell>()
 
@@ -21,6 +23,10 @@ class EditorNotebook(private val editor: EditorImpl): Disposable {
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
 
   private val extensions = mutableMapOf<KClass<*>, EditorNotebookExtension>()
+
+  init {
+    EDITOR_NOTEBOOK_KEY.set(editor, this)
+  }
 
   @Suppress("UNCHECKED_CAST")
   fun <T : EditorNotebookExtension> getExtension(cls: KClass<T>): T? {
@@ -52,6 +58,7 @@ class EditorNotebook(private val editor: EditorImpl): Disposable {
         Disposer.dispose(it)
       }
     }
+    EDITOR_NOTEBOOK_KEY.set(editor, null)
   }
 
   fun clear() {
@@ -69,11 +76,34 @@ class EditorNotebook(private val editor: EditorImpl): Disposable {
     cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed)))
   }
 
-  fun <T: EditorNotebookExtension> addExtension(type: KClass<T>, extension: T) {
+  fun <T : EditorNotebookExtension> addExtension(type: KClass<T>, extension: T) {
     extensions[type] = extension
+  }
+
+  fun getNextVisibleCellBelow(ordinal: Int): EditorCell? {
+    return getNextVisibleCellInDirection(ordinal, 1)
+  }
+
+  fun getNextVisibleCellAbove(ordinal: Int): EditorCell? {
+    return getNextVisibleCellInDirection(ordinal, -1)
+  }
+
+  private fun getNextVisibleCellInDirection(ordinal: Int, direction: Int): EditorCell? {
+    for (i in ordinal + direction until _cells.size) {
+      val cell = _cells[i]
+      if (cell.visible.get()) {
+        return cell
+      }
+    }
+    return null
   }
 }
 
 inline fun <reified T : EditorNotebookExtension> EditorNotebook.getExtension(): T? {
   return getExtension(T::class)
 }
+
+private val EDITOR_NOTEBOOK_KEY = Key<EditorNotebook>("UPDATE_MANAGER_KEY")
+
+val Editor.notebook: EditorNotebook?
+  get() = EDITOR_NOTEBOOK_KEY.get(this)

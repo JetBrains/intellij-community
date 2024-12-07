@@ -34,6 +34,7 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -299,13 +300,14 @@ public class RegistryUi implements Disposable {
     }
   }
 
+  @Unmodifiable
   private static List<String> getRecent() {
     String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
     return StringUtil.isEmpty(value) ? new ArrayList<>(0) : StringUtil.split(value, "=");
   }
 
   private static void keyChanged(String key) {
-    final List<String> recent = getRecent();
+    final List<String> recent = new ArrayList<>(getRecent());
     recent.remove(key);
     recent.add(0, key);
     PropertiesComponent.getInstance().setValue(RECENT_PROPERTIES_KEY, StringUtil.join(recent, "="), "");

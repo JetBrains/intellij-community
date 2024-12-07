@@ -331,3 +331,25 @@ fun Project.checkConflictsInteractively(
 
 fun FqNameUnsafe.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
 fun FqName.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
+
+fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
+    return lambdaArguments.singleOrNull()?.getArgumentExpression()?.unpackFunctionLiteral() ?: getLastLambdaExpression()
+}
+
+fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
+    call: KtCallExpression,
+    newFunctionName: String
+) {
+    val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
+    if (callOrQualified is KtQualifiedExpression) {
+        appendExpression(callOrQualified.receiverExpression)
+        if (callOrQualified is KtSafeQualifiedExpression) appendFixedText("?")
+        appendFixedText(".")
+    }
+    appendNonFormattedText(newFunctionName)
+    call.valueArgumentList?.let { appendNonFormattedText(it.text) }
+    call.lambdaArguments.firstOrNull()?.let {
+        if (it.getArgumentExpression() is KtLabeledExpression) appendFixedText(" ")
+        appendNonFormattedText(it.text)
+    }
+}

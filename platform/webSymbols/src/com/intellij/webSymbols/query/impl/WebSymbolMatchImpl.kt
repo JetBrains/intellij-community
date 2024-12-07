@@ -4,15 +4,18 @@ package com.intellij.webSymbols.query.impl
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Priority
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.WebSymbolMatchBuilder
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.coalesceApiStatus
@@ -26,10 +29,18 @@ internal open class WebSymbolMatchImpl private constructor(
   override val kind: SymbolKind,
   override val origin: WebSymbolOrigin,
   private val explicitPriority: Priority?,
-  private val explicitProximity: Int?
+  private val explicitProximity: Int?,
+  private val additionalProperties: Map<String, Any>,
 ) : WebSymbolMatch {
 
+  init {
+    require(nameSegments.isNotEmpty()) { "nameSegments must not be empty" }
+  }
+
   protected fun reversedSegments() = Sequence { ReverseListIterator(nameSegments) }
+
+  override fun withCustomProperties(properties: Map<String, Any>): WebSymbolMatch =
+    create(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties + properties)
 
   override val psiContext: PsiElement?
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
@@ -97,21 +108,12 @@ internal open class WebSymbolMatchImpl private constructor(
     get() = nameSegments.asSequence().flatMap { it.symbols }
       .flatMap { it.properties.entries }
       .filter { it.key != WebSymbol.PROP_HIDE_FROM_COMPLETION }
+      .plus(additionalProperties.entries)
       .map { Pair(it.key, it.value) }
       .toMap()
 
-
   override fun createPointer(): Pointer<out WebSymbolMatchImpl> =
-    object : WebSymbolMatchPointer<WebSymbolMatchImpl>(this) {
-      override fun create(matchedName: String,
-                          nameSegments: List<WebSymbolNameSegment>,
-                          namespace: SymbolNamespace,
-                          kind: SymbolKind,
-                          origin: WebSymbolOrigin,
-                          explicitPriority: Priority?,
-                          explicitProximity: Int?): WebSymbolMatchImpl =
-        WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity)
-    }
+    WebSymbolMatchPointer<WebSymbolMatchImpl>(this, ::WebSymbolMatchImpl)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     if (nameSegments.size == 1)
@@ -168,6 +170,9 @@ internal open class WebSymbolMatchImpl private constructor(
 
   override fun hashCode(): Int = name.hashCode()
 
+  internal fun withSegments(segments: List<WebSymbolNameSegment>): WebSymbolMatch =
+    create(matchedName, segments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties)
+
   class ReverseListIterator<T>(list: List<T>) : Iterator<T> {
 
     private val iterator = list.listIterator(list.size)
@@ -184,18 +189,21 @@ internal open class WebSymbolMatchImpl private constructor(
 
   companion object {
 
-    fun create(matchedName: String,
-               nameSegments: List<WebSymbolNameSegment>,
-               namespace: SymbolNamespace,
-               kind: SymbolKind,
-               origin: WebSymbolOrigin,
-               explicitPriority: Priority?,
-               explicitProximity: Int?): WebSymbolMatch =
-      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.all { symbol -> symbol is PsiSourcedWebSymbol }) })
+    private fun create(
+      matchedName: String,
+      nameSegments: List<WebSymbolNameSegment>,
+      namespace: SymbolNamespace,
+      kind: SymbolKind,
+      origin: WebSymbolOrigin,
+      explicitPriority: Priority?,
+      explicitProximity: Int?,
+      additionalProperties: Map<String, Any>,
+    ): WebSymbolMatch =
+      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedWebSymbol }) })
         PsiSourcedWebSymbolMatch(matchedName, nameSegments, namespace, kind, origin,
-                                 explicitPriority, explicitProximity)
+                                 explicitPriority, explicitProximity, additionalProperties)
       else WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin,
-                              explicitPriority, explicitProximity)
+                              explicitPriority, explicitProximity, additionalProperties)
 
     private fun List<WebSymbolNameSegment>.equalsIgnoreOffset(other: List<WebSymbolNameSegment>): Boolean {
       if (size != other.size) return false
@@ -222,14 +230,17 @@ internal open class WebSymbolMatchImpl private constructor(
 
   }
 
-  class PsiSourcedWebSymbolMatch(matchedName: String,
-                                 nameSegments: List<WebSymbolNameSegment>,
-                                 namespace: SymbolNamespace,
-                                 kind: SymbolKind,
-                                 origin: WebSymbolOrigin,
-                                 explicitPriority: Priority?,
-                                 explicitProximity: Int?)
-    : WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity), PsiSourcedWebSymbol {
+  private class PsiSourcedWebSymbolMatch(
+    matchedName: String,
+    nameSegments: List<WebSymbolNameSegment>,
+    namespace: SymbolNamespace,
+    kind: SymbolKind,
+    origin: WebSymbolOrigin,
+    explicitPriority: Priority?,
+    explicitProximity: Int?,
+    additionalProperties: Map<String, Any>,
+  ) : WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties),
+      PsiSourcedWebSymbol {
 
     override val psiContext: PsiElement?
       get() = reversedSegments().flatMap { it.symbols.asSequence() }
@@ -240,16 +251,7 @@ internal open class WebSymbolMatchImpl private constructor(
         .mapNotNull { (it as? PsiSourcedWebSymbol)?.source }.singleOrNull()
 
     override fun createPointer(): Pointer<PsiSourcedWebSymbolMatch> =
-      object : WebSymbolMatchPointer<PsiSourcedWebSymbolMatch>(this) {
-        override fun create(matchedName: String,
-                            nameSegments: List<WebSymbolNameSegment>,
-                            namespace: SymbolNamespace,
-                            kind: SymbolKind,
-                            origin: WebSymbolOrigin,
-                            explicitPriority: Priority?,
-                            explicitProximity: Int?): PsiSourcedWebSymbolMatch =
-          PsiSourcedWebSymbolMatch(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity)
-      }
+      WebSymbolMatchPointer<PsiSourcedWebSymbolMatch>(this, ::PsiSourcedWebSymbolMatch)
 
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       super<WebSymbolMatchImpl>.getNavigationTargets(project)
@@ -259,7 +261,59 @@ internal open class WebSymbolMatchImpl private constructor(
 
   }
 
-  private abstract class WebSymbolMatchPointer<T : WebSymbolMatch>(webSymbolMatch: WebSymbolMatchImpl) : Pointer<T> {
+  class BuilderImpl(
+    private var matchedName: String,
+    private var qualifiedKind: WebSymbolQualifiedKind,
+    private var origin: WebSymbolOrigin,
+  ) : WebSymbolMatchBuilder {
+
+    private var nameSegments = mutableListOf<WebSymbolNameSegment>()
+    private var properties = mutableMapOf<String, Any>()
+    private var explicitPriority: Priority? = null
+    private var explicitProximity: Int? = null
+
+    fun build(): WebSymbolMatch =
+      create(matchedName, nameSegments, qualifiedKind.namespace, qualifiedKind.kind,
+             origin, explicitPriority, explicitProximity, properties)
+
+    override fun addNameSegments(value: List<WebSymbolNameSegment>): WebSymbolMatchBuilder = this.also {
+      nameSegments.addAll(value)
+    }
+
+    override fun addNameSegments(vararg value: WebSymbolNameSegment): WebSymbolMatchBuilder = this.also {
+      nameSegments.addAll(value)
+    }
+
+    override fun addNameSegment(value: WebSymbolNameSegment): WebSymbolMatchBuilder = this.also {
+      nameSegments.add(value)
+    }
+
+    override fun explicitPriority(value: Priority): WebSymbolMatchBuilder = this.also {
+      explicitPriority = value
+    }
+
+    override fun explicitProximity(value: Int): WebSymbolMatchBuilder = this.also {
+      explicitProximity = value
+    }
+
+    override fun setProperty(name: String, value: Any): WebSymbolMatchBuilder = this.also {
+      properties[name] = value
+    }
+  }
+
+  private class WebSymbolMatchPointer<T : WebSymbolMatch>(
+    webSymbolMatch: WebSymbolMatchImpl,
+    private val newInstanceProvider: (
+      matchedName: String,
+      nameSegments: List<WebSymbolNameSegment>,
+      namespace: SymbolNamespace,
+      kind: SymbolKind,
+      origin: WebSymbolOrigin,
+      explicitPriority: Priority?,
+      explicitProximity: Int?,
+      additionalProperties: Map<String, Any>,
+    ) -> T,
+  ) : Pointer<T> {
 
     private val matchedName = webSymbolMatch.matchedName
     private val nameSegments = webSymbolMatch.nameSegments
@@ -269,24 +323,46 @@ internal open class WebSymbolMatchImpl private constructor(
     private val origin = webSymbolMatch.origin
     private val explicitPriority = webSymbolMatch.explicitPriority
     private val explicitProximity = webSymbolMatch.explicitProximity
+    private val additionalProperties = webSymbolMatch.additionalProperties
+      .createPointers()
 
     override fun dereference(): T? =
       nameSegments.map { it.dereference() }
         .takeIf { it.all { segment -> segment != null } }
         ?.let {
+          var dereferencingProblems = Ref(false)
+          val dereferencedProperties = additionalProperties.dereferencePointers(dereferencingProblems)
+          if (dereferencingProblems.get()) return null
+
           @Suppress("UNCHECKED_CAST")
-          create(matchedName, it as List<WebSymbolNameSegment>, namespace, kind, origin,
-                 explicitPriority, explicitProximity)
+          newInstanceProvider(matchedName, it as List<WebSymbolNameSegment>, namespace, kind, origin,
+                              explicitPriority, explicitProximity, dereferencedProperties)
         }
 
-    abstract fun create(matchedName: String,
-                        nameSegments: List<WebSymbolNameSegment>,
-                        namespace: SymbolNamespace,
-                        kind: SymbolKind,
-                        origin: WebSymbolOrigin,
-                        explicitPriority: Priority?,
-                        explicitProximity: Int?): T
+    private fun Map<String, Any>.createPointers(): Map<String, Any> =
+      mapValues { (_, value) -> value.createPointers() }
 
+    private fun Any.createPointers(): Any =
+      when (this) {
+        is Symbol -> createPointer()
+        is PsiElement -> createSmartPointer()
+        is Map<*, *> -> mapValues { (_, value) -> value?.createPointers() }
+        is List<*> -> map { it?.createPointers() }
+        is Set<*> -> mapTo(HashSet()) { it?.createPointers() }
+        else -> this
+      }
+
+    private fun Map<String, Any>.dereferencePointers(anyProblems: Ref<Boolean>): Map<String, Any> =
+      mapValues { (_, value) -> value.dereferencePointers(anyProblems) }
+
+    private fun Any.dereferencePointers(anyProblems: Ref<Boolean>): Any =
+      when (this) {
+        is Pointer<*> -> dereference().also { if (it == null) anyProblems.set(true) } ?: this
+        is Map<*, *> -> mapValues { (_, value) -> value?.dereferencePointers(anyProblems) }
+        is List<*> -> map { it?.dereferencePointers(anyProblems) }
+        is Set<*> -> mapTo(HashSet()) { it?.dereferencePointers(anyProblems) }
+        else -> this
+      }
   }
 
 }
