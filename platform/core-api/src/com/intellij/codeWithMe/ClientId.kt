@@ -159,7 +159,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val currentOrNull: ClientId?
-      get() = currentThreadClientId?.value?.let(::ClientId)
+      get() = currentThreadClientId
 
     /**
      * Overrides the ID of the owner of CWM/RD session.
