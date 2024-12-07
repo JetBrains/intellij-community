@@ -56,6 +56,7 @@ class XMixedModeExecutionStack(
         logger.trace("No high level stack, adding low level frames")
         container.addStackFrames(lowLevelFrames, true)
         computedMixedFrames.complete(lowLevelFrames)
+        computedFramesMap.complete(lowLevelFrames.associateWith { null })
       }
       else {
         highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
