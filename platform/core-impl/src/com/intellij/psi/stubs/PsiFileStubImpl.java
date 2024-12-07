@@ -12,6 +12,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
@@ -113,7 +114,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
 
   public void setStubRoots(PsiFileStub<?> @NotNull [] roots) {
     if (roots.length == 0) {
-      Logger.getInstance(getClass()).error("Incorrect psi file stub roots count" + this + "," + getStubType());
+      Logger.getInstance(getClass()).error("Incorrect psi file stub roots count" + this);
     }
     myStubRoots = roots;
   }
