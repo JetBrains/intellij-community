@@ -1068,4 +1068,48 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
 
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
+
+  @Test
+  fun `Kotlin inline value class (AssertJ) primitive type`() {
+    @Language("kotlin") val code = """
+    import org.junit.Test
+    import org.assertj.core.api.Assertions
+    
+    @JvmInline
+    value class ValueClass(val prop: Int)
+    
+    class MySampleTest {
+      @Test
+      fun myTest() {
+        val a = ValueClass(1)
+        val b = ValueClass(2)
+        Assertions.assertThat(a).isEqualTo(b)
+      }
+    }
+    """.trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  @Test
+  fun `Kotlin inline value class (AssertJ) reference type`() {
+    @Language("kotlin") val code = """
+    import org.junit.Test
+    import org.assertj.core.api.Assertions
+    
+    @JvmInline
+    value class ValueClass(val prop: List<String>)
+    
+    class MySampleTest {
+      @Test
+      fun myTest() {
+        val a = ValueClass(listOf("a"))
+        val b = ValueClass(listOf("b"))
+        Assertions.assertThat(a).isEqualTo(b)
+      }
+    }
+    """.trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
 }
