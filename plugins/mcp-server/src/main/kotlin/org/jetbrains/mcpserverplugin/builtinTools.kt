@@ -54,7 +54,7 @@ class GetSelectedTextTool : McpTool<NoArgs> {
         val text = runReadAction<String?> {
             getInstance(project).selectedTextEditor?.selectionModel?.selectedText
         }
-        return Response(text)
+        return Response(text ?: "")
     }
 }
 
