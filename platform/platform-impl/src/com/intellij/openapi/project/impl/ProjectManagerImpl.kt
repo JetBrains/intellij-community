@@ -200,22 +200,20 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override fun loadProject(path: Path): Project = loadProject(path = path, preloadServices = true)
 
   @RequiresBackgroundThread
-  fun loadProject(path: Path, preloadServices: Boolean): ProjectImpl {
-    val project = ProjectImpl(filePath = path, projectName = null, parent = ApplicationManager.getApplication() as ComponentManagerImpl)
+  fun loadProject(path: Path, preloadServices: Boolean): Project {
     @Suppress("DEPRECATION")
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
-    runBlockingCancellable {
+    return runBlockingCancellable {
       withContext(modalityState.asContextElement()) {
-        initProject(
-          file = path,
-          project = project,
-          preloadServices = preloadServices,
-          template = null,
-          isTrustCheckNeeded = false,
-        )
+        prepareProject(projectStoreBaseDir = path,
+                       projectName = null,
+                       beforeInit = null,
+                       projectInitHelper = null,
+                       runConversionBeforeOpen = false,
+                       isTrustCheckNeeded = false,
+                       preloadServices = preloadServices)
       }
     }
-    return project
   }
 
   override val isDefaultProjectInitialized: Boolean
@@ -520,29 +518,20 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   @Suppress("OVERRIDE_DEPRECATION")
   @RequiresEdt
   final override fun createProject(name: String?, path: String): Project {
-    val options = OpenProjectTask {
-      isNewProject = true
-      runConfigurators = false
-      projectName = name
-    }
-
     @Suppress("DEPRECATION")
-    val project = runUnderModalProgressIfIsEdt {
+    return runUnderModalProgressIfIsEdt {
       val file = toCanonicalName(path)
-      removeProjectConfigurationAndCaches(file)
-      TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
-      val project = instantiateProject(projectStoreBaseDir = file, options = options)
-      initProject(
-        file = file,
-        project = project,
-        preloadServices = options.preloadServices,
-        template = defaultProject,
-        isTrustCheckNeeded = false,
-      )
-      project.setTrusted(true)
-      project
+      prepareNewProject(
+        file,
+        name,
+        beforeInit = null,
+        useDefaultProjectAsTemplate = true,
+        preloadServices = true,
+        markAsNew = false
+      ).apply {
+        setTrusted(true)
+      }
     }
-    return project
   }
 
   final override fun loadAndOpenProject(originalFilePath: String): Project? = openProject(toCanonicalName(originalFilePath), OpenProjectTask())
@@ -648,11 +637,21 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
             val project = when {
               options.project != null -> options.project!!
-              options.isNewProject -> prepareNewProject(options = options, projectStoreBaseDir = projectStoreBaseDir)
+              options.isNewProject -> prepareNewProject(
+                projectStoreBaseDir,
+                options.projectName,
+                options.beforeInit,
+                options.useDefaultProjectAsTemplate,
+                options.preloadServices
+              )
               else -> prepareProject(
-                options = options,
-                projectStoreBaseDir = projectStoreBaseDir,
+                projectStoreBaseDir,
+                options.projectName,
+                options.beforeInit,
                 projectInitHelper = initHelper.takeIf { initFrameEarly },
+                options.runConversionBeforeOpen,
+                isTrustCheckNeeded = true,
+                options.preloadServices
               )
             }
             result = project
@@ -794,49 +793,29 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun newProject(file: Path, options: OpenProjectTask): Project? {
-    removeProjectConfigurationAndCaches(file)
-    TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
-
-    try {
-      val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
+    return try {
       @Suppress("DEPRECATION")
-      val project = runUnderModalProgressIfIsEdt {
-        val project = instantiateProject(file, options)
-        initProject(
-          file = file,
-          project = project,
-          preloadServices = options.preloadServices,
-          template = template,
-          isTrustCheckNeeded = false,
-        )
-        project
+      runUnderModalProgressIfIsEdt {
+        newProjectAsync(file, options)
       }
-      project.setTrusted(true)
-      return project
     }
     catch (t: Throwable) {
       handleErrorOnNewProject(t)
-      return null
+      null
     }
   }
 
-  override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
-    withContext(Dispatchers.IO) {
-      removeProjectConfigurationAndCaches(file)
-      TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
+  override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project =
+    prepareNewProject(
+      file,
+      options.projectName,
+      options.beforeInit,
+      options.useDefaultProjectAsTemplate,
+      options.preloadServices,
+      markAsNew = false
+    ).apply {
+      setTrusted(true)
     }
-
-    val project = instantiateProject(file, options)
-    initProject(
-      file = file,
-      project = project,
-      preloadServices = options.preloadServices,
-      template = if (options.useDefaultProjectAsTemplate) defaultProject else null,
-      isTrustCheckNeeded = false,
-    )
-    project.setTrusted(true)
-    return project
-  }
 
   protected open fun handleErrorOnNewProject(t: Throwable) {
     LOG.warn(t)
@@ -852,13 +831,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  protected open suspend fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
+  protected open suspend fun instantiateProject(
+    projectStoreBaseDir: Path,
+    projectName: String?,
+    beforeInit: ((Project) -> Unit)?,
+  ): ProjectImpl {
     val project = span("project instantiation") {
       ProjectImpl(filePath = projectStoreBaseDir,
-                  projectName = options.projectName,
+                  projectName = projectName,
                   parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     }
-    options.beforeInit?.let { beforeInit ->
+    beforeInit?.let { beforeInit ->
       span("options.beforeInit") {
         beforeInit(project)
       }
@@ -866,12 +849,19 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  private suspend fun prepareNewProject(options: OpenProjectTask, projectStoreBaseDir: Path): Project {
+  private suspend fun prepareNewProject(
+    projectStoreBaseDir: Path,
+    projectName: String?,
+    beforeInit: ((Project) -> Unit)?,
+    useDefaultProjectAsTemplate: Boolean,
+    preloadServices: Boolean,
+    markAsNew: Boolean = true,
+  ): Project {
+    TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(projectStoreBaseDir, project = null), true)
     return coroutineScope {
-      val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-      val saveTemplateJob = if (template != null) {
-        launch(CoroutineName("save default project") + Dispatchers.IO) {
-          saveSettings(template, forceSavingAllSettings = true)
+      val templateAsync = if (useDefaultProjectAsTemplate) {
+        async {
+          acquireTemplateProject()
         }
       }
       else {
@@ -881,38 +871,52 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         removeProjectConfigurationAndCaches(projectStoreBaseDir)
       }
 
-      val project = instantiateProject(projectStoreBaseDir, options)
-      project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
-      saveTemplateJob?.join()
+      val project = instantiateProject(projectStoreBaseDir, projectName, beforeInit)
+      project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, markAsNew)
+      val template = templateAsync?.await()
       initProject(file = projectStoreBaseDir,
                   project = project,
-                  preloadServices = options.preloadServices,
+                  preloadServices = preloadServices,
                   template = template,
                   isTrustCheckNeeded = false)
       project
     }
   }
 
-  private suspend fun prepareProject(options: OpenProjectTask,
-                                     projectStoreBaseDir: Path,
-                                     projectInitHelper: ProjectInitHelper?): Project {
-    val conversionResult: ConversionResult? = if (options.runConversionBeforeOpen) {
+  private suspend fun acquireTemplateProject(): Project {
+    val project = defaultProject
+    withContext(CoroutineName("save default project") + Dispatchers.IO) {
+      saveSettings(project, forceSavingAllSettings = true)
+    }
+    return project
+  }
+
+  private suspend fun prepareProject(
+    projectStoreBaseDir: Path,
+    projectName: String?,
+    beforeInit: ((Project) -> Unit)?,
+    projectInitHelper: ProjectInitHelper?,
+    runConversionBeforeOpen: Boolean,
+    isTrustCheckNeeded: Boolean,
+    preloadServices: Boolean,
+  ): Project {
+    val conversionResult: ConversionResult? = if (runConversionBeforeOpen) {
       runConversion(projectStoreBaseDir)
     }
     else {
       null
     }
 
-    val project = instantiateProject(projectStoreBaseDir, options)
+    val project = instantiateProject(projectStoreBaseDir, projectName, beforeInit)
 
     // template as null here because it is not a new project
     initProject(
       file = projectStoreBaseDir,
       project = project,
-      preloadServices = options.preloadServices,
+      preloadServices = preloadServices,
       template = null,
       projectInitHelper = projectInitHelper,
-      isTrustCheckNeeded = true,
+      isTrustCheckNeeded = isTrustCheckNeeded,
     )
 
     if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
