@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
@@ -87,9 +88,12 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       presentation.setEnabled(false);
       return;
     }
-    if (isProjectView(e) && ArrayUtil.isEmpty(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS))) {
-      presentation.setEnabled(false);
-      return;
+    if (isProjectView(e)) {
+      presentation.setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
+      if (ArrayUtil.isEmpty(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS))) {
+        presentation.setEnabled(false);
+        return;
+      }
     }
 
     presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e));
