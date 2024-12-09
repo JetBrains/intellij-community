@@ -4,8 +4,8 @@
   "targetPackage": "",
   "targetSourceRoot": "A/src",
   "withRuntime": "true",
-  "modulesWithRuntime": ["B"],
-  "modulesWithCommonRuntime": ["A"],
+  "modulesWithRuntime": ["A", "B"],
+  "modulesWithCommonRuntime": ["A", "B"],
   "enabledInK1": "true",
   "enabledInK2": "true"
 }

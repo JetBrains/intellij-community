@@ -4,9 +4,9 @@
   "targetPackage": "bar",
   "targetSourceRoot": "A/src",
   "withRuntime": "true",
-  "modulesWithRuntime": ["B"],
-  "modulesWithCommonRuntime": ["A"],
+  "modulesWithRuntime": ["A", "B"],
+  "modulesWithCommonRuntime": ["A", "B"],
   "moveExpectedActuals": "false",
   "enabledInK1": "false",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }
