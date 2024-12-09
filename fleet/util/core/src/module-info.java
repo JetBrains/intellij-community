@@ -8,6 +8,7 @@ module fleet.util.core {
   exports fleet.util.radixTrie;
   exports fleet.util.reducible;
   exports fleet.util.serialization;
+  exports fleet.util.text;
   exports fleet.util.tree;
   exports com.tylerthrailkill.helpers.prettyprint;
   exports fleet.util.fastutil;
