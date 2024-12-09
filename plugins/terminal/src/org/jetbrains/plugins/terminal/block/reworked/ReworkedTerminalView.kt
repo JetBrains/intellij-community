@@ -2,45 +2,115 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteStringEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
+import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.getCharSize
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import java.awt.Dimension
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
 internal class ReworkedTerminalView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
 ) : TerminalContentView {
+  private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
+  private val terminalSessionFuture = CompletableFuture<TerminalSession>()
+
+  private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
+
+  private val editor: EditorImpl
+
+  private val model: TerminalModel
+  private val controller: TerminalSessionController
+
   override val component: JComponent
-    get() = TODO("Not yet implemented")
+    get() = editor.component
   override val preferredFocusableComponent: JComponent
-    get() = TODO("Not yet implemented")
+    get() = editor.contentComponent
+
+  init {
+    Disposer.register(this) {
+      // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
+      terminalSessionFuture.complete(null)
+
+      coroutineScope.cancel()
+    }
+
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      for (listener in terminationListeners) {
+        try {
+          listener.run()
+        }
+        catch (t: Throwable) {
+          thisLogger().error("Unhandled exception in termination listener", t)
+        }
+      }
+    }
+
+    val document = EditorFactory.getInstance().createDocument("")
+    editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    Disposer.register(this) {
+      EditorFactory.getInstance().releaseEditor(editor)
+    }
+    editor.settings.isUseSoftWraps = true
+    editor.useTerminalDefaultBackground(parentDisposable = this)
+
+    model = TerminalModel(editor)
+    controller = TerminalSessionController(model, coroutineScope.childScope("TerminalSessionController"))
+  }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
-    TODO("Not yet implemented")
-  }
+    val session = startTerminalSession(ttyConnector, initialTermSize, settings, coroutineScope.childScope("TerminalSession"))
+    terminalSessionFuture.complete(session)
 
-  override fun getTerminalSize(): TermSize? {
-    TODO("Not yet implemented")
-  }
-
-  override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {
-    TODO("Not yet implemented")
-  }
-
-  override fun isFocused(): Boolean {
-    TODO("Not yet implemented")
+    controller.handleEvents(session.outputChannel)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
-    TODO("Not yet implemented")
+    TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
   }
 
   override fun sendCommandToExecute(shellCommand: String) {
-    TODO("Not yet implemented")
+    terminalSessionFuture.thenAccept {
+      it?.inputChannel?.trySend(TerminalWriteStringEvent(shellCommand + "\n"))
+    }
+  }
+
+  override fun getTerminalSize(): TermSize? {
+    val width = component.width - editor.scrollPane.verticalScrollBar.width
+    val height = component.height
+    val charSize = editor.getCharSize()
+
+    return if (width > 0 && height > 0) {
+      TerminalUiUtils.calculateTerminalSize(Dimension(width, height), charSize)
+    }
+    else null
+  }
+
+  override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {
+    return TerminalUiUtils.getComponentSizeInitializedFuture(component)
+  }
+
+  override fun isFocused(): Boolean {
+    return component.hasFocus()
   }
 
   override fun dispose() {}
