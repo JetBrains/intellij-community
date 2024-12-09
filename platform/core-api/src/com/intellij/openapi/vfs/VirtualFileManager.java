@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -49,28 +49,25 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract VirtualFileSystem getFileSystem(@Nullable String protocol);
 
   /**
-   * <p>Refreshes the cached file systems information from the physical file systems synchronously.<p/>
-   *
-   * <p><strong>Note</strong>: this method should be only called within a write-action
-   * (see {@linkplain com.intellij.openapi.application.Application#runWriteAction})</p>
-   *
-   * @return refresh session ID.
+   * The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead.
+   * <p>
+   * Besides, the method is blocking and requires a write lock.
    */
+  @ApiStatus.Obsolete
   public abstract long syncRefresh();
 
-  /**
-   * Refreshes the cached file systems information from the physical file systems asynchronously.
-   * Launches specified action when refresh is finished.
-   * <p>
-   * @param postAction - action which will be executed in write-action after the refresh session finished.
-   * @return refresh session ID.
-   */
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead. */
+  @ApiStatus.Obsolete
   public abstract long asyncRefresh(@Nullable Runnable postAction);
 
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead. */
+  @ApiStatus.Obsolete
   public final long asyncRefresh() {
     return asyncRefresh(null);
   }
 
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VfsUtil#markDirtyAndRefresh} instead. */
+  @ApiStatus.Obsolete
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
