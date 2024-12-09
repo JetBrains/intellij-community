@@ -168,7 +168,7 @@ fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String
     PyBundle.message("python.sdk.pipenv.execution.exception.no.pipenv.message"),
     "pipenv", emptyList(), ProcessOutput())
   @Suppress("DialogTitleCapitalization")
-  return runCommand(executable, Path.of(projectPath), PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"), *args)
+  return runCommand(executable, Path.of(projectPath), PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"), *args).getOrThrow()
 }
 
 /**

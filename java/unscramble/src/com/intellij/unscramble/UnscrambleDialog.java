@@ -46,7 +46,7 @@ public class UnscrambleDialog extends DialogWrapper {
   private static final @NonNls String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   private static final @NonNls String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   private static final @NonNls String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
-  private static final Condition<ThreadState> DEADLOCK_CONDITION = state -> state.isDeadlocked();
+
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -311,84 +311,11 @@ public class UnscrambleDialog extends DialogWrapper {
     String unscrambledTrace = unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project,textToUnscramble, logName, settings);
     if (unscrambledTrace == null) return null;
     List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
-    return addConsole(project, threadStates, unscrambledTrace);
-  }
-
-  private static RunContentDescriptor addConsole(final Project project, final List<ThreadState> threadDump, String unscrambledTrace) {
-    Icon icon = null;
-    String message = JavaBundle.message("unscramble.unscrambled.stacktrace.tab");
-    if (!threadDump.isEmpty()) {
-      message = JavaBundle.message("unscramble.unscrambled.threaddump.tab");
-      icon = AllIcons.Actions.Dump;
-    }
-    else {
-      String name = getExceptionName(unscrambledTrace);
-      if (name != null) {
-        message = name;
-        icon = AllIcons.Actions.Lightning;
-      }
-    }
-    if (ContainerUtil.find(threadDump, DEADLOCK_CONDITION) != null) {
-      message = JavaBundle.message("unscramble.unscrambled.deadlock.tab");
-      icon = AllIcons.Debugger.KillProcess;
-    }
-    return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new ThreadDumpConsoleFactory(project, threadDump) : null, message, unscrambledTrace, icon);
+    return UnscrambleUtils.addConsole(project, threadStates, unscrambledTrace);
   }
 
   @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.unscramble.UnscrambleDialog";
-  }
-
-  private static @Nullable String getExceptionName(String unscrambledTrace) {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    BufferedReader reader = new BufferedReader(new StringReader(unscrambledTrace));
-    for (int i = 0; i < 3; i++) {
-      try {
-        String line = reader.readLine();
-        if (line == null) return null;
-        String name = getExceptionAbbreviation(line);
-        if (name != null) return name;
-      }
-      catch (IOException e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  private static @Nullable String getExceptionAbbreviation(String line) {
-    line = StringUtil.trimStart(line.trim(), "Caused by: ");
-    int classNameStart = 0;
-    int classNameEnd = line.length();
-    for (int j = 0; j < line.length(); j++) {
-      char c = line.charAt(j);
-      if (c == '.' || c == '$') {
-        classNameStart = j + 1;
-        continue;
-      }
-      if (c == ':') {
-        classNameEnd = j;
-        break;
-      }
-      if (!StringUtil.isJavaIdentifierPart(c)) {
-        return null;
-      }
-    }
-    if (classNameStart >= classNameEnd) return null;
-    String clazz = line.substring(classNameStart, classNameEnd);
-    String abbreviate = abbreviate(clazz);
-    return abbreviate.length() > 1 ? abbreviate : clazz;
-  }
-
-  private static String abbreviate(String s) {
-      StringBuilder builder = new StringBuilder();
-      for (int i = 0; i < s.length(); i++) {
-          char c = s.charAt(i);
-          if (Character.isUpperCase(c)) {
-              builder.append(c);
-          }
-      }
-      return builder.toString();
   }
 }

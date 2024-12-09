@@ -100,8 +100,6 @@ class 'decompiler/TestInstanceofWithPattern' {
       10      8
       11      8
       12      8
-      13      8
-      14      8
       18      10
       19      10
       1a      10
@@ -138,8 +136,6 @@ class 'decompiler/TestInstanceofWithPattern' {
       1f      20
       20      20
       21      20
-      22      20
-      23      20
       27      21
       28      21
       29      21
@@ -185,8 +181,6 @@ class 'decompiler/TestInstanceofWithPattern' {
       21      31
       22      31
       23      31
-      24      31
-      25      31
       29      36
       2a      36
       2b      36

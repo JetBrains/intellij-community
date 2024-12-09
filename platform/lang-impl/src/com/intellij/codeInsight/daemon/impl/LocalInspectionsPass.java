@@ -27,10 +27,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectTypeService;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -476,13 +473,17 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
         continue; // filter out at least unknown languages
       }
 
-      if (myIgnoreSuppressed
-          && wrapper.isApplicable(getFile().getLanguage())
-          && wrapper.getTool().isSuppressedFor(getFile())) {
-        // inspections that do not match file language are excluded later in InspectionRunner.inspect
+      try {
+        if (myIgnoreSuppressed
+            && wrapper.isApplicable(getFile().getLanguage())
+            && wrapper.getTool().isSuppressedFor(getFile())) {
+          // inspections that do not match file language are excluded later in InspectionRunner.inspect
+          continue;
+        }
+      }
+      catch (IndexNotReadyException ex) {
         continue;
       }
-
       enabled.add(wrapper);
     }
     return enabled;

@@ -51,6 +51,18 @@
     {
       "id": "RegExpRedundantClassElement",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpUnnecessaryNonCapturingGroup",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CustomRegExpInspection",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "RegExpAnonymousGroup",
+      "codeQualityCategory": "Code Style"
     }
   ]
 }

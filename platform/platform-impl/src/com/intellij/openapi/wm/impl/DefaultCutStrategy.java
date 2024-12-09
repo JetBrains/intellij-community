@@ -12,7 +12,7 @@ import static com.intellij.ui.paint.PaintUtil.getStringWidth;
 @ApiStatus.Internal
 public final class DefaultCutStrategy implements TextCutStrategy {
 
-  private static final int MIN_TEXT_LENGTH = 5;
+  private static final int MIN_TEXT_LENGTH = 4;
 
   @NotNull
   @Override
@@ -29,6 +29,6 @@ public final class DefaultCutStrategy implements TextCutStrategy {
 
   @Override
   public int calcMinTextWidth(@NotNull String text, @NotNull FontMetrics metrics) {
-    return UIUtil.computeTextComponentMinimumSize(metrics.stringWidth(text), text, metrics, MIN_TEXT_LENGTH - 1);
+    return UIUtil.computeTextComponentMinimumSize(metrics.stringWidth(text), text, metrics, MIN_TEXT_LENGTH);
   }
 }

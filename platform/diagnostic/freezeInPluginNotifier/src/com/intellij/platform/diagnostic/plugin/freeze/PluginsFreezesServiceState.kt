@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.plugin.freeze
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginId
 import java.time.Instant
@@ -22,7 +23,19 @@ internal class PluginsFreezesService : PersistentStateComponent<PluginsFreezesSe
   }
 
   fun mutePlugin(pluginId: PluginId) {
-    state.mutedPlugins[pluginId.idString] = true
+    val ideVersion = mutedProblemVersion()
+
+    state.mutedPlugins += MutedPlugin().apply {
+      this.pluginId = pluginId.idString
+      this.ideVersion = ideVersion
+    }
+
+    state.mutedPlugins.removeIf { it.ideVersion != ideVersion }
+  }
+
+  private fun mutedProblemVersion(): String {
+    val app = ApplicationInfo.getInstance()
+    return app.majorVersion + "." + app.minorVersion
   }
 
   fun setLatestFreezeDate(pluginId: PluginId) {
@@ -36,7 +49,11 @@ internal class PluginsFreezesService : PersistentStateComponent<PluginsFreezesSe
 
   fun shouldBeIgnored(pluginId: PluginId): Boolean {
     val pluginIdString = pluginId.idString
-    if (state.mutedPlugins[pluginIdString] == true) return true
+
+    val ideVersion = mutedProblemVersion()
+    if (state.mutedPlugins.any { p -> p.pluginId == pluginIdString && p.ideVersion == ideVersion }) {
+      return true
+    }
 
     val lastNotification = state.latestNotificationTime[pluginIdString]?.let { Instant.parse(it) } ?: return false
     return Instant.now().isBefore(lastNotification.plus(NOTIFICATION_COOLDOWN_DAYS, ChronoUnit.DAYS))
@@ -51,5 +68,10 @@ internal class PluginsFreezesService : PersistentStateComponent<PluginsFreezesSe
 
 internal data class PluginsFreezesServiceState(
   var latestNotificationTime: MutableMap<String, String> = mutableMapOf(),
-  var mutedPlugins: MutableMap<String, Boolean> = mutableMapOf(),
+  var mutedPlugins: MutableList<MutedPlugin> = mutableListOf(),
 )
+
+internal class MutedPlugin: BaseState() {
+  var pluginId by string()
+  var ideVersion by string()
+}

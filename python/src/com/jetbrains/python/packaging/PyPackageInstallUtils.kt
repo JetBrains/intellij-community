@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

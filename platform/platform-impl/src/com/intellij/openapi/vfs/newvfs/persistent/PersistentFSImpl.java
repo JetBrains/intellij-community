@@ -43,8 +43,8 @@ import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
@@ -54,9 +54,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -154,6 +154,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
 
     setupOTelMonitoring(TelemetryManager.getInstance().getMeter(PlatformScopesKt.VFS));
+
+    LOG.info("VFS.MAX_FILE_LENGTH_TO_CACHE: " + PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE);
   }
 
   @ApiStatus.Internal
@@ -600,8 +602,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
 
       if (child == null) {
-        //FIXME RC: inside makeChildRecord() there will be a fileRecordLock acquisition -- and recursive acquisition is
-        //          impossible with StampedLock
         child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null);
         foundChildRef.set(child);
         return children.insert(child);
@@ -802,7 +802,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       byte[] content = fs.contentsToByteArray(file);
 
-      if (mayCacheContent && shouldCache(content.length)) {
+      if (mayCacheContent && shouldCacheFileContentInVFS(content.length)) {
         updateContentForFile(fileId, new ByteArraySequence(content));
       }
       else {
@@ -894,7 +894,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     InputStream contentStream;
     if (result.contentRecordId <= 0 || result.mustReloadContent) {
       InputStream fileStream = fs.getInputStream(file);
-      if (shouldCache(result.actualFileLength)) {
+      if (shouldCacheFileContentInVFS(result.actualFileLength)) {
         contentStream = createReplicatorAndStoreContent(file, fileStream, result.actualFileLength);
       }
       else {
@@ -908,11 +908,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return contentStream;
   }
 
-  private static boolean shouldCache(long len) {
-    if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
-      return false;
-    }
-    return true;
+  private static boolean shouldCacheFileContentInVFS(long fileLength) {
+    return fileLength <= PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE;
   }
 
   private @NotNull InputStream createReplicatorAndStoreContent(@NotNull VirtualFile file,
@@ -1008,27 +1005,42 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         long oldLength = getLastRecordedLength(file);
         VFileContentChangeEvent event = new VFileContentChangeEvent(
-          requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count);
+          requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count
+        );
         List<VFileEvent> events = List.of(event);
         fireBeforeEvents(getPublisher(), events);
+
         NewVirtualFileSystem fs = getFileSystem(file);
-        // `FSRecords.ContentOutputStream` already buffered, no need to wrap in `BufferedStream`
-        try (OutputStream persistenceStream = writeContent(file, /*contentOfFixedSize: */ fs.isReadOnly())) {
-          persistenceStream.write(buf, 0, count);
+        try {
+          if (shouldCacheFileContentInVFS(count)) {
+            // `FSRecords.ContentOutputStream` is already buffered => no need to wrap in `BufferedStream`
+            try (OutputStream persistenceStream = writeContent(file, /*contentOfFixedSize: */ fs.isReadOnly())) {
+              persistenceStream.write(buf, 0, count);
+            }
+          }
+          else {
+            cleanPersistedContent(fileId(file));//so next turn content will be loaded from FS again
+          }
         }
         finally {
-          try (OutputStream ioFileStream = fs.getOutputStream(file, requestor, modStamp, timeStamp)) {
-            ioFileStream.write(buf, 0, count);
-          }
-          finally {
-            closed = true;
-            FileAttributes attributes = fs.getAttributes(file);
-            // due to FS rounding, the timestamp of the file can significantly differ from the current time
-            long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
-            long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
-            executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-            fireAfterEvents(getPublisher(), events);
-          }
+          writeToDisk(fs, event, events);
+        }
+      }
+
+      private void writeToDisk(@NotNull NewVirtualFileSystem fs,
+                               @NotNull VFileContentChangeEvent event,
+                               @NotNull List<VFileEvent> events) throws IOException {
+        try (OutputStream ioFileStream = fs.getOutputStream(file, requestor, modStamp, timeStamp)) {
+          ioFileStream.write(buf, 0, count);
+        }
+        finally {
+          closed = true;
+          FileAttributes attributes = fs.getAttributes(file);
+          // due to FS rounding, the timestamp of the file can significantly differ from the current time
+          long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
+          long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+          executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
+          fireAfterEvents(getPublisher(), events);
         }
       }
     };
@@ -2373,8 +2385,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @TestOnly
-  public void cleanPersistedContent(int id) {
-    doCleanPersistedContent(id);
+  public void cleanPersistedContent(int fileId) {
+    doCleanPersistedContent(fileId);
   }
 
   @TestOnly
@@ -2394,6 +2406,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void doCleanPersistedContent(int id) {
     vfsPeer.updateRecordFields(id, record -> {
+      //current .contentId, if any, should be ignored when MUST_RELOAD_CONTENT flag is set
       return record.addFlags(Flags.MUST_RELOAD_CONTENT | Flags.MUST_RELOAD_LENGTH);
     });
   }

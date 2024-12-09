@@ -34,6 +34,7 @@ public final class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implement
     ATTRIBUTES.put(SEQUENCE_MARKER, YAMLHighlighter.SIGN);
     ATTRIBUTES.put(ANCHOR, YAMLHighlighter.ANCHOR);
     ATTRIBUTES.put(ALIAS, YAMLHighlighter.ANCHOR);
+    ATTRIBUTES.put(TAG, YAMLHighlighter.ANCHOR);
   }
 
   @Override

@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -477,13 +478,27 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         // The (usually invisible) border may be outside the caret line.
         y = lineY + (lineHeight - panelHeight) / 2;
       }
-      else if (lineY - panelHeight >= visibleArea.y) {
-        // Place the light bulb panel above the caret line.
-        y = lineY - panelHeight;
-      }
       else {
-        // Place the light bulb panel below the caret line.
-        y = lineY + lineHeight;
+        int panelAndInlayHeight = panelHeight;
+
+        int visualLine = editor.yToVisualLine(lineY);
+        List<Inlay<?>> inlaysAboveVisualLine = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, true);
+        if (!inlaysAboveVisualLine.isEmpty()) {
+          int maxInlayHeight = inlaysAboveVisualLine.stream()
+            .mapToInt(inlay -> inlay.getHeightInPixels())
+            .max()
+            .orElse(0);
+          panelAndInlayHeight = maxInlayHeight + lineHeight - (maxInlayHeight - panelHeight) / 2;
+        }
+
+        if (lineY - panelAndInlayHeight >= visibleArea.y) {
+          // Place the light bulb panel above the caret line and inlay hint.
+          y = lineY - panelAndInlayHeight;
+        }
+        else {
+          // Place the light bulb panel below the caret line.
+          y = lineY + lineHeight;
+        }
       }
 
       return SwingUtilities.convertPoint(editor.getContentComponent(), new Point(x, y), getLayeredPane(editor));

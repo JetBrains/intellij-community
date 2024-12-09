@@ -58,6 +58,7 @@
 
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.psi.impl.PyGotoDeclarationHandler"/>
+    <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyTypedDictGoToDeclarationProvider" order="first"/>
 
     <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
 

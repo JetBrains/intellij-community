@@ -174,6 +174,10 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
         completeHotSwap(true, HotSwapVisibleStatus.NO_CHANGES)
       }
 
+      override fun onFailure() {
+        completeHotSwap(resetChanges = false, HotSwapVisibleStatus.NO_CHANGES)
+      }
+
       override fun onCanceled() {
         completeHotSwap(false, statusBefore)
       }

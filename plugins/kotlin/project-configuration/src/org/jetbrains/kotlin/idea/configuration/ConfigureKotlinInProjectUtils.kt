@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -63,6 +65,7 @@ import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import java.nio.file.Path
+import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -405,6 +408,17 @@ fun getPlatform(module: Module): String {
         module.platform.isNative() -> "native." + (module.platform?.componentPlatforms?.first()?.targetName ?: "unknown")
         else -> "unknown"
     }
+}
+
+fun getNonDefaultLanguageFeatures(module: Module): EnumSet<LanguageFeature> {
+    val languageVersionSettings = module.languageVersionSettings
+    val languageVersion = languageVersionSettings.languageVersion
+    val apiVersion = languageVersionSettings.apiVersion
+    val defaultSettingsForVersion = LanguageVersionSettingsImpl(languageVersion, apiVersion)
+    val nonDefaultFeatures = LanguageFeature.entries.filterTo(EnumSet.noneOf(LanguageFeature::class.java)) { feature ->
+        languageVersionSettings.supportsFeature(feature) && !defaultSettingsForVersion.supportsFeature(feature)
+    }
+    return nonDefaultFeatures
 }
 
 fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {

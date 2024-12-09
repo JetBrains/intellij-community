@@ -6,6 +6,7 @@ MAX_COLWIDTH = 100000
 pl_version_major, pl_version_minor, _ = pl.__version__.split(".")
 pl_version_major, pl_version_minor = int(pl_version_major), int(pl_version_minor)
 COUNT_COL_NAME = "counts" if pl_version_major == 0 and pl_version_minor < 20 else "count"
+CSV_FORMAT_SEPARATOR = '~'
 
 
 def get_type(table):
@@ -32,13 +33,37 @@ def get_column_types(table):
         return TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
 
+def __write_to_csv(table, null_value="null", float_precision=None):
+    def serialize_nested(value, null_value="null", float_precision=None):
+        if value is None:
+            return null_value
+        elif isinstance(value, float) and float_precision is not None:
+            return "{:.{}f}".format(value, float_precision)
+        elif isinstance(value, dict):
+            return "{" + ", ".join("{}: {}".format(k, serialize_nested(v, null_value, float_precision)) for k, v in value.items()) + "}"
+        elif isinstance(value, list):
+            return "[" + ", ".join(serialize_nested(v, null_value, float_precision) for v in value) + "]"
+        else:
+            return str(value)
+
+    lines = []
+    lines.append(CSV_FORMAT_SEPARATOR.join(table.columns))
+    for row in table.rows():
+        line = []
+        for value in row:
+            line.append(serialize_nested(value, null_value, float_precision))
+        lines.append(CSV_FORMAT_SEPARATOR.join(line))
+    return "\n".join(lines)
+
+
+
 # used by pydevd
 def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
     # type: (pl.DataFrame, int, int) -> str
     with __create_config(format):
         if use_csv_serialization:
             float_precision = _get_float_precision(format)
-            return __get_df_slice(table, start_index, end_index).write_csv(null_value = "null", float_precision=float_precision)
+            return __write_to_csv(__get_df_slice(table, start_index, end_index), float_precision=float_precision)
         return table[start_index:end_index]._repr_html_()
 
 
@@ -52,7 +77,7 @@ def display_data_html(table, start, end):
 def display_data_csv(table, start, end):
     # type: (pl.DataFrame, int, int) -> None
     with __create_config():
-        print(__get_df_slice(table, start, end).write_csv(null_value = "null"))
+        print(__write_to_csv(__get_df_slice(table, start, end)))
 
 
 def __get_df_slice(table, start_index, end_index):

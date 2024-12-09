@@ -21,7 +21,7 @@ object DummyJBAccountInfoService : JBAccountInfoService {
     return _idToken
   }
 
-  override fun startLoginSession(loginMode: JBAccountInfoService.LoginMode): JBAccountInfoService.LoginSession {
+  override fun startLoginSession(loginMode: JBAccountInfoService.LoginMode, clientMetadata: Map<String, String>): JBAccountInfoService.LoginSession {
     TODO("Not yet implemented")
   }
 

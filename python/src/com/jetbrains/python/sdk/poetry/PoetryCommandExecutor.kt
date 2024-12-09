@@ -6,7 +6,6 @@ import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -21,12 +20,13 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -81,7 +81,7 @@ fun validatePoetryExecutable(poetryExecutable: Path?): ValidationInfo? =
 /**
  * Runs the configured poetry for the specified Poetry SDK with the associated project path.
  */
-internal fun runPoetry(sdk: Sdk, vararg args: String): String {
+internal fun runPoetry(sdk: Sdk, vararg args: String): Result<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) }
                     ?: throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.project.message"),
                                                   "Poetry", emptyList(), ProcessOutput())
@@ -92,10 +92,10 @@ internal fun runPoetry(sdk: Sdk, vararg args: String): String {
 /**
  * Runs the configured poetry for the specified project path.
  */
-fun runPoetry(projectPath: Path?, vararg args: String): String {
+fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
   val executable = getPoetryExecutable()
-                   ?: throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"), "poetry",
-                                                 emptyList(), ProcessOutput())
+                   ?: return Result.failure(PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"), "poetry",
+                                                 emptyList(), ProcessOutput()))
 
   return runCommand(executable, projectPath, PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"), *args)
 }
@@ -121,10 +121,11 @@ fun setupPoetry(projectPath: Path, python: String?, installPackages: Boolean, in
     python != null -> runPoetry(projectPath, "env", "use", python)
     else -> runPoetry(projectPath, "run", "python", "-V")
   }
-  return runPoetry(projectPath, "env", "info", "-p")
+
+  return runPoetry(projectPath, "env", "info", "-p").getOrThrow()
 }
 
-private fun runCommand(projectPath: Path, command: String, vararg args: String): String {
+private fun runCommand(projectPath: Path, command: String, vararg args: String): Result<String> {
   val commandLine = GeneralCommandLine(listOf(command) + args).withWorkingDirectory(projectPath)
   val handler = CapturingProcessHandler(commandLine)
 
@@ -134,12 +135,12 @@ private fun runCommand(projectPath: Path, command: String, vararg args: String):
   return with(result) {
     when {
       isCancelled ->
-        throw RunCanceledByUserException()
+        Result.failure(RunCanceledByUserException())
       exitCode != 0 ->
-        throw PyExecutionException(PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"), command,
-                                   args.asList(),
-                                   stdout, stderr, exitCode, emptyList())
-      else -> stdout
+        Result.failure(PyExecutionException(PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"), command,
+                                            args.asList(),
+                                            stdout, stderr, exitCode, emptyList()))
+      else -> Result.success(stdout)
     }
   }
 }
@@ -149,15 +150,15 @@ internal fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe 
     withBackgroundProgress(module.project, "$description...", true) {
       val sdk = module.pythonSdk ?: return@withBackgroundProgress
       try {
-        runPoetry(sdk, *args.toTypedArray())
-      }
-      catch (e: ExecutionException) {
-        showSdkExecutionException(sdk, e, PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"))
+        val result = runPoetry(sdk, *args.toTypedArray()).exceptionOrNull()
+        if (result is ExecutionException) {
+          showSdkExecutionException(sdk, result, PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"))
+        }
       }
       finally {
         PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
         sdk.associatedModuleDir?.refresh(true, false)
-        PyPackageManager.getInstance(sdk).refreshAndGetPackages(true)
+        PythonPackageManager.forSdk(module.project, sdk).reloadPackages()
       }
     }
   }
@@ -168,7 +169,7 @@ internal fun detectPoetryEnvs(module: Module?, existingSdkPaths: Set<String>, pr
   return try {
     getPoetryEnvs(path).filter { existingSdkPaths.contains(getPythonExecutable(it)) }.map { PyDetectedSdk(getPythonExecutable(it)) }
   }
-  catch (e: Throwable) {
+  catch (_: Throwable) {
     emptyList()
   }
 }
@@ -191,21 +192,44 @@ inline fun <reified T> syncRunPoetry(
 ): T {
   return try {
     ApplicationManager.getApplication().executeOnPooledThread<T> {
-      try {
-        val result = runPoetry(projectPath, *args)
-        callback(result)
-      }
-      catch (e: PyExecutionException) {
-        defaultResult
-      }
-      catch (e: ProcessNotCreatedException) {
-        defaultResult
-      }
+      val result = runPoetry(projectPath, *args).getOrNull()
+      if (result == null) defaultResult else callback(result)
     }.get(30, TimeUnit.SECONDS)
   }
-  catch (e: TimeoutException) {
+  catch (_: TimeoutException) {
     defaultResult
   }
 }
 
-fun getPythonExecutable(homePath: String): String =  VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(homePath))?.toString() ?: FileUtil.join(homePath, "bin", "python")
+fun getPythonExecutable(homePath: String): String = VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(homePath))?.toString()
+                                                    ?: FileUtil.join(homePath, "bin", "python")
+
+
+/**
+ * Installs a Python package using Poetry.
+ * Runs `poetry add [pkg] [extraArgs]`
+ *
+ * @param [pkg] The name of the package to be installed.
+ * @param [extraArgs] Additional arguments to pass to the Poetry add command.
+ */
+@Internal
+fun poetryInstallPackage(sdk: Sdk, pkg: String, extraArgs: List<String>): Result<String> {
+  val args = listOf("add", pkg) + extraArgs
+  return runPoetry(sdk, *args.toTypedArray())
+}
+
+/**
+ * Uninstalls a Python package using Poetry.
+ * Runs `poetry remove [pkg]`
+ *
+ * @param [pkg] The name of the package to be uninstalled.
+ */
+@Internal
+fun poetryUninstallPackage(sdk: Sdk, pkg: String): Result<String> = runPoetry(sdk, "remove", pkg)
+
+@Internal
+fun poetryReloadPackages(sdk: Sdk): Result<String> {
+  runPoetry(sdk, "update").onFailure { return Result.failure(it) }
+  runPoetry(sdk, "install", "--no-root").onFailure { return Result.failure(it) }
+  return runPoetry(sdk, "show")
+}

@@ -348,6 +348,7 @@
 
     <diff.DiffExtension implementation="com.intellij.vcs.commit.CommitSessionCollector$MyDiffExtension"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.commit.CommitSessionCounterUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.ex.commit.CommitChunkCollector"/>
 
     <advancedSetting id="vcs.annotations.preload" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.process.ignored" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
@@ -367,7 +368,8 @@
 
     <registryKey key="llm.vcs.shelve.title.generation"
                  description="Enables AI generated shelve change list title"
-                 defaultValue="false"/>
+                 defaultValue="true"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -404,7 +406,7 @@
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
     <listener class="com.intellij.vcs.commit.CommitSessionCollector$MyToolWindowManagerListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
-    <listener class="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$MyShelfManagerListener"
+    <listener class="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManagerShelfManagerListener"
               topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
   </projectListeners>
 </idea-plugin>

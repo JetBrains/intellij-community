@@ -166,7 +166,8 @@ internal class WhenToIfIntention :
         val lastEntry = entries.lastOrNull() ?: return false
         return !(entries.any { it != lastEntry && it.isElse }) &&
                 !(entries.size == 1 && lastEntry.isElse) && // 'when' with only 'else' branch is not supported
-                element.subjectExpression !is KtProperty
+                element.subjectExpression !is KtProperty &&
+                entries.none { it.guard != null } // Not implemented: KTIJ-31750
     }
 
     /**

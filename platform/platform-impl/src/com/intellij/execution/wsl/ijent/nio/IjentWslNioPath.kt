@@ -41,6 +41,12 @@ class IjentWslNioPath(
   override fun toAbsolutePath(): IjentWslNioPath = delegate.toAbsolutePath().toIjentWslPath()
 
   override fun toRealPath(vararg options: LinkOption): IjentWslNioPath {
+    when (normalize().toString()) {
+      "\\\\wsl$\\${fileSystem.wslId}\\", "\\\\wsl.localhost\\${fileSystem.wslId}\\" -> {
+        return this
+      }
+    }
+
     val ijentNioPath = fileSystem.provider().toIjentNioPath(this)
     val ijentNioRealPath = ijentNioPath.toRealPath(*options)
     val originalPath = fileSystem.provider().toOriginalPath(ijentNioRealPath)

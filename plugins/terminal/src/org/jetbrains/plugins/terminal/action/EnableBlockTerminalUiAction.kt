@@ -10,14 +10,13 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
-import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.feedback.showBlockTerminalFeedbackNotification
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 
-internal class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.messagePointer("action.Terminal.EnableNewUi.text")) {
+internal class EnableBlockTerminalUiAction : DumbAwareToggleAction() {
   override fun isSelected(e: AnActionEvent): Boolean {
     return Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
   }

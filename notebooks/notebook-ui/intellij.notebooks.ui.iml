@@ -1,5 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="2.0" />
+            <stringArg name="languageVersion" arg="2.0" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+              </args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -8,6 +32,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

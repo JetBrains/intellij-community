@@ -27,6 +27,14 @@
     {
       "id": "XsltVariableShadowing",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XsltUnusedDeclaration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XsltDeclarations",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

@@ -128,8 +128,7 @@
     <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLJsonSchemaIdReferenceContributor"/>
     <completion.contributor language="yaml" implementationClass="org.jetbrains.yaml.YAMLJsonSchemaInCommentCompletionContributor"/>
 
-    <lang.floatingToolbarCustomizer language="yaml"
-                                    implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$MinimalGroup"/>
+    <lang.floatingToolbar language="yaml" minimal="true"/>
 
     <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
     <intentionAction>
@@ -174,6 +173,9 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.yaml.tagRecogniser"
+                    interface="org.jetbrains.yaml.psi.YamlTagRecogniser"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.yaml.customStructureViewFactory"
                     interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory"
                     dynamic="true">

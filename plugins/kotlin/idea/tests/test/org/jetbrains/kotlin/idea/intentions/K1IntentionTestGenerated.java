@@ -3186,6 +3186,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/whenWithEqualityTests.kt");
                 }
 
+                @TestMetadata("whenWithGuards.kt")
+                public void testWhenWithGuards() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/whenToIf/whenWithGuards.kt");
+                }
+
                 @TestMetadata("whenWithIf.kt")
                 public void testWhenWithIf() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/whenWithIf.kt");

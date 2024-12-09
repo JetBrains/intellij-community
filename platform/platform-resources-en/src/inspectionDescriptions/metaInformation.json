@@ -4,7 +4,8 @@
       "id": "MismatchedStringCase",
       "cweIds": [
         597
-      ]
+      ],
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ObjectsEqualsCanBeSimplified",

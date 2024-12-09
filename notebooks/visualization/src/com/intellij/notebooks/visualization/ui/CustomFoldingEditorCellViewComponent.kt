@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorGutterColor
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
@@ -93,21 +92,12 @@ class CustomFoldingEditorCellViewComponent(
       foldingRegion?.dispose()
       val fr = editor.foldingModel.addCustomLinesFolding(
         cell.interval.lines.first, cell.interval.lines.last, object : CustomFoldRegionRenderer {
-        override fun calcWidthInPixels(region: CustomFoldRegion): Int {
-          return mainComponent.width
-        }
-
-        override fun calcHeightInPixels(region: CustomFoldRegion): Int {
-          return mainComponent.height
-        }
-
-        override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
-        }
-
-        override fun calcGutterIconRenderer(region: CustomFoldRegion): GutterIconRenderer? {
-          return gutterActionRenderer
-        }
+        override fun calcWidthInPixels(region: CustomFoldRegion) = mainComponent.width
+        override fun calcHeightInPixels(region: CustomFoldRegion) = mainComponent.height
+        override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) = Unit
+        override fun calcGutterIconRenderer(region: CustomFoldRegion) = gutterActionRenderer
       }) ?: error("Failed to create folding region ${cell.interval.lines}")
+      fr.putUserData(CustomFoldRegion.IMMUTABLE_FOLD_REGION, true)
       foldingRegion = fr
       editor.componentContainer.add(mainComponent, CustomFoldingConstraint(fr, true))
     }

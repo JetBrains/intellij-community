@@ -32,8 +32,8 @@ import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
@@ -64,7 +64,7 @@ public final class VcsUtil {
   }
 
   private static int computeLoadedFileSize() {
-    long result = PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    long result = FileSizeLimit.getDefaultContentLoadLimit();
     try {
       String userLimitKb = System.getProperty(MAX_VCS_LOADED_SIZE_KB);
       if (userLimitKb != null) {

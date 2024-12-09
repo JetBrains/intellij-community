@@ -26,6 +26,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author gregsh
@@ -41,6 +42,7 @@ public abstract class LRUPopupBuilder<T> {
   private T mySelection;
   private Consumer<? super T> myOnChosen;
   private Comparator<? super T> myComparator;
+  private Predicate<? super T> myFilter = it -> true;
   private Iterable<? extends T> myValues;
   private JBIterable<T> myTopValues = JBIterable.empty();
   private JBIterable<T> myMiddleValues = JBIterable.empty();
@@ -129,6 +131,11 @@ public abstract class LRUPopupBuilder<T> {
     return this;
   }
 
+  public @NotNull LRUPopupBuilder<T> withFilter(@Nullable Predicate<? super T> filter) {
+    myFilter = filter;
+    return this;
+  }
+
   public @NotNull LRUPopupBuilder<T> withExtraSpeedSearchNamer(@Nullable Function<? super T, String> function) {
     myExtraSpeedSearchNamer = function;
     return this;
@@ -153,7 +160,7 @@ public abstract class LRUPopupBuilder<T> {
     if (!lru.isEmpty()) {
       lru.sort(Comparator.comparingInt(o -> ids.indexOf(getStorageId(o))));
     }
-    List<T> combinedItems = ContainerUtil.concat(topItems, lru, middleItems, items, bottomItems);
+    List<T> combinedItems = ContainerUtil.concat(topItems, lru, middleItems, items, bottomItems).stream().filter(myFilter).toList();
     T sep1 = ContainerUtil.getOrElse(combinedItems, topItems.size() + lru.size() + middleItems.size(), null);
     T sep2 = ContainerUtil.getOrElse(combinedItems, topItems.size() + lru.size() + middleItems.size() + items.size(), null);
 

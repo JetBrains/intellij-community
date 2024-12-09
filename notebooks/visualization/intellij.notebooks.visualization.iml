@@ -42,6 +42,6 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="library" exported="" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
   </component>
 </module>

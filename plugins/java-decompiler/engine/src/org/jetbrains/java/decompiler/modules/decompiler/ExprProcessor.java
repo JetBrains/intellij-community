@@ -277,8 +277,8 @@ public class ExprProcessor {
       if (offset >= 0) {
         offsets = new BitSet();
         offsets.set(offset);
-        int end_offset = block.getOriginalOffset(i+1);
-        if (end_offset > offset) {
+        int end_offset = block.getOriginalOffset(i + 1);
+        if (end_offset > offset && seq.length() > i + 1) {
           offsets.set(offset, end_offset);
         }
       }

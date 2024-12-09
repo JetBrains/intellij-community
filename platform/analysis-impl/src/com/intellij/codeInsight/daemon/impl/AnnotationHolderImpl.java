@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -213,7 +214,10 @@ final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
   @ApiStatus.Internal
   public void runAnnotatorWithContext(@NotNull PsiElement element) {
     myCurrentElement.set(element);
-    ((Annotator)myAnnotator).annotate(element, this);
+    try {
+      ((Annotator)myAnnotator).annotate(element, this);
+    }
+    catch (IndexNotReadyException ignore) { }
   }
 
   /**
@@ -223,7 +227,10 @@ final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
   @Deprecated(forRemoval = true)
   public void runAnnotatorWithContext(PsiElement element, Annotator annotator) {
     myCurrentElement.set(element);
-    annotator.annotate(element, this);
+    try {
+      annotator.annotate(element, this);
+    }
+    catch (IndexNotReadyException ignore) { }
   }
 
   @ApiStatus.Internal

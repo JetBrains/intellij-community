@@ -4108,6 +4108,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("castFunctionParameter.kt")
+        public void testCastFunctionParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/casts/castFunctionParameter.kt");
+        }
+
         @TestMetadata("castQualifiedArgument.kt")
         public void testCastQualifiedArgument() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/casts/castQualifiedArgument.kt");

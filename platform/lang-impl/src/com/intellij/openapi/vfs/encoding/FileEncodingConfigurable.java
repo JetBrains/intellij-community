@@ -32,8 +32,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
@@ -163,7 +163,7 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   }
 
   private static @NotNull Charset getDefaultCharset() {
-    if(Registry.is("properties.file.encoding.legacy.support", false)) {
+    if(Registry.is("properties.file.encoding.legacy.support", true)) {
       return StandardCharsets.ISO_8859_1;
     } else {
       return StandardCharsets.UTF_8;

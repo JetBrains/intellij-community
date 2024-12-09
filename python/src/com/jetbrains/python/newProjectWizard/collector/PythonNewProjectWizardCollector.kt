@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditio
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.platform.DirectoryProjectGenerator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.EXECUTION_TYPE
@@ -22,13 +23,13 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
     return GROUP
   }
 
-  private val GROUP = EventLogGroup("python.new.project.wizard", 9)
+  private val GROUP = EventLogGroup("python.new.project.wizard", 10)
   const val PROJECT_GENERATED_EVENT_ID = "project.generated"
   private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
   private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
   private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
   private val IS_WSL_CONTEXT = EventFields.Boolean("wsl_context")
-  private val GENERATOR_FIELD = EventFields.Class("generator")
+  private val GENERATOR_FIELD = EventFields.StringValidatedByCustomRule("generator", PyProjectTypeValidationRule::class.java)
   private val DJANGO_ADMIN_FIELD = EventFields.Boolean("django_admin")
   private val ADDITIONAL = createAdditionalDataField(GROUP.id, PROJECT_GENERATED_EVENT_ID)
 
@@ -50,12 +51,12 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   private val USE_EXISTING_VENV_FIX = GROUP.registerEvent("existing.venv")
 
   @JvmStatic
-  fun logPythonNewProjectGenerated(
+  fun <T> logPythonNewProjectGenerated(
     info: InterpreterStatisticsInfo,
     pythonVersion: LanguageLevel,
-    generatorClass: Class<*>,
+    generator: T,
     additionalData: List<EventPair<*>>,
-  ) {
+  ) where T : PyProjectTypeGenerator, T : DirectoryProjectGenerator<*> {
     PROJECT_GENERATED_EVENT.log(
       INTERPRETER_TYPE.with(info.type.value),
       EXECUTION_TYPE.with(info.target.value),
@@ -64,7 +65,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
       INHERIT_GLOBAL_SITE_PACKAGE_FIELD.with(info.globalSitePackage),
       MAKE_AVAILABLE_TO_ALL_PROJECTS.with(info.makeAvailableToAllProjects),
       PREVIOUSLY_CONFIGURED.with(info.previouslyConfigured),
-      GENERATOR_FIELD.with(generatorClass),
+      GENERATOR_FIELD.with(generator.projectTypeForStatistics),
       IS_WSL_CONTEXT.with(info.isWSLContext),
       ADDITIONAL.with(ObjectEventData(additionalData))
     )

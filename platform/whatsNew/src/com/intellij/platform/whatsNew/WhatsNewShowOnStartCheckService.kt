@@ -12,6 +12,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import kotlinx.coroutines.withContext
@@ -64,6 +66,18 @@ internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNew
         if (WhatsNewContentVersionChecker.isNeedToShowContent(content).also { logger.info("Should show What's New: $it") }) {
           val whatsNewAction = environment.findAction()
           if (whatsNewAction != null) {
+            if (!PlatformUtils.isPyCharm() // PY-77622
+                && !PlatformUtils.isPhpStorm() /* WI-79830 */
+                && !application.isUnitTestMode /* unit test env has non-null URL, known fact, not an issue */) {
+              val urls = ExternalProductResourceUrls.getInstance()
+              if (urls.whatIsNewPageUrl != null) {
+                logger.error("ExternalProductResourceUrls::whatIsNewPageUrl is not null. Vision-based What's New is not supported and will be disabled.")
+                // If you need to enable new What's New in your product,
+                // make sure to set ExternalProductResourceUrls::whatIsNewPageUrl to null in your override of that service.
+                return@withContext
+              }
+            }
+
             val activityTracker = ProjectInitializationDiagnosticService.registerTracker(project, "OpenWhatsNewOnStart")
             environment.showWhatsNew(project, whatsNewAction)
             activityTracker.activityFinished()

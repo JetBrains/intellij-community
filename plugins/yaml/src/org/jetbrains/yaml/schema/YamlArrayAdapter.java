@@ -3,6 +3,7 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.YamlTagRecogniser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,11 @@ public final class YamlArrayAdapter implements JsonArrayValueAdapter {
   @Override
   public boolean isArray() {
     PsiElement tag = myArray.getTag();
-    return tag == null || "!!seq".equals(tag.getText());
+    if (tag == null) return true;
+
+    String tagText = tag.getText();
+    return "!!seq".equals(tagText)
+           || ContainerUtil.exists(YamlTagRecogniser.EP_NAME.getExtensionList(), extension -> extension.isRecognizedTag(tagText));
   }
 
   @Override

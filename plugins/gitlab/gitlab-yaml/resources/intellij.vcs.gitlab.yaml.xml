@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.plugins.gitlab.yaml">
+
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.yaml"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <yaml.tagRecogniser implementation="org.jetbrains.plugins.gitlab.yaml.GitlabYamlTagRecogniser"/>
+  </extensions>
+</idea-plugin>

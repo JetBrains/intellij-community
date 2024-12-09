@@ -5,11 +5,10 @@ import com.intellij.ide.plugins.LocalizationPluginHelper.isActiveLocalizationPlu
 import com.intellij.ide.ui.LanguageAndRegionUi
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.diagnostic.logger
-import java.util.Locale
+import java.util.*
 
 internal class LocalizationPluginListener : DynamicPluginListener {
-
-  override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     if (isActiveLocalizationPlugin(pluginDescriptor)) {
       logger<LocalizationPluginListener>().info("[i18n] Language setting was reset to default during unload Localization plugin")
 

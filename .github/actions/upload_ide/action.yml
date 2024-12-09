@@ -1,0 +1,43 @@
+inputs:
+  os:
+    description: 'linux, windows or mac'
+    required: true
+  extension:
+    description: 'tar.gz, exe, sit or dmg'
+    required: true
+  artifacts_dir:
+    description: 'IDE artifacts output directory'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Generate checksums
+      shell: bash
+      # language=bash
+      run: |
+        function checksum() {
+          file="$1"
+          # The output is a line with checksum,
+          # a character indicating type ('*' for --binary, ' ' for --text),
+          # and the supplied file argument
+          if [ "$(uname)" == Darwin ]; then
+            shasum --algorithm 256 --binary "$file" 
+          else
+            sha256sum --binary "$file" 
+          fi > "$file.sha256"
+        }
+        cd "${{inputs.artifacts_dir}}"
+        for it in *.${{inputs.extension}}; do checksum "$it"; done
+        if ls *.${{inputs.extension}}.spdx.json; then
+          for it in *.${{inputs.extension}}.spdx.json; do checksum "$it"; done
+        fi
+    - name: Upload .${{inputs.extension}}
+      uses: actions/upload-artifact@v4.4.3
+      with:
+        name: ${{inputs.os}}-${{inputs.extension}}-unsigned
+        if-no-files-found: 'error'
+        retention-days: 1
+        path: |
+          ${{inputs.artifacts_dir}}/*.${{inputs.extension}}
+          ${{inputs.artifacts_dir}}/*.spdx.json
+          ${{inputs.artifacts_dir}}/*.sha256

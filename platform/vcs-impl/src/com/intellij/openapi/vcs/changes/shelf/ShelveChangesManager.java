@@ -64,6 +64,7 @@ import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Tracer;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.*;
@@ -98,7 +99,7 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWi
 public final class ShelveChangesManager implements PersistentStateComponent<Element> {
   public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf"; //NON-NLS
   @Topic.ProjectLevel
-  public static final Topic<ShelveChangesManagerListener> SHELF_TOPIC = new Topic<>("shelf updates", ShelveChangesManagerListener.class);
+  public static final Topic<ShelveChangesManagerListener> SHELF_TOPIC = new Topic<>("shelf updates", ShelveChangesManagerListener.class, Topic.BroadcastDirection.NONE);
   private static final Logger LOG = Logger.getInstance(ShelveChangesManager.class);
   private static final @NonNls String ELEMENT_CHANGELIST = "changelist";
   private static final @NonNls String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
@@ -109,14 +110,16 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private final ReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
   private final Tracer myTracer = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope);
   private final Project myProject;
+  @NotNull final CoroutineScope coroutineScope;
   private State myState = new State();
   private @NotNull SchemeManager<ShelvedChangeList> schemeManager;
   private ScheduledFuture<?> myCleaningFuture;
   private @Nullable Set<VirtualFile> myShelvingFiles;
 
-  public ShelveChangesManager(@NotNull Project project) {
+  ShelveChangesManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myPathMacroSubstitutor = PathMacroManager.getInstance(project);
     myProject = project;
+    this.coroutineScope = coroutineScope;
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
     schemeManager =
       createShelveSchemeManager(project, vcsConfiguration.USE_CUSTOM_SHELF_PATH ? vcsConfiguration.CUSTOM_SHELF_PATH : null);

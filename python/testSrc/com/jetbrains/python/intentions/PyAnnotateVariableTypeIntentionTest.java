@@ -279,6 +279,33 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  // PY-46546
+  public void testAnnotationGenericBuiltinList() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-46546
+  public void testAnnotationGenericBuiltinTuple() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-76642
+  public void testAnnotationDeclaredTypedDict() {
+    doMultiFileAnnotationTest();
+  }
+
+  // PY-76642
+  public void testAnnotationInferredTypedDict() {
+    // builtin dict and "|" operator will be used
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-76642
+  public void testAnnotationInferredTypedDictPre39() {
+    // typing.Dict and typing.Union will be used
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }

@@ -4,9 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
-import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverMMappedFile;
+import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter;
@@ -15,6 +13,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEn
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverMMappedFile;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -23,7 +23,9 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.util.io.storage.*;
+import com.intellij.util.io.storage.RefCountingContentStorage;
+import com.intellij.util.io.storage.RefCountingContentStorageImpl;
+import com.intellij.util.io.storage.VFSContentStorage;
 import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -529,10 +531,10 @@ public final class PersistentFSLoader {
       //Use larger pages: content storage is usually quite big.
       int pageSize = 64 * IOUtil.MiB;
 
-      if (pageSize <= FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+      if (pageSize <= PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE) {
         //pageSize is an upper limit on record size for AppendOnlyLogOverMMappedFile:
         LOG.warn("ContentStorage.pageSize(=" + pageSize + ") " +
-                 "must be > FileUtilRt.LARGE_FOR_CONTENT_LOADING(=" + FileUtilRt.LARGE_FOR_CONTENT_LOADING + "b), " +
+                 "must be > PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE(=" + PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE + "b), " +
                  "otherwise large content can't fit");
       }
       CompressingAlgo compressionAlgo = switch (FSRecordsImpl.COMPRESSION_ALGO) {

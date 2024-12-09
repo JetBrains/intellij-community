@@ -27,6 +27,18 @@
     {
       "id": "NoButtonGroup",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "OneButtonGroup",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BoundFieldAssignment",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NoLabelFor",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

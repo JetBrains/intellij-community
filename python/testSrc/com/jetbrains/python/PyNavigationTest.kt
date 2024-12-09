@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import com.jetbrains.python.codeInsight.PyTypedDictGoToDeclarationProvider
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -288,6 +289,25 @@ class PyNavigationTest : PyTestCase() {
                                            type Al<caret>ias[T] = dict[str, T]
                                            x: Alias
                                            """)
+  }
+
+  // PY-51687
+  fun testNavigationToTypedDictClass() {
+    myFixture.configureByText(
+      "a.py",
+      "from typing import TypedDict\n" +
+      "\n" +
+      "\n" +
+      "class Foo(TypedDict):\n" +
+      "    bar: int\n" +
+      "    baz: str\n" +
+      "\n" +
+      "\n" +
+      "f = F<caret>oo(bar=1, baz=\"baz\")"
+    )
+    val target = PyTypedDictGoToDeclarationProvider().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertInstanceOf(target, PyClass::class.java)
+    assertEquals("Foo", (target as PyClass).name)
   }
 
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {

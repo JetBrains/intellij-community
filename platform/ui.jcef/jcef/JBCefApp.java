@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
@@ -285,6 +286,11 @@ public final class JBCefApp {
     if (delegate != null) {
       return delegate.isCefSupported();
     }
+
+    if (SystemInfo.isLinux && !isLinuxLibcSupported()) {
+      return false;
+    }
+
     Function<String, Boolean> unsupported = (msg) -> {
       LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
       return false;
@@ -480,14 +486,18 @@ public final class JBCefApp {
 
   private static class MyCefAppHandler extends CefAppHandlerAdapter {
     private final int myGPUCrashLimit;
-    private int myGPUCrashCounter = 0;
+    private int myGPULaunchCounter = 0;
     private boolean myNotificationShown = false;
     private final String myArgs;
 
     MyCefAppHandler(String @Nullable [] args, boolean trackGPUCrashes) {
       super(args);
       myArgs = Arrays.toString(args);
-      myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
+      if (trackGPUCrashes) {
+        myGPUCrashLimit = Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10);
+      } else {
+        myGPUCrashLimit = -1;
+      }
     }
 
     @Override
@@ -520,11 +530,16 @@ public final class JBCefApp {
 
     @Override
     public void onBeforeChildProcessLaunch(String command_line) {
-      if (myGPUCrashLimit >= 0 && command_line != null && command_line.contains("--type=gpu-process")) {
-        if (++myGPUCrashCounter > myGPUCrashLimit && !myNotificationShown) {
+      if (command_line == null || !command_line.contains("--type=gpu-process"))
+        return;
+
+      ++myGPULaunchCounter;
+      if (myGPUCrashLimit >= 0 && myGPULaunchCounter > myGPUCrashLimit) {
+        if (!myNotificationShown) {
           ApplicationManager.getApplication().executeOnPooledThread(() -> SettingsHelper.showNotificationDisableGPU());
           myNotificationShown = true;
         }
+        ApplicationManager.getApplication().executeOnPooledThread(() -> CefApp.getInstance().dispose());
       }
     }
   }
@@ -575,5 +590,28 @@ public final class JBCefApp {
 
   private static @Nullable CefDelegate getActiveDelegate() {
     return CefDelegate.EP.findFirstSafe(CefDelegate::isActive);
+  }
+
+  private static boolean isLinuxLibcSupported() {
+    String libcVersionString;
+    try {
+      libcVersionString = LibC.INSTANCE.gnu_get_libc_version();
+    } catch (UnsatisfiedLinkError e) {
+      LOG.warn("Failed load libc to check the version: " + e.getMessage());
+      return false;
+    }
+
+    Version version = Version.parseVersion(libcVersionString);
+    if (version == null) {
+      LOG.error("Failed to parse libc version: " + libcVersionString);
+      return false;
+    }
+
+    if (version.lessThan(2, 28)) {
+      LOG.warn("Incompatible glibc version: " + libcVersionString);
+      return false;
+    }
+
+    return true;
   }
 }

@@ -1,9 +1,12 @@
 package com.intellij.settingsSync.auth
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger.getInstance
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.SettingsSyncEvents
+import com.intellij.settingsSync.SettingsSyncPromotion
 import com.intellij.ui.JBAccountInfoService
+import java.util.function.Consumer
 
 internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
 
@@ -38,13 +41,27 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
 
   override fun login() {
     if (!isLoggedIn()) {
-      getAccountInfoService()?.invokeJBALogin(
-        {
+      val accountInfoService = getAccountInfoService()
+      val loginMetadata = hashMapOf(
+        "from.settings.sync" to "true"
+      )
+      if (SettingsSyncPromotion.promotionShownThisSession) {
+        loginMetadata["from.settings.sync.promotion"] = "true"
+      }
+      if (accountInfoService != null) {
+        try {
+          val loginSession: JBAccountInfoService.LoginSession? = accountInfoService.startLoginSession(
+            JBAccountInfoService.LoginMode.AUTO, loginMetadata)
+
+          loginSession!!.onCompleted().thenAccept(Consumer<JBAccountInfoService.LoginResult> {
+              SettingsSyncEvents.getInstance().fireLoginStateChanged()
+            })
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
           SettingsSyncEvents.getInstance().fireLoginStateChanged()
-        },
-        {
-          SettingsSyncEvents.getInstance().fireLoginStateChanged()
-        })
+        }
+      }
     }
   }
 

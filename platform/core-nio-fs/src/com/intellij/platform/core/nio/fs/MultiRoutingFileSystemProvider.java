@@ -249,7 +249,7 @@ public final class MultiRoutingFileSystemProvider
 
   @Contract("null -> null; !null -> !null")
   @Override
-  protected @Nullable Path fromDelegatePath(@Nullable Path path) {
+  public @Nullable Path fromDelegatePath(@Nullable Path path) {
     if (path instanceof MultiRoutingFsPath) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.

@@ -61,6 +61,8 @@
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
     <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
+    <scratch.creationHelper language="kotlin"
+                            implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
     <!-- fir-specific -->
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>

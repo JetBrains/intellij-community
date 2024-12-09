@@ -831,23 +831,6 @@ c:com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 - mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - startListening():V
-f:com.intellij.xdebugger.impl.inline.InlineDebugRenderer
-- com.intellij.openapi.editor.EditorCustomElementRenderer
-- sf:INDENT:java.lang.String
-- sf:NAME_VALUE_SEPARATION:java.lang.String
-- <init>(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XDebugSession):V
-- getPresentation():com.intellij.ui.SimpleColoredText
-- s:getXValueDescriptor(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):com.intellij.openapi.util.Pair
-- isCustomNode():Z
-- isErrorMessage():Z
-- onClick(com.intellij.openapi.editor.Inlay,com.intellij.openapi.editor.event.EditorMouseEvent):V
-- updatePresentation():V
-f:com.intellij.xdebugger.impl.inline.InlineDebugRenderer$LinePainter
-- sf:CACHE:com.intellij.openapi.util.Key
-- <init>():V
-- s:computeVariablePresentationWithChanges(java.lang.String,com.intellij.ui.SimpleColoredText,com.intellij.openapi.editor.markup.TextAttributes,I,com.intellij.openapi.project.Project):com.intellij.ui.SimpleColoredText
-- s:createPresentation(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):com.intellij.ui.SimpleColoredText
-- s:getOldValues(com.intellij.openapi.project.Project):java.util.Map
 com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
@@ -860,16 +843,6 @@ f:com.intellij.xdebugger.impl.inline.InlineWatch
 - f:setMarker():Z
 - f:setPosition(com.intellij.xdebugger.XSourcePosition):V
 - f:updatePosition():Z
-c:com.intellij.xdebugger.impl.inline.InlineWatchNodeImpl
-- com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
-- com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
-- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.impl.inline.InlineWatch,com.intellij.xdebugger.frame.XStackFrame):V
-- getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
-- getLink():com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-- getPosition():com.intellij.xdebugger.XSourcePosition
-- getValueContainer():com.intellij.xdebugger.frame.XValue
-- getWatch():com.intellij.xdebugger.impl.inline.InlineWatch
-- nodeRemoved():V
 c:com.intellij.xdebugger.impl.inline.InlineWatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
@@ -1591,6 +1564,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 - getExpression():com.intellij.xdebugger.XExpression
 - getValueContainer():com.intellij.xdebugger.frame.XValue
+- p:shouldUpdateInlineDebuggerData():Z
 c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
@@ -1728,6 +1702,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
 - setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
 - setValueModificationStarted():V
+- p:shouldUpdateInlineDebuggerData():Z
 f:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator
 - <init>():V
 - s:setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode):V

@@ -49,7 +49,8 @@ public final class RainbowColorsInSchemeState {
     }
   }
 
-  private static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme) {
+  @ApiStatus.Internal
+  public static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme) {
     Set<String> languagesWithRainbowHighlighting = getRainbowOnLanguageIds(scheme);
     reportStatistic(languagesWithRainbowHighlighting);
 

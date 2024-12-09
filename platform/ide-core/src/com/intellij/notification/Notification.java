@@ -71,6 +71,7 @@ public class Notification {
   private @Nullable Boolean myImportant;
   private boolean mySuggestionType;
   private boolean myImportantSuggestion;
+  private boolean myRemoveWhenExpired;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
   private boolean myIsShowingPopupSuppressed;
@@ -118,6 +119,16 @@ public class Notification {
   @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setImportantSuggestion(boolean importantSuggestion) {
     myImportantSuggestion = importantSuggestion;
+    return this;
+  }
+
+  public boolean isRemoveWhenExpired() {
+    return myRemoveWhenExpired;
+  }
+
+  @Contract(value = "_ -> this", mutates = "this")
+  public @NotNull Notification setRemoveWhenExpired(boolean removeWhenExpired) {
+    myRemoveWhenExpired = removeWhenExpired;
     return this;
   }
 

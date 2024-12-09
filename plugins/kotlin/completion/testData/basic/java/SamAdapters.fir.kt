@@ -9,6 +9,7 @@ fun foo() {
     runBloc<caret>
 }
 
-// EXIST: { lookupString: "runBlock", itemText: "runBlock", tailText: "(`fun`: Fun<R>) (<root>)", typeText: "R", icon: "Function"}
+// WITH_ORDER
 // EXIST: { lookupString: "runBlock", itemText: "runBlock", tailText: " { `fun`: () -> R } (<root>)", typeText: "R", icon: "Function"}
+// EXIST: { lookupString: "runBlock", itemText: "runBlock", tailText: "(`fun`: Fun<R>) (<root>)", typeText: "R", icon: "Function"}
 // NOTHING_ELSE

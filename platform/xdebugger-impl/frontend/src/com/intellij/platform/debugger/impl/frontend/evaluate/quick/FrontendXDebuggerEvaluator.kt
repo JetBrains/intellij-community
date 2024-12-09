@@ -3,7 +3,6 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.withKernel
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
@@ -21,18 +20,16 @@ private val LOG = logger<FrontendXDebuggerEvaluator>()
 internal class FrontendXDebuggerEvaluator(private val project: Project, private val scope: CoroutineScope, private val evaluatorId: XDebuggerEvaluatorId) : XDebuggerEvaluator() {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     scope.launch(Dispatchers.EDT) {
-      withKernel {
-        try {
-          val evaluation = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorId, expression).await()
-          when (evaluation) {
-            is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluation.valueId))
-            is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
-          }
+      try {
+        val evaluation = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorId, expression).await()
+        when (evaluation) {
+          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluation.valueId))
+          is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
         }
-        catch (e: Exception) {
-          callback.errorOccurred(e.message ?: XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
-          LOG.error(e)
-        }
+      }
+      catch (e: Exception) {
+        callback.errorOccurred(e.message ?: XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
+        LOG.error(e)
       }
     }
   }

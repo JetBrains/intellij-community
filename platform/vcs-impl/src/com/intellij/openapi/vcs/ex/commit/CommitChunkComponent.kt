@@ -208,6 +208,7 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
 
 private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(project) {
   lateinit var state: ChangeListCommitState
+  lateinit var range: LocalRange
 
   init {
     val vcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss.toSet()
@@ -221,7 +222,18 @@ private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(pro
     val committer = LocalChangesCommitter(project, state, commitContext)
     addCommonResultHandlers(sessionInfo, committer)
     committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
+    logCommit()
     committer.runCommit(VcsBundle.message("commit.changes"), false)
+  }
+
+  private fun logCommit() {
+    val message = state.commitMessage
+    val messageLines = message.lines().filter { it.isNotBlank() }
+    val subjectLength = messageLines.getOrNull(0)?.length ?: 0
+
+    val lines = range.line2 - range.line1
+
+    CommitChunkCollector.logCommit(commitContext.isAmendCommitMode, lines, messageLines.size, subjectLength)
   }
 }
 
@@ -256,6 +268,7 @@ private class CommitChunkWorkFlowHandler(
 
   override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.state = getCommitState()
+    workflow.range = rangeProvider()
     return true
   }
 

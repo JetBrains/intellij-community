@@ -137,6 +137,20 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
         assertEquals(HotSwapVisibleStatus.CHANGES_READY, list.last())
         assertEquals(1, hotSwapSession.getChanges().size)
       }
+
+      run {
+        val start = 9
+        assertEquals(1, hotSwapSession.getChanges().size)
+        assertEquals(start, list.size)
+        assertEquals(HotSwapVisibleStatus.CHANGES_READY, list.last())
+        val listener = provider.performHotSwap(hotSwapSession)
+        assertEquals(start + 1, list.size)
+        assertEquals(HotSwapVisibleStatus.IN_PROGRESS, list.last())
+        listener.onFailure()
+        assertEquals(start + 2, list.size)
+        assertEquals(HotSwapVisibleStatus.NO_CHANGES, list.last())
+        assertEquals(1, hotSwapSession.getChanges().size)
+      }
     }
     finally {
       Disposer.dispose(disposable)

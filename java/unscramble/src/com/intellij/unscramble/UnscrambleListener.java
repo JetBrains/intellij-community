@@ -36,21 +36,7 @@ class UnscrambleListener extends ClipboardAnalyzeListener {
 
   @Override
   public boolean canHandle(@NotNull String value) {
-    value = ThreadDumpParser.normalizeText(value);
-    int linesCount = 0;
-    for (String line : value.split("\n")) {
-      line = line.trim();
-      if (line.length() == 0) continue;
-      line = StringUtil.trimEnd(line, "\r");
-      if (STACKTRACE_LINE.matcher(line).matches()) {
-        linesCount++;
-      }
-      else {
-        linesCount = 0;
-      }
-      if (linesCount > 2) return true;
-    }
-    return false;
+    return UnscrambleUtils.isStackTrace(value);
   }
 
   @Override

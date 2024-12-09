@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -16,6 +16,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitConfigurationCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +118,7 @@ public class GitExecutableDetector {
     }
 
     if (fireEvent) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
+      fireExecutableChanged();
     }
 
     if (path != null) return path;
@@ -132,6 +133,11 @@ public class GitExecutableDetector {
       myWslExecutables.clear();
       myWslDistributionsProcessed = false;
     }
+    fireExecutableChanged();
+  }
+
+  static void fireExecutableChanged() {
+    GitConfigurationCache.getInstance().clearCache();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 

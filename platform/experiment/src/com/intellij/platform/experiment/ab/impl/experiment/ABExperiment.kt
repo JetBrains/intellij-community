@@ -17,7 +17,7 @@ import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
 
 fun getABExperimentInstance(): ABExperiment {
-  return ApplicationManager.getApplication().service<ABExperiment>()
+  return ABExperiment.getABExperimentInstance()
 }
 
 /**
@@ -44,9 +44,29 @@ fun getABExperimentInstance(): ABExperiment {
  * @see com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption
  * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperimentGroupStorageService
  */
-@Service
-class ABExperiment {
+interface ABExperiment {
+  companion object {
+    fun getABExperimentInstance(): ABExperiment {
+      val application = ApplicationManager.getApplication() ?: return DummyABExperiment
+      return application.service<ABExperimentImpl>()
+    }
+  }
+  fun isControlExperimentOptionEnabled() : Boolean
 
+
+  fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean
+}
+
+internal object DummyABExperiment : ABExperiment {
+  // is never a control group
+  override fun isControlExperimentOptionEnabled(): Boolean = false
+
+  // always turned on
+  override fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean = true
+}
+
+@Service
+internal class ABExperimentImpl : ABExperiment {
   companion object {
     private val AB_EXPERIMENTAL_OPTION_EP = ExtensionPointName<ABExperimentOptionBean>("com.intellij.experiment.abExperimentOption")
     private val LOG = logger<ABExperiment>()
@@ -71,11 +91,11 @@ class ABExperiment {
     internal fun isPopularIDE() = PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro()
   }
 
-  fun isControlExperimentOptionEnabled(): Boolean {
+  override fun isControlExperimentOptionEnabled(): Boolean {
     return isExperimentOptionEnabled(ABExperimentControlOption::class.java)
   }
 
-  fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean {
+  override fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean {
     return experimentOptionClass.isInstance(getUserExperimentOption())
   }
 

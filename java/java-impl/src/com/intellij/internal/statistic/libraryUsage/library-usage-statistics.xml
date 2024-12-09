@@ -42,6 +42,7 @@
   <technology name="arrowkt" root="arrow"/>
   <technology name="asm" root="org.objectweb.asm"/>
   <technology name="aspectj" root="org.aspectj.lang"/>
+  <technology name="assertj" root="org.assertj"/>
   <technology name="async-http-client" root="org.asynchttpclient"/>
   <technology name="atlas" root="io.qameta.atlas"/>
   <technology name="avro" root="org.apache.avro"/>
@@ -56,16 +57,19 @@
   <technology name="bytebuddy" root="net.bytebuddy"/>
   <technology name="caliban" root="caliban"/>
   <technology name="camunda" root="org.camunda.bpm"/>
+  <technology name="cassandra" root="com.datastax.driver.core"/>
   <technology name="cats" root="cats"/>
   <technology name="cats-effect" root="cats.effect"/>
   <technology name="checkerframework" root="org.checkerframework"/>
   <technology name="chimney" root="chimney"/>
   <technology name="chisel3" root="chisel3"/>
+  <technology name="choco-solver" root="org.chocosolver"/>
   <technology name="circe" root="io.circe"/>
   <technology name="citrus" root="com.consol.citrus"/>
   <technology name="clikt" root="com.github.ajalt.clikt"/>
   <technology name="coherence" root="com.oracle.coherence"/>
   <technology name="consul" root="com.ecwid.consul"/>
+  <technology name="cplex" root="ilog.cplex"/>
   <technology name="corda" root="net.corda"/>
   <technology name="coroutineworker" root="com.autodesk.coroutineworker"/>
   <technology name="crashkios" root="co.touchlab.crashkios"/>
@@ -75,12 +79,15 @@
   <technology name="datasphere-studio" root="com.webank.wedatasphere.dss"/>
   <technology name="debezium" root="io.debezium"/>
   <technology name="decompose" root="com.arkivanov.decompose"/>
+  <technology name="deep-java-library" root="ai.jdl"/>
+  <technology name="deeplearning4j" root="org.deeplearning4j"/>
   <technology name="deequ" root="deequ"/>
   <technology name="delta-core" root="delta"/>
   <technology name="documents4j" root="com.documents4j"/>
   <technology name="dokka" root="org.jetbrains.dokka"/>
   <technology name="doobie" root="doobie"/>
   <technology name="doodle" root="io.nacular.doodle"/>
+  <technology name="dozer" root="com.github.dozermapper"/>
   <technology name="drools" root="org.drools"/>
   <technology name="dropwizard" root="io.dropwizard"/>
   <technology name="easymock" root="org.easymock"/>
@@ -89,6 +96,7 @@
   <technology name="eclipselink" root="org.eclipse.persistence"/>
   <technology name="eclipselink-jpa" root="org.eclipse.persistence.jpa"/>
   <technology name="ehcache" root="org.ehcache"/>
+  <technology name="elasticsearch-client" root="co.elastic.clients"/>
   <technology name="elastic4s" root="elastic4s"/>
   <technology name="elasticjob" root="org.apache.shardingsphere.elasticjob"/>
   <technology name="elasticmq" root="elasticmq"/>
@@ -123,8 +131,10 @@
   <technology name="gson" root="com.google.gson"/>
   <technology name="guava" root="com.google.common.base"/>
   <technology name="guice" root="com.google.inject"/>
+  <technology name="gurobi" root="com.gurobi"/>
   <technology name="gwt" root="com.google.gwt"/>
   <technology name="h2" root="org.h2"/>
+  <technology name="hamcrest" root="org.hamcrest"/>
   <technology name="hazelcast" root="com.hazelcast"/>
   <technology name="helidon" root="io.helidon"/>
   <technology name="hexagonkt" root="com.hexagonkt"/>
@@ -169,6 +179,7 @@
   <technology name="javax-websocket" root="javax.websocket"/>
   <technology name="jbehave" root="org.jbehave"/>
   <technology name="jbpm" root="org.kie.api"/>
+  <technology name="jdbc" root="java.sql"/>
   <technology name="jdbi" root="org.jdbi.v3"/>
   <technology name="jdi-light" root="com.epam.jdi.light"/>
   <technology name="jeecg-boot" root="org.jeecg"/>
@@ -215,6 +226,7 @@
   <technology name="kotlinx-io" root="kotlinx.io"/>
   <technology name="kotlinx-jupyter-ktor-client" root="org.jetbrains.kotlinx.jupyter.ktor.client"/>
   <technology name="kotlinx-jupyter-json-generation" root="org.jetbrains.kotlinx.jupyter.json"/>
+  <technology name="kotlin-logging" root="io.github.oshai.kotlinlogging"/>
   <technology name="kotlinx-serialization" root="kotlinx.serialization"/>
   <technology name="ktlint" root="com.pinterest.ktlint"/>
   <technology name="ktor" root="io.ktor"/>
@@ -222,7 +234,9 @@
   <technology name="kvision" root="io.kvision"/>
   <technology name="lagom" root="com.lightbend.lagom"/>
   <technology name="laminar" root="laminar"/>
+  <technology name="langchain4j" root="dev.langchain4j.model.chat"/>
   <technology name="liquibase" root="liquibase"/>
+  <technology name="log4j1" root="org.apache.log4j"/>
   <technology name="log4j" root="org.apache.logging.log4j"/>
   <technology name="logback" root="ch.qos.logback"/>
   <technology name="lombok" root="lombok"/>
@@ -237,6 +251,9 @@
   <technology name="mockito" root="org.mockito"/>
   <technology name="mockk" root="io.mockk"/>
   <technology name="mockserver" root="org.mockserver"/>
+  <technology name="moddelmapper" root="org.modelmapper"/>
+  <technology name="mongodb" root="com.mongodb"/>
+  <technology name="mongodb-reactive" root="com.mongodb.reactivestreams"/>
   <technology name="moko-mvvm" root="dev.icerock.moko"/>
   <technology name="monix" root="monix.reactive"/>
   <technology name="monocle" root="monocle"/>
@@ -260,6 +277,7 @@
   <technology name="opentelemetry" root="io.opentelemetry"/>
   <technology name="opentracing" root="io.opentracing"/>
   <technology name="optaplanner" root="org.optaplanner"/>
+  <technology name="or-tools" root="com.google.ortools"/>
   <technology name="osgi" root="org.osgi"/>
   <technology name="play" root="play"/>
   <technology name="play-json" root="play.api.libs.json"/>
@@ -366,10 +384,14 @@
   <technology name="swagger-v3" root="io.swagger.v3.oas.annotations"/>
   <technology name="tapestry5" root="org.apache.tapestry5"/>
   <technology name="tapir" root="sttp.tapir"/>
+  <technology name="tensorflow" root="org.tensorflow"/>
   <technology name="testcontainers" root="org.testcontainers"/>
   <technology name="testng" root="org.testng"/>
   <technology name="thymeleaf" root="org.thymeleaf"/>
+  <technology name="timefold" root="ai.timefold.solver"/>
   <technology name="tornadofx" root="tornadofx"/>
+  <technology name="torque" root="org.apache.torque"/>
+  <technology name="truth" root="com.google.common.truth"/>
   <technology name="twitter-server" root="com.twitter.server"/>
   <technology name="twitter-util" root="com.twitter.util"/>
   <technology name="unfiltered" root="unfiltered"/>

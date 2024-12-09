@@ -47,6 +47,7 @@ class LogicalStructureAssembledModel<T> private constructor(
       }
       result.add(Pair(provider, children))
     }
+    result.sortBy { if (it.first is PropertyElementProvider<*, *>) 0 else 1 }
     return result
   }
 

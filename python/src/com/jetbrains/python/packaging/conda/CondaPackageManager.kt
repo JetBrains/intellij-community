@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,7 +17,6 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.pip.PipBasedPackageManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -29,64 +28,56 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
-
-  @Volatile
-  override var installedPackages: List<CondaPackage> = emptyList()
-    private set
-
   override val repositoryManager: CondaRepositoryManger = CondaRepositoryManger(project, sdk)
 
-  override suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
-    return if (specification is CondaPackageSpecification) {
-      runPackagingOperationOrShowErrorDialog(sdk, message("python.new.project.install.failed.title", specification.name), specification.name) {
-        runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name))
-        refreshPaths()
-        reloadPackages()
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
+    if (specification is CondaPackageSpecification) {
+      try {
+        Result.success(runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name)))
+      }
+      catch (ex: ExecutionException) {
+        Result.failure(ex)
       }
     }
-    else return super.installPackage(specification, emptyList<String>())
-  }
+    else {
+      super.installPackageCommand(specification, options)
+    }
 
-  override suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
-    return if (pkg is CondaPackage && !pkg.installedWithPip) {
-      runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.operation.failed.title")) {
-        runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name))
-        refreshPaths()
-        reloadPackages()
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> =
+    if (specification is CondaPackageSpecification) {
+      try {
+        Result.success(runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name)))
+      }
+      catch (ex: ExecutionException) {
+        Result.failure(ex)
       }
     }
-    else super.uninstallPackage(pkg)
-  }
+    else {
+      super.updatePackageCommand(specification)
+    }
 
-  override suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
-    return if (specification is CondaPackageSpecification) {
-      runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.notification.update.failed", specification.name), specification.name) {
-        runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name))
-        refreshPaths()
-        reloadPackages()
+
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> =
+    if (pkg is CondaPackage && !pkg.installedWithPip) {
+      try {
+        Result.success(runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name)))
+      }
+      catch (ex: ExecutionException) {
+        Result.failure(ex)
       }
     }
-    else super.updatePackage(specification)
-  }
-
-  override suspend fun reloadPackages(): Result<List<PythonPackage>> {
-    return withContext(Dispatchers.IO) {
-      val result = runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.operation.failed.title")) {
-        val output = runConda("list", emptyList(), message("conda.packaging.list.progress"))
-        Result.success(parseCondaPackageList(output))
-      }
-      if (result.isFailure) return@withContext result
-
-      installedPackages = result.getOrThrow()
-
-      ApplicationManager.getApplication()
-        .messageBus
-        .syncPublisher(PACKAGE_MANAGEMENT_TOPIC)
-        .packagesChanged(sdk)
-
-      result
+    else {
+      super.uninstallPackageCommand(pkg)
     }
-  }
+
+  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> =
+    try {
+      val output =runConda("list", emptyList(), message("conda.packaging.list.progress"))
+      Result.success(parseCondaPackageList(output))
+    }
+    catch (ex: ExecutionException) {
+      Result.failure(ex)
+    }
 
   private fun parseCondaPackageList(text: String): List<CondaPackage> {
     return text.lineSequence()

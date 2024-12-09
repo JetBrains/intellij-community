@@ -276,7 +276,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
-    javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
+    if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
+      javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
+    }
     javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
 
     final StringBuilder buf = new StringBuilder();

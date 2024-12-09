@@ -4,7 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.model.*
+import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel
+import com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
+import com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
+import com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -54,7 +57,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   private val changesFetchFlow = computationStateFlow(mergeRequest.changes, GitLabMergeRequestChanges::loadRevisionsAndParseChanges)
   private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
     .map {
-      { changes: ListSelection<RefComparisonChange> ->
+      { changes: List<RefComparisonChange> ->
         RefComparisonChangesSorter.Grouping(project, it).sort(changes)
       }
     }

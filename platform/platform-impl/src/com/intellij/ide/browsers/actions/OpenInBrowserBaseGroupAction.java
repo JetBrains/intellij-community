@@ -85,7 +85,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     return ActionUpdateThread.BGT;
   }
 
-  private static boolean hasLocalBrowser() {
+  public static boolean hasLocalBrowser() {
     return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled", true);
   }
 
@@ -95,7 +95,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     }
   }
 
-  public static final class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {
+  public static class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {
     public OpenInBrowserEditorContextBarGroupAction() {
       super(false);
     }

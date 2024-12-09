@@ -18,7 +18,7 @@ class KotlinReadWriteAccessDetector : ReadWriteAccessDetector() {
         val INSTANCE = KotlinReadWriteAccessDetector()
     }
 
-    private val javaReadWriteAccessDetector = JavaReadWriteAccessDetector()
+    private val javaReadWriteAccessDetector by lazy { EP_NAME.extensionList.filterIsInstance<JavaReadWriteAccessDetector>().first() }
 
     override fun isReadWriteAccessible(element: PsiElement) = element is KtVariableDeclaration || element is KtParameter || javaReadWriteAccessDetector.isReadWriteAccessible(element)
 

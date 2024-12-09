@@ -1417,7 +1417,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                    boolean showCodePreview,
                                    int dataSize) {
 
-    if (Registry.is("find.usages.disable.smart.size", false)) return;
+    if (Registry.is("find.usages.disable.smart.size", false)) {
+      calcMaxWidth(table);
+      return;
+    }
 
     if (isCodeWithMeClientInstance(popup)) return;
 

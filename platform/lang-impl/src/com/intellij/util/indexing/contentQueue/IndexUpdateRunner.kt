@@ -38,6 +38,7 @@ import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
@@ -131,7 +132,7 @@ class IndexUpdateRunner(
       val filesIndexed = AtomicInteger(0)
       val progressReportingJob = launch {
         while (true) {
-          delay(200)
+          delay(50)
           val currentlyIndexedFile = currentlyIndexedFileRef.get()
           if (currentlyIndexedFile != null) {
             val presentableLocation = getPresentableLocationBeingIndexed(project, currentlyIndexedFile)
@@ -194,7 +195,7 @@ class IndexUpdateRunner(
                     processRequestTask(fileIndexingRequest)
                   }
 
-                ensureActive()
+                yield()
               }
             }
             //FIXME RC: for profiling, remove afterwards

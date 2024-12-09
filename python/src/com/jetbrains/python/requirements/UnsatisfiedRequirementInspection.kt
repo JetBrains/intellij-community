@@ -155,7 +155,10 @@ class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickFix {
       val name = requirement.displayName
 
       project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
-        manager.installPackage(manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch, emptyList<String>())
+        val specification = manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch
+        runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
+          manager.installPackage(specification, emptyList<String>())
+        }
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }
     }
@@ -200,7 +203,9 @@ class InstallProjectAsEditableQuickfix : LocalQuickFix {
       runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.pyproject.install.self.error"), null) {
         manager.runPackagingTool("install", listOf("-e", "."), PyBundle.message("python.pyproject.install.self.as.editable.progress"))
         manager.refreshPaths()
-        manager.reloadPackages()
+        runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+          manager.reloadPackages()
+        }
       }
       DaemonCodeAnalyzer.getInstance(project).restart(file)
     }

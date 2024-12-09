@@ -17,6 +17,7 @@ import com.intellij.util.Java11Shim
 import com.intellij.util.ThreeState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
@@ -647,11 +648,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         try {
           (listener as ExtensionPointAdapter<T>).extensionListChanged()
         }
-        catch (e: ProcessCanceledException) {
-          throw e
+        catch (ce: CancellationException) {
+          LOG.warn("Cancellation while notifying `${listener}`", ce)
         }
         catch (e: Throwable) {
-          LOG.error(e)
+          LOG.error("Exception while notifying `$listener`", e)
         }
       }
       else {
@@ -671,11 +672,11 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
               }
             }
           }
-          catch (e: ProcessCanceledException) {
-            throw e
+          catch (ce: CancellationException) {
+            LOG.warn("Cancellation while notifying `$listener`", ce)
           }
           catch (e: Throwable) {
-            LOG.error(e)
+            LOG.error("Exception while notifying `$listener`", e)
           }
         }
       }

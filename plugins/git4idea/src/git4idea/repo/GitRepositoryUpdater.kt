@@ -148,6 +148,7 @@ internal class GitRepositoryUpdater(
       BackgroundTaskUtil.syncPublisher(repository.project, GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository)
     }
     if (configChanged) {
+      GitProjectConfigurationCache.getInstance(repository.project).clearForRepo(repository)
       BackgroundTaskUtil.syncPublisher(repository.project, GitConfigListener.TOPIC).notifyConfigChanged(repository)
     }
     if (indexChanged || externallyCommitted || headMoved || headChanged || currentBranchChanged || gitignoreChanged) {

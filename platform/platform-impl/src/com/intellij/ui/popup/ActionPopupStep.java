@@ -217,6 +217,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
+  public @Nullable Icon getSecondaryIconFor(PopupFactoryImpl.@NotNull ActionItem item) {
+    return item.getClientProperty(ActionUtil.SECONDARY_ICON);
+  }
+
+  @Override
   public ListSeparator getSeparatorAbove(final PopupFactoryImpl.ActionItem value) {
     return value.isPrependWithSeparator() ? new ListSeparator(value.getSeparatorText()) : null;
   }

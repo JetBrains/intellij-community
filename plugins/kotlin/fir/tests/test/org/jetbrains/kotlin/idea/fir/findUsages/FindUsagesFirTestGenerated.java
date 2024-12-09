@@ -1999,6 +1999,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             public void testJKFieldUsages() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsages.0.java");
             }
+
+            @TestMetadata("JKFieldUsagesReadWriteAccess.0.java")
+            public void testJKFieldUsagesReadWriteAccess() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsagesReadWriteAccess.0.java");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

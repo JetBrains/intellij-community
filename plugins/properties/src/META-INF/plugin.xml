@@ -153,6 +153,8 @@
     <completion.contributor language="Properties"
                             implementationClass="com.intellij.lang.properties.providers.slf4j.SimpleLoggerPropertiesCompletionContributor"/>
     <properties.implicitPropertyUsageProvider implementation="com.intellij.lang.properties.providers.slf4j.SimpleLoggerImplicitPropertiesUsageProvider"/>
+
+    <lang.floatingToolbar language="Properties" minimal="true"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>

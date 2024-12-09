@@ -17,7 +17,7 @@ internal object NotificationsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("notifications", 68)
+  val GROUP: EventLogGroup = EventLogGroup("notifications", 69)
 
   @JvmField
   val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)

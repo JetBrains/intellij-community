@@ -19,6 +19,10 @@
     {
       "id": "MavenParentMissedVersionInspection",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MavenPropertyInParent",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

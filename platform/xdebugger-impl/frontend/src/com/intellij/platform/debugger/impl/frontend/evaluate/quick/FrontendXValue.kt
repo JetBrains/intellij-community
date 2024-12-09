@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
@@ -68,9 +67,7 @@ private fun Obsolescent.childCoroutineScope(name: String): CoroutineScope {
 private class FrontendXValueDisposer(project: Project, val cs: CoroutineScope) {
   fun dispose(xValueId: XValueId) {
     cs.launch(Dispatchers.IO) {
-      withKernel {
-        XDebuggerEvaluatorApi.getInstance().disposeXValue(xValueId)
-      }
+      XDebuggerEvaluatorApi.getInstance().disposeXValue(xValueId)
     }
   }
 }

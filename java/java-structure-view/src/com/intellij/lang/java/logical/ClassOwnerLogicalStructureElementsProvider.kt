@@ -13,6 +13,7 @@ class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvid
     val result = mutableListOf<Any>()
     var convertedAtLeastOne = false
     for (psiClass in parent.classes) {
+      if (!psiClass.isValid) continue
       val convertedModels = LogicalStructureElementsProvider.getProviders(psiClass)
         .filterIsInstance<ConvertElementsProvider<PsiClass, Any>>()
         .map { it.convert(psiClass) }

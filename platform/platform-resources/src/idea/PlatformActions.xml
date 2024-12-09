@@ -1726,12 +1726,6 @@
     <action id="RemoveMainToolbarActionsAction" class="com.intellij.openapi.wm.impl.headertoolbar.RemoveMainToolbarActionsAction"
             internal="true"/>
 
-    <group id="Search.Everywhere.Preview.Close">
-      <action id="search.everywhere.preview.close"
-              class="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview"
-              icon="AllIcons.Actions.CloseDarkGrey"/>
-    </group>
-
     <action id="plugins.autoupdate.repository.view" class="com.intellij.openapi.application.PluginsAutoUpdateRepositoryViewAction"
             internal="true"/>
 

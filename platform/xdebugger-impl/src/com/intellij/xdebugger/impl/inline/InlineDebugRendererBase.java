@@ -47,6 +47,9 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
   protected int myRemoveXCoordinate = Integer.MAX_VALUE;
   protected int myTextStartXCoordinate;
   protected boolean isHovered = false;
+  protected String specialRenderId = "";
+
+  public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {}
 
   @Override
   public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
@@ -253,4 +256,9 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
 
   @RequiresBackgroundThread
   abstract protected boolean calculateIsInExecutionPoint();
+
+  @ApiStatus.Internal
+  public String getSpecialRenderId() {
+    return specialRenderId;
+  }
 }

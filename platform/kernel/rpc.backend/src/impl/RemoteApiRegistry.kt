@@ -67,8 +67,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
            ?: throw IllegalStateException("No remote API found for $descriptor")
   }
 
-  override fun resolve(serviceId: InstanceId): ServiceImplementation {
+  override fun resolve(serviceId: InstanceId): ServiceImplementation? {
     return remoteApis[serviceId.id]
-           ?: throw IllegalStateException("No remote API found for $serviceId")
   }
 }

@@ -967,6 +967,7 @@ f:com.intellij.openapi.util.SystemInfo
 - sf:isMacOSCatalina:Z
 - sf:isMacOSLeopard:Z
 - sf:isMacOSMonterey:Z
+- sf:isMacOSSequoia:Z
 - sf:isMacOSSonoma:Z
 - sf:isMacOSVentura:Z
 - sf:isMacSystemMenu:Z
@@ -2125,6 +2126,9 @@ com.intellij.util.Consumer
 - java.util.function.Consumer
 - accept(java.lang.Object):V
 - a:consume(java.lang.Object):V
+f:com.intellij.util.CoroutineScopeKt
+- sf:asDisposable(kotlinx.coroutines.CoroutineScope):com.intellij.openapi.Disposable
+- sf:attachAsChildTo(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 f:com.intellij.util.DefaultBundleService
 - <init>():V
 - compute(java.util.function.Supplier):java.lang.Object

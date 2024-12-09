@@ -194,6 +194,7 @@ private suspend fun doRunTestBuild(context: suspend () -> BuildContext, traceSpa
         if (jetBrainsClientMainModule != null && context.generateRuntimeModuleRepository) {
           val softly = SoftAssertions()
           RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(jetBrainsClientMainModule, ProductMode.FRONTEND, context, softly)
+          checkKeymapPluginsAreBundledWithFrontend(jetBrainsClientMainModule, context, softly)
           softly.assertAll()
         }
       }
@@ -246,6 +247,23 @@ private suspend fun doRunTestBuild(context: suspend () -> BuildContext, traceSpa
   error?.let {
     throw it
   }
+}
+
+private suspend fun checkKeymapPluginsAreBundledWithFrontend(
+  jetBrainsClientMainModule: String,
+  context: BuildContext,
+  softly: SoftAssertions,
+) {
+  val productModules = context.getOriginalModuleRepository().loadProductModules(jetBrainsClientMainModule, ProductMode.FRONTEND)
+  val keymapPluginModulePrefix = "intellij.keymap."
+  val keymapPluginsBundledWithFrontend = productModules.bundledPluginModuleGroups
+    .map { it.mainModule.moduleId.stringId }
+    .filter { it.startsWith(keymapPluginModulePrefix) }
+  val keymapPluginsBundledWithMonolith = context.getBundledPluginModules().filter { it.startsWith(keymapPluginModulePrefix) }
+  softly.assertThat(keymapPluginsBundledWithFrontend)
+    .describedAs("Frontend variant of ${context.applicationInfo.productNameWithEdition} must bundle the same keymap plugins as the full IDE for consistency. " +
+                 "Change 'bundled-plugins' in 'META-INF/$jetBrainsClientMainModule/product-modules.xml' to fix this.")
+    .containsExactlyInAnyOrder(*keymapPluginsBundledWithMonolith.toTypedArray())
 }
 
 private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessages) {

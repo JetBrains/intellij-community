@@ -392,8 +392,18 @@ public class GradleExtensionsSettings {
   }
 
   public static class GradleTask implements TypeAware {
-    private final @NotNull String name;
-    private final @NotNull String typeFqn;
+
+    /**
+     * Do not access the field directly, use {@link GradleTask#getName()} instead.
+     */
+    @ApiStatus.Internal
+    public final @NotNull String name;
+
+    /**
+     * Do not access the field directly, use {@link GradleTask#getTypeFqn()} instead.
+     */
+    @ApiStatus.Internal
+    public final @NotNull String typeFqn;
 
     public GradleTask(@NotNull String name, @NotNull String typeFqn) {
       this.name = name;

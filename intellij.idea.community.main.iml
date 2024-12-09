@@ -222,5 +222,6 @@
     <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.gitlab.yaml" scope="RUNTIME" />
   </component>
 </module>

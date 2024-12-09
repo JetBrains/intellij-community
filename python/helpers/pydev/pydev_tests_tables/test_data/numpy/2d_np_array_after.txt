@@ -1,7 +1,0 @@
-<class 'numpy.ndarray'>
-__pydev_val__
-3
-__pydev_val__
-'<table class="dataframe">\n<thead>\n<tr style="text-align: right;">\n<th></th>\n<th>0</th>\n<th>1</th>\n<th>2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<th>0</th>\n<td>1</td>\n<td>2</td>\n<td>3</td>\n</tr>\n<tr>\n<th>1</th>\n<td>4</td>\n<td>5</td>\n<td>6</td>\n</tr>\n<tr>\n<th>2</th>\n<td>7</td>\n<td>8</td>\n<td>9</td>\n</tr>\n</tbody>\n</table>\n'
-__pydev_val__
-int64__pydev_table_column_type_val__int64__pydev_table_column_type_val__int64__pydev_table_column_type_val__int64

@@ -32,6 +32,7 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
             val bindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
             if (bindingContext == BindingContext.EMPTY || element.isUsedAsExpression(bindingContext)) return null
         }
+        if (element.entries.any { it.guard != null }) return null // when guards is a K2-only feature
         return element.whenKeyword.textRange
     }
 

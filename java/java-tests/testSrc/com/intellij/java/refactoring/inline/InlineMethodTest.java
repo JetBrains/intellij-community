@@ -82,6 +82,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testGenericArrayCreation() { doTest(); }
   public void testNoRedundantCast() { doTest(); }
   public void testFieldInitializer() { doTest(); }
+  public void testStaticInterfaceMethod() { doTest(); }
 
   public void testMethodCallInOtherAnonymousOrInner() { doTest(); }
 
@@ -578,6 +579,9 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testAndChain() { doTest(); }
   public void testAndChainLambda() { doTest(); }
   public void testAndChainLambdaSingleLine() { doTest(); }
+
+  public void testInlineDoubleCall() { doTest(); }
+  public void testInlineNestedCall() { doTest(); }
 
   public void testTernaryBranch() { doTest(); }
   public void testTernaryBranchCollapsible() { doTest(); }

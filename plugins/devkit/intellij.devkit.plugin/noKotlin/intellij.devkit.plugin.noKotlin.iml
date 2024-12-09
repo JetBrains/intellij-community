@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.stacktrace" scope="RUNTIME" />
   </component>
 </module>

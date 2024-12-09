@@ -4926,6 +4926,7 @@ e:com.intellij.openapi.ui.popup.JBPopupFactory$ActionSelectionAid
 - s:values():com.intellij.openapi.ui.popup.JBPopupFactory$ActionSelectionAid[]
 com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.ListPopupStep
+- getSecondaryIconFor(java.lang.Object):javax.swing.Icon
 - getSecondaryTextFor(java.lang.Object):java.lang.String
 - a:getTooltipTextFor(java.lang.Object):java.lang.String
 - onChosen(java.lang.Object,Z,I):com.intellij.openapi.ui.popup.PopupStep
@@ -5179,8 +5180,6 @@ f:com.intellij.openapi.ui.validation.ValidationUtilKt
 - sf:validationErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 - sf:validationErrorIf(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:validationErrorIf(java.lang.String,kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
-- sf:validationFileErrorFor(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
-- sf:validationFileErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 - sf:validationPathErrorFor(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:validationPathErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 c:com.intellij.openapi.util.DefaultModificationTracker

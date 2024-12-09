@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.block.history
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -20,8 +22,16 @@ internal class CommandSearchPresenter(
     val lookup = CommandHistoryUtil.createLookup(project, editor, command, history.asReversed())
     lookup.putUserData(IS_COMMAND_SEARCH_LOOKUP_KEY, true)
 
+    lookup.addLookupListener(object : LookupListener {
+      override fun lookupCanceled(event: LookupEvent) {
+        project.messageBus.syncPublisher(CommandSearchListener.TOPIC).commandSearchAborted(promptModel)
+      }
+    })
+
     if (lookup.showLookup()) {
       lookup.ensureSelectionVisible(false)
+
+      project.messageBus.syncPublisher(CommandSearchListener.TOPIC).commandSearchShown(promptModel)
     }
   }
 

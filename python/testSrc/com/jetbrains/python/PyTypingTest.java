@@ -5959,6 +5959,28 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-77168
+  public void testReferencingImportedTypeFromUnmatchedVersionGuard() {
+    doTest("Literal[42]", """
+      from typing import Literal
+      import sys
+      
+      if sys.version_info < (3, 0):
+          expr: Literal[42]
+      """);
+  }
+
+  // PY-77168
+  public void testReferencingTopLevelTypeFromUnmatchedVersionGuard() {
+    doTest("int", """
+      import sys
+      
+      type Alias = int
+      if sys.version_info < (3, 0):
+          expr: Alias
+      """);
+  }
+  
   // PY-76243
   public void testGenericClassDeclaredInStubPackage() {
     runWithAdditionalClassEntryInSdkRoots("types/" + getTestName(false) + "/site-packages", () -> {
@@ -6047,6 +6069,55 @@ public class PyTypingTest extends PyTestCase {
           payload_length: MyDescriptor[int]
       
       My<caret>Class()
+      """);
+  }
+
+  // PY-36416
+  public void testReturnTypeOfNonAnnotatedAsyncOverride() {
+    doTest("Coroutine[Any, Any, str]", """
+      class Base:
+          async def get(self) -> str:
+              ...
+      
+      class Specific(Base):
+          async def get(self):
+              ...
+      
+      expr = Specific().get()
+      """);
+  }
+
+  // PY-40458
+  public void testReturnTypeOfNonAnnotatedAsyncOverrideOfNonAsyncMethod() {
+    doTest("AsyncGenerator[int, Any]", """
+      from typing import AsyncIterator, TypeGuard, Protocol
+      
+      class Base(Protocol):
+          def get(self) -> AsyncIterator[int]:
+              ...
+      
+      class Specific(Base):
+          async def get(self):
+              yield 42
+      
+      expr = Specific().get()
+      """);
+  }
+
+  // PY-40458
+  public void testReturnTypeOfNonAnnotatedAsyncOverrideOfAsyncGeneratorMethod() {
+    doTest("AsyncIterator[int]", """
+      from typing import AsyncIterator, TypeGuard, Protocol
+      
+      class Base(Protocol):
+          async def get(self) -> AsyncIterator[int]:
+              if False: yield
+      
+      class Specific(Base):
+          async def get(self):
+              yield 42
+      
+      expr = Specific().get()
       """);
   }
 

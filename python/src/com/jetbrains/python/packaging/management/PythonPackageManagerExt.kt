@@ -18,11 +18,13 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.net.HttpConfigurable
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.normalizePackageName
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -36,7 +38,9 @@ import kotlin.math.min
 
 fun PythonPackageManager.launchReload() {
   (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
-    reloadPackages()
+    runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+      reloadPackages()
+    }
   }
 }
 

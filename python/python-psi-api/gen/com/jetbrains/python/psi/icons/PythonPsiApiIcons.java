@@ -26,4 +26,5 @@ public final class PythonPsiApiIcons {
   /** 16x16 */ public static final @NotNull Icon PropertyGetter = load("icons/com/jetbrains/python/psi/propertyGetter.svg", 1495604199, 2);
   /** 16x16 */ public static final @NotNull Icon PropertySetter = load("icons/com/jetbrains/python/psi/propertySetter.svg", -1451064081, 2);
   /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python/psi/python.svg", 2008591516, 8);
+  /** 32x32 */ public static final @NotNull Icon Python_32x32 = load("icons/com/jetbrains/python/psi/python@32x32.svg", -2111231783, 2);
 }

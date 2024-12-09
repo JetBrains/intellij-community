@@ -187,6 +187,62 @@
     {
       "id": "IncorrectCancellationExceptionHandling",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UElementAsPsi",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ListenerImplementationMustNotBeDisposable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExtensionClassShouldBeFinalAndNonPublic",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JComponentDataProvider",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ApplicationServiceAsStaticFinalFieldOrProperty",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "QuickFixGetFamilyNameViolation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UndesirableClassUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CallingMethodShouldBeRequiresBlockingContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonDefaultConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnknownIdInMetaInformation",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ThreadingConcurrency",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnspecifiedActionsPlace",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectServiceRetrieving",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StatefulEp",
+      "codeQualityCategory": "Performance"
     }
   ]
 }

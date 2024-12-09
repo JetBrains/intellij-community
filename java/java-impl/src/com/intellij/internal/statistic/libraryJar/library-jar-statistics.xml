@@ -14,6 +14,7 @@
   <technology name="apache-flink" class="org.apache.flink.util.Collector"/>
   <technology name="apache-http" class="org.apache.http.HttpEntity"/>
   <technology name="apache-ignite" class="org.apache.ignite.Ignite"/>
+  <technology name="apache-pulsar" class="org.apache.pulsar.client.api.PulsarClient"/>
   <technology name="apache-rocketmq" class="org.apache.rocketmq.common.BrokerConfig"/>
   <technology name="apache-shiro" class="org.apache.shiro.authc.AuthenticationInfo"/>
   <technology name="apache-spark" class="org.apache.spark.SparkConf"/>
@@ -24,25 +25,34 @@
   <technology name="arquillian" class="org.jboss.arquillian.container.test.api.Deployment"/>
   <technology name="arrowkt" class="arrow.core.Either"/>
   <technology name="aspectj" class="org.aspectj.lang.annotation.Aspect"/>
+  <technology name="assertj" class="org.assertj.core.api.Assertions"/>
   <technology name="atlas" class="io.qameta.atlas.core.Atlas"/>
   <technology name="aws-sqs" class="com.amazonaws.services.sqs.AmazonSQS"/>
   <technology name="axonframework" class="org.axonframework.commandhandling.CommandHandler"/>
   <technology name="blade" class="com.blade.Blade"/>
   <technology name="breeze" class="breeze.linalg.DenseVector"/>
   <technology name="camunda-bpm" class="org.camunda.bpm.model.bpmn.Bpmn"/>
+  <technology name="cassandra" class="com.datastax.driver.core.Session"/>
   <technology name="cats" class="cats.Functor"/>
   <technology name="checkerframework" class="org.checkerframework.checker.nullness.qual.Nullable"/>
+  <technology name="choco-solver" class="org.chocosolver.solver.Model"/>
   <technology name="citrus" class="com.consol.citrus.Citrus"/>
   <technology name="coherence" class="com.oracle.coherence.persistence.PersistentStore"/>
   <technology name="consul" class="com.ecwid.consul.v1.ConsulClient"/>
+  <technology name="cplex" class="ilog.cplex.IloCplex"/>
   <technology name="cucumber" class="io.cucumber.java.Before"/>
   <technology name="dagger" class="dagger.Provides"/>
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
+  <technology name="db2" class="com.ibm.db2.jcc.DB2Driver"/>
   <technology name="debezium" class="io.debezium.engine.ChangeEvent"/>
+  <technology name="deep-java-library" class="ai.jdl.Application"/>
+  <technology name="deeplearning4j" class="org.deeplearning4j.nn.conf.MultiLayerConfiguration"/>
+  <technology name="dozer" class="com.github.dozermapper.DozerBeanMapper"/>
   <technology name="drools" class="org.drools.core.spi.KnowledgeHelper"/>
   <technology name="dropwizard" class="io.dropwizard.Application"/>
   <technology name="easymock" class="org.easymock.Mock"/>
   <technology name="eclipselink-jpa" class="org.eclipse.persistence.jpa.PersistenceProvider"/>
+  <technology name="elasticsearch" class="co.elastic.clients.elasticsearch.ElasticsearchClient"/>
   <technology name="errorprone" class="com.google.errorprone.annotations.Immutable"/>
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
@@ -67,7 +77,10 @@
   <technology name="gson" class="com.google.gson.Gson"/>
   <technology name="guava" class="com.google.common.base.Optional"/>
   <technology name="guice" class="com.google.inject.Provider"/>
+  <technology name="gurobi" class="com.gurobi.gurobi.GRBEnv"/>
   <technology name="gwt" class="com.google.gwt.core.client.EntryPoint"/>
+  <technology name="h2" class="org.h2.Driver"/>
+  <technology name="hamcrest" class="org.hamcrest.Matchers"/>
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
   <technology name="hazelcast-jet" class="com.hazelcast.jet.pipeline.Pipeline"/>
   <technology name="helidon" class="io.helidon.webserver.WebServer"/>
@@ -110,6 +123,7 @@
   <technology name="jbpm" class="org.kie.api.runtime.manager.RuntimeEngine"/>
   <technology name="jdbi" class="org.jdbi.v3.core.Jdbi"/>
   <technology name="jdi-light" class="com.epam.jdi.light.elements.pageobjects.annotations.locators.UI"/>
+  <technology name="jedis" class="redis.clients.jedis.Jedis"/>
   <technology name="jetbrains-annotations" class="org.jetbrains.annotations.Contract"/>
   <technology name="jetbrains-compose" class="androidx.compose.ui.ComposeScene"/>
   <technology name="jhipster" class="io.github.jhipster.config.JHipsterProperties"/>
@@ -129,10 +143,11 @@
   <technology name="kotest" class="io.kotest.core.annotation.Tags"/>
   <technology name="kotless" class="io.kotless.HttpMethod"/>
   <technology name="kotlin" class="kotlin.reflect.KClass"/>
-  <technology name="kotlin-test" root="kotlin.test.Asserter"/>
+  <technology name="kotlin-logging" class="io.github.oshai.kotlinlogging.KotlinLogging"/>
+  <technology name="kotlin-test" class="kotlin.test.Asserter"/>
   <technology name="kotlinx-coroutines" class="kotlinx.coroutines.CoroutineDispatcher"/>
   <technology name="kotlinx-datetime" class="kotlinx.datetime.Instant"/>
-  <technology name="kotlinx-io" root="kotlinx.io.Buffer"/>
+  <technology name="kotlinx-io" class="kotlinx.io.Buffer"/>
   <technology name="kotlinx-serialization" class="kotlinx.serialization.KSerializer"/>
   <technology name="ktor-client" class="io.ktor.client.HttpClient"/>
   <technology name="ktor-server" class="io.ktor.application.Application"/>
@@ -140,17 +155,27 @@
   <technology name="ktorm" class="org.ktorm.entity.Entity"/>
   <technology name="lagom-java" class="com.lightbend.lagom.javadsl.api.Service"/>
   <technology name="lagom-scala" class="com.lightbend.lagom.scaladsl.api.Service"/>
+  <technology name="langchain4j" class="dev.langchain4j.model.chat.ChatLanguageModel"/>
   <technology name="liquibase" class="liquibase.Liquibase"/>
+  <technology name="log4j1" class="org.apache.log4j.Logger"/>
+  <technology name="log4j2" class="org.apache.logging.log4j.Logger"/>
+  <technology name="logback" class="ch.qos.logback.classic.Logger"/>
   <technology name="lombok" class="lombok.Getter"/>
   <technology name="mapstruct" class="org.mapstruct.Mapping"/>
+  <technology name="mariadb" class="org.mariadb.jdbc.Driver"/>
   <technology name="micrometer" class="io.micrometer.core.annotation.Timed"/>
   <technology name="micronaut" class="io.micronaut.http.server.HttpServerConfiguration"/>
   <technology name="microprofile" class="org.eclipse.microprofile.config.Config"/>
+  <technology name="microsoftsql" class="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
   <technology name="mockito" class="org.mockito.Mock"/>
   <technology name="mockserver" class="org.mockserver.model.Body"/>
+  <technology name="moddelmapper" class="org.modelmapper.ModelMapper"/>
+  <technology name="mongodb" class="com.mongodb.client.MongoClient"/>
+  <technology name="mongodb-reactive" class="com.mongodb.reactivestreams.client.MongoClient"/>
   <technology name="monix" class="monix.reactive.Observable"/>
   <technology name="munit" class="munit.FunSuite"/>
   <technology name="mybatis" class="org.apache.ibatis.annotations.Select"/>
+  <technology name="mysql" class="com.mysql.jdbc.Driver"/>
   <technology name="netty" class="io.netty.channel.AbstractChannel"/>
   <technology name="okhttp3" class="okhttp3.Request"/>
   <technology name="openfeign" class="feign.RequestLine"/>
@@ -159,8 +184,11 @@
   <technology name="opentelemetry" class="io.opentelemetry.api.OpenTelemetry"/>
   <technology name="opentracing" class="io.opentracing.Tracer"/>
   <technology name="optaplanner" class="org.optaplanner.core.api.solver.Solver"/>
+  <technology name="or-tools" class="com.google.ortools.init.OrToolsVersion"/>
+  <technology name="oracle" class="oracle.jdbc.driver.OracleDriver"/>
   <technology name="osgi" class="org.osgi.framework.BundleActivator"/>
   <technology name="play2" class="play.api.mvc.AbstractController"/>
+  <technology name="postgresql" class="org.postgresql.Driver"/>
   <technology name="playwright-java" class="com.microsoft.playwright.Playwright"/>
   <technology name="protobuf" class="com.google.protobuf.Message"/>
   <technology name="quarkus" class="io.quarkus.runtime.Application"/>
@@ -188,8 +216,10 @@
   <technology name="selenium" class="org.openqa.selenium.WebDriver"/>
   <technology name="serenity" class="net.thucydides.core.annotations.Step"/>
   <technology name="shapeless" class="shapeless.HList"/>
+  <technology name="slf4j" class="org.slf4j.Logger"/>
   <technology name="slick" class="slick.sql.SqlAction"/>
   <technology name="smallrye-mutiny" class="io.smallrye.mutiny.Uni"/>
+  <technology name="snowflake" class="net.snowflake.client.jdbc.SnowflakeDriver"/>
   <technology name="spark-java" class="spark.Spark"/>
   <technology name="specs2" class="org.specs2.Specification"/>
   <technology name="spek" class="org.jetbrains.spek.api.Spek"/>
@@ -235,16 +265,21 @@
   <technology name="spring-ws" class="org.springframework.ws.WebServiceException"/>
   <technology name="springOldJavaConfig" class="org.springframework.config.java.annotation.Bean"/>
   <technology name="springfox" class="springfox.documentation.oas.annotations.EnableOpenApi"/>
+  <technology name="sqlite" class="org.sqlite.JDBC"/>
   <technology name="streamex" class="one.util.streamex.StreamEx"/>
   <technology name="struts2" class="org.apache.struts2.StrutsConstants"/>
   <technology name="sttp" class="sttp.client3.Response"/>
   <technology name="swagger-v2" class="io.swagger.annotations.Api"/>
   <technology name="swagger-v3" class="io.swagger.v3.oas.annotations.Operation"/>
   <technology name="tapestry5" class="org.apache.tapestry5.modules.TapestryModule"/>
+  <technology name="tensorflow" class="org.tensorflow.Tensor"/>
   <technology name="testcontainers" class="org.testcontainers.containers.Container"/>
   <technology name="testng" class="org.testng.annotations.Test"/>
   <technology name="thymeleaf" class="org.thymeleaf.dialect.IDialect"/>
+  <technology name="timefold" class="ai.timefold.solver.core.api.score.stream.Constraint"/>
   <technology name="tornadofx" class="tornadofx.App"/>
+  <technology name="torque" class="org.apache.torque"/>
+  <technology name="truth" class="com.google.common.truth.Truth"/>
   <technology name="twitter-util" class="com.twitter.util.Future"/>
   <technology name="unfiltered" class="unfiltered.response.ResponseString"/>
   <technology name="unirest" class="kong.unirest.Client"/>

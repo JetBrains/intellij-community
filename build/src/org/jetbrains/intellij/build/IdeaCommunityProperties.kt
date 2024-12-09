@@ -78,6 +78,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     buildDocAuthoringAssets = true
 
     qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
+    additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

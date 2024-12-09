@@ -6380,6 +6380,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
             }
 
+            @TestMetadata("dontReplaceImplicitOverrideOfKotlinMethod.kt")
+            public void testDontReplaceImplicitOverrideOfKotlinMethod() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceImplicitOverrideOfKotlinMethod.kt");
+            }
+
             @TestMetadata("dontReplaceIsEmptyOfAbstractCollectionInheritor.kt")
             public void testDontReplaceIsEmptyOfAbstractCollectionInheritor() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIsEmptyOfAbstractCollectionInheritor.kt");
@@ -6460,6 +6465,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithReservedWord2.kt");
             }
 
+            @TestMetadata("dontReplaceWhenReceiverIsSuper.kt")
+            public void testDontReplaceWhenReceiverIsSuper() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceWhenReceiverIsSuper.kt");
+            }
+
             @TestMetadata("get.kt")
             public void testGet() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/get.kt");
@@ -6483,11 +6493,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("replaceGetterAfterSafeCall.kt")
             public void testReplaceGetterAfterSafeCall() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterAfterSafeCall.kt");
-            }
-
-            @TestMetadata("replaceGetterAfterSuperCall.kt")
-            public void testReplaceGetterAfterSuperCall() throws Exception {
-                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterAfterSuperCall.kt");
             }
 
             @TestMetadata("replaceGetterFromGenericClassMethod.kt")
@@ -6548,6 +6553,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("replaceSetterToIsSetter.kt")
             public void testReplaceSetterToIsSetter() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceSetterToIsSetter.kt");
+            }
+
+            @TestMetadata("replaceWhenMultipleInheritance.kt")
+            public void testReplaceWhenMultipleInheritance() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceWhenMultipleInheritance.kt");
             }
 
             @TestMetadata("replaceWithBackticks.kt")

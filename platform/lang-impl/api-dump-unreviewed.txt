@@ -2203,6 +2203,8 @@ c:com.intellij.codeInsight.daemon.DefaultGutterIconNavigationHandler
 - p:createListCellRenderer():javax.swing.ListCellRenderer
 - getReferences():java.util.Collection
 - navigate(java.awt.event.MouseEvent,com.intellij.psi.PsiElement):V
+com.intellij.codeInsight.daemon.EssentialHighlightingRestarterDisablement
+- a:shouldBeDisabledForProject(com.intellij.openapi.project.Project):Z
 com.intellij.codeInsight.daemon.ProjectSdkSetupValidator
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - doFix(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
@@ -11364,6 +11366,7 @@ a:com.intellij.ide.scratch.LRUPopupBuilder
 - withExtraMiddleValue(java.lang.Object,java.lang.String,javax.swing.Icon):com.intellij.ide.scratch.LRUPopupBuilder
 - withExtraSpeedSearchNamer(java.util.function.Function):com.intellij.ide.scratch.LRUPopupBuilder
 - withExtraTopValue(java.lang.Object,java.lang.String,javax.swing.Icon):com.intellij.ide.scratch.LRUPopupBuilder
+- withFilter(java.util.function.Predicate):com.intellij.ide.scratch.LRUPopupBuilder
 - withSelection(java.lang.Object):com.intellij.ide.scratch.LRUPopupBuilder
 f:com.intellij.ide.scratch.ScratchFileActions
 - <init>():V
@@ -11383,6 +11386,7 @@ a:com.intellij.ide.scratch.ScratchFileCreationHelper
 - sf:EXTENSION:com.intellij.lang.LanguageExtension
 - <init>():V
 - beforeCreate(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context):V
+- newScratchAllowed():Z
 - s:parseHeader(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.String):com.intellij.psi.PsiFile
 - prepareText(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context,com.intellij.openapi.actionSystem.DataContext):Z
 - s:reformat(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.String):java.lang.String
@@ -13920,6 +13924,7 @@ f:com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 - s:addSdk(com.intellij.openapi.projectRoots.Sdk):V
 - s:configureDirectoryProjectSdk(com.intellij.openapi.project.Project,java.util.Comparator,com.intellij.openapi.projectRoots.SdkType[]):V
 - s:createAndAddSDK(java.lang.String,com.intellij.openapi.projectRoots.SdkType):com.intellij.openapi.projectRoots.Sdk
+- s:createIncompleteSDK(java.lang.String,com.intellij.openapi.projectRoots.SdkType):com.intellij.openapi.projectRoots.Sdk
 - s:createSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk[],com.intellij.util.NullableConsumer,Z,com.intellij.openapi.projectRoots.SdkType[]):V
 - s:createSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk[],com.intellij.util.NullableConsumer,com.intellij.openapi.projectRoots.SdkType[]):V
 - s:createSdk(java.util.Collection,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.projectRoots.SdkAdditionalData,java.lang.String):com.intellij.openapi.projectRoots.Sdk
@@ -18917,6 +18922,7 @@ f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - s:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String):V
 - s:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.execution.ui.RunContentDescriptor
+- s:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Boolean):com.intellij.execution.ui.RunContentDescriptor
 - s:createEditorPanel(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
 - s:printStacktrace(com.intellij.execution.ui.ConsoleView,java.lang.String):V
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory

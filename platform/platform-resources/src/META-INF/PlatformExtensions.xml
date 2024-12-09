@@ -632,6 +632,7 @@ Android Studio: don't register IntelliJ fork -->
                  description="Add icon 'open In right splitter' to recent files menu"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
     <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory"/>
+    <registryKey defaultValue="3" description="Number of primary buttons on welcome screen (other go to 'more actions')" key="welcome.screen.primaryButtonsCount" restartRequired="true"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounterUsageCollector"/>
     <welcomeTabFactory id="CustomizeWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.CustomizeTabFactory"
@@ -1475,6 +1476,7 @@ Android Studio: b/285867050 -->
 
     <applicationActivity implementation="com.intellij.ide.plugins.DynamicPluginVfsListenerInitializer"/>
     <vfs.asyncListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListener"/>
+    <ide.dynamicPluginVetoer implementation="com.intellij.ide.plugins.FallbackPluginVetoer"/>
 
     <intentionMenuContributor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringIntentionContributor"/>
     <gutterMarkPreprocessor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringGutterMarkPreprocessor"/>
@@ -1586,6 +1588,7 @@ Android Studio: b/285867050 -->
                        key="notification.group.failed.to.generate.module.descriptors"/>
     <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.advertiser.try.ultimate.installed"/>
+    <notificationGroup id="Mac15 Local Network" displayType="BALLOON" bundle="messages.IdeCoreBundle" key="mac15.local.network.issue.title"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -1799,11 +1802,6 @@ Android Studio: b/285867050 -->
                  defaultValue="false"
                  description="Turn on the highlighting passes preload experiment"/>
 
-    <editorFloatingToolbarProvider
-      id="CloseSearchEverywherePreviewToolbar"
-      order="after DefaultFloatingToolbarProvider"
-      implementation="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreviewToolbar"/>
-
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer"/>
 
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"
@@ -1966,6 +1964,9 @@ Android Studio: b/285867050 -->
     <xi:fallback/>
   </xi:include>
   <xi:include href="intellij.platform.ide.progress.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="intellij.platform.experiment.xml">
     <xi:fallback/>
   </xi:include>
 </idea-plugin>

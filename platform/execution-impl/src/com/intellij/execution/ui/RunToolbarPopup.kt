@@ -285,6 +285,8 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   override fun getListElementRenderer(): PopupListElementRenderer<PopupFactoryImpl.ActionItem> {
     return object : PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
       override fun isShowSecondaryText(): Boolean = mySpeedSearch.isHoldingFilter
+
+      override fun isShowSecondaryIcon(): Boolean = mySpeedSearch.isHoldingFilter
     }
   }
 

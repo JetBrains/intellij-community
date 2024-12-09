@@ -150,7 +150,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
         catch (Exception e) {
           LOG.info(e);
-          throw new CorruptedException("PersistentEnumerator storage corrupted " + file, e);
+          throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
         }
       }
       else {

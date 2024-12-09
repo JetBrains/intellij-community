@@ -93,8 +93,10 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     const val CUSTOM_HEADER: String = "CUSTOM_HEADER"
 
     @JvmField
-    val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
-    const val MAX_DEFAULT_WIDTH: Int = 800
+    val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) System.getProperty("welcome.screen.defaultHeight", "650").toInt() else 460
+
+    @JvmField
+    val MAX_DEFAULT_WIDTH: Int = System.getProperty("welcome.screen.defaultWidth", "800").toInt()
 
     private fun saveSizeAndLocation(location: Rectangle) {
       val middle = Point(location.x + location.width / 2, location.y + location.height / 2)

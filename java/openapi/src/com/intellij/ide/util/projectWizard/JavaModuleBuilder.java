@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -27,8 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private static final Logger LOG = Logger.getInstance(JavaModuleBuilder.class);
@@ -49,9 +52,16 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   public List<Pair<String,String>> getSourcePaths() {
     if (mySourcePaths == null) {
       final List<Pair<String, String>> paths = new ArrayList<>();
-      @NonNls final String path = getContentEntryPath() + File.separator + "src";
-      new File(path).mkdirs();
-      paths.add(Pair.create(path, ""));
+      String contentEntry = Objects.requireNonNull(getContentEntryPath());
+      @NonNls final Path path = Path.of(contentEntry).resolve("src");
+      try {
+        NioFiles.createDirectories(path);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        new File(path.toString()).mkdirs(); // maybe this will succeed...
+      }
+      paths.add(Pair.create(path.toString(), ""));
       return paths;
     }
     return mySourcePaths;

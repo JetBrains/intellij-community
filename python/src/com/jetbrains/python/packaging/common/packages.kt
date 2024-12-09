@@ -9,8 +9,25 @@ import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.Nls
 
 open class PythonPackage(val name: String, val version: String, val isEditableMode: Boolean) {
+  companion object {
+    private const val HASH_MULTIPLIER = 31
+  }
+
   override fun toString(): String {
     return "PythonPackage(name='$name', version='$version')"
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is PythonPackage) return false
+    return name == other.name && version == other.version && isEditableMode == other.isEditableMode
+  }
+
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = HASH_MULTIPLIER * result + version.hashCode()
+    result = HASH_MULTIPLIER * result + isEditableMode.hashCode()
+    return result
   }
 }
 

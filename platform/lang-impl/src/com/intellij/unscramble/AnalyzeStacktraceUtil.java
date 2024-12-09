@@ -25,6 +25,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,9 @@ import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboa
 
 public final class AnalyzeStacktraceUtil {
   public static final ProjectExtensionPointName<Filter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.analyzeStacktraceFilter");
+  @ApiStatus.Experimental
+  public static final ProjectExtensionPointName<StacktraceTabContentProvider> EP_CONTENT_PROVIDER =
+    new ProjectExtensionPointName<>("com.intellij.analyzeStacktraceRunContentProvider");
 
   private AnalyzeStacktraceUtil() {
   }
@@ -51,7 +55,10 @@ public final class AnalyzeStacktraceUtil {
     JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
   }
 
-  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final @NlsContexts.TabTitle String tabTitle, String text) {
+  public static void addConsole(Project project,
+                                @Nullable ConsoleFactory consoleFactory,
+                                final @NlsContexts.TabTitle String tabTitle,
+                                String text) {
     addConsole(project, consoleFactory, tabTitle, text, null);
   }
 
@@ -59,7 +66,8 @@ public final class AnalyzeStacktraceUtil {
                                                 @Nullable ConsoleFactory consoleFactory,
                                                 final @NlsContexts.TabTitle String tabTitle,
                                                 String text,
-                                                @Nullable Icon icon) {
+                                                @Nullable Icon icon,
+                                                Boolean withExecutor) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     builder.filters(EP_NAME.getExtensions(project));
     final ConsoleView consoleView = builder.getConsole();
@@ -70,14 +78,13 @@ public final class AnalyzeStacktraceUtil {
                                   : new MyConsolePanel(consoleView, toolbarActions);
     final RunContentDescriptor descriptor =
       new RunContentDescriptor(consoleView, null, consoleComponent, tabTitle, icon) {
-      @Override
-      public boolean isContentReuseProhibited() {
-        return true;
-      }
-    };
+        @Override
+        public boolean isContentReuseProhibited() {
+          return true;
+        }
+      };
 
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    for (AnAction action: consoleView.createConsoleActions()) {
+    for (AnAction action : consoleView.createConsoleActions()) {
       toolbarActions.add(action);
     }
     final ConsoleViewImpl console = (ConsoleViewImpl)consoleView;
@@ -85,7 +92,17 @@ public final class AnalyzeStacktraceUtil {
     console.getEditor().getSettings().setCaretRowShown(true);
     toolbarActions.add(ActionManager.getInstance().getAction("AnalyzeStacktraceToolbar"));
 
-    RunContentManager.getInstance(project).showRunContent(executor, descriptor);
+    if (withExecutor) {
+      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+      RunContentManager runContentManager = RunContentManager.getInstance(project);
+      runContentManager.showRunContent(executor, descriptor);
+
+      for (@NotNull StacktraceTabContentProvider stacktraceRunContentProvider : EP_CONTENT_PROVIDER.getExtensions(project)) {
+        RunContentDescriptor contentDescriptor = stacktraceRunContentProvider.createRunTabDescriptor(project, text);
+        if (contentDescriptor == null) continue;
+        runContentManager.showRunContent(executor, contentDescriptor);
+      }
+    }
     consoleView.allowHeavyFilters();
     if (consoleFactory == null) {
       printStacktrace(consoleView, text);
@@ -93,11 +110,20 @@ public final class AnalyzeStacktraceUtil {
     return descriptor;
   }
 
+  public static RunContentDescriptor addConsole(Project project,
+                                                @Nullable ConsoleFactory consoleFactory,
+                                                final @NlsContexts.TabTitle String tabTitle,
+                                                String text,
+                                                @Nullable Icon icon) {
+    return addConsole(project, consoleFactory, tabTitle, text, icon, true);
+  }
+
   private static final class MyConsolePanel extends JPanel {
     MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
       super(new BorderLayout());
       JPanel toolbarPanel = new JPanel(new BorderLayout());
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false);
+      ActionToolbar toolbar =
+        ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false);
       toolbar.setTargetComponent(consoleView.getComponent());
       toolbarPanel.add(toolbar.getComponent());
       add(toolbarPanel, BorderLayout.WEST);

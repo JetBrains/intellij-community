@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="library" name="jbr-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jbr" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

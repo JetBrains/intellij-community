@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.google.gson.annotations.SerializedName
@@ -13,6 +13,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
+import kotlinx.coroutines.runBlocking
 import java.util.regex.Pattern
 
 
@@ -57,7 +58,7 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     }
 
     try {
-      runPoetry(sdk, *args.toTypedArray())
+        runPoetry(sdk, *args.toTypedArray())
     }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
@@ -69,8 +70,8 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     val args = listOf("remove") +
                packages.map { it.name }
     try {
-      runPoetry(sdk, *args.toTypedArray())
-    }
+        runPoetry(sdk, *args.toTypedArray())
+      }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
       refreshAndGetPackages(true)
@@ -102,18 +103,18 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     if (alwaysRefresh || packages == null) {
       packages = null
       val outputInstallDryRun = try {
-        runPoetry(sdk, "install", "--dry-run", "--no-root")
+          runPoetry(sdk, "install", "--dry-run", "--no-root")
       }
       catch (e: ExecutionException) {
         packages = emptyList()
         return packages ?: emptyList()
       }
-      val allPackage = parsePoetryInstallDryRun(outputInstallDryRun)
+      val allPackage = parsePoetryInstallDryRun(outputInstallDryRun.getOrThrow())
       packages = allPackage.first
       requirements = allPackage.second
 
       val outputOutdatedPackages = try {
-        runPoetry(sdk, "show", "--outdated")
+          runPoetry(sdk, "show", "--outdated")
       }
       catch (e: ExecutionException) {
         outdatedPackages = emptyMap()

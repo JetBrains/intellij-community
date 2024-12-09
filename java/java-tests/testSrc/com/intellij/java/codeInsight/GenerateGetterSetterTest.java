@@ -399,6 +399,41 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  public void testPrimitivesWithTypeUseAnnotations() {
+    myFixture.configureByText("a.java", """
+       import java.lang.annotation.ElementType;
+       import java.lang.annotation.Target;
+      
+       class TestField {
+           private @Anno int field<caret>;
+       }
+      
+       @Target(ElementType.TYPE_USE)
+       @interface Anno {}
+       """);
+    generateGetter();
+    generateSetter();
+    myFixture.checkResult("""
+                            import java.lang.annotation.ElementType;
+                            import java.lang.annotation.Target;
+                            
+                            class TestField {
+                                public void setField(int field) {
+                                    this.field = field;
+                                }
+                            
+                                public int getField() {
+                                    return field;
+                                }
+                            
+                                private @Anno int field;
+                            }
+                            
+                            @Target(ElementType.TYPE_USE)
+                            @interface Anno {}
+                            """);
+  }
+
   public void testLombokGeneratedFieldsWithoutContainingFile() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), GenerateAccessorProviderRegistrar.EP_NAME,
                                            new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {

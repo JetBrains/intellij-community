@@ -231,21 +231,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   protected final List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
                                                                    @NotNull PyResolveProcessor processor,
-                                                                   @Nullable PsiElement realContext,
+                                                                   @Nullable PsiElement referenceAnchor,
                                                                    @Nullable PsiElement resolveRoof) {
     boolean unreachableLocalDeclaration = false;
     Supplier<ScopeOwner> resolveInParentScope = null;
     final ResolveResultList resultList = new ResolveResultList();
-    final ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(realContext);
+    final ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(referenceAnchor);
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
     if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
-      if (resolvedOwner == referenceOwner) {
-        final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, realContext);
+      if (resolvedOwner == referenceOwner && referenceAnchor != null) {
+        final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, referenceAnchor);
         // TODO: Use the results from the processor as a cache for resolving to latest defs
-        final ResolveResultList latestDefs = resolveToLatestDefs(instructions, realContext, referencedName, typeEvalContext);
+        final ResolveResultList latestDefs = resolveToLatestDefs(instructions, referenceAnchor, referencedName, typeEvalContext);
         if (!latestDefs.isEmpty()) {
           return StreamEx.of(latestDefs)
             .flatMap(r -> {
@@ -306,7 +306,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PsiElement resolved = entry.getKey();
         final PyImportedNameDefiner definer = entry.getValue();
         if (resolved != null) {
-          if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
+          if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(referenceAnchor, resolved)) {
             continue;
           }
           if (definer == null) {
@@ -332,9 +332,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @NotNull
   protected List<Instruction> getLatestDefinitions(@NotNull String referencedName,
-                                                   @Nullable ScopeOwner resolvedOwner,
-                                                   @Nullable PsiElement realContext) {
-    return PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, realContext, false, true, myContext.getTypeEvalContext());
+                                                   @NotNull ScopeOwner resolvedOwner,
+                                                   @NotNull PsiElement referenceAnchor) {
+    return PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, referenceAnchor, false, true, myContext.getTypeEvalContext());
   }
 
   private boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {

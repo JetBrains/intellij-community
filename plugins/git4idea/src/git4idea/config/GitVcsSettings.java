@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.dvcs.branch.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -97,7 +96,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setPathToGit(@Nullable String value) {
     getState().setPathToGit(value);
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
+    GitExecutableDetector.fireExecutableChanged();
   }
 
   public boolean autoUpdateIfPushRejected() {

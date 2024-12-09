@@ -20,5 +20,5 @@ fun interface PyV3ProjectTypeSpecificSettings {
    * Generate project-specific things in [baseDir].
    * You might need to [installPackages] on [sdk]
    */
-  suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk)
+  suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Boolean>
 }

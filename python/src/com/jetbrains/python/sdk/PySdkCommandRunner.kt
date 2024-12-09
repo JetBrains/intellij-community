@@ -26,7 +26,7 @@ internal object Logger {
  * @return A [Result] object containing the output of the command execution.
  */
 @RequiresBackgroundThread
-internal fun runCommandLine(commandLine: GeneralCommandLine): Result<ProcessOutput> {
+internal fun runCommandLine(commandLine: GeneralCommandLine): Result<String> {
   Logger.LOG.info("Running command: ${commandLine.commandLineString}")
   val commandOutput = with(CapturingProcessHandler(commandLine)) {
     runProcess()
@@ -39,7 +39,7 @@ internal fun runCommandLine(commandLine: GeneralCommandLine): Result<ProcessOutp
   )
 }
 
-fun runCommand(executable: Path, projectPath: Path?, @NlsContexts.DialogMessage errorMessage: String, vararg args: String): String {
+fun runCommand(executable: Path, projectPath: Path?, @NlsContexts.DialogMessage errorMessage: String, vararg args: String): Result<String> {
   val command = listOf(executable.absolutePathString()) + args
   val commandLine = GeneralCommandLine(command).withWorkingDirectory(projectPath)
   val handler = CapturingProcessHandler(commandLine)
@@ -55,7 +55,7 @@ fun runCommand(executable: Path, projectPath: Path?, @NlsContexts.DialogMessage 
     }
   }
 
-  return processOutput(result, executable.pathString, args.asList(), errorMessage).getOrThrow().stdout.trim()
+  return processOutput(result, executable.pathString, args.asList(), errorMessage)
 }
 
 /**
@@ -72,14 +72,14 @@ internal fun processOutput(
   commandString: String,
   args: List<String>,
   @NlsContexts.DialogMessage errorMessage: String = "",
-): Result<ProcessOutput> {
+): Result<String> {
   return with(output) {
     when {
       isCancelled ->
         Result.failure(RunCanceledByUserException())
       exitCode != 0 ->
         Result.failure(PyExecutionException(errorMessage, commandString, args, stdout, stderr, exitCode, emptyList()))
-      else -> Result.success(output)
+      else -> Result.success(output.stdout.trim())
     }
   }
 }

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.analysis.UExpressionFact
 import org.jetbrains.uast.analysis.UNullability
@@ -164,6 +165,25 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     """.trimIndent())
 
+    fun `test nullable properties with primitive types`() = doTest("""
+        data class SomeClass(val a:/*NULLABLE*/String?, var b:/*NULLABLE*/Int? = null, val c:/*NULLABLE*/Int? = 1)
+    """.trimIndent())
+
+    fun `test non nullable properties with primitive types`() = doTest("""
+        data class SomeClass(val a:/*NOT_NULL*/String, var b:/*NOT_NULL*/Int = 1)
+    """.trimIndent())
+
+    fun `test complex properties`() = doTest("""
+        data class SomeClass(
+            val a:/*NOT_NULL*/String, 
+            var b:/*NULLABLE*/Int? = null,
+            val c:/*NULLABLE*/D?,
+            val d:/*NOT_NULL*/D
+        )
+        
+        class D
+    """.trimIndent())
+
     private fun doTest(
         @Language("kotlin") source: String
     ) {
@@ -173,6 +193,11 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
         val file = myFixture.configureByText("file.kt", source).toUElement() ?: kFail("Cannot create UFile")
         var visitAny = false
         file.accept(object : AbstractUastVisitor() {
+            override fun visitField(node: UField): Boolean {
+                val typeReference = node.typeReference ?: return super.visitField(node)
+                return visitExpression(typeReference)
+            }
+
             override fun visitExpression(node: UExpression): Boolean {
                 val uNullability = node.comments.firstOrNull()?.text
                     ?.removePrefix("/*")

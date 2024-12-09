@@ -16,6 +16,7 @@ import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
@@ -33,17 +34,28 @@ typealias PathToPythonBinary = Path
  */
 sealed class PythonType<T : Any>(private val tag: @NonNls String) {
 
-  suspend fun getTestEnvironment(vararg additionalTags: @NonNls String): Result<Pair<T, AutoCloseable>> =
+  /**
+   * Returns all test environments: each must be closed after the test.
+   */
+  suspend fun getTestEnvironments(vararg additionalTags: @NonNls String): Flow<Pair<T, AutoCloseable>> =
     PyEnvTestSettings
       .fromEnvVariables()
       .pythons
+      .asFlow()
       .map { it.toPath() }
-      .firstOrNull { typeMatchesEnv(it, *additionalTags) }
-      ?.let { envDir ->
-        Result.success(pythonPathToEnvironment(
+      .filter { typeMatchesEnv(it, *additionalTags) }
+      .map { envDir ->
+        pythonPathToEnvironment(
           VirtualEnvReader.Instance.findPythonInPythonRoot(envDir)
-          ?: error("Can't find python binary in $envDir"), envDir)) // This is a misconfiguration, hence an error
+          ?: error("Can't find python binary in $envDir"), envDir) // This is a misconfiguration, hence an error
       }
+
+
+  /**
+   * Returns first (whatever it means) test environment and closable that must be closed after the test
+   */
+  suspend fun getTestEnvironment(vararg additionalTags: @NonNls String): Result<Pair<T, AutoCloseable>> =
+    getTestEnvironments(*additionalTags).firstOrNull()?.let { Result.success(it) }
     ?: failure("No python found. See ${PyEnvTestSettings::class} class for more info")
 
 

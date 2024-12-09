@@ -28,7 +28,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     myEditor = editor;
     myAllowInlineThisOnly = allowInlineThisOnly;
     myOccurrencesNumber = getNumberOfOccurrences(method);
-    myInvokedOnReference = ref != null && myOccurrencesNumber != 1;
+    myInvokedOnReference = ref != null;
 
     setTitle(getRefactoringName());
     init();

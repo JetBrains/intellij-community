@@ -17,8 +17,8 @@ public class TestSwitchGuardedJavac {
 
    public static void testObject2(Object o) {
       switch (o) {// 20
-         case String s when s.isEmpty() && s.getBytes().length == 2:// 21
-            System.out.println("empty s");
+         case String s when s.isEmpty() && s.getBytes().length == 2:
+            System.out.println("empty s");// 21
             return;// 26
          case String s:// 22
             System.out.println("s");
@@ -84,8 +84,6 @@ class 'pkg/TestSwitchGuardedJavac' {
       49      8
       4a      8
       4b      8
-      4c      8
-      4d      8
       55      9
       56      9
       57      9
@@ -94,8 +92,6 @@ class 'pkg/TestSwitchGuardedJavac' {
       5a      9
       5b      9
       5c      9
-      5d      9
-      5e      9
       66      10
       67      10
       68      10
@@ -104,15 +100,11 @@ class 'pkg/TestSwitchGuardedJavac' {
       6b      10
       6c      10
       6d      10
-      6e      10
-      6f      10
       76      11
       77      11
       78      11
       79      11
       7a      11
-      7b      11
-      7c      11
       80      14
       81      14
       82      14
@@ -145,8 +137,6 @@ class 'pkg/TestSwitchGuardedJavac' {
       49      20
       4a      20
       4b      20
-      4c      20
-      4d      20
       55      22
       56      22
       57      23
@@ -155,8 +145,6 @@ class 'pkg/TestSwitchGuardedJavac' {
       5a      23
       5b      23
       5c      23
-      5d      23
-      5e      23
       66      25
       67      25
       68      26
@@ -165,15 +153,11 @@ class 'pkg/TestSwitchGuardedJavac' {
       6b      26
       6c      26
       6d      26
-      6e      26
-      6f      26
       76      29
       77      29
       78      29
       79      29
       7a      29
-      7b      29
-      7c      29
       80      21
    }
 
@@ -204,8 +188,6 @@ class 'pkg/TestSwitchGuardedJavac' {
       51      40
       52      40
       53      40
-      54      40
-      55      40
       56      41
       5d      42
       5e      42
@@ -215,8 +197,6 @@ class 'pkg/TestSwitchGuardedJavac' {
       62      43
       63      43
       64      43
-      65      43
-      66      43
       67      44
       6e      45
       6f      45
@@ -226,16 +206,12 @@ class 'pkg/TestSwitchGuardedJavac' {
       73      46
       74      46
       75      46
-      76      46
-      77      46
       78      47
       7e      49
       7f      49
       80      49
       81      49
       82      49
-      83      49
-      84      49
       85      50
       8b      54
       8c      54
@@ -259,7 +235,7 @@ Lines mapping:
 16 <-> 15
 17 <-> 16
 20 <-> 19
-21 <-> 20
+21 <-> 21
 22 <-> 23
 23 <-> 26
 24 <-> 30

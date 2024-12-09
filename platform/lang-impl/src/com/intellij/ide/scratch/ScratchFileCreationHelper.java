@@ -33,6 +33,13 @@ public abstract class ScratchFileCreationHelper {
   public boolean prepareText(@NotNull Project project, @NotNull Context context, @NotNull DataContext dataContext) {
     return false;
   }
+
+  /**
+   * Return false if it's prohibited to create new scratch file for particular {@link Context#language}
+   */
+  public boolean newScratchAllowed() {
+    return true;
+  }
   
   public void beforeCreate(@NotNull Project project, @NotNull Context context) {
   } 
