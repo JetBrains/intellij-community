@@ -20383,6 +20383,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/whenWithOnlyElse/hasOtherBranches.kt");
             }
 
+            @TestMetadata("notApplicableRange.kt")
+            public void testNotApplicableRange() throws Exception {
+                runTest("testData/inspectionsLocal/whenWithOnlyElse/notApplicableRange.kt");
+            }
+
             @TestMetadata("notExpression.kt")
             public void testNotExpression() throws Exception {
                 runTest("testData/inspectionsLocal/whenWithOnlyElse/notExpression.kt");

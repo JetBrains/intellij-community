@@ -2809,6 +2809,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/hasOtherBranches.kt");
             }
 
+            @TestMetadata("notApplicableRange.kt")
+            public void testNotApplicableRange() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/notApplicableRange.kt");
+            }
+
             @TestMetadata("notExpression.kt")
             public void testNotExpression() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/whenWithOnlyElse/notExpression.kt");
