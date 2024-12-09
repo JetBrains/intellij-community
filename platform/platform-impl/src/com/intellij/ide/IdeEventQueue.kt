@@ -570,7 +570,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     return false
   }
 
-  private fun defaultDispatchEvent(e: AWTEvent) {
+  @Internal
+  fun defaultDispatchEvent(e: AWTEvent) {
     try {
       maybeReady()
       val me = e as? MouseEvent
