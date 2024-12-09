@@ -46,7 +46,7 @@ class ExecuteTerminalCommandTool : McpTool<ExecuteTerminalCommandArgs> {
                 override fun createCenterPanel(): JComponent? {
                     return panel {
                         row {
-                            label("Do you want to run command `${args.command}` in the terminal?")
+                            label("Do you want to run command `${args.command.take(100)}` in the terminal?")
                         }
                     }
                 }
