@@ -1162,7 +1162,17 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     void expandLater(@NotNull TreePath parentPath, @NotNull Object o) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!tree.isVisible(parentPath) || !tree.isExpanded(parentPath)) return;
-        tree.expandPath(parentPath.pathByAddingChild(o));
+        try {
+          if (tree instanceof Tree jbTree) {
+            jbTree.suspendExpandCollapseAccessibilityAnnouncements();
+          }
+          tree.expandPath(parentPath.pathByAddingChild(o));
+        }
+        finally {
+          if (tree instanceof Tree jbTree) {
+            jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+          }
+        }
       });
     }
 
