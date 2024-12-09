@@ -4,9 +4,9 @@ package org.jetbrains.plugins.terminal.reworked
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import junit.framework.TestCase.assertEquals
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentChangesTracker
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalDiscardedHistoryTracker
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentChangesTracker
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDiscardedHistoryTracker
 import org.junit.Test
 
 internal class TerminalContentChangesTrackerTest {

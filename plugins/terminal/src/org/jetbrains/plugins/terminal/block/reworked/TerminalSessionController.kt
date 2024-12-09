@@ -9,9 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCursorPositionChangedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalOutputEvent
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class TerminalSessionController(

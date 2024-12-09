@@ -17,6 +17,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentChangesTracker
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalCursorPositionTracker
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDiscardedHistoryTracker
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
