@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
 import org.jetbrains.kotlin.utils.SmartList
 
-sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingRangeIntention<KtNamedFunction>(
+internal sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingRangeIntention<KtNamedFunction>(
     KtNamedFunction::class.java, KotlinBundle.lazyMessage("replace.0.name.with.spaces", case)
 ) {
     abstract fun split(name: String): List<String>
@@ -50,13 +50,14 @@ sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingR
         return range
     }
 
-    private fun convert(name: String) = split(name).joinToString(separator = " ") { it.decapitalizeSmart().trim() }.quoteIfNeeded()
+    private fun convert(name: String): String =
+        split(name).joinToString(separator = " ") { it.decapitalizeSmart().trim() }.quoteIfNeeded()
 
     private fun startRename(element: KtNamedFunction, newName: String) {
         RenameProcessor(element.project, element, newName, false, false).run()
     }
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     override fun applyTo(element: KtNamedFunction, editor: Editor?) {
         val nameIdentifier = element.nameIdentifier ?: return
@@ -64,45 +65,46 @@ sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingR
         val oldId = oldName.quoteIfNeeded()
         val newId = convert(oldName)
 
-        if (editor != null) {
-            val builder = TemplateBuilderImpl(nameIdentifier)
-            builder.replaceElement(nameIdentifier, newId)
-            val template = runWriteAction { builder.buildInlineTemplate() }
-            TemplateManager.getInstance(element.project).startTemplate(
-                editor,
-                template,
-                object : TemplateEditingAdapter() {
-                    private var chosenId: String = newId
-                    private var range: TextRange? = null
+        if (editor == null) {
+            startRename(element, newId)
+            return
+        }
 
-                    override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-                        val varName = (template as? TemplateImpl)?.getVariableNameAt(0) ?: return
-                        chosenId = state.getVariableValue(varName)?.text?.quoteIfNeeded() ?: return
-                        range = state.getVariableRange(varName)
+        val builder = TemplateBuilderImpl(nameIdentifier)
+        builder.replaceElement(nameIdentifier, newId)
+        val template = runWriteAction { builder.buildInlineTemplate() }
+        TemplateManager.getInstance(element.project).startTemplate(
+            editor,
+            template,
+            object : TemplateEditingAdapter() {
+                private var chosenId: String = newId
+                private var range: TextRange? = null
+
+                override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
+                    val varName = (template as? TemplateImpl)?.getVariableNameAt(0) ?: return
+                    chosenId = state.getVariableValue(varName)?.text?.quoteIfNeeded() ?: return
+                    range = state.getVariableRange(varName)
+                }
+
+                override fun templateFinished(template: Template, brokenOff: Boolean) {
+                    range?.let {
+                        val document = editor.document
+                        runWriteAction { document.replaceString(it.startOffset, it.endOffset, oldId) }
+                        PsiDocumentManager.getInstance(element.project).commitDocument(document)
                     }
 
-                    override fun templateFinished(template: Template, brokenOff: Boolean) {
-                        range?.let {
-                            val doc = editor.document
-                            runWriteAction { doc.replaceString(it.startOffset, it.endOffset, oldId) }
-                            PsiDocumentManager.getInstance(element.project).commitDocument(doc)
-                        }
-
-                        if (!brokenOff && chosenId != oldId) {
-                            startRename(element, chosenId)
-                        }
+                    if (!brokenOff && chosenId != oldId) {
+                        startRename(element, chosenId)
                     }
                 }
-            )
-        } else {
-            startRename(element, newId)
-        }
+            }
+        )
     }
 }
 
 private val SNAKE_CASE_REGEX: Regex = ".+_.+".toRegex()
 
-class ConvertCamelCaseTestFunctionToSpacedIntention : ConvertTestFunctionToSpacedIntention("camel-case") {
+internal class ConvertCamelCaseTestFunctionToSpacedIntention : ConvertTestFunctionToSpacedIntention("camel-case") {
     override fun isApplicableName(name: String): Boolean {
         return !isSnakeCase(name)
     }
@@ -140,7 +142,7 @@ class ConvertCamelCaseTestFunctionToSpacedIntention : ConvertTestFunctionToSpace
     }
 }
 
-class ConvertSnakeCaseTestFunctionToSpacedIntention : ConvertTestFunctionToSpacedIntention("snake_case") {
+internal class ConvertSnakeCaseTestFunctionToSpacedIntention : ConvertTestFunctionToSpacedIntention("snake_case") {
     override fun isApplicableName(name: String): Boolean {
         return isSnakeCase(name)
     }
