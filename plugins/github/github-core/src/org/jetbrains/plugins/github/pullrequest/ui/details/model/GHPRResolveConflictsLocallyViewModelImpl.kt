@@ -13,7 +13,6 @@ import git4idea.remote.hosting.isInCurrentHistory
 import git4idea.remote.hosting.ui.BaseOrHead
 import git4idea.remote.hosting.ui.BaseOrHead.Base
 import git4idea.remote.hosting.ui.BaseOrHead.Head
-import git4idea.remote.hosting.ui.BaseResolveConflictsLocallyViewModel
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyCoordinates
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
 import git4idea.repo.GitRepository
@@ -27,28 +26,29 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateC
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getRemoteDescriptor
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.*
 
-interface GHPRResolveConflictsLocallyViewModel : ResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError>
+typealias GHPRResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError>
 
-class GHPRResolveConflictsLocallyViewModelImpl(
+private val REPO_MERGING_STATES = setOf(Repository.State.REBASING, Repository.State.MERGING)
+
+fun GHPRResolveConflictsLocallyViewModel(
   parentCs: CoroutineScope,
   project: Project,
-  private val server: GithubServerPath,
+  server: GithubServerPath,
   gitRepository: GitRepository,
   detailsData: GHPRDetailsDataProvider,
-) : BaseResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError>(parentCs, project, gitRepository),
-    GHPRResolveConflictsLocallyViewModel {
-  override val hasConflicts: StateFlow<Boolean?> = detailsData.mergeabilityStateComputationFlow
-    .filter { !it.isInProgress }
-    .map { it.getOrNull()?.hasConflicts }
-    .stateIn(cs, SharingStarted.Lazily, false)
-
-  private val isBaseInHistory: StateFlow<Boolean> =
-    gitRepository.isInCurrentHistory(
-      rev = detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.map { it.baseRefOid }
-    ).map { it ?: false }.stateInNow(cs, false)
-
-  override val requestOrError: StateFlow<Either<GHPRResolveConflictsLocallyError, ResolveConflictsLocallyCoordinates>> =
-    combine(isBaseInHistory, detailsData.detailsComputationFlow, gitRepository.infoFlow()) { isBaseInHistory, detailsResult, repoState ->
+): GHPRResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel.createIn(
+  parentCs, project, gitRepository,
+  hasConflicts =
+    detailsData.mergeabilityStateComputationFlow
+      .filter { !it.isInProgress }
+      .map { it.getOrNull()?.hasConflicts },
+  requestOrError =
+    combine(
+      gitRepository.isInCurrentHistory(
+        rev = detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.map { it.baseRefOid }
+      ).map { it ?: false },
+      detailsData.detailsComputationFlow, gitRepository.infoFlow()
+    ) { isBaseInHistory, detailsResult, repoState ->
       if (repoState.state in REPO_MERGING_STATES) return@combine Either.left(MergeInProgress)
 
       val details = detailsResult.getOrNull() ?: return@combine Either.left(DetailsNotLoaded)
@@ -67,12 +67,9 @@ class GHPRResolveConflictsLocallyViewModelImpl(
       Either.right(
         ResolveConflictsLocallyCoordinates(headRemoteDescriptor, details.headRefName, baseRemoteDescriptor, details.baseRefName)
       )
-    }.stateIn(cs, SharingStarted.Lazily, Either.left(DetailsNotLoaded))
-
-  companion object {
-    private val REPO_MERGING_STATES = setOf(Repository.State.REBASING, Repository.State.MERGING)
-  }
-}
+    },
+  initialRequestOrErrorState = Either.left(DetailsNotLoaded)
+)
 
 sealed interface GHPRResolveConflictsLocallyError {
   data object AlreadyResolvedLocally : GHPRResolveConflictsLocallyError

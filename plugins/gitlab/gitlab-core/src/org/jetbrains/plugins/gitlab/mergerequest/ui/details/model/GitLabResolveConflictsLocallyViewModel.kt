@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
-import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.Either
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
@@ -9,38 +8,41 @@ import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.findFirstRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.infoFlow
 import git4idea.remote.hosting.isInCurrentHistory
-import git4idea.remote.hosting.ui.BaseResolveConflictsLocallyViewModel
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyCoordinates
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.getRemoteDescriptor
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.*
 
-interface GitLabResolveConflictsLocallyViewModel : ResolveConflictsLocallyViewModel<GitLabResolveConflictsLocallyError>
+typealias GitLabResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel<GitLabResolveConflictsLocallyError>
 
-class GitLabResolveConflictsLocallyViewModelImpl(
+private val REPO_MERGING_STATES = setOf(Repository.State.REBASING, Repository.State.MERGING)
+
+fun GitLabResolveConflictsLocallyViewModel(
   parentCs: CoroutineScope,
   project: Project,
-  private val serverPath: GitLabServerPath,
+  serverPath: GitLabServerPath,
   gitRepository: GitRepository,
   mergeRequest: GitLabMergeRequest,
-) : BaseResolveConflictsLocallyViewModel<GitLabResolveConflictsLocallyError>(parentCs, project, gitRepository),
-    GitLabResolveConflictsLocallyViewModel {
-  override val hasConflicts: StateFlow<Boolean> = mergeRequest.details.map {
-    it.conflicts && (it.diffRefs == null || it.diffRefs.headSha != it.diffRefs.startSha)
-  }.stateIn(cs, SharingStarted.Lazily, false)
-
-  private val isBaseInHistory: StateFlow<Boolean> =
-    gitRepository.isInCurrentHistory(
-      rev = mergeRequest.details.map { it.diffRefs?.baseSha }.filterNotNull()
-    ).map { it ?: false }.stateInNow(cs, false)
-
-  override val requestOrError: StateFlow<Either<GitLabResolveConflictsLocallyError, ResolveConflictsLocallyCoordinates>> =
-    combine(isBaseInHistory, mergeRequest.details, gitRepository.infoFlow()) { isBaseInHistory, details, repoInfo ->
+): GitLabResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel.createIn(
+  parentCs, project, gitRepository,
+  hasConflicts =
+    mergeRequest.details.map {
+      it.conflicts && (it.diffRefs == null || it.diffRefs.headSha != it.diffRefs.startSha)
+    },
+  requestOrError =
+    combine(
+      gitRepository.isInCurrentHistory(
+        rev = mergeRequest.details.map { it.diffRefs?.baseSha }.filterNotNull()
+      ).map { it ?: false },
+      mergeRequest.details, gitRepository.infoFlow()
+    ) { isBaseInHistory, details, repoInfo ->
       if (repoInfo.state in REPO_MERGING_STATES) return@combine Either.left(MergeInProgress)
 
       val sourceProject = details.sourceProject ?: return@combine Either.left(SourceRepositoryNotFound)
@@ -57,12 +59,9 @@ class GitLabResolveConflictsLocallyViewModelImpl(
       Either.right(
         ResolveConflictsLocallyCoordinates(sourceRemoteDescriptor, details.sourceBranch, targetRemoteDescriptor, details.targetBranch)
       )
-    }.stateIn(cs, SharingStarted.Lazily, Either.left(DetailsNotLoaded))
-
-  companion object {
-    private val REPO_MERGING_STATES = setOf(Repository.State.REBASING, Repository.State.MERGING)
-  }
-}
+    },
+  initialRequestOrErrorState = Either.left(DetailsNotLoaded)
+)
 
 sealed interface GitLabResolveConflictsLocallyError {
   data object AlreadyResolvedLocally : GitLabResolveConflictsLocallyError

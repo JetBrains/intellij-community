@@ -28,7 +28,7 @@ interface GHPRStatusViewModel : CodeReviewStatusViewModel {
   val isRestricted: Flow<Boolean>
   val requiredApprovingReviewsCount: Flow<Int>
 
-  val resolveConflictsVm: ResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError>
+  val resolveConflictsVm: GHPRResolveConflictsLocallyViewModel
 }
 
 private val LOG = logger<GHPRStatusViewModel>()
@@ -81,6 +81,6 @@ class GHPRStatusViewModelImpl(
     }
   }
 
-  override val resolveConflictsVm: ResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError> =
-    GHPRResolveConflictsLocallyViewModelImpl(cs, project, server, gitRepository, detailsData)
+  override val resolveConflictsVm: GHPRResolveConflictsLocallyViewModel =
+    GHPRResolveConflictsLocallyViewModel(cs, project, server, gitRepository, detailsData)
 }
