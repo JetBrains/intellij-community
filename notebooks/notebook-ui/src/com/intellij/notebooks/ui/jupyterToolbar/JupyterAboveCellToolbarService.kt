@@ -194,8 +194,8 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
     private const val ADD_CELL_TOOLBAR_X_OFFSET_RATIO = 0.5
     private const val ADDITIONAL_TOOLBAR_X_OFFSET_RATIO = 0.95
 
-    private const val ADD_CELL_TOOLBAR_START_RATIO = 0.15
-    private const val ADD_CELL_TOOLBAR_END_RATIO = 0.6
+    private const val ADD_CELL_TOOLBAR_START_RATIO = 0.0  // discussible
+    private const val ADD_CELL_TOOLBAR_END_RATIO = 0.99 // todo: change to 0.6 when additional toolbar is on
     private const val ADDITIONAL_TOOLBAR_START_RATIO = ADD_CELL_TOOLBAR_END_RATIO
 
     private const val ACTION_GROUP_ID = "Jupyter.AboveCellPanelNew"
