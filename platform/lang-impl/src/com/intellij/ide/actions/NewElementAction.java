@@ -6,21 +6,28 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.ActionPopupStep;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.InputEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -201,6 +208,31 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       if (popup instanceof AbstractPopup abstractPopup) {
         abstractPopup.setSpeedSearchAlwaysShown();
         abstractPopup.setSpeedSearchEmptyText(IdeBundle.message("new.file.popup.search.hint"));
+      }
+      if (popup instanceof PopupFactoryImpl.ActionGroupPopup listPopup && listPopup.getList() instanceof JBList<?> list) {
+        var emptyText = list.getEmptyText();
+        emptyText.clear();
+        emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.1"));
+        emptyText.appendLine(
+          IdeBundle.message("popup.new.element.empty.text.2"),
+          SimpleTextAttributes.LINK_ATTRIBUTES,
+          linkActionEvent -> {
+            Disposer.dispose(popup);
+            @SuppressWarnings("DialogTitleCapitalization")
+            var actionPresentation = new Presentation(IdeBundle.message("popup.new.element.empty.text.2"));
+            var place = ActionPlaces.POPUP;
+            var step = listPopup.getStep();
+            if (step instanceof ActionPopupStep actionPopupStep) {
+              place = actionPopupStep.getActionPlace();
+            }
+            var inputEvent = linkActionEvent.getSource() instanceof InputEvent linkInputEvent ? linkInputEvent : null;
+            var actionEvent = AnActionEvent.createEvent(event.getDataContext(), actionPresentation, place, ActionUiKind.POPUP, inputEvent);
+            ActionUtil.invokeAction(ActionManager.getInstance().getAction("NewFile"), actionEvent, null);
+          }
+        );
+        // The capitalization is wrong here because this line continues the previous one.
+        //noinspection DialogTitleCapitalization
+        emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.3"));
       }
     }
 
