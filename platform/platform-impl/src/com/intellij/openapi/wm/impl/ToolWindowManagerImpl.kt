@@ -221,7 +221,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
           toolWindowManager.revalidateStripeButtons()
 
-          if (Registry.`is`("auto.hide.all.tool.windows.on.focus.change", false)) {
+          if (Registry.`is`("auto.hide.all.tool.windows.on.focus.change", true)) {
             hideAllUnfocusedAutoHideToolWindows(toolWindowManager, event.oppositeComponent)
           }
           else {
@@ -352,7 +352,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             if (manager.currentState != KeyState.HOLD) {
               manager.resetHoldState()
             }
-            if (Registry.`is`("auto.hide.all.tool.windows.on.any.action", false)) {
+            if (Registry.`is`("auto.hide.all.tool.windows.on.any.action", true)) {
               val focusedComponent = IdeFocusManager.getInstance(manager.project).focusOwner
               val actionToolWindowId = getToolWindowIdForComponent(event.inputEvent?.component)
               if (focusedComponent != null) {
