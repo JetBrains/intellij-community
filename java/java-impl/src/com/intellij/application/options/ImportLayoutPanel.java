@@ -30,6 +30,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -38,6 +40,8 @@ public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
   @Nullable private final JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst;
+  @Nullable private final JBCheckBox myCbModuleImportFirst;
+  @Nullable private final JBCheckBox myCbSpaceBetweenModuleAndOther;
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -59,7 +63,17 @@ public abstract class ImportLayoutPanel extends JPanel {
     return myCbLayoutOnDemandImportsFromSamePackageFirst;
   }
 
-  public ImportLayoutPanel(boolean showLayoutOnDemandImportFromSamePackageFirstCheckbox) {
+  @Nullable
+  public JBCheckBox getCbModuleImportFirst() {
+    return myCbModuleImportFirst;
+  }
+
+  @Nullable
+  public JBCheckBox getCbSpaceBetweenModuleAndOther() {
+    return myCbSpaceBetweenModuleAndOther;
+  }
+
+  public ImportLayoutPanel(boolean showLayoutOnDemandImportFromSamePackageFirstCheckbox, boolean supportModuleImport) {
     super(new BorderLayout());
 
     myCbLayoutStaticImportsSeparately.addItemListener(e -> {
@@ -118,8 +132,16 @@ public abstract class ImportLayoutPanel extends JPanel {
       showLayoutOnDemandImportFromSamePackageFirstCheckbox
       ? new JBCheckBox(JavaBundle.message("import.layout.on.demand.import.from.same.package.first"))
       : null;
+
+    myCbModuleImportFirst = supportModuleImport ? new JBCheckBox(JavaBundle.message("import.layout.module.import.first")) : null;
+    myCbSpaceBetweenModuleAndOther =
+      supportModuleImport ? new JBCheckBox(JavaBundle.message("import.layout.space.between.module.import.other")) : null;
+    List<@Nullable JBCheckBox> additionalCheckBoxes = new ArrayList<>();
+    additionalCheckBoxes.add(myCbLayoutOnDemandImportsFromSamePackageFirst);
+    additionalCheckBoxes.add(myCbModuleImportFirst);
+    additionalCheckBoxes.add(myCbSpaceBetweenModuleAndOther);
     final ImportLayoutPanelUI UI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately,
-                                                           myCbLayoutOnDemandImportsFromSamePackageFirst,
+                                                           additionalCheckBoxes,
                                                            importLayoutPanel);
     add(UI.getPanel(), BorderLayout.CENTER);
   }
@@ -229,6 +251,14 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public boolean isLayoutOnDemandImportsFromSamePackageFirst() {
     return myCbLayoutOnDemandImportsFromSamePackageFirst != null && myCbLayoutOnDemandImportsFromSamePackageFirst.isSelected();
+  }
+
+  public boolean isModuleImportFirst() {
+    return myCbModuleImportFirst != null && myCbModuleImportFirst.isSelected();
+  }
+
+  public boolean isSpaceBetweenModuleAndOther() {
+    return myCbSpaceBetweenModuleAndOther != null && myCbSpaceBetweenModuleAndOther.isSelected();
   }
 
   public static JBTable createTableForPackageEntries(final PackageEntryTable packageTable, final ImportLayoutPanel panel) {

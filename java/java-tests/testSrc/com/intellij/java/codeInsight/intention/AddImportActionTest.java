@@ -1121,7 +1121,6 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
       myFixture.checkResult("""
                               import a.*;
                               import module java.base;
-                              
                               import java.util.List;
                               
                               class Test{

@@ -49,7 +49,7 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
     final @NotNull List<ImportHelper.Import> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final Map<String, Boolean> onDemand = new HashMap<>();
-    ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand);
+    ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand, new HashMap<>());
     for (String s : demandedForNested) {
       onDemand.put(s, false);
     }

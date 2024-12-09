@@ -33,6 +33,8 @@ public class EclipseCodeStylePropertiesImporter implements EclipseFormatterOptio
     importStarImportThresholds(uiPreferences, javaSettings);
     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
     javaSettings.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
+    javaSettings.MODULE_IMPORT_FIRST = true;
+    javaSettings.SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS = false;
     javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(new PackageEntryTable());
   }
 
