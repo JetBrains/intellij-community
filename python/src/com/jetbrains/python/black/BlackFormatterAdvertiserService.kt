@@ -41,7 +41,7 @@ class BlackFormatterAdvertiserService private constructor() {
       val project = psiFile.project
       val blackInstalled = project.modules
         .mapNotNull { it.pythonSdk }
-        .any { BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(it) }
+        .any { BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, it) }
 
         if (blackInstalled) {
           showBlackFormatterSupportNotification(project,

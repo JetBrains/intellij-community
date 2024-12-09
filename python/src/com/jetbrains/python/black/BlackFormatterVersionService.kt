@@ -14,7 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version
 import com.intellij.util.VersionUtil
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
-import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import kotlinx.coroutines.*
@@ -60,7 +60,7 @@ class BlackFormatterVersionService(private val project: Project, private val ser
         } ?: UNKNOWN_VERSION
       }
       BlackFormatterConfiguration.ExecutionMode.PACKAGE -> {
-        BlackFormatterUtil.getBlackFormatterPackageInfo(configuration.getSdk())?.let {
+        BlackFormatterUtil.getBlackFormatterPackageInfo(configuration.getSdk(), project)?.let {
           getVersionForPackage(it)
         } ?: UNKNOWN_VERSION
       }
@@ -90,7 +90,7 @@ class BlackFormatterVersionService(private val project: Project, private val ser
     }
   }
 
-  private fun getVersionForPackage(pythonPackage: PyPackage): Version =
+  private fun getVersionForPackage(pythonPackage: PythonPackage): Version =
     parseVersionString(pythonPackage.version)
 
   private fun parseVersionString(versionString: String): Version {

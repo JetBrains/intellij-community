@@ -229,7 +229,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
 
   private fun updateSdkInfo() {
     isLocalSdk = selectedSdk?.let { it.sdkType.isLocalSdk(it) } ?: false
-    isBlackFormatterPackageInstalled = BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(selectedSdk)
+    isBlackFormatterPackageInstalled = BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, selectedSdk)
   }
 
   private fun canBeEnabled(): Boolean {
@@ -369,7 +369,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     override fun isApplicableAccordingToUiState(configurable: BlackFormatterConfigurable) =
       when (configurable.storedState.executionMode) {
         BlackFormatterConfiguration.ExecutionMode.PACKAGE ->
-          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configurable.selectedSdk)
+          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, configurable.selectedSdk)
         BlackFormatterConfiguration.ExecutionMode.BINARY ->
           BlackFormatterUtil.isBlackExecutableDetected()
       }
@@ -378,7 +378,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       val configuration = BlackFormatterConfiguration.getBlackConfiguration(project)
       return when (configuration.executionMode) {
         BlackFormatterConfiguration.ExecutionMode.PACKAGE ->
-          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configuration.getSdk())
+          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(project, configuration.getSdk())
         BlackFormatterConfiguration.ExecutionMode.BINARY ->
           BlackFormatterUtil.isBlackExecutableDetected()
       }
