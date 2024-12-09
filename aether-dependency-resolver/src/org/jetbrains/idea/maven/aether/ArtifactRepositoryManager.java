@@ -288,6 +288,7 @@ public final class ArtifactRepositoryManager {
     return files;
   }
 
+  /// Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
   @Nullable
   public ArtifactDependencyNode collectDependencies(String groupId, String artifactId, String versionConstraint) throws Exception {
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
@@ -370,6 +371,7 @@ public final class ArtifactRepositoryManager {
     return artifacts;
   }
 
+  /// Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
   @NotNull
   private RepositorySystemSession prepareRequests(String groupId,
                                                   String artifactId,
