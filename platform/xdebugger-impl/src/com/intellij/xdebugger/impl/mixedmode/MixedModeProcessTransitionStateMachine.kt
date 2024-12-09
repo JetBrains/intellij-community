@@ -30,6 +30,7 @@ class MixedModeProcessTransitionStateMachine(
   class OnlyHighStoppedWaitingForLowStepToComplete(val highSuspendContext: XSuspendContext) : State
   object OnlyLowStopped : State
   class WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread : State
+  class HighLevelDebuggerStoppedAfterStepWaitingForLowStop(val highLevelSuspendContext : XSuspendContext) : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
   class ManagedStepStarted(val low: XSuspendContext) : State
   class HighLevelDebuggerResumedForStepOnlyLowStopped(val low: XSuspendContext) : State
@@ -158,7 +159,8 @@ class MixedModeProcessTransitionStateMachine(
               }
             }
 
-            changeState(BothStopped(currentState.low, event.suspendContext))
+            // Resume low level and stop it, it's made to have low level stack
+            changeState(HighLevelDebuggerStoppedAfterStepWaitingForLowStop(event.suspendContext))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -192,6 +194,9 @@ class MixedModeProcessTransitionStateMachine(
 
             val lowSuspendCtx = event.suspendContext
             changeState(BothStopped(lowSuspendCtx, highSuspendCtx))
+          }
+          is HighLevelDebuggerStoppedAfterStepWaitingForLowStop -> {
+            changeState(BothStopped(event.suspendContext, currentState.highLevelSuspendContext))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
