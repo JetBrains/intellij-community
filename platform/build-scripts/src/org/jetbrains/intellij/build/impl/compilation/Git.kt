@@ -2,8 +2,11 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.util.io.awaitExit
+import java.io.ByteArrayOutputStream
+import java.lang.ProcessBuilder.Redirect
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.pathString
 
 class Git(private val dir: Path) {
   suspend fun log(commitCount: Int): List<String> {
@@ -15,8 +18,16 @@ class Git(private val dir: Path) {
     return execute("git", "log", "--pretty=format:$format", "-n", "1").joinToString("\n")
   }
 
-  suspend fun listFilesUnderVersionControl(refSpec: String = "HEAD"): List<String> {
-    return execute("git", "ls-tree", "-r", refSpec, "--name-only")
+  suspend fun listTree(refSpec: String = "HEAD"): List<String> {
+    return executeWithNullSeparatedOutput("git", "ls-tree", "-z", "-r", refSpec, "--name-only")
+  }
+
+  suspend fun listStagingFiles(): List<String> {
+    return executeWithNullSeparatedOutput("git", "ls-files", "-z")
+  }
+
+  suspend fun mv(source: Path, destination: Path) {
+    execute("git", "mv", source.pathString, destination.pathString)
   }
 
   suspend fun currentCommitShortHash(): String {
@@ -46,10 +57,33 @@ class Git(private val dir: Path) {
     return ExecutionResult(process.exitValue(), output)
   }
 
+  private suspend fun executeWithNullSeparatedOutput(vararg command: String): List<String> {
+    val process = ProcessBuilder(*command)
+      .redirectError(Redirect.INHERIT)
+      .directory(dir.toFile())
+      .start()
+    process.outputStream.close()
+
+    val memoryStream = ByteArrayOutputStream()
+    process.inputStream.copyTo(memoryStream)
+
+    if (!process.waitFor(5, TimeUnit.MINUTES)) {
+      process.destroyForcibly().awaitExit()
+      throw IllegalStateException("Cannot execute ${command.toList()}: 5 minutes timeout")
+    }
+
+    val exitCode = process.exitValue()
+    if (exitCode != 0) {
+      throw IllegalStateException("Cannot execute ${command.toList()}: exit code $exitCode")
+    }
+
+    return memoryStream.toByteArray().decodeToString().split('\u0000')
+  }
+
   private suspend fun execute(vararg command: String): List<String> {
     val result = maybeExecute(*command)
     if (result.exitCode != 0) {
-      throw IllegalStateException("git process failed with $result.exitCode:\n${result.output.joinToString("\n")}")
+      throw IllegalStateException("${command.toList()} failed with $result.exitCode:\n${result.output.joinToString("\n")}")
     }
     return result.output
   }
