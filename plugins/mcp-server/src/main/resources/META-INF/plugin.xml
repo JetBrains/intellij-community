@@ -1,0 +1,21 @@
+<idea-plugin>
+    <id>com.intellij.mcpServer</id>
+    <name>MCP Server</name>
+    <description><![CDATA[
+    MCP (Model Context Protocol) Server inside IntelliJ IDEs.
+  ]]></description>
+    <vendor>JetBrains</vendor>
+
+    <depends>com.intellij.modules.lang</depends>
+    <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
+
+    <extensionPoints>
+        <extensionPoint name="mcpTool"
+                        interface="org.jetbrains.ide.mcp.McpTool"
+                        dynamic="true"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <httpRequestHandler implementation="org.jetbrains.ide.mcp.MCPService"/>
+    </extensions>
+</idea-plugin>
