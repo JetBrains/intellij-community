@@ -66,7 +66,8 @@ internal fun convertParentImpl(
                             ?: parent
 
             AnnotationUseSiteTarget.FIELD ->
-                parent = (parentUnwrapped as? KtProperty)
+                parent = (parentUnwrapped as? KtAnnotation)?.parent
+                    ?: (parentUnwrapped as? KtProperty)
                     ?: (parentUnwrapped as? KtParameter)
                         ?.takeIf { it.isPropertyParameter() }
                         ?.let(LightClassUtil::getLightClassBackingField)
