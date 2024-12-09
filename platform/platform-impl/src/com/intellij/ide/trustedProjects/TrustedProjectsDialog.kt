@@ -114,8 +114,8 @@ object TrustedProjectsDialog {
         checker.isRealTimeProtectionEnabled == true
       ) {
         val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project, projectPath)).toMutableList()
-        if (paths.isEmpty()) {
-          logger<TrustedProjectsDialog>().info("all paths are on a DevDrive")
+        if (paths.isEmpty() || projectPath !in paths) {
+          logger<TrustedProjectsDialog>().info("project is on a DevDrive")
         }
         return paths
       }
