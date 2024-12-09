@@ -3,14 +3,17 @@ package org.jetbrains.mcpserverplugin.terminal
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
+import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalView
 import javax.swing.JComponent
+import java.lang.Thread
 import kotlin.reflect.KClass
 
 class GetTerminalTextTool : McpTool<NoArgs> {
@@ -54,8 +57,24 @@ class ExecuteTerminalCommandTool : McpTool<ExecuteTerminalCommandArgs> {
             confirmationDialog.show()
 
             if (confirmationDialog.isOK) {
-                terminalWidget(project)?.sendCommandToExecute(args.command)
-                result = Response("ok")
+                val terminalWidget = terminalWidget(project)
+                terminalWidget?.sendCommandToExecute("clear; " + args.command)
+
+                val startTime = System.currentTimeMillis()
+                while (terminalWidget?.hasRunningCommands() == true &&
+                    System.currentTimeMillis() - startTime < 1000
+                ) {
+                    try {
+                        Thread.sleep(100)
+                    } catch (e: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        result = Response(error = "Execution interrupted")
+                        return@invokeAndWait
+                    }
+                }
+
+                val terminalOutput = TerminalView.getInstance(project).getWidgets().firstOrNull()?.text ?: "No output collected."
+                result = Response(terminalOutput)
             }
         }
 
@@ -66,4 +85,23 @@ class ExecuteTerminalCommandTool : McpTool<ExecuteTerminalCommandArgs> {
         val terminalManager = TerminalToolWindowManager.getInstance(project)
         return terminalManager.terminalWidgets.firstOrNull() ?: terminalManager.createNewSession()
     }
+}
+
+private fun TerminalWidget?.hasRunningCommands(): Boolean {
+    if (this == null) return false
+
+    try {
+        val bridgeClass = Class.forName("com.intellij.terminal.JBTerminalWidget\$TerminalWidgetBridge")
+        val widgetMethod = bridgeClass.getDeclaredMethod("widget")
+        widgetMethod.isAccessible = true
+
+        val shellWidget = widgetMethod.invoke(this)
+        if (shellWidget is ShellTerminalWidget) {
+            return shellWidget.hasRunningCommands()
+        }
+    } catch (e: Exception) {
+        // Handle or log the exception
+        return false
+    }
+    return false
 }
