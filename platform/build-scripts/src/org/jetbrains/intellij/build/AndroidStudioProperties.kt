@@ -59,6 +59,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     private val EXCLUDED_PLUGINS = EAP_PLUGINS + listOf(
       "intellij.settingsSync", // Not supported yet in Studio (b/267070185).
       "intellij.android.gradle.dsl",
+      "intellij.android.gradle.declarative.lang.ide",
       "intellij.eclipse",
       "intellij.featuresTrainer",
       "intellij.gradle.analysis",
