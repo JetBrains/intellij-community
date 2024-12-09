@@ -13,16 +13,14 @@ import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.JediTerminal
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentChangesTracker
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalCursorPositionTracker
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDiscardedHistoryTracker
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputChannel
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 
@@ -84,48 +82,6 @@ private fun createJediTermServices(
   )
 
   return JediTermServices(textBuffer, terminalDisplay, executorService, terminalStarter)
-}
-
-private fun createTerminalOutputChannel(
-  textBuffer: TerminalTextBuffer,
-  terminalDisplay: TerminalDisplayImpl,
-  coroutineScope: CoroutineScope,
-): ReceiveChannel<List<TerminalOutputEvent>> {
-  val outputChannel = Channel<List<TerminalOutputEvent>>(capacity = Channel.UNLIMITED)
-
-  val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
-  val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
-  val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
-
-  coroutineScope.launch(Dispatchers.IO) {
-    try {
-      while (true) {
-        textBuffer.withLock {
-          val contentUpdate = contentChangesTracker.getContentUpdate()
-          val cursorPositionUpdate = cursorPositionTracker.getCursorPositionUpdate()
-          val updates = listOfNotNull(contentUpdate, cursorPositionUpdate)
-          if (updates.isNotEmpty()) {
-            outputChannel.send(updates)
-          }
-        }
-
-        delay(10)
-      }
-    }
-    finally {
-      outputChannel.close()
-    }
-  }
-
-  contentChangesTracker.addHistoryOverflowListener { contentUpdate ->
-    val cursorPositionUpdate = cursorPositionTracker.getCursorPositionUpdate()
-    val updates = listOfNotNull(contentUpdate, cursorPositionUpdate)
-    if (updates.isNotEmpty()) {
-      outputChannel.trySend(updates)
-    }
-  }
-
-  return outputChannel
 }
 
 private fun createTerminalInputChannel(
