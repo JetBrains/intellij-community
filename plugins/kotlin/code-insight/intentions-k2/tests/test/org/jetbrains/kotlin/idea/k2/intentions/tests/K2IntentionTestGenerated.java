@@ -8194,7 +8194,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced")
+    public static class ConvertCamelCaseTestFunctionToSpaced extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("letters.kt")
+        public void testLetters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/letters.kt");
+        }
+
+        @TestMetadata("nonFunction.kt")
+        public void testNonFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/nonFunction.kt");
+        }
+
+        @TestMetadata("nonLetters.kt")
+        public void testNonLetters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/nonLetters.kt");
+        }
+
+        @TestMetadata("notAtIdentifier.kt")
+        public void testNotAtIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/notAtIdentifier.kt");
+        }
+
+        @TestMetadata("notTestFunction.kt")
+        public void testNotTestFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/notTestFunction.kt");
+        }
+
+        @TestMetadata("snake.kt")
+        public void testSnake() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/snake.kt");
+        }
+
+        @TestMetadata("unchanged.kt")
+        public void testUnchanged() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/unchanged.kt");
+        }
+    }
 
 
 
@@ -12442,7 +12489,29 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertSnakeCaseTestFunctionToSpaced")
+    public static class ConvertSnakeCaseTestFunctionToSpaced extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("camel.kt")
+        public void testCamel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSnakeCaseTestFunctionToSpaced/camel.kt");
+        }
+
+        @TestMetadata("snake.kt")
+        public void testSnake() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSnakeCaseTestFunctionToSpaced/snake.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addValOrVar")
