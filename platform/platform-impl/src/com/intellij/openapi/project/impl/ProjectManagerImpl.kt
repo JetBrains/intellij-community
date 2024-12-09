@@ -896,18 +896,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun prepareProject(options: OpenProjectTask,
                                      projectStoreBaseDir: Path,
                                      projectInitHelper: ProjectInitHelper?): Project {
-    var conversionResult: ConversionResult? = null
-    if (options.runConversionBeforeOpen) {
-      val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx)
-        .getServiceAsyncIfDefined(ConversionService::class.java)
-      if (conversionService != null) {
-        conversionResult = span("project conversion") {
-          conversionService.convert(projectStoreBaseDir)
-        }
-        if (conversionResult.openingIsCanceled()) {
-          throw ProjectLoadingCancelled("ConversionResult.openingIsCanceled() returned true")
-        }
-      }
+    val conversionResult: ConversionResult? = if (options.runConversionBeforeOpen) {
+      runConversion(projectStoreBaseDir)
+    }
+    else {
+      null
     }
 
     val project = instantiateProject(projectStoreBaseDir, options)
@@ -928,6 +921,19 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
     return project
+  }
+
+  private suspend fun runConversion(projectPath: Path): ConversionResult? {
+    val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx)
+                              .getServiceAsyncIfDefined(ConversionService::class.java)
+                            ?: return null
+    val result = span("project conversion") {
+      conversionService.convert(projectPath)
+    }
+    if (result.openingIsCanceled()) {
+      throw ProjectLoadingCancelled("ConversionResult.openingIsCanceled() returned true")
+    }
+    return result
   }
 
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
