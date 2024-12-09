@@ -27,9 +27,9 @@ import kotlin.reflect.full.primaryConstructor
 
 class McpToolManager {
     companion object {
-        private val EP_NAME = ExtensionPointName<McpTool<*, *>>("com.intellij.mcpServer.mcpTool")
+        private val EP_NAME = ExtensionPointName<McpTool<*>>("com.intellij.mcpServer.mcpTool")
 
-        fun getAllTools(): List<McpTool<*, *>> {
+        fun getAllTools(): List<McpTool<*>> {
             return buildList {
                 // Add built-in tools
                 addAll(getBuiltInTools())
@@ -38,7 +38,7 @@ class McpToolManager {
             }
         }
 
-        private fun getBuiltInTools(): List<McpTool<*, *>> = listOf(
+        private fun getBuiltInTools(): List<McpTool<*>> = listOf(
             GetCurrentFileTextTool(),
             GetCurrentFilePathTool(),
             GetSelectedTextTool(),
@@ -48,6 +48,8 @@ class McpToolManager {
         )
     }
 }
+
+data class Response(val status: String? = null, val error: String? = null)
 
 internal class MCPService : RestService() {
     private val serviceName = "mcp"
@@ -81,7 +83,7 @@ internal class MCPService : RestService() {
 
     override fun isMethodSupported(method: HttpMethod): Boolean = method === HttpMethod.GET || method === HttpMethod.POST
 
-    private fun <Args : Any, Result> toolHandle(tool: McpTool<Args, Result>, project: Project, args: Any): Result {
+    private fun <Args : Any> toolHandle(tool: McpTool<Args>, project: Project, args: Any): Response {
         @Suppress("UNCHECKED_CAST")
         return tool.handle(project, args as Args)
     }
@@ -132,13 +134,13 @@ sealed class JsonType {
     data class ArrayType(val items: JsonType) : JsonType()
 }
 
-interface McpTool<Args : Any, Result> {
+interface McpTool<Args : Any> {
     val name: String
     val description: String
     val argKlass: KClass<*>
 
     // Modified to accept project context
-    fun handle(project: Project, args: Args): Result
+    fun handle(project: Project, args: Args): Response
 }
 
 object NoArgs
@@ -186,60 +188,52 @@ fun schemaFromDataClass(kClass: KClass<*>): JsonType.ObjectType {
 
 // tools
 
-data class GetCurrentFileTextResult(val text: String?)
-
-class GetCurrentFileTextTool : McpTool<NoArgs, GetCurrentFileTextResult> {
+class GetCurrentFileTextTool : McpTool<NoArgs> {
     override val name: String = "get_current_file_text"
     override val description: String = "Get the current contents of the file in JetBrains IDE"
     override val argKlass: KClass<NoArgs> = NoArgs::class
 
-    override fun handle(project: Project, args: NoArgs): GetCurrentFileTextResult {
+    override fun handle(project: Project, args: NoArgs): Response {
         val text = runReadAction<String?> {
             getInstance(project).selectedTextEditor?.document?.text
         }
-        return GetCurrentFileTextResult(text)
+        return Response(text)
     }
 }
 
-data class GetCurrentFilePathResult(val path: String?)
-
-class GetCurrentFilePathTool : McpTool<NoArgs, GetCurrentFilePathResult> {
+class GetCurrentFilePathTool : McpTool<NoArgs> {
     override val name: String = "get_current_file_path"
     override val description: String = "Get the current file path in JetBrains IDE"
     override val argKlass: KClass<NoArgs> = NoArgs::class
 
-    override fun handle(project: Project, args: NoArgs): GetCurrentFilePathResult {
+    override fun handle(project: Project, args: NoArgs): Response {
         val path = runReadAction<String?> {
             getInstance(project).selectedTextEditor?.virtualFile?.path
         }
-        return GetCurrentFilePathResult(path)
+        return Response(path)
     }
 }
 
-data class GetSelectedTextResult(val text: String?)
-
-class GetSelectedTextTool : McpTool<NoArgs, GetSelectedTextResult> {
+class GetSelectedTextTool : McpTool<NoArgs> {
     override val name: String = "get_selected_text"
     override val description: String = "Get the currently selected text in the JetBrains IDE"
     override val argKlass: KClass<NoArgs> = NoArgs::class
 
-    override fun handle(project: Project, args: NoArgs): GetSelectedTextResult {
+    override fun handle(project: Project, args: NoArgs): Response {
         val text = runReadAction<String?> {
             getInstance(project).selectedTextEditor?.selectionModel?.selectedText
         }
-        return GetSelectedTextResult(text)
+        return Response(text)
     }
 }
 
 data class ReplaceSelectedTextArgs(val text: String)
-data class ReplaceSelectedTextResult(val status: String)
-
-class ReplaceSelectedTextTool : McpTool<ReplaceSelectedTextArgs, ReplaceSelectedTextResult> {
+class ReplaceSelectedTextTool : McpTool<ReplaceSelectedTextArgs> {
     override val name: String = "replace_selected_text"
     override val description: String = "Replace the currently selected text in the JetBrains IDE with new text"
     override val argKlass: KClass<ReplaceSelectedTextArgs> = ReplaceSelectedTextArgs::class
 
-    override fun handle(project: Project, args: ReplaceSelectedTextArgs): ReplaceSelectedTextResult {
+    override fun handle(project: Project, args: ReplaceSelectedTextArgs): Response {
         runInEdt {
             runWriteCommandAction(project, "Replace Selected Text", null, {
                 val editor = getInstance(project).selectedTextEditor
@@ -251,19 +245,17 @@ class ReplaceSelectedTextTool : McpTool<ReplaceSelectedTextArgs, ReplaceSelected
                 }
             })
         }
-        return ReplaceSelectedTextResult("ok")
+        return Response("ok")
     }
 }
 
 data class ReplaceCurrentFileTextArgs(val text: String)
-data class ReplaceCurrentFileTextResult(val status: String)
-
-class ReplaceCurrentFileTextTool : McpTool<ReplaceCurrentFileTextArgs, ReplaceCurrentFileTextResult> {
+class ReplaceCurrentFileTextTool : McpTool<ReplaceCurrentFileTextArgs> {
     override val name: String = "replace_current_file_text"
     override val description: String = "Replace the entire contents of the current file in JetBrains IDE with new text"
     override val argKlass: KClass<ReplaceCurrentFileTextArgs> = ReplaceCurrentFileTextArgs::class
 
-    override fun handle(project: Project, args: ReplaceCurrentFileTextArgs): ReplaceCurrentFileTextResult {
+    override fun handle(project: Project, args: ReplaceCurrentFileTextArgs): Response {
         runInEdt {
             runWriteCommandAction(project, "Replace File Text", null, {
                 val editor = getInstance(project).selectedTextEditor
@@ -271,30 +263,29 @@ class ReplaceCurrentFileTextTool : McpTool<ReplaceCurrentFileTextArgs, ReplaceCu
                 document?.setText(args.text)
             })
         }
-        return ReplaceCurrentFileTextResult("ok")
+        return Response("ok")
     }
 }
 
 data class CreateNewFileWithTextArgs(val absolutePath: String, val text: String)
-data class CreateNewFileWithTextResult(val status: String)
 
-class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs, CreateNewFileWithTextResult> {
+class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs> {
     override val name: String = "create_new_file_with_text"
     override val description: String = "Create a new file inside the project with specified text in JetBrains IDE"
     override val argKlass: KClass<CreateNewFileWithTextArgs> = CreateNewFileWithTextArgs::class
 
-    override fun handle(project: Project, args: CreateNewFileWithTextArgs): CreateNewFileWithTextResult {
+    override fun handle(project: Project, args: CreateNewFileWithTextArgs): Response {
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return CreateNewFileWithTextResult("can't find project dir")
+            ?: return Response("can't find project dir")
 
         val path = kotlin.io.path.Path(args.absolutePath)
         return if (path.startsWith(projectDir)) {
             path.createParentDirectories().createFile().writeText(args.text)
             LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
-            CreateNewFileWithTextResult("ok")
+            Response("ok")
         }
         else {
-            CreateNewFileWithTextResult("file is outside of the project")
+            Response(error = "file is outside of the project")
         }
     }
 }
@@ -329,7 +320,7 @@ fun JsonType.toJsonElementWithRequired(): JsonElement {
     }
 }
 
-fun generateToolsJson(tools: List<McpTool<*, *>>): JsonElement {
+fun generateToolsJson(tools: List<McpTool<*>>): JsonElement {
     val toolsArray = JsonArray()
     for (tool in tools) {
         val toolObj = JsonObject()
