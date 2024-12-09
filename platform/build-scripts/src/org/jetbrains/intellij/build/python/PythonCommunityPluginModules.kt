@@ -30,7 +30,6 @@ object PythonCommunityPluginModules {
     "intellij.python.pydev",
     "intellij.python.sdk",
     "intellij.python.terminal",
-    "intellij.python.ml.features",
   )
 
   /**

@@ -6,9 +6,8 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.ml.features.api.feature.*
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
+import com.jetbrains.ml.*
+import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidate
 import com.jetbrains.python.sdk.PythonSdkUtil
 
 enum class UnderscoresType {
@@ -21,7 +20,6 @@ enum class UnderscoresType {
   DOUBLE_LEADING_TRAILING, // __something__
   IRREGULAR // not from the above
 }
-
 enum class ModuleSourceType {
   STD_LIB,
   EXTERNAL_LIB,
@@ -29,7 +27,9 @@ enum class ModuleSourceType {
 }
 
 
-object RelevanceEvaluationFeatures : ImportCandidateFeatures() {
+
+
+class RelevanceEvaluationFeatures : FeatureProvider(MLUnitImportCandidate) {
   object Features {
     val UNDERSCORES_IN_PATH = FeatureDeclaration.int("underscores_in_path") { "number of prefix and suffix underscores in path" }.nullable()
     val MODULE_SOURCE_TYPE = FeatureDeclaration.enum<ModuleSourceType>("module_source_type") { "info about lib being std, local, or external" }.nullable()
@@ -38,10 +38,10 @@ object RelevanceEvaluationFeatures : ImportCandidateFeatures() {
 
   override val featureComputationPolicy = FeatureComputationPolicy(false, true)
 
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
-    val importCandidate = instance.candidate
+  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter) = buildList {
+    val importCandidate = units[MLUnitImportCandidate]
     add(Features.UNDERSCORES_IN_PATH with countBoundaryUnderscores(importCandidate.path))
     readAction {
       Features.UNDERSCORES_TYPES_OF_PACKAGES.withIndex().forEach { (i, featureDeclaration) ->
@@ -64,10 +64,7 @@ object RelevanceEvaluationFeatures : ImportCandidateFeatures() {
                 ModuleUtilCore.findModuleForFile(vFile, baseElement.project) == null -> ModuleSourceType.EXTERNAL_LIB
                 else -> ModuleSourceType.LOCAL_LIB
               }
-            }
-      )
-    } else {
-      add(Features.MODULE_SOURCE_TYPE with null)
+            })
     }
   }
 
@@ -75,7 +72,6 @@ object RelevanceEvaluationFeatures : ImportCandidateFeatures() {
     if (qName == null) return 0
     return qName.components.sumOf { it.takeWhile { it == '_' }.length + it.takeLastWhile { it == '_' }.length }
   }
-
   private fun getUnderscoresType(s: String): UnderscoresType {
     val leadingUnderscores = s.takeWhile { it == '_' }.length
     val trailingUnderscores = s.reversed().takeWhile { it == '_' }.length

@@ -1,15 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.imports.mlapi.features
 
-import com.jetbrains.ml.features.api.feature.Feature
-import com.jetbrains.ml.features.api.feature.FeatureDeclaration
-import com.jetbrains.ml.features.api.feature.FeatureFilter
-import com.jetbrains.ml.features.api.feature.extractFeatureDeclarations
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
+import com.jetbrains.ml.*
+import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidate
 
 
-object PrimitiveImportFeatures : ImportCandidateFeatures() {
+class PrimitiveImportFeatures : FeatureProvider(MLUnitImportCandidate) {
   object Features {
     val RELEVANCE = FeatureDeclaration.int("old_relevance") {
       """
@@ -21,10 +17,13 @@ object PrimitiveImportFeatures : ImportCandidateFeatures() {
     }.nullable()
   }
 
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature>? = buildList {
-    add(Features.RELEVANCE with instance.candidate.relevance)
-    add(Features.COMPONENT_COUNT with instance.candidate.path?.componentCount)
+  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter) = buildList {
+
+    val importCandidate = units[MLUnitImportCandidate]
+
+    add(Features.RELEVANCE with importCandidate.relevance)
+    add(Features.COMPONENT_COUNT with importCandidate.path?.componentCount)
   }
 }

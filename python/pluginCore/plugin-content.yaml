@@ -4,10 +4,6 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
     reason: withProjectLibrary
-  - name: jetbrains.ml.models.python.imports.ranking.model
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua.jar
-    reason: <- intellij.python.ml.features
   - name: jsr305
     files:
     - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
@@ -46,7 +42,6 @@
   - name: intellij.python.grazie
   - name: intellij.python.langInjection
   - name: intellij.python.markdown
-  - name: intellij.python.ml.features
   - name: intellij.python.terminal
 - name: lib/python-common.jar
   modules:

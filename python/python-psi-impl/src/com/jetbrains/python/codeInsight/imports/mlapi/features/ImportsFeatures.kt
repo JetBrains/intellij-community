@@ -5,16 +5,15 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.QualifiedName
-import com.jetbrains.ml.features.api.feature.*
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
+import com.jetbrains.ml.*
+import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidate
 import com.jetbrains.python.psi.PyFile
+import one.util.streamex.StreamEx
+import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyImportElement
-import one.util.streamex.StreamEx
 
-object ImportsFeatures : ImportCandidateFeatures() {
+class ImportsFeatures : FeatureProvider(MLUnitImportCandidate) {
   object Features {
     val EXISTING_IMPORT_FROM_PREFIX = FeatureDeclaration.int("existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
     val EXISTING_IMPORT_PREFIX = FeatureDeclaration.int("existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
@@ -24,11 +23,12 @@ object ImportsFeatures : ImportCandidateFeatures() {
 
   override val featureComputationPolicy = FeatureComputationPolicy(false, true)
 
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
-    val importCandidate = instance.candidate
-    val project = readAction { importCandidate.importable?.project } ?: return@buildList
+  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter) = buildList {
+    val importCandidate = units[MLUnitImportCandidate]
+    val project = importCandidate.importable?.project ?: return@buildList
+
     val editor = readAction { FileEditorManager.getInstance(project).selectedEditor } ?: return@buildList
     val psiFile = readAction { PsiManager.getInstance(project).findFile(editor.file) } ?: return@buildList
 

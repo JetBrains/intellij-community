@@ -3,28 +3,26 @@ package com.jetbrains.python.codeInsight.imports.mlapi.features
 
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiElement
-import com.jetbrains.ml.features.api.feature.Feature
-import com.jetbrains.ml.features.api.feature.FeatureDeclaration
-import com.jetbrains.ml.features.api.feature.FeatureFilter
-import com.jetbrains.ml.features.api.feature.extractFeatureDeclarations
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
+import com.jetbrains.ml.*
+import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder
+import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidate
 
 
-object PsiStructureFeatures : ImportCandidateFeatures() {
+class PsiStructureFeatures : FeatureProvider(MLUnitImportCandidate) {
   object Features {
     val PSI_CLASS = FeatureDeclaration.aClass("importable_class") { "PSI class of the imported element" }.nullable()
     val PSI_PARENT = (1..4).map { i -> FeatureDeclaration.aClass("psi_parent_$i") { "PSI parent #$i" }.nullable() }
   }
 
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
 
+  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter) = buildList {
+    val importCandidate: ImportCandidateHolder = units[MLUnitImportCandidate]
 
-  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
     readAction {
-      add(Features.PSI_CLASS with (instance.candidate.importable?.javaClass))
+      add(Features.PSI_CLASS with (importCandidate.importable?.javaClass))
       Features.PSI_PARENT.withIndex().forEach { (i, featureDeclaration) ->
-        var parent: PsiElement? = instance.candidate.importable
+        var parent: PsiElement? = importCandidate.importable
         repeat(i) {
           parent = parent?.parent
         }

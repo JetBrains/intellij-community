@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.ml.features.imports
+package com.jetbrains.python.codeInsight.imports.mlapi
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.components.Service

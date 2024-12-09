@@ -1,14 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.imports.mlapi.features
 
-import com.jetbrains.ml.features.api.feature.Feature
-import com.jetbrains.ml.features.api.feature.FeatureDeclaration
-import com.jetbrains.ml.features.api.feature.FeatureFilter
-import com.jetbrains.ml.features.api.feature.extractFeatureDeclarations
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContext
-import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContextFeatures
+import com.jetbrains.ml.*
+import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidatesList
 
-object CandidatesListFeatures : ImportRankingContextFeatures() {
+class CandidatesListFeatures : FeatureProvider(MLUnitImportCandidatesList) {
   object Features {
     val LENGTH = FeatureDeclaration.int("n_candidates") {
       "The amount of import candidates"
@@ -18,10 +14,11 @@ object CandidatesListFeatures : ImportRankingContextFeatures() {
     }.nullable()
   }
 
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(instance: ImportRankingContext, filter: FeatureFilter): List<Feature> = buildList {
-    add(Features.LENGTH with instance.candidates.size)
-    add(Features.HIGHEST_OLD_RELEVANCE with instance.candidates.maxOfOrNull { it.relevance })
+  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter) = buildList<Feature> {
+    val candidates = units[MLUnitImportCandidatesList]
+    add(Features.LENGTH with candidates.size)
+    add(Features.HIGHEST_OLD_RELEVANCE with candidates.maxOfOrNull { it.relevance })
   }
 }
