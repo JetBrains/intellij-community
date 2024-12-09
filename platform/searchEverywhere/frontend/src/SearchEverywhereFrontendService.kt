@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProviderFactory
 import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
 import com.intellij.platform.searchEverywhere.SearchEverywhereTab
 import com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider
@@ -29,7 +29,9 @@ class SearchEverywhereFrontendService(val project: Project, val coroutineScope: 
     val frontendProviders = remoteProviderIds.associateWith {
       providerId -> SearchEverywhereItemDataFrontendProvider(providerId, projectId, sessionId)
     }
-    val localProviders = SearchEverywhereItemsProvider.EP_NAME.extensionList.filter {
+    val localProviders = SearchEverywhereItemsProviderFactory.EP_NAME.extensionList.map {
+      it.getItemsProvider()
+    }.filter {
       !remoteProviderIds.contains(SearchEverywhereProviderId(it.id))
     }.associate { provider ->
       SearchEverywhereProviderId(provider.id) to SearchEverywhereItemDataLocalProvider(provider)

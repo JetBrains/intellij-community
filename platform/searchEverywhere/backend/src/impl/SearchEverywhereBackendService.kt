@@ -18,7 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 class SearchEverywhereBackendService(val project: Project) {
 
   suspend fun startSession(): EID {
-    val providers = SearchEverywhereItemsProvider.EP_NAME.extensionList.associate { provider ->
+    val providers = SearchEverywhereItemsProviderFactory.EP_NAME.extensionList.associate { factory ->
+      val provider = factory.getItemsProvider()
       val id = SearchEverywhereProviderId(provider.id)
       id to SearchEverywhereItemDataBackendProvider(id, provider)
     }

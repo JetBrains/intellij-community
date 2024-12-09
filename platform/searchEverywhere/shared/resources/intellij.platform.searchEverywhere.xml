@@ -5,8 +5,8 @@
                     dynamic="true"/>
 
 
-    <extensionPoint name="searchEverywhere.itemsProvider"
-                    interface="com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider"
+    <extensionPoint name="searchEverywhere.itemsProviderFactory"
+                    interface="com.intellij.platform.searchEverywhere.SearchEverywhereItemsProviderFactory"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
