@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildData.productInfo.CustomProperty
 import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
@@ -12,7 +13,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule

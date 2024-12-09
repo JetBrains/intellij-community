@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.productInfo
 
+import com.intellij.platform.buildData.productInfo.*
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.*
@@ -91,63 +91,3 @@ internal suspend fun generateJetBrainsClientLaunchData(
   }
 }
 
-/**
- * Describes the format of a JSON file containing meta-information about a product installation.
- * Must be consistent with the `product-info.schema.json` file.
- */
-@Serializable
-data class ProductInfoData(
-  val name: String,
-  val version: String,
-  val versionSuffix: String?,
-  val buildNumber: String,
-  val productCode: String,
-  val envVarBaseName: String,
-  val dataDirectoryName: String,
-  val svgIconPath: String?,
-  val productVendor: String,
-  val launch: List<ProductInfoLaunchData>,
-  val customProperties: List<CustomProperty> = emptyList(),
-  val bundledPlugins: List<String>,
-  // it is not modules, but plugin aliases
-  val modules: List<String>,
-  val fileExtensions: List<String>,
-  val flavors: List<ProductFlavorData> = emptyList(),
-
-  // not used by launcher, specify in the end
-  val layout: List<ProductInfoLayoutItem>,
-)
-
-@Serializable
-data class ProductFlavorData(@JvmField val id: String)
-
-@Serializable
-data class ProductInfoLaunchData(
-  val os: String,
-  val arch: String,
-  val launcherPath: String,
-  val javaExecutablePath: String?,
-  val vmOptionsFilePath: String,
-  val startupWmClass: String? = null,
-  val bootClassPathJarNames: List<String>,
-  val additionalJvmArguments: List<String>,
-  val mainClass: String,
-  val customCommands: List<CustomCommandLaunchData> = emptyList(),
-)
-
-@Serializable
-data class CustomCommandLaunchData(
-  val commands: List<String>,
-  val vmOptionsFilePath: String? = null,
-  val bootClassPathJarNames: List<String> = emptyList(),
-  val additionalJvmArguments: List<String> = emptyList(),
-  val mainClass: String? = null,
-  val envVarBaseName: String? = null,
-  val dataDirectoryName: String? = null,
-)
-
-@Serializable
-data class CustomProperty(
-  val key: String,
-  val value: String,
-)

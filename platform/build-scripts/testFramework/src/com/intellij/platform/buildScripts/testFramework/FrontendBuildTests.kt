@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
+import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
 import com.intellij.platform.runtime.product.ProductMode
 import org.assertj.core.api.SoftAssertions
-import org.jetbrains.intellij.build.ProductInfoLayoutItemKind
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.readBuiltinModulesFile

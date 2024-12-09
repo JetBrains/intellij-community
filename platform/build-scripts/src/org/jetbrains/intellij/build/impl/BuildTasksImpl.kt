@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport

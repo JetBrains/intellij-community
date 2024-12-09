@@ -32,5 +32,6 @@
     <orderEntry type="library" name="devkit.runtime.module.repository.jps" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
   </component>
 </module>

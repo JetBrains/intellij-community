@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span

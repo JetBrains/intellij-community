@@ -606,6 +606,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/intellij.platform.bootstrap.iml" filepath="$PROJECT_DIR$/platform/bootstrap/intellij.platform.bootstrap.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/coroutine/intellij.platform.bootstrap.coroutine.iml" filepath="$PROJECT_DIR$/platform/bootstrap/coroutine/intellij.platform.bootstrap.coroutine.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/dev/intellij.platform.bootstrap.dev.iml" filepath="$PROJECT_DIR$/platform/bootstrap/dev/intellij.platform.bootstrap.dev.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/buildData/intellij.platform.buildData.iml" filepath="$PROJECT_DIR$/platform/buildData/intellij.platform.buildData.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/intellij.platform.buildScripts.iml" filepath="$PROJECT_DIR$/platform/build-scripts/intellij.platform.buildScripts.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/bazel/intellij.platform.buildScripts.bazel.iml" filepath="$PROJECT_DIR$/platform/build-scripts/bazel/intellij.platform.buildScripts.bazel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/codeOptimizer/intellij.platform.buildScripts.codeOptimizer.iml" filepath="$PROJECT_DIR$/platform/build-scripts/codeOptimizer/intellij.platform.buildScripts.codeOptimizer.iml" />

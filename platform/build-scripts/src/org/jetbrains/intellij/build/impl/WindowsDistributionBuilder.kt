@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct

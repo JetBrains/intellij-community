@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
