@@ -7,7 +7,7 @@ import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -68,7 +68,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   private void createUIComponents() {
     myJarPathComponent = new LabeledComponent<>();
     var textFieldWithBrowseButton = new TextFieldWithBrowseButton();
-    textFieldWithBrowseButton.addBrowseFolderListener(myProject, new FileChooserDescriptor(false, false, true, true, false, false)
+    textFieldWithBrowseButton.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileDescriptor("jar")
       .withTitle(ExecutionBundle.message("choose.jar.file")));
     myJarPathComponent.setComponent(textFieldWithBrowseButton);
   }

@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -75,10 +75,10 @@ class InstallFromDiskAction extends DumbAwareAction {
                    ? contextFile
                    : getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
 
-    var descriptor = new FileChooserDescriptor(false, false, true, true, false, false)
-      .withTitle(IdeBundle.message("chooser.title.plugin.file"))
-      .withDescription(IdeBundle.message("chooser.description.jar.and.zip.archives.are.accepted"))
-      .withExtensionFilter("", "zip", "jar");
+    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(IdeBundle.message("install.plugin.chooser.title"))
+      .withDescription(IdeBundle.message("install.plugin.chooser.description"))
+      .withExtensionFilter(IdeBundle.message("install.plugin.chooser.label"), "zip", "jar");
 
     var chosenFile = FileChooser.chooseFile(descriptor, myParentComponent, project, toSelect);
     if (chosenFile != null) {
