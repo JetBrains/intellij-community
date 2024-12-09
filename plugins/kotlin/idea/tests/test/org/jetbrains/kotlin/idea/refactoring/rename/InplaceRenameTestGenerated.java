@@ -85,6 +85,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClassTypeParameters.kt");
     }
 
+    @TestMetadata("conflicts/functions/ConflictParameterLocalProperty.kt")
+    public void testConflicts_functions_ConflictParameterLocalProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/ConflictParameterLocalProperty.kt");
+    }
+
     @TestMetadata("conflicts/functions/DefaultParameter.kt")
     public void testConflicts_functions_DefaultParameter() throws Exception {
         runTest("testData/refactoring/rename/inplace/conflicts/functions/DefaultParameter.kt");
@@ -108,6 +113,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("conflicts/functions/NoConflictParameterFunction.kt")
     public void testConflicts_functions_NoConflictParameterFunction() throws Exception {
         runTest("testData/refactoring/rename/inplace/conflicts/functions/NoConflictParameterFunction.kt");
+    }
+
+    @TestMetadata("conflicts/functions/NoConflictParameterProperty.kt")
+    public void testConflicts_functions_NoConflictParameterProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/NoConflictParameterProperty.kt");
     }
 
     @TestMetadata("conflicts/functions/SameSignature.kt")
