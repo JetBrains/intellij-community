@@ -61,11 +61,5 @@
     <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis">
       <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
     </action>
-
-    <action id="ExternalSystem.AttachProject"
-            class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction">
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after"
-                    relative-to-action="ExternalSystem.RefreshAllProjects"/>
-    </action>
   </actions>
 </idea-plugin>

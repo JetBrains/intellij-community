@@ -2865,6 +2865,12 @@
     <action class="com.intellij.codeInsight.hints.ToggleExternalAnnotationsAction" id="ToggleExternalAnnotationsAction">
       <add-to-group group-id="InlayMenu" />
     </action>
+
+    <action id="ExternalSystem.AttachProject"
+            class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction">
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after"
+                    relative-to-action="ExternalSystem.RefreshAllProjects"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
