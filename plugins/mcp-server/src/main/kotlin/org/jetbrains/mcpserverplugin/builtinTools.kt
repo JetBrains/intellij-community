@@ -128,9 +128,10 @@ class FindFilesByNameSubstring: McpTool<Query> {
     override val argKlass: KClass<*> = Query::class
 
     override fun handle(project: Project, args: Query): Response {
+        val searchSubstring = args.nameSubstring.toLowerCase()
         return runReadAction {
             Response(FilenameIndex.getAllFilenames(project).filter {
-                it.toLowerCase().contains(args.nameSubstring.toLowerCase())
+                it.toLowerCase().contains(searchSubstring)
         }.flatMap {
                 FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.allScope(project))
         }.map {
