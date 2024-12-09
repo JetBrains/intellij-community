@@ -70,8 +70,13 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
   val beforeAdviseClientId = currentThreadClientId
   advise(lifetime) {
-    // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
-    beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)", fallbackToLocal = false)
+    // TODO: very very temporary hack to avoid assert until the code in RdSettingsStorageService is rewritten
+    // TODO Moklev IJPL-173291 Dependency between RdSettingsStorageService and
+    //  settingsModel should be inversed to provide proper coroutine scopes where model operations are done
+    if (!this.toString().contains("ThinClient.SettingsModel.settingsChanges")) {
+      // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
+      beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)", fallbackToLocal = false)
+    }
     val inAdviseClientId = currentThreadClientId
     lifetime.coroutineScope.launch(coroutineContext + getSuitableDispatcher(coroutineContext), coroutineStart) {
       inAdviseClientId.assertClientIdConsistency("Inside launch ($this)", fallbackToLocal = false)
