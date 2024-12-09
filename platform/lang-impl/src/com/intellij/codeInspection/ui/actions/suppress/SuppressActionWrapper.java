@@ -73,10 +73,10 @@ public final class SuppressActionWrapper extends ActionGroup {
     });
 
     return Stream.of(
-      actionsList.stream().map(a -> new SuppressTreeAction(a)),
-      Stream.of(Separator.getInstance()),
-      suppressAllList.stream().map(a -> new SuppressTreeAction(a))
-    )
+        actionsList.stream().map(a -> new SuppressTreeAction(a)),
+        Stream.of(Separator.getInstance()),
+        suppressAllList.stream().map(a -> new SuppressTreeAction(a))
+      )
       .flatMap(e -> e)
       .toArray(AnAction[]::new);
   }
