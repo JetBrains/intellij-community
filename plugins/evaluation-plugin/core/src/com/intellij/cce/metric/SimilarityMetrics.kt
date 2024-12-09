@@ -132,7 +132,7 @@ class BleuScore(showByDefault: Boolean = true) : SimilarityMetric(showByDefault)
 }
 
 class LLMJudgeScore(showByDefault: Boolean = true,  private val llmJudge: LLMJudge) : SimilarityMetric(showByDefault) {
-  override val name = "LLM-as-a-Judge Score"
+  override val name = "LLM Judge Score"
   override val description: String = "Calculates the LLM-as-a-Judge Score score for the AIA response compared to the reference text."
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
