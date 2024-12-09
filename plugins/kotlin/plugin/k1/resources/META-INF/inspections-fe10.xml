@@ -1703,14 +1703,6 @@
                      language="kotlin"
                      key="inspection.implicit.nullable.nothing.type.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SimplifyWhenWithBooleanConstantConditionInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.simplify.when.with.boolean.constant.condition.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.JavaCollectionsStaticMethodInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"

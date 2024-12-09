@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inspections
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
@@ -16,9 +16,14 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConstantConditionIfUtils.repl
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.inspections.SimplifyWhenWithBooleanConstantConditionInspection.Context
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyWhenWithBooleanConstantConditionInspection.Context
 import org.jetbrains.kotlin.psi.*
 
+/**
+ * Tests:
+ *  - [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1LocalInspectionTestGenerated.SimplifyWhenWithBooleanConstantCondition]
+ *  - [org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2LocalInspectionTestGenerated.SimplifyWhenWithBooleanConstantCondition]
+ */
 internal class SimplifyWhenWithBooleanConstantConditionInspection : KotlinApplicableInspectionBase.Simple<KtWhenExpression, Context>() {
     data class Context(val isUsedAsExpression: Boolean)
 

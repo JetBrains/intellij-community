@@ -2768,6 +2768,95 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition")
+    public static class SimplifyWhenWithBooleanConstantCondition extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("falseAndElse1.kt")
+        public void testFalseAndElse1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseAndElse1.kt");
+        }
+
+        @TestMetadata("falseAndElse2.kt")
+        public void testFalseAndElse2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseAndElse2.kt");
+        }
+
+        @TestMetadata("falseAndElse3.kt")
+        public void testFalseAndElse3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseAndElse3.kt");
+        }
+
+        @TestMetadata("falseOnly1.kt")
+        public void testFalseOnly1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseOnly1.kt");
+        }
+
+        @TestMetadata("falseOnly2.kt")
+        public void testFalseOnly2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseOnly2.kt");
+        }
+
+        @TestMetadata("falseOnly3.kt")
+        public void testFalseOnly3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseOnly3.kt");
+        }
+
+        @TestMetadata("hasSubject.kt")
+        public void testHasSubject() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/hasSubject.kt");
+        }
+
+        @TestMetadata("noBoolean.kt")
+        public void testNoBoolean() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/noBoolean.kt");
+        }
+
+        @TestMetadata("notApplicableRange.kt")
+        public void testNotApplicableRange() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/notApplicableRange.kt");
+        }
+
+        @TestMetadata("trueIsNotTop1.kt")
+        public void testTrueIsNotTop1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsNotTop1.kt");
+        }
+
+        @TestMetadata("trueIsNotTop2.kt")
+        public void testTrueIsNotTop2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsNotTop2.kt");
+        }
+
+        @TestMetadata("trueIsNotTop3.kt")
+        public void testTrueIsNotTop3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsNotTop3.kt");
+        }
+
+        @TestMetadata("trueIsTop1.kt")
+        public void testTrueIsTop1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsTop1.kt");
+        }
+
+        @TestMetadata("trueIsTop2.kt")
+        public void testTrueIsTop2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsTop2.kt");
+        }
+
+        @TestMetadata("trueIsTop3.kt")
+        public void testTrueIsTop3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsTop3.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/sortModifiers")
     public static class SortModifiers extends AbstractSharedK1LocalInspectionTest {
         @java.lang.Override
