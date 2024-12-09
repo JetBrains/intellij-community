@@ -11,6 +11,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -96,7 +97,7 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                 }
 
                 var used = false
-                callableDeclaration.acceptChildren(object : KtVisitorVoid() {
+                callableDeclaration.acceptChildren(object : KtVisitorVoid(), PsiRecursiveVisitor {
                     override fun visitKtElement(element: KtElement) {
                         if (used) return
                         element.acceptChildren(this)

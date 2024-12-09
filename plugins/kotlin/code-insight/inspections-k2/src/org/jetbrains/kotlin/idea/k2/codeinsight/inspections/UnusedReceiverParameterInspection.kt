@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -94,7 +95,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
             }
 
             var used = false
-            callableDeclaration.acceptChildren(object : KtVisitorVoid() {
+            callableDeclaration.acceptChildren(object : KtVisitorVoid(),PsiRecursiveVisitor {
                 override fun visitKtElement(element: KtElement) {
                     if (used) return
                     element.acceptChildren(this)

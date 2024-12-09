@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsOfType
@@ -60,7 +61,7 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         blocksToVisit: Sequence<KtBlockExpression>
     ): List<String> {
         val names = mutableListOf<String>()
-        expression.accept(object : KtTreeVisitorVoid() {
+        expression.accept(object : KtTreeVisitorVoid(), PsiRecursiveVisitor {
             var stopTraversal = false
 
             override fun visitBlockExpression(expression: KtBlockExpression) {

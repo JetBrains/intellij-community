@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -119,7 +120,7 @@ internal object MovePropertyToConstructorUtils {
     private fun KtExpression.isValidInConstructor(): Boolean {
         val containingClass = getStrictParentOfType<KtClass>() ?: return false
         var isValid = true
-        this.accept(object : KtVisitorVoid() {
+        this.accept(object : KtVisitorVoid(), PsiRecursiveVisitor {
             override fun visitKtElement(element: KtElement) {
                 element.acceptChildren(this)
             }

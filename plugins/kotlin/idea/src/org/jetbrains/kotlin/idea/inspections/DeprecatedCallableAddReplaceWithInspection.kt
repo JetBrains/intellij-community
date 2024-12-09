@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -139,7 +140,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         } ?: return null
 
         var isGood = true
-        replacementExpression.accept(object : KtVisitorVoid() {
+        replacementExpression.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
             override fun visitReturnExpression(expression: KtReturnExpression) {
                 isGood = false
             }
@@ -205,7 +206,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         val importHelper = ImportInsertHelper.getInstance(expression.project)
 
         val result = ArrayList<String>()
-        expression.accept(object : KtVisitorVoid() {
+        expression.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val bindingContext = expression.analyze()
                 val target = bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, expression]

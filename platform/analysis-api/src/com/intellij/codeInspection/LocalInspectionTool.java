@@ -100,7 +100,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
   /**
    * Override to report problems at file level.
    * Please use {@link #buildVisitor} instead, and do the analysis from there in a more fine-grained and latency-friendly way,
-   * as opposed to this {@code checkFile}, which should finish the analysis of the whole file before displaying result,
+   * as opposed to this {@code checkFile}, which should finish the analysis of the whole file before displaying result.
    * @param file       to check.
    * @param manager    InspectionManager to ask for ProblemDescriptor's from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
