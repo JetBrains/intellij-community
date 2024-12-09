@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -8,6 +8,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class StubBuilderType {
       int elementTypeStubVersion = myElementType.getStubVersion();
 
       if (myElementType.getLanguage() instanceof TemplateLanguage) {
-        int templateStubBaseVersion = IStubFileElementType.getTemplateStubBaseVersion();
+        int templateStubBaseVersion = TemplateLanguageStubBaseVersion.getVersion();
         if (elementTypeStubVersion < templateStubBaseVersion) {
           PluginException.logPluginError(LOG, myElementType.getClass() + " " +
                                               myElementType.getLanguage() +
