@@ -37,7 +37,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
       LOG.warn(new IllegalArgumentException("Must specify non-empty 'commandLine' parameter"));
     }
     myPresentableName = CommandLineUtil.extractPresentableName(StringUtil.notNullize(commandLine));
-    myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
+    myWaitFor = createWaitFor();
   }
 
   public final @NotNull T getProcess() {
@@ -73,6 +73,10 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   protected void onOSProcessTerminated(final int exitCode) {
     notifyProcessTerminated(exitCode);
     closeStreams();
+  }
+
+  protected ProcessWaitFor createWaitFor() {
+    return new ProcessWaitFor(myProcess, this, myPresentableName);
   }
 
   protected void doDestroyProcess() {
