@@ -9,10 +9,13 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.createParentDirectories
 import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
+import kotlin.io.path.Path
 import kotlin.io.path.createFile
 import kotlin.io.path.writeText
 import kotlin.reflect.KClass
@@ -109,7 +112,7 @@ class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs> {
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
             ?: return Response("can't find project dir")
 
-        val path = kotlin.io.path.Path(args.absolutePath)
+        val path = Path(args.absolutePath)
         return if (path.startsWith(projectDir)) {
             path.createParentDirectories().createFile().writeText(args.text)
             LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
@@ -118,5 +121,22 @@ class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs> {
         else {
             Response(error = "file is outside of the project")
         }
+    }
+}
+
+data class Query(val nameSubstring: String)
+class FindFilesByNameSubstring: McpTool<Query> {
+    override val name: String = "find_files_by_name_substring"
+    override val description: String = "Find files inside the projct using name substring in JetBrains IDE"
+    override val argKlass: KClass<*> = Query::class
+
+    override fun handle(project: Project, args: Query): Response {
+        return Response(FilenameIndex.getAllFilenames(project).filter {
+            it.toLowerCase().contains(args.nameSubstring)
+        }.flatMap {
+            FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.allScope(project))
+        }.map {
+            it.path
+        }.joinToString(",\n"))
     }
 }

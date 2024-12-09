@@ -1,18 +1,9 @@
 package org.jetbrains.ide.mcp
 
 import com.google.gson.*
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.io.createParentDirectories
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
@@ -20,8 +11,6 @@ import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.RestService
 import org.jetbrains.mcpserverplugin.*
 import java.nio.charset.StandardCharsets
-import kotlin.io.path.createFile
-import kotlin.io.path.writeText
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
@@ -45,7 +34,8 @@ class McpToolManager {
             GetSelectedTextTool(),
             ReplaceSelectedTextTool(),
             ReplaceCurrentFileTextTool(),
-            CreateNewFileWithTextTool()
+            CreateNewFileWithTextTool(),
+            FindFilesByNameSubstring()
         )
     }
 }
