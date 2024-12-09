@@ -278,7 +278,7 @@ open class ConsoleViewImpl protected constructor(
       }
 
       fun getEffectiveOffset(editor: Editor): Int {
-        var moveOffset = min(offset.toDouble(), editor.document.textLength.toDouble()).toInt()
+        var moveOffset = min(offset, editor.document.textLength)
         if (ConsoleBuffer.useCycleBuffer() && moveOffset >= editor.document.textLength) {
           moveOffset = 0
         }
@@ -643,7 +643,8 @@ open class ConsoleViewImpl protected constructor(
         if (lineCount != 0) {
           val lineStartOffset = document.getLineStartOffset(lineCount - 1)
           document.deleteString(
-            max(lineStartOffset.toDouble(), (document.textLength - backspacePrefixLength).toDouble()).toInt(), document.textLength)
+            max(lineStartOffset, document.textLength - backspacePrefixLength),
+            document.textLength)
         }
       }
       addedText = TokenBuffer.getRawText(refinedTokens)
@@ -845,7 +846,7 @@ open class ConsoleViewImpl protected constructor(
     val document = editor!!.document
     if (document.textLength == 0) return
 
-    val endLine = max(0.0, (document.lineCount - 1).toDouble()).toInt()
+    val endLine = max(0, document.lineCount - 1)
 
     if (canHighlightHyperlinks) {
       getHyperlinks()!!.highlightHyperlinksLater(compositeFilter, startLine, endLine, expirableToken)
@@ -873,7 +874,7 @@ open class ConsoleViewImpl protected constructor(
 
   private fun runHeavyFilters(compositeFilter: CompositeFilter, line1: Int, endLine: Int) {
     ThreadingAssertions.assertEventDispatchThread()
-    val startLine = max(0.0, line1.toDouble()).toInt()
+    val startLine = max(0, line1)
 
     val document = editor!!.document
     val startOffset = document.getLineStartOffset(startLine)
@@ -1351,8 +1352,7 @@ open class ConsoleViewImpl protected constructor(
 
     val oldDocLength = document.textLength
     document.insertString(offset, text)
-    val newStartOffset = max(0.0,
-                             (document.textLength - oldDocLength + offset - text.length).toDouble()).toInt() // take care of trim document
+    val newStartOffset = max(0, document.textLength - oldDocLength + offset - text.length) // take care of trim document
     val newEndOffset = document.textLength - oldDocLength + offset // take care of trim document
 
     if (ConsoleTokenUtil.findTokenMarker(this.editor!!, project, newEndOffset) == null) {
