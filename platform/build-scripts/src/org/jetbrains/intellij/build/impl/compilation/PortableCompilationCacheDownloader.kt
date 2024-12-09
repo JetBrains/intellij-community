@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.*
 import org.jetbrains.intellij.build.jpsCache.*
+import org.jetbrains.intellij.build.impl.Git
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.telemetry.withTracer

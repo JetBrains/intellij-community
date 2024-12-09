@@ -1,36 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.compilation
+package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.io.awaitExit
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.lang.ProcessBuilder.Redirect
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.pathString
 
+@ApiStatus.Internal
 class Git(private val dir: Path) {
-  suspend fun log(commitCount: Int): List<String> {
+  fun log(commitCount: Int): List<String> {
     @Suppress("SpellCheckingInspection")
     return execute("git", "log", "-$commitCount", "--pretty=tformat:%H")
   }
 
-  suspend fun formatLatestCommit(format: String): String {
+  fun formatLatestCommit(format: String): String {
     return execute("git", "log", "--pretty=format:$format", "-n", "1").joinToString("\n")
   }
 
-  suspend fun listTree(refSpec: String = "HEAD"): List<String> {
+  fun listTree(refSpec: String = "HEAD"): List<String> {
     return executeWithNullSeparatedOutput("git", "ls-tree", "-z", "-r", refSpec, "--name-only")
   }
 
-  suspend fun listStagingFiles(): List<String> {
+  fun listStagingFiles(): List<String> {
     return executeWithNullSeparatedOutput("git", "ls-files", "-z")
   }
 
-  suspend fun mv(source: Path, destination: Path) {
+  fun mv(source: Path, destination: Path) {
     execute("git", "mv", source.pathString, destination.pathString)
   }
 
-  suspend fun currentCommitShortHash(): String {
+  fun currentCommitShortHash(): String {
     val lines = execute("git", "rev-parse", "--short", "HEAD")
     if (lines.size != 1) {
       throw IllegalStateException("Single line output is expected but got '$lines'")
@@ -42,13 +43,13 @@ class Git(private val dir: Path) {
     return hash
   }
 
-  private suspend fun maybeExecute(vararg command: String): ExecutionResult {
+  private fun maybeExecute(vararg command: String): ExecutionResult {
     val process = ProcessBuilder(*command).directory(dir.toFile()).start()
     var output = process.inputStream.bufferedReader().use {
       it.lines().map { line -> line.trim() }.toList()
     }
     if (!process.waitFor(1, TimeUnit.MINUTES)) {
-      process.destroyForcibly().awaitExit()
+      process.destroyForcibly().waitFor()
       throw IllegalStateException("Cannot execute $command: 1 minute timeout")
     }
     if (process.exitValue() != 0) {
@@ -57,7 +58,7 @@ class Git(private val dir: Path) {
     return ExecutionResult(process.exitValue(), output)
   }
 
-  private suspend fun executeWithNullSeparatedOutput(vararg command: String): List<String> {
+  private fun executeWithNullSeparatedOutput(vararg command: String): List<String> {
     val process = ProcessBuilder(*command)
       .redirectError(Redirect.INHERIT)
       .directory(dir.toFile())
@@ -68,7 +69,7 @@ class Git(private val dir: Path) {
     process.inputStream.copyTo(memoryStream)
 
     if (!process.waitFor(5, TimeUnit.MINUTES)) {
-      process.destroyForcibly().awaitExit()
+      process.destroyForcibly().waitFor()
       throw IllegalStateException("Cannot execute ${command.toList()}: 5 minutes timeout")
     }
 
@@ -77,10 +78,10 @@ class Git(private val dir: Path) {
       throw IllegalStateException("Cannot execute ${command.toList()}: exit code $exitCode")
     }
 
-    return memoryStream.toByteArray().decodeToString().split('\u0000')
+    return memoryStream.toByteArray().decodeToString().split('\u0000').filter { it.isNotEmpty() }
   }
 
-  private suspend fun execute(vararg command: String): List<String> {
+  private fun execute(vararg command: String): List<String> {
     val result = maybeExecute(*command)
     if (result.exitCode != 0) {
       throw IllegalStateException("${command.toList()} failed with $result.exitCode:\n${result.output.joinToString("\n")}")
