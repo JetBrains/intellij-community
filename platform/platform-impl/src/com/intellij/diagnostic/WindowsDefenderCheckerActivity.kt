@@ -59,17 +59,16 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
-    if (checker.hasPathsToExclude(project)) {
-      runAndNotify(project) {
-        checker.excludeSavedPaths(project)
-      }
-      return
-    } else {
-      checker.clearPathsToExclude()
-    }
-    if (checker.isStatusCheckIgnored(project) || checker.isAlreadyProcessed(project)) {
+    if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
+      return
+    }
+
+    val paths = checker.popScheduledPaths(project)
+    if (paths != null) {
+      LOG.info("status check is disabled")
+      runAndNotify(project) { checker.excludeProjectPaths(project, paths) }
       return
     }
 

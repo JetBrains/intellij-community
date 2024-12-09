@@ -82,19 +82,17 @@ object TrustedProjectsDialog {
     if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
       dialog.getDefenderTrustFolder()?.let { defenderTrustDir ->
         WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
-        val checker = serviceAsync<WindowsDefenderChecker>()
-        if (project == null) {
-          checker.markProjectPath(projectRoot)
-        }
         if (defenderTrustDir != projectRoot) {
           (pathsToExclude as MutableList<Path>).apply {
             remove(projectRoot)
             add(0, defenderTrustDir)
           }
         }
+        val checker = serviceAsync<WindowsDefenderChecker>()
         if (project == null) {
-          checker.setPathsToExclude(pathsToExclude)
-        } else {
+          checker.schedule(projectRoot, pathsToExclude)
+        }
+        else {
           WindowsDefenderCheckerActivity.runAndNotify(project) {
             checker.excludeProjectPaths(project, pathsToExclude)
           }

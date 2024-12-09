@@ -16,8 +16,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.sun.jna.Memory;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.COM.COMException;
@@ -32,7 +30,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -63,8 +60,7 @@ public class WindowsDefenderChecker {
     return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
-  private final Map<Path, @Nullable Boolean> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
-  private final List<Path> myPathsToExclude = Collections.synchronizedList(new ArrayList<>());
+  private final Map<Path, List<Path>> myScheduledTasks = Collections.synchronizedMap(new HashMap<>(1));
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
     return
@@ -85,39 +81,14 @@ public class WindowsDefenderChecker {
   }
 
   @ApiStatus.Internal
-  public final void markProjectPath(@NotNull Path projectPath) {
-    myProjectPaths.put(projectPath, null);
+  public final void schedule(@NotNull Path projectPath, @NotNull List<Path> paths) {
+    myScheduledTasks.put(projectPath, paths);
   }
 
   @ApiStatus.Internal
-  public final void setPathsToExclude(@NotNull List<Path> paths) {
-    clearPathsToExclude();
-    myPathsToExclude.addAll(paths);
-  }
-
-  @ApiStatus.Internal
-  public final List<Path> getPathsToExclude() {
-    return myPathsToExclude;
-  }
-
-  @ApiStatus.Internal
-  public final void clearPathsToExclude() {
-    myPathsToExclude.clear();
-  }
-
-  @ApiStatus.Internal
-  @RequiresBackgroundThread
-  final boolean isAlreadyProcessed(@NotNull Project project) {
+  final @Nullable List<Path> popScheduledPaths(@NotNull Project project) {
     var projectPath = getProjectPath(project);
-    if (projectPath != null && myProjectPaths.containsKey(projectPath)) {
-      while (!project.isDisposed() && myProjectPaths.get(projectPath) == null) TimeoutUtil.sleep(100);
-      if (myProjectPaths.remove(projectPath) == Boolean.TRUE) {
-        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
-      }
-      return true;
-    }
-
-    return false;
+    return projectPath != null ? myScheduledTasks.remove(projectPath) : null;
   }
 
   private static @Nullable Path getProjectPath(Project project) {
@@ -224,9 +195,6 @@ public class WindowsDefenderChecker {
   private Set<Path> doGetPathsToExclude(@Nullable Project project, @Nullable Path projectPath) {
     var paths = new TreeSet<Path>();
     paths.add(PathManager.getSystemDir());
-    if (projectPath != null) {
-      paths.add(projectPath);
-    }
     EP_NAME.forEachExtensionSafe(ext -> {
       paths.addAll(ext.getPaths(project, projectPath));
     });
@@ -309,32 +277,6 @@ public class WindowsDefenderChecker {
   }
 
   public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
-    return doExcludeProjectPaths(project, paths);
-  }
-
-  public final boolean excludeSavedPaths(@NotNull Project project) {
-    List<Path> pathsToExclude = getPathsToExclude(project);
-    boolean result = doExcludeProjectPaths(project, pathsToExclude);
-    clearPathsToExclude();
-    return result;
-  }
-
-  public boolean hasPathsToExclude(Project project) {
-    List<Path> pathsToExclude = getPathsToExclude();
-    if (pathsToExclude.isEmpty()) return false;
-    String basePath = project.getBasePath();
-    if (basePath == null) {
-      return false;
-    }
-    for (Path path : pathsToExclude) {
-      if (Paths.get(basePath).startsWith(path)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean doExcludeProjectPaths(@NotNull Project project, List<Path> paths) {
     logCaller("paths=" + paths + " project=" + project);
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
