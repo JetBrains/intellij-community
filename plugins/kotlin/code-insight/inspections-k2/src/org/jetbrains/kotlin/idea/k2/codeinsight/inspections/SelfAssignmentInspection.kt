@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -100,9 +101,21 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
             is KtNameReferenceExpression -> return receiverExpression.mainReference.resolveToSymbol()
         }
 
+        return getImplicitReceiverSymbolIfExists()
+    }
+
+    context(KaSession)
+    private fun KtExpression.getImplicitReceiverSymbolIfExists(): KaSymbol? {
         val implicitReceiver = this.resolveToCall()?.singleVariableAccessCall()?.partiallyAppliedSymbol?.let {
             it.dispatchReceiver ?: it.extensionReceiver
         }
-        return (implicitReceiver as? KaImplicitReceiverValue)?.symbol
+
+        return when (implicitReceiver) {
+            is KaImplicitReceiverValue -> implicitReceiver.symbol
+            is KaSmartCastedReceiverValue -> {
+                implicitReceiver.original.safeAs<KaImplicitReceiverValue>()?.symbol
+            }
+            else -> null
+        }
     }
 }
