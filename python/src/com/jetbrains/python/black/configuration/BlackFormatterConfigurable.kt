@@ -18,35 +18,34 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.io.await
 import com.intellij.util.text.nullize
 import com.intellij.util.textCompletion.TextCompletionUtil
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.UIUtil
-import com.intellij.webcore.packaging.PackageManagementService
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.BlackFormatterUtil
 import com.jetbrains.python.black.BlackFormatterVersionService
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration.BlackFormatterOption.Companion.toCliOptionFlags
 import com.jetbrains.python.newProject.steps.createPythonSdkComboBox
-import com.jetbrains.python.packaging.PyPackageManagers
-import com.jetbrains.python.packaging.PyPackagesNotificationPanel
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.createSpecification
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.io.File
-import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 
-const val CONFIGURABLE_ID = "com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
+const val CONFIGURABLE_ID: String = "com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
 
 class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBundle.message("black.configurable.name")) {
   private var storedState = BlackFormatterConfiguration.getBlackConfiguration(project)
@@ -124,20 +123,20 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
           .applyToComponent { icon = AllIcons.General.Warning }
           .component
         installButton = button(PyBundle.message("black.install.button.label")) {
-          runWithModalProgressBlocking(project, PyBundle.message("black.installing.modal.title")) {
+          runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("black.installing.modal.title")) {
             withContext(Dispatchers.EDT) {
               if (selectedSdk != null) {
-                val errorDescription = installBlackFormatter(selectedSdk!!)
-                if (errorDescription == null) {
-                  isBlackFormatterPackageInstalled = true
-                  updateUiState()
-                  enableOnReformatCheckBox.isSelected = true
-                }
-                else {
-                  PyPackagesNotificationPanel
-                    .showPackageInstallationError(@Suppress("DialogTitleCapitalization")
-                                                  PyBundle.message("black.installation.error.title"),
-                                                  errorDescription)
+                val manager = PythonPackageManager.forSdk(project, selectedSdk!!)
+                val blackPackageSpecification = manager.repositoryManager.createSpecification(BlackFormatterUtil.PACKAGE_NAME, null)
+                blackPackageSpecification?.let { packageSpec ->
+                  runPackagingOperationOrShowErrorDialog(selectedSdk!!, PyBundle.message("python.new.project.install.failed.title", BlackFormatterUtil.PACKAGE_NAME),
+                                                         BlackFormatterUtil.PACKAGE_NAME) {
+                    manager.installPackage(packageSpec, emptyList())
+                  }.onSuccess {
+                    isBlackFormatterPackageInstalled = true
+                    updateUiState()
+                    enableOnReformatCheckBox.isSelected = true
+                  }
                 }
               }
             }
@@ -231,26 +230,6 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   private fun updateSdkInfo() {
     isLocalSdk = selectedSdk?.let { it.sdkType.isLocalSdk(it) } ?: false
     isBlackFormatterPackageInstalled = BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(selectedSdk)
-  }
-
-  private suspend fun installBlackFormatter(sdk: Sdk): PackageManagementService.ErrorDescription? {
-    val manager = PyPackageManagers.getInstance().getManagementService(project, sdk)
-    val blackPackage = manager.allPackagesCached.firstOrNull { pyPackage -> pyPackage.name == BlackFormatterUtil.PACKAGE_NAME }
-    val result = CompletableFuture<PackageManagementService.ErrorDescription>()
-    val listener = object : PackageManagementService.Listener {
-      override fun operationStarted(packageName: String?) {}
-
-      override fun operationFinished(packageName: String?, errorDescription: PackageManagementService.ErrorDescription?) {
-        if (errorDescription == null) {
-          result.complete(null)
-        }
-        else {
-          result.complete(errorDescription)
-        }
-      }
-    }
-    manager.installPackage(blackPackage, null, false, null, listener, false)
-    return result.await()
   }
 
   private fun canBeEnabled(): Boolean {
