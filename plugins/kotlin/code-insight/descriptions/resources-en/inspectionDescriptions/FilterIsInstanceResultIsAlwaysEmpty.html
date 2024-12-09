@@ -1,0 +1,12 @@
+<html>
+<body>
+<p>The inspection detects calls to Kotlin standard library functions <code>filterIsInstance</code>/<code>filterIsInstanceTo</code>,
+whose target type is not a subtype of the element type the filtering is called on.</p>
+
+<p>Example:</p>
+<pre><code>
+    val list = listOf&lt;Int&gt;(1, 2, 3)
+    val filteredList = list.filterIsInstance&lt;Boolean&gt;() // Empty result
+</code></pre>
+</body>
+</html>

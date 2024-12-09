@@ -77,6 +77,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
             model("${idea}/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
             model("${idea}/inspectionsLocal/unusedReceiverParameter")
+            model("${idea}/inspectionsLocal/filterIsInstanceAlwaysEmpty")
             model("${idea}/inspectionsLocal/selfReferenceConstructorParameter")
             model("${idea}/inspectionsLocal/canBeVal")
             model("${idea}/inspectionsLocal/addOperatorModifier")
