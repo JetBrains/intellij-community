@@ -7,7 +7,6 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
-import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
@@ -554,7 +553,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   // open for Rider
   @Suppress("MemberVisibilityCanBePrivate")
   protected suspend fun isValidProjectPath(file: Path): Boolean {
-    return withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(file) }
+    return withContext(Dispatchers.IO) { ProjectUtil.isValidProjectPath(file) }
   }
 
   // toOpen - no non-existent project paths and every info has a frame

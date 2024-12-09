@@ -4,7 +4,7 @@ package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
@@ -177,7 +177,7 @@ object FUSProjectHotStartUpMeasurer {
    */
   suspend fun reportProjectPath(projectFile: Path) {
     if (!isProperContext()) return
-    val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
+    val hasSettings = withContext(Dispatchers.IO) { ProjectUtil.isValidProjectPath(projectFile) }
     channel.trySend(Event.ProjectPathReportEvent(hasSettings))
   }
 

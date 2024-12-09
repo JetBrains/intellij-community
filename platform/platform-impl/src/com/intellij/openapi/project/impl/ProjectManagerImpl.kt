@@ -947,7 +947,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return !closeAndDisposeKeepingFrame(projectToClose)
     }
 
-    val isValidProject = ProjectUtilCore.isValidProjectPath(projectDir)
+    val isValidProject = ProjectUtil.isValidProjectPath(projectDir)
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
     if (processor != null &&
         !isDataSpell() &&

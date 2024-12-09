@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.OpenProjectTaskBuilder
-import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.ide.impl.TrustedPaths
+import com.intellij.ide.impl.*
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.*
@@ -347,7 +344,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
         runConfigurators = true
-        isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+        isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
         this.projectToClose = projectToClose
         useDefaultProjectAsTemplate = true
       }
@@ -356,7 +353,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.Internal
     fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
       runConfigurators = true
-      isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+      isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
       useDefaultProjectAsTemplate = true
     }

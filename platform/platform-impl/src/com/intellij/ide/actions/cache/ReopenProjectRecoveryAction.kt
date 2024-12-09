@@ -3,12 +3,10 @@ package com.intellij.ide.actions.cache
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +56,7 @@ abstract class ReopenProjectRecoveryAction : RecoveryAction {
       file = projectPath,
       options = OpenProjectTask {
         runConfigurators = true
-        isNewProject = !ProjectUtilCore.isValidProjectPath(projectPath)
+        isNewProject = !ProjectUtil.isValidProjectPath(projectPath)
         useDefaultProjectAsTemplate = true
         forceOpenInNewFrame = true
       }

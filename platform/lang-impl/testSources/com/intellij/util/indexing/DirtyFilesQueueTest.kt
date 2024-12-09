@@ -3,7 +3,6 @@ package com.intellij.util.indexing
 
 import com.intellij.find.TextSearchService
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
@@ -294,7 +293,7 @@ class DirtyFilesQueueTest {
 
   private suspend fun <T> openProject(name: String, action: suspend (Project, Module) -> T): T {
     val projectFile = nameToPathMap.computeIfAbsent(name) { n -> TemporaryDirectory.generateTemporaryPath("project_$n") }
-    val reopenProject = ProjectUtilCore.isValidProjectPath(projectFile)
+    val reopenProject = ProjectUtil.isValidProjectPath(projectFile)
     projectFile.createDirectories()
     @Suppress("DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING") val options = createTestOpenProjectOptions().copy(projectName = name)
     SystemProperties.setProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", "true")

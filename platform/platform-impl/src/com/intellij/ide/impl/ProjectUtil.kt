@@ -176,7 +176,7 @@ object ProjectUtil {
         return chooseProcessorAndOpenAsync(mutableListOf(provider), virtualFile, options)
       }
     }
-    if (ProjectUtilCore.isValidProjectPath(file)) {
+    if (isValidProjectPath(file)) {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true))
     }
@@ -281,9 +281,11 @@ object ProjectUtil {
                        })
   }
 
-  private suspend fun chooseProcessorAndOpenAsync(processors: MutableList<ProjectOpenProcessor>,
-                                                  virtualFile: VirtualFile,
-                                                  options: OpenProjectTask): Project? {
+  private suspend fun chooseProcessorAndOpenAsync(
+    processors: MutableList<ProjectOpenProcessor>,
+    virtualFile: VirtualFile,
+    options: OpenProjectTask,
+  ): Project? {
     val processor = when (processors.size) {
       1 -> {
         processors.first()
@@ -359,9 +361,11 @@ object ProjectUtil {
     return null
   }
 
-  fun confirmLoadingFromRemotePath(path: String,
-                                   msgKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
-                                   titleKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String): Boolean {
+  fun confirmLoadingFromRemotePath(
+    path: String,
+    msgKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
+    titleKey: @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String,
+  ): Boolean {
     return showYesNoDialog(IdeBundle.message(msgKey, path), titleKey)
   }
 
@@ -692,7 +696,7 @@ object ProjectUtil {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
-                       (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file))
+                       (PlatformUtils.isDataGrip() && !isValidProjectPath(file))
     if (preferAttach && attachToProjectAsync(projectToClose = currentProject, projectDir = file, callback = null)) {
       return null
     }

@@ -21,6 +21,10 @@ public final class ProjectUtilCore {
     return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
   }
 
+  /**
+   * @deprecated Use {@code com.intellij.ide.impl.ProjectUtil#isValidProjectPath}
+   */
+  @Deprecated
   public static boolean isValidProjectPath(@NotNull Path file) {
     return Files.isDirectory(file.resolve(Project.DIRECTORY_STORE_FOLDER)) ||
            (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
