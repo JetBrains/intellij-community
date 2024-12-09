@@ -145,7 +145,9 @@ public final class InspectionDescriptionInfo {
 
     String nameWithSuffix = filename + ".html";
     return DescriptionCheckerUtil.allDescriptionDirs(module, DescriptionType.INSPECTION)
-      .map(directory -> directory.findFile(nameWithSuffix)).nonNull().findFirst().orElse(null);
+      .map(directory -> directory.findFile(nameWithSuffix))
+      .map(directory -> directory != null && directory.getName().equals(nameWithSuffix) ? directory : null)
+      .nonNull().findFirst().orElse(null);
   }
 
   public boolean isValid() {
