@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpointManager
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import org.jetbrains.ide.mcp.McpTool
@@ -52,6 +53,19 @@ class GetBreakpointsTool : McpTool<NoArgs> {
         project: Project,
         args: NoArgs
     ): Response {
-        TODO("Not yet implemented")
+        val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+        return Response(breakpointManager.allBreakpoints
+            .filterIsInstance<XLineBreakpoint<*>>() // Only consider line breakpoints
+            .mapNotNull { breakpoint ->
+                val filePath = breakpoint.presentableFilePath
+                val line = breakpoint.line
+                if (filePath != null && line >= 0) {
+                    filePath to (line + 1) // Convert line from 0-based to 1-based
+                } else {
+                    null
+                }
+            }.joinToString(",\n", prefix = "[", postfix = "]") {
+                """{"path": "${it.first}", "type": "${it.second}"}"""
+            })
     }
 }
