@@ -63,6 +63,7 @@ class ExecuteTerminalCommandTool : McpTool<ExecuteTerminalCommandArgs> {
     }
 
     private fun terminalWidget(project: Project): TerminalWidget? {
-        return TerminalToolWindowManager.getInstance(project).terminalWidgets.firstOrNull()
+        val terminalManager = TerminalToolWindowManager.getInstance(project)
+        return terminalManager.terminalWidgets.firstOrNull() ?: terminalManager.createNewSession()
     }
 }
