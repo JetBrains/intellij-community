@@ -180,6 +180,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
         return HttpRequests.request(urlString)
           .accept(HttpRequests.JSON_CONTENT_TYPE)
+          .setHeadersViaTuner()
           .productNameAsUserAgent()
           .throwStatusCodeException(throwExceptions)
           .connect {
