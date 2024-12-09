@@ -14,7 +14,7 @@
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.i18n.PluginXmlI18nInspection"
                      key="inspection.plugin.xml.i18n.display.name"/>
     <localInspection language="XML" shortName="PluginXmlCapitalization" applyToDialects="false"

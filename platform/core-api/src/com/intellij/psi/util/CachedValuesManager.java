@@ -4,7 +4,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -72,28 +71,10 @@ public abstract class CachedValuesManager {
                                               @NotNull ParameterizedCachedValueProvider<T, P> provider,
                                               boolean trackValue,
                                               P parameter) {
-    ParameterizedCachedValue<T, P> value;
-
-    if (dataHolder instanceof UserDataHolderEx) {
-      UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
-      value = dh.getUserData(key);
-      if (value == null) {
-        trackKeyHolder(dataHolder, key);
-        value = createParameterizedCachedValue(dataHolder, provider, trackValue);
-        value = dh.putUserDataIfAbsent(key, value);
-      }
-    }
-    else {
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (dataHolder) {
-        value = dataHolder.getUserData(key);
-        if (value == null) {
-          trackKeyHolder(dataHolder, key);
-          value = createParameterizedCachedValue(dataHolder, provider, trackValue);
-          dataHolder.putUserData(key, value);
-        }
-      }
-    }
+    ParameterizedCachedValue<T, P> value = ConcurrencyUtil.computeIfAbsent(dataHolder, key, () -> {
+      trackKeyHolder(dataHolder, key);
+      return createParameterizedCachedValue(dataHolder, provider, trackValue);
+    });
     return value.getValue(parameter);
   }
 

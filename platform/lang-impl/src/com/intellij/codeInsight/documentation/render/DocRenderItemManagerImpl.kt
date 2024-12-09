@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.containers.toArray
 import com.intellij.util.messages.Topic
 import kotlinx.collections.immutable.toImmutableList
@@ -57,7 +58,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
 
   override fun setItemsToEditor(editor: Editor, itemsToSet: DocRenderPassFactory.Items, collapseNewItems: Boolean) {
     if (editor.getUserData(OWN_ITEMS) == null && itemsToSet.isEmpty) return
-    val items = (editor as UserDataHolderEx).putUserDataIfAbsent(OWN_ITEMS, mutableListOf())
+    val items = ConcurrencyUtil.computeIfAbsent(editor, OWN_ITEMS) { mutableListOf() }
     keepScrollingPositionWhile(editor) {
       val foldingTasks = mutableListOf<Runnable>()
       val itemsToUpdateRenderers: MutableList<DocRenderItemImpl> = ArrayList()

@@ -18,6 +18,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dsdk.download.consent=true",
   "-Dide.activity.tracking.enable.debug=true",
   "-Deslint.service.expiration.timeout.ms=5000",
+  "-Dphp.additional.library.manager.new.updater=true",
   )
 
 private const val IS_EAP = true

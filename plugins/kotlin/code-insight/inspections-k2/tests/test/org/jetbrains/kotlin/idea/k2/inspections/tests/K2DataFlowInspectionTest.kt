@@ -97,6 +97,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
         doTest()
     }
     fun testPrimitiveAndNullK2() = doTest()
+    fun testPrimitiveBound() = doTest()
     fun testProperty() = doTest()
     fun testQualifierK2() = doTest()
     fun testRangeAnnotation() = doTest()

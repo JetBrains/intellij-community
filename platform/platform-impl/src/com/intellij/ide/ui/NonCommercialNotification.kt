@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -102,7 +103,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     val borderColor = JBColor.namedColor("Badge.greenOutlineBorderColor", JBColor(0x55A76A, 0x4E8052))
     val uiSettings = UISettings.Companion.getInstance()
     val icon = TextIcon(title, foreground, null, borderColor, 0, true)
-    icon.setFont(JBFont.medium())
+    icon.setFont(getStatusFont())
     icon.setRound(18)
     icon.setInsets(JBUI.insets(if (!ExperimentalUI.Companion.isNewUI() || uiSettings.compactMode) 3 else 4, 8))
 
@@ -120,7 +121,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
             scale = newScale
             oldFont = font
             icon.setInsets(JBUI.insets(if (newValue) 3 else 4, 8))
-            icon.font = JBFont.medium()
+            icon.font = getStatusFont()
             icon.setFontTransform(getFontMetrics(icon.font).fontRenderContext.transform)
             parent.revalidate()
           }
@@ -167,6 +168,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     label.iconTextGap = JBUI.scale(8)
     label.horizontalTextPosition = SwingConstants.LEFT
     label.border = JBUI.Borders.empty(0, 12)
+    label.font = getStatusFont()
 
     val popup = NonCommercialPopup(this)
     label.clickListener = popup
@@ -174,6 +176,8 @@ private class NonCommercialWidget : CustomStatusBarWidget {
 
     return label
   }
+
+  private fun getStatusFont() = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBFont.medium()
 
   override fun getComponent(): JComponent = myComponent
 

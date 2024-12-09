@@ -179,7 +179,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     runPythonTest(new PyDataFrameDebuggerTask("/debug", "test_sci_data_with_complex_numbers.py", Collections.singleton(2)) {
       @Override
       public void testing() throws Exception {
-        doTest("arr", 1, 10, chunk -> {
+        doTest("arr", 10, 1, chunk -> {
           assertEquals("(9.000000000000001e-09+1.8000000000000002e-08j)",  chunk.getMax());
           assertEquals("0j", chunk.getMin());
         });

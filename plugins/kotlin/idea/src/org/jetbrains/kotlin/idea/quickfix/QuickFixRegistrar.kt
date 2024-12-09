@@ -545,7 +545,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         INFIX_MODIFIER_REQUIRED.registerFactory(AddModifierFixFactory(INFIX_KEYWORD))
 
-        UNDERSCORE_IS_RESERVED.registerFactory(RenameUnderscoreFix)
+        UNDERSCORE_IS_RESERVED.registerFactory(RenameUnderscoreFixFactory)
 
         DEPRECATED_TYPE_PARAMETER_SYNTAX.registerFactory(MigrateTypeParameterListFixFactory)
         DEPRECATED_JAVA_ANNOTATION.registerFactory(DeprecatedJavaAnnotationFix)

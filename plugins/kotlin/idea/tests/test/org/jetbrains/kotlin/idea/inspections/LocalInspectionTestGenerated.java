@@ -278,6 +278,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/conditionNotBinaryExpr.kt");
             }
 
+            @TestMetadata("conflictingNames.kt")
+            public void testConflictingNames() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToElvis/conflictingNames.kt");
+            }
+
             @TestMetadata("doesNotInlineVariableInMultiDeclaration.kt")
             public void testDoesNotInlineVariableInMultiDeclaration() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/doesNotInlineVariableInMultiDeclaration.kt");
@@ -366,6 +371,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("isCheckWithSelectorChain.kt")
             public void testIsCheckWithSelectorChain() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/isCheckWithSelectorChain.kt");
+            }
+
+            @TestMetadata("isFunctionalCheck.kt")
+            public void testIsFunctionalCheck() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToElvis/isFunctionalCheck.kt");
             }
 
             @TestMetadata("kt19666.kt")
@@ -16024,6 +16034,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/selfAssignment/differentThis.kt");
         }
 
+        @TestMetadata("doubleSmartCast.kt")
+        public void testDoubleSmartCast() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/doubleSmartCast.kt");
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("testData/inspectionsLocal/selfAssignment/list.kt");
@@ -16102,6 +16117,61 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("shadow.kt")
         public void testShadow() throws Exception {
             runTest("testData/inspectionsLocal/selfAssignment/shadow.kt");
+        }
+
+        @TestMetadata("smartCastDifferentExplicitReceiver.kt")
+        public void testSmartCastDifferentExplicitReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastDifferentExplicitReceiver.kt");
+        }
+
+        @TestMetadata("smartCastDifferentImplicitReceiver1.kt")
+        public void testSmartCastDifferentImplicitReceiver1() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastDifferentImplicitReceiver1.kt");
+        }
+
+        @TestMetadata("smartCastDifferentImplicitReceiver2.kt")
+        public void testSmartCastDifferentImplicitReceiver2() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastDifferentImplicitReceiver2.kt");
+        }
+
+        @TestMetadata("smartCastSameExplicitLabeledThisMultipleThis.kt")
+        public void testSmartCastSameExplicitLabeledThisMultipleThis() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastSameExplicitLabeledThisMultipleThis.kt");
+        }
+
+        @TestMetadata("smartCastSameExplicitReceiver.kt")
+        public void testSmartCastSameExplicitReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastSameExplicitReceiver.kt");
+        }
+
+        @TestMetadata("smartCastSameExplicitThisMultipleThis.kt")
+        public void testSmartCastSameExplicitThisMultipleThis() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastSameExplicitThisMultipleThis.kt");
+        }
+
+        @TestMetadata("smartCastSameImplicitReceiverMultipleThis.kt")
+        public void testSmartCastSameImplicitReceiverMultipleThis() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastSameImplicitReceiverMultipleThis.kt");
+        }
+
+        @TestMetadata("smartCastThis1.kt")
+        public void testSmartCastThis1() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastThis1.kt");
+        }
+
+        @TestMetadata("smartCastThis2.kt")
+        public void testSmartCastThis2() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastThis2.kt");
+        }
+
+        @TestMetadata("smartCastThis3.kt")
+        public void testSmartCastThis3() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastThis3.kt");
+        }
+
+        @TestMetadata("smartCastThis4.kt")
+        public void testSmartCastThis4() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/smartCastThis4.kt");
         }
 
         @TestMetadata("withReceiver.kt")

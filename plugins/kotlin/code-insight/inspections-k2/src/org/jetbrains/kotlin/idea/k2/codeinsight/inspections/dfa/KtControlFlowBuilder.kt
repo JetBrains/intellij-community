@@ -1828,7 +1828,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(WrapDerivedVariableInstruction(expectedType.toDfType().meet(dfType), SpecialField.UNBOX))
         }
         if (actualDfType is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
-            addInstruction(PrimitiveConversionInstruction(expectedType.toPsiPrimitiveType(), null))
+            addInstruction(PrimitiveConversionInstruction(expectedDfType.psiType, null))
         }
     }
 

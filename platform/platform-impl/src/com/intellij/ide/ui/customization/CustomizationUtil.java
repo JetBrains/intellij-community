@@ -59,6 +59,8 @@ import java.util.function.Supplier;
 
 public final class CustomizationUtil {
   private static final Logger LOG = Logger.getInstance(CustomizationUtil.class);
+  @ApiStatus.Internal
+  public static final int DEFAULT_CUSTOMIZATION_ROOT_DEPTH = 1;
 
   public static final Key<Boolean> DISABLE_CUSTOMIZE_POPUP_KEY = Key.create("CustomizationUtil.DisablePopup");
 
@@ -468,7 +470,16 @@ public final class CustomizationUtil {
                                                                           @Nullable String groupID,
                                                                           @NotNull JComponent component,
                                                                           @NotNull String place) {
-    PopupHandler popupHandler = createToolbarCustomizationHandler(actionGroup, groupID, component, place);
+    return installToolbarCustomizationHandler(actionGroup, groupID, DEFAULT_CUSTOMIZATION_ROOT_DEPTH, component, place);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PopupHandler installToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
+                                                                          @Nullable String groupID,
+                                                                          int customizationRootDepth,
+                                                                          @NotNull JComponent component,
+                                                                          @NotNull String place) {
+    PopupHandler popupHandler = createToolbarCustomizationHandler(actionGroup, groupID, customizationRootDepth, component, place);
     if (popupHandler != null) component.addMouseListener(popupHandler);
     return popupHandler;
   }
@@ -477,12 +488,21 @@ public final class CustomizationUtil {
                                                                          @Nullable String groupID,
                                                                          @NotNull JComponent component,
                                                                          @NotNull String place) {
+    return createToolbarCustomizationHandler(actionGroup, groupID, DEFAULT_CUSTOMIZATION_ROOT_DEPTH, component, place);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PopupHandler createToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
+                                                                         @Nullable String groupID,
+                                                                         int customizationRootDepth,
+                                                                         @NotNull JComponent component,
+                                                                         @NotNull String place) {
     if (groupID == null) {
       return null;
     }
 
     Ref<Component> popupInvoker = new Ref<>();
-    ActionGroup customizationGroup = createToolbarCustomizationGroup(actionGroup, groupID, popupInvoker);
+    ActionGroup customizationGroup = createToolbarCustomizationGroup(actionGroup, groupID, customizationRootDepth, popupInvoker);
     if (customizationGroup == null) {
       return null;
     }
@@ -521,6 +541,13 @@ public final class CustomizationUtil {
   public static @Nullable ActionGroup createToolbarCustomizationGroup(@NotNull ActionGroup actionGroup,
                                                                       String groupID,
                                                                       Ref<? extends Component> popupInvoker) {
+    return createToolbarCustomizationGroup(actionGroup, groupID, DEFAULT_CUSTOMIZATION_ROOT_DEPTH, popupInvoker);
+  }
+
+  private static @Nullable ActionGroup createToolbarCustomizationGroup(@NotNull ActionGroup actionGroup,
+                                                                      String groupID,
+                                                                      int customizationRootDepth,
+                                                                      Ref<? extends Component> popupInvoker) {
     String groupName = getGroupName(actionGroup, groupID);
     if (groupName == null) {
       return null;
@@ -531,7 +558,7 @@ public final class CustomizationUtil {
       new MyDumbAction(actionID, IdeBundle.messagePointer("action.customizations.customize.action"), () -> AllIcons.General.GearPlain, event -> {
         Component src = popupInvoker.get();
         AnAction targetAction = src instanceof ActionButton ? ((ActionButton)src).getAction() : null;
-        DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
+        DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, customizationRootDepth, targetAction);
         dialogWrapper.show();
       })
     );
@@ -552,7 +579,17 @@ public final class CustomizationUtil {
 
   public static @NotNull DialogWrapper createCustomizeGroupDialog(@Nullable Project project, @NotNull String groupID,
                                                                   @NlsContexts.DialogTitle String groupName, @Nullable AnAction targetAction) {
-    ToolbarCustomizableActionsPanel panel = new ToolbarCustomizableActionsPanel(groupID, groupName);
+    return createCustomizeGroupDialog(project, groupID, groupName, DEFAULT_CUSTOMIZATION_ROOT_DEPTH, targetAction);
+  }
+
+  private static @NotNull DialogWrapper createCustomizeGroupDialog(
+    @Nullable Project project,
+    @NotNull String groupID,
+    @NlsContexts.DialogTitle String groupName,
+    int customizationRootDepth,
+    @Nullable AnAction targetAction
+  ) {
+    ToolbarCustomizableActionsPanel panel = new ToolbarCustomizableActionsPanel(groupID, groupName, customizationRootDepth);
     return new DialogWrapper(project, true) {
       {
         setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
@@ -627,11 +664,25 @@ public final class CustomizationUtil {
   private static final class ToolbarCustomizableActionsPanel extends CustomizableActionsPanel {
     private final @NotNull String myGroupID;
     private final @Nls @NotNull String myGroupName;
+    private final int myCustomizationRootDepth;
     private @Nullable Action myApplyAction;
 
-    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @Nls @NotNull String groupName) {
+    private ToolbarCustomizableActionsPanel(@NotNull String groupID, @Nls @NotNull String groupName, int customizationRootDepth) {
       myGroupID = groupID;
       myGroupName = groupName;
+      myCustomizationRootDepth = customizationRootDepth;
+    }
+
+    @Override
+    protected int minSelectionPathLength() {
+      // Most actions work one level under a customization root and below, hence the +1.
+      // The "add" actions explicitly subtract one from this value, so they work at the customization root level.
+      // Above the customization root level all actions are disabled.
+      // Example: the main toolbar has three action groups that are customization roots:
+      // - on the root level, all actions are disabled: you can't add/remove top-level groups;
+      // - on the 2nd level, you can add actions inside one of the three sub-toolbars, but you can't edit them;
+      // - bellow the 2nd level (inside toolbars), you can do anything: add/remove, move, edit icons...
+      return myCustomizationRootDepth + 1;
     }
 
     @Override

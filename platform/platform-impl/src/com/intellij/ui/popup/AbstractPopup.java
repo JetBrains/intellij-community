@@ -658,11 +658,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
-    show(aPoint, new PopupShowOptionsBuilder());
-  }
-
-  @Override
-  public void show(@NotNull RelativePoint aPoint, @NotNull PopupShowOptions options) {
     if (UiInterceptors.tryIntercept(this, aPoint)) return;
 
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
@@ -671,12 +666,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
 
-    showImpl(
-      ((PopupShowOptionsBuilder) options)
-        .withOwner(aPoint.getComponent())
-        .withScreenXY(screenPoint.x, screenPoint.y)
-        .withForcedXY(false)
-    );
+    show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }
 
   @Override
@@ -1047,14 +1037,20 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     );
   }
 
+  @Override
+  public void show(@NotNull PopupShowOptions showOptions) {
+    showImpl((PopupShowOptionsBuilder)showOptions);
+  }
+
   @ApiStatus.Internal
-  protected void showImpl(@NotNull PopupShowOptionsBuilder optionsBuilder) {
-    var options = optionsBuilder.build();
+  protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
+    if (UiInterceptors.tryIntercept(this)) return;
+
+    var options = showOptions.build();
     var owner = options.getOwner();
     var aScreenX = options.getScreenX();
     var aScreenY = options.getScreenY();
     var considerForcedXY = options.getConsiderForcedXY();
-    if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
@@ -1529,6 +1525,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Anchor point " + anchorPoint);
     }
+    var originalY = bounds.y;
     var offsetX = bounds.x - anchorPoint.x;
     var offsetY = bounds.y - anchorPoint.y;
     bounds.x += offsetX;
@@ -1577,10 +1574,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         // if this popup can reduce it height at all.
         if (options.getRelativePosition() == PopupRelativePosition.TOP && options.getMinimumHeight() != null) {
           var reducedHeight = bounds.height - shift;
-          bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
-          adjustedHeight = true;
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
+          if (reducedHeight >= options.getMinimumHeight()) {
+            bounds.height = reducedHeight;
+            adjustedHeight = true;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
+            }
+          }
+          else {
+            // Can't fit even with the reduced height, revert to its original position,
+            // then let the code below do its job and try to fit it there.
+            bounds.y = originalY;
           }
         }
       }

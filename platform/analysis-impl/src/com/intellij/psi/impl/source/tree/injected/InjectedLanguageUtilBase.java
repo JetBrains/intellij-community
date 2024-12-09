@@ -24,6 +24,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -419,10 +420,7 @@ public class InjectedLanguageUtilBase {
   @Deprecated
   public static @NotNull ConcurrentList<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     // modification of cachedInjectedDocuments must be under InjectedLanguageManagerImpl.ourInjectionPsiLock only
-    List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
-    if (injected == null) {
-      injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.createConcurrentList());
-    }
+    List<DocumentWindow> injected = ConcurrencyUtil.computeIfAbsent(hostPsiFile, INJECTED_DOCS_KEY, () -> ContainerUtil.createConcurrentList());
     return (ConcurrentList<DocumentWindow>)injected;
   }
 

@@ -34,7 +34,7 @@ fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiCom
   x(xpath ?: "//div[@class='EditorComponentImpl']", JEditorUiComponent::class.java).action()
 }
 
-class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
+open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   private val editorComponent get() = driver.cast(component, EditorComponentImpl::class)
   private val document: Document by lazy { editor.getDocument() }
   private val caretPosition

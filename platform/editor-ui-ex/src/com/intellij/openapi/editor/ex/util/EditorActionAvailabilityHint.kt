@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.util.ThreeState
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -155,11 +155,7 @@ private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String,
 }
 
 private fun UserDataHolderEx.addActionAvailabilityHintImpl(vararg newHints: EditorActionAvailabilityHint) {
-  var hints = getUserData(hintsKey)
-  if (hints == null) {
-    hints = ContainerUtil.createConcurrentList()
-    putUserDataIfAbsent(hintsKey, hints)
-  }
+  var hints = ConcurrencyUtil.computeIfAbsent(this, hintsKey) { ContainerUtil.createConcurrentList() }
   for (newHint in newHints) {
     val existingHint = hints.find { it.actionId == newHint.actionId }
     if (existingHint != null) {

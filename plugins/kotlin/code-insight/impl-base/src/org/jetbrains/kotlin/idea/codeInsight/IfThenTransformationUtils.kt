@@ -96,7 +96,7 @@ object IfThenTransformationUtils {
         return when (strategy) {
             is IfThenTransformationStrategy.WrapWithLet -> data.baseClause.wrapWithLet(
                 newReceiverExpression,
-                expressionsToReplaceWithLambdaParameter = collectTextBasedUsages(data)
+                expressionsToReplaceWithLambdaParameter = collectCheckedExpressionUsages(data)
             )
 
             is IfThenTransformationStrategy.AddSafeAccess -> {
@@ -117,7 +117,7 @@ object IfThenTransformationUtils {
                     TransformIfThenReceiverMode.REPLACE_BASE_CLAUSE -> newBaseClause.replaced(newReceiverExpression)
 
                     TransformIfThenReceiverMode.FIND_AND_REPLACE_MATCHING_RECEIVER -> {
-                        val receiverToReplace = newBaseClause.getMatchingReceiver(data.checkedExpression.text) ?: error("")
+                        val receiverToReplace = newBaseClause.getMatchingReceiver(data.checkedExpression) ?: error("")
                         receiverToReplace.replaced(newReceiverExpression)
                     }
                 }
@@ -139,7 +139,7 @@ object IfThenTransformationUtils {
         if (acceptUnstableSmartCasts) {
             if (data.negatedClause != null && !data.negatedClause.isNullExpression()) return null
         } else {
-            if (collectTextBasedUsages(data).any { it.doesNotHaveStableSmartCast() }) return null
+            if (collectCheckedExpressionUsages(data).any { it.doesNotHaveStableSmartCast() }) return null
         }
 
         if (conditionIsSenseless(data)) return null
@@ -198,14 +198,16 @@ object IfThenTransformationUtils {
         is KtIsExpression -> leftHandSide
         else -> null
     }
-
     /**
-     * @return usages of [IfThenTransformationData.checkedExpression] based on its text and `KClass`, excluding usages from nested scopes
+     * @return usages of [IfThenTransformationData.checkedExpression]'s target
      */
-    fun collectTextBasedUsages(data: IfThenTransformationData): List<KtExpression> = data.baseClause.collectDescendantsOfType<KtExpression>(
-        canGoInside = { it !is KtBlockExpression },
-        predicate = { it::class == data.checkedExpression::class && it.text == data.checkedExpression.text },
-    )
+    fun collectCheckedExpressionUsages(data: IfThenTransformationData): List<KtExpression> {
+        val target = getReferenceTarget(data.checkedExpression).mainReference?.resolve() ?: return emptyList()
+        return data.baseClause.collectDescendantsOfType<KtExpression>(
+            canGoInside = { it !is KtBlockExpression },
+            predicate = { it::class == data.checkedExpression::class && it.text == data.checkedExpression.text && getReferenceTarget(it).mainReference?.resolve() == target },
+        )
+    }
 
 
     context(KaSession)
@@ -344,13 +346,13 @@ sealed class IfThenTransformationStrategy {
         fun create(data: IfThenTransformationData): IfThenTransformationStrategy? {
             val newReceiverIsSafeCast = data.condition is KtIsExpression
 
-            return if (data.checkedExpression is KtThisExpression && IfThenTransformationUtils.collectTextBasedUsages(data).isEmpty()) {
+            return if (data.checkedExpression is KtThisExpression && IfThenTransformationUtils.collectCheckedExpressionUsages(data).isEmpty()) {
                 val leftMostReceiver = data.baseClause.getLeftMostReceiverExpressionOrThis()
                 if (!leftMostReceiver.hasImplicitReceiverMatchingThisExpression(data.checkedExpression)) return null
 
                 AddSafeAccess(leftMostReceiver.collectVariableCalls(), TransformIfThenReceiverMode.ADD_EXPLICIT_THIS, newReceiverIsSafeCast)
             } else {
-                val receiverToReplace = data.baseClause.getMatchingReceiver(data.checkedExpression.text) ?: return WrapWithLet
+                val receiverToReplace = data.baseClause.getMatchingReceiver(data.checkedExpression) ?: return WrapWithLet
                 val variableCalls = receiverToReplace.collectVariableCalls()
 
                 val transformReceiverMode = if (variableCalls.isEmpty() && data.baseClause.isSimplifiableTo(data.checkedExpression)) {
@@ -382,6 +384,9 @@ sealed class IfThenTransformationStrategy {
     }
 }
 
+private fun getReferenceTarget(expression: KtExpression): KtExpression = (expression as? KtThisExpression)?.instanceReference ?: expression.getSelectorOrThis()
+
+
 /**
  * Note, that if [IfThenTransformationData.checkedExpression] is used in variable call, variable call will be returned, e.g., for:
  * ```
@@ -391,12 +396,15 @@ sealed class IfThenTransformationStrategy {
  * ```
  * `a()` will be returned.
  */
-private fun KtExpression.getMatchingReceiver(targetText: String): KtExpression? {
+private fun KtExpression.getMatchingReceiver(targetExpr: KtExpression): KtExpression? {
+    val target = getReferenceTarget(targetExpr).mainReference?.resolve() ?: return null
     val leftMostReceiver = this.getLeftMostReceiverExpressionOrThis()
 
+    if ((leftMostReceiver as? KtCallExpression)?.calleeExpression?.mainReference?.resolve() == target) return leftMostReceiver
+
     return leftMostReceiver.parentsOfType<KtExpression>(withSelf = true).firstOrNull { parent ->
-        val valueArgumentList = (parent.getSelectorOrThis() as? KtCallExpression)?.valueArgumentList
-        parent.text.removeSuffix(valueArgumentList?.text.orEmpty()) == targetText
+        val resolve = getReferenceTarget(parent).mainReference?.resolve()
+        resolve == target
     }
 }
 

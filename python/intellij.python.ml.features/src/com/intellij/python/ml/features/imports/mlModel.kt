@@ -78,7 +78,6 @@ internal object TypingFeatures {
 
 private class QuickfixRankingModelLoading : ProjectActivity {
   override suspend fun execute(project: Project) {
-    println("!!! LOADING !!!! FUCK !!!")
     service<MLModelService>().prepareModel(MLTaskPyCharmImportStatementsRanking)
   }
 }

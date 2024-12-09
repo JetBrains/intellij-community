@@ -15,17 +15,14 @@ import fleet.kernel.transactor
 
 internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {
   override suspend fun createEntityImpl(project: Project) {
-    // migrate to the implementation below when IJPL-172500 is investigated and a fix has been found
-    //val projectId = project.projectId()
-    //change {
-    //  shared {
-    //    ProjectEntity.new {
-    //      it[ProjectEntity.ProjectIdValue] = projectId
-    //    }
-    //  }
-    //}
-    //LOG.info("Project entity created for $projectId")
-
+    val projectId = project.projectId()
+    change {
+      shared {
+        ProjectEntity.upsert(ProjectEntity.ProjectIdValue, projectId) {
+          it[ProjectEntity.ProjectIdValue] = projectId
+        }
+      }
+    }
   }
 
   override suspend fun removeProjectEntity(project: Project): Unit = withKernel {

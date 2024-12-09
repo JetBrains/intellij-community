@@ -1312,13 +1312,11 @@ e:com.intellij.diagnostic.VMOptions$MemoryKind
 c:com.intellij.diagnostic.WindowsDefenderChecker
 - <init>():V
 - f:excludeProjectPaths(com.intellij.openapi.project.Project,java.util.List):Z
-- f:excludeSavedPaths(com.intellij.openapi.project.Project):Z
 - f:filterDevDrivePaths(java.util.List):java.util.List
 - getConfigurationInstructionsUrl():java.lang.String
 - s:getInstance():com.intellij.diagnostic.WindowsDefenderChecker
 - f:getPathsToExclude(com.intellij.openapi.project.Project):java.util.List
 - f:getPathsToExclude(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.List
-- hasPathsToExclude(com.intellij.openapi.project.Project):Z
 - f:ignoreStatusCheck(com.intellij.openapi.project.Project,Z):V
 - f:isRealTimeProtectionEnabled():java.lang.Boolean
 - f:isStatusCheckIgnored(com.intellij.openapi.project.Project):Z
@@ -16252,8 +16250,8 @@ c:com.intellij.ui.popup.AbstractPopup
 - setUiVisible(Z):V
 - setUserData(java.util.List):V
 - setWarning(java.lang.String):V
+- show(com.intellij.openapi.ui.popup.PopupShowOptions):V
 - show(com.intellij.ui.awt.RelativePoint):V
-- show(com.intellij.ui.awt.RelativePoint,com.intellij.openapi.ui.popup.PopupShowOptions):V
 - show(java.awt.Component):V
 - show(java.awt.Component,I,I,Z):V
 - showCenteredInCurrentWindow(com.intellij.openapi.project.Project):V

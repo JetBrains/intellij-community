@@ -178,6 +178,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RestrictedRetentionForExpressionAnnotationFactories.quickFixFactory)
         registerFactory(ModifierRequiredFixFactories.addInfixModifierFixFactory)
         registerFactory(ModifierRequiredFixFactories.addOperatorModifierFixFactory)
+        registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

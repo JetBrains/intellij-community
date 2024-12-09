@@ -109,6 +109,17 @@ public final class HardcodedContracts {
               (call, cnt) -> getSubstringContracts(cnt == 2))
     .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
               ContractProvider.of(SpecialField.STRING_LENGTH.getEmptyContracts()))
+    .register(staticCall("com.google.common.base.Strings", "emptyToNull").parameterTypes(JAVA_LANG_STRING),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), 
+                                        RelationType.EQ, ContractValue.zero(), returnNull()),
+                trivialContract(returnParameter(0))))
+    .register(staticCall("com.google.common.base.Strings", "isNullOrEmpty").parameterTypes(JAVA_LANG_STRING),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.nullValue(), returnTrue()),
+                singleConditionContract(ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), 
+                                        RelationType.EQ, ContractValue.zero(), returnTrue()),
+                trivialContract(returnFalse())))
     .register(instanceCall(JAVA_LANG_STRING, "isBlank").parameterCount(0),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.EQ, ContractValue.zero(), returnTrue())))

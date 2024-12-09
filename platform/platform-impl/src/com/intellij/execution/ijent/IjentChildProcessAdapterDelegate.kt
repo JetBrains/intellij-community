@@ -2,13 +2,15 @@
 package com.intellij.execution.ijent
 
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.ijent.*
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.utils.EelPipe
+import com.intellij.platform.eel.provider.utils.asOutputStream
+import com.intellij.platform.eel.provider.utils.consumeAsInputStream
+import com.intellij.platform.eel.provider.utils.copy
+import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.platform.ijent.spi.IjentThreadPool
-import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.asCompletableFuture
 import java.io.ByteArrayInputStream
 import java.io.InputStream
@@ -24,27 +26,32 @@ internal class IjentChildProcessAdapterDelegate(
 ) {
   val inputStream: InputStream
 
-  val outputStream: OutputStream = IjentStdinOutputStream(coroutineScope.coroutineContext, ijentChildProcess)
+  val outputStream: OutputStream = ijentChildProcess.stdin.asOutputStream(coroutineScope.coroutineContext)
 
   val errorStream: InputStream
 
   init {
     if (redirectStderr) {
-      val merged = Channel<ByteArray>()
+      val pipe = EelPipe()
 
       coroutineScope.launch {
-        ijentChildProcess.stdout.consumeEach { chunk -> merged.send(chunk) }
-      }
-      coroutineScope.launch {
-        ijentChildProcess.stderr.consumeEach { chunk -> merged.send(chunk) }
+        val stdoutClosed = launch {
+          copy(ijentChildProcess.stdout, pipe.sink).getOrThrow() // TODO: Process error
+        }
+        val stdErrClosed = launch {
+          copy(ijentChildProcess.stderr, pipe.sink).getOrThrow() // TODO: Process error
+        }
+        stdErrClosed.join()
+        stdoutClosed.join()
+        pipe.close()
       }
 
-      inputStream = ChannelInputStream.forArrays(coroutineScope, merged)
+      inputStream = pipe.source.consumeAsInputStream(coroutineScope.coroutineContext)
       errorStream = ByteArrayInputStream(byteArrayOf())
     }
     else {
-      inputStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stdout)
-      errorStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stderr)
+      inputStream = ijentChildProcess.stdout.consumeAsInputStream(coroutineScope.coroutineContext)
+      errorStream = ijentChildProcess.stderr.consumeAsInputStream(coroutineScope.coroutineContext)
     }
   }
 
@@ -62,8 +69,7 @@ internal class IjentChildProcessAdapterDelegate(
       withTimeoutOrNull(unit.toMillis(timeout).milliseconds) {
         ijentChildProcess.exitCode.await()
         true
-      }
-      ?: false
+      } == true
     }
 
   fun destroyForcibly() {

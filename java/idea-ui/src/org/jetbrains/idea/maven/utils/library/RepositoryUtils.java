@@ -20,12 +20,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -66,21 +66,45 @@ public final class RepositoryUtils {
   }
 
 
+  /**
+   * Returns the common storage root directory path (system-dependent) from a list of URLs.
+   * <p>
+   * If roots (non-filename part) of URLs are different, returns null.
+   * On empty list also returns null.
+   * <p>
+   * Used by JarRepositoryManager to determine whether it needs to copy resolved files somewhere or now
+   * (it's two modes of JPS repository libraries)
+   * <p>
+   */
   public static String getStorageRoot(String[] urls) {
     if (urls.length == 0) {
       return null;
     }
-    final String localRepositoryPath = FileUtil.toSystemIndependentName(JarRepositoryManager.getLocalRepositoryPath().getAbsolutePath());
-    List<String> roots = JBIterable.of(urls).transform(urlWithPrefix -> {
-      String url = StringUtil.trimStart(urlWithPrefix, JarFileSystem.PROTOCOL_PREFIX);
-      return url.startsWith(localRepositoryPath) ? null : FileUtil.toSystemDependentName(PathUtil.getParentPath(url));
-    }).toList();
-    final Map<String, Integer> counts = new HashMap<>();
-    for (String root : roots) {
-      final Integer count = counts.get(root);
-      counts.put(root, count != null ? count + 1 : 1);
+
+    String firstPath = getOnDiskParentPath(urls[0]);
+    for (String root : urls) {
+      if (!StringUtil.equals(firstPath, getOnDiskParentPath(root))) {
+        return null;
+      }
     }
-    return Collections.max(counts.entrySet(), Map.Entry.comparingByValue()).getKey();
+
+    return firstPath;
+  }
+
+  private static String getOnDiskParentPath(String url) {
+    String trimmedStart;
+
+    if (url.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
+      trimmedStart = url.substring(JarFileSystem.PROTOCOL_PREFIX.length());
+    }
+    else if (url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
+      trimmedStart = url.substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length());
+    }
+    else {
+      trimmedStart = url;
+    }
+
+    return FileUtil.toSystemDependentName(PathUtil.getParentPath(trimmedStart));
   }
 
   public static Promise<List<OrderRoot>> loadDependenciesToLibrary(@NotNull final Project project,

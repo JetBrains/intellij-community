@@ -3,11 +3,12 @@ package com.intellij.platform.eel.impl.utils
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -35,11 +36,11 @@ suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
       ByteArrayOutputStream().use { err ->
         coroutineScope {
           launch {
-            stdout.consumeEach(out::write)
+            copy(stdout, out.asEelChannel()).getOrThrow() // TODO: process errors
           }
 
           launch {
-            stderr.consumeEach(err::write)
+            copy(stderr, err.asEelChannel()).getOrThrow() // TODO: process errors
           }
         }
 

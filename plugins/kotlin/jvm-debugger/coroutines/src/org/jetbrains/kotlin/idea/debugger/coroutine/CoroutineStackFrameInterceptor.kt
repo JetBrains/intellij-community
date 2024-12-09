@@ -7,12 +7,9 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodInvokeUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
-import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
@@ -258,30 +255,14 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
 internal fun callMethodFromHelper(
     helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>,
-    vararg additionalClassesToLoad: Class<*>
+    vararg additionalClassesToLoad: String
 ): Value? {
     try {
-        if (!loadClasses(context, *additionalClassesToLoad)) return null
-        return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args)
+        return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args, true, *additionalClassesToLoad)
     } catch (e: Exception) {
         val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
         DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
                                    *listOfNotNull(helperExceptionStackTrace).toTypedArray()) // log helper exception if available
     }
     return null
-}
-
-private fun loadClasses(context: DefaultExecutionContext, vararg additionalClassesToLoad: Class<*>): Boolean {
-    for (clazz in additionalClassesToLoad) {
-        try {
-            if (ClassLoadingUtils.getHelperClass(clazz, context.evaluationContext) == null) {
-                fileLogger().warn("Cannot load '${clazz.canonicalName}' to the debuggee process")
-                return false
-            }
-        } catch (e: EvaluateException) {
-            fileLogger().warn("Cannot load '${clazz.canonicalName}' to the debuggee process", e)
-            return false
-        }
-    }
-    return true
 }

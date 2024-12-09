@@ -438,10 +438,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       highlightRedundant(vendor.getEmail(),
                          DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.email"), holder);
     }
-    if (DomUtil.hasXml(ideaPlugin.getChangeNotes())) {
-      highlightRedundant(ideaPlugin.getChangeNotes(),
-                         DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.change.notes"), holder);
-    }
     if (DomUtil.hasXml(ideaPlugin.getVersion())) {
       highlightRedundant(ideaPlugin.getVersion(),
                          DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.version"), holder);

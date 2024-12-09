@@ -147,7 +147,7 @@ open class RiderMainToolbarRootPaneManager(private val project: Project) : Simpl
                                     popupActionGroup: ActionGroup?,
                                     popupActionId: String?) : ActionToolbarImpl(place, actionGroup, horizontal, decorateButtons, false) {
     init {
-      installPopupHandler(true, popupActionGroup, popupActionId)
+      installPopupHandler(true, popupActionGroup, CustomizationUtil.DEFAULT_CUSTOMIZATION_ROOT_DEPTH, popupActionId)
     }
 
     override fun addNotify() {
