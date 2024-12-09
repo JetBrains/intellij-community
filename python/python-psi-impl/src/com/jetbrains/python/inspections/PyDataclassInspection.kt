@@ -60,8 +60,17 @@ class PyDataclassInspection : PyInspection() {
       val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
 
       if (dataclassParameters != null) {
-        if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD ||
-            dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM) {
+        if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM) {
+          processDataclassParameters(node, dataclassParameters)
+
+          node.processClassLevelDeclarations { element, _ ->
+            if (element is PyTargetExpression) {
+              processFieldFunctionCall(node, dataclassParameters, element)
+            }
+            true
+          }
+        }
+        else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
           processDataclassParameters(node, dataclassParameters)
 
           val postInit = node.findMethodByName(Dataclasses.DUNDER_POST_INIT, false, myTypeEvalContext)
