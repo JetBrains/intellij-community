@@ -5,8 +5,12 @@ import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.isFireStorageFileChangedEvent
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.isTrusted
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.Service
@@ -20,6 +24,7 @@ import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -36,6 +41,7 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
@@ -46,6 +52,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.*
@@ -346,7 +353,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val orphanage = MutableEntityStorage.create()
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
 
-    val loadedProjectEntities = if (!WorkspaceModelInitialTestContent.hasInitialContent) {
+    val loadedProjectEntities = if (WorkspaceModelInitialTestContent.hasInitialContent) {
+      childActivity?.end()
+      childActivity = null
+      activity?.end()
+      activity = null
+      null
+    }
+    else if (project.isTrusted()) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val unloadedModuleNamesHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
       val sourcesToUpdate = loadAndReportErrors {
@@ -362,16 +376,41 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
     }
     else {
-      childActivity?.end()
-      childActivity = null
-      activity?.end()
-      activity = null
-      null
+      childActivity = childActivity?.endAndStart("loading untrusted project")
+
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup("Project Loading Error")
+        .createNotification(ProjectBundle.message("notification.title.error.loading.project"),
+                            IdeBundle.message("untrusted.jps.project.not.loaded.notification"),
+                            NotificationType.WARNING)
+        .notify(project)
+
+      // this should be not a "base path", but a folder that user selected in the file chooser.
+      // this works (at the moment) because: if user selected a folder with .idea or .ipr inside, then basePath is pointing
+      // to the directory selected by the user. If there is no .idea nor .ipr in selected directory, then we should not get here.
+      val basePath = project.basePath
+      if (basePath != null) {
+        createProjectFromFolder(builder, "untrusted", virtualFileManager.getOrCreateFromUrl("file://$basePath"))
+      }
+      LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, emptyList())
     }
 
     jpsLoadProjectToEmptyStorageTimeMs.addElapsedTime(start)
     WorkspaceModelFusLogger.logLoadingJpsFromIml(Milliseconds.now().minus(start).value)
     return loadedProjectEntities
+  }
+
+  private fun createProjectFromFolder(builder: MutableEntityStorage, name: String, basePath: VirtualFileUrl) {
+    // DummyParentEntitySource, because otherwise the module will be thrown away in [applyLoadedStorage]
+    class UntrustedProjectEntitySource : DummyParentEntitySource
+
+    val entitySource = UntrustedProjectEntitySource()
+    val module = ModuleEntity(name, emptyList(), entitySource)
+    // add everything (*) to excludes to avoid indexing (at the moment - minimize, not fully avoid)
+    ContentRootEntity(url = basePath, excludedPatterns = listOf("*"), entitySource = entitySource) {
+      this.module = module
+    }
+    builder.addEntity(module)
   }
 
   suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?) = applyLoadedStorageTimeMs.addMeasuredTime {
