@@ -6,6 +6,7 @@ import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -177,11 +178,22 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
   }
 
   private fun getActionGroup(): ActionGroup? = ActionManager.getInstance().getAction(ACTION_GROUP_ID) as? ActionGroup
+
   private fun getAdditionalActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when(cellType) {
-    NotebookCellLines.CellType.CODE -> ActionManager.getInstance().getAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
-    NotebookCellLines.CellType.MARKDOWN -> ActionManager.getInstance().getAction(ADDITIONAL_MARKDOWN_ACTION_GROUP_ID) as? ActionGroup
+    NotebookCellLines.CellType.CODE -> {
+      hideDropdownIcon(ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID)
+      ActionManager.getInstance().getAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
+    }
+    NotebookCellLines.CellType.MARKDOWN -> {
+      hideDropdownIcon(ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID)
+      ActionManager.getInstance().getAction(ADDITIONAL_MARKDOWN_ACTION_GROUP_ID) as? ActionGroup
+    }
     NotebookCellLines.CellType.RAW -> null
   }
+
+  private fun hideDropdownIcon(actionGroupId: String) = (ActionManager.getInstance().getAction(actionGroupId) as ActionGroup)
+      .templatePresentation
+      .putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
 
   override fun dispose() {
     showToolbarJob?.cancel()
@@ -216,7 +228,9 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
     private const val ACTION_GROUP_ID = "Jupyter.AboveCellPanelNew"
 
     private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar"
+    private const val ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar.Ellipsis"
     private const val ADDITIONAL_MARKDOWN_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar"
+    private const val ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar.Ellipsis"
 
     private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.distanceBetweenCells
 
