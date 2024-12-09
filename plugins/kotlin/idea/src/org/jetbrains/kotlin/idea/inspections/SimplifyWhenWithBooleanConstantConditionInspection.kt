@@ -8,25 +8,23 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
+import org.jetbrains.kotlin.idea.util.replaceWithBranchAndMoveCaret
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.util.replaceWithBranchAndMoveCaret
-
-class SimplifyWhenWithBooleanConstantConditionInspection : AbstractKotlinInspection() {
-
+internal class SimplifyWhenWithBooleanConstantConditionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return whenExpressionVisitor(fun(expression) {
-            if (expression.closeBrace == null) return
-            if (expression.subjectExpression != null) return
-            if (expression.entries.none { it.isTrueConstantCondition() || it.isFalseConstantCondition() }) return
+        return whenExpressionVisitor(fun(whenExpression: KtWhenExpression) {
+            if (whenExpression.closeBrace == null) return
+            if (whenExpression.subjectExpression != null) return
+            if (whenExpression.entries.none { it.isTrueConstantCondition() || it.isFalseConstantCondition() }) return
 
             holder.registerProblem(
-                expression.whenKeyword,
+                whenExpression.whenKeyword,
                 KotlinBundle.message("this.when.is.simplifiable"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 SimplifyWhenFix()
@@ -36,21 +34,21 @@ class SimplifyWhenWithBooleanConstantConditionInspection : AbstractKotlinInspect
 }
 
 private class SimplifyWhenFix : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("simplify.when.fix.text")
+    override fun getName(): String = KotlinBundle.message("simplify.when.fix.text")
 
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = descriptor.psiElement.getStrictParentOfType<KtWhenExpression>() ?: return
-        val closeBrace = element.closeBrace ?: return
+        val whenExpression = descriptor.psiElement.getStrictParentOfType<KtWhenExpression>() ?: return
+        val closeBrace = whenExpression.closeBrace ?: return
         val factory = KtPsiFactory(project)
-        val usedAsExpression = element.isUsedAsExpression(element.analyze())
-        element.deleteFalseEntries(usedAsExpression)
-        element.replaceTrueEntry(usedAsExpression, closeBrace, factory)
+        val isUsedAsExpression = whenExpression.isUsedAsExpression(whenExpression.analyze())
+        whenExpression.deleteFalseEntries(isUsedAsExpression)
+        whenExpression.replaceTrueEntry(isUsedAsExpression, closeBrace, factory)
     }
 }
 
-private fun KtWhenExpression.deleteFalseEntries(usedAsExpression: Boolean) {
+private fun KtWhenExpression.deleteFalseEntries(isUsedAsExpression: Boolean) {
     for (entry in entries) {
         if (entry.isFalseConstantCondition()) {
             entry.delete()
@@ -58,14 +56,14 @@ private fun KtWhenExpression.deleteFalseEntries(usedAsExpression: Boolean) {
     }
 
     val entries = entries
-    if (entries.isEmpty() && !usedAsExpression) {
+    if (entries.isEmpty() && !isUsedAsExpression) {
         delete()
     } else if (entries.singleOrNull()?.isElse == true) {
-        elseExpression?.let { replaceWithBranchAndMoveCaret(it, usedAsExpression) }
+        elseExpression?.let { replaceWithBranchAndMoveCaret(it, isUsedAsExpression) }
     }
 }
 
-private fun KtWhenExpression.replaceTrueEntry(usedAsExpression: Boolean, closeBrace: PsiElement, factory: KtPsiFactory) {
+private fun KtWhenExpression.replaceTrueEntry(isUsedAsExpression: Boolean, closeBrace: PsiElement, factory: KtPsiFactory) {
     val entries = entries
     val trueIndex = entries.indexOfFirst { it.isTrueConstantCondition() }
     if (trueIndex == -1) return
@@ -73,7 +71,7 @@ private fun KtWhenExpression.replaceTrueEntry(usedAsExpression: Boolean, closeBr
     val expression = entries[trueIndex].expression ?: return
 
     if (trueIndex == 0) {
-        replaceWithBranchAndMoveCaret(expression, usedAsExpression)
+        replaceWithBranchAndMoveCaret(expression, isUsedAsExpression)
     } else {
         val elseEntry = factory.createWhenEntry("else -> ${expression.text}")
         for (entry in entries.subList(trueIndex, entries.size)) {
