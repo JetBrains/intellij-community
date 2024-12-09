@@ -52,7 +52,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   public CreateHtmlDescriptionFix(String filename, Module module, DescriptionType descriptionType) {
     myModule = module;
     myDescriptionType = descriptionType;
-    myFilename = myDescriptionType.hasBeforeAfterTemplateFiles() ? filename : filename + ".html";
+    myFilename = isFixedDescriptionFilename() ? filename : filename + ".html";
   }
 
   @Override
