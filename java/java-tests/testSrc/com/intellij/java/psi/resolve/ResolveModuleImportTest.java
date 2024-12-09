@@ -4,6 +4,7 @@ package com.intellij.java.psi.resolve;
 import com.intellij.JavaTestUtil;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.DependencyScope;
@@ -11,9 +12,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -319,6 +323,26 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     });
   }
 
+  public void testOptimizeImportWithModuleConflict() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+      prepareAmbiguousModuleTests();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        String fileName = getTestName(false) + ".java";
+        try {
+          PsiFile file = myFixture.configureByFile(fileName);
+          JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
+          PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+          myFixture.checkResultByFile(getTestName(false) + "_after" + ".java");
+          PsiTestUtil.checkFileStructure(file);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      });
+    });
+  }
+
   public void testModuleImportWithDefaultPackageImport() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
       addCode("module-info.java", """
@@ -367,6 +391,10 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     package my.source.moduleB;
     public class Imported {}
     """, M2);
+    addCode("my/source/moduleB/B.java", """
+    package my.source.moduleB;
+    public class B {}
+    """, M2);
     addCode("module-info.java", """
     module my.source.moduleA {
       exports my.source.moduleA;
@@ -375,6 +403,10 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     addCode("my/source/moduleA/Imported.java", """
     package my.source.moduleA;
     public class Imported {}
+    """, M4);
+    addCode("my/source/moduleA/A.java", """
+    package my.source.moduleA;
+    public class A {}
     """, M4);
     addCode("Test.java", """
     """);

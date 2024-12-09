@@ -7,10 +7,12 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JPanel
 
-internal class ImportLayoutPanelUI(staticImportsCb: JBCheckBox, onDemandBeforeSingleClassCb: JBCheckBox?, importLayoutPanel: JPanel) {
+internal class ImportLayoutPanelUI(staticImportsCb: JBCheckBox, additionalCheckBoxes: List<JBCheckBox?>, importLayoutPanel: JPanel) {
   val panel = panel {
     group(JavaBundle.message("title.import.layout")) {
-      if (onDemandBeforeSingleClassCb != null) row { cell(onDemandBeforeSingleClassCb) }
+      for (box in additionalCheckBoxes) {
+        if (box != null) row { cell(box) }
+      }
       row { cell(staticImportsCb) }
       row { cell(importLayoutPanel).align(Align.FILL) }.resizableRow()
     }.resizableRow()

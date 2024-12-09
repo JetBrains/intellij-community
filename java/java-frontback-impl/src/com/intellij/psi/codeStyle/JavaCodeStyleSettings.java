@@ -171,6 +171,9 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   // Imports
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
   public boolean LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
+  public boolean MODULE_IMPORT_FIRST = true;
+  public boolean SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS = false;
+  public boolean PRESERVE_MODULE_IMPORTS = true;
   public boolean USE_FQ_CLASS_NAMES;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS;
@@ -295,8 +298,25 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     return LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST;
   }
 
+  public boolean isModuleImportFirst() {
+    return MODULE_IMPORT_FIRST;
+  }
+
+  public boolean isSpaceBetweenModuleAndOtherImports() {
+    return SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS;
+  }
+
+
   public void setLayoutOnDemandImportFromSamePackageFirst(boolean value) {
     this.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = value;
+  }
+
+  public void setModuleImportFirst(boolean value) {
+    this.MODULE_IMPORT_FIRST = value;
+  }
+
+  public void setSpaceBetweenModuleAndOtherImports(boolean value) {
+    SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS = value;
   }
 
   @Override
@@ -336,6 +356,14 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Override
   public boolean isUseSingleClassImports() {
     return USE_SINGLE_CLASS_IMPORTS;
+  }
+
+  public boolean isPreserveModuleImports() {
+    return PRESERVE_MODULE_IMPORTS;
+  }
+
+  public void setPreserveModuleImports(boolean value) {
+    PRESERVE_MODULE_IMPORTS = value;
   }
 
   @Override

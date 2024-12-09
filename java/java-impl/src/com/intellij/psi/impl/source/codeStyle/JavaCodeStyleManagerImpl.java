@@ -130,7 +130,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
-    return ImportHelper.hasConflictingOnDemandImport(file, psiClass, referenceName);
+    return ImportHelper.hasConflictingOnStaticDemandImport(file, psiClass, referenceName);
   }
 
   @Override
