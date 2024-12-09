@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.FilenameIndex
@@ -23,8 +24,8 @@ import kotlin.reflect.KClass
 // tools
 
 class GetCurrentFileTextTool : McpTool<NoArgs> {
-    override val name: String = "get_current_file_text"
-    override val description: String = "Get the current contents of the file in JetBrains IDE"
+    override val name: String = "get_open_in_editor_file_text"
+    override val description: String = "Get the contents of the file which currently is opened in selected editor in JetBrains IDE"
     override val argKlass: KClass<NoArgs> = NoArgs::class
 
     override fun handle(project: Project, args: NoArgs): Response {
@@ -36,8 +37,8 @@ class GetCurrentFileTextTool : McpTool<NoArgs> {
 }
 
 class GetCurrentFilePathTool : McpTool<NoArgs> {
-    override val name: String = "get_current_file_path"
-    override val description: String = "Get the current file path in JetBrains IDE"
+    override val name: String = "get_open_in_editor_file_path"
+    override val description: String = "Get the absolute path of the file which currently is opened in selected editor in JetBrains IDE"
     override val argKlass: KClass<NoArgs> = NoArgs::class
 
     override fun handle(project: Project, args: NoArgs): Response {
@@ -49,8 +50,8 @@ class GetCurrentFilePathTool : McpTool<NoArgs> {
 }
 
 class GetSelectedTextTool : McpTool<NoArgs> {
-    override val name: String = "get_selected_text"
-    override val description: String = "Get the currently selected text in the JetBrains IDE"
+    override val name: String = "get_open_in_editor_text"
+    override val description: String = "Get the currently selected text in open editor the JetBrains IDE"
     override val argKlass: KClass<NoArgs> = NoArgs::class
 
     override fun handle(project: Project, args: NoArgs): Response {
@@ -134,5 +135,25 @@ class FindFilesByNameSubstring: McpTool<Query> {
         }.map {
             it.path
         }.joinToString(",\n"))
+    }
+}
+
+data class Path(val absolutePath: String)
+class GetFileTextByPathTool : McpTool<Path> {
+    override val name: String = "get_file_text_by_path"
+    override val description: String = "Get the contents of the file by its absolute path in JetBrains IDE if file belongs to the project"
+    override val argKlass: KClass<Path> = Path::class
+
+    override fun handle(project: Project, args: Path): Response {
+        val text = runReadAction {
+            val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path(args.absolutePath)) ?: return@runReadAction null
+            if (GlobalSearchScope.allScope(project).contains(file)) {
+                file.readText()
+            }
+            else {
+                null
+            }
+        }
+        return Response(text)
     }
 }
