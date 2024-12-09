@@ -84,7 +84,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   // TODO Move to ijent.impl?
   internal class WslEelProvider : EelProvider {
     override suspend fun getEelApi(path: Path): EelApi? {
-      val distribution = WslDistributionManager.getInstance().installedDistributions.firstOrNull { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }
+      val distribution = WslDistributionManager.getInstance().installedDistributions.firstOrNull { distro -> distro.getUNCRootPath().toString().compareTo(path.root.toString(), true) == 0 }
       if (distribution == null) {
         return null
       }
