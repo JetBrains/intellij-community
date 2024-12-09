@@ -75,6 +75,8 @@ internal class ReworkedTerminalView(
 
     model = TerminalModel(editor)
     controller = TerminalSessionController(model, coroutineScope.childScope("TerminalSessionController"))
+
+    TerminalCaretPainter(model, coroutineScope.childScope("TerminalCaretPainter"))
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {

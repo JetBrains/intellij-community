@@ -2,13 +2,20 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 
-internal class TerminalModel(private val editor: EditorEx) {
+internal class TerminalModel(val editor: EditorEx) {
   private val document = editor.document
+
+  private val mutableCaretOffsetState = MutableStateFlow(0)
+  val caretOffsetState: StateFlow<Int> = mutableCaretOffsetState.asStateFlow()
 
   @RequiresEdt
   @RequiresWriteLock
@@ -16,6 +23,11 @@ internal class TerminalModel(private val editor: EditorEx) {
     CommandProcessor.getInstance().runUndoTransparentAction {
       doUpdateEditorContent(startLineIndex, text, styles)
     }
+  }
+
+  fun updateCaretPosition(logicalLineIndex: Int, columnIndex: Int) {
+    val newOffset = editor.logicalPositionToOffset(LogicalPosition(logicalLineIndex, columnIndex))
+    mutableCaretOffsetState.value = newOffset
   }
 
   private fun doUpdateEditorContent(startLineIndex: Int, text: String, styles: List<StyleRange>) {

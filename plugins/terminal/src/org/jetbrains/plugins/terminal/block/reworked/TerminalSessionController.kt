@@ -43,7 +43,7 @@ internal class TerminalSessionController(
   private suspend fun handleEvent(event: TerminalOutputEvent) {
     when (event) {
       is TerminalContentUpdatedEvent -> updateEditorContent(event)
-      is TerminalCursorPositionChangedEvent -> TODO()
+      is TerminalCursorPositionChangedEvent -> model.updateCaretPosition(event.logicalLineIndex, event.columnIndex)
     }
   }
 
