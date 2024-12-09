@@ -31,7 +31,7 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
     FeatureSuggesterStatistics.logSuggestionFound(id, !isSuggestingActionUsedRecently(), daysPassedFromLastUsage.toInt())
   }
 
-  private fun isSuggestingActionUsedRecently(): Boolean {
+  protected fun isSuggestingActionUsedRecently(): Boolean {
     val summary = actionSummary() ?: return false
     val lastTimeUsed = summary.lastUsedTimestamp
     val oldestWorkingDayStart = FeatureSuggesterSettings.instance().getOldestWorkingDayStartMillis(minSuggestingIntervalDays)
@@ -40,7 +40,7 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
 
   private fun actionSummary() = service<ActionsLocalSummary>().getActionStatsById(suggestingActionId)
 
-  private fun isSuggestionShownRecently(): Boolean {
+  protected fun isSuggestionShownRecently(): Boolean {
     val lastTimeShown = FeatureSuggesterSettings.instance().getSuggestionLastShownTime(id)
     val delta = System.currentTimeMillis() - lastTimeShown
     return delta < TimeUnit.DAYS.toMillis(1L)

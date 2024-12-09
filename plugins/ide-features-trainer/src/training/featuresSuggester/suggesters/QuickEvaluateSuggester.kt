@@ -4,6 +4,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,6 +16,8 @@ import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorCopyAction
 import training.featuresSuggester.actions.InlineEvaluatorInvokedAction
+import training.featuresSuggester.statistics.AltClickSuggesterResult
+import training.featuresSuggester.statistics.FeatureSuggesterStatistics
 import training.featuresSuggester.suggesters.promo.evaluateBox
 import training.featuresSuggester.suggesters.promo.showAltClickGotItPromo
 import java.awt.event.InputEvent
@@ -54,12 +57,29 @@ class QuickEvaluateSuggester : AbstractFeatureSuggester() {
         if (action.expression.expression != lastCopiedText) return NoSuggestion
         val neededVirtualFile = lastCopyFromFile.get() ?: return NoSuggestion
 
-        val fileIsOpenedNow = FileEditorManager.getInstance(action.project).selectedEditors.map { it.file }.contains(neededVirtualFile)
-        if (!fileIsOpenedNow) return NoSuggestion
+        val language = (neededVirtualFile.fileType as? LanguageFileType)?.language ?: return NoSuggestion
 
-        val evaluateBox = evaluateBox(action.project) ?: return NoSuggestion
+        val fileIsOpenedNow = FileEditorManager.getInstance(action.project).selectedEditors.map { it.file }.contains(neededVirtualFile)
+        if (!fileIsOpenedNow) {
+          FeatureSuggesterStatistics.altClickSuggesterResult(AltClickSuggesterResult.FILE_IS_NOT_OPENED, language)
+          return NoSuggestion
+        }
+
+        val evaluateBox = evaluateBox(action.project) ?: return NoSuggestion.also {
+          FeatureSuggesterStatistics.altClickSuggesterResult(AltClickSuggesterResult.NO_EVALUATE_BOX_FOUND, language)
+        }
+
+        when {
+          getAltClickShortcut() == null ->
+            FeatureSuggesterStatistics.altClickSuggesterResult(AltClickSuggesterResult.NO_ALT_CLICK_SHORTCUT, language)
+          isSuggestingActionUsedRecently() ->
+            FeatureSuggesterStatistics.altClickSuggesterResult(AltClickSuggesterResult.QUICK_EVALUATE_ACTION_USED_RECENTLY, language)
+          isSuggestionShownRecently() ->
+            FeatureSuggesterStatistics.altClickSuggesterResult(AltClickSuggesterResult.SUGGESTER_WAS_SHOWN_RECENTLY, language)
+        }
 
         return CustomSuggestion(id) {
+          FeatureSuggesterStatistics.altClickSuggesterResult(AltClickSuggesterResult.SUGGESTED, language)
           showAltClickGotItPromo(action.project, evaluateBox)
         }
       }

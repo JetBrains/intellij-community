@@ -7,12 +7,23 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.lang.Language
 import training.featuresSuggester.suggesters.FeatureSuggester
 
-object FeatureSuggesterStatistics : CounterUsagesCollector() {
+internal enum class AltClickSuggesterResult {
+  SUGGESTED,
+  FILE_IS_NOT_OPENED,
+  NO_EVALUATE_BOX_FOUND,
+  NO_ALT_CLICK_SHORTCUT,
+  SUGGESTER_WAS_SHOWN_RECENTLY,
+  QUICK_EVALUATE_ACTION_USED_RECENTLY,
+}
+
+internal object FeatureSuggesterStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private const val GROUP_ID = "feature_suggester"
+
   private const val NOTIFICATION_SHOWED_EVENT_ID = "notification.showed"
   private const val NOTIFICATION_DONT_SUGGEST_EVENT_ID = "notification.dont_suggest"
   private const val NOTIFICATION_LEARN_MORE_EVENT_ID = "notification.learn_more"
@@ -22,7 +33,7 @@ object FeatureSuggesterStatistics : CounterUsagesCollector() {
   private const val DAYS_PASSED_LAST_USED_FIELD = "days_passed_last_used"
   const val SUGGESTER_ID_VALIDATION_RULE = "feature_suggester_id"
 
-  private val GROUP = EventLogGroup(GROUP_ID, 5)
+  private val GROUP = EventLogGroup(GROUP_ID, 6)
 
   private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, FeatureSuggesterIdRuleValidator::class.java)
   private val suggestionWouldBeShownField = EventFields.Boolean(SUGGESTION_WOULD_BE_SHOWN_FIELD)
@@ -40,6 +51,17 @@ object FeatureSuggesterStatistics : CounterUsagesCollector() {
 
   fun logSuggestionFound(suggesterId: String, suggestionWouldBeShown: Boolean, daysPassedFromLastUsage: Int) {
       suggestionFoundEvent.log(suggesterId, suggestionWouldBeShown, daysPassedFromLastUsage)
+  }
+
+  // TO check the specific QuickEvaluateSuggester behavior
+  private val altClickSuggesterResultEvent = GROUP.registerEvent(
+    "alt_click_suggester",
+    EventFields.Enum<AltClickSuggesterResult>("alt_click_suggester_result"),
+    EventFields.Language
+  )
+
+  fun altClickSuggesterResult(result: AltClickSuggesterResult, language: Language) {
+    altClickSuggesterResultEvent.log(result, language)
   }
 }
 
