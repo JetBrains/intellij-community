@@ -1,5 +1,6 @@
 package org.jetbrains.mcpserverplugin
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -31,7 +32,11 @@ class ToggleBreakpointTool : McpTool<ToggleBreakpointArgs> {
 
         runWriteAction {
             val position = XSourcePositionImpl.create(virtualFile, args.line)
-            val breakpointType = XBreakpointUtil.toggleLineBreakpoint(project, position, false, null, false, true, true)
+            XBreakpointUtil.toggleLineBreakpoint(project, position, false, null, false, true, true).onSuccess {
+                 invokeLater {
+                     position.createNavigatable(project).navigate(true)
+                 }
+            }
         }
 
         return Response("ok")
