@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -178,7 +179,7 @@ public class IndexInfrastructureVersionBase {
   public static int getStubFileElementBaseVersion(@NotNull IStubFileElementType<?> fileNodeType) {
     int stubVersion = fileNodeType.getStubVersion();
     return fileNodeType.getLanguage() instanceof TemplateLanguage
-           ? stubVersion - IStubFileElementType.getTemplateStubBaseVersion()
+           ? stubVersion - TemplateLanguageStubBaseVersion.getVersion()
            : stubVersion;
   }
 }
