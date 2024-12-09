@@ -73,7 +73,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
   /**
    * Searches for a file specified by the given {@link VirtualFile#getUrl() URL}.
    *
-   * @param url the URL to find file by
+   * @param url the URL to find a file by
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
@@ -96,11 +96,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
-   * by the given URL.</p>
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds a file by the given URL.</p>
    *
-   * <p>This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
-   * corresponding to it.</p>
+   * <p>This method is useful when the file was created externally, and you need to find a {@link VirtualFile} corresponding to it.</p>
    *
    * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
    *
@@ -114,11 +112,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
-   * by the given URL.</p>
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds a file by the given URL.</p>
    *
-   * <p>This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
-   * corresponding to it.</p>
+   * <p>This method is useful when the file was created externally, and you need to find a {@link VirtualFile} corresponding to it.</p>
    *
    * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
    *
@@ -188,19 +184,19 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
-  /**
-   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
-   */
+  /** @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)} */
   @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
-  public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile,
-                                             @VirtualFile.PropName @NotNull String property,
-                                             Object oldValue,
-                                             Object newValue);
+  public abstract void notifyPropertyChanged(
+    @NotNull VirtualFile virtualFile,
+    @VirtualFile.PropName @NotNull String property,
+    Object oldValue,
+    Object newValue
+  );
 
   /**
-   * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
+   * @return a number that's incremented every time something changes in the VFS, i.e., file hierarchy, names, flags, attributes, contents.
    * This only counts modifications done in the current IDE session.
    * @see #getStructureModificationCount()
    */
@@ -208,7 +204,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract long getModificationCount();
 
   /**
-   * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
+   * @return a number that's incremented every time something changes in the VFS structure, i.e., file hierarchy or names.
    * This only counts modifications done in the current IDE session.
    * @see #getModificationCount()
    */
