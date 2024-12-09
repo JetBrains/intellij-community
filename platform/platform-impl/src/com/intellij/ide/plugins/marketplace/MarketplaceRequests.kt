@@ -25,6 +25,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
@@ -34,7 +35,6 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.intellij.util.io.computeDetached
 import com.intellij.util.io.write
-import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
 import com.intellij.util.withQuery
 import kotlinx.coroutines.CoroutineScope
@@ -164,8 +164,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         }
 
         var url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
-        val os = URLEncoder.encode(OS.CURRENT.name + " " + OS.CURRENT.version, CharsetToolkit.UTF8)
-        val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates")
+        val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
+        val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
           .takeIf { PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
 
         val query = buildString {
@@ -183,6 +183,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
         return HttpRequests.request(urlString)
           .accept(HttpRequests.JSON_CONTENT_TYPE)
+          .setHeadersViaTuner()
           .productNameAsUserAgent()
           .throwStatusCodeException(throwExceptions)
           .connect {
