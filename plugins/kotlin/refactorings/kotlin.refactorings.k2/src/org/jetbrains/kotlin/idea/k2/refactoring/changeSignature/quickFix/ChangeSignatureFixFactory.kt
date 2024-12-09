@@ -256,9 +256,10 @@ object ChangeSignatureFixFactory {
         callable: KtNamedDeclaration, usedNames: MutableSet<String> = mutableSetOf<String>()
     ): (String) -> Boolean {
         val nameValidator = KotlinDeclarationNameValidator(
-            callable,
-            true,
-            KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+          callable,
+          true,
+          KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+          listOf(callable),
         )
         return { name -> usedNames.add(name) && nameValidator.validate(name) }
     }
