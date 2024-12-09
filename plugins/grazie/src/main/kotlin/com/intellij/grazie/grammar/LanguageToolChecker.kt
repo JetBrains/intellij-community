@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.*
@@ -40,12 +41,7 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   override fun check(extracted: TextContent): List<Problem> {
-    var result = cacheKey.get(extracted)
-    if (result == null) {
-      result = doCheck(extracted)
-      extracted.putUserDataIfAbsent(cacheKey, result)
-    }
-    return result
+    return ConcurrencyUtil.computeIfAbsent(extracted, cacheKey) { doCheck(extracted) }
   }
 
   private fun doCheck(extracted: TextContent): List<Problem> {

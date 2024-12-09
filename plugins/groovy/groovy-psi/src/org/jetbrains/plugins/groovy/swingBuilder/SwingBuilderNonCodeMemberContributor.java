@@ -3,11 +3,11 @@ package org.jetbrains.plugins.groovy.swingBuilder;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -802,12 +802,11 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
     if (aClass == null) return;
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
 
-    MultiMap<String, PsiMethod> methodMap = aClass.getUserData(KEY);
-    if (methodMap == null) {
+    MultiMap<String, PsiMethod> methodMap = ConcurrencyUtil.computeIfAbsent(aClass, KEY, ()->{
       MyBuilder builder = new MyBuilder(aClass);
       builder.generateMethods();
-      methodMap = ((UserDataHolderEx)aClass).putUserDataIfAbsent(KEY, builder.myResult);
-    }
+      return builder.myResult;
+    });
 
     String nameHint = ResolveUtil.getNameHint(processor);
 

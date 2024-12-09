@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -301,7 +302,7 @@ private class CommandCompletionHighlightingListener(
   }
 
   private fun update(lookup: LookupImpl, item: CommandCompletionLookupElement) {
-    var installed = lookup.putUserDataIfAbsent(INSTALLED_LISTENER_KEY, AtomicBoolean(false))
+    var installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_LISTENER_KEY) {AtomicBoolean(false)}
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
     val endOffset = lookup.editor.caretModel.offset
     if (!installed.get()) {

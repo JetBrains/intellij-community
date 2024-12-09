@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.VirtualFileGist;
@@ -271,11 +272,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     return ContainerUtil.mapNotNull(
       FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
       file -> {
-        CachedValue<Map<HMember, Equations>> equations = file.getUserData(EQUATIONS);
-        if (equations == null) {
-          equations = new CachedValueImpl<>(() -> CachedValueProvider.Result.create(ourGist.getFileData(null, file), file));
-          file.putUserDataIfAbsent(EQUATIONS, equations);
-        }
+        CachedValue<Map<HMember, Equations>> equations = ConcurrencyUtil.computeIfAbsent(file, EQUATIONS, () ->
+          new CachedValueImpl<>(() -> CachedValueProvider.Result.create(ourGist.getFileData(null, file), file)));
         return equations.getValue().get(key);
       });
   }

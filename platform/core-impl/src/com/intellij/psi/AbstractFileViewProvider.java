@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterable;
@@ -415,10 +416,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (copy instanceof FreeThreadedFileViewProvider) {
       LOG.assertTrue(this instanceof FreeThreadedFileViewProvider, "Injected file can't have non-injected original file");
     }
-    Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
-    if (copies == null) {
-      copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap()));
-    }
+    Set<AbstractFileViewProvider> copies = ConcurrencyUtil.computeIfAbsent(this, KNOWN_COPIES, () -> Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap()));
     if (copy.getUserData(KNOWN_COPIES) != null) {
       List<AbstractFileViewProvider> derivations = JBTreeTraverser.from(AbstractFileViewProvider::getKnownCopies).withRoot(copy).toList();
       if (derivations.contains(this)) {

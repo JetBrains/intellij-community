@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
@@ -86,11 +87,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   }
 
   static List<ParameterInfoControllerBase> getAllControllers(@NotNull Editor editor) {
-    List<ParameterInfoControllerBase> array = editor.getUserData(ALL_CONTROLLERS_KEY);
-    if (array == null) {
-      array = ((UserDataHolderEx)editor).putUserDataIfAbsent(ALL_CONTROLLERS_KEY, new CopyOnWriteArrayList<>());
-    }
-    return array;
+    return ConcurrencyUtil.computeIfAbsent(editor, ALL_CONTROLLERS_KEY, () -> new CopyOnWriteArrayList<>());
   }
 
   public static boolean existsForEditor(@NotNull Editor editor) {

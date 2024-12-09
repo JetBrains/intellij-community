@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -64,7 +65,7 @@ internal open class DaemonFusReporter(private val project: Project) : DaemonCode
       initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity("initial entire file highlighting")
     }
 
-    (editor as UserDataHolderEx).putUserDataIfAbsent(sessionSegmentsTotalDurationMs, AtomicLong())
+    ConcurrencyUtil.computeIfAbsent(editor, sessionSegmentsTotalDurationMs) { AtomicLong() }
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {

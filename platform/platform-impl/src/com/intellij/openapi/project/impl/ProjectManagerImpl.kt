@@ -75,6 +75,7 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.PlatformUtils.isDataSpell
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -457,9 +458,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return
     }
 
-    val listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY)
-                    ?: (project as UserDataHolderEx).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY,
-                                                                         ContainerUtil.createLockFreeCopyOnWriteList())
+    val listeners = ConcurrencyUtil.computeIfAbsent(project, LISTENERS_IN_PROJECT_KEY) { ContainerUtil.createLockFreeCopyOnWriteList() }
     listeners.add(listener)
   }
 

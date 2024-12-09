@@ -2118,6 +2118,7 @@ f:com.intellij.util.ConcurrencyUtil
 - s:awaitQuiescence(java.util.concurrent.ThreadPoolExecutor,J,java.util.concurrent.TimeUnit):V
 - s:cacheOrGet(java.util.concurrent.ConcurrentMap,java.lang.Object,java.lang.Object):java.lang.Object
 - s:cacheOrGet(java.util.concurrent.atomic.AtomicReference,java.lang.Object):java.lang.Object
+- s:computeIfAbsent(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,java.util.function.Supplier):java.lang.Object
 - s:getAll(J,java.util.concurrent.TimeUnit,java.util.Collection):V
 - s:getAll(java.util.Collection):V
 - s:invokeAll(java.util.Collection,java.util.concurrent.ExecutorService):java.util.List

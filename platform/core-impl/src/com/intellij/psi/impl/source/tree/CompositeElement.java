@@ -24,6 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -484,20 +485,15 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public int hc() {
-    Integer cached = getUserData(OUR_HC_KEY);
-    if (cached != null) {
-      return cached;
-    }
-
-    int hc = 0;
-    TreeElement child = firstChild;
-    while (child != null) {
-      hc += child.hc();
-      child = child.getTreeNext();
-    }
-    putUserDataIfAbsent(OUR_HC_KEY, hc);
-
-    return hc;
+    return ConcurrencyUtil.computeIfAbsent(this, OUR_HC_KEY, () -> {
+      int hc = 0;
+      TreeElement child = firstChild;
+      while (child != null) {
+        hc += child.hc();
+        child = child.getTreeNext();
+      }
+      return hc;
+    });
   }
 
   @Override
