@@ -1,0 +1,10 @@
+// NEW_NAME: value
+// RENAME: member
+sealed interface Suggestion {
+    data object YES : Suggestion
+    data object NO : Suggestion
+}
+
+fun value(va<caret>lue: Boolean?) = if (value == null) Suggestion.NO else value(value)
+fun value(value: Boolean) = if (value) Suggestion.YES else Suggestion.NO
+// IGNORE_K1

@@ -73,7 +73,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
             is KaFunctionSymbol -> !areSameSignatures(candidateSymbol, symbol)
             is KaPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
             is KaClassSymbol -> symbol.declaredMemberScope.constructors.none { areSameSignatures(it, candidateSymbol) }
-            else -> false
+            else -> true
         }
 
         return !skipCandidate

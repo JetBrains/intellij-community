@@ -105,6 +105,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/conflicts/functions/FunctionalParameter.kt");
     }
 
+    @TestMetadata("conflicts/functions/NoConflictParameterFunction.kt")
+    public void testConflicts_functions_NoConflictParameterFunction() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/NoConflictParameterFunction.kt");
+    }
+
     @TestMetadata("conflicts/functions/SameSignature.kt")
     public void testConflicts_functions_SameSignature() throws Exception {
         runTest("testData/refactoring/rename/inplace/conflicts/functions/SameSignature.kt");
