@@ -37,7 +37,8 @@ class McpToolManager {
             CreateNewFileWithTextTool(),
             FindFilesByNameSubstring(),
             GetFileTextByPathTool(),
-            GetVcsStatusTool()
+            GetVcsStatusTool(),
+            ToggleBreakpointTool()
         )
     }
 }
