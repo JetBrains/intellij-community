@@ -165,7 +165,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
         var url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
         val os = URLEncoder.encode(OS.CURRENT.name + " " + OS.CURRENT.version, CharsetToolkit.UTF8)
-        val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates")
+        val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
           .takeIf { PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
 
         val query = buildString {
@@ -183,6 +183,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
         return HttpRequests.request(urlString)
           .accept(HttpRequests.JSON_CONTENT_TYPE)
+          .setHeadersViaTuner()
           .productNameAsUserAgent()
           .throwStatusCodeException(throwExceptions)
           .connect {
