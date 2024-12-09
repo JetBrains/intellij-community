@@ -21,7 +21,7 @@
       <synonym key="action.Annotate.synonym1"/>
       <synonym key="action.Annotate.with.Blame.text"/>
       <add-to-group group-id="Diff.EditorPopupMenu"/>
-      <add-to-group group-id="Diff.EditorGutterPopupMenu" anchor="first"/>
+      <add-to-group group-id="Diff.EditorGutterPopupMenu"/>
     </action>
     <action id="Show.Current.Revision" class="com.intellij.openapi.vcs.actions.ShowBaseRevisionAction"/>
     <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction" icon="AllIcons.Actions.Diff"/>
@@ -457,18 +457,22 @@
         <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
       </action>
       <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.diff.editor.MoveDiffEditorAction$ToEditor">
-        <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+        <add-to-group group-id="Diff.EditorGutterPopupMenu.DiffModes" anchor="first"/>
         <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
       </action>
+      <action id="Vcs.Diff.ShowDiffInNewWindow"
+              icon="AllIcons.Actions.MoveToWindow"
+              class="com.intellij.diff.editor.MoveDiffEditorAction$ToWindow">
+        <add-to-group group-id="Diff.EditorGutterPopupMenu.DiffModes"/>
+        <add-to-group group-id="Diff.Binary.Settings"/>
+        <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
+      </action>
+      <action id="Vcs.Diff.EnableDisableCombinedDiff"
+              class="com.intellij.diff.actions.impl.CombinedDiffToggleAction">
+        <add-to-group group-id="Diff.EditorGutterPopupMenu.DiffModes"/>
+        <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
+      </action>
       <group id="Vcs.Diff.EditorTabs.Group" searchable="false">
-        <action id="Vcs.Diff.ShowDiffInNewWindow"
-                icon="AllIcons.Actions.MoveToWindow"
-                class="com.intellij.diff.editor.MoveDiffEditorAction$ToWindow">
-          <add-to-group group-id="Diff.Binary.Settings"/>
-        </action>
-        <action id="Vcs.Diff.EnableDisableCombinedDiff"
-                class="com.intellij.diff.actions.impl.CombinedDiffToggleAction">
-        </action>
         <separator/>
         <action id="Vcs.CombinedDiff.ToggleCollapseAllBlock"
                 class="com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAllAction"/>
