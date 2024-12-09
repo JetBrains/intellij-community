@@ -34,20 +34,22 @@ object FleetFromSourcesPaths {
   @Deprecated(message = "should use the string property on next dock api breakage", ReplaceWith("fontsResourcesDirectory"))
   val fontsDirectory: Path = Path.of(fontsResourcesDirectory)
 
-  val dockAppDevIconFile: Path by lazy {
-    buildDirectory.resolve("localDistribution/icons/os-appicon.png")
+  @Deprecated(message = "use [DesktopDockResources#osIntegrationAppIconFile] instead, it will be set appropriately in dev distributions", level = DeprecationLevel.ERROR)
+  val dockAppDevIconFile: Path by lazy { // TODO: remove in next Dock API breakage
+    Path.of("") // former path has been emptied here, Fleet should never know about build tooling paths
   }
 
   val nemmetPath: Path by lazy {
     projectRoot.resolve("plugins/emmet/frontend/resources/nemmet/dist/nemmet.js")
   }
 
-  private val buildDirectory: Path by lazy {
-    fleetProperty("fleet.build.directory.path")?.let { Path.of(it) } ?: projectRoot.resolve("build/build")
-  }
-
+  // TODO: remove the usages of this property and delete it.
+  // Ideally `skiko.library.path` should always be set by the tooling or distribution argfile, making `skikoLibraryDirectory` property redundant.
+  // Currently, this is needed for GalleryApp and some isolated UI tests, which can be run using JPS and which would break missing `skiko.library.path` property.
   val skikoLibraryDirectory: Path by lazy {
-    buildDirectory.resolve("localDistribution/libs")
+    val appDirectory = fleetProperty("fleet.distribution.app.directory")?.let { Path.of(it) }
+      ?: projectRoot.resolve("build/build/localDistribution") // FIXME: this will break when we move to `:fl` and `:air` projects (only works if `:fleet-build-project:run` was once run)
+    appDirectory.resolve("libs")
   }
 
   //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.plugins.keymap.test", "fleet.app.fleet.tests"])
