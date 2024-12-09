@@ -278,6 +278,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/conditionNotBinaryExpr.kt");
             }
 
+            @TestMetadata("conflictingNames.kt")
+            public void testConflictingNames() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToElvis/conflictingNames.kt");
+            }
+
             @TestMetadata("doesNotInlineVariableInMultiDeclaration.kt")
             public void testDoesNotInlineVariableInMultiDeclaration() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/doesNotInlineVariableInMultiDeclaration.kt");
@@ -366,6 +371,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("isCheckWithSelectorChain.kt")
             public void testIsCheckWithSelectorChain() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/isCheckWithSelectorChain.kt");
+            }
+
+            @TestMetadata("isFunctionalCheck.kt")
+            public void testIsFunctionalCheck() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToElvis/isFunctionalCheck.kt");
             }
 
             @TestMetadata("kt19666.kt")
