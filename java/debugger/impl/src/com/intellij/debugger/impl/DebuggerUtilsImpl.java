@@ -537,8 +537,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                          Class<?> cls,
                                          String methodName,
                                          List<Value> arguments,
-                                         boolean keepResult) throws EvaluateException {
-    ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext);
+                                         boolean keepResult,
+                                         String... additionalClassesToLoad) throws EvaluateException {
+    ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
     if (helperClass != null) {
       Method method = findMethod(helperClass, methodName, null);
       if (method != null) {

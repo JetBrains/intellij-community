@@ -77,7 +77,8 @@ public final class ClassLoadingUtils {
    * May modify class loader in evaluationContext
    */
   @Nullable
-  public static ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext) throws EvaluateException {
+  public static ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext,
+                                         String... additionalClassesToLoad) throws EvaluateException {
     // TODO [egor]: cache and load in bootstrap class loader
     String name = cls.getName();
     evaluationContext = evaluationContext.withAutoLoadClasses(true);
@@ -91,18 +92,31 @@ public final class ClassLoadingUtils {
         if ("java.lang.ClassNotFoundException".equals(((InvocationException)cause).exception().type().name())) {
           // need to define
           ClassLoaderReference classLoader = getClassLoader(evaluationContext, process);
-          try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
-            if (stream == null) return null;
-            defineClass(name, stream.readAllBytes(), evaluationContext, process, classLoader);
-            evaluationContext.setClassLoader(classLoader);
-            return (ClassType)process.findClass(evaluationContext, name, classLoader);
+          if (!defineClass(name, cls, evaluationContext, process, classLoader)) return null;
+          for (String fqn : additionalClassesToLoad) {
+            if (!defineClass(fqn, cls, evaluationContext, process, classLoader)) return null;
           }
-          catch (IOException ioe) {
-            throw new EvaluateException("Unable to read " + name + " class bytes", ioe);
-          }
+
+          evaluationContext.setClassLoader(classLoader);
+          return (ClassType)process.findClass(evaluationContext, name, classLoader);
         }
       }
       throw e;
+    }
+  }
+
+  private static boolean defineClass(String name,
+                                     Class<?> cls,
+                                     EvaluationContextImpl evaluationContext,
+                                     DebugProcess process,
+                                     ClassLoaderReference classLoader) throws EvaluateException {
+    try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
+      if (stream == null) return false;
+      defineClass(name, stream.readAllBytes(), evaluationContext, process, classLoader);
+      return true;
+    }
+    catch (IOException ioe) {
+      throw new EvaluateException("Unable to read " + name + " class bytes", ioe);
     }
   }
 }
