@@ -101,7 +101,7 @@ class ReplaceCurrentFileTextTool : McpTool<ReplaceCurrentFileTextArgs> {
     }
 }
 
-data class CreateNewFileWithTextArgs(val absolutePath: String, val text: String)
+data class CreateNewFileWithTextArgs(val pathInProject: String, val text: String)
 
 class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs> {
     override val name: String = "create_new_file_with_text"
@@ -112,15 +112,11 @@ class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs> {
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
             ?: return Response("can't find project dir")
 
-        val path = Path(args.absolutePath)
-        return if (path.startsWith(projectDir)) {
-            path.createParentDirectories().createFile().writeText(args.text)
-            LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
-            Response("ok")
-        }
-        else {
-            Response(error = "file is outside of the project")
-        }
+        val path = Path(args.pathInProject)
+        projectDir.resolve(path).createParentDirectories().createFile().writeText(args.text)
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
+
+        return Response("ok")
     }
 }
 
