@@ -1753,6 +1753,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         public void testTrailingLambdaParameterName3() throws Exception {
             runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName3.kt");
         }
+
+        @TestMetadata("TrailingLambdaParameterName4.kt")
+        public void testTrailingLambdaParameterName4() throws Exception {
+            runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName4.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
