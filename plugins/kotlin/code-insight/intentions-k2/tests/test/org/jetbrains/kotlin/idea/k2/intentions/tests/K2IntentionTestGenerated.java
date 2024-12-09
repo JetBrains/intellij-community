@@ -10489,6 +10489,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("branchWithRun.kt")
+        public void testBranchWithRun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToIf/branchWithRun.kt");
+        }
+
         @TestMetadata("ifWithBreak.kt")
         public void testIfWithBreak() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToIf/ifWithBreak.kt");

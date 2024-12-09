@@ -34,12 +34,10 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
         val newElseExpr = newIfExpression.`else`?.lastBlockStatementOrThis()
 
         val psiFactory = KtPsiFactory(element.project)
-        analyze(element) {
-            val labelName = element.getLabelName()
-            newThenExpr.replace(createReturnExpression(thenExpr, labelName, psiFactory))
-            if (elseExpr != null) {
-                newElseExpr?.replace(createReturnExpression(elseExpr, labelName, psiFactory))
-            }
+        val labelName = element.getLabelName()
+        newThenExpr.replace(createReturnExpression(thenExpr, labelName, psiFactory))
+        if (elseExpr != null) {
+            newElseExpr?.replace(createReturnExpression(elseExpr, labelName, psiFactory))
         }
         element.replace(newIfExpression)
     }
@@ -60,18 +58,17 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
 
     override fun isApplicableByPsi(element: KtReturnExpression): Boolean = element.returnedExpression is KtIfExpression
 
-    fun createReturnExpression(
+    private fun createReturnExpression(
         expr: KtExpression,
         labelName: String?,
         psiFactory: KtPsiFactory
     ): KtExpression {
-        val label = labelName?.let { "@$it" } ?: ""
+        val label = labelName?.let { "@$it" }.orEmpty()
         val returnText = when (expr) {
             is KtBreakExpression, is KtContinueExpression, is KtReturnExpression, is KtThrowExpression -> ""
             else -> {
                 analyze(expr) {
-                    val returnType = (expr as? KtCallExpression)?.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.returnType
-                    if (returnType?.isNothingType == true) {
+                    if (expr.expressionType?.isNothingType == true) {
                         ""
                     } else {
                         "return$label "

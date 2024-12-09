@@ -3556,6 +3556,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("branchWithRun.kt")
+                public void testBranchWithRun() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToIf/branchWithRun.kt");
+                }
+
                 @TestMetadata("ifWithBreak.kt")
                 public void testIfWithBreak() throws Exception {
                     runTest("testData/intentions/branched/unfolding/returnToIf/ifWithBreak.kt");
