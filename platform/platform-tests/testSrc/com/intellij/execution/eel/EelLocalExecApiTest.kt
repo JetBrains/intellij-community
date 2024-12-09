@@ -6,7 +6,10 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -93,8 +96,7 @@ class EelLocalExecApiTest {
         val text = ByteBuffer.allocate(8192)
         withContext(Dispatchers.Default) {
           withTimeoutOrNull(10.seconds) {
-            for (chunk in process.stderr) {
-              text.put(chunk)
+            while (process.stderr.receive(text).getOrThrow() != ReadResult.EOF) {
               if (HELLO in text.slice(0, text.position()).decodeString()) break
             }
           }
@@ -107,7 +109,7 @@ class EelLocalExecApiTest {
         var ttyState: TTYState? = null
         text.clear()
         while (ttyState == null) {
-          text.put(process.stdout.receive())
+          process.stdout.receive(text).getOrThrow()
           // tty might insert "\r\n", we need to remove them, hence, NEW_LINES.
           // Schlemiel the Painter's Algorithm is OK in tests: do not use in production
           ttyState = TTYState.deserializeIfValid(text.slice(0, text.position()).decodeString().replace(NEW_LINES, ""))
@@ -137,6 +139,7 @@ class EelLocalExecApiTest {
             process.sendCommand(Command.EXIT)
           }
         }
+
         val exitCode = process.exitCode.await()
         when (exitType) {
           ExitType.KILL -> {
@@ -174,7 +177,6 @@ class EelLocalExecApiTest {
    * Sends [command] to the helper and flush
    */
   private suspend fun EelProcess.sendCommand(command: Command) {
-    val text = command.name + "\n"
-    stdin.send(text.encodeToByteArray())
+    stdin.sendWholeText(command.name + "\n").getOrThrow()
   }
 }

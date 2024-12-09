@@ -15,7 +15,10 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.platform.eel.executeProcess
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
@@ -24,7 +27,6 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.deploy
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.ByteArrayOutputStream
 import java.net.URI
@@ -81,7 +83,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
                       is EelResult.Ok -> p.value
                     }
                     val stdout = ByteArrayOutputStream()
-                    process.stdout.consumeEach(stdout::write)
+                    copy(process.stdout, stdout.asEelChannel()).getOrThrow() // TODO: process errors
                     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                       Messages.showInfoMessage(stdout.toString(), title)
                     }

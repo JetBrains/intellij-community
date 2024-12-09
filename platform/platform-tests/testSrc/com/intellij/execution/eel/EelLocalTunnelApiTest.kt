@@ -5,6 +5,7 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.network.NetworkConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -41,7 +42,7 @@ class EelLocalTunnelApiTest {
   fun testClientSuccessConnection(): Unit = timeoutRunBlocking(1.minutes) {
     val helper = localEel.exec.execute(executor.createBuilderToExecuteMain().build()).getOrThrow()
     try {
-      val port = helper.stdout.receive().decodeToString().trim().toInt()
+      val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
       val address = EelTunnelsApi
         .HostAddress.Builder(port.toUShort())
         .preferIPv4()
