@@ -138,6 +138,19 @@ class CodeInsightContextManagerImpl(
     return context
   }
 
+  override fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext {
+    val rawContext = getCodeInsightContextRaw(fileViewProvider)
+    if (rawContext != anyContext()) {
+      return rawContext
+    }
+
+    if (context !in getContextSequence(fileViewProvider.virtualFile)) {
+      return inferContext(fileViewProvider)
+    }
+
+    return trySetContext(fileViewProvider, context)
+  }
+
   private fun findFirstContext(file: VirtualFile?): CodeInsightContext {
     if (file == null) return defaultContext()
 
@@ -166,6 +179,13 @@ class CodeInsightContextManagerImpl(
     val preferredContext = getPreferredContext(fileViewProvider.virtualFile)
     log.assertTrue(preferredContext != anyContext()) { "preferredContext must not be anyContext" }
 
+    return trySetContext(fileViewProvider, preferredContext)
+  }
+
+  private fun trySetContext(
+    fileViewProvider: FileViewProvider,
+    preferredContext: CodeInsightContext,
+  ): CodeInsightContext {
     val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as? FileManagerImpl
     if (fileManager != null) {
       val result = fileManager.trySetContext(fileViewProvider, preferredContext)

@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.EventListener
 
 /**
@@ -56,6 +57,14 @@ interface CodeInsightContextManager {
   @RequiresReadLock
   @RequiresBackgroundThread
   fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext
+
+  /**
+   * Tries to assign context of [fileViewProvider] to [context] if it's not yet assigned to something else.
+   *
+   * @return the context assigned to [fileViewProvider]
+   */
+  @Internal
+  fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext
 
   /**
    * Subscribe to this flow to listen for context changes.

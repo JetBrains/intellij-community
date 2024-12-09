@@ -3,13 +3,14 @@ package com.intellij.psi.search;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.lang.LanguageMatcher;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,13 +44,16 @@ public final class PsiSearchScopeUtil {
       return true;
     }
     while (file != null) {
-      VirtualFile backed = BackedVirtualFile.getOriginFileIfBacked(file.getOriginalFile().getViewProvider().getVirtualFile());
+      FileViewProvider viewProvider = file.getOriginalFile().getViewProvider();
+      VirtualFile backed = BackedVirtualFile.getOriginFileIfBacked(viewProvider.getVirtualFile());
       if (CodeInsightContextKt.isSharedSourceSupportEnabled(element.getProject())) {
         // todo ijpl-339 invent a way to avoid inferring the context here.
         //               by default, the file does not have an assigned context before the context is really requested.
         //               And once we request it here, it's assigned to "something".
         //               But we could try assign it to the context which the scope wants to avoid building addition psi
-        CodeInsightContext codeInsightContext = FileViewProviderUtil.getCodeInsightContext(file.getOriginalFile());
+
+        CodeInsightContext context = CodeInsightContextAwareSearchScopesKt.getAnyCorrespondingContext(globalScope, backed);
+        CodeInsightContext codeInsightContext = CodeInsightContextManager.getInstance(element.getProject()).getOrSetContext(viewProvider, context);
         if (CodeInsightContextAwareSearchScopesKt.contains(globalScope, backed, codeInsightContext)) {
           return true;
         }
