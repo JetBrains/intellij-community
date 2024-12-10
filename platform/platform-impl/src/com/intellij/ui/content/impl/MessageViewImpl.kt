@@ -5,8 +5,8 @@ import com.intellij.concurrency.captureThreadContext
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.wm.ToolWindow
@@ -42,7 +42,7 @@ internal class MessageViewImpl(private val project: Project, private val scope: 
               postponedRunnable.run()
             }
             catch (e: Throwable) {
-              if (e !is ProcessCanceledException) {
+              if (e !is ControlFlowException) {
                 thisLogger().error(e)
               }
               if (err == null) {
