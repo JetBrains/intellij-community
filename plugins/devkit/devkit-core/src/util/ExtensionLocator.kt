@@ -3,9 +3,12 @@ package org.jetbrains.idea.devkit.util
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.xml.XmlTag
@@ -41,13 +44,14 @@ fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint,
 /**
  * A synchronized collection should be used as an accumulator in callbacks.
  */
+@JvmOverloads
 fun processExtensionDeclarations(name: String,
                                  project: Project,
                                  strictMatch: Boolean = true,
+                                 scope : SearchScope = PluginRelatedLocatorsUtils.getCandidatesScope(project),
                                  callback: (Extension, XmlTag) -> Boolean) {
   PerformanceAssertions.assertDoesNotAffectHighlighting()
 
-  val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   val searchWord = name.substringBeforeLast('$')
   if (searchWord.isEmpty()) return
 

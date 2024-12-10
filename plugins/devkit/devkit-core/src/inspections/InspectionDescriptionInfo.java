@@ -11,18 +11,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.uast.UastModificationTracker;
-import com.intellij.util.Query;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
-import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -37,6 +32,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtensionDeclarations;
 
 public final class InspectionDescriptionInfo {
 
@@ -103,38 +100,29 @@ public final class InspectionDescriptionInfo {
   private static Extension doFindExtension(Module module, PsiClass psiClass) {
     // Try search in narrow scopes first
     Project project = module.getProject();
-    Set<DomFileElement<IdeaPlugin>> processed = new HashSet<>();
+    Set<DomFileElement<IdeaPlugin>> processedFileElements = new HashSet<>();
     for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
-      List<DomFileElement<IdeaPlugin>> origElements = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
-      origElements.removeAll(processed);
-      List<DomFileElement<IdeaPlugin>> elements = PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), origElements);
+      List<DomFileElement<IdeaPlugin>> fileElements = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
+      fileElements.removeAll(processedFileElements);
+      List<DomFileElement<IdeaPlugin>> filteredFileElements =
+        PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), fileElements);
+      SearchScope searchScope = new LocalSearchScope(filteredFileElements.stream().map(DomFileElement::getFile).toArray(PsiElement[]::new));
 
-      Query<PsiReference> query =
-        ReferencesSearch.search(psiClass, new LocalSearchScope(elements.stream().map(DomFileElement::getFile).toArray(PsiElement[]::new)));
-
-      Ref<Extension> result = Ref.create(null);
-      query.forEach(ref -> {
-        PsiElement element = ref.getElement();
-        if (element instanceof XmlAttributeValue) {
-          PsiElement parent = element.getParent();
-          if (parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
-            DomElement domElement = DomUtil.getDomElement(parent.getParent());
-            if (domElement instanceof Extension extension) {
-              ExtensionPoint extensionPoint = extension.getExtensionPoint();
-              if (extensionPoint != null &&
-                  InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
-                result.set(extension);
-                return false;
-              }
-            }
+      Ref<Extension> result = Ref.create();
+      processExtensionDeclarations(Objects.requireNonNull(psiClass.getQualifiedName()), module.getProject(),
+                                   true, searchScope, (extension, tag) -> {
+          ExtensionPoint extensionPoint = extension.getExtensionPoint();
+          if (extensionPoint != null &&
+              InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
+            result.set(extension);
+            return false;
           }
-        }
-        return true;
-      });
+          return true;
+        });
       Extension extension = result.get();
       if (extension != null) return extension;
 
-      processed.addAll(origElements);
+      processedFileElements.addAll(fileElements);
     }
     return null;
   }
