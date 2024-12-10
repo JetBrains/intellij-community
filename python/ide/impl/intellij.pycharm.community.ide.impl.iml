@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.whatsNew" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.experiment" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>
