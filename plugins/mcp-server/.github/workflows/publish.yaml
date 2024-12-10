@@ -1,0 +1,30 @@
+name: Publish to Marketplace
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build with Gradle
+        run: ./gradlew -PintellijPlatformPublishingToken=${{ secrets.MARKETPLACE_PUBLISH_TOKEN }} publishPlugin
+      - name: Store artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: |
+            build/distributions/

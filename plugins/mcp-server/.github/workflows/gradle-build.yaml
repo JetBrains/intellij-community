@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  runExamples:
+  buildPlugin:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,9 +23,10 @@ jobs:
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
           arguments: clean buildPlugin
-      - name: Store reports
-        uses: actions/upload-artifact@v3
+      - name: Store artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: distributions
           path: |
-            **/build/distributions/
+            build/distributions/

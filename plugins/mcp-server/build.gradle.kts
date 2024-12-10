@@ -32,9 +32,12 @@ intellijPlatform {
     pluginConfiguration {
         version = settings.extra["pluginVersion"] as String
         ideaVersion {
-            sinceBuild.set("233")
-            untilBuild.set("243.*")
+            sinceBuild.set("242")
+            untilBuild.set("251.*")
         }
+    }
+    publishing {
+        token = providers.gradleProperty("intellijPlatformPublishingToken")
     }
 }
 
