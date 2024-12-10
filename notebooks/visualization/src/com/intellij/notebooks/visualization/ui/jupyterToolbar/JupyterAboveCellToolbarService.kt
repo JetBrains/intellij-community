@@ -27,7 +27,6 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
   private var currentEditor: Editor? = null
   private var currentPanel: JComponent? = null
 
-  private val additionalToolbarEnabled = Registry.`is`("jupyter.cell.additional.toolbar")
   private var currentToolbar: JupyterAddNewCellToolbar? = null
   private var currentAdditionalToolbar: JupyterAdditionalToolbar? = null
 
@@ -221,9 +220,16 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
     private const val ADD_CELL_TOOLBAR_X_OFFSET_RATIO = 0.5
     private const val ADDITIONAL_TOOLBAR_X_OFFSET_RATIO = 0.95
 
-    private const val ADD_CELL_TOOLBAR_START_RATIO = 0.0  // discussible
-    private const val ADD_CELL_TOOLBAR_END_RATIO = 0.99 // todo: change to 0.6 when additional toolbar is on
-    private const val ADDITIONAL_TOOLBAR_START_RATIO = ADD_CELL_TOOLBAR_END_RATIO
+    private const val ADD_CELL_TOOLBAR_START_RATIO = 0.0
+
+    private val additionalToolbarEnabled = Registry.`is`("jupyter.cell.additional.toolbar")
+
+    private val ADD_CELL_TOOLBAR_END_RATIO = when (additionalToolbarEnabled) {
+      true -> 0.6
+      else -> 0.99
+    }
+
+    private val ADDITIONAL_TOOLBAR_START_RATIO = ADD_CELL_TOOLBAR_END_RATIO
 
     private const val ACTION_GROUP_ID = "Jupyter.AboveCellPanelNew"
 
