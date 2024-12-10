@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.inspections.createReturnExpression
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtReturnExpression, Unit>(KtReturnExpression::class) {
 
@@ -51,14 +51,11 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
         val ifExpression = returnExpression.returnedExpression as? KtIfExpression ?: return emptyList()
         if (ifExpression.then == null) return emptyList()
 
-        val returnKeyword = returnExpression.returnKeyword
-        val returnKeywordRange = returnKeyword.textRange
-        val ifKeywordRange = ifExpression.ifKeyword.textRange
-
-        val unionFromReturnToIf = returnKeywordRange.union(ifKeywordRange)
+        val returnKeywordRange = returnExpression.returnKeyword.textRangeIn(returnExpression)
+        val ifKeywordRange = ifExpression.ifKeyword.textRangeIn(returnExpression)
 
         return listOf(
-            unionFromReturnToIf.shiftLeft(returnKeyword.startOffset)
+            returnKeywordRange.union(ifKeywordRange)
         )
     }
 
