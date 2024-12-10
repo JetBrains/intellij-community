@@ -10,6 +10,8 @@ import org.apache.maven.api.*;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.api.cli.ParserException;
 import org.apache.maven.api.cli.ParserRequest;
+import org.apache.maven.api.cli.extensions.CoreExtension;
+import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.api.services.Lookup;
@@ -18,9 +20,9 @@ import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
-import org.apache.maven.cling.invoker.ProtoLogger;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenContext;
+import org.apache.maven.cling.invoker.mvn.MavenInvokerRequest;
 import org.apache.maven.cling.invoker.mvn.MavenParser;
 import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenContext;
 import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenInvoker;
@@ -65,9 +67,10 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -94,6 +97,38 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
+  static class IdeaMavenInvokerRequest extends MavenInvokerRequest {
+    IdeaMavenInvokerRequest(ParserRequest parserRequest,
+                            Path cwd,
+                            Path installationDirectory,
+                            Path userHomeDirectory,
+                            Map<String, String> userProperties,
+                            Map<String, String> systemProperties,
+                            Path topDirectory,
+                            Path rootDirectory,
+                            InputStream in,
+                            OutputStream out,
+                            OutputStream err,
+                            List<CoreExtension> coreExtensions,
+                            List<String> jvmArguments,
+                            MavenOptions options) {
+      super(parserRequest, cwd, installationDirectory, userHomeDirectory, userProperties, systemProperties, topDirectory, rootDirectory, in,
+            out, err, coreExtensions, jvmArguments, options);
+    }
+
+    private boolean coreExtensionsDisabled = false;
+
+    void disableCoreExtensions() {
+      coreExtensionsDisabled = true;
+    }
+
+    @Override
+    public Optional<List<CoreExtension>> coreExtensions() {
+      if (coreExtensionsDisabled) return Optional.empty();
+      return super.coreExtensions();
+    }
+  }
+
   static class IdeaMavenInvoker extends ResidentMavenInvoker {
     MavenContext myContext = null;
 
@@ -111,7 +146,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       activateLogging(context);
       helpOrVersionAndMayExit(context);
       preCommands(context);
-      container(context);
+      tryRunAndRetryOnFailure(() -> container(context), () -> ((IdeaMavenInvokerRequest)context.invokerRequest).disableCoreExtensions());
       postContainer(context);
       pushUserProperties(context);
       lookup(context);
@@ -123,12 +158,21 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       return 0;
     }
 
-    private void tryRun(ThrowingRunnable action) {
+    private boolean tryRun(ThrowingRunnable action) {
       try {
         action.run();
       }
       catch (Exception e) {
         warn(e.getMessage(), e);
+        return false;
+      }
+      return true;
+    }
+
+    private void tryRunAndRetryOnFailure(ThrowingRunnable action, Runnable onFailure) {
+      if (!tryRun(action)) {
+        onFailure.run();
+        tryRun(action);
       }
     }
 
@@ -211,7 +255,26 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       .cwd(cwd)
       .build();
 
-    MavenParser mavenParser = new MavenParser();
+    MavenParser mavenParser = new MavenParser() {
+      @Override
+      protected MavenInvokerRequest getInvokerRequest(LocalContext context) {
+        return new IdeaMavenInvokerRequest(
+          context.parserRequest,
+          context.cwd,
+          context.installationDirectory,
+          context.userHomeDirectory,
+          context.userProperties,
+          context.systemProperties,
+          context.topDirectory,
+          context.rootDirectory,
+          context.parserRequest.in(),
+          context.parserRequest.out(),
+          context.parserRequest.err(),
+          context.extensions,
+          getJvmArguments(context.rootDirectory),
+          (MavenOptions)context.options);
+      }
+    };
     InvokerRequest invokerRequest;
     try {
       invokerRequest = mavenParser.parseInvocation(parserRequest);
