@@ -17,9 +17,9 @@ import kotlin.reflect.full.primaryConstructor
 
 class McpToolManager {
     companion object {
-        private val EP_NAME = ExtensionPointName<McpTool<*>>("com.intellij.mcpServer.mcpTool")
+        private val EP_NAME = ExtensionPointName<AbstractMcpTool<*>>("com.intellij.mcpServer.mcpTool")
 
-        fun getAllTools(): List<McpTool<*>> {
+        fun getAllTools(): List<AbstractMcpTool<*>> {
             return buildList {
                 // Add built-in tools
                 addAll(getBuiltInTools())
@@ -28,7 +28,7 @@ class McpToolManager {
             }
         }
 
-        private fun getBuiltInTools(): List<McpTool<*>> = listOf(
+        private fun getBuiltInTools(): List<AbstractMcpTool<*>> = listOf(
             GetCurrentFileTextTool(),
             GetCurrentFilePathTool(),
             GetSelectedTextTool(),
@@ -132,10 +132,21 @@ sealed class JsonType {
 interface McpTool<Args : Any> {
     val name: String
     val description: String
-    val argKlass: KClass<*>
-
-    // Modified to accept project context
     fun handle(project: Project, args: Args): Response
+}
+
+abstract class AbstractMcpTool<Args : Any> : McpTool<Args> {
+    val argKlass: KClass<Args> by lazy {
+        val supertype = this::class.supertypes.find {
+            it.classifier == AbstractMcpTool::class
+        } ?: error("Cannot find McpTool supertype")
+
+        val typeArgument = supertype.arguments.first().type
+            ?: error("Cannot find type argument for McpTool")
+
+        @Suppress("UNCHECKED_CAST")
+        typeArgument.classifier as KClass<Args>
+    }
 }
 
 object NoArgs
@@ -211,7 +222,7 @@ fun JsonType.toJsonElementWithRequired(): JsonElement {
     }
 }
 
-fun generateToolsJson(tools: List<McpTool<*>>): JsonElement {
+fun generateToolsJson(tools: List<AbstractMcpTool<*>>): JsonElement {
     val toolsArray = JsonArray()
     for (tool in tools) {
         val toolObj = JsonObject()

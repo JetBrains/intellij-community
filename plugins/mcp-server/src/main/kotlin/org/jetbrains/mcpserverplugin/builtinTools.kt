@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.createParentDirectories
+import org.jetbrains.ide.mcp.AbstractMcpTool
 import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
@@ -23,10 +24,9 @@ import kotlin.reflect.KClass
 
 // tools
 
-class GetCurrentFileTextTool : McpTool<NoArgs> {
+class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_open_in_editor_file_text"
     override val description: String = "Get the contents of the file which currently is opened in selected editor in JetBrains IDE"
-    override val argKlass: KClass<NoArgs> = NoArgs::class
 
     override fun handle(project: Project, args: NoArgs): Response {
         val text = runReadAction<String?> {
@@ -36,10 +36,9 @@ class GetCurrentFileTextTool : McpTool<NoArgs> {
     }
 }
 
-class GetCurrentFilePathTool : McpTool<NoArgs> {
+class GetCurrentFilePathTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_open_in_editor_file_path"
     override val description: String = "Get the absolute path of the file which currently is opened in selected editor in JetBrains IDE"
-    override val argKlass: KClass<NoArgs> = NoArgs::class
 
     override fun handle(project: Project, args: NoArgs): Response {
         val path = runReadAction<String?> {
@@ -49,10 +48,9 @@ class GetCurrentFilePathTool : McpTool<NoArgs> {
     }
 }
 
-class GetSelectedTextTool : McpTool<NoArgs> {
+class GetSelectedTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_open_in_editor_text"
     override val description: String = "Get the currently selected text in open editor the JetBrains IDE"
-    override val argKlass: KClass<NoArgs> = NoArgs::class
 
     override fun handle(project: Project, args: NoArgs): Response {
         val text = runReadAction<String?> {
@@ -63,10 +61,9 @@ class GetSelectedTextTool : McpTool<NoArgs> {
 }
 
 data class ReplaceSelectedTextArgs(val text: String)
-class ReplaceSelectedTextTool : McpTool<ReplaceSelectedTextArgs> {
+class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
     override val name: String = "replace_selected_text"
     override val description: String = "Replace the currently selected text in the JetBrains IDE with new text"
-    override val argKlass: KClass<ReplaceSelectedTextArgs> = ReplaceSelectedTextArgs::class
 
     override fun handle(project: Project, args: ReplaceSelectedTextArgs): Response {
         runInEdt {
@@ -85,10 +82,9 @@ class ReplaceSelectedTextTool : McpTool<ReplaceSelectedTextArgs> {
 }
 
 data class ReplaceCurrentFileTextArgs(val text: String)
-class ReplaceCurrentFileTextTool : McpTool<ReplaceCurrentFileTextArgs> {
+class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>() {
     override val name: String = "replace_current_file_text"
     override val description: String = "Replace the entire contents of the current file in JetBrains IDE with new text"
-    override val argKlass: KClass<ReplaceCurrentFileTextArgs> = ReplaceCurrentFileTextArgs::class
 
     override fun handle(project: Project, args: ReplaceCurrentFileTextArgs): Response {
         runInEdt {
@@ -104,10 +100,9 @@ class ReplaceCurrentFileTextTool : McpTool<ReplaceCurrentFileTextArgs> {
 
 data class CreateNewFileWithTextArgs(val pathInProject: String, val text: String)
 
-class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs> {
+class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
     override val name: String = "create_new_file_with_text"
     override val description: String = "Create a new file inside the project with specified text in JetBrains IDE"
-    override val argKlass: KClass<CreateNewFileWithTextArgs> = CreateNewFileWithTextArgs::class
 
     override fun handle(project: Project, args: CreateNewFileWithTextArgs): Response {
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
@@ -122,10 +117,9 @@ class CreateNewFileWithTextTool : McpTool<CreateNewFileWithTextArgs> {
 }
 
 data class Query(val nameSubstring: String)
-class FindFilesByNameSubstring: McpTool<Query> {
+class FindFilesByNameSubstring: AbstractMcpTool<Query>() {
     override val name: String = "find_files_by_name_substring"
     override val description: String = "Find files inside the projct using name substring in JetBrains IDE"
-    override val argKlass: KClass<*> = Query::class
 
     override fun handle(project: Project, args: Query): Response {
         val searchSubstring = args.nameSubstring.toLowerCase()
@@ -142,10 +136,9 @@ class FindFilesByNameSubstring: McpTool<Query> {
 }
 
 data class Path(val absolutePath: String)
-class GetFileTextByPathTool : McpTool<Path> {
+class GetFileTextByPathTool : AbstractMcpTool<Path>() {
     override val name: String = "get_file_text_by_path"
     override val description: String = "Get the contents of the file by its absolute path in JetBrains IDE if file belongs to the project"
-    override val argKlass: KClass<Path> = Path::class
 
     override fun handle(project: Project, args: Path): Response {
         val text = runReadAction {

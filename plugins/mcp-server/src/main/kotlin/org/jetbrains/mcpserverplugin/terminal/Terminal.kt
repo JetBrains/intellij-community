@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.ide.mcp.AbstractMcpTool
 import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
@@ -16,10 +17,9 @@ import javax.swing.JComponent
 import java.lang.Thread
 import kotlin.reflect.KClass
 
-class GetTerminalTextTool : McpTool<NoArgs> {
+class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_terminal_text"
     override val description: String = "Get the current contents of a terminal in JetBrains IDE"
-    override val argKlass: KClass<NoArgs> = NoArgs::class
 
     override fun handle(project: Project, args: NoArgs): Response {
         // Retrieve the first terminal widget text
@@ -31,10 +31,9 @@ class GetTerminalTextTool : McpTool<NoArgs> {
 }
 
 data class ExecuteTerminalCommandArgs(val command: String)
-class ExecuteTerminalCommandTool : McpTool<ExecuteTerminalCommandArgs> {
+class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>() {
     override val name: String = "execute_terminal_command"
     override val description: String = "Execute any terminal command in JetBrains IDE"
-    override val argKlass: KClass<ExecuteTerminalCommandArgs> = ExecuteTerminalCommandArgs::class
 
     override fun handle(project: Project, args: ExecuteTerminalCommandArgs): Response {
         var result = Response(error = "canceled")
