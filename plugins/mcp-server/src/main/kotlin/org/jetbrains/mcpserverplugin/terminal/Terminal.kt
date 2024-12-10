@@ -6,27 +6,15 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.serialization.Serializable
-import org.jetbrains.mcpserverplugin.AbstractMcpTool
-import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
-import org.jetbrains.plugins.terminal.ShellTerminalWidget
+import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalView
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
-import java.lang.Thread
 
-class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
-    override val name: String = "get_terminal_text"
-    override val description: String = "Get the current contents of a terminal in JetBrains IDE"
-
-    override fun handle(project: Project, args: NoArgs): Response {
-        // Retrieve the first terminal widget text
-        val text = com.intellij.openapi.application.runReadAction<String?> {
-            TerminalView.getInstance(project).getWidgets().firstOrNull()?.text
-        }
-        return Response(text)
-    }
-}
 @Serializable
 data class ExecuteTerminalCommandArgs(val command: String)
 
@@ -35,7 +23,7 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
     override val description: String = "Execute any terminal command in JetBrains IDE"
 
     override fun handle(project: Project, args: ExecuteTerminalCommandArgs): Response {
-        var result = Response(error = "canceled")
+        val future = CompletableFuture<Response>()
 
         ApplicationManager.getApplication().invokeAndWait {
             val confirmationDialog = object : DialogWrapper(project, true) {
@@ -54,52 +42,44 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
             }
             confirmationDialog.show()
 
-            if (confirmationDialog.isOK) {
-                val terminalWidget = terminalWidget(project)
-                terminalWidget?.sendCommandToExecute("clear; " + args.command)
+            if (!confirmationDialog.isOK) {
+                future.complete(Response(error = "canceled"))
+                return@invokeAndWait
+            }
 
-                val startTime = System.currentTimeMillis()
-                while (terminalWidget?.hasRunningCommands() == true &&
-                    System.currentTimeMillis() - startTime < 1000
-                ) {
-                    try {
-                        Thread.sleep(100)
-                    } catch (e: InterruptedException) {
-                        Thread.currentThread().interrupt()
-                        result = Response(error = "Execution interrupted")
-                        return@invokeAndWait
-                    }
+            val terminalWidget = terminalWidget(project)
+            terminalWidget?.sendCommandToExecute("clear; " + args.command)
+
+            // Schedule a single delayed task to collect output
+            ApplicationManager.getApplication().executeOnPooledThread {
+                Thread.sleep(100) // Wait 100ms
+                val terminalOutput = TerminalView.getInstance(project)
+                    .getWidgets()
+                    .firstOrNull()?.text ?: "No output collected."
+
+                // Limit to 200 lines if needed
+                val lines = terminalOutput.lines()
+                val finalOutput = if (lines.size > 200) {
+                    lines.take(200).joinToString("\n") + "\n... (output truncated at 200 lines)"
+                } else {
+                    terminalOutput
                 }
 
-                val terminalOutput = TerminalView.getInstance(project).getWidgets().firstOrNull()?.text ?: "No output collected."
-                result = Response(terminalOutput)
+                future.complete(Response(finalOutput))
             }
         }
 
-        return result
+        try {
+            return future.get(5, TimeUnit.SECONDS)
+        } catch (e: TimeoutException) {
+            return Response(error = "Command execution timed out after 5 seconds")
+        } catch (e: Exception) {
+            return Response(error = "Execution error: ${e.message}")
+        }
     }
 
     private fun terminalWidget(project: Project): TerminalWidget? {
         val terminalManager = TerminalToolWindowManager.getInstance(project)
         return terminalManager.terminalWidgets.firstOrNull() ?: terminalManager.createNewSession()
     }
-}
-
-private fun TerminalWidget?.hasRunningCommands(): Boolean {
-    if (this == null) return false
-
-    try {
-        val bridgeClass = Class.forName("com.intellij.terminal.JBTerminalWidget\$TerminalWidgetBridge")
-        val widgetMethod = bridgeClass.getDeclaredMethod("widget")
-        widgetMethod.isAccessible = true
-
-        val shellWidget = widgetMethod.invoke(this)
-        if (shellWidget is ShellTerminalWidget) {
-            return shellWidget.hasRunningCommands()
-        }
-    } catch (e: Exception) {
-        // Handle or log the exception
-        return false
-    }
-    return false
 }

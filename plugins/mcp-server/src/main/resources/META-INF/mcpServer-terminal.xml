@@ -1,6 +1,5 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <mcpServer.mcpTool implementation="org.jetbrains.mcpserverplugin.terminal.GetTerminalTextTool"/>
         <mcpServer.mcpTool implementation="org.jetbrains.mcpserverplugin.terminal.ExecuteTerminalCommandTool"/>
     </extensions>
 </idea-plugin>
