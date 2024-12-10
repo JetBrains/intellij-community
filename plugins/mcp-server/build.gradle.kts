@@ -29,6 +29,10 @@ dependencies {
     }
 }
 
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+}
+
 intellijPlatform {
     pluginConfiguration {
         version = settings.extra["pluginVersion"] as String
