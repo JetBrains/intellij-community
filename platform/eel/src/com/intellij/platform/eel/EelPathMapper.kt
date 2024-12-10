@@ -6,9 +6,9 @@ import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
-fun EelPath.Absolute.toNioPath(eelApi: EelApi): Path = eelApi.mapper.toNioPath(this)
+fun EelPath.toNioPath(eelApi: EelApi): Path = eelApi.mapper.toNioPath(this)
 
-suspend fun EelPathMapper.maybeUploadPath(path: Path, scope: CoroutineScope): EelPath.Absolute {
+suspend fun EelPathMapper.maybeUploadPath(path: Path, scope: CoroutineScope): EelPath {
   val options = CreateTemporaryDirectoryOptions.Builder()
     .prefix(path.fileName.toString())
     .suffix("eel")
@@ -19,7 +19,7 @@ suspend fun EelPathMapper.maybeUploadPath(path: Path, scope: CoroutineScope): Ee
 }
 
 interface EelPathMapper {
-  fun getOriginalPath(path: Path): EelPath.Absolute?
+  fun getOriginalPath(path: Path): EelPath?
 
   /**
    * Transfers file system entry which is pointed to by [path] to the machine which owns this [EelPathMapper].
@@ -40,9 +40,9 @@ interface EelPathMapper {
     path: Path,
     scope: CoroutineScope,
     options: CreateTemporaryDirectoryOptions,
-  ): EelPath.Absolute
+  ): EelPath
 
-  fun toNioPath(path: EelPath.Absolute): Path
+  fun toNioPath(path: EelPath): Path
 
   /**
    * @return empty string for local eel

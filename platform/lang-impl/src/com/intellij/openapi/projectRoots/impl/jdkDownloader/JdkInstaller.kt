@@ -174,11 +174,10 @@ class JdkInstaller : JdkInstallerBase() {
 
     val userHome = eel.fs.user.home
 
-    val relativePath = EelPath.Relative.parse(
-      when (eel.platform) {
+    val relativePath = when (eel.platform) {
         is EelPlatform.Windows, is EelPlatform.Linux -> ".jdks"
         is EelPlatform.Darwin -> "Library/Java/JavaVirtualMachines"
-      })
+    }
 
     val jdks = userHome.resolve(relativePath)
     return eel.mapper.toNioPath(jdks)

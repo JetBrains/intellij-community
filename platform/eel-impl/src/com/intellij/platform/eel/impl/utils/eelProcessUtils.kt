@@ -71,7 +71,7 @@ suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
  * }
  * ```
  */
-suspend fun EelApiBase.where(exe: String): EelPath.Absolute? {
+suspend fun EelApiBase.where(exe: String): EelPath? {
   val tool = when (this) {
     is EelPosixApiBase -> "which"
     is EelWindowsApiBase -> "where.exe"
@@ -85,6 +85,6 @@ suspend fun EelApiBase.where(exe: String): EelPath.Absolute? {
     return null
   }
   else {
-    return fs.getPath(result.stdout.trim())
+    return fs.getPath(result.stdout.trim(), null)
   }
 }

@@ -351,7 +351,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       var mavenHomePath = mavenDistribution.getMavenHome();
       var effectiveMavenHome = StringUtil.notNullize(
-        Optional.ofNullable(eel.getMapper().getOriginalPath(mavenHomePath)).map(EelPath.Absolute::toString).orElse(mavenHomePath.toString())
+        Optional.ofNullable(eel.getMapper().getOriginalPath(mavenHomePath)).map(EelPath::toString).orElse(mavenHomePath.toString())
       );
 
       var mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());

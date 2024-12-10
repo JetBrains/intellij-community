@@ -69,7 +69,7 @@ class IjentWslNioFileSystemProvider(
     when (this) {
       is IjentNioPath -> this
       is IjentWslNioPath -> delegate.toIjentPath()
-      else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, IjentNioPath::resolve)
+      else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart -> nioPath.resolve(newPart.toString()) })
     }
 
   internal fun toOriginalPath(path: Path): Path = path.toOriginalPath()
@@ -178,7 +178,7 @@ class IjentWslNioFileSystemProvider(
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next().toIjentPath()
 
-            val originalPath = dir.resolve(sanitizeFileName(ijentPath.eelPath.fileName.toString()))
+            val originalPath = dir.resolve(sanitizeFileName(ijentPath.fileName.toString()))
 
             val cachedAttrs = ijentPath.get() as IjentNioPosixFileAttributes?
             val dosAttributes =
@@ -186,7 +186,7 @@ class IjentWslNioFileSystemProvider(
                 IjentNioPosixFileAttributesWithDosAdapter(
                   ijentPath.fileSystem.ijentFs.user as EelUserPosixInfo,
                   cachedAttrs,
-                  nameStartsWithDot = ijentPath.eelPath.fileName.startsWith("."),
+                  nameStartsWithDot = ijentPath.fileName.startsWith("."),
                 )
               else null
 

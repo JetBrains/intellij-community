@@ -2,36 +2,36 @@
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.path.EelPath.Absolute.OS
-import java.nio.file.InvalidPathException
-
-interface EelPathError {
-  val raw: String
-  val reason: String
-}
-
-class EelPathException(override val raw: String, override val reason: String) : RuntimeException("`$raw`: $reason"), EelPathError
+import com.intellij.platform.eel.path.EelPath.OS
 
 /**
- * This interface deliberately mimics API of [java.nio.file.Path].
+ * An interface for **absolute** paths on some environment.
+ *
+ * [EelPath] is immutable. Its instances may be interned, so you should make no assumptions about the identity of the path.
  *
  * On Unix, the first element of an absolute path is always '/'.
  * On Windows, the root may contain several '\'.
  *
- * It consists of all methods of nio.Path which don't require any I/O.
+ * All operations listed here do not require I/O.
  */
 sealed interface EelPath {
   companion object {
     @Throws(EelPathException::class)
     @JvmStatic
-    fun parse(raw: String, os: OS?): EelPath =
-      ArrayListEelAbsolutePath.parseOrNull(raw, os)
-      ?: Relative.parse(raw)
+    fun parse(raw: String, os: OS?): EelPath {
+      return ArrayListEelAbsolutePath.parseOrNull(raw, os) ?: throw EelPathException(raw, "Invalid absolute path")
+    }
+
+    @Throws(EelPathException::class)
+    @JvmStatic
+    fun build(parts: List<String>, os: OS?): EelPath {
+      return ArrayListEelAbsolutePath.build(parts, os)
+    }
   }
 
   val fileName: String
+
+  val root: EelPath
 
   /**
    * Returns the number of elements in the path.
@@ -67,7 +67,7 @@ sealed interface EelPath {
    * IjentAbsolutePath.parse("C:\\Users\\username", isWindows = true).getName(0) == "Users"
    * ```
    */
-  fun getName(index: Int): Relative
+  fun getName(index: Int): String
 
   /**
    * Return the parent path if it exists.
@@ -88,7 +88,7 @@ sealed interface EelPath {
    * IjentRelativePath.parse("a/b/cde", false).endsWith(IjentRelativePath.parse("b/c", false)) == false
    * ```
    */
-  fun endsWith(other: Relative): Boolean
+  fun endsWith(other: EelPath): Boolean
 
   /**
    * Concatenates two paths.
@@ -96,12 +96,26 @@ sealed interface EelPath {
    * ```kotlin
    * IjentRelativePath.parse("abc/..", false).resolve(IjentRelativePath.parse("def", false)) == IjentRelativePath.parse("abc/../def", false)
    * ```
-   *
-   * // TODO Wouldn't it be better to return different types for relative and absolute paths?
-   * It should fail in cases like Absolute("/").resolve(Relative("..")).
    */
   @Throws(EelPathException::class)
-  fun resolve(other: Relative): EelPath
+  fun resolve(other: String): EelPath
+
+
+  /**
+   * Resolves special path elements like `.` and `..` whenever it is possible.
+   *
+   * Does not perform any access to the file system.
+   *
+   * ```kotlin
+   * IjentRelativePath.parse("abc/./../def", false).normalize() == IjentRelativePath.parse("def", false)
+   * IjentRelativePath.parse("abc/../x/../../../def", false).normalize() == IjentRelativePath.parse("../../def", false)
+   * ```
+   */
+  fun normalize(): EelPath
+
+
+  /** See [java.nio.file.Path.startsWith] */
+  fun startsWith(other: EelPath): Boolean
 
   /**
    * ```kotlin
@@ -116,145 +130,18 @@ sealed interface EelPath {
   @Throws(EelPathException::class)
   fun getChild(name: String): EelPath
 
+  fun parts(): List<String>
+
+  fun toDebugString(): String
+
   override fun toString(): String
 
-  interface Relative : EelPath, Comparable<Relative> {
-    companion object {
-      @JvmStatic
-      @Throws(EelPathException::class)
-      fun parse(raw: String): Relative =
-        ArrayListEelRelativePath.parse(raw)
-
-      /**
-       * The parts of the path must not contain / or \.
-       */
-      @JvmStatic
-      @Throws(EelPathException::class)
-      fun build(vararg parts: String): Relative =
-        build(listOf(*parts))
-
-      /**
-       * The parts of the path must not contain / or \.
-       */
-      @JvmStatic
-      @Throws(EelPathException::class)
-      fun build(parts: List<String>): Relative =
-        ArrayListEelRelativePath.build(parts)
-
-      @JvmField
-      val EMPTY: Relative = ArrayListEelRelativePath.EMPTY
-    }
-
-    override val parent: Relative?
-
-    /** See [java.nio.file.Path.startsWith] */
-    fun startsWith(other: Relative): Boolean
-
-    @Throws(EelPathException::class)
-    override fun resolve(other: Relative): Relative
-
-    @Throws(EelPathException::class)
-    override fun getChild(name: String): Relative
-
-    override fun compareTo(other: Relative): Int
-
-    /**
-     * Resolves special path elements like `.` and `..` whenever it is possible.
-     *
-     * Does not perform any access to the file system.
-     *
-     * ```kotlin
-     * IjentRelativePath.parse("abc/./../def", false).normalize() == IjentRelativePath.parse("def", false)
-     * IjentRelativePath.parse("abc/../x/../../../def", false).normalize() == IjentRelativePath.parse("../../def", false)
-     * ```
-     */
-    fun normalize(): Relative
-  }
-
-  /**
-   * This interface deliberately mimics API of [java.nio.file.Path].
-   *
-   * On Unix, the first element of an absolute path is always '/'.
-   * On Windows, the root may contain several '\'.
-   *
-   * It consists of all methods of nio.Path which don't require any I/O.
-   */
-  interface Absolute : EelPath, Comparable<Absolute> {
-    companion object {
-      @JvmStatic
-      @Throws(EelPathException::class)
-      fun parse(raw: String, os: OS?): Absolute =
-        ArrayListEelAbsolutePath.parseOrNull(raw, os) ?: throw EelPathException(raw, "Invalid absolute path")
-
-      @JvmStatic
-      @Throws(EelPathException::class)
-      fun parse(os: OS?, raw: String, vararg otherRaw: String): Absolute {
-        var result: Absolute = parse(raw, os)
-        for (segment in otherRaw) {
-          val relativePath = Relative.parse(segment)
-          result = result.resolve(relativePath)
-        }
-        return result
-      }
-
-      @JvmStatic
-      @Throws(EelPathException::class)
-      fun build(vararg parts: String): Absolute =
-        build(listOf(*parts), null)
-
-      @JvmStatic
-      @Throws(EelPathException::class)
-      fun build(parts: List<String>, os: OS?): Absolute =
-        ArrayListEelAbsolutePath.build(parts, os)
-    }
-
-    enum class OS {
-      WINDOWS, UNIX
-    }
-
-    val os: OS
-
-    /** See [java.nio.file.Path.getRoot] */
-    val root: Absolute
-
-    /** See [java.nio.file.Path.getParent] */
-    override val parent: Absolute?
-
-    fun startsWith(other: Absolute): Boolean
-
-    /** See [java.nio.file.Path.normalize] */
-    @Throws(EelPathException::class)
-    fun normalize(): Absolute
-
-    /** See [java.nio.file.Path.resolve] */
-    @Throws(EelPathException::class)
-    override fun resolve(other: Relative): Absolute
-
-    /**
-     * See [java.nio.file.Path.relativize].
-     *
-     * ```kotlin
-     * IjentPathAbsolute.parse("C:\\foo\\bar\\baz", isWindows = true).relativize(IjentPathAbsolute.parse("C:\\foo\\oops", isWindows = true))
-     *   == IjentPathAbsolute.parse("..\..\oops", isWindows = true)
-     * ```
-     */
-    @Throws(EelPathException::class)
-    fun relativize(other: Absolute): Relative
-
-    @Throws(EelPathException::class)
-    override fun getChild(name: String): Absolute
-
-    fun scan(): Sequence<Absolute>
-
-    /** See [java.nio.file.Path.toString] */
-    override fun toString(): String
-
-    /** TODO Describe the difference with [toString] */
-    fun toDebugString(): String
+  enum class OS {
+    WINDOWS, UNIX
   }
 }
 
-operator fun EelPath.div(part: String): EelPath = resolve(EelPath.Relative.parse(part))
+operator fun EelPath.div(part: String): EelPath = resolve(part)
 
 val OS.pathSeparator: String
   get() = when (this) {
@@ -267,3 +154,11 @@ val EelPlatform.pathOs: OS
     is EelPlatform.Posix -> OS.UNIX
     is EelPlatform.Windows -> OS.WINDOWS
   }
+
+
+interface EelPathError {
+  val raw: String
+  val reason: String
+}
+
+class EelPathException(override val raw: String, override val reason: String) : RuntimeException("`$raw`: $reason"), EelPathError

@@ -20,15 +20,15 @@ object JdkInstallerEel {
   fun unpackJdkOnEel(
     eel: EelApi,
     downloadFile: Path,
-    targetDirEel: EelPath.Absolute,
+    targetDirEel: EelPath,
     packageRootPrefixRaw: String,
   ): Unit = runBlockingMaybeCancellable {
-    var downloadFileEelCopy: EelPath.Absolute? = eel.mapper.getOriginalPath(downloadFile)
+    var downloadFileEelCopy: EelPath? = eel.mapper.getOriginalPath(downloadFile)
 
-    val tempDirectory: EelPath.Absolute? =
+    val tempDirectory: EelPath? =
       if (downloadFileEelCopy == null) {
         // TODO Eel downloading API
-        val archiveName = EelPath.Relative.parse(downloadFile.name)
+        val archiveName = downloadFile.name
 
         downloadFileEelCopy = eel.fs
           .createTemporaryDirectory(EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().prefix("download-jdk-").build()).getOrThrow()
@@ -41,7 +41,7 @@ object JdkInstallerEel {
       else null
     try {
       val unpackDir = targetDirEel.parent!!
-        .resolve(EelPath.Relative.parse(".${targetDirEel.fileName}-downloading-${System.currentTimeMillis()}"))
+        .resolve(".${targetDirEel.fileName}-downloading-${System.currentTimeMillis()}")
       try {
         eel.archive.extract(downloadFileEelCopy, unpackDir)
         moveUnpackedJdkPrefixOnEel(
@@ -69,8 +69,8 @@ object JdkInstallerEel {
 
   private suspend fun moveUnpackedJdkPrefixOnEel(
     eel: EelApi,
-    unpackDir: EelPath.Absolute,
-    targetDir: EelPath.Absolute,
+    unpackDir: EelPath,
+    targetDir: EelPath,
     packageRootPrefixRaw: String,
   ) {
     val packageRootPrefix = packageRootPrefixRaw.removePrefix("./").trim('/')
@@ -78,7 +78,7 @@ object JdkInstallerEel {
       if (packageRootPrefix.isBlank())
         unpackDir
       else
-        unpackDir.resolve(EelPath.Relative.parse(packageRootPrefixRaw)).normalize()
+        unpackDir.resolve(packageRootPrefixRaw).normalize()
 
 
     if (!packageRootResolved.startsWith(unpackDir)) {

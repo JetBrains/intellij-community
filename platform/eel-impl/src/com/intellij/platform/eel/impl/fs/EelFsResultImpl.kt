@@ -19,7 +19,7 @@ object EelFsResultImpl {
   data class FullBytesReadOverflown(override val bytes: ByteArray) : EelFileSystemApi.FullReadResult.BytesOverflown
   data object Overflow : EelFileSystemApi.FullReadResult.Overflow
 
-  data class Other(override val where: EelPath.Absolute, override val message: String) :
+  data class Other(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.Other,
     EelFileSystemApi.FileWriterError.Other,
     EelFileSystemApi.ListDirectoryError.Other,
@@ -42,7 +42,7 @@ object EelFsResultImpl {
     EelOpenedFile.Writer.TruncateError.Other,
     EelFileSystemApi.FullReadError.Other
 
-  data class DoesNotExist(override val where: EelPath.Absolute, override val message: String) :
+  data class DoesNotExist(override val where: EelPath, override val message: String) :
     EelFileSystemApi.ChangeAttributesError.SourceDoesNotExist,
     EelFileSystemApi.FileReaderError.DoesNotExist,
     EelFileSystemApi.FileWriterError.DoesNotExist,
@@ -58,13 +58,13 @@ object EelFsResultImpl {
     EelFileSystemApi.MoveError.SourceDoesNotExist,
     EelFileSystemPosixApi.CreateSymbolicLinkError.DoesNotExist
 
-  data class AlreadyExists(override val where: EelPath.Absolute, override val message: String) :
+  data class AlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.AlreadyExists,
     EelFileSystemApi.FileWriterError.AlreadyExists,
     EelFileSystemPosixApi.CreateDirectoryError.FileAlreadyExists,
     EelFileSystemPosixApi.CreateSymbolicLinkError.FileAlreadyExists
 
-  class PermissionDenied(override val where: EelPath.Absolute, override val message: String) :
+  class PermissionDenied(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.PermissionDenied,
     EelFileSystemApi.ChangeAttributesError.PermissionDenied,
     EelFileSystemApi.CreateTemporaryDirectoryError.PermissionDenied,
@@ -81,7 +81,7 @@ object EelFsResultImpl {
     EelFileSystemPosixApi.CreateSymbolicLinkError.PermissionDenied,
     EelFileSystemApi.FullReadError.PermissionDenied
 
-  data class NotDirectory(override val where: EelPath.Absolute, override val message: String) :
+  data class NotDirectory(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotDirectory,
     EelFileSystemApi.CreateTemporaryDirectoryError.NotDirectory,
     EelFileSystemApi.FileReaderError.NotDirectory,
@@ -91,13 +91,13 @@ object EelFsResultImpl {
     EelFileSystemApi.StatError.NotDirectory,
     EelFileSystemPosixApi.CreateSymbolicLinkError.NotDirectory
 
-  data class NameTooLong(override val where: EelPath.Absolute, override val message: String) :
+  data class NameTooLong(override val where: EelPath, override val message: String) :
     EelFileSystemApi.ChangeAttributesError.NameTooLong,
     EelFileSystemApi.DiskInfoError.NameTooLong,
     EelFileSystemApi.CopyError.NameTooLong,
     EelFileSystemApi.MoveError.NameTooLong
 
-  data class NotFile(override val where: EelPath.Absolute, override val message: String) :
+  data class NotFile(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotFile,
     EelFileSystemApi.FileReaderError.NotFile,
     EelFileSystemApi.FileWriterError.NotFile,
@@ -106,42 +106,42 @@ object EelFsResultImpl {
     EelFileSystemApi.MoveError.TargetIsDirectory,
     EelFileSystemApi.FullReadError.NotFile
 
-  data class InvalidValue(override val where: EelPath.Absolute, override val message: String) :
+  data class InvalidValue(override val where: EelPath, override val message: String) :
     EelOpenedFile.Reader.ReadError.InvalidValue,
     EelOpenedFile.Writer.WriteError.InvalidValue,
     EelOpenedFile.SeekError.InvalidValue
 
-  data class UnknownFile(override val where: EelPath.Absolute, override val message: String) :
+  data class UnknownFile(override val where: EelPath, override val message: String) :
     EelOpenedFile.Reader.ReadError.UnknownFile,
     EelOpenedFile.Writer.WriteError.UnknownFile,
     EelOpenedFile.Writer.TruncateError.UnknownFile,
     EelOpenedFile.SeekError.UnknownFile
 
-  data class TargetAlreadyExists(override val where: EelPath.Absolute, override val message: String) :
+  data class TargetAlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemApi.MoveError.TargetAlreadyExists,
     EelFileSystemApi.CopyError.TargetAlreadyExists
 
-  data class DirAlreadyExists(override val where: EelPath.Absolute, override val message: String) :
+  data class DirAlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemPosixApi.CreateDirectoryError.DirAlreadyExists
 
-  data class DirNotEmpty(override val where: EelPath.Absolute, override val message: String) :
+  data class DirNotEmpty(override val where: EelPath, override val message: String) :
     EelFileSystemApi.DeleteError.DirNotEmpty,
     EelFileSystemApi.CopyError.TargetDirNotEmpty
 
-  data class UnresolvedLink(override val where: EelPath.Absolute, override val message: String) :
+  data class UnresolvedLink(override val where: EelPath, override val message: String) :
     EelFileSystemApi.DeleteError.UnresolvedLink
 
-  data class NotEnoughSpace(override val where: EelPath.Absolute, override val message: String) :
+  data class NotEnoughSpace(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CopyError.NotEnoughSpace
 
-  data class ReadOnlyFileSystem(override val where: EelPath.Absolute, override val message: String) :
+  data class ReadOnlyFileSystem(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CopyError.ReadOnlyFileSystem,
     EelFileSystemApi.MoveError.ReadOnlyFileSystem,
     EelOpenedFile.Writer.TruncateError.ReadOnlyFs
 
-  data class NegativeOffset(override val where: EelPath.Absolute, override val message: String) :
+  data class NegativeOffset(override val where: EelPath, override val message: String) :
     EelOpenedFile.Writer.TruncateError.NegativeOffset
 
-  data class OffsetTooBig(override val where: EelPath.Absolute, override val message: String) :
+  data class OffsetTooBig(override val where: EelPath, override val message: String) :
     EelOpenedFile.Writer.TruncateError.OffsetTooBig
 }

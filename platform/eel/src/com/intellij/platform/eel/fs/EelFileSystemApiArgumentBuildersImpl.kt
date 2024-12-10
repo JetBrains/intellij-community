@@ -5,7 +5,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.*
 import com.intellij.platform.eel.path.EelPath
 
 internal data class WriteOptionsImpl(
-  override val path: EelPath.Absolute,
+  override val path: EelPath,
   override var append: Boolean = false,
   override var truncateExisting: Boolean = false,
   override var creationMode: FileWriterCreationMode = FileWriterCreationMode.ONLY_OPEN_EXISTING,
@@ -22,8 +22,8 @@ internal data class WriteOptionsImpl(
 }
 
 internal data class CopyOptionsImpl(
-  override val source: EelPath.Absolute,
-  override val target: EelPath.Absolute,
+  override val source: EelPath,
+  override val target: EelPath,
   override var copyRecursively: Boolean = false,
   override var replaceExisting: Boolean = false,
   override var preserveAttributes: Boolean = false,
@@ -67,7 +67,7 @@ internal data class CreateTemporaryDirectoryOptionsImpl(
   override var prefix: String = "tmp",
   override var suffix: String = "",
   override var deleteOnExit: Boolean = false,
-  override var parentDirectory: EelPath.Absolute? = null,
+  override var parentDirectory: EelPath? = null,
 ) : CreateTemporaryDirectoryOptions, CreateTemporaryDirectoryOptions.Builder {
   override fun prefix(prefix: String): CreateTemporaryDirectoryOptions.Builder = apply {
     this.prefix = prefix
@@ -81,7 +81,7 @@ internal data class CreateTemporaryDirectoryOptionsImpl(
     this.deleteOnExit = deleteOnExit
   }
 
-  override fun parentDirectory(parentDirectory: EelPath.Absolute?): CreateTemporaryDirectoryOptions.Builder = apply {
+  override fun parentDirectory(parentDirectory: EelPath?): CreateTemporaryDirectoryOptions.Builder = apply {
     this.parentDirectory = parentDirectory
   }
 

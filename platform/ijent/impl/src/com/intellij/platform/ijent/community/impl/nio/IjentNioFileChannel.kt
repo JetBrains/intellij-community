@@ -27,7 +27,7 @@ internal class IjentNioFileChannel private constructor(
 ) : FileChannel() {
   companion object {
     @JvmStatic
-    internal suspend fun createReading(nioFs: IjentNioFileSystem, path: EelPath.Absolute): IjentNioFileChannel =
+    internal suspend fun createReading(nioFs: IjentNioFileSystem, path: EelPath): IjentNioFileChannel =
       IjentNioFileChannel(nioFs.ijentFs.openForReading(path).getOrThrowFileSystemException())
 
     @JvmStatic

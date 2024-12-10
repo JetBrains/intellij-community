@@ -51,11 +51,20 @@ interface EelPosixFileInfo : EelFileInfo {
   sealed interface Type : EelFileInfo.Type {
     sealed interface Symlink : Type {
       interface Unresolved : Symlink
-      interface Resolved : Symlink {
-        val result: EelPath.Absolute
+
+      sealed interface Resolved : Symlink {
+        interface Absolute : Resolved {
+          val result: EelPath
+        }
+
+        interface Relative : Resolved {
+          val result: List<String>
+        }
       }
     }
   }
+
+
 
   interface Permissions : EelFileInfo.Permissions {
     /** TODO */

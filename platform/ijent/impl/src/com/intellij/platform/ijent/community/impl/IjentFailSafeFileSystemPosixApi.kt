@@ -117,14 +117,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   }
 
   override suspend fun listDirectory(
-    path: EelPath.Absolute,
+    path: EelPath,
   ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
     holder.withDelegateRetrying {
       listDirectory(path)
     }
 
   override suspend fun createDirectory(
-    path: EelPath.Absolute,
+    path: EelPath,
     attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
   ): EelResult<Unit, EelFileSystemPosixApi.CreateDirectoryError> =
     holder.withDelegateRetrying {
@@ -132,7 +132,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun listDirectoryWithAttrs(
-    path: EelPath.Absolute,
+    path: EelPath,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
   ): EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError> {
     return holder.withDelegateRetrying {
@@ -141,14 +141,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   }
 
   override suspend fun canonicalize(
-    path: EelPath.Absolute,
-  ): EelResult<EelPath.Absolute, EelFileSystemApi.CanonicalizeError> =
+    path: EelPath,
+  ): EelResult<EelPath, EelFileSystemApi.CanonicalizeError> =
     holder.withDelegateRetrying {
       canonicalize(path)
     }
 
   override suspend fun stat(
-    path: EelPath.Absolute,
+    path: EelPath,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
   ): EelResult<EelPosixFileInfo, EelFileSystemApi.StatError> =
     holder.withDelegateRetrying {
@@ -156,21 +156,21 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun sameFile(
-    source: EelPath.Absolute,
-    target: EelPath.Absolute,
+    source: EelPath,
+    target: EelPath,
   ): EelResult<Boolean, EelFileSystemApi.SameFileError> =
     holder.withDelegateRetrying {
       sameFile(source, target)
     }
 
   override suspend fun openForReading(
-    path: EelPath.Absolute,
+    path: EelPath,
   ): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
     holder.withDelegateRetrying {
       openForReading(path)
     }
 
-  override suspend fun readFully(path: EelPath.Absolute, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> = holder.withDelegateRetrying {
+  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> = holder.withDelegateRetrying {
     readFully(path, limit, overflowPolicy)
   }
 
@@ -188,7 +188,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       openForReadingAndWriting(options)
     }
 
-  override suspend fun delete(path: EelPath.Absolute, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
+  override suspend fun delete(path: EelPath, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
     holder.withDelegateRetrying {
       delete(path, removeContent)
     }
@@ -199,8 +199,8 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun move(
-    source: EelPath.Absolute,
-    target: EelPath.Absolute,
+    source: EelPath,
+    target: EelPath,
     replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove,
     followLinks: Boolean,
   ): EelResult<Unit, EelFileSystemApi.MoveError> =
@@ -209,14 +209,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun changeAttributes(
-    path: EelPath.Absolute,
+    path: EelPath,
     options: EelFileSystemApi.ChangeAttributesOptions,
   ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
     holder.withDelegateRetrying {
       changeAttributes(path, options)
     }
 
-  override suspend fun getDiskInfo(path: EelPath.Absolute): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
+  override suspend fun getDiskInfo(path: EelPath): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
     return holder.withDelegateRetrying {
       getDiskInfo(path)
     }
@@ -224,7 +224,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun createSymbolicLink(
     target: EelPath,
-    linkPath: EelPath.Absolute,
+    linkPath: EelPath,
   ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
     holder.withDelegateRetrying {
       createSymbolicLink(target, linkPath)
@@ -232,7 +232,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun createTemporaryDirectory(
     options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
-  ): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> =
+  ): EelResult<EelPath, EelFileSystemApi.CreateTemporaryDirectoryError> =
     holder.withDelegateRetrying {
       createTemporaryDirectory(options)
     }
