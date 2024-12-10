@@ -5,19 +5,14 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XBreakpointManager
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.serialization.Serializable
-import org.jetbrains.ide.mcp.AbstractMcpTool
-import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
-import kotlin.reflect.KClass
 
 @Serializable
 data class ToggleBreakpointArgs(val filePathInProject: String, val line: Int)

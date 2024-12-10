@@ -30,7 +30,7 @@
 
     <extensionPoints>
         <extensionPoint name="mcpTool"
-                        interface="org.jetbrains.ide.mcp.McpTool"
+                        interface="org.jetbrains.mcpserverplugin.McpTool"
                         dynamic="true"/>
     </extensionPoints>
 

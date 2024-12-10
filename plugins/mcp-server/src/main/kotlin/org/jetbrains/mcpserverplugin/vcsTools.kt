@@ -1,15 +1,9 @@
 package org.jetbrains.mcpserverplugin
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import org.jetbrains.ide.mcp.AbstractMcpTool
-import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
-import kotlin.reflect.KClass
 
 class GetVcsStatusTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_project_vcs_status"

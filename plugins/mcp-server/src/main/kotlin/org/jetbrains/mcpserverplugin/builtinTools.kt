@@ -14,14 +14,11 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.createParentDirectories
 import kotlinx.serialization.Serializable
-import org.jetbrains.ide.mcp.AbstractMcpTool
-import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import kotlin.io.path.Path
 import kotlin.io.path.createFile
 import kotlin.io.path.writeText
-import kotlin.reflect.KClass
 
 // tools
 

@@ -3,12 +3,10 @@ package org.jetbrains.mcpserverplugin.terminal
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.serialization.Serializable
-import org.jetbrains.ide.mcp.AbstractMcpTool
-import org.jetbrains.ide.mcp.McpTool
+import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
@@ -16,7 +14,6 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalView
 import javax.swing.JComponent
 import java.lang.Thread
-import kotlin.reflect.KClass
 
 class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_terminal_text"
