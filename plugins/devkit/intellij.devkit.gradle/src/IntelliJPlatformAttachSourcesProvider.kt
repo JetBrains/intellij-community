@@ -108,7 +108,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param coordinates The Maven coordinates of the IntelliJ Platform whose sources need to be attached.
    */
   private fun createAttachLocalPlatformSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
-    resolveIntelliJPlatformAction(psiFile, coordinates.version.substringBefore('+'))
+    resolveIntelliJPlatformAction(psiFile, coordinates.version.substringAfter('-').substringBefore('+'))
 
   /**
    * Creates an action to attach sources of bundled plugins for the IntelliJ Platform.
@@ -118,7 +118,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    */
   private fun createAttachBundledPluginSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
     createAttachSourcesArchiveAction(psiFile, ApiSourceArchive.entries.firstOrNull { it.id == coordinates.artifactId })
-    ?: resolveIntelliJPlatformAction(psiFile, coordinates.version.substringBefore('+'))
+    ?: resolveIntelliJPlatformAction(psiFile, coordinates.version.substringAfter('-').substringBefore('+'))
 
   /**
    * Attach the provided sources archive.
