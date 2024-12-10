@@ -6,6 +6,7 @@ package com.jetbrains.python.codeInsight.stdlib
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.tailOrEmpty
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.*
@@ -42,28 +43,38 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
     if (func.name != Dataclasses.DUNDER_POST_INIT) return null
     if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null) {
-      val cls = func.containingClass
-      val name = param.name
+      val parameters = func.getParameters(context).tailOrEmpty()
+      val parameterIndex = parameters.indexOfFirst { it.parameter == param }
+      if (parameterIndex == -1) return null
 
-      if (cls != null && name != null && parseStdDataclassParameters(cls, context)?.init == true) {
-        cls
-          .findClassAttribute(name, false, context) // `true` is not used here because ancestor should be a dataclass
-          ?.let { return Ref.create(getTypeForParameter(cls, it, PyDataclassParameters.PredefinedType.STD, context)) }
-
-        for (ancestor in cls.getAncestorClasses(context)) {
-          if (parseStdDataclassParameters(ancestor, context) != null) {
-            ancestor
-              .findClassAttribute(name, false, context)
-              ?.let { return Ref.create(getTypeForParameter(ancestor, it, PyDataclassParameters.PredefinedType.STD, context)) }
-          }
-        }
-      }
+      val cls = func.containingClass ?: return null
+      return getInitVarTypes(cls, context)
+        .drop(parameterIndex)
+        .map { Ref.create(it) }
+        .firstOrNull()
     }
 
     return null
   }
 
   companion object {
+    fun getInitVarTypes(cls: PyClass, context: TypeEvalContext): Sequence<PyType?> {
+      return if (parseStdDataclassParameters(cls, context)?.init == true) {
+        cls.getAncestorClasses(context)
+          .asReversed()
+          .asSequence()
+          .filter { parseDataclassParameters(it, context) != null }
+          .plus(cls)
+          .flatMap { it.classAttributes }
+          .map { context.getType(it) }
+          .filterIsInstance<PyCollectionType>()
+          .filter { it.classQName == Dataclasses.DATACLASSES_INITVAR }
+          .map { it.elementTypes.firstOrNull() }
+      }
+      else {
+        emptySequence()
+      }
+    }
 
     private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
       val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null

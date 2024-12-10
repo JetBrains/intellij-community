@@ -1029,6 +1029,52 @@ public class Py3TypeTest extends PyTestCase {
                      expr = d""");
   }
 
+  // PY-78006
+  public void testDataclassPostInitParameters() {
+    doTest("tuple[A1, A4, A2, A3, A5, A6]",
+           """
+             from dataclasses import dataclass, InitVar
+             
+             class A1:
+                 pass
+             class A2:
+                 pass
+             class A3:
+                 pass
+             class A4:
+                 pass
+             class A5:
+                 pass
+             class A6:
+                 pass
+             
+             @dataclass
+             class BaseDC:
+                 b1: str
+                 a1: InitVar[A1]
+             
+             @dataclass
+             class DC1(BaseDC):
+                 a2: InitVar[A2]
+                 b2: int
+                 a3: InitVar[A3]
+             
+             @dataclass
+             class DC2(BaseDC):
+                 a4: InitVar[A4]
+                 b3 = 2
+             
+             @dataclass
+             class DC(DC1, DC2):
+                 b4: bool
+                 a5: InitVar[A5]
+                 a6: InitVar[A6]
+             
+                 def __post_init__(self, p1, p2, p3, p4, p5, p6):
+                     expr = (p1, p2, p3, p4, p5, p6)
+             """);
+  }
+
   // PY-27398
   public void testDataclassPostInitParameterNoInit() {
     doTest("Any",
@@ -1121,7 +1167,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testMixedDataclassPostInitInheritedParameter() {
-    doTest("Any",
+    doTest("str",
            """
              from dataclasses import dataclass, InitVar
 
