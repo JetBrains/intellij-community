@@ -274,7 +274,8 @@ open class ProjectRootManagerComponent(
 
     val store = project.stateStore
     val projectFilePath = store.projectFilePath
-    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
+    val directoryStorePath = store.directoryStorePath
+    if (directoryStorePath == null || !projectFilePath.startsWith(directoryStorePath)) {
       flatPaths += projectFilePath.invariantSeparatorsPathString
       flatPaths += store.workspacePath.invariantSeparatorsPathString
       WATCH_ROOTS_LOG.trace { "  project store: ${flatPaths}" }
