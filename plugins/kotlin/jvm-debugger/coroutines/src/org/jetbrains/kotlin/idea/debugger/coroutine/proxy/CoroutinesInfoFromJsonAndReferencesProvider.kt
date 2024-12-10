@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 import com.google.gson.Gson
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.sun.jdi.*
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import kotlin.reflect.typeOf
 
 class CoroutinesInfoFromJsonAndReferencesProvider(
   private val executionContext: DefaultExecutionContext,
@@ -110,11 +112,6 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
         val state: String?
     )
 
-    private inline fun <reified T> ArrayReference.toTypedList(): List<T> = values.map {
-        if (it != null && it !is T) error("Value has type ${it::class.java}, but ${T::class.java} was expected")
-        it
-    }
-
     companion object {
         fun instance(executionContext: DefaultExecutionContext, debugProbesImpl: DebugProbesImpl): CoroutinesInfoFromJsonAndReferencesProvider? {
             if (debugProbesImpl.canDumpCoroutinesInfoAsJsonAndReferences()) {
@@ -125,4 +122,16 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
 
         val log by logger
     }
+}
+
+private inline fun <reified T> ArrayReference.toTypedList() = values.toTypedList<T>()
+
+@VisibleForTesting
+inline fun <reified T> List<Any?>.toTypedList(): List<T> = map {
+    if (it == null) {
+        require(typeOf<T>().isMarkedNullable) { "Value should not be null" }
+        return@map null as T
+    }
+    require(it is T) { "Value has type ${it::class.java}, but ${T::class.java} was expected" }
+    it
 }
