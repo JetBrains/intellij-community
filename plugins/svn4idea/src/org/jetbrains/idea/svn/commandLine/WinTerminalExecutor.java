@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessWrapper;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,8 +84,8 @@ public class WinTerminalExecutor extends TerminalExecutor {
   protected Process createProcess() throws ExecutionException {
     checkRedirectFile();
 
-    List<@NonNls String> parameters = escapeArguments(buildParameters());
-    parameters.add(0, ExecUtil.getWindowsShellName());
+    List<String> parameters = escapeArguments(buildParameters());
+    parameters.add(0, CommandLineUtil.getWinShellName());
     parameters.add(1, "/c");
     parameters.add(">>");
     //noinspection ConstantConditions

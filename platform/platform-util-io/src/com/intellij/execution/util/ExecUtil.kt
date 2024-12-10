@@ -25,7 +25,6 @@ import java.io.*
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.Throws
 import kotlin.io.path.pathString
 
 object ExecUtil {
@@ -50,8 +49,9 @@ object ExecUtil {
     get() = "/usr/bin/open"
 
   @JvmStatic
+  @Suppress("unused")
   val windowsShellName: String
-    @Deprecated("Inline this property")
+    @Deprecated("Inline this property", level = DeprecationLevel.ERROR)
     get() = CommandLineUtil.getWinShellName()
 
   @ApiStatus.Internal
@@ -157,9 +157,6 @@ object ExecUtil {
       return commandLine
     }
 
-    val command = mutableListOf(commandLine.exePath)
-    command += commandLine.parametersList.list
-
     val sudoCommandLine = SudoCommandProvider.getInstance().sudoCommand(commandLine, prompt)
                           ?: throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
 
@@ -172,21 +169,6 @@ object ExecUtil {
   }
 
   @ApiStatus.Internal
-  fun envCommand(commandLine: GeneralCommandLine): List<String> =
-    when (val args = envCommandArgs(commandLine)) {
-      emptyList<String>() -> emptyList()
-      else -> listOf("env") + args
-    }
-
-  internal fun envCommandArgs(commandLine: GeneralCommandLine): List<String> =
-    // sudo doesn't pass parent process environment for security reasons,
-    // for the same reasons we pass only explicitly configured env variables
-    when (val env = commandLine.environment) {
-      emptyMap<String, String>() -> emptyList()
-      else -> env.map { entry -> "${entry.key}=${entry.value}" }
-    }
-
-  @ApiStatus.Internal
   @JvmStatic
   @Throws(IOException::class, ExecutionException::class)
   fun sudoAndGetOutput(commandLine: GeneralCommandLine, prompt: @Nls String): ProcessOutput =
@@ -197,10 +179,8 @@ object ExecUtil {
   @ApiStatus.Internal
   @Deprecated(
     "It is an oversimplified quoting. Prefer CommandLineUtil.posixQuote instead.",
-    ReplaceWith(
-      "CommandLineUtil.posixQuote(arg)",
-      "com.intellij.execution.CommandLineUtil.posixQuote",
-    )
+    ReplaceWith("CommandLineUtil.posixQuote(arg)", "com.intellij.execution.CommandLineUtil.posixQuote"),
+    level = DeprecationLevel.ERROR
   )
   @JvmStatic
   fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"
@@ -249,10 +229,9 @@ object ExecUtil {
   }
 
   /**
-   * Wraps the commandline process with the OS specific utility
-   * to mark the process to run with low priority.
+   * Wraps the commandline process with the OS-specific utility to mark the process to run with low priority.
    *
-   * NOTE. Windows implementation does not return the original process exit code!
+   * NOTE: Windows implementation does not return the original process exit code!
    */
   @ApiStatus.Internal
   @JvmStatic
@@ -283,8 +262,8 @@ object ExecUtil {
     }
   }
 
-  @JvmStatic
   @ApiStatus.Internal
+  @JvmStatic
   fun EelExecApi.startProcessBlockingUsingEel(builder: ProcessBuilder, pty: LocalPtyOptions?): Process {
     val args = builder.command()
     val exe = args.first()
