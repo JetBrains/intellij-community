@@ -39,10 +39,7 @@ import com.intellij.util.*;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -282,10 +279,19 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     );
   }
 
+  /**
+   * @deprecated use {@link #getStubDescriptor()} instead
+   */
+  @Deprecated
   public @Nullable IStubFileElementType<?> getElementTypeForStubBuilder() {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
     IFileElementType type = definition == null ? null : definition.getFileNodeType();
     return type instanceof IStubFileElementType ? (IStubFileElementType<?>)type : null;
+  }
+
+  @ApiStatus.Experimental
+  public @Nullable LanguageStubDescriptor getStubDescriptor() {
+    return StubElementRegistryService.getInstance().getStubDescriptor(getLanguage());
   }
 
   protected @NotNull FileElement createFileElement(CharSequence docText) {
@@ -670,8 +676,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement();
     StubElement<?> stubElement = result.first != null ? result.first.getRoot() : null;
     if (stubElement != null && !stubClass.isAssignableFrom(stubElement.getClass())) {
-      IStubFileElementType<?> elementType = getElementTypeForStubBuilder();
-      String elementTypeName = elementType != null ? elementType.getExternalId() : null;
+      LanguageStubDescriptor descriptor = getStubDescriptor();
+      String elementTypeName = descriptor != null ? descriptor.getFileElementSerializer().getExternalId() : null;
       Logger.getInstance(PsiFileImpl.class).error("stub: " + stubElement.getClass().getName() + "; file: " + elementTypeName);
       stubElement = null;
     }
@@ -721,7 +727,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       return Pair.create(deref, treeElement);
     }
 
-    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getElementTypeForStubBuilder() == null) {
+    if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getStubDescriptor() == null) {
       return Pair.empty();
     }
 
@@ -730,7 +736,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return Pair.empty();
     FileViewProvider viewProvider = getViewProvider();
-    List<Pair<IStubFileElementType<?>, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
+    List<Pair<LanguageStubDescriptor, PsiFile>> roots = StubTreeBuilder.getStubbedRootDescriptors(viewProvider);
 
     try {
       synchronized (myPsiLock) {
@@ -748,7 +754,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         PsiFileStub<?>[] stubRoots = baseRoot.getStubRoots();
         if (stubRoots.length != roots.size()) {
           com.intellij.util.Function<PsiFileStub<?>, String> stubToString =
-            stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getType().getLanguage() + "}";
+            stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getFileElementType().getLanguage() + "}";
           LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
                     StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
           rebuildStub();
@@ -1057,8 +1063,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
         if (tree == null) {
           assertReadAccessAllowed();
-          IStubFileElementType<?> contentElementType = getElementTypeForStubBuilder();
-          if (contentElementType == null) {
+          LanguageStubDescriptor stubDescriptor = getStubDescriptor();
+          if (stubDescriptor == null) {
             VirtualFile vFile = getVirtualFile();
             String message = "ContentElementType: " + getContentElementType() +
                              "; file: " + this + (vFile.isValid() ? "" : " (" + vFile + " invalid)") +
@@ -1070,9 +1076,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
             throw new AssertionError(message);
           }
 
-          StubElement<?> currentStubTree = contentElementType.getBuilder().buildStubTree(this);
+          StubElement<?> currentStubTree = stubDescriptor.getStubDefinition().getBuilder().buildStubTree(this);
           if (currentStubTree == null) {
-            throw new AssertionError("Stub tree wasn't built for " + contentElementType + "; file: " + this);
+            throw new AssertionError("Stub tree wasn't built for " + stubDescriptor + "; file: " + this);
           }
 
           tree = new StubTree((PsiFileStub<?>)currentStubTree);

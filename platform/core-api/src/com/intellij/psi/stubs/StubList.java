@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
@@ -41,8 +41,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     myJoinedChildrenList.add(0); // indices in this list should be non-zero
   }
 
-  IStubElementType<?, ?> getStubType(int id) {
-    return (IStubElementType<?, ?>)IElementType.find(getStubTypeIndex(id));
+  @NotNull IElementType getStubElementType(int id) {
+    return IElementType.find(getStubTypeIndex(id));
   }
 
   short getStubTypeIndex(int id) {
@@ -65,7 +65,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     return myStubData.get(childrenCountIndex(id));
   }
 
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
+  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     int stubId = size();
     stub.id = stubId;
 
@@ -168,7 +168,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   @Nullable
-  <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(int id, @NotNull IStubElementType<S, P> elementType) {
+  <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(int id, @NotNull IElementType elementType) {
     int count = getChildrenCount(id);
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
@@ -178,7 +178,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  private @Nullable <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
+  private @Nullable <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IElementType elementType,
                                                                                            IntUnaryOperator idList,
                                                                                            int start, int end) {
     for (int i = start; i < end; ++i) {
@@ -318,7 +318,7 @@ final class MaterialStubList extends StubList {
   }
 
   @Override
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
+  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     super.addStub(stub, parent, type);
     myPlainList.add(stub);
   }

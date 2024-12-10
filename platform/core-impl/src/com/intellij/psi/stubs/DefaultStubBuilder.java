@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -70,21 +70,23 @@ public class DefaultStubBuilder implements StubBuilder {
     protected @Nullable StubElement createStub(StubElement parentStub, ASTNode node) {
       IElementType nodeType = node.getElementType();
 
-      if (nodeType instanceof IStubElementType) {
-        IStubElementType type = (IStubElementType)nodeType;
-
-        if (type.shouldCreateStub(node)) {
-          PsiElement element = node.getPsi();
-          if (!(element instanceof StubBasedPsiElement)) {
-            LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element + ", language: #" + type.getLanguage());
-          }
-          @SuppressWarnings("unchecked") StubElement stub = type.createStub(element, parentStub);
-          //noinspection ConstantConditions
-          LOG.assertTrue(stub != null, element);
-          return stub;
-        }
+      StubElementFactory factory = StubElementRegistryService.getInstance().getStubFactory(nodeType);
+      if (factory == null) {
+        return null;
       }
-      return null;
+
+      if (!factory.shouldCreateStub(node)) {
+        return null;
+      }
+
+      PsiElement element = node.getPsi();
+      if (!(element instanceof StubBasedPsiElement)) {
+        LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + nodeType + ", PSI: " + element + ", language: #" + nodeType.getLanguage());
+      }
+      @SuppressWarnings("unchecked")
+      StubElement stub = factory.createStub(element, parentStub);
+      LOG.assertTrue(stub != null, element);
+      return stub;
     }
 
     private void pushChildren(ASTNode node, boolean hasStub, StubElement stub) {

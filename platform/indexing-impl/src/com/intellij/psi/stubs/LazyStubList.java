@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -34,7 +34,7 @@ final class LazyStubList extends StubList {
   }
 
   @Override
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
+  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     // stub is lazily created, so we already know all structure, so do nothing
   }
 
@@ -87,7 +87,12 @@ final class LazyStubList extends StubList {
 
     try {
       StubBase<?> parent = get(data.getParentIndex(index));
-      StubBase<?> stub = data.deserializeStub(index, parent, getStubType(index));
+      IElementType elementType = getStubElementType(index);
+      ObjectStubSerializer<?, Stub> serializer = StubElementRegistryService.getInstance().getStubSerializer(elementType);
+      if (serializer == null) {
+          throw new IllegalStateException("Stub serializer is null for the element type: " + elementType);
+      }
+      StubBase<?> stub = data.deserializeStub(index, parent, serializer, elementType);
       stub.id = index;
       return stub;
     }
@@ -132,9 +137,14 @@ final class LazyStubData {
     return myParentsAndStarts.get(index * 2 + 1);
   }
 
-  StubBase<?> deserializeStub(int index, StubBase<?> parent, IStubElementType<?, ?> type) throws IOException {
+  @NotNull StubBase<?> deserializeStub(
+    int index,
+    @Nullable StubBase<?> parent,
+    @NotNull ObjectStubSerializer<?, ? super Stub> serializer,
+    @NotNull IElementType type
+  ) throws IOException {
     StubInputStream stream = new StubInputStream(stubBytes(index), myStorage);
-    StubBase<?> stub = (StubBase<?>)type.deserialize(stream, parent);
+    StubBase<?> stub = (StubBase<?>)serializer.deserialize(stream, parent);
     int available = stream.available();
     if (available > 0) {
       if (available != 1) {
@@ -154,7 +164,7 @@ final class LazyStubData {
     return new ByteArrayInputStream(mySerializedStubs, start - 1, end - start);
   }
 
-  private static @NotNull String getSerializeDeserializerMismatchMessage(@NotNull IStubElementType<?, ?> type) {
+  private static @NotNull String getSerializeDeserializerMismatchMessage(@NotNull IElementType type) {
     return "Stub serializer/deserialize mismatch for StubElementType: " +
            "name = " + type.getDebugName() +
            ", language = " + type.getLanguage();

@@ -1,18 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface StubElement<T extends PsiElement> extends Stub {
+  /**
+   * @deprecated Use {@link #getElementType()} instead
+   */
+  @Deprecated
   @Override
   IStubElementType<?, ?> getStubType();
+
+  @ApiStatus.Experimental
+  IElementType getElementType();
+
   @Override
   StubElement<?> getParentStub();
 
@@ -22,8 +31,22 @@ public interface StubElement<T extends PsiElement> extends Stub {
   @NotNull
   List<StubElement<?>> getChildrenStubs();
 
+  /**
+   * @deprecated Use {@link #findChildStubByElementType} instead
+   */
+  @Deprecated
   @Nullable
   <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(@NotNull IStubElementType<S, P> elementType);
+
+  @ApiStatus.Experimental
+  default @Nullable StubElement<? extends PsiElement> findChildStubByElementType(@NotNull IElementType elementType) {
+    if (elementType instanceof IStubElementType) {
+      return findChildStubByType((IStubElementType<StubElement<PsiElement>, PsiElement>)elementType);
+    }
+    else {
+      return null;
+    }
+  }
 
   T getPsi();
 

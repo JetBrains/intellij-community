@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -238,6 +239,28 @@ public class IElementType {
       }
     }
     return matches.toArray(new IElementType[0]);
+  }
+
+  /**
+   * todo IJPL-562 mark experimental?
+   *
+   * Map all registered token types that match the specified predicate.
+   *
+   * @param p the predicate which should be matched by the element types.
+   * @return the list of matching element types.
+   */
+  @ApiStatus.Internal
+  public static <R> @NotNull List<@NotNull R> mapNotNull(@NotNull Function<IElementType, ? extends R> p) {
+    List<R> matches = new ArrayList<>();
+    for (IElementType value : ourRegistry) {
+      if (value != null) {
+        R result = p.apply(value);
+        if (result != null) {
+          matches.add(result);
+        }
+      }
+    }
+    return matches;
   }
 
   private void checkSizeDoesNotExceedLimit() {

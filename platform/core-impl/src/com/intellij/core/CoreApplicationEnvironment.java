@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.DynamicBundle;
@@ -44,7 +44,9 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
+import com.intellij.psi.stubs.CoreStubElementRegistryServiceImpl;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
+import com.intellij.psi.stubs.StubElementRegistryService;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.graph.GraphAlgorithms;
@@ -111,6 +113,7 @@ public class CoreApplicationEnvironment {
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
+    registerApplicationService(StubElementRegistryService.class, new CoreStubElementRegistryServiceImpl());
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
