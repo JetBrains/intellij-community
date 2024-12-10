@@ -195,6 +195,17 @@ object LanguageAndRegionUi {
     }
   }
 
+  @JvmStatic
+  fun showLanguageAndRegionDialog(parent: JComponent?) {
+    val configurable = LanguageAndRegionConfigurable()
+    try {
+      ShowSettingsUtil.getInstance().editConfigurable(parent, configurable)
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
+
   fun showRestartDialog(runAlways: Boolean = true) {
     DynamicPlugins.runAfter(runAlways) {
       application.invokeLater {
