@@ -453,6 +453,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return ImageIO.read(File(screenshotPath))
   }
 
+  fun getColor(point: Point?): Color {
+    return withComponent {
+      Color(robot.getColor(it, point).getRGB())
+    }
+  }
+
   // Mouse
   fun click(point: Point? = null, silent: Boolean = false) {
     if (point != null) {
