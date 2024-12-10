@@ -1511,6 +1511,9 @@
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GenerateGetterSetterHandleCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GenerateSetterHandleCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GenerateGetterHandleCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.DeleteCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.CopyFQNCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToImplementationCompletionCommand" />
 
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
