@@ -23,6 +23,7 @@ import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,15 +110,8 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   protected void setUpModule() {
     super.setUpModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final String modulePath = getTestAppPath();
-      final String srcPath = modulePath + File.separator + SOURCES_DIRECTORY_NAME;
-      VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
-      VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
+      setupModuleRoots();
 
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-      PsiTestUtil.removeAllRoots(myModule, rootManager.getSdk());
-      PsiTestUtil.addContentRoot(myModule, moduleDir);
-      PsiTestUtil.addSourceRoot(myModule, srcDir);
       IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
 
       Path outputDir = getModuleOutputDir();
@@ -174,6 +168,19 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     return parameters;
   }
 
+  @RequiresWriteLock
+  protected void setupModuleRoots() {
+    final String modulePath = getTestAppPath();
+    final String srcPath = getSrcPath(modulePath);
+    VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
+    VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
+
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+    PsiTestUtil.removeAllRoots(myModule, rootManager.getSdk());
+    PsiTestUtil.addContentRoot(myModule, moduleDir);
+    PsiTestUtil.addSourceRoot(myModule, srcDir);
+  }
+
   protected OutputChecker getChecker() {
     return myChecker;
   }
@@ -188,6 +195,10 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
 
   protected String getAppOutputPath() {
     return getModuleOutputDir().toString();
+  }
+
+  protected @NotNull String getSrcPath(String modulePath) {
+    return modulePath + File.separator + SOURCES_DIRECTORY_NAME;
   }
 
   public void waitProcess(@NotNull ProcessHandler processHandler) {
