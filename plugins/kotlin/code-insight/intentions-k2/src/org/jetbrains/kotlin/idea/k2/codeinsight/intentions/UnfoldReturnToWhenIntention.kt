@@ -7,12 +7,11 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.inspections.createReturnExpressionText
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
@@ -41,7 +40,7 @@ class UnfoldReturnToWhenIntention : LowPriorityAction,
 
         return whenExpression.entries.map {
             val expr = it.expression!!.lastBlockStatementOrThis()
-            Holder.createReturnExpressionText(expr, labelName)
+            createReturnExpressionText(expr, labelName)
         }
     }
 
@@ -52,27 +51,6 @@ class UnfoldReturnToWhenIntention : LowPriorityAction,
 
         return ApplicabilityRange.multiple(element) {
             listOf(it.returnKeyword, whenExpr.whenKeyword)
-        }
-    }
-}
-
-object Holder {
-    context(KaSession@KaSession)
-    fun createReturnExpressionText(
-        expr: KtExpression,
-        labelName: String?,
-    ): String {
-        val label = labelName?.let { "@$it" } ?: ""
-
-        return when (expr) {
-            is KtBreakExpression, is KtContinueExpression, is KtReturnExpression, is KtThrowExpression -> ""
-            else -> {
-                val isNothingType = analyze(expr) {
-                    expr.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.returnType?.isNothingType
-                }
-
-                if (isNothingType == true) "" else "return$label "
-            }
         }
     }
 }
