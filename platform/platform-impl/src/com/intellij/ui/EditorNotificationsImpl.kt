@@ -203,7 +203,9 @@ class EditorNotificationsImpl(private val project: Project,
         visible
       }
     }
-    updateEditors(file = file, fileEditors = editors.toList())
+    if (editors.any()) {
+      updateEditors(file = file, fileEditors = editors.toList())
+    }
   }
 
   private fun getEditors(file: VirtualFile): Sequence<FileEditor> {
