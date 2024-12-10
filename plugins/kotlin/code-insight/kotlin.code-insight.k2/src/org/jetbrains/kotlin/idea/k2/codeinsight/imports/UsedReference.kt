@@ -113,13 +113,8 @@ private fun KaSession.adjustSymbolIfNeeded(
     target is KaConstructorSymbol -> {
         val targetClass = target.containingSymbol as? KaClassLikeSymbol
 
-        // if constructor is typealiased, it can be imported in any scenario
-        val typeAlias = targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, containingFile) }
-
         // if constructor leads to inner class, it cannot be resolved by import
-        val notInnerTargetClass = targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
-
-        typeAlias ?: notInnerTargetClass
+        targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
     }
 
     target is KaSamConstructorSymbol -> {
