@@ -61,6 +61,12 @@ internal fun tryInvokeWithHelper(
     return InvocationResult(false, null)
   }
 
+  val methodDeclaringType = method.declaringType()
+  require(DebuggerUtilsImpl.instanceOf(type, methodDeclaringType)) { "Invalid method" }
+  if (objRef != null) {
+    require(DebuggerUtilsImpl.instanceOf(objRef.referenceType(), methodDeclaringType)) { "Invalid method" }
+  }
+
   val debugProcess = evaluationContext.debugProcess
   val invokerArgs = mutableListOf<Value?>()
 
@@ -72,7 +78,7 @@ internal fun tryInvokeWithHelper(
   invokerArgs.add(type.classObject()) // class
   invokerArgs.add(objRef) // object
   invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name() + ";" + method.signature(), evaluationContext)) // method name and descriptor
-  invokerArgs.add(method.declaringType().classLoader()) // method's declaring type class loader to be able to resolve parameter types
+  invokerArgs.add(methodDeclaringType.classLoader()) // method's declaring type class loader to be able to resolve parameter types
 
   // argument values
   val boxedArgs = originalArgs.map { BoxingEvaluator.box(it, evaluationContext) as Value? }
@@ -105,7 +111,7 @@ internal fun tryInvokeWithHelper(
     }
     if (ApplicationManager.getApplication().isInternal) {
       val attachments = listOfNotNull(helperExceptionStackTrace?.let { Attachment("helper_stack.txt", it).apply { isIncluded = true } }).toTypedArray()
-      DebuggerUtilsImpl.logError("Exception from helper (while evaluating ${method.declaringType().name() + "." + method.name()}): ${e.message}",
+      DebuggerUtilsImpl.logError("Exception from helper (while evaluating ${methodDeclaringType.name() + "." + method.name()}): ${e.message}",
                                  RuntimeExceptionWithAttachments(e, *attachments)) // log helper exception if available
     }
     return InvocationResult(false, null)
