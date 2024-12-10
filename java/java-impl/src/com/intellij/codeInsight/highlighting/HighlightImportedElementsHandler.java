@@ -11,7 +11,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -62,7 +64,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  protected void selectTargets(final @NotNull List<? extends PsiMember> targets, final @NotNull Consumer<? super List<? extends PsiMember>> selectionConsumer) {
+  protected void selectTargets(@NotNull @Unmodifiable List<? extends PsiMember> targets, final @NotNull Consumer<? super List<? extends PsiMember>> selectionConsumer) {
     if (targets.isEmpty()) {
       selectionConsumer.consume(Collections.emptyList());
       return;
@@ -75,11 +77,11 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       selectionConsumer.consume(targets);
       return;
     }
-    targets.sort(new PsiMemberComparator());
+    @Unmodifiable @NotNull List<? extends PsiMember> sortedTargets = ContainerUtil.sorted(targets, new PsiMemberComparator());
     final List<Object> model = new ArrayList<>();
     String allListed = CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry");
     model.add(allListed);
-    model.addAll(targets);
+    model.addAll(sortedTargets);
     final ListCellRenderer<Object> renderer = new NavigationItemListCellRenderer();
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
@@ -96,7 +98,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
                 JavaBundle.message("highlight.imported.classes.chooser.title"))
       .setItemChosenCallback((selectedValue) -> {
         if (selectedValue.equals(allListed)) {
-          selectionConsumer.consume(targets);
+          selectionConsumer.consume(sortedTargets);
         }
         else {
           selectionConsumer.consume(Collections.singletonList((PsiMember)selectedValue));

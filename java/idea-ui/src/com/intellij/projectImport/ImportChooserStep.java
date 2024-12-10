@@ -13,9 +13,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -24,7 +26,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
@@ -135,10 +136,9 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     }
   }
 
-  private static List<ProjectImportProvider> sorted(List<? extends ProjectImportProvider> providers) {
-    List<ProjectImportProvider> result = new ArrayList<>(providers);
-    result.sort((l, r) -> l.getName().compareToIgnoreCase(r.getName()));
-    return result;
+  @Unmodifiable
+  private static List<ProjectImportProvider> sorted(@Unmodifiable List<? extends ProjectImportProvider> providers) {
+    return ContainerUtil.sorted(providers, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
   }
 
   @Override

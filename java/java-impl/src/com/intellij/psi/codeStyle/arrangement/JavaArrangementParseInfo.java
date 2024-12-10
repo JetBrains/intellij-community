@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,8 +153,8 @@ public class JavaArrangementParseInfo {
         JavaArrangementOverriddenMethodsInfo info = new JavaArrangementOverriddenMethodsInfo(name);
         result.add(info);
 
-        List<OverriddenMethodPair> value = listEntry.getValue();
-        value.sort(Comparator.comparingInt(pair -> pair.overridden.getTextOffset()));
+        List<OverriddenMethodPair> value = ContainerUtil.sorted(listEntry.getValue(),
+                Comparator.comparingInt(pair -> pair.overridden.getTextOffset()));
         for (OverriddenMethodPair methodPair: value) {
           JavaElementArrangementEntry methodEntry = myMethodEntriesMap.get(methodPair.overriding);
           info.addMethodEntry(methodEntry);

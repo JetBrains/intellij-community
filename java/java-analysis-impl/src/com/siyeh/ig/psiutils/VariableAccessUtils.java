@@ -31,6 +31,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -276,6 +277,7 @@ public final class VariableAccessUtils {
    * @param variable  the variable to find references for
    * @return a list of references, empty list if no references were found.
    */
+  @Unmodifiable
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
     PsiFile file = variable.getContainingFile();
     if (file == null) return List.of();
@@ -291,6 +293,7 @@ public final class VariableAccessUtils {
    * @param context  the context to find references in
    * @return a list of references. When the specified context is {@code null}, the result will always be an empty list.
    */
+  @Unmodifiable
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) return Collections.emptyList();
     PsiFile file = context.getContainingFile();
@@ -431,6 +434,7 @@ public final class VariableAccessUtils {
     return child;
   }
 
+  @Unmodifiable
   public static Set<PsiVariable> collectUsedVariables(PsiElement context) {
     if (context == null) {
       return Collections.emptySet();
@@ -440,7 +444,7 @@ public final class VariableAccessUtils {
     return visitor.getUsedVariables();
   }
 
-  public static boolean isAnyVariableAssigned(@NotNull Collection<? extends PsiVariable> variables, @Nullable PsiElement context) {
+  public static boolean isAnyVariableAssigned(@NotNull @Unmodifiable Collection<? extends PsiVariable> variables, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }

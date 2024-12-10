@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -43,5 +44,6 @@ public interface JvmFacade {
    * @return the list of found classes, or an empty array if no classes are found.
    */
   @NotNull
+  @Unmodifiable
   List<? extends JvmClass> findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 }

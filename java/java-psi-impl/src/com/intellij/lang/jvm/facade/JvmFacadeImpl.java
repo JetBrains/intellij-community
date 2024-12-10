@@ -12,7 +12,9 @@ import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,15 +35,18 @@ public final class JvmFacadeImpl implements JvmFacade {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     Map<String, List<JvmClass>> map = myClassCache.computeIfAbsent(scope, s -> CollectionFactory.createConcurrentWeakValueMap());
     return map.computeIfAbsent(qualifiedName, fqn -> doFindClassesWithJavaFacade(fqn, scope));
   }
 
+  @Unmodifiable
   private List<JvmClass> doFindClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return sortByScope(findClassesWithJavaFacade(qualifiedName, scope), scope);
   }
 
+  @Unmodifiable
   private List<JvmClass> findClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<JvmClass> result = null;
 
@@ -63,6 +68,7 @@ public final class JvmFacadeImpl implements JvmFacade {
     return result == null ? Collections.emptyList() : result;
   }
 
+  @Unmodifiable
   public @NotNull List<JvmClass> findClassesWithoutJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<JvmClass> result = null;
     for (JvmElementProvider provider : filteredProviders()) {
@@ -79,10 +85,10 @@ public final class JvmFacadeImpl implements JvmFacade {
     return result == null ? Collections.emptyList() : result;
   }
 
-  private static @NotNull List<JvmClass> sortByScope(@NotNull List<JvmClass> classes, @NotNull GlobalSearchScope scope) {
+  @Unmodifiable
+  private static @NotNull List<JvmClass> sortByScope(@NotNull @Unmodifiable List<JvmClass> classes, @NotNull GlobalSearchScope scope) {
     if (classes.size() == 1) return classes;
-    classes.sort(JvmClassUtil.createScopeComparator(scope));
-    return classes;
+    return ContainerUtil.sorted(classes, JvmClassUtil.createScopeComparator(scope));
   }
 
   private static void assertNotNullClasses(@NotNull JvmElementProvider provider, @NotNull List<? extends JvmClass> classes) {
@@ -91,6 +97,7 @@ public final class JvmFacadeImpl implements JvmFacade {
     }
   }
 
+  @Unmodifiable
   private @NotNull List<JvmElementProvider> filteredProviders() {
     return myDumbService.filterByDumbAwareness(JvmElementProvider.EP_NAME.getExtensionList(myJavaPsiFacade.getProject()));
   }
