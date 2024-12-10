@@ -16,25 +16,17 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.testFramework.utils.notImplemented
-import com.intellij.testFramework.junit5.TestApplication
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.model.BuildIdentifier
 import org.gradle.tooling.model.build.BuildEnvironment
-import org.gradle.tooling.model.build.JavaEnvironment
-import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Path
 
-@TestApplication
 abstract class GradleExecutionHelperJvmArgumentsTestCase {
 
-  @TempDir
-  protected lateinit var tempDirectory: Path
-
-  fun createBuildEnvironment(workingDirectory: Path): MockBuildEnvironment {
+  fun createBuildEnvironment(workingDirectory: Path): BuildEnvironment {
     val buildIdentifier = MockBuildIdentifier(workingDirectory)
-    val javaEnvironment = MockJavaEnvironment()
-    return MockBuildEnvironment(buildIdentifier, javaEnvironment)
+    return MockBuildEnvironment(buildIdentifier)
   }
 
   fun createOperation(): MockLongRunningOperation {
@@ -47,22 +39,10 @@ abstract class GradleExecutionHelperJvmArgumentsTestCase {
     override fun getRootDir(): File = workingDirectory.toFile()
   }
 
-  class MockBuildEnvironment(
+  private class MockBuildEnvironment(
     private val buildIdentifier: BuildIdentifier,
-    private val javaEnvironment: MockJavaEnvironment,
   ) : BuildEnvironment by notImplemented<BuildEnvironment>() {
     override fun getBuildIdentifier(): BuildIdentifier = buildIdentifier
-    override fun getJava(): MockJavaEnvironment = javaEnvironment
-  }
-
-  class MockJavaEnvironment : JavaEnvironment {
-
-    @get:JvmName("_jvmArguments")
-    var jvmArguments: List<String> = emptyList()
-
-    override fun getJvmArguments(): List<String> = jvmArguments
-
-    override fun getJavaHome() = throw UnsupportedOperationException()
   }
 
   class MockLongRunningOperation : LongRunningOperation by notImplemented<LongRunningOperation>() {
