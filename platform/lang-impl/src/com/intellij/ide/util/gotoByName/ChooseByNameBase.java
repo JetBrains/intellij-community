@@ -73,6 +73,7 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -361,6 +362,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       JLabel label = new JLabel(promptText);
       label.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
       caption2Tools.add(label, BorderLayout.WEST);
+      label.setLabelFor(myTextField);
     }
 
     if (promptText != null || isCheckboxVisible()) {
@@ -493,13 +495,13 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
             }
             else {
               Component oppositeComponent = e.getOppositeComponent();
-              if (oppositeComponent == myCheckBox) {
+              if (oppositeComponent == myCheckBox && !ScreenReader.isActive()) {
                 IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
                 return;
               }
               if (oppositeComponent != null && !(oppositeComponent instanceof JFrame) &&
                   myList.isShowing() &&
-                  (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
+                  (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent)) && !ScreenReader.isActive()) {
                 IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);// Otherwise me may skip some KeyEvents
                 return;
               }
@@ -518,10 +520,24 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           }, 5);
         }
       });
+
+      if (ScreenReader.isActive()) {
+        myList.addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusLost(final @NotNull FocusEvent e) {
+            cancelListUpdater(); // cancel thread as early as possible
+            Component oppositeComponent = e.getOppositeComponent();
+            if (UIUtil.haveCommonOwner(oppositeComponent, e.getComponent())) {
+              return;
+            }
+            hideHint();
+          }
+        });
+      }
     }
 
     myCheckBox.addItemListener(__ -> rebuildList(false));
-    myCheckBox.setFocusable(false);
+    myCheckBox.setFocusable(ScreenReader.isActive());
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -558,8 +574,23 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           keyCode = e.getKeyCode();
         }
         switch (keyCode) {
-          case KeyEvent.VK_DOWN -> ScrollingUtil.moveDown(myList, e.getModifiersEx());
-          case KeyEvent.VK_UP -> ScrollingUtil.moveUp(myList, e.getModifiersEx());
+          case KeyEvent.VK_DOWN -> {
+            if (!ScreenReader.isActive()) {
+              ScrollingUtil.moveDown(myList, e.getModifiersEx());
+            }
+            else {
+              IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
+            }
+          }
+          case KeyEvent.VK_UP -> {
+            if (!ScreenReader.isActive()) {
+              ScrollingUtil.moveUp(myList, e.getModifiersEx());
+            }
+            else {
+              ScrollingUtil.moveEnd(myList);
+              IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
+            }
+          }
           case KeyEvent.VK_PAGE_UP -> ScrollingUtil.movePageUp(myList);
           case KeyEvent.VK_PAGE_DOWN -> ScrollingUtil.movePageDown(myList);
           case KeyEvent.VK_TAB -> close(true);
@@ -580,7 +611,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     });
 
-    myList.setFocusable(false);
+    myList.setFocusable(ScreenReader.isActive());
     myList.setSelectionMode(allowMultipleSelection ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION :
                             ListSelectionModel.SINGLE_SELECTION);
     new ClickListener() {
@@ -631,6 +662,26 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
         currentChosenInfo = new SelectionSnapshot(getTrimmedText(), new HashSet<>(chosenElements));
       }
     });
+
+    if (ScreenReader.isActive()) {
+      myList.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(@NotNull KeyEvent e) {
+          myTextField.processKeyEvent(e);
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+          myTextField.processKeyEvent(e);
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+          IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+          myTextField.processKeyEvent(e);
+        }
+      });
+    }
 
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList, true);
 
@@ -828,6 +879,26 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     RelativePoint location = new RelativePoint(layeredPane, new Point(x, y));
     myTextPopup.show(location);
+
+    if (ScreenReader.isActive()) {
+      Window window = SwingUtilities.getWindowAncestor(myTextPopup.getContent());
+      window.setFocusTraversalKeysEnabled(false);
+      window.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {});
+      window.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyReleased(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_TAB) {
+            if (e.isShiftDown()) {
+              IdeFocusManager.getInstance(myProject).requestFocus(myList.isShowing() ? myList : myTextField, true);
+            }
+            else {
+              IdeFocusManager.getInstance(myProject)
+                .requestFocus(myList.isShowing() ? myList : (myCheckBox.isVisible() ? myCheckBox : myTextField), true);
+            }
+          }
+        }
+      });
+    }
   }
 
   private JLayeredPane getLayeredPane() {
@@ -1055,7 +1126,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);
       backStroke = getShortcut(IdeActions.ACTION_GOTO_BACK);
-      setFocusTraversalKeysEnabled(false);
+      setFocusTraversalKeysEnabled(ScreenReader.isActive());
       putClientProperty("JTextField.variant", "search");
       setDocument(new PlainDocument() {
         @Override
