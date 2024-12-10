@@ -17,7 +17,7 @@
       implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Standalone"/>-->
 
     <advancedSetting id="enable.combined.diff.for.codereview"
-                     default="true"
+                     default="false"
                      bundle="messages.CollaborationToolsBundle"
                      groupKey="advanced.settings.collab.tools"/>
   </extensions>
