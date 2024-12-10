@@ -832,7 +832,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/rt-java8/intellij.platform.util.rt.java8.iml" filepath="$PROJECT_DIR$/platform/util/rt-java8/intellij.platform.util.rt.java8.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/intellij.platform.util.tests.iml" filepath="$PROJECT_DIR$/platform/util/intellij.platform.util.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/util/intellij.platform.util.tests.iml" filepath="$PROJECT_DIR$/platform/util/intellij.platform.util.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/text-matching/intellij.platform.util.text.matching.iml" filepath="$PROJECT_DIR$/platform/util/text-matching/intellij.platform.util.text.matching.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/trove/intellij.platform.util.trove.iml" filepath="$PROJECT_DIR$/platform/util/trove/intellij.platform.util.trove.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/troveCompileOnly/intellij.platform.util.troveCompileOnly.iml" filepath="$PROJECT_DIR$/platform/util/troveCompileOnly/intellij.platform.util.troveCompileOnly.iml" />

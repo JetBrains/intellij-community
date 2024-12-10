@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-ir">
+  <library name="kotlinc.kotlin-compiler-ir" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.1.20-dev-6122">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.1.20-dev-6122/kotlin-compiler-ir-for-ide-2.1.20-dev-6122.jar">
+          <sha256sum>55efb46547d344f4c7ec7d998a36ebce7394fc5fc3d9ce4e3954b7ca0943f4da</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.1.255-dev-255/kotlin-compiler-ir-for-ide-2.1.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.1.20-dev-6122/kotlin-compiler-ir-for-ide-2.1.20-dev-6122.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.1.255-dev-255/kotlin-compiler-ir-for-ide-2.1.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.1.20-dev-6122/kotlin-compiler-ir-for-ide-2.1.20-dev-6122-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
