@@ -2,7 +2,26 @@
     <id>com.intellij.mcpServer</id>
     <name>MCP Server</name>
     <description><![CDATA[
-    MCP (Model Context Protocol) Server inside IntelliJ IDEs.
+    MCP (Model Context Protocol) Server for IntelliJ IDEs
+    <p>
+        This plugin integrates the MCP server into IntelliJ-based IDEs, enabling seamless communication between
+        Large Language Models (LLMs) and your development environment. It provides tools for interacting with the IDE,
+        including:
+    </p>
+    <ul>
+        <li>Reading the current file</li>
+        <li>Executing terminal commands</li>
+        <li>Setting breakpoints</li>
+        <li>Searching project files</li>
+        <li>And more</li>
+    </ul>
+    <p>
+        To connect with Claude Desktop, you must install and register the MCP Proxy in Claude.
+    </p>
+    <p>
+        For detailed instructions, visit the
+        <a href="https://github.com/JetBrains/mcp-jetbrains/blob/main/README.md" target="_blank">GitHub repository</a>.
+    </p>
   ]]></description>
     <vendor>JetBrains</vendor>
 
