@@ -45,7 +45,7 @@ public final class PlatformNioHelper {
     @Nullable Set<String> filter,
     @NotNull BiPredicate<Path, Result<BasicFileAttributes>> consumer
   ) throws IOException, SecurityException {
-    try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, getRelevantAllAcceptingPathFilter(directory))) {
+    try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
       for (var path : dirStream) {
         if (filter != null && !filter.contains(path.getFileName().toString())) {
           continue;
@@ -73,27 +73,6 @@ public final class PlatformNioHelper {
           break;
         }
       }
-    }
-  }
-
-  /**
-   * In production, we have two coexisting app class loaders: {@link jdk.internal.loader.ClassLoaders.AppClassLoader} and {@link com.intellij.util.lang.PathClassLoader}.
-   * The code executing here is running under {@link com.intellij.util.lang.PathClassLoader}, but the classes of routing FS are loaded with {@link jdk.internal.loader.ClassLoaders.AppClassLoader}.
-   * These two class loaders are not related to each other, hence checks for {@code instanceof} between objects loaded with them will fail.
-   * Here we forcefully retrieve a filter belonging to the necessary classloader with the sole purpose of having matching loaders.
-   */
-  private static @NotNull DirectoryStream.Filter<Path> getRelevantAllAcceptingPathFilter(@NotNull Path directory) {
-    try {
-      ClassLoader classLoader = directory.getClass().getClassLoader();
-      if (classLoader == null) {
-        return FetchAttributesFilter.ACCEPT_ALL;
-      }
-      //noinspection unchecked
-      return (DirectoryStream.Filter<Path>)classLoader.loadClass(
-        "com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2$FetchAttributesFilter").getField("ACCEPT_ALL").get(null);
-    }
-    catch (IllegalAccessException | NoSuchFieldException | ClassNotFoundException e) {
-      return FetchAttributesFilter.ACCEPT_ALL;
     }
   }
 }

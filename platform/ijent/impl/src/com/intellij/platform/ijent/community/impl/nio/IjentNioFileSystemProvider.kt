@@ -198,7 +198,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     return fsBlocking {
       val notFilteredPaths =
-        if (pathFilter is FetchAttributesFilter) {
+        if (FetchAttributesFilter.isFetchAttributesFilter(pathFilter)) {
           nioFs.ijentFs
             .listDirectoryWithAttrs(ensurePathIsAbsolute(dir.eelPath), EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
             .getOrThrowFileSystemException()
