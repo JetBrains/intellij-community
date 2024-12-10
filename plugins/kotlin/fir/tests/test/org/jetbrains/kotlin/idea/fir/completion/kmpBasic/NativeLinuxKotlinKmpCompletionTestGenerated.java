@@ -1738,26 +1738,6 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         public void testParameterType5() throws Exception {
             runTest("../../completion/testData/basic/common/lambdaSignature/ParameterType5.kt");
         }
-
-        @TestMetadata("TrailingLambdaParameterName1.kt")
-        public void testTrailingLambdaParameterName1() throws Exception {
-            runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName1.kt");
-        }
-
-        @TestMetadata("TrailingLambdaParameterName2.kt")
-        public void testTrailingLambdaParameterName2() throws Exception {
-            runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName2.kt");
-        }
-
-        @TestMetadata("TrailingLambdaParameterName3.kt")
-        public void testTrailingLambdaParameterName3() throws Exception {
-            runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName3.kt");
-        }
-
-        @TestMetadata("TrailingLambdaParameterName4.kt")
-        public void testTrailingLambdaParameterName4() throws Exception {
-            runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName4.kt");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -1,4 +1,4 @@
-// FIR_COMPARISON
+// IGNORE_K1
 
 fun <T> T.foo(block: (reference: T) -> Unit) {
     block(this)

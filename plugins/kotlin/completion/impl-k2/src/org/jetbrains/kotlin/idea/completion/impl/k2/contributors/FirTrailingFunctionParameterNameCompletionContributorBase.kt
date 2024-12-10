@@ -24,29 +24,89 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.TrailingFunctionDe
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.psiUtil.isFirstStatement
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 
-internal class FirTrailingFunctionParameterNameCompletionContributor(
+internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<C : KotlinRawPositionContext>(
     parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<C>(parameters, sink, priority) {
+
+    class All(
+        parameters: KotlinFirCompletionParameters,
+        sink: LookupElementSink,
+        priority: Int = 0,
+    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(
+        parameters,
+        sink,
+        priority
+    ) {
+
+        context(KaSession)
+        override fun complete(
+            positionContext: KotlinExpressionNameReferencePositionContext,
+            weighingContext: WeighingContext,
+        ) {
+            if (positionContext.explicitReceiver != null) return
+
+            val nameExpression = positionContext.nameExpression
+            if (!nameExpression.isFirstStatement()) return
+
+            super.complete(
+                position = nameExpression,
+                existingParameterNames = emptySet(),
+                weighingContext = weighingContext,
+            )
+        }
+    }
+
+    class Missing(
+        parameters: KotlinFirCompletionParameters,
+        sink: LookupElementSink,
+        priority: Int = 0,
+    ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinSimpleParameterPositionContext>(parameters, sink, priority) {
+
+        context(KaSession)
+        override fun complete(
+            positionContext: KotlinSimpleParameterPositionContext,
+            weighingContext: WeighingContext,
+        ) {
+            val parameter = positionContext.ktParameter
+
+            val parameterList = parameter.parent
+            if (parameterList !is KtParameterList) return
+
+            val existingParameterNames = parameterList.parameters
+                .asSequence()
+                .takeWhile { it != parameter }
+                .mapNotNull { it.name }
+                .toSet()
+
+            super.complete(
+                position = parameter,
+                existingParameterNames = existingParameterNames,
+                weighingContext = weighingContext,
+            )
+        }
+    }
 
     context(KaSession)
-    override fun complete(
-        positionContext: KotlinExpressionNameReferencePositionContext,
+    protected fun complete(
+        position: KtElement,
+        existingParameterNames: Set<String>,
         weighingContext: WeighingContext
     ) {
-        if (positionContext.explicitReceiver != null) return
-
-        val callExpression = positionContext.nameExpression
-            .takeIf { it.isFirstStatement() }
-            ?.parentOfType<KtCallExpression>()
+        val callExpression = position.parentOfType<KtCallExpression>()
             ?: return
 
         if (callExpression.lambdaArguments
@@ -65,7 +125,7 @@ internal class FirTrailingFunctionParameterNameCompletionContributor(
             .mapNotNull { FunctionLookupElementFactory.getTrailingFunctionSignature(it, checkDefaultValues = false) }
             .mapNotNull { FunctionLookupElementFactory.createTrailingFunctionDescriptor(it) }
             .filterNot { it.functionType.hasReceiver }
-            .flatMap { createLookupElements(it) }
+            .flatMap { createLookupElements(it, existingParameterNames) }
             .map { it.applyWeighs(weighingContext) }
             .forEach(sink::addElement)
     }
@@ -81,13 +141,29 @@ private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.
 context(KaSession)
 private fun createLookupElements(
     trailingFunctionDescriptor: TrailingFunctionDescriptor,
+    existingParameterNames: Set<String>,
 ): Sequence<LookupElementBuilder> {
     val typeNames = mutableMapOf<KaType, MutableSet<String>>()
+    return createLookupElements(
+        trailingFunctionDescriptor = trailingFunctionDescriptor,
+        fromIndex = existingParameterNames.size,
+    ) { parameterType, name ->
+        typeNames.getOrPut(parameterType) { existingParameterNames.toMutableSet() }
+            .add(name)
+    }
+}
+
+context(KaSession)
+private fun createLookupElements(
+    trailingFunctionDescriptor: TrailingFunctionDescriptor,
+    fromIndex: Int = 0,
+    nameValidator: (parameterType: KaType, name: String) -> Boolean = { _, _ -> true },
+): Sequence<LookupElementBuilder> {
     val kotlinNameSuggester = KotlinNameSuggester()
 
     fun suggestNames(
         parameterType: KaType,
-        index: Int,
+        index: Int = 0,
     ): Sequence<String> {
         val suggestedNames = sequenceOfNotNull(trailingFunctionDescriptor.suggestParameterNameAt(index))
             .map { it.asString() } +
@@ -95,8 +171,7 @@ private fun createLookupElements(
 
         return suggestedNames.map { name ->
             KotlinNameSuggester.suggestNameByName(name) {
-                typeNames.getOrPut(parameterType) { mutableSetOf() }
-                    .add(it)
+                nameValidator(parameterType, it)
             }
         }
     }
@@ -105,17 +180,19 @@ private fun createLookupElements(
         .parameterTypes
 
     return when (val parameterType = parameterTypes.singleOrNull()) {
-        null -> {
-            val suggestedNames = parameterTypes.mapIndexed { index, parameterType ->
+        null -> sequence {
+            val suggestedNames = parameterTypes.mapIndexedNotNull { index, parameterType ->
+                if (index < fromIndex) return@mapIndexedNotNull null
                 parameterType to suggestNames(parameterType, index).first()
             }
 
-            sequenceOfNotNull(createCompoundLookupElement(suggestedNames))
+            yieldIfNotNull(createCompoundLookupElement(suggestedNames))
         }
 
-        else -> {
-            val suggestedNames = suggestNames(parameterType, 0)
-            val hardCodedLookupElement = (parameterType as? KaClassType)
+        else -> sequence {
+            if (fromIndex != 0) return@sequence
+
+            val standardSuggestions = (parameterType as? KaClassType)
                 ?.classId
                 ?.let { getStandardSuggestions(it) }
                 ?.takeUnless { it.isEmpty() }
@@ -123,15 +200,19 @@ private fun createLookupElements(
                     parameterType.typeArguments
                         .mapNotNull { it.type }
                         .zip(suggestions)
-                }?.let { createCompoundLookupElement(it) }
+                }
+
+            if (standardSuggestions != null) {
+                yieldIfNotNull(createCompoundLookupElement(standardSuggestions, isDeconstruction = true))
+            }
 
             val parameterTypeText = parameterType.text
-            sequenceOfNotNull(hardCodedLookupElement) +
-                    suggestedNames.map {
-                        LookupElementBuilder.create(it)
-                            .withTypeText(parameterTypeText)
-                            .withTailTextInsertHandler()
-                    }
+            val lookupElements = suggestNames(parameterType).map {
+                LookupElementBuilder.create(it)
+                    .withTypeText(parameterTypeText)
+                    .withTailTextInsertHandler()
+            }
+            yieldAll(lookupElements)
         }
     }.map { it.apply { isTrailingLambdaParameter = true } }
 }
@@ -151,14 +232,27 @@ private fun LookupElementBuilder.withTailTextInsertHandler(
 context(KaSession)
 private fun createCompoundLookupElement(
     suggestedNames: Collection<Pair<KaType, String>>,
+    isDeconstruction: Boolean = false,
 ): LookupElementBuilder? {
     if (suggestedNames.isEmpty()) return null
 
+    val (prefix, postfix) = if (suggestedNames.size > 1) "(" to ")"
+    else "" to ""
+
     val lookupStrings = suggestedNames.map { it.second }
-    val presentableText = lookupStrings.joinToString()
+    val presentableText = lookupStrings.joinToString(
+        prefix = if (isDeconstruction) prefix else "",
+        postfix = if (isDeconstruction) postfix else "",
+    )
+
+    val typeText = suggestedNames.joinToString(
+        prefix = prefix,
+        postfix = postfix,
+    ) { it.first.text }
+
     return LookupElementBuilder.create(lookupStrings.first())
         .withPresentableText(presentableText)
-        .withTypeText(suggestedNames.map { it.first }.joinToString(prefix = "(", postfix = ")") { it.text })
+        .withTypeText(typeText)
         .withLookupStrings(lookupStrings)
         .withTailTextInsertHandler { context, item ->
             context.document.replaceString(context.startOffset, context.tailOffset, presentableText)

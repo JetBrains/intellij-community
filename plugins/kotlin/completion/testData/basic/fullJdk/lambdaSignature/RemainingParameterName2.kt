@@ -1,4 +1,4 @@
-// FIR_COMPARISON
+// IGNORE_K1
 
 fun <T, U> foo(
     foo: T,
@@ -9,8 +9,8 @@ fun <T, U> foo(
 }
 
 fun bar() {
-    foo(42, "") { <caret> }
+    foo(42, "") { foo, <caret> }
 }
 
 // INVOCATION_COUNT: 0
-// EXIST: { itemText: "foo, bar ->", allLookupStrings: "foo, bar ->" }
+// EXIST: { itemText: "bar", tailText: " -> ", allLookupStrings: "bar", typeText: "String" }
