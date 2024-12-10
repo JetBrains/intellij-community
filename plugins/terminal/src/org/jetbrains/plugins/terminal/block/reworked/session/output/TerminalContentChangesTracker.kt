@@ -82,7 +82,7 @@ internal class TerminalContentChangesTracker(
 
     val output: StyledCommandOutput = scrapeOutput(startLine, additionalLines)
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)
-    val logicalLineIndex = getLogicalLineIndex(startLine) + discardedHistoryTracker.discardedLogicalLinesCount - additionalLines.size
+    val logicalLineIndex = textBuffer.getLogicalLineIndex(startLine) + discardedHistoryTracker.discardedLogicalLinesCount - additionalLines.size
 
     lastChangedVisualLine = textBuffer.historyLinesCount + textBuffer.screenLinesCount
     anyLineChanged = false
@@ -102,17 +102,17 @@ internal class TerminalContentChangesTracker(
 
     return StyledCommandOutput(stringCollector.buildText(), false, styles)
   }
+}
 
-  /**
-   * Consider the sequence of wrapped lines in the Text Buffer as a single logical line.
-   */
-  private fun getLogicalLineIndex(visualLine: Int): Int {
-    var count = 0
-    for (ind in -textBuffer.historyLinesCount until visualLine) {
-      if (!textBuffer.getLine(ind).isWrapped) {
-        count++
-      }
+/**
+ * Consider the sequence of wrapped lines in the Text Buffer as a single logical line.
+ */
+internal fun TerminalTextBuffer.getLogicalLineIndex(visualLine: Int): Int {
+  var count = 0
+  for (ind in -historyLinesCount until visualLine) {
+    if (!getLine(ind).isWrapped) {
+      count++
     }
-    return count
   }
+  return count
 }

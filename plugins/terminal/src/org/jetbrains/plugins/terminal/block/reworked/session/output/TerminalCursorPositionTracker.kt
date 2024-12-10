@@ -41,8 +41,10 @@ internal class TerminalCursorPositionTracker(
       column += textBuffer.getLine(line).length()
     }
 
+    val logicalLine = textBuffer.getLogicalLineIndex(line) + discardedHistoryTracker.discardedLogicalLinesCount
+
     cursorPositionChanged = false
 
-    return TerminalCursorPositionChangedEvent(line + discardedHistoryTracker.discardedLogicalLinesCount, column)
+    return TerminalCursorPositionChangedEvent(logicalLine, column)
   }
 }
