@@ -1,3 +1,3 @@
-class <warning descr="Inspection does not have a description">MyInspection</warning> : com.intellij.codeInspection.InspectionProfileEntry() {
+class <error descr="Inspection does not have a description">MyInspection</error> : com.intellij.codeInspection.InspectionProfileEntry() {
   
 }
