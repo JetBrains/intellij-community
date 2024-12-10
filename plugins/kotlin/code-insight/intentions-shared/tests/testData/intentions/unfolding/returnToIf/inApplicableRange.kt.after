@@ -1,8 +1,8 @@
 fun test(b: Boolean): Int {
     var i = 0
     while (i == 0) {
-        <caret>return if (b) {
-            1
+        if (b) {
+            return 1
         } else {
             i++
             continue

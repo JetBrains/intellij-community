@@ -3024,6 +3024,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
                 runTest("../testData/intentions/unfolding/returnToIf/ifWithoutThen.kt");
             }
 
+            @TestMetadata("inApplicableRange.kt")
+            public void testInApplicableRange() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/inApplicableRange.kt");
+            }
+
             @TestMetadata("innerIfTransformed.kt")
             public void testInnerIfTransformed() throws Exception {
                 runTest("../testData/intentions/unfolding/returnToIf/innerIfTransformed.kt");

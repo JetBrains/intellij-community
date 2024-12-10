@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.inspections.createReturnExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -48,11 +47,18 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
     override fun prepareContext(element: KtReturnExpression) {
     }
 
-    override fun getApplicableRanges(element: KtReturnExpression): List<TextRange> {
-        val ifExpression = element.returnedExpression as? KtIfExpression ?: return emptyList()
+    override fun getApplicableRanges(returnExpression: KtReturnExpression): List<TextRange> {
+        val ifExpression = returnExpression.returnedExpression as? KtIfExpression ?: return emptyList()
         if (ifExpression.then == null) return emptyList()
+
+        val returnKeyword = returnExpression.returnKeyword
+        val returnKeywordRange = returnKeyword.textRange
+        val ifKeywordRange = ifExpression.ifKeyword.textRange
+
+        val unionFromReturnToIf = returnKeywordRange.union(ifKeywordRange)
+
         return listOf(
-            TextRange(0, ifExpression.ifKeyword.endOffset - element.startOffset)
+            unionFromReturnToIf.shiftLeft(returnKeyword.startOffset)
         )
     }
 
