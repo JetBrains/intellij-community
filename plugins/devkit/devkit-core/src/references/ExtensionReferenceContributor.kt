@@ -12,7 +12,6 @@ import com.intellij.util.Function
 import com.intellij.util.ProcessingContext
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
-import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil
 import org.jetbrains.idea.devkit.inspections.DescriptionType
 import org.jetbrains.idea.devkit.inspections.INTENTION_ACTION_EP
 
@@ -58,7 +57,8 @@ private class IntentionActionDescriptionDirectoryNameReferenceProvider : PsiRefe
   }
 
   private fun getIntentionDescriptionRootDirectory(element: PsiElement): Collection<PsiFileSystemItem> {
-    return DescriptionCheckerUtil.getDescriptionsDirs(ModuleUtil.findModuleForPsiElement(element), DescriptionType.INTENTION).map { it ->
+    val module = ModuleUtil.findModuleForPsiElement(element)?: return emptyList()
+    return DescriptionType.INTENTION.getDescriptionFolderDirs(module).map { it ->
       element.manager.findDirectory(it.virtualFile)!!
     }
   }

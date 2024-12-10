@@ -28,7 +28,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
 import org.jetbrains.idea.devkit.inspections.DescriptionTypesKt;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -69,7 +68,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiDirectory[] dirs = DescriptionCheckerUtil.getDescriptionsDirs(myModule, myDescriptionType);
+    final PsiDirectory[] dirs = myDescriptionType.getDescriptionFolderDirs(myModule);
     final List<VirtualFile> roots = getPotentialRoots(myModule, dirs);
     if (roots.size() == 1) {
       ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots.get(0)));

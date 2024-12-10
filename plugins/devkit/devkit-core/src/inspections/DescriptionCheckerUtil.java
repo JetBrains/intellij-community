@@ -52,22 +52,6 @@ public final class DescriptionCheckerUtil {
     return searchScopes(module).flatMap(scope -> StreamEx.of(psiPackage.getDirectories(scope))).distinct();
   }
 
-  public static PsiDirectory[] getDescriptionsDirs(Module module,
-                                                   DescriptionType descriptionType) {
-    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(module.getProject());
-    final PsiPackage psiPackage = javaPsiFacade.findPackage(descriptionType.getDescriptionFolder());
-    if (psiPackage == null) {
-      return PsiDirectory.EMPTY_ARRAY;
-    }
-
-    PsiDirectory[] currentModuleDirectories = psiPackage.getDirectories(module.getModuleScope(false));
-    if (currentModuleDirectories.length != 0) {
-      return currentModuleDirectories;
-    }
-
-    return psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
-  }
-
   @Nullable
   public static String getDefaultDescriptionDirName(@NotNull PsiClass aClass) {
     String descriptionDir = "";

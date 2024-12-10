@@ -7,10 +7,8 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
@@ -71,6 +69,20 @@ internal enum class DescriptionType(
   fun hasBeforeAfterTemplateFiles(): Boolean = myHasBeforeAfterTemplateFiles
 
   fun getDescriptionFolder(): String = descriptionFolder
+
+  /**
+   * @return description directories (usually exactly one)
+   */
+  fun getDescriptionFolderDirs(module: Module): Array<PsiDirectory> {
+    val javaPsiFacade = JavaPsiFacade.getInstance(module.getProject())
+    val psiPackage = javaPsiFacade.findPackage(getDescriptionFolder()) ?: return PsiDirectory.EMPTY_ARRAY
+
+    val currentModuleDirectories = psiPackage.getDirectories(module.getModuleScope(false))
+    return when {
+      currentModuleDirectories.size != 0 -> currentModuleDirectories
+      else -> psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module))
+    }
+  }
 }
 
 /**
@@ -102,7 +114,7 @@ internal sealed class DescriptionTypeResolver(
     val descriptionDirName = getDescriptionDirName() ?: return null
 
     // additional filename checks to force case-sensitivity
-    for (description in DescriptionCheckerUtil.getDescriptionsDirs(module, descriptionType)) {
+    for (description in descriptionType.getDescriptionFolderDirs(module)) {
       val dir = description.findSubdirectory(descriptionDirName) ?: continue
       if (dir.getName() != descriptionDirName) continue
 
