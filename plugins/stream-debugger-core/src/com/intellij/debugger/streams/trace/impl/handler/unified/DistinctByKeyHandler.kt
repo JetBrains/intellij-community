@@ -8,7 +8,6 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl
 import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl
 import com.intellij.openapi.util.TextRange
-import one.util.streamex.StreamEx
 
 open class DistinctByKeyHandler(callNumber: Int,
                                 private val myCall: IntermediateStreamCall,
@@ -62,7 +61,7 @@ open class DistinctByKeyHandler(callNumber: Int,
   override fun prepareResult(): CodeBlock {
     val keys2TimesBefore = dsl.map(dsl.types.ANY, dsl.types.list(dsl.types.INT), "keys2Times")
     val transitions = dsl.map(dsl.types.INT, dsl.types.INT, "transitionsMap")
-    StreamEx.of(1).distinct().toList()
+
     return dsl.block {
       add(myPeekHandler.prepareResult())
       declare(keys2TimesBefore.defaultDeclaration())
