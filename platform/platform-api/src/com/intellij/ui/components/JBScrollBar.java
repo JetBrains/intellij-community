@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
@@ -90,6 +91,15 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   @SuppressWarnings("UnusedParameters")
   public static @NotNull ScrollBarUI createUI(JComponent c) {
     return createUI(c, false);
+  }
+
+  /**
+   * Returns a new instance of {@link DefaultScrollBarUI}.
+   * Use only to replace a more specific ScrollBarUI and release resources correctly.
+   */
+  @IntellijInternalApi
+  public static @NotNull ScrollBarUI createDefaultUI() {
+    return new DefaultScrollBarUI();
   }
 
   /**

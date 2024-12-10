@@ -108,6 +108,7 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
 
   override fun createBaseAnimationBehavior(state: DefaultScrollbarUiInstalledState): ScrollBarAnimationBehavior {
     return MacScrollBarAnimationBehavior(
+      state.coroutineScope,
       scrollBarComputable = { state.scrollBar },
       trackAnimator = state.track.animator,
       thumbAnimator = state.thumb.animator,

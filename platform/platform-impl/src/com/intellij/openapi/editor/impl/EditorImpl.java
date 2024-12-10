@@ -1153,7 +1153,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
       Disposer.dispose(myDisposable);
-      myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
+
+      // clear error panel's cached image
+      // replace UI with default to release resources (e.g. coroutines) of a custom UI correctly
+      myVerticalScrollBar.setPersistentUI(JBScrollBar.createDefaultUI());
     });
   }
 

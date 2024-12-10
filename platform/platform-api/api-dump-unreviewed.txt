@@ -7891,6 +7891,7 @@ c:com.intellij.ui.components.JBScrollBar
 - <init>(I,I,I,I,I):V
 - p:addImpl(java.awt.Component,java.lang.Object,I):V
 - canBePreprocessed(java.awt.event.MouseEvent):Z
+- s:createDefaultUI():javax.swing.plaf.ScrollBarUI
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ScrollBarUI
 - s:createUI(javax.swing.JComponent,Z):javax.swing.plaf.ScrollBarUI
 - getBlockIncrement(I):I
