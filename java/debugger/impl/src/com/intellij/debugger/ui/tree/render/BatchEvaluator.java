@@ -120,8 +120,17 @@ public final class BatchEvaluator {
         return true;
       }
     }
-    catch (ObjectCollectedException | EvaluateException e) {
+    catch (ObjectCollectedException e) {
       LOG.error(e);
+    }
+    catch (EvaluateException e) {
+      ObjectReference exceptionFromTargetVM = e.getExceptionFromTargetVM();
+      if (exceptionFromTargetVM != null && "java.io.UTFDataFormatException".equals(exceptionFromTargetVM.referenceType().name())) {
+        // one of the strings is too long - just fall back to the regular separate toString calls
+      }
+      else {
+        LOG.error(e);
+      }
     }
     return false;
   }
