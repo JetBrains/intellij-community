@@ -10,7 +10,6 @@ import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.model.JediTermTypeAheadModel
-import com.jediterm.terminal.model.JediTerminal
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.reworked.session.output.ObservableJediTerminal
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
 import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputChannel
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
@@ -36,7 +36,7 @@ internal fun startTerminalSession(
   val services: JediTermServices = createJediTermServices(connector, termSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
-  val outputChannel = createTerminalOutputChannel(services.textBuffer, services.terminalDisplay, outputScope)
+  val outputChannel = createTerminalOutputChannel(services.textBuffer, services.terminalDisplay, services.controller, outputScope)
 
   val inputScope = coroutineScope.childScope("Terminal input handling")
   val inputChannel = createTerminalInputChannel(services.terminalStarter, inputScope)
@@ -70,7 +70,7 @@ private fun createJediTermServices(
   val styleState = StyleState()
   val textBuffer = TerminalTextBuffer(termSize.columns, termSize.rows, styleState, maxHistoryLinesCount, null)
   val terminalDisplay = TerminalDisplayImpl()
-  val controller = JediTerminal(terminalDisplay, textBuffer, styleState)
+  val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()
   val terminalStarter = TerminalStarter(
@@ -81,7 +81,7 @@ private fun createJediTermServices(
     executorService
   )
 
-  return JediTermServices(textBuffer, terminalDisplay, executorService, terminalStarter)
+  return JediTermServices(textBuffer, terminalDisplay, controller, executorService, terminalStarter)
 }
 
 private fun createTerminalInputChannel(
@@ -132,6 +132,7 @@ private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
 private class JediTermServices(
   val textBuffer: TerminalTextBuffer,
   val terminalDisplay: TerminalDisplayImpl,
+  val controller: ObservableJediTerminal,
   val executorService: TerminalExecutorServiceManager,
   val terminalStarter: TerminalStarter,
 )

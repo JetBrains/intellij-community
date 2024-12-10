@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalStateChangedEvent
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class TerminalSessionController(
@@ -44,6 +45,7 @@ internal class TerminalSessionController(
     when (event) {
       is TerminalContentUpdatedEvent -> updateEditorContent(event)
       is TerminalCursorPositionChangedEvent -> model.updateCaretPosition(event.logicalLineIndex, event.columnIndex)
+      is TerminalStateChangedEvent -> TODO()
     }
   }
 

@@ -12,6 +12,21 @@ internal class TerminalDisplayImpl : TerminalDisplay {
   private var cursorX: Int = 0
   private var cursorY: Int = 0
 
+  var isCursorVisible: Boolean = true
+    private set
+  var cursorShape: CursorShape? = null
+    private set
+  var mouseMode: MouseMode = MouseMode.MOUSE_REPORTING_NONE
+    private set
+  var mouseFormat: MouseFormat = MouseFormat.MOUSE_FORMAT_XTERM
+    private set
+  var isAlternateScreenBuffer: Boolean = false
+    private set
+  var isBracketedPasteMode: Boolean = false
+    private set
+  var windowTitleText: String = ""
+    private set
+
   private val dispatcher = EventDispatcher.create(TerminalDisplayListener::class.java)
 
   fun addListener(listener: TerminalDisplayListener) {
@@ -28,7 +43,56 @@ internal class TerminalDisplayImpl : TerminalDisplay {
   }
 
   override fun setCursorShape(cursorShape: CursorShape?) {
+    if (this.cursorShape != cursorShape) {
+      this.cursorShape = cursorShape
+      dispatcher.multicaster.cursorShapeChanged(cursorShape)
+    }
+  }
 
+  override fun setCursorVisible(isCursorVisible: Boolean) {
+    if (this.isCursorVisible != isCursorVisible) {
+      this.isCursorVisible = isCursorVisible
+      dispatcher.multicaster.cursorVisibilityChanged(isCursorVisible)
+    }
+  }
+
+  override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
+    if (isAlternateScreenBuffer != useAlternateScreenBuffer) {
+      isAlternateScreenBuffer = useAlternateScreenBuffer
+      dispatcher.multicaster.alternateScreenBufferChanged(useAlternateScreenBuffer)
+    }
+  }
+
+  override fun getWindowTitle(): String? {
+    return windowTitleText
+  }
+
+  override fun setWindowTitle(windowTitle: String) {
+    if (this.windowTitleText != windowTitle) {
+      this.windowTitleText = windowTitle
+      dispatcher.multicaster.windowTitleChanged(windowTitle)
+    }
+  }
+
+  override fun terminalMouseModeSet(mouseMode: MouseMode) {
+    if (this.mouseMode != mouseMode) {
+      this.mouseMode = mouseMode
+      dispatcher.multicaster.mouseModeChanged(mouseMode)
+    }
+  }
+
+  override fun setMouseFormat(mouseFormat: MouseFormat) {
+    if (this.mouseFormat != mouseFormat) {
+      this.mouseFormat = mouseFormat
+      dispatcher.multicaster.mouseFormatChanged(mouseFormat)
+    }
+  }
+
+  override fun setBracketedPasteMode(bracketedPasteModeEnabled: Boolean) {
+    if (isBracketedPasteMode != bracketedPasteModeEnabled) {
+      isBracketedPasteMode = bracketedPasteModeEnabled
+      dispatcher.multicaster.bracketedPasteModeChanged(bracketedPasteModeEnabled)
+    }
   }
 
   override fun beep() {
@@ -39,32 +103,8 @@ internal class TerminalDisplayImpl : TerminalDisplay {
 
   }
 
-  override fun setCursorVisible(isCursorVisible: Boolean) {
-
-  }
-
-  override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
-
-  }
-
-  override fun getWindowTitle(): String? {
-    return "Local"
-  }
-
-  override fun setWindowTitle(windowTitle: String) {
-
-  }
-
   override fun getSelection(): TerminalSelection? {
     return null
-  }
-
-  override fun terminalMouseModeSet(mouseMode: MouseMode) {
-
-  }
-
-  override fun setMouseFormat(mouseFormat: MouseFormat) {
-
   }
 
   override fun ambiguousCharsAreDoubleWidth(): Boolean {

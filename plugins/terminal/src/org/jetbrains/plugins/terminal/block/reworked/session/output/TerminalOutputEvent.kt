@@ -15,3 +15,5 @@ internal data class TerminalCursorPositionChangedEvent(
   val logicalLineIndex: Int,
   val columnIndex: Int,
 ) : TerminalOutputEvent
+
+internal data class TerminalStateChangedEvent(val state: TerminalStateDto) : TerminalOutputEvent
