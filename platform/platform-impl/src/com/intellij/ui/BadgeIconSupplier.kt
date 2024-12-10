@@ -3,11 +3,14 @@ package com.intellij.ui
 
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.util.ui.JBUI.CurrentTheme.IconBadge
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
+/**
+ * Provides icon variants with additional badges such as error, warning, information, and success on top of the original icon.
+ * It also decorates icons with a live indicator.
+ *
+ * @property originalIcon The original icon to which badges are to be applied.
+ */
 class BadgeIconSupplier(val originalIcon: Icon) {
   private val oldLiveIndicatorIcon by lazy { ExecutionUtil.getLiveIndicator(originalIcon) }
 

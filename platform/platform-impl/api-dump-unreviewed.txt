@@ -13275,6 +13275,19 @@ f:com.intellij.ui.AppUIUtilKt
 - sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I):javax.swing.Icon
 - bs:loadSmallApplicationIcon$default(com.intellij.ui.scale.ScaleContext,I,I,java.lang.Object):javax.swing.Icon
 - sf:updateAppWindowIcon(java.awt.Window):V
+f:com.intellij.ui.BadgeIconSupplier
+- <init>(javax.swing.Icon):V
+- f:getErrorIcon():javax.swing.Icon
+- f:getErrorIcon(Z):javax.swing.Icon
+- f:getInfoIcon():javax.swing.Icon
+- f:getInfoIcon(Z):javax.swing.Icon
+- f:getLiveIndicatorIcon():javax.swing.Icon
+- f:getLiveIndicatorIcon(Z):javax.swing.Icon
+- f:getOriginalIcon():javax.swing.Icon
+- f:getSuccessIcon():javax.swing.Icon
+- f:getSuccessIcon(Z):javax.swing.Icon
+- f:getWarningIcon():javax.swing.Icon
+- f:getWarningIcon(Z):javax.swing.Icon
 f:com.intellij.ui.BalloonImpl
 - com.intellij.ide.IdeTooltip$Ui
 - com.intellij.ide.ui.ScreenAreaConsumer

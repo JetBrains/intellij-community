@@ -33,7 +33,6 @@ com/intellij/openapi/wm/impl/status/InlineProgressIndicator$ProgressButton
 com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory$JActionLinkPanel
 com/intellij/serialization/MutableAccessor
 com/intellij/toolWindow/ToolWindowToolbar
-com/intellij/ui/BadgeIconSupplier
 com/intellij/ui/BalloonImpl$AbstractPosition
 com/intellij/ui/components/fields/ExpandableSupport$Content
 com/intellij/ui/popup/PopupComponentFactory$PopupType
