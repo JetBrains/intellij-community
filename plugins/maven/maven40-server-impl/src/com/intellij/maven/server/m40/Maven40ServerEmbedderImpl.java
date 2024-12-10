@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import org.apache.maven.*;
 import org.apache.maven.api.*;
 import org.apache.maven.api.cli.InvokerRequest;
+import org.apache.maven.api.cli.ParserException;
 import org.apache.maven.api.cli.ParserRequest;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
@@ -64,7 +65,6 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -203,7 +203,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     try {
       invokerRequest = mavenParser.parseInvocation(parserRequest);
     }
-    catch (IOException e) {
+    catch (ParserException e) {
+      throw new MavenConfigParseException(e.getMessage(), multiModuleProjectDirectory);
+    }
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
 
@@ -224,31 +227,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
 
     myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
-
-/*    Object cliRequest;
-    try {
-      Constructor<?> constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
-      constructor.setAccessible(true);
-      //noinspection SSBasedInspection
-      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
-
-      for (String each : new String[]{"initialize", "cli", "logging", "properties"}) {
-        Method m = MavenCling.class.getDeclaredMethod(each, cliRequestClass);
-        m.setAccessible(true);
-        m.invoke(cli, cliRequest);
-      }
-    }
-    catch (Exception e) {
-      ParseException cause = ExceptionUtilRt.findCause(e, ParseException.class);
-      if (cause != null) {
-        String workingDir = settings.getMultiModuleProjectDirectory();
-        if (workingDir == null) {
-          workingDir = System.getProperty("user.dir");
-        }
-        throw new MavenConfigParseException(cause.getMessage(), workingDir);
-      }
-      throw new RuntimeException(e);
-    }*/
 
     // reset threshold
 /*    try {
