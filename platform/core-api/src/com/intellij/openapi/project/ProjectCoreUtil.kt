@@ -1,50 +1,53 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project;
+package com.intellij.openapi.project
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.InternalFileType
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
+import kotlin.concurrent.Volatile
 
-public final class ProjectCoreUtil {
-  private static volatile Project theOnlyProject;
+object ProjectCoreUtil {
+  @Volatile
+  private var theOnlyProject: Project? = null
 
-  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
-    return isProjectOrWorkspaceFile(file, file.getNameSequence());
+  @JvmStatic
+  fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean {
+    return isProjectOrWorkspaceFile(file, file.nameSequence)
   }
 
-  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile fileOrParent, @NotNull CharSequence fileName) {
+  @JvmStatic
+  fun isProjectOrWorkspaceFile(fileOrParent: VirtualFile, fileName: CharSequence): Boolean {
     // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
-    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
-    return isProjectOrWorkspaceFile(fileOrParent, fileType);
+    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName)
+    return isProjectOrWorkspaceFile(fileOrParent, fileType)
   }
 
-  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile fileOrParent, @Nullable FileType fileType) {
-    return fileType instanceof InternalFileType ||
-           VfsUtilCore.findContainingDirectory(fileOrParent, Project.DIRECTORY_STORE_FOLDER) != null;
+  @JvmStatic
+  fun isProjectOrWorkspaceFile(fileOrParent: VirtualFile, fileType: FileType?): Boolean {
+    return fileType is InternalFileType ||
+           VfsUtilCore.findContainingDirectory(fileOrParent, Project.DIRECTORY_STORE_FOLDER) != null
   }
 
   /**
    * For internal usage only.
-   *
-   * @deprecated Please use {@link com.intellij.psi.PsiElement#getProject()} or {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()} instead.
    */
-  @Deprecated
+  @JvmStatic
   @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
-  public static @Nullable Project theOnlyOpenProject() {
-    return theOnlyProject;
+  @Deprecated(
+    "Please use {@link com.intellij.psi.PsiElement#getProject()} or {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()} instead.")
+  fun theOnlyOpenProject(): Project? {
+    return theOnlyProject
   }
 
   /**
    * Do not use to avoid internal data structures corruption
    */
   @ApiStatus.Internal
-  public static void updateInternalTheOnlyProjectFieldTemporarily(Project project) {
-    theOnlyProject = project;
+  fun updateInternalTheOnlyProjectFieldTemporarily(project: Project?) {
+    theOnlyProject = project
   }
 }
