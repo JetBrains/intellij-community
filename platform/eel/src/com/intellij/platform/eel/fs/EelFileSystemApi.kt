@@ -609,9 +609,40 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   /**
    * Notice that the first argument is the target of the symlink,
    * like in `ln -s` tool, like in `symlink(2)` from LibC, but opposite to `java.nio.file.spi.FileSystemProvider.createSymbolicLink`.
+   *
+   * Here we provide a way to create symlinks to either relative or absolute location.
    */
   @CheckReturnValue
-  suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath): EelResult<Unit, CreateSymbolicLinkError>
+  suspend fun createSymbolicLink(target: SymbolicLinkTarget, linkPath: EelPath): EelResult<Unit, CreateSymbolicLinkError>
+
+  sealed interface SymbolicLinkTarget {
+    companion object {
+      @JvmStatic
+      fun Absolute(path: EelPath): Absolute {
+        return AbsoluteSymbolicLinkTarget(path)
+      }
+
+      @JvmStatic
+      fun Relative(parts: List<String>): Relative {
+        return RelativeSymbolicLinkTarget(parts)
+      }
+    }
+
+    /**
+     * The created link will be pointing to some fixed location on an environment.
+     */
+    interface Absolute : SymbolicLinkTarget {
+      val path: EelPath
+    }
+
+    /**
+     * The created link will be pointing to a location relative to the path of the **link**.
+     * Such symbolic links may be safe to copy even between different machines.
+     */
+    interface Relative : SymbolicLinkTarget {
+      val reference: List<String>
+    }
+  }
 
   sealed interface CreateSymbolicLinkError : EelFsError {
     /**

@@ -544,18 +544,20 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       throw UnsupportedOperationException("Attributes are not supported for symbolic links")
     }
 
-    // todo: relative symlinks
     val fs = ensureAbsoluteIjentNioPath(link).nioFs
-    ensureAbsoluteIjentNioPath(target)
-    val linkPath = link.eelPath
+    ensureIjentNioPath(target)
+    val eelTarget = when (target) {
+      is AbsoluteIjentNioPath -> EelFileSystemPosixApi.SymbolicLinkTarget.Absolute(target.eelPath)
+      is RelativeIjentNioPath -> EelFileSystemPosixApi.SymbolicLinkTarget.Relative(target.segments)
+    }
 
-    require(ensureIjentNioPath(target).nioFs == fs) {
+    require(target.nioFs == fs) {
       "Can't create symlinks between different file systems"
     }
 
     fsBlocking {
       when (val ijentFs = fs.ijentFs) {
-        is IjentFileSystemPosixApi -> ijentFs.createSymbolicLink(target.eelPath, linkPath).getOrThrowFileSystemException()
+        is IjentFileSystemPosixApi -> ijentFs.createSymbolicLink(eelTarget, link.eelPath).getOrThrowFileSystemException()
         is IjentFileSystemWindowsApi -> TODO("Symbolic links are not supported on Windows")
       }
     }

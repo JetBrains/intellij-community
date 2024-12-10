@@ -382,11 +382,16 @@ abstract class PosixNioBasedEelFileSystemApi(
     }
 
   override suspend fun createSymbolicLink(
-    target: EelPath,
+    target: EelFileSystemPosixApi.SymbolicLinkTarget,
     linkPath: EelPath,
   ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
     wrapIntoEelResult {
-      Files.createSymbolicLink(linkPath.toNioPath(), target.toNioPath())
+      val targetPath = when (target) {
+        is EelFileSystemPosixApi.SymbolicLinkTarget.Absolute -> target.path.toNioPath()
+        is EelFileSystemPosixApi.SymbolicLinkTarget.Relative -> Path.of(target.reference.first(), *target.reference.drop(1).toTypedArray())
+      }
+
+      Files.createSymbolicLink(linkPath.toNioPath(), targetPath)
     }
 
   override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {

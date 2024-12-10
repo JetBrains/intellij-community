@@ -223,7 +223,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   }
 
   override suspend fun createSymbolicLink(
-    target: EelPath,
+    target: EelFileSystemPosixApi.SymbolicLinkTarget,
     linkPath: EelPath,
   ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
     holder.withDelegateRetrying {

@@ -89,3 +89,6 @@ internal data class CreateTemporaryDirectoryOptionsImpl(
     return copy()
   }
 }
+
+internal data class AbsoluteSymbolicLinkTarget(override val path: EelPath) : EelFileSystemPosixApi.SymbolicLinkTarget.Absolute
+internal data class RelativeSymbolicLinkTarget(override val reference: List<String>) : EelFileSystemPosixApi.SymbolicLinkTarget.Relative
