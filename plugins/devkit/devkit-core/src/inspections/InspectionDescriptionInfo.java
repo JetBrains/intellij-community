@@ -10,14 +10,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastModificationTracker;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -33,9 +36,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtensionDeclarations;
 
+/**
+ * Resolving inspection description files does (currently) not work via {@link DescriptionTypeResolver} logic,
+ * as it has some additional complexity and performs searches in additional scopes.
+ */
 public final class InspectionDescriptionInfo {
 
   private final String myFilename;
@@ -98,7 +106,7 @@ public final class InspectionDescriptionInfo {
     // Try search in narrow scopes first
     Project project = module.getProject();
     Set<DomFileElement<IdeaPlugin>> processedFileElements = new HashSet<>();
-    for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
+    for (GlobalSearchScope scope : searchScopes(module)) {
       List<DomFileElement<IdeaPlugin>> fileElements = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
       fileElements.removeAll(processedFileElements);
       List<DomFileElement<IdeaPlugin>> filteredFileElements =
@@ -129,7 +137,7 @@ public final class InspectionDescriptionInfo {
     if (filename == null) return null;
 
     String nameWithSuffix = filename + ".html";
-    return DescriptionCheckerUtil.allDescriptionDirs(module, DescriptionType.INSPECTION)
+    return allDescriptionDirs(module)
       .map(directory -> directory.findFile(nameWithSuffix))
       .map(directory -> directory != null && directory.getName().equals(nameWithSuffix) ? directory : null)
       .nonNull().findFirst().orElse(null);
@@ -167,5 +175,38 @@ public final class InspectionDescriptionInfo {
     }
 
     return UastUtils.evaluateString(expression);
+  }
+
+  public static StreamEx<GlobalSearchScope> searchScopes(@NotNull Module module) {
+    // Try search in narrow scopes first
+    return StreamEx.<Supplier<GlobalSearchScope>>of(
+        () -> GlobalSearchScope.EMPTY_SCOPE,
+        () -> module.getModuleScope(false),
+        module::getModuleWithDependenciesScope,
+        () -> {
+          GlobalSearchScope[] scopes = ContainerUtil.map2Array(ModuleUtilCore.getAllDependentModules(module),
+                                                               GlobalSearchScope.EMPTY_ARRAY,
+                                                               Module::getModuleContentWithDependenciesScope);
+          return scopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(scopes);
+        },
+        () -> GlobalSearchScopesCore.projectProductionScope(module.getProject())
+      ).takeWhile(supplier -> !module.isDisposed())
+      .map(Supplier::get)
+      .pairMap((prev, next) -> next.intersectWith(GlobalSearchScope.notScope(prev)));
+  }
+
+  /**
+   * Unlike {@link DescriptionType#getDescriptionFolderDirs(Module)} this includes dirs in dependent modules and even project dirs,
+   * ordered by search scopes (first dirs in the current module, then dirs in module dependencies, then dirs in
+   * dependent modules, finally other project dirs).
+   *
+   * @param module module to search description directories for
+   * @return lazily populated stream of candidate directories
+   */
+  public static StreamEx<PsiDirectory> allDescriptionDirs(@NotNull Module module) {
+    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(module.getProject());
+    final PsiPackage psiPackage = javaPsiFacade.findPackage(DescriptionType.INSPECTION.getDescriptionFolder());
+    if (psiPackage == null) return StreamEx.empty();
+    return searchScopes(module).flatMap(scope -> StreamEx.of(psiPackage.getDirectories(scope))).distinct();
   }
 }

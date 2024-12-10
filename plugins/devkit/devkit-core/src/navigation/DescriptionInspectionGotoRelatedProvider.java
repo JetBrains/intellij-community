@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -23,7 +23,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -77,7 +76,7 @@ final class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider
       possibleImplementationName += INSPECTION_CLASS_NAME_SUFFIX;
     }
     Set<PsiClass> checkedPossibleImplementation = new HashSet<>();
-    for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
+    for (GlobalSearchScope scope : InspectionDescriptionInfo.searchScopes(module)) {
       PsiClass[] possibleImplementations = psiShortNamesCache.getClassesByName(possibleImplementationName, scope);
       for (PsiClass possibleImplementation : possibleImplementations) {
         if (isTargetInspectionPsiClass(possibleImplementation, descriptionFile, module)) {
@@ -87,7 +86,7 @@ final class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider
       }
     }
 
-    for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
+    for (GlobalSearchScope scope : InspectionDescriptionInfo.searchScopes(module)) {
       Query<PsiClass> query = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
       Ref<List<GotoRelatedItem>> resultItems = new Ref<>();
       query.forEach(psiClass -> {
