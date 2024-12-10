@@ -72,6 +72,7 @@ import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 import static com.intellij.util.concurrency.Propagation.isContextAwareComputation;
+import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
 
 @ApiStatus.Internal
 public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx, ReadActionListener, WriteActionListener {
@@ -256,7 +257,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
-    invokeLater(runnable, getDefaultModalityState(), expired);
+    ModalityState state = getDefaultModalityState();
+    if (getReportInvokeLaterWithoutModality() && state == ModalityState.any()) {
+      getLogger().error("Application.invokeLater() was called without modality state and default modality state is ANY");
+    }
+    invokeLater(runnable, state, expired);
   }
 
   @Override
