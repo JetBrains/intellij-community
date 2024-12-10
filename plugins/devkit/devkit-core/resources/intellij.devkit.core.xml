@@ -793,6 +793,10 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
+    <action id="NewRemoteDevModule" class="org.jetbrains.idea.devkit.actions.NewRemoteDevModuleAction" icon="AllIcons.Nodes.Module">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+
     <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" id="GenerateExternalization">
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
