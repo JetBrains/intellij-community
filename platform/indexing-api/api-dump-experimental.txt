@@ -80,6 +80,12 @@ f:com.intellij.psi.search.IndexPattern
 - *:getWordToHighlight():java.lang.String
 a:com.intellij.psi.stubs.StubIndex
 - *a:getMaxContainingFileCount(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):I
+*:com.intellij.psi.stubs.StubRegistry
+- a:registerLightStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.LightStubElementFactory):V
+- a:registerStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubElementFactory):V
+- a:registerStubSerializer(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.ObjectStubSerializer):V
+*:com.intellij.psi.stubs.StubRegistryExtension
+- a:register(com.intellij.psi.stubs.StubRegistry):V
 *Fa:com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - com.intellij.openapi.project.RootsChangeRescanningInfo
 - a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo

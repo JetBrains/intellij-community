@@ -1,3 +1,8 @@
+c:com.intellij.extapi.psi.StubBasedPsiElementBase
+- com.intellij.extapi.psi.ASTDelegatePsiElement
+- *:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
+- *pf:getElementTypeImpl():com.intellij.psi.tree.IElementType
+- *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 *:com.intellij.ide.plugins.PluginEnabler
 - sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
 - a:disable(java.util.Collection):Z
@@ -43,9 +48,23 @@ f:com.intellij.psi.impl.PsiModificationTrackerImpl
 - *:incLanguageModificationCount(com.intellij.lang.Language):V
 f:com.intellij.psi.impl.file.PsiFileImplUtil
 - *s:setNonPhysicalFileDeleteHandler(com.intellij.psi.PsiFile,java.util.function.Consumer):V
+a:com.intellij.psi.impl.source.PsiFileImpl
+- com.intellij.psi.impl.ElementBase
+- com.intellij.openapi.ui.Queryable
+- com.intellij.psi.impl.PsiFileEx
+- com.intellij.psi.impl.source.PsiFileWithStubSupport
+- java.lang.Cloneable
+- *:getStubDescriptor():com.intellij.psi.stubs.LanguageStubDescriptor
 c:com.intellij.psi.impl.source.resolve.ResolveCache
 - com.intellij.openapi.Disposable
 - *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 - *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 *:com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
 - a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection
+c:com.intellij.psi.stubs.PsiFileStubImpl
+- com.intellij.psi.stubs.StubBase
+- com.intellij.psi.stubs.PsiFileStub
+- *:getElementType():com.intellij.psi.tree.IElementType
+- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+f:com.intellij.psi.stubs.StubTreeBuilder
+- *s:getStubbedRootDescriptors(com.intellij.psi.FileViewProvider):java.util.List

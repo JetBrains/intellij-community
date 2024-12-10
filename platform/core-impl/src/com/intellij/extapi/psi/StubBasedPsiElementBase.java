@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -74,6 +74,12 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   private final IElementType myElementType;
 
   public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType<?,?> nodeType) {
+    mySubstrateRef = new SubstrateRef.StubRef(stub);
+    myElementType = nodeType;
+  }
+
+  @ApiStatus.Experimental
+  public StubBasedPsiElementBase(@NotNull T stub, @NotNull IElementType nodeType) {
     mySubstrateRef = new SubstrateRef.StubRef(stub);
     myElementType = nodeType;
   }
@@ -316,11 +322,28 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return SourceTreeToPsiMap.treeElementToPsi(getNode().getTreeParent());
   }
 
+  /**
+   * @deprecated implement and use {{@link com.intellij.psi.StubBasedPsiElement#getIElementType()}} instead.
+   *             Use {@link #getElementTypeImpl)} to access {@link #myElementType}.
+   *
+   */
+  @Deprecated
   public @NotNull IStubElementType getElementType() {
     if (!(myElementType instanceof IStubElementType)) {
-      throw new ClassCastException("Not a stub type: " + myElementType + " in " + getClass());
+      throw new ClassCastException("Don't use #getElementType method. It is deprecated.\n" +
+                                   "Implement and use #getIElementType with the help of #getElementTypeImpl" +
+                                   "Not a stub type: " + myElementType + " in " + getClass());
     }
     return (IStubElementType<?, ?>)myElementType;
+  }
+
+  /**
+   * Can't be renamed to `getIElementType`. It breaks compilation of this class's inheritors written in Kotlin.
+   */
+  @SuppressWarnings("unused")
+  @ApiStatus.Experimental
+  protected final @NotNull IElementType getElementTypeImpl() {
+    return myElementType;
   }
 
   /**
@@ -349,23 +372,32 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * @return a child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  public @Nullable <Psi extends PsiElement> Psi getStubOrPsiChild(@NotNull IStubElementType<? extends StubElement, Psi> elementType) {
+  @ApiStatus.Experimental
+  public final @Nullable PsiElement getStubOrPsiChild(@NotNull IElementType elementType) {
     T stub = getGreenStub();
     if (stub != null) {
-      //noinspection unchecked
-      final StubElement<Psi> element = stub.findChildStubByType(elementType);
+      StubElement<?> element = stub.findChildStubByElementType(elementType);
       if (element != null) {
         return element.getPsi();
       }
     }
     else {
-      final ASTNode childNode = getNode().findChildByType(elementType);
+      ASTNode childNode = getNode().findChildByType(elementType);
       if (childNode != null) {
-        //noinspection unchecked
-        return (Psi)childNode.getPsi();
+        return childNode.getPsi();
       }
     }
     return null;
+  }
+
+  /**
+   * @return a child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @deprecated use {@link #getStubOrPsiChild(IElementType)} instead
+   */
+  @Deprecated
+  public @Nullable <Psi extends PsiElement> Psi getStubOrPsiChild(@NotNull IStubElementType<? extends StubElement, Psi> elementType) {
+    //noinspection unchecked
+    return (Psi)getStubOrPsiChild((IElementType)elementType);
   }
 
   /**

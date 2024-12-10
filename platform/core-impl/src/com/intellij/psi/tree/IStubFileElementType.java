@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.tree;
 
@@ -8,11 +8,17 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * OBSOLESCENCE NOTE:
+ * Use {@link com.intellij.psi.stubs.LanguageStubDefinition}, {@link com.intellij.psi.stubs.StubElementFactory}, {@link com.intellij.psi.stubs.LightStubElementFactory} instead
+ */
+@ApiStatus.Obsolete
 public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {
   public IStubFileElementType(Language language) {
     super(language);
@@ -58,7 +64,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
    */
   @Override
   public @NonNls @NotNull String getExternalId() {
-    return DEFAULT_EXTERNAL_ID;
+    return StubSerializerId.DEFAULT_EXTERNAL_ID;
   }
 
   @Override

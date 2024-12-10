@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
@@ -23,10 +23,8 @@ import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,8 +123,10 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
         element.isPhysical() &&
         (element instanceof PsiCompiledElement || canHaveStub(containingFile))) {
       StubBasedPsiElement<?> elt = (StubBasedPsiElement<?>)element;
-      IStubElementType<?,?> elementType = elt.getElementType();
-      if (elt.getStub() != null || elementType.shouldCreateStub(element.getNode())) {
+      IElementType elementType = elt.getIElementType();
+      StubElementFactory<?, ?> factory = StubElementRegistryService.getInstance().getStubFactory(elementType);
+      if (factory == null) return null;
+      if (elt.getStub() != null || factory.shouldCreateStub(element.getNode())) {
         int index = calcStubIndex((StubBasedPsiElement<?>)element);
         if (index != -1) {
           return new StubIndexReference(containingFile, index, containingFile.getLanguage(), elementType);
@@ -141,8 +141,8 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
     VirtualFile vFile = file.getVirtualFile();
 
-    IStubFileElementType<?> elementType = ((PsiFileImpl)file).getElementTypeForStubBuilder();
-    return elementType != null && vFile != null && elementType.shouldBuildStubFor(vFile);
+    LanguageStubDescriptor stubDescriptor = ((PsiFileImpl)file).getStubDescriptor();
+    return stubDescriptor != null && vFile != null && stubDescriptor.getStubDefinition().shouldBuildStubFor(vFile);
   }
 
   public static int calcStubIndex(@NotNull StubBasedPsiElement<?> psi) {
@@ -404,7 +404,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
   public static @Nullable PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                           int index,
-                                                          @NotNull IStubElementType<?,?> elementType,
+                                                          @NotNull IElementType elementType,
                                                           boolean throwIfNull) {
     if (fileImpl == null) {
       if (throwIfNull) throw new AssertionError("Null file");
@@ -420,8 +420,8 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return null;
     }
 
-    if (psi.getElementType() != elementType) {
-      if (throwIfNull) throw new AssertionError("Element type mismatch: " + psi.getElementType() + "!=" + elementType);
+    if (psi.getIElementType() != elementType) {
+      if (throwIfNull) throw new AssertionError("Element type mismatch: " + psi.getIElementType() + "!=" + elementType);
       return null;
     }
 
@@ -433,9 +433,12 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
     private final @NotNull Project myProject;
     private final int myIndex;
     private final @NotNull Language myLanguage;
-    private final @NotNull IStubElementType<?,?> myElementType;
+    private final @NotNull IElementType myElementType;
 
-    private StubIndexReference(@NotNull PsiFile file, int index, @NotNull Language language, @NotNull IStubElementType<?,?> elementType) {
+    private StubIndexReference(@NotNull PsiFile file,
+                               int index,
+                               @NotNull Language language,
+                               @NotNull IElementType elementType) {
       myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();

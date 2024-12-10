@@ -1902,7 +1902,7 @@ a:com.intellij.psi.PsiAnchor
 - a:getEndOffset():I
 - a:getFile():com.intellij.psi.PsiFile
 - a:getStartOffset():I
-- s:restoreFromStubIndex(com.intellij.psi.impl.source.PsiFileWithStubSupport,I,com.intellij.psi.stubs.IStubElementType,Z):com.intellij.psi.PsiElement
+- s:restoreFromStubIndex(com.intellij.psi.impl.source.PsiFileWithStubSupport,I,com.intellij.psi.tree.IElementType,Z):com.intellij.psi.PsiElement
 - a:retrieve():com.intellij.psi.PsiElement
 - retrieveOrThrow():com.intellij.psi.PsiElement
 c:com.intellij.psi.PsiAnchor$HardReference

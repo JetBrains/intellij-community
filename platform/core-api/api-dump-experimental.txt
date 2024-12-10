@@ -387,12 +387,61 @@ com.intellij.psi.PsiElement
 com.intellij.psi.SmartPsiElementPointer
 - com.intellij.model.Pointer
 - *:dereference():com.intellij.psi.PsiElement
+com.intellij.psi.StubBasedPsiElement
+- com.intellij.psi.PsiElement
+- *:getIElementType():com.intellij.psi.tree.IElementType
 com.intellij.psi.SyntheticElement
 - *:findSameElementInCopy(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 f:com.intellij.psi.search.PsiSearchScopeUtil
 - *s:restrictScopeToFileLanguage(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope,com.intellij.lang.LanguageMatcher):com.intellij.psi.search.SearchScope
 com.intellij.psi.stubs.BinaryFileStubBuilder
 - *:getFileFilter():com.intellij.openapi.vfs.VirtualFileFilter
+*:com.intellij.psi.stubs.LanguageStubDefinition
+- a:getBuilder():com.intellij.psi.StubBuilder
+- a:getStubVersion():I
+- shouldBuildStubFor(com.intellij.openapi.vfs.VirtualFile):Z
+*:com.intellij.psi.stubs.LanguageStubDescriptor
+- a:getFileElementSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+- a:getFileElementType():com.intellij.psi.tree.IFileElementType
+- a:getLanguage():com.intellij.lang.Language
+- a:getStubDefinition():com.intellij.psi.stubs.LanguageStubDefinition
+*:com.intellij.psi.stubs.LightLanguageStubDefinition
+- com.intellij.psi.stubs.LanguageStubDefinition
+- a:parseContentsLight(com.intellij.lang.ASTNode):com.intellij.util.diff.FlyweightCapableTreeStructure
+*:com.intellij.psi.stubs.LightStubElementFactory
+- com.intellij.psi.stubs.StubElementFactory
+- a:createStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
+- shouldCreateStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):Z
+com.intellij.psi.stubs.PsiFileStub
+- com.intellij.openapi.util.UserDataHolder
+- com.intellij.psi.stubs.StubElement
+- *:getFileElementType():com.intellij.psi.tree.IElementType
+com.intellij.psi.stubs.Stub
+- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+a:com.intellij.psi.stubs.StubBase
+- com.intellij.psi.stubs.ObjectStubBase
+- com.intellij.psi.stubs.StubElement
+- *p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
+- *f:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
+- *:getElementType():com.intellij.psi.tree.IElementType
+- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+com.intellij.psi.stubs.StubElement
+- com.intellij.psi.stubs.Stub
+- *:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
+- *a:getElementType():com.intellij.psi.tree.IElementType
+*:com.intellij.psi.stubs.StubElementFactory
+- a:createPsi(com.intellij.psi.stubs.StubElement):com.intellij.psi.PsiElement
+- a:createStub(com.intellij.psi.PsiElement,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
+- shouldCreateStub(com.intellij.lang.ASTNode):Z
+*:com.intellij.psi.stubs.StubElementRegistryService
+- *sf:Companion:com.intellij.psi.stubs.StubElementRegistryService$Companion
+- s:getInstance():com.intellij.psi.stubs.StubElementRegistryService
+- a:getLightStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.LightStubElementFactory
+- a:getStubDescriptor(com.intellij.lang.Language):com.intellij.psi.stubs.LanguageStubDescriptor
+- a:getStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElementFactory
+- a:getStubSerializer(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.ObjectStubSerializer
+*f:com.intellij.psi.stubs.StubElementRegistryService$Companion
+- f:getInstance():com.intellij.psi.stubs.StubElementRegistryService
 com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 - com.intellij.psi.FileViewProvider
 - *:getContentElementType(com.intellij.lang.Language):com.intellij.psi.tree.IElementType
