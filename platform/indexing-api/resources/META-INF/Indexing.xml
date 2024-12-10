@@ -22,9 +22,21 @@
     </extensionPoint>
     <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
+
+    <extensionPoint name="stubElementRegistryExtension"
+                    interface="com.intellij.psi.stubs.StubRegistryExtension"
+                    dynamic="true"/>
+
+    <extensionPoint name="languageStubDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.stubs.LanguageStubDefinition"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
+                        serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"
+                        overrides="true"/>
+
     <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 
     <fileBasedIndexLayout id="in-memory"

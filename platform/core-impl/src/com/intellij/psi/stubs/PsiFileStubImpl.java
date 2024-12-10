@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -12,6 +12,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
@@ -59,6 +60,18 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     return null;
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public IElementType getElementType() {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public ObjectStubSerializer<?, ? extends Stub> getStubSerializer() {
+    return null;
+  }
+
   @Override
   public @NotNull IStubFileElementType getType() {
     return TYPE;
@@ -79,9 +92,9 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
 
     StubTree baseTree = getOrCalcStubTree(stubBindingRoot);
     if (baseTree != null) {
-      List<PsiFileStub> roots = new SmartList<>(baseTree.getRoot());
-      List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = StubTreeBuilder.getStubbedRoots(viewProvider);
-      for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
+      List<PsiFileStub<?>> roots = new SmartList<>(baseTree.getRoot());
+      List<Pair<LanguageStubDescriptor, PsiFile>> stubbedRoots = StubTreeBuilder.getStubbedRootDescriptors(viewProvider);
+      for (Pair<LanguageStubDescriptor, PsiFile> stubbedRoot : stubbedRoots) {
         if (stubbedRoot.second == stubBindingRoot) continue;
         StubTree secondaryStubTree = getOrCalcStubTree(stubbedRoot.second);
         if (secondaryStubTree != null) {
