@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RetryProviderTest {
   private final Logger logger = Logger.getInstance(RetryProviderTest.class);
-  private final Retry retryDisabled = disabled();
+  private static final Retry retryDisabled = disabled();
   private final Retry retryWithExpBackOff = withExponentialBackOff(1000, 5000, 5);
 
   @Test
