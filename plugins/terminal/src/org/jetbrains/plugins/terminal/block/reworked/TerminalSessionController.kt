@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -17,6 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 internal class TerminalSessionController(
   private val model: TerminalModel,
+  private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
 ) {
   fun handleEvents(channel: ReceiveChannel<List<TerminalOutputEvent>>) {
@@ -45,7 +47,10 @@ internal class TerminalSessionController(
     when (event) {
       is TerminalContentUpdatedEvent -> updateEditorContent(event)
       is TerminalCursorPositionChangedEvent -> model.updateCaretPosition(event.logicalLineIndex, event.columnIndex)
-      is TerminalStateChangedEvent -> TODO()
+      is TerminalStateChangedEvent -> {
+        val state = event.state.toTerminalState(settings.cursorShape)
+        model.updateTerminalState(state)
+      }
     }
   }
 

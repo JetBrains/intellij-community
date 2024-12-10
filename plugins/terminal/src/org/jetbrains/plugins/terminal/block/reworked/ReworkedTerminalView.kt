@@ -73,8 +73,8 @@ internal class ReworkedTerminalView(
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
 
-    model = TerminalModel(editor)
-    controller = TerminalSessionController(model, coroutineScope.childScope("TerminalSessionController"))
+    model = TerminalModel(editor, settings)
+    controller = TerminalSessionController(model, settings, coroutineScope.childScope("TerminalSessionController"))
 
     TerminalCaretPainter(model, coroutineScope.childScope("TerminalCaretPainter"))
   }
