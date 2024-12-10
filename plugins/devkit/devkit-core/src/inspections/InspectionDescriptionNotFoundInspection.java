@@ -19,8 +19,8 @@ public final class InspectionDescriptionNotFoundInspection extends DescriptionNo
   }
 
   @Override
-  protected @InspectionMessage @NotNull String getHasNotDescriptionError(Module module,
-                                                                         PsiClass psiClass) {
+  protected @InspectionMessage @NotNull String getHasNotDescriptionError(@NotNull Module module,
+                                                                         @NotNull PsiClass psiClass) {
     final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
     final PsiMethod shortNameMethod = info.getShortNameMethod();
     final String methodName = shortNameMethod == null ? "" : " [" + shortNameMethod.getName() + "()]";

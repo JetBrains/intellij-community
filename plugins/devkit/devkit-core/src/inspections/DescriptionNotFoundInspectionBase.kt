@@ -35,7 +35,7 @@ internal abstract class DescriptionNotFoundInspectionBase(private val descriptio
     }
   }
 
-  protected abstract fun getHasNotDescriptionError(module: Module?, psiClass: PsiClass?): @InspectionMessage String
+  protected abstract fun getHasNotDescriptionError(module: Module, psiClass: PsiClass): @InspectionMessage String
 
   protected abstract fun getHasNotBeforeAfterError(): @InspectionMessage String
 }

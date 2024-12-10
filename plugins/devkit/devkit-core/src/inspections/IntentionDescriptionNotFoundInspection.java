@@ -14,7 +14,7 @@ final class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundIn
 
   @Override
   @NotNull
-  protected String getHasNotDescriptionError(Module module, PsiClass psiClass) {
+  protected String getHasNotDescriptionError(@NotNull Module module, @NotNull PsiClass psiClass) {
     return DevKitBundle.message("inspections.intention.description.not.found");
   }
 

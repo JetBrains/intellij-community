@@ -14,7 +14,7 @@ final class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNotF
 
   @NotNull
   @Override
-  protected String getHasNotDescriptionError(Module module, PsiClass psiClass) {
+  protected String getHasNotDescriptionError(@NotNull Module module, @NotNull PsiClass psiClass) {
     return DevKitBundle.message("inspections.postfix.description.not.found");
   }
 
