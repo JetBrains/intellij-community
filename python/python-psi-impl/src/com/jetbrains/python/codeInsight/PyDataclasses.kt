@@ -566,7 +566,7 @@ private fun resolveDataclassParameters(
         
         if (dataclassTransformStub != null) {
           val resolvedFieldSpecifiers = dataclassTransformStub.fieldSpecifiers
-            .flatMap { PyResolveUtil.resolveQualifiedNameInScope(it, ScopeUtil.getScopeOwner(pyClass)!!, context) }
+            .flatMap { PyResolveUtil.resolveQualifiedNameInScope(it, dataclassTransformDecorator.containingFile as ScopeOwner, context) }
             .filterIsInstance<PyQualifiedNameOwner>()
             .mapNotNull { it.qualifiedName }
             .map { QualifiedName.fromDottedString(it) }
