@@ -118,7 +118,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     if (memberPackageName == null) {
       return null;
     }
-    ImportUtils.OnDemandImportConflicts conflicts = ImportUtils.findOnDemandImportConflict(memberQualifiedName, myFile);
+    ImportUtils.OnDemandImportConflict conflicts = ImportUtils.findOnDemandImportConflict(memberQualifiedName, myFile);
     for (PsiImportStatementBase importStatement : importStatements) {
       if (!importStatement.isOnDemand()) {
         final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
@@ -133,12 +133,12 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
         }
       }
       else {
-        if (importStatement instanceof PsiImportModuleStatement && conflicts.conflictForModules()) {
+        if (importStatement instanceof PsiImportModuleStatement && conflicts.hasConflictForModules()) {
           continue;
         }
         if (!(importStatement instanceof PsiImportModuleStatement) &&
             importStatement.isOnDemand() &&
-            conflicts.conflictForOnDemand()) {
+            conflicts.hasConflictForOnDemand()) {
           continue;
         }
         if (importStatement instanceof PsiImportModuleStatement psiImportModuleStatement &&

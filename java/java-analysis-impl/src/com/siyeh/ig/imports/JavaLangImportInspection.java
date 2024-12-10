@@ -80,7 +80,7 @@ public final class JavaLangImportInspection extends BaseInspection implements Cl
         if (!HardcodedMethodConstants.JAVA_LANG.equals(parentName)) {
           return;
         }
-        if (ImportUtils.findOnDemandImportConflict(text, statement).conflictForOnDemand()) {
+        if (ImportUtils.findOnDemandImportConflict(text, statement).hasConflictForOnDemand()) {
           return;
         }
         registerError(statement);
