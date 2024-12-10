@@ -138,13 +138,15 @@ public class RemoteConnectionBuilder {
   }
 
   private static void addRtJar(@NotNull PathsList pathsList) {
-    if (PluginManagerCore.isRunningFromSources()) {
-      String path = DebuggerUtilsImpl.getIdeaRtPath();
-      pathsList.remove(JavaSdkUtil.getIdeaRtJarPath());
-      pathsList.addTail(path);
-    }
-    else {
-      JavaSdkUtil.addRtJar(pathsList);
+    if (Registry.is("debugger.add.rt.jar", true)) {
+      if (PluginManagerCore.isRunningFromSources()) {
+        String path = DebuggerUtilsImpl.getIdeaRtPath();
+        pathsList.remove(JavaSdkUtil.getIdeaRtJarPath());
+        pathsList.addTail(path);
+      }
+      else {
+        JavaSdkUtil.addRtJar(pathsList);
+      }
     }
   }
 
