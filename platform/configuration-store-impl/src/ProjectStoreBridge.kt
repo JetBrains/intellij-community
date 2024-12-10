@@ -55,7 +55,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
-import kotlin.Throws
 import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
@@ -431,7 +430,7 @@ private fun getStorageSpec(filePath: String, project: Project): Storage {
   val fileName = PathUtil.getFileName(filePath)
   val parentPath = PathUtil.getParentPath(filePath)
   val parentFileName = PathUtil.getFileName(parentPath)
-  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == ".idea") {
+  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == Project.DIRECTORY_STORE_FOLDER) {
     collapsedPath = "\$PROJECT_FILE$"
     splitterClass = StateSplitterEx::class.java
   }
