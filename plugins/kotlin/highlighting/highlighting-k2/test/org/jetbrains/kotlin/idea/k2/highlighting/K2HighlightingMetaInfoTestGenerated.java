@@ -140,6 +140,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("JavaClassWithStaticStarImport.kt")
+        public void testJavaClassWithStaticStarImport() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaClassWithStaticStarImport.kt");
+        }
+
         @TestMetadata("javaFields.kt")
         public void testJavaFields() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaFields.kt");
