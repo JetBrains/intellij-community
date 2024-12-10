@@ -4,9 +4,9 @@ package com.intellij.execution.filters
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.NoStackTraceFoldingPanel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getParentOfType
-import com.intellij.unscramble.ThreadDumpPanel
 
 private const val STACK_TRACE_ELEMENT_PREFIX = "\tat "
 private const val ASYNC_STACK_TRACE_PREFIX = "\tat --- Async.Stack.Trace --- "
@@ -51,6 +51,5 @@ class StackTraceFolding : ConsoleFolding() {
   override fun isEnabledForConsole(consoleView: ConsoleView): Boolean =
     super.isEnabledForConsole(consoleView) &&
       enabled &&
-      // We want unfolded stack traces inside ThreadDumpPanel.
-      consoleView.component.getParentOfType<ThreadDumpPanel>() == null
+      consoleView.component.getParentOfType<NoStackTraceFoldingPanel>() == null
 }

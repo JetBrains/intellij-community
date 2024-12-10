@@ -1767,6 +1767,7 @@ com.intellij.execution.ui.ExecutionConsoleEx
 - com.intellij.execution.ui.ExecutionConsole
 - a:buildUi(com.intellij.execution.ui.RunnerLayoutUi):V
 - a:getExecutionConsoleId():java.lang.String
+com.intellij.execution.ui.NoStackTraceFoldingPanel
 com.intellij.execution.ui.ObservableConsoleView
 - a:addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
 com.intellij.execution.ui.ObservableConsoleView$ChangeListener
