@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -16,8 +16,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
@@ -281,9 +282,9 @@ public final class DebugUtil {
   public static void stubTreeToBuffer(@NotNull Stub node, @NotNull Appendable buffer, int indent) {
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
-      ObjectStubSerializer<?, ?> stubType = node.getStubType();
-      if (stubType != null) {
-        buffer.append(stubType.toString()).append(':');
+      Object presentable = getPresentable(node);
+      if (presentable != null) {
+        buffer.append(presentable.toString()).append(':');
       }
       buffer.append(node.toString()).append('\n');
 
@@ -295,6 +296,19 @@ public final class DebugUtil {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private static Object getPresentable(@NotNull Stub node) {
+    if (node instanceof PsiFileStubImpl) {
+      // psi file stubs historically don't have presentable
+      return null;
+    }
+
+    if (node instanceof StubElement) {
+      return ((StubElement<?>)node).getElementType();
+    }
+
+    return node.getStubSerializer();
   }
 
   private static void doCheckTreeStructure(@Nullable ASTNode anyElement) {

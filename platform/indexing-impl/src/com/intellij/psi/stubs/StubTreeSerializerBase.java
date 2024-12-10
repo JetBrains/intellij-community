@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -204,7 +204,8 @@ abstract class StubTreeSerializerBase<SerializationState> {
 
         allStarts.set(start);
 
-        addStub(parentIndex, index, start, (IElementType)serializer);
+        IElementType elementType = serializer2type(serializer);
+        addStub(parentIndex, index, start, elementType);
         if (!serializer.isAlwaysLeaf(root)) {
           deserializeChildren(index);
         }
@@ -225,9 +226,15 @@ abstract class StubTreeSerializerBase<SerializationState> {
       }
 
       void deserializeRoot() throws IOException, SerializerNotFoundException {
-        addStub(0, 0, 0, (IElementType)rootType);
+        addStub(0, 0, 0, serializer2type(rootType));
         deserializeChildren(0);
       }
+
+      private static @Nullable IElementType serializer2type(ObjectStubSerializer<?, ?> serializer) {
+        // todo IJPL-562 potentially slow call???
+        return StubElementRegistryServiceImpl.getInstanceImpl().getElementTypeBySerializer(serializer);
+      }
+
     }.deserializeRoot();
     byte[] serializedStubs = readByteArray(inputStream);
     stubList.setStubData(new LazyStubData(storage, parentsAndStarts, serializedStubs, allStarts));

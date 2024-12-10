@@ -24495,7 +24495,7 @@ f:com.intellij.psi.stubs.StubIndexImpl
 - getIndexModificationStamp(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project):J
 - *:getIndexModificationTracker(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project):com.intellij.openapi.util.ModificationTracker
 - getLogger():com.intellij.openapi.diagnostic.Logger
-- getPerFileElementTypeModificationTracker(com.intellij.psi.tree.StubFileElementType):com.intellij.openapi.util.ModificationTracker
+- getPerFileElementTypeModificationTracker(com.intellij.psi.tree.IFileElementType):com.intellij.openapi.util.ModificationTracker
 - getPerFileElementTypeModificationTrackerUpdateProcessor():com.intellij.psi.stubs.StubIndexEx$FileUpdateProcessor
 - getStubIndexModificationTracker(com.intellij.openapi.project.Project):com.intellij.openapi.util.ModificationTracker
 - initializationFailed(java.lang.Throwable):V
@@ -28332,9 +28332,12 @@ c:com.intellij.util.indexing.IndexInfrastructureVersionBase
 - equals(java.lang.Object):Z
 - s:fileBasedIndexVersions(java.util.List,com.intellij.util.Function):java.util.Map
 - s:getAllCompositeBinaryFileStubBuilderVersions():java.util.Map
+- *s:getAllLanguageStubDescriptors():java.util.List
 - s:getAllStubFileElementTypes():java.util.List
 - s:getBinaryFileStubBuilderVersion(com.intellij.psi.stubs.BinaryFileStubBuilder$CompositeBinaryFileStubBuilder):java.lang.String
+- *s:getStubFileElementBaseVersion(com.intellij.psi.stubs.LanguageStubDescriptor):I
 - s:getStubFileElementBaseVersion(com.intellij.psi.tree.IStubFileElementType):I
+- *s:getStubFileElementTypeKey(com.intellij.psi.stubs.LanguageStubDescriptor):java.lang.String
 - s:getStubFileElementTypeKey(com.intellij.psi.tree.IStubFileElementType):java.lang.String
 - hashCode():I
 - s:stubFileElementTypeVersions():java.util.Map
