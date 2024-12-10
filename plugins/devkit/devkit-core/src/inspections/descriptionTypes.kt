@@ -220,7 +220,7 @@ internal class InspectionDescriptionTypeResolver(module: Module, psiClass: PsiCl
   }
 
   override fun getDescriptionDirName(): String? {
-    return InspectionDescriptionInfo.create(module, psiClass).getFilename()
+    return InspectionDescriptionInfo.create(module, psiClass).filename
   }
 
   private fun isAnyPathMethodOverridden(psiClass: PsiClass?): Boolean {

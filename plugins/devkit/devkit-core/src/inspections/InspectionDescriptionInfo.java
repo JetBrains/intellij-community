@@ -18,6 +18,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastModificationTracker;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -38,19 +39,21 @@ import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtension
 public final class InspectionDescriptionInfo {
 
   private final String myFilename;
-  private final PsiMethod myMethod;
+  private final PsiMethod myShortNameMethod;
   private final PsiFile myDescriptionFile;
   private final boolean myShortNameInXml;
 
-  private InspectionDescriptionInfo(String filename, @Nullable PsiMethod method,
+  private InspectionDescriptionInfo(@NotNull String filename, @Nullable PsiMethod shortNameMethod,
                                     @Nullable PsiFile descriptionFile, boolean shortNameInXml) {
     myFilename = filename;
-    myMethod = method;
+    myShortNameMethod = shortNameMethod;
     myDescriptionFile = descriptionFile;
     myShortNameInXml = shortNameInXml;
   }
 
-  public static InspectionDescriptionInfo create(Module module, PsiClass psiClass) {
+  public static InspectionDescriptionInfo create(@NotNull Module module, @NotNull PsiClass psiClass) {
+    assert psiClass.getName() != null;
+
     PsiMethod getShortNameMethod = PsiUtil.findNearestMethod("getShortName", psiClass);
     if (getShortNameMethod != null &&
         Objects.requireNonNull(getShortNameMethod.getContainingClass()).hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -61,12 +64,9 @@ public final class InspectionDescriptionInfo {
     String filename = null;
     if (getShortNameMethod == null) {
       shortNameInXml = true;
-      String className = psiClass.getQualifiedName();
-      if (className != null) {
-        Extension extension = findExtension(psiClass);
-        if (extension != null) {
-          filename = extension.getXmlTag().getAttributeValue("shortName");
-        }
+      Extension extension = findExtension(psiClass);
+      if (extension != null) {
+        filename = extension.getXmlTag().getAttributeValue("shortName");
       }
     }
     else {
@@ -75,10 +75,7 @@ public final class InspectionDescriptionInfo {
     }
 
     if (filename == null) {
-      final String className = psiClass.getName();
-      if (className != null) {
-        filename = InspectionProfileEntry.getShortName(className);
-      }
+      filename = InspectionProfileEntry.getShortName(psiClass.getName());
     }
 
     PsiFile descriptionFile = resolveInspectionDescriptionFile(module, filename);
@@ -138,18 +135,14 @@ public final class InspectionDescriptionInfo {
       .nonNull().findFirst().orElse(null);
   }
 
-  public boolean isValid() {
-    return myFilename != null;
-  }
-
+  @NotNull
   public String getFilename() {
-    assert isValid();
     return myFilename;
   }
 
   @Nullable
   public PsiMethod getShortNameMethod() {
-    return myMethod;
+    return myShortNameMethod;
   }
 
   @Nullable
