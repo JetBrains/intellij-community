@@ -58,12 +58,12 @@ public class FileChooserDescriptor implements Cloneable {
   public FileChooserDescriptor(
     boolean chooseFiles,
     boolean chooseFolders,
-    @SuppressWarnings("unused") boolean chooseJars,
-    @SuppressWarnings("unused") boolean chooseJarsAsFiles,
+    boolean chooseJars,
+    boolean chooseJarsAsFiles,
     boolean chooseJarContents,
     boolean chooseMultiple
   ) {
-    this(chooseFiles, chooseFolders, chooseJarContents, chooseMultiple);
+    this(chooseFiles || chooseJars || chooseJarsAsFiles, chooseFolders, chooseJarContents, chooseMultiple);
   }
 
   FileChooserDescriptor(boolean chooseFiles, boolean chooseFolders, boolean chooseJarContents, boolean chooseMultiple) {
