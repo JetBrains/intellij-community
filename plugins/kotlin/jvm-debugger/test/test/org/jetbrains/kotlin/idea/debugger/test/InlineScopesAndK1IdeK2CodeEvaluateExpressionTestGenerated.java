@@ -2139,6 +2139,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFunSeveralOnLine.kt");
             }
 
+            @TestMetadata("privateAssignmentOperators.kt")
+            public void testPrivateAssignmentOperators() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateAssignmentOperators.kt");
+            }
+
             @TestMetadata("privateClass.kt")
             public void testPrivateClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateClass.kt");

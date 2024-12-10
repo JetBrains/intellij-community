@@ -2139,6 +2139,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/parametersOfInlineFunSeveralOnLine.kt");
             }
 
+            @TestMetadata("privateAssignmentOperators.kt")
+            public void testPrivateAssignmentOperators() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/privateAssignmentOperators.kt");
+            }
+
             @TestMetadata("privateClass.kt")
             public void testPrivateClass() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/privateClass.kt");

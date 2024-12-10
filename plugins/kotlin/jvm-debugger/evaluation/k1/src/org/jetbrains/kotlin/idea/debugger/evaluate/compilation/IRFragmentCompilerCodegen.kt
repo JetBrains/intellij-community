@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
@@ -35,33 +34,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
-class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
-    override fun configureCompiler(compilerConfiguration: CompilerConfiguration) {
-        // TODO: Do not understand the implications of DO_NOT_CLEAR_BINDING_CONTEXT,
-        //       but enforced by assertions in JvmIrCodegen
-        compilerConfiguration.put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
-    }
-
-    override fun configureGenerationState(
-        builder: GenerationState.Builder,
-        bindingContext: BindingContext,
-        compilerConfiguration: CompilerConfiguration,
-        classDescriptor: ClassDescriptor,
-        methodDescriptor: FunctionDescriptor,
-        parameterInfo: K1CodeFragmentParameterInfo
-    ) {
-        builder.codegenFactory(
-            codegenFactory(
-                bindingContext,
-                compilerConfiguration,
-                classDescriptor,
-                methodDescriptor,
-                parameterInfo
-            )
-        )
-    }
-
-    private fun codegenFactory(
+internal class IRFragmentCompilerCodegen {
+    fun codegenFactory(
         bindingContext: BindingContext,
         compilerConfiguration: CompilerConfiguration,
         classDescriptor: ClassDescriptor,
@@ -76,7 +50,6 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         )
         return JvmIrCodegenFactory(
             configuration = compilerConfiguration,
-            phaseConfig = null,
             externalMangler = mangler,
             externalSymbolTable = FragmentCompilerSymbolTableDecorator(
                 JvmIdSignatureDescriptor(mangler),
@@ -138,7 +111,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         )
     }
 
-    override fun computeFragmentParameters(
+    fun computeFragmentParameters(
         executionContext: ExecutionContext,
         codeFragment: KtCodeFragment,
         bindingContext: BindingContext
@@ -152,8 +125,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         }
     }
 
-    override fun extractResult(
-        methodDescriptor: FunctionDescriptor,
+    fun extractResult(
         parameterInfo: K1CodeFragmentParameterInfo,
         generationState: GenerationState
     ): CompilationResult {
@@ -205,5 +177,14 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
     }
 }
 
-internal val OutputFile.internalClassName: String
+private val OutputFile.internalClassName: String
     get() = computeInternalClassName(relativePath)
+
+private fun isCodeFragmentClassPath(path: String): Boolean {
+    return path == "$GENERATED_CLASS_NAME.class"
+           || (path.startsWith("$GENERATED_CLASS_NAME\$") && path.endsWith(".class"))
+}
+
+private fun List<OutputFile>.filterCodeFragmentClassFiles(): List<OutputFile> {
+    return filter { isCodeFragmentClassPath(it.relativePath) }
+}
