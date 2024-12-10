@@ -108,7 +108,12 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun checkLocks(dotGit: Path) {
     val rootLockEntries = dotGit.listDirectoryEntries("*.lock")
-    val headsLockEntries = (dotGit / "refs" / "heads").listDirectoryEntries("*.lock")
+    val refsHeads = dotGit / "refs" / "heads"
+    if (!refsHeads.exists()) {
+      LOG.warn("refs/heads is absent under ${dotGit}. Will reinitialize the repo from scratch")
+      return
+    }
+    val headsLockEntries = refsHeads.listDirectoryEntries("*.lock")
     for (lock in rootLockEntries + headsLockEntries) {
       if (System.currentTimeMillis() - lock.getLastModifiedTime().toMillis() > FIVE_SECONDS) {
         FileUtil.delete(lock)
