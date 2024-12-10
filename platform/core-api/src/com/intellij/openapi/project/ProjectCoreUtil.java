@@ -14,13 +14,18 @@ public final class ProjectCoreUtil {
   private static volatile Project theOnlyProject;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
-    // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
-    return isProjectOrWorkspaceFile(file, FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()));
+    return isProjectOrWorkspaceFile(file, file.getNameSequence());
   }
 
-  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
+  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile fileOrParent, @NotNull CharSequence fileName) {
+    // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
+    return isProjectOrWorkspaceFile(fileOrParent, fileType);
+  }
+
+  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile fileOrParent, @Nullable FileType fileType) {
     return fileType instanceof InternalFileType ||
-           VfsUtilCore.findContainingDirectory(file, Project.DIRECTORY_STORE_FOLDER) != null;
+           VfsUtilCore.findContainingDirectory(fileOrParent, Project.DIRECTORY_STORE_FOLDER) != null;
   }
 
   /**
