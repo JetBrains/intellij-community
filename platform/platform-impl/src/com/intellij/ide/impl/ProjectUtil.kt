@@ -714,9 +714,19 @@ object ProjectUtil {
     return project
   }
 
+  @Deprecated("Please use the suspending version to avoid FS access on an unintended thread", ReplaceWith("isValidProjectPath(file)"))
   @JvmStatic
-  fun isValidProjectPath(file: Path): Boolean {
+  @JvmName("isValidProjectPath")
+  fun isValidProjectPathBlocking(file: Path): Boolean {
     return ProjectUtilCore.isValidProjectPath(file)
+  }
+
+  @JvmName("isValidProjectPathAsync")
+  @JvmStatic
+  suspend fun isValidProjectPath(file: Path): Boolean {
+    return withContext(Dispatchers.IO) {
+      ProjectUtilCore.isValidProjectPath(file)
+    }
   }
 }
 

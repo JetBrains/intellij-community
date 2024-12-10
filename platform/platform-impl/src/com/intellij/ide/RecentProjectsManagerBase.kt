@@ -325,7 +325,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
     FUSProjectHotStartUpMeasurer.reportProjectPath(projectFile)
-    if (isValidProjectPath(projectFile)) {
+    if (ProjectUtil.isValidProjectPath(projectFile)) {
       val projectManager = ProjectManagerEx.getInstanceEx()
       projectManager.openProjects.firstOrNull { isSameProject(projectFile = projectFile, project = it) }?.let { project ->
         FUSProjectHotStartUpMeasurer.reportAlreadyOpenedProject()
@@ -505,7 +505,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       val toOpen = openPaths.mapNotNull { entry ->
         runCatching {
           val path = Path.of(entry.key)
-          if (isValidProjectPath(path)) Pair(path, entry.value) else null
+          if (ProjectUtil.isValidProjectPath(path)) Pair(path, entry.value) else null
         }.getOrLogException(LOG)
       }
 
@@ -549,12 +549,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   override fun suggestNewProjectLocation(): String = ProjectUtil.getBaseDir()
-
-  // open for Rider
-  @Suppress("MemberVisibilityCanBePrivate")
-  protected suspend fun isValidProjectPath(file: Path): Boolean {
-    return withContext(Dispatchers.IO) { ProjectUtil.isValidProjectPath(file) }
-  }
 
   // toOpen - no non-existent project paths and every info has a frame
   private suspend fun openMultiple(toOpen: List<Pair<Path, RecentProjectMetaInfo>>): Boolean {

@@ -191,6 +191,8 @@ f:com.intellij.ide.impl.OpenProjectTask
 f:com.intellij.ide.impl.OpenProjectTask$Companion
 - f:build():com.intellij.ide.impl.OpenProjectTask
 f:com.intellij.ide.impl.OpenProjectTaskBuilder
+- <init>():V
+- f:build(kotlin.jvm.functions.Function1):com.intellij.ide.impl.OpenProjectTask
 - f:getCallback():com.intellij.projectImport.ProjectOpenedCallback
 - f:getColumn():I
 - f:getForceOpenInNewFrame():Z

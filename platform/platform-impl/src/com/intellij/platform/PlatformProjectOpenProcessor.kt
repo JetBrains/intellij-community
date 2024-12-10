@@ -164,8 +164,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.Internal
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       if (Files.isDirectory(file)) {
-        return ProjectManagerEx.getInstanceEx().openProject(file,
-                                                            createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
+        val options = runUnderModalProgressIfIsEdt {
+          createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null)
+        }
+        return ProjectManagerEx.getInstanceEx().openProject(file, options)
       }
 
       var options = originalOptions
@@ -341,7 +343,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
      */
     @ApiStatus.Internal
     @JvmStatic
-    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
+    suspend fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
         runConfigurators = true
         isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
@@ -351,7 +353,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     @ApiStatus.Internal
-    fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
+    suspend fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
       runConfigurators = true
       isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
@@ -367,8 +369,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
-      .copy(forceOpenInNewFrame = forceOpenInNewFrame))
+    val options = runUnderModalProgressIfIsEdt {
+      createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
+    }.copy(forceOpenInNewFrame = forceOpenInNewFrame)
+    return doOpenProject(baseDir, options)
   }
 
   // force open in a new frame if temp project
