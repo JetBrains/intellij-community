@@ -45,8 +45,8 @@ class IjentNioFileSystem internal constructor(
       is IjentFileSystemPosixApi -> listOf(getPath("/"))
       is IjentFileSystemWindowsApi -> fsBlocking {
         fs.getRootDirectories().map { it.toNioPath() }
+      }
     }
-  }
 
   override fun getFileStores(): Iterable<FileStore> {
     val home = ijentFs.user.home

@@ -11,13 +11,9 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryErr
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.impl.fs.EelFsResultImpl
+import com.intellij.platform.eel.impl.fs.*
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Ok
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Other
-import com.intellij.platform.eel.impl.fs.EelUserPosixInfoImpl
-import com.intellij.platform.eel.impl.fs.EelUserWindowsInfoImpl
-import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
-import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsPosixApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsWindowsApi
 import com.intellij.platform.eel.path.EelPath
@@ -49,7 +45,7 @@ internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
   }
 }
 
-internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {
+internal class LocalWindowsEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {
   init {
     check(SystemInfo.isWindows)
   }
@@ -62,6 +58,8 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
   override val fs: EelFileSystemWindowsApi = object : WindowsNioBasedEelFileSystemApi(nioFs, userInfo) {
+    override fun toNioFs(): FileSystem = nioFs
+
     override suspend fun createTemporaryDirectory(
       options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
     ): EelResult<EelPath.Absolute, CreateTemporaryDirectoryError> =
@@ -70,7 +68,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
 }
 
 @VisibleForTesting
-class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalPosixEelApi {
+class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefault()) : LocalPosixEelApi {
   init {
     check(SystemInfo.isUnix)
   }
@@ -107,6 +105,7 @@ class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : Local
 
   override val fs: EelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
     override val pathOs: EelPath.Absolute.OS = EelPath.Absolute.OS.UNIX
+    override fun toNioFs(): FileSystem  = nioFs
 
     override suspend fun createTemporaryDirectory(
       options: EelFileSystemApi.CreateTemporaryDirectoryOptions,

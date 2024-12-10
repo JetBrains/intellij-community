@@ -14,6 +14,7 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import kotlinx.coroutines.*
+import java.nio.file.FileSystem
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -104,6 +105,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   override val user: EelUserPosixInfo by lazy {
     runBlocking {
       holder.withDelegateRetrying { user }
+    }
+  }
+
+  override fun toNioFs(): FileSystem {
+    return runBlocking {
+      holder.withDelegateRetrying {
+        toNioFs()
+      }
     }
   }
 

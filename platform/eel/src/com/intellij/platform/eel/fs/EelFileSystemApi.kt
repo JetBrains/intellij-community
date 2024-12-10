@@ -8,8 +8,10 @@ import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
+import java.nio.file.FileSystem
 
 val EelFileSystemApi.pathOs: EelPath.Absolute.OS
   get() = when (this) {
@@ -38,6 +40,11 @@ interface EelFileSystemApi {
    * in other cases outside the filesystem.
    */
   val user: EelUserInfo
+
+  // TODO: document
+  // see com.intellij.platform.ijent.impl.IjentNioFsKt.makeNioFs
+  @ApiStatus.Experimental
+  fun toNioFs(): FileSystem
 
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
@@ -258,7 +265,7 @@ interface EelFileSystemApi {
   }
 
   @CheckReturnValue
-  suspend fun copy(options: CopyOptions) : EelResult<Unit, CopyError>
+  suspend fun copy(options: CopyOptions): EelResult<Unit, CopyError>
 
   sealed interface CopyOptions {
     val source: EelPath.Absolute
@@ -320,7 +327,7 @@ interface EelFileSystemApi {
     target: EelPath.Absolute,
     replaceExisting: ReplaceExistingDuringMove,
     followLinks: Boolean,
-  ) : EelResult<Unit, MoveError>
+  ): EelResult<Unit, MoveError>
 
   sealed interface MoveError : EelFsError {
     interface SourceDoesNotExist : MoveError, EelFsError.DoesNotExist
@@ -368,7 +375,7 @@ interface EelFileSystemApi {
   }
 
   @CheckReturnValue
-  suspend fun changeAttributes(path: EelPath.Absolute, options: ChangeAttributesOptions) : EelResult<Unit, ChangeAttributesError>
+  suspend fun changeAttributes(path: EelPath.Absolute, options: ChangeAttributesOptions): EelResult<Unit, ChangeAttributesError>
 
   @CheckReturnValue
   suspend fun createTemporaryDirectory(options: CreateTemporaryDirectoryOptions): EelResult<
@@ -437,7 +444,7 @@ sealed interface EelOpenedFile {
   val path: EelPath.Absolute
 
   @CheckReturnValue
-  suspend fun close() : EelResult<Unit, CloseError>
+  suspend fun close(): EelResult<Unit, CloseError>
 
   sealed interface CloseError : EelFsError {
     interface Other : CloseError, EelFsError.Other
@@ -545,14 +552,14 @@ sealed interface EelOpenedFile {
     }
 
     @CheckReturnValue
-    suspend fun flush() : EelResult<Unit, FlushError>
+    suspend fun flush(): EelResult<Unit, FlushError>
 
     sealed interface FlushError : EelFsError {
       interface Other : FlushError, EelFsError.Other
     }
 
     @CheckReturnValue
-    suspend fun truncate(size: Long) : EelResult<Unit, TruncateError>
+    suspend fun truncate(size: Long): EelResult<Unit, TruncateError>
 
     sealed interface TruncateError : EelFsError {
       interface UnknownFile : TruncateError, EelFsError.UnknownFile
@@ -574,7 +581,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   }
 
   @CheckReturnValue
-  suspend fun createDirectory(path: EelPath.Absolute, attributes: List<CreateDirAttributePosix>) : EelResult<Unit, CreateDirectoryError>
+  suspend fun createDirectory(path: EelPath.Absolute, attributes: List<CreateDirAttributePosix>): EelResult<Unit, CreateDirectoryError>
 
   sealed interface CreateDirectoryError : EelFsError {
     interface DirAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
@@ -603,7 +610,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
    * like in `ln -s` tool, like in `symlink(2)` from LibC, but opposite to `java.nio.file.spi.FileSystemProvider.createSymbolicLink`.
    */
   @CheckReturnValue
-  suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute) : EelResult<Unit, CreateSymbolicLinkError>
+  suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute): EelResult<Unit, CreateSymbolicLinkError>
 
   sealed interface CreateSymbolicLinkError : EelFsError {
     /**
