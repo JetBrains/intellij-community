@@ -351,7 +351,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     }
   }
 
-  protected suspend fun withRealJDK(jdkName: String, block: suspend () -> Unit) {
+  protected suspend fun withRealJDK(jdkName: String = "JDK_FOR_MAVEN_TESTS", block: suspend () -> Unit)  {
     val fixture = MavenProjectJDKTestFixture(project, jdkName)
     try {
       writeAction {
