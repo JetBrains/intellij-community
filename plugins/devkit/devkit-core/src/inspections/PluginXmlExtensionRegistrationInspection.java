@@ -112,7 +112,7 @@ final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInsp
         GenericDomValue<?> classNameDom = DevKitDomUtil.getTag(extension, "className");
         if (classNameDom != null && DomUtil.hasXml(classNameDom)) {
           PsiClass intentionClass = (PsiClass)classNameDom.getValue();
-          if (intentionClass != null && Objects.equals(customDescriptionDirectory, DescriptionCheckerUtil.getDefaultDescriptionDirName(intentionClass))) {
+          if (intentionClass != null && Objects.equals(customDescriptionDirectory, DescriptionTypeResolver.getDefaultDescriptionDirName(intentionClass))) {
             highlightRedundant(descriptionDirectoryDom, DevKitBundle.message(
                                  "inspection.plugin.xml.extension.registration.intention.redundant.description.directory"),
                                ProblemHighlightType.WARNING, holder);

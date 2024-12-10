@@ -151,7 +151,7 @@ internal sealed class DescriptionTypeResolver(
   }
 
   open fun getDescriptionDirName(): String? {
-    return DescriptionCheckerUtil.getDefaultDescriptionDirName(psiClass)
+    return getDefaultDescriptionDirName(psiClass)
   }
 
   protected fun processExtensions(candidates: List<ExtensionCandidate> = locateExtensionsByPsiClass(psiClass), processor: Processor<Extension?>): Boolean {
@@ -168,6 +168,24 @@ internal sealed class DescriptionTypeResolver(
     }
 
     return true
+  }
+
+  companion object {
+
+    @JvmStatic
+    fun getDefaultDescriptionDirName(psiClass: PsiClass): String? {
+      var descriptionDir = ""
+      var each: PsiClass? = psiClass
+      while (each != null) {
+        val name = each.getName()
+        if (name.isNullOrBlank()) {
+          return null
+        }
+        descriptionDir = name + descriptionDir
+        each = each.getContainingClass()
+      }
+      return descriptionDir
+    }
   }
 }
 

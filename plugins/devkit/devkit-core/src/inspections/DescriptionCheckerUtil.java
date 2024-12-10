@@ -52,18 +52,4 @@ public final class DescriptionCheckerUtil {
     return searchScopes(module).flatMap(scope -> StreamEx.of(psiPackage.getDirectories(scope))).distinct();
   }
 
-  @Nullable
-  public static String getDefaultDescriptionDirName(@NotNull PsiClass aClass) {
-    String descriptionDir = "";
-    PsiClass each = aClass;
-    while (each != null) {
-      String name = each.getName();
-      if (StringUtil.isEmptyOrSpaces(name)) {
-        return null;
-      }
-      descriptionDir = name + descriptionDir;
-      each = each.getContainingClass();
-    }
-    return descriptionDir;
-  }
 }
