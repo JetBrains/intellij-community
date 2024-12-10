@@ -3,7 +3,7 @@ package com.intellij.platform.eel.path
 
 internal class ArrayListEelAbsolutePath private constructor(
   private val _root: Root,
-  private val parts: List<String>,
+  override val parts: List<String>,
 ) : EelPath, Comparable<EelPath> {
   init {
     // TODO To be removed when the class is thoroughly covered with unit tests.
@@ -43,12 +43,6 @@ internal class ArrayListEelAbsolutePath private constructor(
     return ArrayListEelAbsolutePath(_root, result)
   }
 
-  override fun endsWith(other: EelPath): Boolean {
-    return nameCount >= other.nameCount &&
-           root.fileName == other.root.fileName &&
-           (nameCount - other.nameCount..<nameCount).all { getName(it) == other.getName(it) }
-  }
-
   override fun resolve(other: String): EelPath {
     val otherParts = other.split('/', '\\')
     for (name in otherParts) {
@@ -68,8 +62,6 @@ internal class ArrayListEelAbsolutePath private constructor(
     else
       throw EelPathException(name, error)
   }
-
-  override fun parts(): List<String> = parts
 
   override fun toString(): String =
     when (_root) {

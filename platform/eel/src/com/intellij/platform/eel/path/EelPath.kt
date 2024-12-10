@@ -29,72 +29,75 @@ sealed interface EelPath {
     }
   }
 
+
+  /**
+   * Returns last part of a path.
+   *
+   * ```kotlin
+   * EelPath.parse("C:\\a\\b\\c").fileName == "c"
+   * EelPath.parse("C:\\").fileName == ""
+   * ```
+   */
   val fileName: String
 
+
+  /**
+   * Returns parts of a path composed as a list.
+   *
+   * ```kotlin
+   * EelPath.parse("C:\\a\\b\\c").root == EelPath.parse("C:\\")
+   * ```
+   */
   val root: EelPath
+
+
+  /**
+   * Returns parts of a path composed as a list.
+   *
+   * ```kotlin
+   * EelPath.parse("/abc/def/ghi", OS.UNIX).parts == listOf("abc", "def", "ghi")
+   * ```
+   */
+  val parts: List<String>
+
 
   /**
    * Returns the number of elements in the path.
    *
    * ```kotlin
-   * IjentRelativePath.parse("", false).nameCount == 1
-   * IjentRelativePath.parse("a", false).nameCount == 1
-   * IjentRelativePath.parse("a/b/c", false).nameCount == 3
+   * EelPath.parse("C:\\").nameCount == 0
+   * EelPath.parse("C:\\Users\\username").nameCount == 2
    * ```
-   *
-   * ```kotlin
-   * IjentAbsolutePath.parse("C:\\", isWindows = true).nameCount == 0
-   * IjentAbsolutePath.parse("C:\\Users", isWindows = true).nameCount == 1
-   * IjentAbsolutePath.parse("C:\\Users\\username", isWindows = true).nameCount == 2
-   * ```
-   *
-   * See [java.nio.file.Path.getNameCount]
    */
   val nameCount: Int
+
 
   /**
    * Returns a part of the path.
    *
-   * This method tries to behave like [java.nio.file.Path.getName].
-   *
    * ```kotlin
-   * IjentRelativePath.parse("", false).getName(0) == ""
-   * IjentRelativePath.parse("a", false).getName(0) == "a"
-   * IjentRelativePath.parse("a/b/c", false).getName(1) == "b"
-   * ```
-   *
-   * ```kotlin
-   * IjentAbsolutePath.parse("C:\\Users\\username", isWindows = true).getName(0) == "Users"
+   * EelPath.parse("C:\\Users\\username").getName(0) == "Users"
    * ```
    */
   fun getName(index: Int): String
+
 
   /**
    * Return the parent path if it exists.
    *
    * ```kotlin
-   * IjentRelativePath.parse("", false).parent == null
-   * IjentRelativePath.parse("a", false).parent == null
-   * IjentRelativePath.parse("a/b/c", false).parent == IjentRelativePath.parse("a/b", false)
+   * EelPath.parse("/a").parent == null
+   * EelPath.parse("/a/b/c").parent == EelPath.parse("a/b")
    * ```
    */
   val parent: EelPath?
 
-  /**
-   * ```kotlin
-   * IjentRelativePath.parse("", false).endsWith(IjentRelativePath.parse("", false)) == true
-   * IjentRelativePath.parse("a", false).endsWith(IjentRelativePath.parse("", false)) == true
-   * IjentRelativePath.parse("a/b/c", false).endsWith(IjentRelativePath.parse("b/c", false)) == true
-   * IjentRelativePath.parse("a/b/cde", false).endsWith(IjentRelativePath.parse("b/c", false)) == false
-   * ```
-   */
-  fun endsWith(other: EelPath): Boolean
 
   /**
    * Concatenates two paths.
    *
    * ```kotlin
-   * IjentRelativePath.parse("abc/..", false).resolve(IjentRelativePath.parse("def", false)) == IjentRelativePath.parse("abc/../def", false)
+   * EelPath.parse("/abc/..").resolve("def") == EelPath.parse("/abc/../def")
    * ```
    */
   @Throws(EelPathException::class)
@@ -107,8 +110,7 @@ sealed interface EelPath {
    * Does not perform any access to the file system.
    *
    * ```kotlin
-   * IjentRelativePath.parse("abc/./../def", false).normalize() == IjentRelativePath.parse("def", false)
-   * IjentRelativePath.parse("abc/../x/../../../def", false).normalize() == IjentRelativePath.parse("../../def", false)
+   * EelPath.parse("/abc/./../def").normalize() == EelPath.parse("/def")
    * ```
    */
   fun normalize(): EelPath
@@ -119,18 +121,15 @@ sealed interface EelPath {
 
   /**
    * ```kotlin
-   * IjentRelativePath.parse("", false).getChild("abc") == Ok(IjentRelativePath.parse("abc", false))
-   * IjentRelativePath.parse("abc", false).getChild("..") == Ok(IjentRelativePath.parse("abc/..", false))
-   * IjentRelativePath.parse("abc", false).getChild("x/y/z") == Err(...)
-   * IjentRelativePath.parse("abc", false).getChild("x\y\z") == Ok(IjentRelativePath.parse("abc/x\y\z", false))
-   * IjentRelativePath.parse("abc", true).getChild("x\y\z") == Err(...)
-   * IjentRelativePath.parse("abc", false).getChild("") == Err(...)
+   * EelPath.parse("/abc", OS.UNIX).getChild("..") == EelPath.parse("abc/..", false)
+   * EelPath.parse("/abc", OS.UNIX).getChild("x/y/z") will throw
+   * EelPath.parse("/abc", OS.UNIX).getChild("x\y\z") == EelPath.parse("/abc/x\y\z")
+   * EelPath.parse("C:\\abc", OS.WINDOWS).getChild("x\y\z") will throw
+   * EelPath.parse("abc", false).getChild("") will throw
    * ```
    */
   @Throws(EelPathException::class)
   fun getChild(name: String): EelPath
-
-  fun parts(): List<String>
 
   fun toDebugString(): String
 
