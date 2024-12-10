@@ -11,6 +11,7 @@ import org.intellij.lang.annotations.Language
 import java.awt.Rectangle
 import java.nio.file.Path
 import kotlin.io.path.name
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.dialog(@Language("xpath") xpath: String? = null, title: String? = null, action: DialogUiComponent.() -> Unit = {}): DialogUiComponent {
@@ -35,8 +36,8 @@ fun Finder.dialog(@Language("xpath") xpath: String? = null, action: DialogUiComp
 fun Finder.fileChooser(locator: QueryBuilder.() -> String, action: FileChooserDialogUi.() -> Unit = {}) =
   x(FileChooserDialogUi::class.java) { locator() }.apply(action)
 
-fun Finder.waitForNoOpenedDialogs() {
-  waitFor(message = "Dialog is closed", timeout = 100.seconds) {
+fun Finder.waitForNoOpenedDialogs(timeout: Duration = 100.seconds) {
+  waitFor(message = "Dialog is closed", timeout) {
     !isDialogOpened()
   }
 }
