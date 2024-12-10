@@ -7,6 +7,19 @@ internal sealed interface TerminalInputEvent
 
 internal data class TerminalResizeEvent(val newSize: TermSize) : TerminalInputEvent
 
-internal data class TerminalWriteStringEvent(val string: String) : TerminalInputEvent
+internal data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TerminalWriteBytesEvent
+
+    return bytes.contentEquals(other.bytes)
+  }
+
+  override fun hashCode(): Int {
+    return bytes.contentHashCode()
+  }
+}
 
 internal class TerminalCloseEvent : TerminalInputEvent

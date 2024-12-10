@@ -93,8 +93,8 @@ private fun createTerminalInputChannel(
   coroutineScope.launch {
     for (event in inputChannel) {
       when (event) {
-        is TerminalWriteStringEvent -> {
-          terminalStarter.sendString(event.string, false)
+        is TerminalWriteBytesEvent -> {
+          terminalStarter.sendBytes(event.bytes, false)
         }
         is TerminalResizeEvent -> {
           terminalStarter.postResize(event.newSize, RequestOrigin.User)

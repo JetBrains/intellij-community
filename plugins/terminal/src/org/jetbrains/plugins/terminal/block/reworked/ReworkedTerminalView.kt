@@ -16,7 +16,7 @@ import kotlinx.coroutines.job
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteStringEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
@@ -92,7 +92,9 @@ internal class ReworkedTerminalView(
 
   override fun sendCommandToExecute(shellCommand: String) {
     terminalSessionFuture.thenAccept {
-      it?.inputChannel?.trySend(TerminalWriteStringEvent(shellCommand + "\n"))
+      // TODO: should we always use UTF8?
+      val bytes = (shellCommand + "\n").toByteArray(Charsets.UTF_8)
+      it?.inputChannel?.trySend(TerminalWriteBytesEvent(bytes))
     }
   }
 
