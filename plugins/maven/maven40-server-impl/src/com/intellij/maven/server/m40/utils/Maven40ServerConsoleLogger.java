@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
-import org.codehaus.plexus.logging.Logger;
+import org.apache.maven.api.cli.Logger;
 import org.jetbrains.idea.maven.server.MavenRemoteObject;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
@@ -50,9 +50,26 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
     doPrint(MavenServerConsoleIndicator.LEVEL_ERROR, string, throwable);
   }
 
-  @Override
   public void fatalError(String string, Throwable throwable) {
     doPrint(MavenServerConsoleIndicator.LEVEL_FATAL, string, throwable);
+  }
+
+  @Override
+  public void log(Level level, String message, Throwable error) {
+    switch (level) {
+      case DEBUG:
+        debug(message, error);
+        break;
+      case INFO:
+        info(message, error);
+        break;
+      case WARN:
+        warn(message, error);
+        break;
+      case ERROR:
+        error(message, error);
+        break;
+    }
   }
 
   @Override
@@ -60,7 +77,6 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
     debug(message, null);
   }
 
-  @Override
   public boolean isDebugEnabled() {
     return getThreshold() <= MavenServerConsoleIndicator.LEVEL_DEBUG;
   }
@@ -70,7 +86,6 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
     info(message, null);
   }
 
-  @Override
   public boolean isInfoEnabled() {
     return getThreshold() <= MavenServerConsoleIndicator.LEVEL_INFO;
   }
@@ -80,7 +95,6 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
     warn(message, null);
   }
 
-  @Override
   public boolean isWarnEnabled() {
     return getThreshold() <= MavenServerConsoleIndicator.LEVEL_WARN;
   }
@@ -90,37 +104,30 @@ public class Maven40ServerConsoleLogger extends MavenRemoteObject implements Log
     error(message, null);
   }
 
-  @Override
   public boolean isErrorEnabled() {
     return getThreshold() <= MavenServerConsoleIndicator.LEVEL_ERROR;
   }
 
-  @Override
   public void fatalError(String message) {
     fatalError(message, null);
   }
 
-  @Override
   public boolean isFatalErrorEnabled() {
     return getThreshold() <= MavenServerConsoleIndicator.LEVEL_FATAL;
   }
 
-  @Override
   public void setThreshold(int threshold) {
     this.myThreshold = threshold;
   }
 
-  @Override
   public int getThreshold() {
     return myThreshold;
   }
 
-  @Override
   public Logger getChildLogger(String s) {
     return null;
   }
 
-  @Override
   public String getName() {
     return toString();
   }

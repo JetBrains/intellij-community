@@ -189,7 +189,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         "",
         "",
         commandLineOptions,
-        new ProtoLogger(),
+        myConsoleWrapper,
         new JLineMessageBuilderFactory()
       )
       .userHome(userHomeDirectory)
@@ -211,42 +211,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     myMavenInvoker.invoke(invokerRequest);
     myContainer = myMavenInvoker.myContext.lookup;
-/*    MavenCling cli = new MavenCling(classWorld) {
-      @Override
-      public void customizeContainer(PlexusContainer container) {
-        ((DefaultPlexusContainer)container).setLoggerManager(new BaseLoggerManager() {
-          @Override
-          protected Logger createLogger(String s) {
-            return myConsoleWrapper;
-          }
-        });
-      }
-    };*/
 
     SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
 
     myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
-
-    // reset threshold
-/*    try {
-      Method m = MavenCling.class.getDeclaredMethod("container", cliRequestClass);
-      m.setAccessible(true);
-      myContainer = (DefaultPlexusContainer)m.invoke(cli, cliRequest);
-    }
-    catch (Exception e) {
-      if (e instanceof InvocationTargetException) {
-        if (((InvocationTargetException)e).getTargetException().getClass().getCanonicalName()
-          .equals("org.apache.maven.cli.internal.ExtensionResolutionException")) {
-          MavenId id = extractIdFromException(((InvocationTargetException)e).getTargetException());
-          throw new MavenCoreInitializationException(
-            wrapToSerializableRuntimeException(((InvocationTargetException)e).getTargetException()), id);
-        }
-      }
-      throw wrapToSerializableRuntimeException(e);
-    }*/
-
-    //TODO: logging level
-    //myContainer.getLoggerManager().setThreshold(serverSettings.getLoggingLevel());
 
     mySystemProperties = invokerRequest.systemProperties();
     if (serverSettings.getProjectJdk() != null) {
@@ -271,18 +239,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       //myContainer.addComponent(importerSpy, Maven40ImporterSpy.class.getName());
     }
     myImporterSpy = importerSpy;
-  }
-
-  // org.apache.maven.cling.invoker.LookupInvoker.settings(C, org.apache.maven.api.services.SettingsBuilder)
-  private static String getValidFilePath(Path cwd, @Nullable String path) {
-    if (null == path) return null;
-
-    Path file = cwd.resolve(path).normalize().toAbsolutePath();
-
-    if (!Files.isRegularFile(file)) {
-      return null;
-    }
-    return path;
   }
 
   public File getMultiModuleProjectDirectory() {
