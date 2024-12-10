@@ -32,7 +32,7 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends Descriptio
     doTestInspectionDescription("MyWithDescriptionFromFieldReferenceInspection.java", "MyWithDescriptionFromFieldReferenceInspection.html");
   }
 
-  public void testInspectionDescriptionNameShouldBeEqualToClassNameNotIgnoringCase() {
+  public void testMustNotProvideGutterIconsWhenInspectionDescriptionNameIsNotCaseSensitiveEqualToClassName() {
     myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
     List<GutterMark> gutters = myFixture.findAllGutters("caseSensitive/MywithDescriptionInspection.java");
     assertEmpty(gutters);
@@ -49,7 +49,7 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends Descriptio
                                                   "after.java.template", "before.java.template");
   }
 
-  public void testIntentionDescriptionFolderNameShouldBeEqualToClassNameNotIgnoringCase() {
+  public void testMustNotProvideGutterIconsWhenIntentionDescriptionFolderNameIsNotCaseSensitiveEqualToClassName() {
     myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
 
     List<GutterMark> gutters = myFixture.findAllGutters("caseSensitive/MyIntentionActionwithDescription.java");
