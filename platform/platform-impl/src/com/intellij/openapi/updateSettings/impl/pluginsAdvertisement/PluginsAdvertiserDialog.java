@@ -39,7 +39,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
     init();
 
-    JRootPane rootPane = getPeer().getRootPane();
+    var rootPane = getPeer().getRootPane();
     if (rootPane != null) {
       rootPane.setPreferredSize(new JBDimension(800, 600));
     }
@@ -62,10 +62,9 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
       myPanel = new DetectedPluginsPanel(myProject);
-
-      // all or nothing, single plugin always gets selected automatically
-      boolean checkAll = mySelectAllSuggestions || myPluginToInstall.size() == 1;
-      for (PluginDownloader downloader : myPluginToInstall) {
+      // all or nothing, a single plugin always gets selected automatically
+      var checkAll = mySelectAllSuggestions || myPluginToInstall.size() == 1;
+      for (var downloader : myPluginToInstall) {
         myPanel.setChecked(downloader, checkAll);
       }
       myPanel.addAll(myPluginToInstall);
@@ -87,8 +86,8 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   }
 
   /**
-   * @param showDialog if the dialog will be shown to a user or not
-   * @param modalityState modality state used by plugin installation process.
+   * @param showDialog    whether the dialog will be shown to a user
+   * @param modalityState modality state used by the plugin installation process.
    *                      {@code modalityState} will taken into account only if {@code showDialog} is <code>false</code>.
    *                      If {@code null} is passed, {@code ModalityState.NON_MODAL} will be used
    */
