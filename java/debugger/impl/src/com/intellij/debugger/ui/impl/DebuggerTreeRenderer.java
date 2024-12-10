@@ -142,7 +142,10 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (valueIcon != null) {
-      nodeIcon = IconManager.getInstance().createRowIcon(nodeIcon, valueIcon);
+      // Keep watch icon to make clear the source of a node, prefer the provided icon otherwise
+      nodeIcon = nodeIcon == AllIcons.Debugger.Db_watch
+                 ? IconManager.getInstance().createRowIcon(nodeIcon, valueIcon)
+                 : valueIcon;
     }
     return nodeIcon;
   }
