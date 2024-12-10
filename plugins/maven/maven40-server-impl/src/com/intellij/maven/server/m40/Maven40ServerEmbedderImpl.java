@@ -117,10 +117,24 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       lookup(context);
       init(context);
       postCommands(context);
-      settings(context);
+      tryRun(() -> settings(context));
       //return execute(context);
       myContext = context;
       return 0;
+    }
+
+    private void tryRun(ThrowingRunnable action) {
+      try {
+        action.run();
+      }
+      catch (Exception e) {
+        warn(e.getMessage(), e);
+      }
+    }
+
+    @FunctionalInterface
+    interface ThrowingRunnable {
+      void run() throws Exception;
     }
   }
 
