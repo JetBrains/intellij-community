@@ -73,16 +73,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     private val customModuleFilePath: String?,
   ) {
     fun loadComponent(componentName: String): Element? {
-      val result = components[componentName]
-      if (LOG.isDebugEnabled) {
-        val rc = reader.loadComponent(fileUrl, componentName, customModuleFilePath)
-        val rcString = if (rc != null) JDOMUtil.write(rc) else null
-        val itString = if (result != null) JDOMUtil.write(result) else null
-        if (rcString != itString) {
-          LOG.error("Error while parsing ${fileUrl}. Expected:\n$rcString\n\nbut was:\n$itString\n")
-        }
-      }
-      return result
+      return components[componentName]
     }
 
     companion object {
