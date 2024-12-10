@@ -5,6 +5,7 @@ import java.util.*
 import org.jetbrains.intellij.platform.gradle.*
 import org.jetbrains.intellij.platform.gradle.models.*
 import org.jetbrains.intellij.platform.gradle.tasks.*
+import org.jetbrains.intellij.platform.gradle.utils.settings
 
 plugins {
     id("org.jetbrains.intellij.platform") version "2.2.0"
@@ -29,6 +30,7 @@ dependencies {
 
 intellijPlatform {
     pluginConfiguration {
+        version = settings.extra["pluginVersion"] as String
         ideaVersion {
             sinceBuild.set("233")
             untilBuild.set("243.*")
