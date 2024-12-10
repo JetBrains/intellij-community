@@ -428,6 +428,9 @@ class PyDataclassInspection : PyInspection() {
         }
       }
 
+      // Here we rely on the fact that dataclasses.field is declared to return the type of its `default` argument,
+      // so if `default` is a dict, or a list instance, we will highlight the call as if the same expression
+      // was in the RHS directly. dataclasses.Field itself is not considered a forbidden mutable default.
       if (PyUtil.isForbiddenMutableDefault(value, myTypeEvalContext)) {
         registerProblem(value,
                         PyPsiBundle.message("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),
