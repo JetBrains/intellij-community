@@ -97,16 +97,4 @@ public final class JpsPathUtil {
   }
 
   private static final String UNNAMED_PROJECT = "<unnamed>";
-
-  @ApiStatus.Internal
-  public static @NotNull String getDefaultProjectName(@NotNull Path projectDir) {
-    Path parent = projectDir.getParent();
-    if (parent != null) {
-      Path name = parent.getFileName();  // `null` when parent is a Windows disk root
-      return name != null ? name.toString() : parent.toString();
-    }
-    else {
-      return UNNAMED_PROJECT;
-    }
-  }
 }

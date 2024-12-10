@@ -11,7 +11,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -22,6 +21,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.impl.JpsSerializationFormatException;
+import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
@@ -140,7 +140,7 @@ public final class JpsProjectLoader {
   }
 
   private void loadFromDirectory(@NotNull Path dir, @NotNull Executor executor) {
-    myProject.setName(JpsProjectConfigurationLoading.getDirectoryBaseProjectName(dir));
+    myProject.setName(JpsProjectConfigurationLoading.getDirectoryBaseProjectName(dir.getParent(), dir));
     Path defaultConfigFile = dir.resolve("misc.xml");
     JpsSdkType<?> projectSdkType = loadProjectRoot(myComponentLoader.loadRootElement(defaultConfigFile));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {

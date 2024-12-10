@@ -94,13 +94,16 @@ public final class Utils {
     }
     else {
       Path directoryBased;
+      String rawName;
       if (rootFile.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directoryBased = rootFile;
+        rawName = JpsProjectConfigurationLoading.getDirectoryBaseProjectName(rootFile.getParent(), directoryBased);
       }
       else {
         directoryBased = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
+        rawName = JpsProjectConfigurationLoading.getDirectoryBaseProjectName(rootFile, directoryBased);
       }
-      name = PathUtilRt.suggestFileName(JpsProjectConfigurationLoading.getDirectoryBaseProjectName(directoryBased));
+      name = PathUtilRt.suggestFileName(rawName);
       locationHash = hashFunction.apply(directoryBased.toString());
     }
 

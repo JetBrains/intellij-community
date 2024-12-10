@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
+import com.intellij.platform.workspace.jps.bridge.JpsModuleExtensionBridge
 import com.intellij.platform.workspace.jps.bridge.impl.JpsModelBridge
 import com.intellij.platform.workspace.jps.bridge.impl.JpsProjectAdditionalData
 import com.intellij.platform.workspace.jps.bridge.impl.JpsProjectBridge
@@ -14,7 +15,6 @@ import com.intellij.platform.workspace.jps.bridge.impl.module.JpsModuleBridge
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
-import com.intellij.platform.workspace.jps.bridge.JpsModuleExtensionBridge
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -32,7 +32,6 @@ import org.jetbrains.jps.model.serialization.*
 import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading.*
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl
 import org.jetbrains.jps.model.serialization.impl.JpsSerializationViaWorkspaceModel
-import org.jetbrains.jps.plugin.JpsPluginManager
 import org.jetbrains.jps.service.JpsServiceManager
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -106,7 +105,8 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
     componentLoader: JpsComponentLoader,
   ): JpsProjectAdditionalData {
     val projectName = when (configLocation) {
-      is JpsProjectConfigLocation.DirectoryBased -> getDirectoryBaseProjectName(configLocation.ideaFolder.toPath())
+      is JpsProjectConfigLocation.DirectoryBased -> getDirectoryBaseProjectName(configLocation.projectDir.toPath(),
+                                                                                configLocation.ideaFolder.toPath())
       is JpsProjectConfigLocation.FileBased -> FileUtil.getNameWithoutExtension(configLocation.iprFile.fileName)
     }
     val projectRootComponentFileElement = when (configLocation) {

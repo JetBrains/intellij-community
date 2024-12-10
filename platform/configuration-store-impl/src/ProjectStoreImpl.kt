@@ -122,7 +122,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
     }
     else {
-      val dotIdea = file.resolve(Project.DIRECTORY_STORE_FOLDER)
+      val dotIdea = ProjectCoreUtil.getProjectStoreDirectory(file)
       this.dotIdea = dotIdea
 
       // PROJECT_CONFIG_DIR must be the first macro
@@ -307,14 +307,13 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       return storageManager.expandMacro(PROJECT_FILE).fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
 
-    val projectDir = directoryStorePath!!
-    val storedName = JpsPathUtil.readProjectName(projectDir)
+    val storedName = JpsPathUtil.readProjectName(directoryStorePath!!)
     if (storedName != null) {
       lastSavedProjectName = storedName
       return storedName
     }
 
-    return JpsPathUtil.getDefaultProjectName(projectDir)
+    return NioFiles.getFileName(projectBasePath)
   }
 
   private suspend fun saveProjectName() {
