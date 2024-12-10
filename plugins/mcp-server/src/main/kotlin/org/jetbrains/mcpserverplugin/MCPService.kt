@@ -65,7 +65,7 @@ internal class MCPService : RestService() {
         }
 
         val tool = tools.find { it.name == path } ?: run {
-            sendText("error", "Unknown tool: $path", request, context)
+            sendResultAsJson(Response(error = "Unknown tool: $path"), request, context)
             return null
         }
 
@@ -99,20 +99,8 @@ internal class MCPService : RestService() {
         send(out, request, context)
     }
 
-    private fun sendText(name: String, value: String?, request: FullHttpRequest, context: ChannelHandlerContext) {
-        val out = BufferExposingByteArrayOutputStream()
-        createJsonWriter(out).use {
-            it.beginObject()
-            it.name(name).value(value)
-            it.endObject()
-        }
-        send(out, request, context)
-    }
-
     private fun parseArgs(body: String, schema: KClass<*>): Any {
         if (body == "") return NoArgs
-        // Implement argument parsing from body to the Args data class.
-        // For example:
         return Gson().fromJson(body, schema.javaObjectType)
     }
 }
