@@ -52,7 +52,7 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
             .flatMap { elem ->
                 // We filter out constructors because calling bindTo on these references will break for light classes.
                 if (elem is KtPrimaryConstructor || elem is KtSecondaryConstructor) return@flatMap emptyList()
-                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
+                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target)
             }
     }
 

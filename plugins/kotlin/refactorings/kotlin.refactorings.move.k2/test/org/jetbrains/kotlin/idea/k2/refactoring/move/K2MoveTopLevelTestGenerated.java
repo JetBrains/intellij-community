@@ -35,6 +35,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/java/moveTopLevelClassToAnotherPackage/moveTopLevelClassToAnotherPackage.test");
     }
 
+    @TestMetadata("kotlin/accessorNames/accessorNames.test")
+    public void testKotlin_accessorNames_AccessorNames() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/accessorNames/accessorNames.test");
+    }
+
     @TestMetadata("kotlin/avoidCapturingOuterName/avoidCapturingOuterName.test")
     public void testKotlin_avoidCapturingOuterName_AvoidCapturingOuterName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/avoidCapturingOuterName/avoidCapturingOuterName.test");

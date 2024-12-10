@@ -318,6 +318,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/java/moveTopLevelClassToAnotherPackage/moveTopLevelClassToAnotherPackage.test");
         }
 
+        @TestMetadata("kotlin/accessorNames/accessorNames.test")
+        public void testKotlin_accessorNames_AccessorNames() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/accessorNames/accessorNames.test");
+        }
+
         @TestMetadata("kotlin/avoidCapturingOuterName/avoidCapturingOuterName.test")
         public void testKotlin_avoidCapturingOuterName_AvoidCapturingOuterName() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/avoidCapturingOuterName/avoidCapturingOuterName.test");
