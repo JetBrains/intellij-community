@@ -108,7 +108,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       return YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element);
     }
     if (element instanceof YAMLDocument) {
-      return new YamlEmptyObjectAdapter(element);
+      if (element.getChildren().length == 0) return new YamlEmptyObjectAdapter(element);
+      return createValueAdapter(element.getFirstChild());
     }
     if (element instanceof LeafPsiElement leaf && leaf.getElementType() == YAMLTokenTypes.INDENT) {
       return YamlPropertyAdapter.createEmptyValueAdapter(element, true);
