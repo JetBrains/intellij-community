@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.inspections.createReturnExpressionText
+import org.jetbrains.kotlin.idea.inspections.createReturnOrEmptyText
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
@@ -40,7 +40,7 @@ class UnfoldReturnToWhenIntention : LowPriorityAction,
 
         return whenExpression.entries.map {
             val expr = it.expression!!.lastBlockStatementOrThis()
-            createReturnExpressionText(expr, labelName)
+            createReturnOrEmptyText(expr, labelName)
         }
     }
 

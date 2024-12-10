@@ -4,16 +4,19 @@ package org.jetbrains.kotlin.idea.inspections
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.*
 
-fun createReturnExpressionText(
-    expr: KtExpression,
+/**
+ * Creates "return" with an optional label or an empty string depending on the [expression] type.
+ */
+fun createReturnOrEmptyText(
+    expression: KtExpression,
     labelName: String?
 ): String {
     val label = labelName?.let { "@$it" }.orEmpty()
-    return when (expr) {
+    return when (expression) {
         is KtBreakExpression, is KtContinueExpression, is KtReturnExpression, is KtThrowExpression -> ""
         else -> {
-            analyze(expr) {
-                if (expr.expressionType?.isNothingType == true) {
+            analyze(expression) {
+                if (expression.expressionType?.isNothingType == true) {
                     ""
                 } else {
                     "return$label "
@@ -23,11 +26,14 @@ fun createReturnExpressionText(
     }
 }
 
+/**
+ * Creates a return expression that may vary depending on the [expression] type.
+ */
 fun createReturnExpression(
-    expr: KtExpression,
+    expression: KtExpression,
     labelName: String?,
     psiFactory: KtPsiFactory
 ): KtExpression {
-    val returnText = createReturnExpressionText(expr, labelName)
-    return psiFactory.createExpressionByPattern("$returnText$0", expr)
+    val returnText = createReturnOrEmptyText(expression, labelName)
+    return psiFactory.createExpressionByPattern("$returnText$0", expression)
 }
