@@ -9,7 +9,8 @@ import org.jetbrains.intellij.platform.gradle.utils.settings
 
 plugins {
     id("org.jetbrains.intellij.platform") version "2.2.0"
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "1.9.24"
+    kotlin("plugin.serialization") version "1.9.24"
 }
 
 repositories {

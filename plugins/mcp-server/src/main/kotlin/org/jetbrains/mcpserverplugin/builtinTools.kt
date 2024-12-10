@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.createParentDirectories
+import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.AbstractMcpTool
 import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
@@ -60,7 +61,9 @@ class GetSelectedTextTool : AbstractMcpTool<NoArgs>() {
     }
 }
 
+@Serializable
 data class ReplaceSelectedTextArgs(val text: String)
+
 class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
     override val name: String = "replace_selected_text"
     override val description: String = "Replace the currently selected text in the JetBrains IDE with new text"
@@ -81,7 +84,9 @@ class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
     }
 }
 
+@Serializable
 data class ReplaceCurrentFileTextArgs(val text: String)
+
 class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>() {
     override val name: String = "replace_current_file_text"
     override val description: String = "Replace the entire contents of the current file in JetBrains IDE with new text"
@@ -98,6 +103,7 @@ class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>()
     }
 }
 
+@Serializable
 data class CreateNewFileWithTextArgs(val pathInProject: String, val text: String)
 
 class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
@@ -116,7 +122,9 @@ class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
     }
 }
 
+@Serializable
 data class Query(val nameSubstring: String)
+
 class FindFilesByNameSubstring: AbstractMcpTool<Query>() {
     override val name: String = "find_files_by_name_substring"
     override val description: String = "Find files inside the projct using name substring in JetBrains IDE"

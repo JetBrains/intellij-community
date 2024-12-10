@@ -1,6 +1,5 @@
 package org.jetbrains.ide.mcp
 
-import com.google.gson.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -8,12 +7,40 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.serializer
 import org.jetbrains.ide.RestService
 import org.jetbrains.mcpserverplugin.*
+import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
-import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.full.starProjectedType
+
+interface McpTool<Args : Any> {
+    val name: String
+    val description: String
+    fun handle(project: Project, args: Args): Response
+}
+
+abstract class AbstractMcpTool<Args : Any> : McpTool<Args> {
+    val argKlass: KClass<Args> by lazy {
+        val supertype = this::class.supertypes.find {
+            it.classifier == AbstractMcpTool::class
+        } ?: error("Cannot find McpTool supertype")
+
+        val typeArgument = supertype.arguments.first().type
+            ?: error("Cannot find type argument for McpTool")
+
+        @Suppress("UNCHECKED_CAST")
+        typeArgument.classifier as KClass<Args>
+    }
+}
 
 class McpToolManager {
     companion object {
@@ -44,181 +71,149 @@ class McpToolManager {
     }
 }
 
-data class Response(val status: String? = null, val error: String? = null)
-
-internal class MCPService : RestService() {
+class MCPService : RestService() {
     private val serviceName = "mcp"
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        classDiscriminator = "schemaType"
+    }
+
     override fun getServiceName(): String = serviceName
 
     override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
         val path = urlDecoder.path().split(serviceName).last().trimStart('/')
         val project = getLastFocusedOrOpenedProject() ?: return null
-
         val tools = McpToolManager.getAllTools()
 
-        if (path == "list_tools") {
-            val json = generateToolsJson(tools)
-            val outputStream = BufferExposingByteArrayOutputStream()
-            outputStream.write(gson.toJson(json).toByteArray(StandardCharsets.UTF_8))
-            send(outputStream, request, context)
-            return null
+        when (path) {
+            "list_tools" -> handleListTools(tools, request, context)
+            else -> handleToolExecution(path, tools, request, context, project)
         }
-
-        val tool = tools.find { it.name == path } ?: run {
-            sendResultAsJson(Response(error = "Unknown tool: $path"), request, context)
-            return null
-        }
-
-        val body = request.content().toString(StandardCharsets.UTF_8)
-        val args = parseArgs(body, tool.argKlass) // Implement this according to schema
-        val result = toolHandle(tool, project, args)
-        sendResultAsJson(result, request, context)
         return null
     }
 
-    override fun isMethodSupported(method: HttpMethod): Boolean = method === HttpMethod.GET || method === HttpMethod.POST
+    private fun handleListTools(
+        tools: List<AbstractMcpTool<*>>,
+        request: FullHttpRequest,
+        context: ChannelHandlerContext
+    ) {
+        val toolsList = tools.map { tool ->
+            ToolInfo(
+                name = tool.name,
+                description = tool.description,
+                inputSchema = schemaFromDataClass(tool.argKlass)
+            )
+        }
+        sendJson(toolsList, request, context)
+    }
+
+    private fun handleToolExecution(
+        path: String,
+        tools: List<AbstractMcpTool<*>>,
+        request: FullHttpRequest,
+        context: ChannelHandlerContext,
+        project: Project
+    ) {
+        val tool = tools.find { it.name == path } ?: run {
+            sendJson(Response(error = "Unknown tool: $path"), request, context)
+            return
+        }
+        val args = parseArgs(request, tool.argKlass)
+        val result = toolHandle(tool, project, args)
+        sendJson(result, request, context)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun sendJson(data: Any, request: FullHttpRequest, context: ChannelHandlerContext) {
+        val jsonString = when (data) {
+            is List<*> -> json.encodeToString<List<ToolInfo>>(ListSerializer(ToolInfo.serializer()), data as List<ToolInfo>)
+            is Response -> json.encodeToString<Response>(Response.serializer(), data)
+            else -> throw IllegalArgumentException("Unsupported type for serialization")
+        }
+        val outputStream = BufferExposingByteArrayOutputStream()
+        outputStream.write(jsonString.toByteArray(StandardCharsets.UTF_8))
+        send(outputStream, request, context)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Any> parseArgs(request: FullHttpRequest, klass: KClass<T>): T {
+        val body = request.content().toString(StandardCharsets.UTF_8)
+        if (body.isEmpty()) {
+            return NoArgs as T
+        }
+        return when (klass) {
+            NoArgs::class -> NoArgs as T
+            else -> {
+                json.decodeFromString(serializer(klass.starProjectedType), body) as T
+            }
+        }
+    }
 
     private fun <Args : Any> toolHandle(tool: McpTool<Args>, project: Project, args: Any): Response {
         @Suppress("UNCHECKED_CAST")
         return tool.handle(project, args as Args)
     }
 
-    private fun <Result> sendResultAsJson(result: Result, request: FullHttpRequest, context: ChannelHandlerContext) {
-        val out = BufferExposingByteArrayOutputStream()
-        createJsonWriter(out).use {
-            it.beginObject()
-            // Here you can customize how result is serialized; if result is a data class, you could use Gson directly.
-            val gson = Gson()
-            // We'll just dump the entire object as JSON directly:
-            val jsonElement = gson.toJsonTree(result)
-            for ((key, value) in jsonElement.asJsonObject.entrySet()) {
-                it.name(key).jsonValue(value.toString())
-            }
-            it.endObject()
-        }
-        send(out, request, context)
-    }
-
-    private fun parseArgs(body: String, schema: KClass<*>): Any {
-        if (body == "") return NoArgs
-        return Gson().fromJson(body, schema.javaObjectType)
-    }
+    override fun isMethodSupported(method: HttpMethod): Boolean =
+        method === HttpMethod.GET || method === HttpMethod.POST
 }
 
-sealed class JsonType {
-    object StringType : JsonType()
-    object NumberType : JsonType()
-    object BooleanType : JsonType()
-    data class ObjectType(
-        val properties: Map<String, JsonType>,
-        val required: List<String> = emptyList(),
-    ) : JsonType()
+@Serializable
+data class ToolInfo(
+    val name: String,
+    val description: String,
+    val inputSchema: JsonSchemaObject
+)
 
-    data class ArrayType(val items: JsonType) : JsonType()
-}
+@Serializable
+data class Response(
+    val status: String? = null,
+    val error: String? = null
+)
 
-interface McpTool<Args : Any> {
-    val name: String
-    val description: String
-    fun handle(project: Project, args: Args): Response
-}
+@Serializable
+data class JsonSchemaObject(
+    val type: String,
+    val properties: Map<String, PropertySchema> = emptyMap(),
+    val required: List<String> = emptyList(),
+    val items: PropertySchema? = null
+)
 
-abstract class AbstractMcpTool<Args : Any> : McpTool<Args> {
-    val argKlass: KClass<Args> by lazy {
-        val supertype = this::class.supertypes.find {
-            it.classifier == AbstractMcpTool::class
-        } ?: error("Cannot find McpTool supertype")
+@Serializable
+data class PropertySchema(
+    val type: String
+)
 
-        val typeArgument = supertype.arguments.first().type
-            ?: error("Cannot find type argument for McpTool")
-
-        @Suppress("UNCHECKED_CAST")
-        typeArgument.classifier as KClass<Args>
-    }
-}
-
+@Serializable
 object NoArgs
 
-// Utility: Infer JsonType from a Kotlin type
-fun jsonTypeFromKType(kType: KType): JsonType {
-    return when (val classifier = kType.classifier) {
-        String::class -> JsonType.StringType
-        Int::class, Long::class, Double::class, Float::class -> JsonType.NumberType
-        Boolean::class -> JsonType.BooleanType
-        else -> {
-            if (classifier is KClass<*> && classifier.isData) {
-                schemaFromDataClass(classifier)
-            }
-            else {
-                JsonType.StringType
+// Type conversion helper
+fun schemaFromDataClass(kClass: KClass<*>): JsonSchemaObject {
+    if (kClass == NoArgs::class) return JsonSchemaObject(type = "object")
+
+    val constructor = kClass.primaryConstructor
+        ?: error("Class ${kClass.simpleName} must have a primary constructor")
+
+    val properties = constructor.parameters.mapNotNull { param ->
+        param.name?.let { name ->
+            name to when (param.type.classifier) {
+                String::class -> PropertySchema("string")
+                Int::class, Long::class, Double::class, Float::class -> PropertySchema("number")
+                Boolean::class -> PropertySchema("boolean")
+                List::class -> PropertySchema("array")
+                else -> PropertySchema("object")
             }
         }
-    }
-}
+    }.toMap()
 
-// Build a schema from a data class using reflection
-fun schemaFromDataClass(kClass: KClass<*>): JsonType.ObjectType {
-    if (kClass == NoArgs::class) {
-        return JsonType.ObjectType(emptyMap())
-    }
+    val required = constructor.parameters
+        .filter { !it.type.isMarkedNullable }
+        .mapNotNull { it.name }
 
-    val primaryConstructor = kClass.primaryConstructor ?: error("Class ${kClass.simpleName} must have a primary constructor.")
-
-    val props = mutableMapOf<String, JsonType>()
-    val requiredParams = mutableListOf<String>()
-
-    for (param in primaryConstructor.parameters) {
-        val name = param.name ?: continue
-        val jsonType = jsonTypeFromKType(param.type)
-        props[name] = jsonType
-        // Non-nullable fields are required
-        if (!param.type.isMarkedNullable) {
-            requiredParams += name
-        }
-    }
-
-    return JsonType.ObjectType(properties = props, required = requiredParams)
-}
-
-// Convert JsonType to JsonObject with 'required'
-fun JsonType.toJsonElementWithRequired(): JsonElement {
-    return when (this) {
-        is JsonType.StringType -> JsonObject().apply { addProperty("type", "string") }
-        is JsonType.NumberType -> JsonObject().apply { addProperty("type", "number") }
-        is JsonType.BooleanType -> JsonObject().apply { addProperty("type", "boolean") }
-        is JsonType.ObjectType -> {
-            val obj = JsonObject()
-            obj.addProperty("type", "object")
-            val props = JsonObject()
-            properties.forEach { (key, value) ->
-                props.add(key, value.toJsonElementWithRequired())
-            }
-            obj.add("properties", props)
-            if (required.isNotEmpty()) {
-                val arr = JsonArray()
-                required.forEach { arr.add(it) }
-                obj.add("required", arr)
-            }
-            obj
-        }
-        is JsonType.ArrayType -> {
-            val obj = JsonObject()
-            obj.addProperty("type", "array")
-            obj.add("items", items.toJsonElementWithRequired())
-            obj
-        }
-    }
-}
-
-fun generateToolsJson(tools: List<AbstractMcpTool<*>>): JsonElement {
-    val toolsArray = JsonArray()
-    for (tool in tools) {
-        val toolObj = JsonObject()
-        toolObj.addProperty("name", tool.name)
-        toolObj.addProperty("description", tool.description)
-        toolObj.add("inputSchema", schemaFromDataClass(tool.argKlass).toJsonElementWithRequired())
-        toolsArray.add(toolObj)
-    }
-
-    return toolsArray
+    return JsonSchemaObject(
+        type = "object",
+        properties = properties,
+        required = required
+    )
 }

@@ -12,12 +12,14 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.AbstractMcpTool
 import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import kotlin.reflect.KClass
 
+@Serializable
 data class ToggleBreakpointArgs(val filePathInProject: String, val line: Int)
 class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
     override val name: String = "toggle_debugger_breakpoint"

@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.dsl.builder.panel
+import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.AbstractMcpTool
 import org.jetbrains.ide.mcp.McpTool
 import org.jetbrains.ide.mcp.NoArgs
@@ -29,8 +30,9 @@ class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
         return Response(text)
     }
 }
-
+@Serializable
 data class ExecuteTerminalCommandArgs(val command: String)
+
 class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>() {
     override val name: String = "execute_terminal_command"
     override val description: String = "Execute any terminal command in JetBrains IDE"
