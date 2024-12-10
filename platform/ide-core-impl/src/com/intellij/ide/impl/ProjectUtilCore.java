@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -26,7 +27,7 @@ public final class ProjectUtilCore {
    */
   @Deprecated
   public static boolean isValidProjectPath(@NotNull Path file) {
-    return Files.isDirectory(file.resolve(Project.DIRECTORY_STORE_FOLDER)) ||
+    return ProjectCoreUtil.isKnownProjectDirectory(file) ||
            (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
   }
 

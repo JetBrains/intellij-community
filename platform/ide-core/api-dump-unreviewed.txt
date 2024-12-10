@@ -1798,7 +1798,6 @@ f:com.intellij.openapi.project.ProjectUtil
 - bs:guessProjectForContentFile$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileTypes.FileType,I,java.lang.Object):com.intellij.openapi.project.Project
 - sf:guessProjectForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.project.Project
 - sf:isNotificationSilentMode(com.intellij.openapi.project.Project):Z
-- sf:isProjectDirectoryExistsUsingIo(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:modifyModules(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):java.lang.Object
 com.intellij.openapi.ui.ComponentWithActions

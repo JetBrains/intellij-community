@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -178,7 +179,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var baseDirCandidate = file.parent
-      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+      while (baseDirCandidate != null && !ProjectCoreUtil.isKnownProjectDirectory(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
       }
 
@@ -199,7 +200,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+        options = options.copy(isNewProject = !ProjectCoreUtil.isKnownProjectDirectory(baseDir))
       }
       else {
         baseDir = baseDirCandidate
@@ -234,7 +235,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var baseDirCandidate = file.parent
-      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+      while (baseDirCandidate != null && !ProjectCoreUtil.isKnownProjectDirectory(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
       }
 
@@ -255,7 +256,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+        options = options.copy(isNewProject = !ProjectCoreUtil.isKnownProjectDirectory(baseDir))
       }
       else {
         baseDir = baseDirCandidate

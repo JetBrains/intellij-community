@@ -1223,7 +1223,7 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
       Files.deleteIfExists(projectFile)
     }
     else {
-      Files.newDirectoryStream(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER)).use { directoryStream ->
+      Files.newDirectoryStream(ProjectCoreUtil.getProjectStoreDirectory(projectFile)).use { directoryStream ->
         for (file in directoryStream) {
           file!!.delete()
         }

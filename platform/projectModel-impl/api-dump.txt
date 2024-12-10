@@ -400,7 +400,6 @@ c:com.intellij.openapi.roots.libraries.DummyLibraryProperties
 - hashCode():I
 - loadState(java.lang.Object):V
 f:com.intellij.project.ProjectKt
-- sf:getProjectStoreDirectory(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - sf:getStateStore(com.intellij.openapi.project.Project):com.intellij.openapi.components.impl.stores.IProjectStore
 - sf:isDirectoryBased(com.intellij.openapi.project.Project):Z
 - sf:isEqualToProjectFileStorePath(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):Z

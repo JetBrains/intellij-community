@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
@@ -345,9 +346,10 @@ object ProjectUtil {
       }
     }
     if (fileAttributes.isDirectory) {
-      val dir = file.resolve(Project.DIRECTORY_STORE_FOLDER)
-      if (!Files.isDirectory(dir)) {
-        Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", dir.toString()), CommonBundle.getErrorTitle())
+      val isKnownProject = ProjectCoreUtil.isKnownProjectDirectory(file)
+      if (!isKnownProject) {
+        val dirPath = ProjectCoreUtil.getProjectStoreDirectory(file)
+        Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", dirPath.toString()), CommonBundle.getErrorTitle())
         return null
       }
     }
@@ -601,11 +603,7 @@ object ProjectUtil {
 
   fun getProjectFile(name: String): Path? {
     val projectDir = getProjectPath(name)
-    return if (isProjectFile(projectDir)) projectDir else null
-  }
-
-  private fun isProjectFile(projectDir: Path): Boolean {
-    return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
+    return if (ProjectCoreUtil.isKnownProjectDirectory(projectDir)) projectDir else null
   }
 
   @JvmStatic
@@ -617,7 +615,7 @@ object ProjectUtil {
   }
 
   private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
-    val existingFile = if (isProjectFile(file)) file else null
+    val existingFile = if (ProjectCoreUtil.isKnownProjectDirectory(file)) file else null
     val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
     if (existingFile != null) {
       for (p in projectManager.openProjects) {

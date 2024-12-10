@@ -26,7 +26,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
-import com.intellij.project.getProjectStoreDirectory
+import com.intellij.project.stateStore
 import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspections
 import com.intellij.spellchecker.dictionary.*
 import com.intellij.spellchecker.engine.SpellCheckerEngine
@@ -74,8 +74,8 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
     fullConfigurationReload()
     @Suppress("DEPRECATION")
-    val projectStoreDir = project.baseDir?.let { getProjectStoreDirectory(it) }
-    projectDictionaryPath = if (projectStoreDir == null) "" else projectStoreDir.path + File.separator + PROJECT_DICTIONARY_PATH
+    val projectStoreDir = project.stateStore.directoryStorePath
+    projectDictionaryPath = if (projectStoreDir == null) "" else projectStoreDir.toAbsolutePath().resolve(PROJECT_DICTIONARY_PATH).toString()
     appDictionaryPath = PathManager.getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE
     LocalFileSystem.getInstance().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
     BUNDLED_EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
