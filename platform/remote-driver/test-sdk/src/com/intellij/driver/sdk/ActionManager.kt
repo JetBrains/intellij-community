@@ -13,11 +13,13 @@ import java.awt.event.InputEvent
 interface ActionManager {
   fun getAction(actionId: String): AnAction?
 
-  fun tryToExecute(action: AnAction,
-                   inputEvent: InputEvent?,
-                   contextComponent: Component?,
-                   place: String?,
-                   now: Boolean): ActionCallback
+  fun tryToExecute(
+    action: AnAction,
+    inputEvent: InputEvent?,
+    contextComponent: Component?,
+    place: String?,
+    now: Boolean,
+  ): ActionCallback
 }
 
 @Remote("com.intellij.openapi.actionSystem.ex.ActionUtil")
@@ -43,6 +45,16 @@ interface Shortcut
 interface ActionCallback {
   fun isRejected(): Boolean
   fun getError(): String
+}
+
+/**
+ * The 'currently focused component' is poorly defined on the backend
+ * So some fixed component needs to be passed into [ActionManager.tryToExecute]
+ */
+fun Driver.invokeGlobalBackendAction(actionId: String, project: Project? = null, now: Boolean = true) {
+  val contextProject = project ?: service<ProjectManager>(rdTarget = RdTarget.BACKEND).getOpenProjects().single()
+  val targetComponent = service<WindowManager>(rdTarget = RdTarget.BACKEND).getIdeFrame(contextProject)?.getComponent() // make sure there's an action in the context
+  invokeAction(actionId, now, component = targetComponent, rdTarget = RdTarget.BACKEND)
 }
 
 fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, place: String? = null, rdTarget: RdTarget? = null) {
