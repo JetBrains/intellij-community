@@ -943,13 +943,13 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       return;
     }
 
-    final Anchor value = addToGroup.getAnchor().getValue();
-    if (value == Anchor.after || value == Anchor.before) {
+    final AddToGroup.Anchor value = addToGroup.getAnchor().getValue();
+    if (value == AddToGroup.Anchor.after || value == AddToGroup.Anchor.before) {
       return;
     }
     holder.createProblem(
       addToGroup.getAnchor(),
-      DevKitBundle.message("inspections.plugin.xml.must.use.after.before.with.relative-to-action", Anchor.after, Anchor.before));
+      DevKitBundle.message("inspections.plugin.xml.must.use.after.before.with.relative-to-action", AddToGroup.Anchor.after, AddToGroup.Anchor.before));
   }
 
   private static void annotateGroup(Group group, DomElementAnnotationHolder holder) {
