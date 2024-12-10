@@ -20,6 +20,7 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -254,7 +255,7 @@ public class Maven40ProjectResolver {
     try {
       ProjectDependenciesResolver dependencyResolver = myEmbedder.getComponent(ProjectDependenciesResolver.class);
       DefaultDependencyResolutionRequest resolution = new DefaultDependencyResolutionRequest(project, session);
-      resolutionResult = dependencyResolver.resolve(resolution);
+      resolutionResult = resolve(dependencyResolver, resolution);
     }
     catch (DependencyResolutionException e) {
       MavenServerGlobals.getLogger().warn(e);
@@ -288,6 +289,35 @@ public class Maven40ProjectResolver {
     project.setArtifacts(artifacts);
 
     return resolutionResult;
+  }
+
+  private static DependencyResolutionResult resolve(ProjectDependenciesResolver dependencyResolver,
+                                                    DefaultDependencyResolutionRequest resolution)
+    throws DependencyResolutionException {
+    try {
+      return dependencyResolver.resolve(resolution);
+    }
+    catch (DependencyResolutionException e) {
+      if (artifactNotFound(e)) {
+        MavenServerGlobals.getLogger().warn(e);
+        MavenServerGlobals.getLogger().warn("Retrying dependency resolution for " + resolution.getMavenProject().getId());
+        return dependencyResolver.resolve(resolution);
+      }
+      throw e;
+    }
+  }
+
+  private static boolean artifactNotFound(DependencyResolutionException e) {
+    Set<Throwable> visited = new HashSet<>();
+    Throwable cause = e;
+    while (cause != null && !visited.contains(cause)) {
+      visited.add(cause);
+      if (cause instanceof ArtifactNotFoundException) {
+        return true;
+      }
+      cause = cause.getCause();
+    }
+    return false;
   }
 
   @NotNull
