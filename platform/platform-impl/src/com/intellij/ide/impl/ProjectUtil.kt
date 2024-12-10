@@ -453,12 +453,11 @@ object ProjectUtil {
       }
     }
 
-    var parent: Path? = projectFile.parent ?: return false
-    val parentFileName = parent!!.fileName
-    if (parentFileName != null && parentFileName.toString() == Project.DIRECTORY_STORE_FOLDER) {
-      parent = parent.parent
-      return parent != null && FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString())
+    val storeDir = projectStore.directoryStorePath ?: return false
+    if (projectFile.startsWith(storeDir)) {
+      return true
     }
+    var parent: Path? = projectFile.parent ?: return false
     return projectFile.fileName.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
            FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString())
   }
