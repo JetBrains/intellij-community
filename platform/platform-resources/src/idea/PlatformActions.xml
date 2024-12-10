@@ -463,6 +463,7 @@
         <separator/>
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
+          <action id="CloseSettings" class="com.intellij.openapi.options.newEditor.settings.CloseSettingsAction" use-shortcut-of="CloseDiffEditor"/>
         </group>
         <group id="FilePropertiesGroup" popup="true">
           <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
