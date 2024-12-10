@@ -1528,6 +1528,7 @@
     <action id="ClearAllNotifications" class="com.intellij.notification.impl.ClearAllNotificationsAction" icon="AllIcons.Actions.GC"/>
 
     <group id="ProjectViewToolbar">
+      <separator/>
       <reference ref="SelectInProjectView"/>
       <reference ref="ExpandRecursively"/>
       <reference ref="ExpandAll"/>
