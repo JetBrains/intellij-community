@@ -20,6 +20,9 @@
                     interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint name="psi.batchReferenceProcessingSuppressor"
+                    interface="com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor"
+                    dynamic="true"/>
     <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider" dynamic="true"/>
     <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP" dynamic="true">
       <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
