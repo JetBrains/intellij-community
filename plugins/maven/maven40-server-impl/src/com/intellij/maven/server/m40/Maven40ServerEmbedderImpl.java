@@ -129,7 +129,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     String mmpDir = settings.getMultiModuleProjectDirectory();
     String multiModuleProjectDirectory = mmpDir == null ? "" : mmpDir;
-    System.setProperty("maven.multiModuleProjectDirectory", multiModuleProjectDirectory); //TODO: get rid of setProperty?
 
     MavenServerSettings serverSettings = settings.getSettings();
     String mh = serverSettings.getMavenHomePath();
@@ -324,7 +323,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
           "projectResolver.resolveProjects", () -> projectResolver.resolveProjects());
         telemetry.shutdown();
-        return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token));
+        return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
       }
       finally {
         resetComponents();
@@ -991,7 +990,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       //TODO:polyglot
 /*      if (!StringUtilRt.endsWithIgnoreCase(file.getName(), "xml")) {
         try {
-          //TODO:polyglot
           Object polyglotManager = myContainer.lookup("org.sonatype.maven.polyglot.PolyglotModelManager");
           if (polyglotManager != null) {
             Method getReaderFor = polyglotManager.getClass().getMethod("getReaderFor", Map.class);
