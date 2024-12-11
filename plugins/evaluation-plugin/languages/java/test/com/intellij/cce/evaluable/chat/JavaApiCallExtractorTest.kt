@@ -4,7 +4,11 @@ import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
+import com.intellij.cce.java.chat.GeneratedCodeIntegrator
+import com.intellij.cce.java.chat.InEditorGeneratedCodeIntegrator
 import com.intellij.cce.java.chat.JavaApiCallExtractor
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
@@ -55,7 +59,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor()
+      val extractor = JavaApiCallExtractor(GeneratedCodeIntegrator { project, code, _ -> code })
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#bar"), apiCalls)
     }
@@ -81,7 +85,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor()
+      val extractor = JavaApiCallExtractor { project, code, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#bar", "MyClass#baz"), apiCalls)
     }
@@ -100,9 +104,47 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor()
+      val extractor = JavaApiCallExtractor { project, code, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertTrue(apiCalls.isEmpty())
+    }
+  }
+
+  fun `test when the generated method needs to be inserted`() {
+    val existingCode = """
+            public class MyClass {
+                public void foo() {
+                    // Does nothing
+                }
+            }
+        """.trimIndent()
+
+    myFixture.configureByText("MyClass.java", existingCode)
+
+    val editor: Editor = myFixture.editor
+    val caretPosition = existingCode.length - 1
+
+    runBlocking {
+      writeAction {
+        editor.caretModel.moveToOffset(caretPosition)
+      }
+    }
+    val code = """
+                public void bar() {
+                    foo()
+                }
+        """.trimIndent()
+
+    val tokenProperties = createTokenProperties("bar")
+    val project: Project = project
+
+    runBlocking {
+      val extractor = JavaApiCallExtractor(InEditorGeneratedCodeIntegrator())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
+      assertEquals(
+        listOf("MyClass#foo"),
+        apiCalls
+      )
     }
   }
 
@@ -119,7 +161,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor()
+      val extractor = JavaApiCallExtractor { project, code, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertTrue(apiCalls.isEmpty())
     }
@@ -192,7 +234,7 @@ class SuperClass {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor()
+      val extractor = JavaApiCallExtractor { project, code, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(
         listOf("MySubClass#isTargetingSuccessful", "Velocity#getLength", "MySubClass#onTargetingFailOrLowVelocity"),

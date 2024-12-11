@@ -83,6 +83,7 @@ class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
     assertEquals("foo", internalMethods[0].name)
   }
 
+
   private fun createPsiFile(code: String): PsiFile {
     val project = myFixture.project
     val virtualFile = myFixture.tempDirFixture.createFile("MyClass.java", code)

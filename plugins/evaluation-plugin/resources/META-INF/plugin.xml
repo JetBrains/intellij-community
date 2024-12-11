@@ -61,7 +61,7 @@
                     interface="com.intellij.cce.evaluable.EvaluableFeature"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.apiCallExtractor"
-                    interface="com.intellij.cce.metric.ApiCallExtractor"
+                    interface="com.intellij.cce.metric.ApiCallExtractorProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.exposedApiExtractor"
                     interface="com.intellij.cce.evaluable.ExposedApiExtractor"

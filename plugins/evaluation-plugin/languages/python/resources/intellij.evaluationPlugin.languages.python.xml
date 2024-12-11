@@ -14,6 +14,6 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonRenameVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonTestGenerationVisitor"/>
     <codeExecutionManager implementation="com.intellij.cce.python.execution.manager.PythonCodeExecutionManager"/>
-    <apiCallExtractor implementation="com.intellij.cce.python.chat.PythonApiCallExtractor"/>
+    <apiCallExtractor implementation="com.intellij.cce.python.chat.PythonApiCallExtractorProvider"/>
   </extensions>
 </idea-plugin>

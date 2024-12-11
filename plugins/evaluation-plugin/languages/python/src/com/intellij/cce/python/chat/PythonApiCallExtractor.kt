@@ -3,6 +3,7 @@ package com.intellij.cce.python.chat
 import com.intellij.cce.core.Language
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.metric.ApiCallExtractor
+import com.intellij.cce.metric.ApiCallExtractorProvider
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
@@ -13,8 +14,6 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.intellij.lang.Language as PlatformLanguage
 
 class PythonApiCallExtractor : ApiCallExtractor {
-  override val language: Language = Language.PYTHON
-
   override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
     val psiFile = writeAction { parsePsiFile(project, code) }
     return readAction { extractApiCalls(psiFile) }
@@ -37,5 +36,12 @@ class PythonApiCallExtractor : ApiCallExtractor {
     }
     psiFile.accept(visitor)
     return callExpressions.mapNotNull { it.callee?.name }
+  }
+}
+
+class PythonApiCallExtractorProvider : ApiCallExtractorProvider {
+  override val language: Language = Language.PYTHON
+  override fun provide(): ApiCallExtractor {
+    return PythonApiCallExtractor()
   }
 }
