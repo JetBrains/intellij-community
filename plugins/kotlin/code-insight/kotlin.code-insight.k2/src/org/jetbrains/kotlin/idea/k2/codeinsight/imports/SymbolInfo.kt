@@ -2,10 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -66,24 +64,31 @@ internal fun KaSession.containingClassSymbol(symbolInfo: SymbolInfo): KaClassLik
         UnsupportedSymbolInfo -> null
     }
 
+/**
+ * A copy of [KaSession.importableFqName] adapted for [CallableId].
+ * 
+ * [substitutedContainingClass] is used to create [CallableId]s for
+ * [KaCallableSymbol]s declared in classes/interfaces, 
+ * but dispatched through objects, because [KaCallableSymbol]s
+ * cannot represent that on their own (see KT-60775).
+ * 
+ * Does not handle [org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol]s (yet).
+ */
 private fun KaSession.computeImportableName(
     target: KaCallableSymbol,
-    containingClass: KaClassLikeSymbol?
+    substitutedContainingClass: KaClassLikeSymbol?
 ): CallableId? {
-    if (target is KaReceiverParameterSymbol) {
-        return null
-    }
+    if (target.isLocal) return null
+    
+    val containingClass = substitutedContainingClass 
+        ?: target.containingDeclaration as? KaClassLikeSymbol
+        ?: return target.callableId
+    
+    val canBeImported = containingClass.origin.isJavaSourceOrLibrary() && target.isJavaStaticDeclaration() ||
+            (containingClass as? KaClassSymbol)?.classKind == KaClassKind.ENUM_CLASS && isEnumStaticMember(target) ||
+            (containingClass as? KaClassSymbol)?.classKind?.isObject == true
 
-    if (containingClass == null) {
-        return target.callableId
-    }
-
-    val callableId = target.callableId ?: return null
-    if (callableId.classId == null) return null
-
-    val receiverClassId = containingClass.classId ?: return null
-
-    val substitutedCallableId = callableId.withClassId(receiverClassId)
-
-    return substitutedCallableId
+    val containingClassId = containingClass.classId ?: return null
+    
+    return if (canBeImported) target.callableId?.withClassId(containingClassId) else null
 }
