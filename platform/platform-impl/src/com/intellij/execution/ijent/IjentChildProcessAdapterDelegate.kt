@@ -2,7 +2,9 @@
 package com.intellij.execution.ijent
 
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.ErrorString
+import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.provider.utils.EelPipe
 import com.intellij.platform.eel.provider.utils.asOutputStream
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
@@ -13,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import java.io.ByteArrayInputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
@@ -35,15 +38,18 @@ internal class IjentChildProcessAdapterDelegate(
       val pipe = EelPipe()
 
       coroutineScope.launch {
-        val stdoutClosed = launch {
-          copy(ijentChildProcess.stdout, pipe.sink).getOrThrow() // TODO: Process error
+        launch {
+          copyToPipe(ijentChildProcess.stdout, pipe)
         }
-        val stdErrClosed = launch {
-          copy(ijentChildProcess.stderr, pipe.sink).getOrThrow() // TODO: Process error
+        launch {
+          copyToPipe(ijentChildProcess.stderr, pipe)
         }
-        stdErrClosed.join()
-        stdoutClosed.join()
-        pipe.closePipe()
+        launch {
+          ijentChildProcess.exitCode.await()
+          // When the process dies, we close its stream.
+          // That will be done by ijentChildProcess anyway, but the operation is idempotent
+          pipe.closePipe()
+        }
       }
 
       inputStream = pipe.source.consumeAsInputStream(coroutineScope.coroutineContext)
@@ -52,6 +58,17 @@ internal class IjentChildProcessAdapterDelegate(
     else {
       inputStream = ijentChildProcess.stdout.consumeAsInputStream(coroutineScope.coroutineContext)
       errorStream = ijentChildProcess.stderr.consumeAsInputStream(coroutineScope.coroutineContext)
+    }
+  }
+
+  /**
+   * Copy from [from] to [pipe] and close [pipe] once read finished.
+   * When `stderr` redirected to `stdout` we close `stdout` as soon as either `stderr` or `stdout` gets closed
+   */
+  private suspend fun copyToPipe(from: EelReceiveChannel<ErrorString>, pipe: EelPipe) {
+    when (val r = copy(from, pipe.sink)) {
+      is EelResult.Error -> pipe.closePipe(IOException("pipe closed: ${r.error}"))
+      is EelResult.Ok -> pipe.closePipe()
     }
   }
 

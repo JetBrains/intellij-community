@@ -46,11 +46,11 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       return OK_UNIT
     }
     catch (_: ClosedSendChannelException) {
-      clearBytesInQueue()
+      closePipe()
       return ERR_CHANNEL_CLOSED
     }
     catch (e: PipeBrokenException) {
-      clearBytesInQueue()
+      closePipe()
       return e.asErrorResult()
     }
   }
@@ -60,11 +60,11 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       channel.receive()
     }
     catch (_: ClosedReceiveChannelException) {
-      clearBytesInQueue()
+      closePipe()
       return OK_EOF
     }
     catch (e: PipeBrokenException) {
-      clearBytesInQueue()
+      closePipe()
       return e.asErrorResult()
     }
     val bytesToWrite = src.remaining()
@@ -90,8 +90,7 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       // We still have some data to be delivered. Let's wait sometime to give change to read it
       delay(200)
     }
-    channel.close()
-    clearBytesInQueue()
+    closePipe()
   }
 
 
@@ -100,18 +99,9 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       // We still have some data to be delivered. Let's wait sometime to give change to read it
       Thread.sleep(200)
     }
-    if (error != null) {
-      channel.close(PipeBrokenException(error))
-    }
-    else {
-      channel.close()
-    }
-  }
-
-  private suspend fun clearBytesInQueue() {
-    bytesInQueueMutex.withLock {
-      bytesInQueue = 0
-    }
+    channel.close(error?.let { PipeBrokenException(it) })
+    bytesInQueue = 0
+    channel.cancel() //If there is a coroutine near `send`, it must get an error
   }
 }
 

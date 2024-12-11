@@ -91,6 +91,12 @@ internal class InputStreamAdapterImpl(
     }
   }
 
+  override fun close() {
+    runBlockingMaybeCancellable {
+      receiveChannel.close()
+    }
+  }
+
   // Pipe is a special case we can tell how much bytes are available.
   // In other cases, we do not know.
   // Unblocking read in IJ depends on it, so we can't simply return 0 here not to break unblocking read
