@@ -10477,12 +10477,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/branched/unfolding/returnToIf")
-    public abstract static class ReturnToIf extends AbstractK2IntentionTest {
-
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/introduceVariable")
     public static class IntroduceVariable extends AbstractK2IntentionTest {
         @java.lang.Override
