@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.serialization.registration
 
 import com.esotericsoftware.kryo.kryo5.Kryo
@@ -9,7 +9,6 @@ import com.google.common.collect.HashMultimap
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.ImmutableEntitiesBarrel
 import com.intellij.platform.workspace.storage.impl.containers.*
 import com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
@@ -49,8 +48,14 @@ internal class StorageClassesRegistrar(
 
   private val kotlinPluginId = "org.jetbrains.kotlin"
 
-  private val kotlinCollectionsToRegistrar: List<Class<*>> = listOf(
-    ArrayDeque::class.java, emptyList<Any>()::class.java, emptyMap<Any, Any>()::class.java, emptySet<Any>()::class.java
+  private val kotlinCollectionsToRegistrar: List<Class<*>> = listOf<Class<*>>(
+    ArrayDeque::class.java,
+    emptyList<Any>()::class.java,
+    emptyMap<Any, Any>()::class.java,
+    emptySet<Any>()::class.java,
+    (buildList<Any> {  })::class.java,
+    (buildMap<Any,Any> {  })::class.java,
+    (buildSet<Any> {  })::class.java,
   )
 
   override fun registerClasses(kryo: Kryo) {
