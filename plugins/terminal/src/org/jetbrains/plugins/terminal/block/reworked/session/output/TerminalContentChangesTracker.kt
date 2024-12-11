@@ -7,7 +7,6 @@ import com.jediterm.terminal.model.TextBufferChangesListener
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
-import org.jetbrains.plugins.terminal.block.session.scraper.DropTrailingNewLinesStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
 import java.util.concurrent.CopyOnWriteArrayList
@@ -92,7 +91,7 @@ internal class TerminalContentChangesTracker(
 
   private fun scrapeOutput(startLine: Int, additionalLines: List<TerminalLine>): StyledCommandOutput {
     val styles = mutableListOf<StyleRange>()
-    val stringCollector = DropTrailingNewLinesStringCollector(SimpleStringCollector())
+    val stringCollector = SimpleStringCollector()
     val terminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
 
     for (line in additionalLines) {
