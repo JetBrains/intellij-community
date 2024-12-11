@@ -75,7 +75,7 @@ internal class OptimizedImportsBuilder(
 
         val symbolsByParentFqName = HashMap<FqName, MutableSet<SymbolInfo>>()
         for (importableSymbol in importableSymbols) {
-            val fqName = importableSymbol.run { computeImportableName() } ?: continue
+            val fqName = importableSymbol.importableName ?: continue
             for (name in usedReferencesData.usedDeclarations.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
@@ -136,7 +136,7 @@ internal class OptimizedImportsBuilder(
                 val parentFqName = fqName.parent()
 
                 val siblingsToImport = symbolsByParentFqName.getValue(parentFqName)
-                for (descriptor in siblingsToImport.filter { it.run { computeImportableName() } == fqName }) {
+                for (descriptor in siblingsToImport.filter { it.importableName == fqName }) {
                     siblingsToImport.remove(descriptor)
                 }
 
@@ -213,8 +213,8 @@ internal class OptimizedImportsBuilder(
                 importSymbolWithMapping(originalSymbolInfo) == importSymbolWithMapping(alternativeSymbolInfo)
     }
 
-    private fun KaSession.lockImportForSymbol(symbol: SymbolInfo, existingNames: Collection<Name>) {
-        val name = symbol.run { computeImportableName() }?.shortName() ?: return
+    private fun lockImportForSymbol(symbol: SymbolInfo, existingNames: Collection<Name>) {
+        val name = symbol.importableName?.shortName() ?: return
         val fqName = importSymbolWithMapping(symbol) ?: return
         val names = usedReferencesData.usedDeclarations.getOrElse(fqName) { listOf(name) }.intersect(existingNames.toSet())
 
@@ -242,8 +242,8 @@ internal class OptimizedImportsBuilder(
         return ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion)
     }
 
-    private fun KaSession.importSymbolWithMapping(symbol: SymbolInfo): FqName? {
-        val importableName = symbol.run { computeImportableName() } ?: return null
+    private fun importSymbolWithMapping(symbol: SymbolInfo): FqName? {
+        val importableName = symbol.importableName ?: return null
 
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }

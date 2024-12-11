@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.withClassId
 
 internal sealed interface SymbolInfo {
-    fun KaSession.computeImportableName(): FqName?
+    val importableName: FqName?
 
     companion object {
         @OptIn(KaExperimentalApi::class)
@@ -43,14 +43,16 @@ internal sealed interface SymbolInfo {
 internal data class ClassLikeSymbolInfo(
     val importableClassId: ClassId,
 ) : SymbolInfo {
-    override fun KaSession.computeImportableName(): FqName? = importableClassId.asSingleFqName()
+    override val importableName: FqName 
+        get() = importableClassId.asSingleFqName()
 }
 
 
 internal data class CallableSymbolInfo(
-    val importableFqName: CallableId,
+    val importableCallableId: CallableId,
 ) : SymbolInfo {
-    override fun KaSession.computeImportableName(): FqName? = importableFqName.asSingleFqName()
+    override val importableName: FqName 
+        get() = importableCallableId.asSingleFqName()
 }
 
 /**
@@ -58,12 +60,12 @@ internal data class CallableSymbolInfo(
  * by more specialized implementations of [SymbolInfo].
  */
 internal data object UnsupportedSymbolInfo : SymbolInfo {
-    override fun KaSession.computeImportableName(): FqName? = null
+    override val importableName: FqName? get() = null
 }
 
 internal fun KaSession.containingClassSymbol(symbolInfo: SymbolInfo): KaClassLikeSymbol? =
     when (symbolInfo) {
-        is CallableSymbolInfo -> symbolInfo.importableFqName.classId?.let(::findClassLike)
+        is CallableSymbolInfo -> symbolInfo.importableCallableId.classId?.let(::findClassLike)
         is ClassLikeSymbolInfo -> symbolInfo.importableClassId.outerClassId?.let(::findClassLike)
         UnsupportedSymbolInfo -> null
     }
