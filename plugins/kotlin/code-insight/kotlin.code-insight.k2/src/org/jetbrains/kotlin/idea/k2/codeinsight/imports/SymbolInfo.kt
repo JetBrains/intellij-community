@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -16,14 +15,12 @@ internal sealed interface SymbolInfo {
     val importableName: FqName?
 
     companion object {
-        @OptIn(KaExperimentalApi::class)
         fun KaSession.create(symbol: KaClassLikeSymbol): SymbolInfo {
             val classImportableName = symbol.classId ?: return UnsupportedSymbolInfo
 
             return ClassLikeSymbolInfo(classImportableName)
         }
 
-        @OptIn(KaExperimentalApi::class)
         fun KaSession.create(symbol: KaCallableSymbol, containingClassSymbol: KaClassLikeSymbol?): SymbolInfo {
             val symbolImportableName = computeImportableName(symbol, containingClassSymbol) 
                 ?: return UnsupportedSymbolInfo
@@ -31,7 +28,6 @@ internal sealed interface SymbolInfo {
             return CallableSymbolInfo(symbolImportableName)
         }
 
-        @OptIn(KaExperimentalApi::class)
         fun KaSession.create(symbol: KaSymbol): SymbolInfo {
             require(symbol !is KaClassLikeSymbol && symbol !is KaCallableSymbol)
 
