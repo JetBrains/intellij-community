@@ -27,14 +27,14 @@ internal data class PyEnvTestSettings(
   private val foldersWithPythons: List<File> = listOfNotNull(folderWithCPythons, folderWithCondas).map { File(it) }
 
   /**
-   * Paths to all existing python SDKs
+   * Paths to all existing python SDKs (as directories with python installation)
    */
   @TestOnly
   @get:JvmName("getPythons")
   internal val pythons: List<File> = foldersWithPythons
     .filter(File::exists)
     .flatMap { it.listFiles()?.toList() ?: emptyList() }
-    .filter { !it.name.startsWith('.') }
+    .filter { it.isDirectory && !it.name.startsWith('.') }
     .plus(additionalInterpreters)
 
   /**
