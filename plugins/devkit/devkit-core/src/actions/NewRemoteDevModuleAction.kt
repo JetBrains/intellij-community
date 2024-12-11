@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions
 
+import com.intellij.codeInsight.actions.ReformatCodeAction
+import com.intellij.codeInspection.incorrectFormatting.ReformatQuickFix
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
@@ -16,6 +21,7 @@ import com.intellij.openapi.observable.util.onceWhenFocusGained
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.ui.DialogWrapper
@@ -25,12 +31,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText
+import com.intellij.patterns.XmlPatterns.xmlFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiManager
+import com.intellij.psi.xml.XmlFile
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.util.xml.DomManager
 import kotlinx.coroutines.*
 import org.jetbrains.idea.devkit.actions.ModuleType.*
+import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import javax.swing.JComponent
@@ -165,6 +176,8 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
 
     patchRemoteDevImls(project, module, moduleType)
 
+    patchEssentialModulesXml(project, module)
+
     // add FacetManagers with Kotlin Compiler plugins
     addKotlinPlugins(project, moduleDirectories.moduleRoot, module)
   }
@@ -202,6 +215,39 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
     }
 
     saveFiles(project)
+  }
+
+  private suspend fun patchEssentialModulesXml(project: Project, module: Module) {
+    val platformResourcesModule = readAction {
+      ModuleManager.getInstance(project).findModuleByName("intellij.platform.resources")
+    } ?: run {
+      LOG.info("intellij.platform.resources module is not found in project modules")
+      return
+    }
+    val essentialModulesXmlFile = readAction {
+      ModuleRootManager.getInstance(platformResourcesModule).getSourceRoots(JavaResourceRootType.RESOURCE).firstNotNullOfOrNull {
+        it.findChild("META-INF")?.findChild("essential-modules.xml")
+      }
+    } ?: run {
+      LOG.info("essentialModules.xml file is not found in intellij.platform.resources module")
+      return
+    }
+
+    val essentialModulesXmlPsi = readAction {
+      PsiManager.getInstance(module.getProject()).findFile(essentialModulesXmlFile) as? XmlFile
+    } ?: run {
+      LOG.info("cannot get PSI from essentialModules.xml")
+      return
+    }
+
+    writeAction {
+      CommandProcessor.getInstance().runUndoTransparentAction {
+        val fileElement = DomManager.getDomManager(project).getFileElement(essentialModulesXmlPsi, IdeaPlugin::class.java)
+                          ?: return@runUndoTransparentAction
+        val moduleEntry = fileElement.rootElement.content.addModuleEntry()
+        moduleEntry.name.stringValue = module.name
+      }
+    }
   }
 
   private suspend fun patchRemoteDevImls(project: Project, module: Module, moduleType: ModuleType) {
