@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.impl
+package com.intellij.platform.searchEverywhere.frontend.dispatcher
 
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemId

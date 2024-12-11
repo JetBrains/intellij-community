@@ -2,16 +2,18 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemDataProvider
+import com.intellij.platform.searchEverywhere.SearchEverywhereParams
+import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereRemoteApi
 import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class SearchEverywhereItemDataFrontendProvider(override val id: SearchEverywhereProviderId,
-                                               private val projectId: ProjectId,
-                                               private val sessionId: EID): SearchEverywhereItemDataProvider {
-  override fun getItems(params: SearchEverywhereParams, session: SearchEverywhereSession): Flow<SearchEverywhereItemData> {
+class SearchEverywhereItemDataFrontendProvider(private val projectId: ProjectId,
+                                               override val id: SearchEverywhereProviderId): SearchEverywhereItemDataProvider {
+  override fun getItems(sessionId: EID, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
     return flow {
       SearchEverywhereRemoteApi.getInstance().getItems(projectId, sessionId, id, params)
     }

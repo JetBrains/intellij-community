@@ -2,15 +2,15 @@
 package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.platform.searchEverywhere.*
+import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 
 class SearchEverywhereItemDataBackendProvider(override val id: SearchEverywhereProviderId,
                                               private val provider: SearchEverywhereItemsProvider): SearchEverywhereItemDataProvider {
-  override fun getItems(params: SearchEverywhereParams, session: SearchEverywhereSession): Flow<SearchEverywhereItemData> {
-    return provider.getItems(params).map {
-      val itemId = session.saveItem(it)
-      SearchEverywhereItemData(itemId, SearchEverywhereProviderId(provider.id), it.weight(), it.presentation())
+  override fun getItems(sessionId: EID, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+    return provider.getItems(params).mapNotNull { item ->
+      SearchEverywhereItemData.createItemData(sessionId, item, id, item.weight(), item.presentation())
     }
   }
 }

@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend
+package com.intellij.platform.searchEverywhere.frontend.vm
 
+import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemDataProvider
-import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
-import com.intellij.platform.searchEverywhere.SearchEverywhereTab
+import com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider
+import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -12,30 +12,22 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
-class SearchEverywherePopupVm(private val coroutineScope: CoroutineScope,
-                              tabs: List<SearchEverywhereTab>,
-                              providers: Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider>) {
+class SearchEverywherePopupVm(private val coroutineScope: CoroutineScope, private val project: Project, private val sessionId: EID, onClose: suspend () -> Unit) {
 
   val currentTab: StateFlow<SearchEverywhereTabVm> get() = _currentTab.asStateFlow()
   val searchResults: Flow<Flow<SearchEverywhereItemData>> = currentTab.flatMapLatest { it.searchResults }
 
   private val searchPattern = MutableStateFlow("")
 
-  private val tabVms: List<SearchEverywhereTabVm> = tabs.mapNotNull { tab ->
-    val tabProviders = tab.providers.map {
-      providers[SearchEverywhereProviderId(it)]!!
-    }.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-
-    SearchEverywhereTabVm(coroutineScope, tabProviders, searchPattern)
+  private val tabVms: List<SearchEverywhereTabVm> = SearchEverywhereTabProvider.EP_NAME.extensionList.map {
+    val tab = it.getTab(project, sessionId)
+    SearchEverywhereTabVm(coroutineScope, tab, searchPattern)
   }
 
   private val _currentTab: MutableStateFlow<SearchEverywhereTabVm>
 
   init {
-    check(tabs.isNotEmpty()) {
-      "Search Everywhere tabs must not be empty"
-    }
-
+    check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
     _currentTab = MutableStateFlow(tabVms.first())
   }
 

@@ -9,4 +9,8 @@
                     interface="com.intellij.platform.searchEverywhere.SearchEverywhereItemsProviderFactory"
                     dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.SearchEverywhereEntityTypeProvider"/>
+  </extensions>
 </idea-plugin>

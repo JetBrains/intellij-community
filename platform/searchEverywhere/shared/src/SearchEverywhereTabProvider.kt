@@ -2,11 +2,13 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.jetbrains.rhizomedb.EID
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface SearchEverywhereTabProvider {
-  fun getTab(): SearchEverywhereTab
+  fun getTab(project: Project, sessionId: EID): SearchEverywhereTab
 
   companion object {
     @ApiStatus.Internal

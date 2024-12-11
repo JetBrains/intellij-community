@@ -16,12 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface SearchEverywhereRemoteApi: RemoteApi<Unit> {
-
-  suspend fun startSession(projectId: ProjectId): EID
-  suspend fun closeSession(projectId: ProjectId, sessionId: EID)
-
-  suspend fun getProviderIds(projectId: ProjectId, sessionId: EID): List<SearchEverywhereProviderId>
-
   suspend fun getItems(projectId: ProjectId,
                        sessionId: EID,
                        providerId: SearchEverywhereProviderId,

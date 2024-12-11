@@ -3,12 +3,14 @@ package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.backend.cascadeDeleteBy
-import com.intellij.platform.kernel.backend.delete
-import com.intellij.platform.kernel.backend.findValueEntity
-import com.intellij.platform.kernel.backend.newValueEntity
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBackendItemDataProvidersHolderEntity.Companion.Holder
+import com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBackendItemDataProvidersHolderEntity.Companion.Session
+import com.intellij.platform.searchEverywhere.impl.SearchEverywhereItemEntity
 import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.entity
+import fleet.kernel.change
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
@@ -17,35 +19,48 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.PROJECT)
 class SearchEverywhereBackendService(val project: Project) {
 
-  suspend fun startSession(): EID {
-    val providers = SearchEverywhereItemsProviderFactory.EP_NAME.extensionList.associate { factory ->
-      val provider = factory.getItemsProvider()
-      val id = SearchEverywhereProviderId(provider.id)
-      id to SearchEverywhereItemDataBackendProvider(id, provider)
+  suspend fun getItems(sessionId: EID, providerId: SearchEverywhereProviderId, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+    return getProviders(sessionId)[providerId]?.getItems(sessionId, params) ?: emptyFlow()
+  }
+
+  private suspend fun getProviders(sessionId: EID): Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider> {
+    val providersHolder = withKernel {
+      val session = entity(sessionId) as? SearchEverywhereSessionEntity ?: return@withKernel null
+      var existingHolderEntity = entity(Session, session)
+
+      if (existingHolderEntity == null) {
+        existingHolderEntity = change {
+          val holderEntity = entity(Session, session)
+
+          if (holderEntity == null) {
+            val providers = SearchEverywhereItemsProviderFactory.EP_NAME.extensionList.associate { factory ->
+              val provider = factory.getItemsProvider()
+              val id = SearchEverywhereProviderId(provider.id)
+              id to SearchEverywhereItemDataBackendProvider(id, provider)
+            }
+            val holder = SearchEverywhereBackendItemDataProvidersHolder(providers)
+
+            SearchEverywhereBackendItemDataProvidersHolderEntity.new {
+              it[Holder] = holder
+              it[Session] = session
+            }
+          }
+
+          holderEntity
+        }
+      }
+
+      existingHolderEntity
     }
 
-    val session = SearchEverywhereBackendSession.create(providers)
-    val sessionEntity = newValueEntity(session)
-    session.parentEntity.cascadeDeleteBy(sessionEntity)
-
-    return sessionEntity.id
-  }
-
-  suspend fun closeSession(sessionId: EID) {
-    sessionId.findValueEntity<SearchEverywhereBackendSession>()?.delete()
-  }
-
-  suspend fun getProviderIds(sessionId: EID): List<SearchEverywhereProviderId> {
-    return sessionId.findValueEntity<SearchEverywhereBackendSession>()?.value?.providers?.keys?.toList() ?: emptyList()
-  }
-
-  suspend fun getItems(sessionId: EID, providerId: SearchEverywhereProviderId, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
-    val session = sessionId.findValueEntity<SearchEverywhereBackendSession>()?.value ?: return emptyFlow()
-    return session.providers[providerId]?.getItems(params, session) ?: emptyFlow()
+    return providersHolder?.holder?.providers ?: emptyMap()
   }
 
   suspend fun itemSelected(itemId: EID) {
-    val item = itemId.findValueEntity<SearchEverywhereItem>()
+    val item = withKernel {
+      entity(itemId) as? SearchEverywhereItemEntity
+    }?.item
+
     if (item == null) {
       println("item not found: $itemId")
       return

@@ -13,18 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SearchEverywhereRemoteApiImpl: SearchEverywhereRemoteApi {
-  override suspend fun startSession(projectId: ProjectId): EID {
-    return SearchEverywhereBackendService.getInstance(projectId.findProject()).startSession()
-  }
-
-  override suspend fun closeSession(projectId: ProjectId, sessionId: EID) {
-    return SearchEverywhereBackendService.getInstance(projectId.findProject()).closeSession(sessionId)
-  }
-
-  override suspend fun getProviderIds(projectId: ProjectId, sessionId: EID): List<SearchEverywhereProviderId> {
-    return SearchEverywhereBackendService.getInstance(projectId.findProject()).getProviderIds(sessionId)
-  }
-
   override suspend fun itemSelected(projectId: ProjectId, itemId: EID) {
     SearchEverywhereBackendService.getInstance(projectId.findProject()).itemSelected(itemId)
   }

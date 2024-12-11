@@ -5,7 +5,7 @@ import com.jetbrains.rhizomedb.EID
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 data class SearchEverywhereItemId(
   val value: EID
