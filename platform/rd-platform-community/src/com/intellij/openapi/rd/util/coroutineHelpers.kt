@@ -25,7 +25,6 @@ import kotlin.coroutines.EmptyCoroutineContext
  * Coroutine dispatcher is being chosen in the following order: handlerScheduler (if not null) -> coroutineContext (if it has) -> this.protocol.scheduler (if not null) -> SynchronousScheduler
  */
 @ApiStatus.Internal
-@DelicateCoroutinesApi
 fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
@@ -47,6 +46,7 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
  * The same as [setSuspend] but add [ClientId] into [coroutineContext] to restore it in [handler]
  */
 @ApiStatus.Internal
+@Deprecated("Use `setSuspend` instead`", ReplaceWith("setSuspend(coroutineContext, coroutineStart, handler)"))
 fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
@@ -66,14 +66,15 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
  * Coroutine dispatcher is being chosen in the following order: handlerScheduler (if not null) -> coroutineContext (if it has) -> this.protocol.scheduler (if not null) -> SynchronousScheduler
  */
 @ApiStatus.Internal
-@DelicateCoroutinesApi
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
   val beforeAdviseClientId = currentThreadClientId
   advise(lifetime) {
-    // TODO: very very temporary hack to avoid assert until the code in RdSettingsStorageService is rewritten
-    // TODO Moklev IJPL-173291 Dependency between RdSettingsStorageService and
+    // TODO: very very temporary hack to avoid assertions in some cases
+    // 1) TODO Moklev IJPL-173291 Dependency between RdSettingsStorageService and
     //  settingsModel should be inversed to provide proper coroutine scopes where model operations are done
-    if (!this.toString().contains("ThinClient.SettingsModel.settingsChanges")) {
+    // 2) TODO: Dubov IJPL-173492 Inconsistent ClientId in `adviseSuspend` on a signal in `ConnectionStateProperty`
+    if (!this.toString().contains("ThinClient.SettingsModel.settingsChanges")
+        && !this.toString().contains("RdOptionalProperty: `<<not bound>>`")) {
       // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
       beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)", fallbackToLocal = false)
     }
@@ -89,6 +90,7 @@ fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineC
  * The same as [adviseSuspend] but adds ClientId into [coroutineContext] to restore it in [handler]
  */
 @ApiStatus.Internal
+@Deprecated("Use `adviseSuspend` instead", ReplaceWith("adviseSuspend(lifetime, coroutineContext, coroutineStart, handler)"))
 fun<T> ISource<T>.adviseSuspendPreserveClientId(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
   @OptIn(DelicateCoroutinesApi::class)
   adviseSuspend(lifetime, coroutineContext, coroutineStart, handler)
