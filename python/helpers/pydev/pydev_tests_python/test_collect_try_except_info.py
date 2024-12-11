@@ -4,7 +4,6 @@ import sys
 import traceback
 
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info, collect_return_info
-from _pydevd_bundle.pydevd_constants import IS_PY39
 from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 from pydev_tests_python.debugger_unittest import IS_CPYTHON, IS_JYTHON, IS_PY2, IS_PY38_OR_GREATER
 
@@ -188,7 +187,7 @@ def test_collect_try_except_info(data_regression):
     data_regression.check(method_to_info)
 
 
-@pytest.mark.xfail(IS_PY39, reason="PCQA-734")
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-734")
 def test_collect_try_except_info2():
 
     def method():

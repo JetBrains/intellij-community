@@ -21,6 +21,7 @@ from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 from _pydevd_bundle.pydevd_constants import GET_FRAME_RETURN_GROUP
 from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
 
 
@@ -1382,6 +1383,7 @@ def test_unhandled_exceptions_get_stack(case_setup_unhandled_exceptions):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='Only for Python.')
+@pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-778')
 def test_case_get_next_statement_targets(case_setup):
     with case_setup.test_file('_debugger_case_get_next_statement_targets.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(21, None)

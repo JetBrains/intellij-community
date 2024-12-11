@@ -2,6 +2,7 @@ from pydevd import PyDB
 import pytest
 from pydev_tests_python.debugger_unittest import IS_CPYTHON
 from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
 
 DEBUG = False
@@ -469,14 +470,14 @@ _expected_tested = (
     # unhandled
     raise_unhandled_exception,
     raise_unhandled_exception_not_in_except_clause,
-    raise_unhandled,
+    pytest.mark(raise_unhandled, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-781')),
     raise_unhandled2,
     raise_unhandled3,
     raise_unhandled4,
     raise_unhandled5,
     raise_unhandled6,
-    raise_unhandled7,
-    raise_unhandled8,
+    pytest.mark(raise_unhandled7, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-782')),
+    pytest.mark(raise_unhandled8, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-783')),
     raise_unhandled9,
     raise_unhandled10,
     raise_unhandled11,

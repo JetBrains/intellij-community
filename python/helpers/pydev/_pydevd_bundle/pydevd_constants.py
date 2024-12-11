@@ -127,6 +127,8 @@ IS_PY38_OR_GREATER = False
 IS_PY38 = False
 IS_PY39 = False
 IS_PY39_OR_GREATER = False
+IS_PY310 = False
+IS_PY310_OR_GREATER = False
 IS_PY311 = False
 IS_PY311_OR_GREATER = False
 IS_PY312_OR_GREATER = False
@@ -146,6 +148,8 @@ try:
         IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
         IS_PY39 = sys.version_info[0] == 3 and sys.version_info[1] == 9
         IS_PY39_OR_GREATER = sys.version_info >= (3, 9)
+        IS_PY310 = sys.version_info[0] == 3 and sys.version_info[1] == 10
+        IS_PY310_OR_GREATER = sys.version_info >= (3, 10)
         IS_PY311 = sys.version_info[0] == 3 and sys.version_info[1] == 11
         IS_PY311_OR_GREATER = sys.version_info >= (3, 11)
         IS_PY312_OR_GREATER = sys.version_info >= (3, 12)
