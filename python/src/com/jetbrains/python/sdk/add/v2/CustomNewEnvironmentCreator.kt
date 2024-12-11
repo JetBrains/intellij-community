@@ -52,7 +52,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
-    savePathToExecutableToProperties()
+    savePathToExecutableToProperties(null)
 
     // todo think about better error handling
     val selectedBasePython = model.state.baseInterpreter.get()!!
@@ -117,10 +117,11 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
   private fun installExecutable() {
     val pythonExecutable = model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
-      installPipIfNeeded(pythonExecutable)
-
       if (installationScript != null) {
-        installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name)
+        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name).getOrNull()
+        if (executablePath != null) {
+          savePathToExecutableToProperties(executablePath)
+        }
       }
     }
   }
@@ -136,7 +137,13 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    */
   private val installationScript: Path? = PythonHelpersLocator.findPathInHelpers("pycharm_package_installer.py")
 
-  internal abstract fun savePathToExecutableToProperties()
+
+  /**
+   * Saves the provided path to an executable in the properties of the environment
+   *
+   * @param [path] The path to the executable that needs to be saved. This may be null when tries to find automatically.
+   */
+  internal abstract fun savePathToExecutableToProperties(path: Path?)
 
   protected abstract fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk?
 
