@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.imports.ImportMapper
 import org.jetbrains.kotlin.idea.imports.KotlinIdeDefaultImportProvider
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -168,11 +169,8 @@ internal class OptimizedImportsBuilder(
                 for (originalReference in references) {
                     val alternativeReference = referencesMap.findReferenceInCopy(originalReference)
 
-                    val originalUsedReference = UsedReference.run { createFrom(originalReference) }
-                    val alternativeUsedReference = UsedReference.run { createFrom(alternativeReference) }
-
-                    val originalSymbols = originalUsedReference?.run { resolveToReferencedSymbols() }?.map { it.run { toSymbolInfo() } }.orEmpty()
-                    val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }?.map { it.run { toSymbolInfo() } }.orEmpty()
+                    val originalSymbols = resolveToSymbolInfo(originalReference)
+                    val alternativeSymbols = resolveToSymbolInfo(alternativeReference)
 
                     if (!areTargetsEqual(originalSymbols, alternativeSymbols)) {
                         val isTypePosition = originalReference.element.parent is KtUserType
@@ -191,6 +189,12 @@ internal class OptimizedImportsBuilder(
                 }
             }
         }
+    }
+
+    private fun KaSession.resolveToSymbolInfo(originalReference: KtReference): List<SymbolInfo> {
+        val usedReference = UsedReference.run { createFrom(originalReference) } ?: return emptyList()
+        val referencedSymbols = usedReference.run { resolveToReferencedSymbols() }
+        return referencedSymbols.map { it.run { toSymbolInfo() } }
     }
 
     private fun areTargetsEqual(
