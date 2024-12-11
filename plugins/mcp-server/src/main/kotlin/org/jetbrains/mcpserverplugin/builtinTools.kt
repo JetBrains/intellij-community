@@ -183,12 +183,15 @@ class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
         if (!path.exists()) {
             path.createParentDirectories().createFile()
         }
-        path.writeText(args.text)
+        val text = args.text
+        path.writeText(text.unescape())
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
 
         return Response("ok")
     }
 }
+
+private fun String.unescape(): String = removePrefix("<![CDATA[").removeSuffix("]]>")
 
 @Serializable
 data class Query(val nameSubstring: String)
