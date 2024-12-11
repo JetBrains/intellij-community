@@ -552,7 +552,13 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                              @Nullable List<String> inactiveProfiles,
                                              @NotNull Properties customProperties) {
     try {
-      return myMavenInvoker.createMavenExecutionRequest();
+      MavenExecutionRequest request = myMavenInvoker.createMavenExecutionRequest();
+
+      // Consider creating a new MavenInvoker / MavenContext / MavenInvokerRequest for every call to the Embedder.
+      // Then profiles will be activated by the MavenInvoker, and this extra step won't be needed.
+      activateProfiles(activeProfiles, inactiveProfiles, request);
+
+      return request;
     }
     catch (Exception e) {
       warn(e.getMessage(), e);
@@ -601,6 +607,22 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (MavenExecutionRequestPopulationException e) {
       throw new RuntimeException(e);
     }*/
+  }
+
+  private static void activateProfiles(@Nullable List<String> activeProfiles,
+                                       @Nullable List<String> inactiveProfiles,
+                                       MavenExecutionRequest request) {
+    ProfileActivation profileActivation = request.getProfileActivation();
+    if (null != activeProfiles) {
+      for (String profileId : activeProfiles) {
+        profileActivation.addProfileActivation(profileId, true, false);
+      }
+    }
+    if (null != inactiveProfiles) {
+      for (String profileId : inactiveProfiles) {
+        profileActivation.addProfileActivation(profileId, false, false);
+      }
+    }
   }
 
   private static Properties toProperties(Map<String, String> map) {
