@@ -3,19 +3,22 @@ package org.jetbrains.mcpserverplugin.terminal
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.dsl.builder.panel
+import com.jediterm.terminal.TtyConnector
 import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.TerminalView
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
+
+val maxLineCount = 200
+val timeout = TimeUnit.MINUTES.toMillis(2)
 
 class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_terminal_text"
@@ -29,7 +32,6 @@ class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
     """
 
     override fun handle(project: Project, args: NoArgs): Response {
-        // Retrieve the first terminal widget text
         val text = com.intellij.openapi.application.runReadAction<String?> {
             TerminalView.getInstance(project).getWidgets().firstOrNull()?.text
         }
@@ -47,15 +49,33 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
         Use this tool to run terminal commands within the IDE environment.
         Requires a command parameter containing the shell command to execute.
         Important features and limitations:
-        - Limits output to 200 lines (truncates excess with a notification)
-        Returns one of these possible responses:
-        - The terminal output if command executes successfully
-        - "No output collected" if execution succeeds but no output is captured
-        - Error messages:
-          * "canceled" if user denies confirmation
-          * "Command execution timed out after 5 seconds" if execution exceeds timeout
-          * "Execution error: [details]" for other failures
+        - Checks if process is running before collecting output
+        - Limits output to $maxLineCount lines (truncates excess)
+        - Times out after $timeout milliseconds with notification
+        Returns possible responses:
+        - Terminal output (truncated if >$maxLineCount lines)
+        - Output with interruption notice if timed out
+        - Error messages for various failure cases
     """
+
+    private fun collectTerminalOutput(widget: ShellTerminalWidget): String? {
+        val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(widget.ttyConnector) ?: return null
+
+        // Check if the process is still running
+        if (!TerminalUtil.hasRunningCommands(processTtyConnector as TtyConnector)) {
+            return widget.text
+        }
+        return null
+    }
+
+    private fun formatOutput(output: String): String {
+        val lines = output.lines()
+        return if (lines.size > maxLineCount) {
+            lines.take(maxLineCount).joinToString("\n") + "\n... (output truncated at 200 lines)"
+        } else {
+            output
+        }
+    }
 
     override fun handle(project: Project, args: ExecuteTerminalCommandArgs): Response {
         val future = CompletableFuture<Response>()
@@ -82,27 +102,37 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
                 return@invokeAndWait
             }
 
-            val terminalWidget = ShTerminalRunner.run(project, "clear; " + args.command, project.basePath ?: "", "MCP Command", true)
+            val terminalWidget =
+                ShTerminalRunner.run(project, "clear; " + args.command, project.basePath ?: "", "MCP Command", true)
+            val shellWidget =
+                if (terminalWidget != null) ShellTerminalWidget.asShellJediTermWidget(terminalWidget) else null
 
-            val jediTermWidget = if (terminalWidget != null) ShellTerminalWidget.asShellJediTermWidget(terminalWidget) else null
-
-            if (jediTermWidget == null) {
+            if (shellWidget == null) {
                 future.complete(Response(error = "No terminal available"))
                 return@invokeAndWait
             }
 
-            // Schedule a single delayed task to collect output
             ApplicationManager.getApplication().executeOnPooledThread {
-                Thread.sleep(100) // Wait 100ms
+                var output: String? = null
+                var isInterrupted = false
 
-                val terminalOutput = jediTermWidget.text
+                val sleep = 300L
+                for (i in 1..timeout / sleep) {
+                    Thread.sleep(sleep)
+                    output = collectTerminalOutput(shellWidget)
+                    if (output != null) break
+                }
 
-                // Limit to 200 lines if needed
-                val lines = terminalOutput.lines()
-                val finalOutput = if (lines.size > 200) {
-                    lines.take(200).joinToString("\n") + "\n... (output truncated at 200 lines)"
+                if (output == null) {
+                    output = shellWidget.text
+                    isInterrupted = true
+                }
+
+                val formattedOutput = formatOutput(output)
+                val finalOutput = if (isInterrupted) {
+                    "$formattedOutput\n... (Command execution interrupted after $timeout milliseconds)"
                 } else {
-                    terminalOutput
+                    formattedOutput
                 }
 
                 future.complete(Response(finalOutput))
@@ -110,9 +140,12 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
         }
 
         try {
-            return future.get(5, TimeUnit.SECONDS)
+            return future.get(
+                timeout + 2000,
+                TimeUnit.MILLISECONDS
+            ) // Give slightly more time than the internal timeout
         } catch (e: TimeoutException) {
-            return Response(error = "Command execution timed out after 5 seconds")
+            return Response(error = "Command execution timed out after $timeout milliseconds")
         } catch (e: Exception) {
             return Response(error = "Execution error: ${e.message}")
         }
