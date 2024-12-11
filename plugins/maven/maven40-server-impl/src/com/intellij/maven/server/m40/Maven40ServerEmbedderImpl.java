@@ -292,7 +292,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         Path rootDir = super.getRootDirectory(context);
         if (null == rootDir) {
           Path topDirectory = context.topDirectory;
-          MavenServerGlobals.getLogger().warn("Root dir not found for $topDirectory");
+          MavenServerGlobals.getLogger().warn("Root dir not found for " + topDirectory);
           return topDirectory;
         }
         return rootDir;
