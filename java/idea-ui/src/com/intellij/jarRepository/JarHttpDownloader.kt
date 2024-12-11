@@ -4,6 +4,7 @@ package com.intellij.jarRepository
 import com.google.common.net.HttpHeaders
 import com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider.AuthenticationData
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.HttpRequests
@@ -15,7 +16,6 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.maven.aether.Retry
-import org.jetbrains.idea.maven.aether.ThrowingSupplier
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -178,7 +178,7 @@ object JarHttpDownloader {
     try {
       var lastFileSize: Long? = null
 
-      val exception = retry.retry(ThrowingSupplier<Throwable> {
+      val exception = retry.retry(ThrowableComputable {
         try {
           HttpRequests.request(url)
             .tuner { tuner ->

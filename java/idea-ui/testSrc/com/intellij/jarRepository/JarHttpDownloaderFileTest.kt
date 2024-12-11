@@ -5,19 +5,18 @@ import com.intellij.jarRepository.JarHttpDownloaderTestUtil.TestHttpServerExtens
 import com.intellij.jarRepository.JarHttpDownloaderTestUtil.createContext
 import com.intellij.jarRepository.JarHttpDownloaderTestUtil.url
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.sha256Hex
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.OutgoingContent
-import io.ktor.server.application.call
-import io.ktor.server.engine.ApplicationEngine
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
+import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import org.jetbrains.idea.maven.aether.Retry
 import org.jetbrains.idea.maven.aether.RetryProvider
-import org.jetbrains.idea.maven.aether.ThrowingSupplier
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -131,11 +130,11 @@ class JarHttpDownloaderFileTest {
 
     val originalRetry = RetryProvider.withExponentialBackOff(1, 1, 3)
     val retry = object : Retry {
-      override fun <R : Any?> retry(supplier: ThrowingSupplier<out R?>, logger: Logger): R? {
-        return originalRetry.retry(ThrowingSupplier {
+      override fun <R : Any?> retry(computable: ThrowableComputable<out R?, out Exception>, logger: Logger): R? {
+        return originalRetry.retry(ThrowableComputable {
           attempts.incrementAndGet()
-          supplier.get()
-        }, logger)
+          computable.compute()
+         }, logger)
       }
     }
 
@@ -191,10 +190,10 @@ class JarHttpDownloaderFileTest {
 
     val originalRetry = RetryProvider.withExponentialBackOff(1, 1, 3)
     val retry = object : Retry {
-      override fun <R : Any?> retry(supplier: ThrowingSupplier<out R?>, logger: Logger): R? {
-        return originalRetry.retry(ThrowingSupplier {
+      override fun <R : Any?> retry(computable: ThrowableComputable<out R?, out Exception>, logger: Logger): R? {
+        return originalRetry.retry(ThrowableComputable {
           attempts.incrementAndGet()
-          supplier.get()
+          computable.compute()
         }, logger)
       }
     }

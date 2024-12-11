@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.junit.jupiter.api.Test;
 
 import static org.jetbrains.idea.maven.aether.RetryProvider.disabled;
@@ -59,11 +60,11 @@ class RetryProviderTest {
 
   @Test
   public void expBackOff_testRetry() throws Exception {
-    int attempts = retryWithExpBackOff.retry(new ThrowingSupplier<>() {
+    int attempts = retryWithExpBackOff.retry(new ThrowableComputable<Integer, Exception>() {
       private int attempts = 0;
 
       @Override
-      public Integer get() throws Exception {
+      public Integer compute() throws Exception {
         if (attempts == 0) {
           /* Simulate a fail */
           ++attempts;
