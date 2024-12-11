@@ -26,16 +26,28 @@ abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVis
             val fileText = FileUtil.loadFile(File(filePath), true)
             val file = myFixture.file as KtFile
             InTextDirectivesUtils.findListWithPrefixes(fileText, "// IMPORT: ").forEach {
-                val descriptor = file.resolveImportReference(FqName(it)).singleOrNull()
-                    ?: error("Could not resolve descriptor to import: $it")
-                ImportInsertHelper.getInstance(project).importDescriptor(file, descriptor)
+                doImport(file, it)
             }
         }
 
         checkHighlighting(filePath)
     }
 
-    private fun checkHighlighting(filePath: String) {
+    protected open fun doImport(file: KtFile, importName: String) {}
+
+    protected open fun checkHighlighting(filePath: String) {
+        myFixture.checkHighlighting(true, false, false)
+    }
+}
+
+abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHighlightingTest() {
+    override fun doImport(file: KtFile, importName: String) {
+        val descriptor = file.resolveImportReference(FqName(importName)).singleOrNull()
+            ?: error("Could not resolve descriptor to import: $importName")
+        ImportInsertHelper.getInstance(project).importDescriptor(file, descriptor)
+    }
+
+    override fun checkHighlighting(filePath: String) {
         val inspectionName = InTextDirectivesUtils.findStringWithPrefixes(File(filePath).readText(), "// INSPECTION_CLASS: ")
         if (inspectionName != null) {
             val inspection = Class.forName(inspectionName).getDeclaredConstructor().newInstance() as InspectionProfileEntry
@@ -48,8 +60,6 @@ abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVis
             return
         }
 
-        myFixture.checkHighlighting(true, false, false)
+        super.checkHighlighting(filePath)
     }
 }
-
-abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHighlightingTest()
