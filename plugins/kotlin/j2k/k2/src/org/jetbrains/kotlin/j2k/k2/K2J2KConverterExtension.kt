@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.copyPaste.TargetData
@@ -51,6 +52,7 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         conversionData: ConversionData,
         targetKotlinFile: KtFile
     ): PlainTextPasteImportResolver {
+        ThreadingAssertions.assertBackgroundThread()
         return K2PlainTextPasteImportResolver(conversionData, targetKotlinFile)
     }
 

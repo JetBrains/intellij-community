@@ -9,6 +9,7 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -49,7 +49,12 @@ class K1PlainTextPasteImportResolver(private val conversionData: ConversionData,
     private val importsToAddToKotlinFile: MutableList<PsiImportStatementBase> = mutableListOf()
 
     override fun generateRequiredImports(): List<PsiImportStatementBase> {
-        addImportsToJavaFileFromKotlinFile()
+        ThreadingAssertions.assertBackgroundThread()
+
+        if (javaFileImportList !in conversionData.elementsAndTexts.toList()) {
+            addImportsToJavaFileFromKotlinFile()
+            ProgressManager.checkCanceled()
+        }
         tryToResolveShortReferencesByAddingImports()
         return importsToAddToKotlinFile
     }
@@ -57,21 +62,6 @@ class K1PlainTextPasteImportResolver(private val conversionData: ConversionData,
     // TODO removing this function doesn't affect existing tests
     //  investigate is this needed or not
     private fun addImportsToJavaFileFromKotlinFile() {
-        if (javaFileImportList in conversionData.elementsAndTexts.toList()) return
-
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            addImportsTask, KotlinNJ2KBundle.message("copy.text.adding.imports"), /* canBeCanceled = */ true, project
-        )
-    }
-
-    private fun tryToResolveShortReferencesByAddingImports() {
-        ProgressManager.checkCanceled()
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            resolveReferencesTask, KotlinNJ2KBundle.message("copy.text.resolving.references"), /* canBeCanceled = */ true, project
-        )
-    }
-
-    private val addImportsTask: () -> Unit = {
         val collectedJavaImports = mutableListOf<PsiImportStatementBase>()
 
         runReadAction {
@@ -136,7 +126,7 @@ class K1PlainTextPasteImportResolver(private val conversionData: ConversionData,
         if (shouldAddToKotlinFile) importsToAddToKotlinFile.add(javaImport)
     }
 
-    private val resolveReferencesTask: () -> Unit = {
+    private fun tryToResolveShortReferencesByAddingImports() {
         val progressIndicator = ProgressManager.getInstance().progressIndicator
         progressIndicator?.isIndeterminate = false
         val elementPointersWithUnresolvedReferences = findUnresolvedReferencesInFile()

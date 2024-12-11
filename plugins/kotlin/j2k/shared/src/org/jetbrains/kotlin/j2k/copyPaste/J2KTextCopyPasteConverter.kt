@@ -6,9 +6,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
+import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
@@ -63,12 +65,19 @@ internal class J2KTextCopyPasteConverter(
     }
 
     private fun tryToResolveImports(conversionData: ConversionData, targetFile: KtFile): ElementAndTextList {
-        val resolver = J2kConverterExtension.extension(j2kKind).createPlainTextPasteImportResolver(conversionData, targetFile)
-        val imports = resolver.generateRequiredImports()
-        val newlineSeparatedImports = imports.flatMap { importStatement ->
-            listOf("\n", importStatement)
-        } + "\n\n"
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            ThrowableComputable {
+                val resolver = J2kConverterExtension.extension(j2kKind).createPlainTextPasteImportResolver(conversionData, targetFile)
+                val imports = resolver.generateRequiredImports()
+                val newlineSeparatedImports = imports.flatMap { importStatement ->
+                    listOf("\n", importStatement)
+                } + "\n\n"
 
-        return ElementAndTextList(newlineSeparatedImports)
+                ElementAndTextList(newlineSeparatedImports)
+            },
+            KotlinNJ2KBundle.message("copy.text.adding.imports"),
+            /* canBeCanceled = */ true,
+            project
+        )
     }
 }
