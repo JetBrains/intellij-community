@@ -193,8 +193,18 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
 
   fun testTypeIgnoreAtFileLevel() {
     doTestByText("""
+      # type:ignore
+      x: int = ""
+    """.trimIndent())
+    doTestByText("""
+      
+      
       # some comment
+      
+      # some other comment
+      
       # type:  ignore
+      
       x: int = ""
     """.trimIndent())
     doTestByText("""

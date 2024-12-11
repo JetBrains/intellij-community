@@ -6,6 +6,7 @@ import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPsiUtils
@@ -29,11 +30,11 @@ class TypeIgnoreInspectionSuppressor : InspectionSuppressor {
 
 private fun isSuppressedForFile(file: PsiFile): Boolean {
   var node = file.firstChild
-  while (node is PsiComment) {
-    if (isTypeIgnore(node)) {
+  while (node is PsiComment || node is PsiWhiteSpace) {
+    if (node is PsiComment && isTypeIgnore(node)) {
       return true
     }
-    node = PyPsiUtils.getNextNonWhitespaceSibling(node)
+    node = node.getNextSibling()
   }
   return false
 }
