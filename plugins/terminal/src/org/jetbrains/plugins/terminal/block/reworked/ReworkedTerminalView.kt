@@ -23,6 +23,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Dimension
+import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
@@ -40,6 +41,7 @@ internal class ReworkedTerminalView(
 
   private val model: TerminalModel
   private val controller: TerminalSessionController
+  private val encodingManager: TerminalKeyEncodingManager
 
   override val component: JComponent
     get() = editor.component
@@ -75,6 +77,7 @@ internal class ReworkedTerminalView(
 
     model = TerminalModel(editor, settings)
     controller = TerminalSessionController(model, settings, coroutineScope.childScope("TerminalSessionController"))
+    encodingManager = TerminalKeyEncodingManager(model, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
     TerminalCaretPainter(model, coroutineScope.childScope("TerminalCaretPainter"))
   }
@@ -84,6 +87,10 @@ internal class ReworkedTerminalView(
     terminalSessionFuture.complete(session)
 
     controller.handleEvents(session.outputChannel)
+
+    val eventsHandler = TerminalEventsHandlerImpl(model, encodingManager, session.inputChannel, settings)
+    setupKeyEventDispatcher(model.editor, eventsHandler, disposable = this)
+    setupMouseListener(model.editor, model, settings, eventsHandler, disposable = this)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
@@ -92,8 +99,9 @@ internal class ReworkedTerminalView(
 
   override fun sendCommandToExecute(shellCommand: String) {
     terminalSessionFuture.thenAccept {
+      val newLineBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
       // TODO: should we always use UTF8?
-      val bytes = (shellCommand + "\n").toByteArray(Charsets.UTF_8)
+      val bytes = shellCommand.toByteArray(Charsets.UTF_8) + newLineBytes
       it?.inputChannel?.trySend(TerminalWriteBytesEvent(bytes))
     }
   }
