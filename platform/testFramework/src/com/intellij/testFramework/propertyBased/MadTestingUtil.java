@@ -41,6 +41,7 @@ import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.GenerationEnvironment;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
@@ -501,8 +502,8 @@ public final class MadTestingUtil {
           return null;
         }
 
-        List<File> toChoose = preferDirs(data, children);
-        toChoose.sort(Comparator.comparing(File::getName));
+        List<File> toChoose = ContainerUtil.sorted(preferDirs(data, children),
+        Comparator.comparing(File::getName));
         File chosen = data.generate(Generator.sampledFrom(toChoose));
         File generated = generateRandomFile(data, chosen, exhausted);
         if (generated != null) {
@@ -515,6 +516,7 @@ public final class MadTestingUtil {
       return FS_TRAVERSAL.fun(root).find(f -> f.isFile()) != null;
     }
 
+    @Unmodifiable
     private static List<File> preferDirs(GenerationEnvironment data, File[] children) {
       List<File> files = new ArrayList<>();
       List<File> dirs = new ArrayList<>();

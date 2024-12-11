@@ -31,7 +31,7 @@ internal class PresentationAssistantConfigurable: DslConfigurableBase(), Configu
 
           if (PresentationAssistant.isThemeEnabled) {
             row(IdeBundle.message("presentation.assistant.configurable.theme")) {
-              comboBox(CollectionComboBoxModel(PresentationAssistantTheme.entries, PresentationAssistantTheme.fromValueOrDefault(configuration.theme)),
+              comboBox(CollectionComboBoxModel(PresentationAssistantTheme.entries.toMutableList(), PresentationAssistantTheme.fromValueOrDefault(configuration.theme)),
                        textListCellRenderer { it?.displayName })
                 .widthGroup(comboGroup)
                 .bindItem({ PresentationAssistantTheme.fromValueOrDefault(configuration.theme) }) {
@@ -41,7 +41,7 @@ internal class PresentationAssistantConfigurable: DslConfigurableBase(), Configu
           }
 
           row(IdeBundle.message("presentation.assistant.configurable.popup.size")) {
-            comboBox(CollectionComboBoxModel(PresentationAssistantPopupSize.entries, PresentationAssistantPopupSize.from(configuration.popupSize)),
+            comboBox(CollectionComboBoxModel(PresentationAssistantPopupSize.entries.toMutableList(), PresentationAssistantPopupSize.from(configuration.popupSize)),
                      textListCellRenderer { it?.displayName })
               .widthGroup(comboGroup)
               .bindItem({ PresentationAssistantPopupSize.from(configuration.popupSize) }) {
@@ -54,7 +54,7 @@ internal class PresentationAssistantConfigurable: DslConfigurableBase(), Configu
             text(IdeBundle.message("presentation.assistant.configurable.duration.seconds"))
           }
           row(IdeBundle.message("presentation.assistant.configurable.popup.position")) {
-            comboBox(CollectionComboBoxModel(PresentationAssistantPopupAlignment.entries,
+            comboBox(CollectionComboBoxModel(PresentationAssistantPopupAlignment.entries.toMutableList(),
                                              configuration.alignmentIfNoDelta),
                      textListCellRenderer { it?.displayName })
               .bindItem({ configuration.alignmentIfNoDelta }) {
@@ -67,7 +67,7 @@ internal class PresentationAssistantConfigurable: DslConfigurableBase(), Configu
 
         group(IdeBundle.message("presentation.assistant.configurable.keymap.group")) {
           row {
-            val comboBox = comboBox(CollectionComboBoxModel(KeymapManagerEx.getInstanceEx().allKeymaps.toList(),
+            val comboBox = comboBox(CollectionComboBoxModel(KeymapManagerEx.getInstanceEx().allKeymaps.toMutableList(),
                                                             configuration.mainKeymapName.toKeymap()),
                                     textListCellRenderer { it?.presentableName }).label(IdeBundle.message("presentation.assistant.configurable.keymap.main"))
               .bindItem({ configuration.mainKeymapName.toKeymap() }) {

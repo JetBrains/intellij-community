@@ -77,12 +77,12 @@ internal class IdeScaleTransformer {
       private fun scaleOptions(isPresentation: Boolean) = if (isPresentation) presentationModeScaleOptions else ideScaleOptions
 
       fun createIdeScaleComboboxModel(): CollectionComboBoxModel<String> {
-        return CollectionComboBoxModel(scaleOptions(false).map { it.percentStringValue },
+        return CollectionComboBoxModel(scaleOptions(false).map { it.percentStringValue }.toMutableList(),
                                        UISettings.getInstance().ideScale.percentStringValue)
       }
 
       fun createPresentationModeScaleComboboxModel(): CollectionComboBoxModel<String> {
-        return CollectionComboBoxModel(scaleOptions(true).map { it.percentStringValue },
+        return CollectionComboBoxModel(scaleOptions(true).map { it.percentStringValue }.toMutableList(),
                                        UISettings.getInstance().presentationModeIdeScale.percentStringValue)
       }
 

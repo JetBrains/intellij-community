@@ -9,10 +9,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -48,6 +45,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return configurable;
   }
 
+  @Unmodifiable
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
     Collection<? extends ConfigurableEP<T>> collection = name.getExtensionList();
     if (collection.isEmpty()) {

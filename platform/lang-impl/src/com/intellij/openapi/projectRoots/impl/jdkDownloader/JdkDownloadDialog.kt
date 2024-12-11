@@ -379,7 +379,7 @@ internal class JdkDownloadDialog(
       installDirTextField!!.text = relativePath
     }
     else {
-      installDirCombo!!.model = CollectionComboBoxModel(getSuggestedInstallDirs(newVersion), relativePath)
+      installDirCombo!!.model = CollectionComboBoxModel(getSuggestedInstallDirs(newVersion).toMutableList(), relativePath)
     }
     selectedPath = path
     selectedItem = newVersion

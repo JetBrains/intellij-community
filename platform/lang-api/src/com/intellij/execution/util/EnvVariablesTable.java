@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -65,9 +66,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   @Override
-  public void setValues(List<? extends EnvironmentVariable> list) {
-    list.sort(Comparator.comparing(EnvironmentVariable::getName, NaturalComparator.INSTANCE));
-    super.setValues(list);
+  public void setValues(@Unmodifiable List<? extends EnvironmentVariable> list) {
+    super.setValues(ContainerUtil.sorted(list, Comparator.comparing(EnvironmentVariable::getName, NaturalComparator.INSTANCE)));
   }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {

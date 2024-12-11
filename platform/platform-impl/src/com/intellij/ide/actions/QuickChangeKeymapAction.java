@@ -17,8 +17,10 @@ import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -27,8 +29,8 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction imple
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     Keymap current = manager.getActiveKeymap();
-    List<Keymap> list = getUnsortedKeymaps();
-    list.sort(KeymapManagerImplKt.getKeymapComparator());
+    List<Keymap> list = ContainerUtil.sorted(getUnsortedKeymaps(),
+    KeymapManagerImplKt.getKeymapComparator());
     for (Keymap keymap : list) {
       addKeymapAction(group, manager, current, keymap);
     }
@@ -42,6 +44,7 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction imple
     group.add(new ShowPluginsWithSearchOptionAction(IdeBundle.message("keymap.action.install.keymap"), "/tag:Keymap"));
   }
 
+  @Unmodifiable
   private static @NotNull List<Keymap> getUnsortedKeymaps() {
     return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(KeymapSchemeManager.FILTER);
   }

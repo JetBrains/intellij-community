@@ -25,6 +25,7 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   protected final DestinationFolderComboBox myDestinationFolderComboBox;
 
 
-  public JavaExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, @NlsContexts.DialogTitle String refactoringName) {
+  public JavaExtractSuperBaseDialog(Project project, PsiClass sourceClass, @Unmodifiable List<MemberInfo> members, @NlsContexts.DialogTitle String refactoringName) {
     super(project, sourceClass, members, refactoringName);
     myDestinationFolderComboBox = new DestinationFolderComboBox() {
       @Override

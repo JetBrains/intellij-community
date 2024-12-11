@@ -18,9 +18,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -74,7 +73,7 @@ public final class FileTypeChooser extends DialogWrapper {
     }
     myList.setModel(model);
     myList.addListSelectionListener(e -> updateContextHelp());
-    myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
+    myPattern.setModel(new CollectionComboBoxModel<>(new ArrayList<>(patterns), patterns.get(0)));
     ListSpeedSearch.installOn(myList, o -> o.getDescription());
 
     myContextHelpLabel.setForeground(UIUtil.getContextHelpForeground());

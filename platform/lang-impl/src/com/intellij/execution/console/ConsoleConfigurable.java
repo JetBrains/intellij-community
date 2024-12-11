@@ -31,6 +31,7 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -63,10 +64,10 @@ public class ConsoleConfigurable extends CompositeConfigurable<UnnamedConfigurab
 
   @ApiStatus.Internal
   @Override
+  @Unmodifiable
   protected @NotNull List<UnnamedConfigurable> createConfigurables() {
-    var configurables = ConfigurableWrapper.createConfigurables(EP_NAME);
-    configurables.sort(Comparator.comparing(ConfigurableBuilder::getConfigurableTitle));
-    return configurables;
+    return ContainerUtil.sorted(ConfigurableWrapper.createConfigurables(EP_NAME),
+                                Comparator.comparing(ConfigurableBuilder::getConfigurableTitle));
   }
 
   @Override

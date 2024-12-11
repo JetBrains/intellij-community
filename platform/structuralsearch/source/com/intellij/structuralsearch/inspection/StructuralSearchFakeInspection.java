@@ -205,9 +205,9 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   private void performMove(@NotNull JList<Configuration> list, boolean up) {
     final MyListModel model = (MyListModel)list.getModel();
-    final List<Configuration> values = list.getSelectedValuesList();
     final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
-    values.sort(up ? c : c.reversed());
+    final List<Configuration> values = ContainerUtil.sorted(list.getSelectedValuesList(),
+    up ? c : c.reversed());
     final int[] indices = new int[values.size()];
     for (int i = 0, size = values.size(); i < size; i++) {
       final Configuration value = values.get(i);

@@ -24,10 +24,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -215,6 +212,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
    * @param parent    the parent
    * @param nodes     must all be children of parent
    */
+  @Contract(mutates = "param3")
   private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
                                             @NotNull List<? extends MutableTreeNode> nodes) {
     int count = nodes.size();

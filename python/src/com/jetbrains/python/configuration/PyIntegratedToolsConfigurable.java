@@ -95,7 +95,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myProject = project;
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
     myPackagingSettings = PyPackageRequirementsSettings.getInstance(module);
-    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<>(Arrays.asList(DocStringFormat.values()),
+    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<>(new ArrayList<>(Arrays.asList(DocStringFormat.values())),
                                                                      myDocumentationSettings.getFormat()));
     myDocstringFormatComboBox.setRenderer(SimpleListCellRenderer.create("", DocStringFormat::getName));
 

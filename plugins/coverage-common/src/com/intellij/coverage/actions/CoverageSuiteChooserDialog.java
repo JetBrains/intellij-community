@@ -15,10 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -166,8 +163,8 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private void createSuitesNodes(List<CoverageSuite> suites, DefaultMutableTreeNode parent) {
-    suites.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+  private void createSuitesNodes(@Unmodifiable List<CoverageSuite> suites, DefaultMutableTreeNode parent) {
+    suites = ContainerUtil.sorted(suites, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageSuite suite : suites) {
       CheckedTreeNode treeNode = new CheckedTreeNode(suite);
       treeNode.setChecked(isSuiteActive(suite));

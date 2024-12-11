@@ -1061,6 +1061,7 @@ public class UsageViewImpl implements UsageViewEx {
    *
    * @param actions to sort
    */
+  @Contract(mutates = "param1")
   protected void sortGroupingActions(@NotNull List<? extends AnAction> actions) {
     actions.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }

@@ -124,6 +124,7 @@ public final class ChangesCacheFile {
     }
   }
 
+  @Contract(mutates = "param1")
   public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes) throws IOException {
     // the list and index are sorted in direct chronological order
     changes.sort(CommittedChangeListByDateComparator.ASCENDING);

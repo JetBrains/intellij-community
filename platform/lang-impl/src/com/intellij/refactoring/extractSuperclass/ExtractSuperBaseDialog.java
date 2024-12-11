@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBBox;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,6 +33,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   private final @NlsContexts.DialogTitle String myRefactoringName;
   protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
+  @Unmodifiable
   protected final List<MemberInfoType> myMemberInfos;
 
   private JRadioButton myRbExtractSuperclass;
@@ -81,7 +83,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract String getDestinationPackageRecentKey();
 
-  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, List<MemberInfoType> members, @NlsContexts.DialogTitle String refactoringName) {
+  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, @Unmodifiable List<MemberInfoType> members, @NlsContexts.DialogTitle String refactoringName) {
     super(project, true);
     myRefactoringName = refactoringName;
 

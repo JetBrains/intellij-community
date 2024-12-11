@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,6 +62,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
     return myContainmentVerifier;
   }
 
+  @Unmodifiable
   private List<MemberInfo> getMemberInfos() {
     return myMemberInfos;
   }

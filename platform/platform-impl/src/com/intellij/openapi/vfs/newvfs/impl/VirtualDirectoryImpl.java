@@ -35,10 +35,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -641,6 +638,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimization: works faster than added.forEach(this::addChild)
   @ApiStatus.Internal
+  @Contract(mutates = "param1")
   public void createAndAddChildren(@NotNull List<ChildInfo> added,
                                    boolean markAllChildrenLoaded,
                                    @NotNull BiConsumer<? super VirtualFile, ? super ChildInfo> callback) {

@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -22,6 +23,7 @@ public class FilterDescendantVirtualFileConvertible<T> extends AbstractFilterChi
   }
 
   @Override
+  @Contract(mutates = "param1")
   protected void sortAscending(@NotNull List<? extends T> ts) {
     ts.sort(myComparator);
   }

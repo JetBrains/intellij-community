@@ -80,7 +80,7 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
         HandleType handleType = info.getSelectedHandleType();
         List<String> changelists = handleType.getChangelists();
         String defaultChangelist = handleType.getDefaultChangelist();
-        myChangelist.setModel(new CollectionComboBoxModel<>(changelists, defaultChangelist));
+        myChangelist.setModel(new CollectionComboBoxModel<>(new ArrayList<>(changelists), defaultChangelist));
 
         myChangelist.setRenderer(new ColoredListCellRenderer<>() {
           @Override
