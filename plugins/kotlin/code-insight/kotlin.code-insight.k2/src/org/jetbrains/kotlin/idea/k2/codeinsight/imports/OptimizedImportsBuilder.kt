@@ -171,8 +171,8 @@ internal class OptimizedImportsBuilder(
                     val originalUsedReference = UsedReference.run { createFrom(originalReference) }
                     val alternativeUsedReference = UsedReference.run { createFrom(alternativeReference) }
 
-                    val originalSymbols = originalUsedReference?.run { resolveToReferencedSymbols() }.orEmpty()
-                    val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }.orEmpty()
+                    val originalSymbols = originalUsedReference?.run { resolveToReferencedSymbols() }?.map { it.run { toSymbolInfo() } }.orEmpty()
+                    val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }?.map { it.run { toSymbolInfo() } }.orEmpty()
 
                     if (!areTargetsEqual(originalSymbols, alternativeSymbols)) {
                         val isTypePosition = originalReference.element.parent is KtUserType
@@ -185,7 +185,7 @@ internal class OptimizedImportsBuilder(
                         }
 
                         for (conflictingSymbol in symbolsToLock) {
-                            lockImportForSymbol(conflictingSymbol.run { toSymbolInfo() }, names)
+                            lockImportForSymbol(conflictingSymbol, names)
                         }
                     }
                 }
@@ -193,24 +193,21 @@ internal class OptimizedImportsBuilder(
         }
     }
 
-    private fun KaSession.areTargetsEqual(
-        originalSymbols: Collection<ReferencedSymbol>,
-        alternativeSymbols: Collection<ReferencedSymbol>
+    private fun areTargetsEqual(
+        originalSymbols: Collection<SymbolInfo>,
+        alternativeSymbols: Collection<SymbolInfo>
     ): Boolean {
         if (originalSymbols.size != alternativeSymbols.size) return false
 
         return originalSymbols.zip(alternativeSymbols).all { (originalSymbol, newSymbol) -> areTargetsEqual(originalSymbol, newSymbol) }
     }
 
-    private fun KaSession.areTargetsEqual(
-        originalSymbol: ReferencedSymbol,
-        alternativeSymbol: ReferencedSymbol,
+    private fun areTargetsEqual(
+        originalSymbol: SymbolInfo,
+        alternativeSymbol: SymbolInfo,
     ): Boolean {
-        val originalSymbolInfo = originalSymbol.run { toSymbolInfo() }
-        val alternativeSymbolInfo = alternativeSymbol.run { toSymbolInfo() }
-
-        return originalSymbolInfo == alternativeSymbolInfo ||
-                importSymbolWithMapping(originalSymbolInfo) == importSymbolWithMapping(alternativeSymbolInfo)
+        return originalSymbol == alternativeSymbol || 
+                importSymbolWithMapping(originalSymbol) == importSymbolWithMapping(alternativeSymbol)
     }
 
     private fun lockImportForSymbol(symbol: SymbolInfo, existingNames: Collection<Name>) {
