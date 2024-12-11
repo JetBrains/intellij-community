@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyType;
@@ -103,6 +104,9 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
           .append(decorator.hasArgumentList() ? "()" : "");
       }
       result.append("(");
+    }
+    if (ScopeUtil.getScopeOwner(referenceTarget) instanceof PyClass containingClass) {
+      result.append(containingClass.getName()).append(".");
     }
     result.append(referenceTarget.getName());
     StringUtil.repeatSymbol(result, ')', decorators.size());

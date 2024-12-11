@@ -4506,6 +4506,25 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-71674
+  public void testContextManagerDecoratorOnMethod() {
+    doTest("str",
+           """
+             from contextlib import contextmanager
+             from typing import Iterator
+             
+             
+             class MyClass:
+                 @contextmanager
+                 def as_context(self) -> Iterator[str]:
+                     yield "foo"
+             
+             
+             with MyClass().as_context() as value:
+                 expr = value
+             """);
+  }
+
   // PY-70484
   public void testUnboundParamSpecFromUnresolvedArgumentReplacedWithArgsKwargs() {
     doTest("(args: Any, kwargs: Any) -> str",
