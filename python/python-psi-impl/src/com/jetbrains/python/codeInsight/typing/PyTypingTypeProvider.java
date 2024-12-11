@@ -2125,12 +2125,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
 
     if (scopeOwner != null && qualifiedName != null) {
-      List<PsiElement> results = new ArrayList<>();
-      while (scopeOwner != null) {
-        results.addAll(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, scopeOwner, context));
-        scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
-      }
-      return results;
+      return PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, scopeOwner, context);
     }
     return Collections.singletonList(expression);
   }
