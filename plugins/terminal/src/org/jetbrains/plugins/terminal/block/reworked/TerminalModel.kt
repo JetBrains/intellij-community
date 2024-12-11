@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.plugins.terminal.block.session.StyleRange
+import org.jetbrains.plugins.terminal.block.ui.doWithScrollingAware
 
 internal class TerminalModel(
   val editor: EditorEx,
@@ -30,7 +31,9 @@ internal class TerminalModel(
   @RequiresWriteLock
   fun updateEditorContent(startLineIndex: Int, text: String, styles: List<StyleRange>) {
     CommandProcessor.getInstance().runUndoTransparentAction {
-      doUpdateEditorContent(startLineIndex, text, styles)
+      editor.doWithScrollingAware {
+        doUpdateEditorContent(startLineIndex, text, styles)
+      }
     }
   }
 

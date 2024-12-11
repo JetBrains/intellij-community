@@ -21,6 +21,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSessio
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
+import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Dimension
 import java.awt.event.KeyEvent
@@ -74,6 +75,7 @@ internal class ReworkedTerminalView(
     }
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
+    stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
 
     model = TerminalModel(editor, settings)
     controller = TerminalSessionController(model, settings, coroutineScope.childScope("TerminalSessionController"))
