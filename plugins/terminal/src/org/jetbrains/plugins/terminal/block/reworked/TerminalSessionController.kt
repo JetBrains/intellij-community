@@ -46,7 +46,11 @@ internal class TerminalSessionController(
   private suspend fun handleEvent(event: TerminalOutputEvent) {
     when (event) {
       is TerminalContentUpdatedEvent -> updateEditorContent(event)
-      is TerminalCursorPositionChangedEvent -> model.updateCaretPosition(event.logicalLineIndex, event.columnIndex)
+      is TerminalCursorPositionChangedEvent -> {
+        withContext(Dispatchers.EDT) {
+          model.updateCaretPosition(event.logicalLineIndex, event.columnIndex)
+        }
+      }
       is TerminalStateChangedEvent -> {
         val state = event.state.toTerminalState(settings.cursorShape)
         model.updateTerminalState(state)

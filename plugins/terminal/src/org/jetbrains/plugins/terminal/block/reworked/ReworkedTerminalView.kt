@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
+import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
@@ -77,7 +79,8 @@ internal class ReworkedTerminalView(
     editor.useTerminalDefaultBackground(parentDisposable = this)
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
 
-    model = TerminalModel(editor, settings)
+    val maxOutputLength = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
+    model = TerminalModel(editor, settings, maxOutputLength)
     controller = TerminalSessionController(model, settings, coroutineScope.childScope("TerminalSessionController"))
     encodingManager = TerminalKeyEncodingManager(model, coroutineScope.childScope("TerminalKeyEncodingManager"))
 

@@ -14,6 +14,7 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
@@ -22,15 +23,22 @@ import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.block.ui.doWithScrollingAware
 
+/**
+ * [maxOutputLength] limits the length of the editor document. Zero means unlimited length.
+ */
 internal class TerminalModel(
   val editor: EditorEx,
   private val settings: JBTerminalSystemSettingsProviderBase,
+  private val maxOutputLength: Int,
 ) {
   private val document = editor.document
 
   private val colorPalette: TerminalColorPalette = BlockTerminalColorPalette()
   private val highlightings: MutableList<HighlightingInfo> = ArrayDeque()
   private var highlightingsSnapshot: TerminalOutputHighlightingsSnapshot? = null
+
+  private var trimmedCharsCount: Int = 0
+  private var trimmedLinesCount: Int = 0
 
   private val mutableCaretOffsetState = MutableStateFlow(0)
   val caretOffsetState: StateFlow<Int> = mutableCaretOffsetState.asStateFlow()
@@ -44,18 +52,21 @@ internal class TerminalModel(
 
   @RequiresEdt
   @RequiresWriteLock
-  fun updateEditorContent(startLineIndex: Int, text: String, styles: List<StyleRange>) {
+  fun updateEditorContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
     CommandProcessor.getInstance().runUndoTransparentAction {
       editor.doWithScrollingAware {
         DocumentUtil.executeInBulk(document) {
-          doUpdateEditorContent(startLineIndex, text, styles)
+          val editorLineIndex = absoluteLineIndex - trimmedLinesCount
+          doUpdateEditorContent(editorLineIndex, text, styles)
         }
       }
     }
   }
 
-  fun updateCaretPosition(logicalLineIndex: Int, columnIndex: Int) {
-    val newOffset = editor.logicalPositionToOffset(LogicalPosition(logicalLineIndex, columnIndex))
+  @RequiresEdt
+  fun updateCaretPosition(absoluteLineIndex: Int, columnIndex: Int) {
+    val editorLineIndex = absoluteLineIndex - trimmedLinesCount
+    val newOffset = editor.logicalPositionToOffset(LogicalPosition(editorLineIndex, columnIndex))
     mutableCaretOffsetState.value = newOffset
   }
 
@@ -80,39 +91,77 @@ internal class TerminalModel(
   }
 
   @RequiresEdt
-  private fun doUpdateEditorContent(startLineIndex: Int, text: String, styles: List<StyleRange>) {
-    if (startLineIndex >= document.lineCount && document.textLength > 0) {
-      val newLines = "\n".repeat(startLineIndex - document.lineCount + 1)
+  private fun doUpdateEditorContent(editorLineIndex: Int, text: String, styles: List<StyleRange>) {
+    if (editorLineIndex >= document.lineCount && document.textLength > 0) {
+      val newLines = "\n".repeat(editorLineIndex - document.lineCount + 1)
       document.insertString(document.textLength, newLines)
     }
 
-    val replaceStartOffset = document.getLineStartOffset(startLineIndex)
+    val replaceStartOffset = document.getLineStartOffset(editorLineIndex)
     document.replaceString(replaceStartOffset, document.textLength, text)
 
     updateHighlightings(replaceStartOffset, styles)
+
+    trimToSize()
   }
 
   @RequiresEdt
-  private fun updateHighlightings(startOffset: Int, styles: List<StyleRange>) {
+  private fun updateHighlightings(editorStartOffset: Int, styles: List<StyleRange>) {
+    val absoluteStartOffset = editorStartOffset + trimmedCharsCount
+
     // Remove previous highlightings that are overlapped by the new highlightings.
-    val startOffsetIndex = highlightings.binarySearch { it.endOffset.compareTo(startOffset) }
-    val removeFromIndex = if (startOffsetIndex < 0) -startOffsetIndex - 1 else startOffsetIndex + 1
+    val highlightingIndex = highlightings.binarySearch { it.endOffset.compareTo(absoluteStartOffset) }
+    val removeFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex + 1
     for (ind in (highlightings.size - 1) downTo removeFromIndex) {
       highlightings.removeAt(ind)
     }
 
     val replaceHighlightings = styles.map {
-      HighlightingInfo(startOffset + it.startOffset, startOffset + it.endOffset, TextStyleAdapter(it.style, colorPalette))
+      HighlightingInfo(absoluteStartOffset + it.startOffset, absoluteStartOffset + it.endOffset, TextStyleAdapter(it.style, colorPalette))
     }
     highlightings.addAll(replaceHighlightings)
 
     highlightingsSnapshot = null
   }
 
+  @VisibleForTesting
   @RequiresEdt
-  private fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
-    val snapshot = highlightingsSnapshot ?: TerminalOutputHighlightingsSnapshot(document, highlightings)
+  fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
+    if (highlightingsSnapshot != null) {
+      return highlightingsSnapshot!!
+    }
+
+    val editorRelativeHighlightings = highlightings.map {
+      HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, it.textAttributesProvider)
+    }
+    val snapshot = TerminalOutputHighlightingsSnapshot(document, editorRelativeHighlightings)
     highlightingsSnapshot = snapshot
     return snapshot
+  }
+
+  private fun trimToSize() {
+    if (maxOutputLength > 0 && document.textLength > maxOutputLength) {
+      trimToSize(maxOutputLength)
+    }
+  }
+
+  private fun trimToSize(maxLength: Int) {
+    val textLength = document.textLength
+    check(textLength > maxLength) { "This method should be called only if text length $textLength is greater than max length $maxLength" }
+
+    val lineCountBefore = document.lineCount
+    val removeUntilOffset = textLength - maxLength
+    document.deleteString(0, removeUntilOffset)
+
+    val absoluteRemoveUntilOffset = removeUntilOffset + trimmedCharsCount
+    val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteRemoveUntilOffset) }
+    val removeUntilHighlightingIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
+    repeat(removeUntilHighlightingIndex) {
+      highlightings.removeAt(0)
+    }
+    highlightingsSnapshot = null
+
+    trimmedCharsCount += removeUntilOffset
+    trimmedLinesCount += lineCountBefore - document.lineCount
   }
 }
