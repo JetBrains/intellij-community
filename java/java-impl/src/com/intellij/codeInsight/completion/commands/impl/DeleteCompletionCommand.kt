@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
+import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiStatement
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -27,7 +26,19 @@ class DeleteCompletionCommand : CompletionCommand() {
 
   override fun execute(offset: Int, psiFile: PsiFile) {
     val element = getContext(offset, psiFile) ?: return
-    val psiElement = PsiTreeUtil.getParentOfType(element, PsiStatement::class.java, PsiMember::class.java) ?: return
-    WriteCommandAction.runWriteCommandAction(psiFile.project, null, null, { psiElement.delete() }, psiFile)
+    var psiElement = PsiTreeUtil.getParentOfType(element, PsiStatement::class.java, PsiMember::class.java) ?: return
+    var curElement = psiElement
+    while (curElement.textRange.endOffset == offset) {
+      psiElement = curElement
+      curElement = PsiTreeUtil.getParentOfType(curElement, PsiStatement::class.java, PsiMember::class.java) ?: break
+    }
+    WriteCommandAction.runWriteCommandAction(psiFile.project, null, null, {
+      val parent: SmartPsiElementPointer<PsiElement?> = SmartPointerManager.createPointer(psiElement.parent ?: psiFile)
+      psiElement.delete()
+      PsiDocumentManager.getInstance(psiFile.project).commitDocument(psiFile.fileDocument)
+      parent.element?.let {
+        ReformatCodeProcessor(psiFile, arrayOf(it.textRange)).run()
+      }
+    }, psiFile)
   }
 }
