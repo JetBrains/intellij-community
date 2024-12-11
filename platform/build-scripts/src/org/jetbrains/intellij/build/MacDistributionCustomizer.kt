@@ -14,7 +14,7 @@ open class MacDistributionCustomizer {
     /**
      * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
      */
-    const val BUILD_ARTIFACT_WITHOUT_RUNTIME = "intellij.build.dmg.without.bundled.jre"
+    const val BUILD_ARTIFACT_WITHOUT_RUNTIME: String = "intellij.build.dmg.without.bundled.jre"
   }
 
   /**
@@ -62,7 +62,7 @@ open class MacDistributionCustomizer {
   /**
    * The minimum version of macOS where the product is allowed to be installed.
    */
-  var minOSXVersion = "10.13"
+  var minOSXVersion: String = "10.13"
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
@@ -82,7 +82,7 @@ open class MacDistributionCustomizer {
    * </dict>
    * ```
    */
-  var additionalDocTypes = ""
+  var additionalDocTypes: String = ""
 
   /**
    * Note that users won't be able to switch off some of these associations during installation
@@ -118,9 +118,9 @@ open class MacDistributionCustomizer {
   var dmgImagePathForEAP: String? = null
 
   /**
-   * If `true`, a separate *-[org.jetbrains.intellij.build.impl.MacDistributionBuilder.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
+   * If `true`, a separate *-[org.jetbrains.intellij.build.impl.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
    */
-  var buildArtifactWithoutRuntime = System.getProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME)?.toBoolean() ?: System.getProperty("artifact.mac.no.jdk").toBoolean()
+  var buildArtifactWithoutRuntime: Boolean = System.getProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME)?.toBoolean() ?: System.getProperty("artifact.mac.no.jdk").toBoolean()
 
   /**
    * Application bundle name (`<name>.app`).
