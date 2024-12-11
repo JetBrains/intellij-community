@@ -2,11 +2,15 @@ package org.jetbrains.mcpserverplugin
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
@@ -227,5 +231,56 @@ class GetFileTextByPathTool : AbstractMcpTool<Path>() {
             }
         }
         return Response(text)
+    }
+}
+
+
+@Serializable
+data class ReplaceTextByPathToolArgs(val absolutePath: String, val text: String)
+class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>() {
+    override val name: String = "replace_file_text_by_path"
+    override val description: String = """
+        Replaces the entire content of a specified file with new text, if the file is within the project scope.
+        Use this tool to modify file contents when you have the file's absolute path.
+        Requires two parameters:
+        - absolutePath: The complete path to the target file
+        - text: The new content to write to the file
+        Returns one of these responses:
+        - "ok" if the file was successfully updated
+        - error "file not found" if the file doesn't exist or is outside project scope
+        - error "could not get document" if the file content cannot be accessed
+        Note: Automatically saves the file after modification
+    """
+
+    override fun handle(project: Project, args: ReplaceTextByPathToolArgs): Response {
+        var document: Document? = null
+        var file: VirtualFile? = null
+
+        val readResult = runReadAction {
+            file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path(args.absolutePath))
+                ?: return@runReadAction "file not found"
+
+            if (!GlobalSearchScope.allScope(project).contains(file!!)) {
+                return@runReadAction "file not found"
+            }
+
+            document = FileDocumentManager.getInstance().getDocument(file!!)
+            if (document == null) {
+                return@runReadAction "could not get document"
+            }
+
+            return@runReadAction "ok"
+        }
+
+        if (readResult != "ok") {
+            return Response(error = readResult)
+        }
+
+        WriteCommandAction.runWriteCommandAction(project) {
+            document!!.setText(args.text)
+            FileDocumentManager.getInstance().saveDocument(document!!)
+        }
+
+        return Response("ok")
     }
 }

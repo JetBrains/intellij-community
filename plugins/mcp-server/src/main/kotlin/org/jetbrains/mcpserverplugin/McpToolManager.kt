@@ -26,7 +26,8 @@ class McpToolManager {
             GetFileTextByPathTool(),
             GetVcsStatusTool(),
             ToggleBreakpointTool(),
-            GetBreakpointsTool()
+            GetBreakpointsTool(),
+            ReplaceTextByPathTool(),
         )
     }
 }
