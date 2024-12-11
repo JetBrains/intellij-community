@@ -1,9 +1,5 @@
 package com.intellij.cce.java.chat
 
-import com.intellij.cce.core.SymbolLocation
-import com.intellij.cce.core.TokenProperties
-import com.intellij.cce.core.TypeProperty
-import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -34,11 +30,10 @@ class InEditorGeneratedCodeIntegratorTest : BasePlatformTestCase() {
         }
         """.trimIndent()
 
-    val tokenProperties = createTokenProperties()
 
     val integrator = InEditorGeneratedCodeIntegrator()
     val result = runBlocking {
-      integrator.integrate(project, codeToGenerate, tokenProperties)
+      integrator.integrate(project, codeToGenerate)
     }
 
     val expectedText = """
@@ -53,21 +48,5 @@ class InEditorGeneratedCodeIntegratorTest : BasePlatformTestCase() {
             }
         """.trimIndent()
     assertEquals(expectedText, result)
-  }
-
-  private fun createTokenProperties(): TokenProperties {
-    val tokenProperties = object : TokenProperties {
-      override val tokenType = TypeProperty.UNKNOWN
-      override val location = SymbolLocation.UNKNOWN
-      override fun additionalProperty(name: String): String? {
-        return if (name == METHOD_NAME_PROPERTY) "newMethod" else null
-      }
-
-      override fun additionalPropertyNames() = setOf(METHOD_NAME_PROPERTY)
-      override fun describe() = "Test Token Properties"
-      override fun hasFeature(feature: String) = false
-      override fun withFeatures(features: Set<String>) = this
-    }
-    return tokenProperties
   }
 }

@@ -59,7 +59,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor(GeneratedCodeIntegrator { project, code, _ -> code })
+      val extractor = JavaApiCallExtractor(GeneratedCodeIntegrator { project, _ -> code })
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#bar"), apiCalls)
     }
@@ -85,7 +85,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor { project, code, _ -> code }
+      val extractor = JavaApiCallExtractor { project, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#bar", "MyClass#baz"), apiCalls)
     }
@@ -104,7 +104,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor { project, code, _ -> code }
+      val extractor = JavaApiCallExtractor { project, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertTrue(apiCalls.isEmpty())
     }
@@ -115,6 +115,48 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
             public class MyClass {
                 public void foo() {
                     // Does nothing
+                }
+            }
+        """.trimIndent()
+
+    myFixture.configureByText("MyClass.java", existingCode)
+
+    val editor: Editor = myFixture.editor
+    val caretPosition = existingCode.length - 1
+
+    runBlocking {
+      writeAction {
+        editor.caretModel.moveToOffset(caretPosition)
+      }
+    }
+    val code = """
+                public void bar() {
+                    foo()
+                }
+        """.trimIndent()
+
+    val tokenProperties = createTokenProperties("bar")
+    val project: Project = project
+
+    runBlocking {
+      val extractor = JavaApiCallExtractor(InEditorGeneratedCodeIntegrator())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
+      assertEquals(
+        listOf("MyClass#foo"),
+        apiCalls
+      )
+    }
+  }
+
+  fun `test when the generated method needs to be inserted with method duplication`() {
+    val existingCode = """
+            public class MyClass {
+                public void foo() {
+                    // does nothing
+                }
+                
+                public void bar(Integer t) {
+                  bar()
                 }
             }
         """.trimIndent()
@@ -161,7 +203,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor { project, code, _ -> code }
+      val extractor = JavaApiCallExtractor { project, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertTrue(apiCalls.isEmpty())
     }
@@ -234,7 +276,7 @@ class SuperClass {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor { project, code, _ -> code }
+      val extractor = JavaApiCallExtractor { project, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(
         listOf("MySubClass#isTargetingSuccessful", "Velocity#getLength", "MySubClass#onTargetingFailOrLowVelocity"),

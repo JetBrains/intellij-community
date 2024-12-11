@@ -16,33 +16,39 @@ import com.intellij.psi.*
 import com.intellij.lang.Language as PlatformLanguage
 
 fun interface GeneratedCodeIntegrator {
-  suspend fun integrate(project: Project, code: String, tokenProperties: TokenProperties): String
+  suspend fun integrate(project: Project, method: String): String
 }
 
 class InEditorGeneratedCodeIntegrator : GeneratedCodeIntegrator {
-  override suspend fun integrate(project: Project, code: String, tokenProperties: TokenProperties): String {
-    val fileWithCode = writeAction { createPsiFile(code, project) }
+  override suspend fun integrate(project: Project, method: String): String {
     return readAction {
-      val methodThatMustBeGenerated = findMethodWhichMustBeGenerated(fileWithCode, tokenProperties)?.text
-      check(methodThatMustBeGenerated != null)
       val editorManager = FileEditorManager.getInstance(project)
       val editor = editorManager.selectedTextEditor!!
       val text = editor.document.text
       val caret = editor.caretModel.currentCaret.offset
-      text.substring(0, caret) + methodThatMustBeGenerated + "\n" + text.substring(caret)
+      text.substring(0, caret) + method + "\n" + text.substring(caret)
     }
   }
 }
 
-class JavaApiCallExtractor(private val generatedCodeProcessor: GeneratedCodeIntegrator) : ApiCallExtractor {
+class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeIntegrator) : ApiCallExtractor {
   override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
-    val integratedCode = generatedCodeProcessor.integrate(project, code, tokenProperties)
+    val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY)!!
+    val method = extractMethodFromGeneratedSnippet(project, code, methodName) ?: return emptyList()
+
+    val integratedCode = generatedCodeIntegrator.integrate(project, method)
     val psiFileWithIntegratedCode = writeAction { createPsiFile(integratedCode, project) }
+
     return smartReadActionBlocking(project) {
-      val method = findMethodWhichMustBeGenerated(psiFileWithIntegratedCode, tokenProperties)
+      val method = psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }
                    ?: return@smartReadActionBlocking emptyList()
       extractCalledApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
     }
+  }
+
+  private suspend fun extractMethodFromGeneratedSnippet(project: Project, code: String, methodName: String): String? {
+    val psiFileWithGeneratedCode = writeAction { createPsiFile(code, project) }
+    return smartReadActionBlocking(project) { psiFileWithGeneratedCode.findMethodsByName(methodName).firstOrNull()?.text }
   }
 }
 
@@ -62,20 +68,18 @@ private fun createPsiFile(code: String, project: Project): PsiFile {
   )
 }
 
-private fun findMethodWhichMustBeGenerated(psiFile: PsiFile, tokenProperties: TokenProperties): PsiMethod? {
-  val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY)!!
-  var foundMethod: PsiMethod? = null
-  psiFile.accept(object : JavaRecursiveElementVisitor() {
+private fun PsiFile.findMethodsByName(methodName: String): List<PsiMethod> {
+  val foundMethods = mutableListOf<PsiMethod>()
+
+  this.accept(object : JavaRecursiveElementVisitor() {
     override fun visitMethod(method: PsiMethod) {
-      if (foundMethod != null) return
       if (methodName == method.name) {
-        foundMethod = method
-        return
+        foundMethods.add(method)
       }
       super.visitMethod(method)
     }
   })
-  return foundMethod
+  return foundMethods.toList()
 }
 
 fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
