@@ -178,7 +178,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RestrictedRetentionForExpressionAnnotationFactories.quickFixFactory)
         registerFactory(ModifierRequiredFixFactories.addInfixModifierFixFactory)
         registerFactory(ModifierRequiredFixFactories.addOperatorModifierFixFactory)
-        registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -516,6 +515,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
 
         registerFactory(ConvertExtensionToFunctionTypeFixFactory.superTypeIsExtensionFunctionType)
+
+        registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {

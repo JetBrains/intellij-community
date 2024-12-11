@@ -6,9 +6,11 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiNameIdentifierOwner
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtDeclaration
 
+@ApiStatus.Internal
 class RenameUnderscoreFix(element: KtDeclaration) : PsiUpdateModCommandAction<KtDeclaration>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String {
