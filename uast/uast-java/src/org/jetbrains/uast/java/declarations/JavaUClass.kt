@@ -2,6 +2,13 @@
 
 package org.jetbrains.uast.java
 
+import com.intellij.lang.jvm.JvmClassKind
+import com.intellij.lang.jvm.JvmMethod
+import com.intellij.lang.jvm.types.JvmReferenceType
+import com.intellij.model.psi.PsiSymbolDeclaration
+import com.intellij.model.psi.PsiSymbolReference
+import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.javadoc.PsiDocComment
@@ -66,11 +73,31 @@ class JavaUClass(
 ) : AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by sourcePsi {
 
   override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(sourcePsi)
+  override fun isRecord(): Boolean = sourcePsi.isRecord
+  override fun getPermitsList(): PsiReferenceList? = sourcePsi.permitsList
+  override fun getPermitsListTypes(): Array<out PsiClassType?> = sourcePsi.getPermitsListTypes()
   override fun getSuperClass(): UClass? = super.getSuperClass()
   override fun getFields(): Array<UField> = super.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
+  override fun findMethodsByName(methodName: String): Array<out JvmMethod?> = sourcePsi.findMethodsByName(methodName)
+  override fun getClassKind(): JvmClassKind = sourcePsi.classKind
+  override fun getSuperClassType(): JvmReferenceType? = sourcePsi.superClassType
+  override fun getInterfaceTypes(): Array<out JvmReferenceType?> = sourcePsi.interfaceTypes
+  override fun getRecordComponents(): Array<out PsiRecordComponent?> = sourcePsi.recordComponents
+  override fun getRecordHeader(): PsiRecordHeader? = sourcePsi.recordHeader
   override fun getMethods(): Array<UMethod> = super.getMethods()
   override fun getInnerClasses(): Array<UClass> = super.getInnerClasses()
+  override fun getTextRangeInParent(): TextRange = sourcePsi.textRangeInParent
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
+  override fun getOwnDeclarations(): Collection<PsiSymbolDeclaration> = sourcePsi.ownDeclarations
+  override fun getOwnReferences(): Collection<PsiSymbolReference> = sourcePsi.ownReferences
+  override fun getIdentifyingElement(): PsiElement? = sourcePsi.identifyingElement
+  override fun navigationRequest(): NavigationRequest? = sourcePsi.navigationRequest()
+  override fun navigate(requestFocus: Boolean) {
+    sourcePsi.navigate(requestFocus)
+  }
+  override fun canNavigate(): Boolean = sourcePsi.canNavigate()
+  override fun canNavigateToSource(): Boolean = sourcePsi.canNavigateToSource()
 
   companion object {
     fun create(psi: PsiClass, containingElement: UElement?): UClass {
@@ -80,8 +107,6 @@ class JavaUClass(
         JavaUClass(psi, containingElement)
     }
   }
-
-  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
 @ApiStatus.Internal
@@ -121,9 +146,28 @@ class JavaUAnonymousClass(
       }
     }
 
+  override fun isRecord(): Boolean = sourcePsi.isRecord
+  override fun getPermitsList(): PsiReferenceList? = sourcePsi.permitsList
+  override fun getPermitsListTypes(): Array<out PsiClassType?> = sourcePsi.getPermitsListTypes()
   override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()
   override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
+  override fun findMethodsByName(methodName: String): Array<out JvmMethod?> = sourcePsi.findMethodsByName(methodName)
+  override fun getClassKind(): JvmClassKind = sourcePsi.classKind
+  override fun getSuperClassType(): JvmReferenceType? = sourcePsi.superClassType
+  override fun getInterfaceTypes(): Array<out JvmReferenceType?> = sourcePsi.interfaceTypes
+  override fun getRecordComponents(): Array<out PsiRecordComponent?> = sourcePsi.recordComponents
+  override fun getRecordHeader(): PsiRecordHeader? = sourcePsi.recordHeader
+  override fun getTextRangeInParent(): TextRange = sourcePsi.textRangeInParent
+  override fun getOwnDeclarations(): Collection<PsiSymbolDeclaration> = sourcePsi.ownDeclarations
+  override fun getOwnReferences(): Collection<PsiSymbolReference> = sourcePsi.ownReferences
+  override fun getIdentifyingElement(): PsiElement? = sourcePsi.identifyingElement
+  override fun navigationRequest(): NavigationRequest? = sourcePsi.navigationRequest()
+  override fun navigate(requestFocus: Boolean) {
+    sourcePsi.navigate(requestFocus)
+  }
+  override fun canNavigate(): Boolean = sourcePsi.canNavigate()
+  override fun canNavigateToSource(): Boolean = sourcePsi.canNavigateToSource()
 
   private val fakeConstructor: JavaUMethod?
     get() = fakeConstructorPart.getOrBuild {
