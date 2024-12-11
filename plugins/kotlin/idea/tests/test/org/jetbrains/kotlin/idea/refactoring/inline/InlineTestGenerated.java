@@ -2500,6 +2500,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/NullableUnitReturnType3.kt");
             }
 
+            @TestMetadata("objectFunction.kt")
+            public void testObjectFunction() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/objectFunction.kt");
+            }
+
             @TestMetadata("OuterClassReceiver.kt")
             public void testOuterClassReceiver() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/OuterClassReceiver.kt");

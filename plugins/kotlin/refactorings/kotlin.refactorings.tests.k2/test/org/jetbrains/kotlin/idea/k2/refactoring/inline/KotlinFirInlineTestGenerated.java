@@ -2500,6 +2500,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/NullableUnitReturnType3.kt");
             }
 
+            @TestMetadata("objectFunction.kt")
+            public void testObjectFunction() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/objectFunction.kt");
+            }
+
             @TestMetadata("OuterClassReceiver.kt")
             public void testOuterClassReceiver() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/OuterClassReceiver.kt");
