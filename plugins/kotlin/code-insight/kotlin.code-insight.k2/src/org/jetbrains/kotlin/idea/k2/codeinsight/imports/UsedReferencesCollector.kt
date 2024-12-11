@@ -15,7 +15,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
     data class Result(
         val usedDeclarations: Map<FqName, Set<Name>>,
         val unresolvedNames: Set<Name>,
-        val usedSymbols: Set<SymbolInfoPointer>,
+        val usedSymbols: Set<SymbolInfo>,
         val references: Collection<KtReference>,
     )
 
@@ -44,9 +44,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             }
         })
 
-        val importableSymbolPointers = importableSymbols
-            .map { it.run { createPointer() } }
-            .toSet()
+        val importableSymbolPointers = importableSymbols.toSet()
 
         return Result(usedDeclarations, unresolvedNames, importableSymbolPointers, references)
     }

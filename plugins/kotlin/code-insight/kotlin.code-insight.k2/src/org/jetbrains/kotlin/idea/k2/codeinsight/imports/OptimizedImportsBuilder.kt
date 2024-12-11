@@ -71,7 +71,7 @@ internal class OptimizedImportsBuilder(
         val importsToGenerate = hashSetOf<ImportPath>()
         importsToGenerate += importRules.filterIsInstance<ImportRule.Add>().map { it.importPath }
 
-        val importableSymbols = usedReferencesData.usedSymbols.mapNotNull { it.run { restore() } }
+        val importableSymbols = usedReferencesData.usedSymbols
 
         val symbolsByParentFqName = HashMap<FqName, MutableSet<SymbolInfo>>()
         for (importableSymbol in importableSymbols) {
