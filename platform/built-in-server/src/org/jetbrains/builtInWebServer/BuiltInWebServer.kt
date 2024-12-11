@@ -2,6 +2,7 @@
 package org.jetbrains.builtInWebServer
 
 import com.google.common.net.InetAddresses
+import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -187,6 +188,10 @@ internal class BuiltInWebServer : HttpRequestHandler() {
     val authHeaders = authService.validateToken(request) ?: return false
 
     if (project == null) return false
+
+    if (request.headers().get("Service-Worker") == "script" && !project.isTrusted()) {
+      return false
+    }
 
     val path = decodedPath.substring(offset).takeIf { it.startsWith('/') }?.let { FileUtil.toCanonicalPath(it).substring(1) } ?: run {
       HttpResponseStatus.NOT_FOUND.send(context.channel(), request, extraHeaders = authHeaders)
