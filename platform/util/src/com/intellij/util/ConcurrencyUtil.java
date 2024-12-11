@@ -103,6 +103,11 @@ public final class ConcurrencyUtil {
     if (holder instanceof UserDataHolderEx) {
       return ((UserDataHolderEx)holder).putUserDataIfAbsent(key, defaultValue.get());
     }
+    return slowPath(holder, key, defaultValue);
+  }
+  // separate method to hint jvm not to inline this code, thus increasing chances of inlining the caller
+  private static <T> T slowPath(@NotNull UserDataHolder holder, @NotNull Key<T> key, @NotNull Supplier<? extends T> defaultValue) {
+    T data;
     synchronized (holder) {
       data = holder.getUserData(key);
       if (data != null) {
