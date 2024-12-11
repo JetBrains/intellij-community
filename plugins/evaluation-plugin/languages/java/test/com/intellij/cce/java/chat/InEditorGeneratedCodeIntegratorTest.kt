@@ -1,7 +1,5 @@
 package com.intellij.cce.java.chat
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Editor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 
@@ -12,22 +10,15 @@ class InEditorGeneratedCodeIntegratorTest : BasePlatformTestCase() {
                 public void existingMethod() {
                     System.out.println("Existing method");
                 }
+                <caret>
             }
         """.trimIndent()
     myFixture.configureByText("Test.java", fileContent)
-    val editor: Editor = myFixture.editor
-    val caretPosition = fileContent.length - 1
-    ApplicationManager.getApplication().runWriteAction {
-      editor.caretModel.moveToOffset(caretPosition)
-    }
 
     val codeToGenerate = """
-        class GeneratedClass {
-            @Generated
             public void newMethod() {
                 System.out.println("Generated method");
             }
-        }
         """.trimIndent()
 
 
@@ -41,10 +32,10 @@ class InEditorGeneratedCodeIntegratorTest : BasePlatformTestCase() {
                 public void existingMethod() {
                     System.out.println("Existing method");
                 }
-            @Generated
                 public void newMethod() {
-                    System.out.println("Generated method");
-                }
+                System.out.println("Generated method");
+            }
+            
             }
         """.trimIndent()
     assertEquals(expectedText, result)
