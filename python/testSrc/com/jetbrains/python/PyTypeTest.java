@@ -868,30 +868,6 @@ public class PyTypeTest extends PyTestCase {
            "expr = open('foo', 'rb')\n");
   }
 
-  public void testIoOpenDefault() {
-    doTest("TextIO",
-           """
-             import io
-             expr = io.open('foo')
-             """);
-  }
-
-  public void testIoOpenText() {
-    doTest("TextIO",
-           """
-             import io
-             expr = io.open('foo', 'r')
-             """);
-  }
-
-  public void testIoOpenBinary() {
-    doTest("BinaryIO",
-           """
-             import io
-             expr = io.open('foo', 'rb')
-             """);
-  }
-
   public void testNoResolveToFunctionsInTypes() {
     doTest("Union[C, Any]",
            """

@@ -28,7 +28,6 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
@@ -127,9 +126,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   public static final String SELF = "typing.Self";
   public static final String SELF_EXT = "typing_extensions.Self";
-  private static final String PY2_FILE_TYPE = "typing.BinaryIO";
-  private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
-  private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
   public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore\\s*(\\[[^]#]*])?($|(\\s.*))", Pattern.CASE_INSENSITIVE);
 
@@ -428,18 +424,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       //  }
       //  return Ref.create(PyBuiltinCache.getInstance(function).getBoolType());
       //}
-    }
-
-    if (callSite instanceof PyCallExpression) {
-      final LanguageLevel level = "open".equals(functionQName)
-                                  ? LanguageLevel.forElement(callSite)
-                                  : "pathlib.Path.open".equals(functionQName) || "_io.open".equals(functionQName)
-                                    ? LanguageLevel.PYTHON34
-                                    : null;
-
-      if (level != null) {
-        return getOpenFunctionCallType(function, (PyCallExpression)callSite, level, context.myContext);
-      }
     }
 
     final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
@@ -2309,21 +2293,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  @NotNull
-  public static Ref<PyType> getOpenFunctionCallType(@NotNull PyFunction function,
-                                                    @NotNull PyCallExpression call,
-                                                    @NotNull LanguageLevel typeLevel,
-                                                    @NotNull TypeEvalContext context) {
-    final String type =
-      typeLevel.isPython2()
-      ? PY2_FILE_TYPE
-      : getOpenMode(function, call, context).contains("b")
-        ? PY3_BINARY_FILE_TYPE
-        : PY3_TEXT_FILE_TYPE;
-
-    return Ref.create(PyTypeParser.getTypeByName(call, type, context));
-  }
-
   /**
    * Checks whether the given assignment is type hinted with {@code typing.TypeAlias}.
    * <p>
@@ -2347,27 +2316,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     return false;
-  }
-
-  @NotNull
-  private static String getOpenMode(@NotNull PyFunction function, @NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
-    final Map<PyExpression, PyCallableParameter> arguments =
-      PyCallExpressionHelper.mapArguments(call, function, context).getMappedParameters();
-
-    for (Map.Entry<PyExpression, PyCallableParameter> entry : arguments.entrySet()) {
-      if ("mode".equals(entry.getValue().getName())) {
-        PyExpression argument = entry.getKey();
-        if (argument instanceof PyKeywordArgument) {
-          argument = ((PyKeywordArgument)argument).getValueExpression();
-        }
-        if (argument instanceof PyStringLiteralExpression) {
-          return ((PyStringLiteralExpression)argument).getStringValue();
-        }
-        break;
-      }
-    }
-
-    return "r";
   }
 
   /**

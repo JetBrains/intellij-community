@@ -4490,7 +4490,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-36444
   public void testTextIOInferredWithContextManagerDecorator() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              from contextlib import contextmanager
                              

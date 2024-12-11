@@ -301,22 +301,22 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            "expr = open('foo', 'rb')\n");
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo')
@@ -324,7 +324,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo', 'r')
@@ -332,7 +332,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            """
              import io
              expr = io.open('foo', 'rb')
