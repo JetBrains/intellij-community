@@ -33,6 +33,22 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
     }
 
+    fun `test declaration move from source directory to directory outside source root as files`() {
+        val fooFile = myFixture.addFileToProject("Foo.kt", """
+            package foo
+            class Foo
+            class Bar
+        """.trimIndent()) as KtFile
+        val nonSourceDir = runWriteAction { fooFile.containingDirectory?.parent }
+        val moveModel = K2MoveModel.create(arrayOf(fooFile.declarations.first()), targetContainer = nonSourceDir)!!
+        assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
+        val moveDeclarationsModel = moveModel as K2MoveModel.Files
+        assertSize(1, moveDeclarationsModel.source.elements)
+        val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
+        assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
+    }
+
     fun `test file from source directory to file move`() {
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }

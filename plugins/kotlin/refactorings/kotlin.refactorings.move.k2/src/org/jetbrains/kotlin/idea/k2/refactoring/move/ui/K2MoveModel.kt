@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
+import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
@@ -380,7 +381,8 @@ sealed class K2MoveModel {
             return when {
                 (elementsToMove.all { it is KtFile } && targetContainer is PsiDirectory)
                         || isMultiFileMove(elementsToMove)
-                        || declarationsFromFiles.isEmpty() -> {
+                        || declarationsFromFiles.isEmpty()
+                        || (targetContainer is PsiDirectory && targetContainer.getPackage() == null) -> {
                     // this move can contain foreign language files
                     val source = K2MoveSourceModel.FileSource(elementsToMove.fileElements().toSet())
                     val target = if (targetContainer is PsiDirectory) {
