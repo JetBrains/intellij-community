@@ -50,12 +50,14 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
 
     final boolean hasRightRenderer = UISettings.getInstance().getShowIconInQuickNavigation();
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
+    String accessibleName = "";
 
     final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     ((JComponent) leftCellRendererComponent).setOpaque(false);
     add(leftCellRendererComponent, BorderLayout.WEST);
+    accessibleName += leftCellRendererComponent.getAccessibleContext().getAccessibleName();
 
     setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : listBg);
 
@@ -67,6 +69,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       ((JComponent)rightCellRendererComponent).setOpaque(false);
       rightCellRendererComponent.setBackground(listBg);
       add(rightCellRendererComponent, BorderLayout.EAST);
+      accessibleName += " " + rightCellRendererComponent.getAccessibleContext().getAccessibleName();
       final JPanel spacer = new NonOpaquePanel();
 
       final Dimension size = rightCellRendererComponent.getSize();
@@ -74,6 +77,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : listBg);
       add(spacer, BorderLayout.CENTER);
     }
+    getAccessibleContext().setAccessibleName(accessibleName);
     return this;
   }
 
