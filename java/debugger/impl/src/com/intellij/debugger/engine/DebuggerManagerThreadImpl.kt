@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -218,9 +219,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     finally {
       val request = getCurrentThreadRequest()
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Switching back to $request")
-      }
+      LOG.debug { "Switching back to $request" }
 
       super.invokeAndWait(object : DebuggerCommandImpl() {
         override fun action() {
@@ -228,7 +227,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
         }
 
         override fun commandCancelled() {
-          LOG.debug("Event queue was closed, killing request")
+          LOG.debug { "Event queue was closed, killing request $request" }
           request.requestStop()
         }
       })
