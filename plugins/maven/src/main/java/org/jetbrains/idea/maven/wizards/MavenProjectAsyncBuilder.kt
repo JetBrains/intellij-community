@@ -126,7 +126,7 @@ class MavenProjectAsyncBuilder {
     generalSettings: MavenGeneralSettings,
     syncProject: Boolean,
   ): List<Module> {
-    MavenAsyncUtil.setupProjectSdk(project)
+    MavenAsyncUtil.setupProjectSdk(project, rootDirectory)
     val projectsNavigator = MavenProjectsNavigator.getInstance(project)
     if (projectsNavigator != null) projectsNavigator.groupModules = true
 

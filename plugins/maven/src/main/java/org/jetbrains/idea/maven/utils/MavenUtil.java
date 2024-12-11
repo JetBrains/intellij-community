@@ -1684,10 +1684,6 @@ public class MavenUtil {
     if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
       Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
 
-      if (res == null) {
-        res = suggestProjectSdk(project);
-      }
-
       if (res != null && res.getSdkType() instanceof JavaSdkType) {
         return res;
       }
@@ -1752,28 +1748,26 @@ public class MavenUtil {
     return settings.getMavenHomeType() instanceof MavenWrapper;
   }
 
-  public static void setupProjectSdk(@NotNull Project project) {
-    if (ProjectRootManager.getInstance(project).getProjectSdk() == null) {
-      Sdk projectSdk = suggestProjectSdk(project);
-      if (projectSdk == null) return;
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        JavaSdkUtil.applyJdkToProject(project, projectSdk);
-      });
-    }
-  }
-
   @Nullable
-  public static Sdk suggestProjectSdk(@NotNull Project project) {
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    ProjectRootManager defaultProjectManager = ProjectRootManager.getInstance(defaultProject);
-    Sdk defaultProjectSdk = defaultProjectManager.getProjectSdk();
-    if (defaultProjectSdk != null) return null;
+  public static Sdk suggestProjectSdk(Path rootProjectPath) {
     ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
     SdkType sdkType = ExternalSystemJdkUtil.getJavaSdkType();
     return projectJdkTable.getSdksOfType(sdkType).stream()
-      .filter(it -> it.getHomePath() != null && JdkUtil.checkForJre(it.getHomePath()))
+      .filter(it -> isGoodSdk(it, rootProjectPath))
       .max(sdkType.versionComparator())
       .orElse(null);
+  }
+
+  private static boolean isGoodSdk(Sdk sdk, Path rootProjectPath) {
+    var sdkRoot = sdk.getHomeDirectory();
+    if (sdkRoot == null) return false;
+
+    boolean isWindowsProjectRoot = !rootProjectPath.getRoot().toString().equals("/");
+    boolean isWindowsSdkRoot = !sdkRoot.toNioPath().getRoot().toString().equals("/");
+    if(isWindowsSdkRoot!= isWindowsProjectRoot) return false;
+    //need better checking, can perform when IDEA-364602 is ready
+
+    return JdkUtil.checkForJdk(sdkRoot.toNioPath(), isWindowsProjectRoot);
   }
 
   @NotNull
