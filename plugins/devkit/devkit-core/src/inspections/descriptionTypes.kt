@@ -190,7 +190,7 @@ internal sealed class DescriptionTypeResolver(
 }
 
 
-internal class IntentionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INTENTION, module, psiClass, INTENTION_ACTION_EP) {
+private class IntentionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INTENTION, module, psiClass, INTENTION_ACTION_EP) {
 
   override fun skipIfNotRegisteredInPluginXml(): Boolean {
     val candidates = locateExtensionsByPsiClass(psiClass)
@@ -230,13 +230,13 @@ internal class IntentionDescriptionTypeResolver(module: Module, psiClass: PsiCla
 }
 
 
-internal class PostfixTemplateDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.POSTFIX_TEMPLATES, module, psiClass) {
+private class PostfixTemplateDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.POSTFIX_TEMPLATES, module, psiClass) {
 
   override fun skipIfNotRegisteredInPluginXml(): Boolean = false
 }
 
 
-internal class InspectionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INSPECTION, module, psiClass) {
+private class InspectionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INSPECTION, module, psiClass) {
 
   @NonNls
   private val INSPECTION_PROFILE_ENTRY: String = InspectionProfileEntry::class.java.getName()
@@ -253,7 +253,7 @@ internal class InspectionDescriptionTypeResolver(module: Module, psiClass: PsiCl
     return InspectionDescriptionInfo.create(module, psiClass).filename
   }
 
-  private fun isAnyPathMethodOverridden(psiClass: PsiClass?): Boolean {
+  private fun isAnyPathMethodOverridden(psiClass: PsiClass): Boolean {
     return !(isLastMethodDefinitionIn("getStaticDescription", psiClass)
              && isLastMethodDefinitionIn("getDescriptionContextClass", psiClass)
              && isLastMethodDefinitionIn("getDescriptionFileName", psiClass))
