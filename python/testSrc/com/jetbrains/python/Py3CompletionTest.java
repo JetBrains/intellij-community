@@ -332,6 +332,11 @@ public class Py3CompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-78008
+  public void testDataclassWithInheritedInitVarPostInit() {
+    doMultiFileTest();
+  }
+
   // PY-27398
   public void testDataclassPostInitNoInit() {
     doMultiFileTest();

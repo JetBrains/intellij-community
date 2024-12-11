@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
+import org.jetbrains.annotations.ApiStatus
 
 class PyDataclassTypeProvider : PyTypeProviderBase() {
 
@@ -48,9 +49,10 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (parameterIndex == -1) return null
 
       val cls = func.containingClass ?: return null
-      return getInitVarTypes(cls, context)
+      val initVars = getInitVars(cls, parseStdDataclassParameters(cls, context), context) ?: return null
+      return initVars
         .drop(parameterIndex)
-        .map { Ref.create(it) }
+        .map { Ref.create(it.type) }
         .firstOrNull()
     }
 
@@ -58,23 +60,34 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   }
 
   companion object {
-    fun getInitVarTypes(cls: PyClass, context: TypeEvalContext): Sequence<PyType?> {
-      return if (parseStdDataclassParameters(cls, context)?.init == true) {
-        cls.getAncestorClasses(context)
-          .asReversed()
-          .asSequence()
-          .filter { parseDataclassParameters(it, context) != null }
-          .plus(cls)
-          .flatMap { it.classAttributes }
-          .map { context.getType(it) }
-          .filterIsInstance<PyCollectionType>()
-          .filter { it.classQName == Dataclasses.DATACLASSES_INITVAR }
-          .map { it.elementTypes.firstOrNull() }
+    @ApiStatus.Internal
+    fun getInitVars(
+      cls: PyClass,
+      dataclassParams: PyDataclassParameters?,
+      context: TypeEvalContext,
+    ): Sequence<InitVarInfo>? {
+      if (dataclassParams == null || !dataclassParams.init) {
+        return null
       }
-      else {
-        emptySequence()
-      }
+      return cls.getAncestorClasses(context)
+        .asReversed()
+        .asSequence()
+        .filter { parseDataclassParameters(it, context) != null }
+        .plus(cls)
+        .flatMap { it.classAttributes }
+        .mapNotNull {
+          val type = context.getType(it)
+          if (type is PyCollectionType && type.classQName == Dataclasses.DATACLASSES_INITVAR) {
+            InitVarInfo(it, type.elementTypes.singleOrNull())
+          }
+          else {
+            null
+          }
+        }
     }
+
+    @ApiStatus.Internal
+    class InitVarInfo(val targetExpression: PyTargetExpression, val type: PyType?)
 
     private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
       val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null
