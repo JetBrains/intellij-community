@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
 
-val maxLineCount = 200
+val maxLineCount = 2000
 val timeout = TimeUnit.MINUTES.toMillis(2)
 
 class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
