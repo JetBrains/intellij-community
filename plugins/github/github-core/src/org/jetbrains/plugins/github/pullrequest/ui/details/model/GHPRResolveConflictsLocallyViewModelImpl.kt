@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.Either
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.dvcs.repo.Repository
@@ -46,7 +47,7 @@ fun GHPRResolveConflictsLocallyViewModel(
     combine(
       gitRepository.isInCurrentHistory(
         rev = detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.map { it.baseRefOid }
-      ).map { it ?: false },
+      ).map { it ?: false }.withInitial(false),
       detailsData.detailsComputationFlow, gitRepository.infoFlow()
     ) { isBaseInHistory, detailsResult, repoState ->
       if (repoState.state in REPO_MERGING_STATES) return@combine Either.left(MergeInProgress)

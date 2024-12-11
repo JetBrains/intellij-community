@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.Either
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
@@ -40,7 +41,7 @@ fun GitLabResolveConflictsLocallyViewModel(
     combine(
       gitRepository.isInCurrentHistory(
         rev = mergeRequest.details.map { it.diffRefs?.baseSha }.filterNotNull()
-      ).map { it ?: false },
+      ).map { it ?: false }.withInitial(false),
       mergeRequest.details, gitRepository.infoFlow()
     ) { isBaseInHistory, details, repoInfo ->
       if (repoInfo.state in REPO_MERGING_STATES) return@combine Either.left(MergeInProgress)
