@@ -295,11 +295,11 @@ class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>() {
                 .refreshAndFindFileByNioFile(projectDir.resolve(args.pathInProject))
                 ?: return@runReadAction "file not found"
 
-            if (!GlobalSearchScope.allScope(project).contains(file)) {
+            if (!GlobalSearchScope.allScope(project).contains(file!!)) {
                 return@runReadAction "file not found"
             }
 
-            document = FileDocumentManager.getInstance().getDocument(file)
+            document = FileDocumentManager.getInstance().getDocument(file!!)
             if (document == null) {
                 return@runReadAction "could not get document"
             }
