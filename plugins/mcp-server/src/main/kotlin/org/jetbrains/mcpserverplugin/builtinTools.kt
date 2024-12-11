@@ -201,8 +201,9 @@ class FindFilesByNameSubstring: AbstractMcpTool<Query>() {
         }
     }
 }
-
+@Serializable
 data class Path(val absolutePath: String)
+
 class GetFileTextByPathTool : AbstractMcpTool<Path>() {
     override val name: String = "get_file_text_by_path"
     override val description: String = """
