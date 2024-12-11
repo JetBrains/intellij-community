@@ -2,15 +2,13 @@
 package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 abstract class AbstractJvmBasicCompletionTestBase : KotlinFixtureCompletionBaseTestCase() {
-    
+
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinJdkAndLibraryProjectDescriptorOnJdk18
 
@@ -44,6 +42,4 @@ private object KotlinJdkAndLibraryProjectDescriptorOnJdk18 : KotlinWithJdkAndRun
     override fun addDefaultLibraries(model: ModifiableRootModel) {
         // Skip adding JetBrains annotation for completion tests
     }
-    
-    override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
 }
