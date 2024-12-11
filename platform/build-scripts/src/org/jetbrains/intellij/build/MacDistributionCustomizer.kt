@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
+import java.util.UUID
 import java.util.function.Predicate
 
 abstract class MacDistributionCustomizer {
@@ -170,5 +171,13 @@ abstract class MacDistributionCustomizer {
            RepairUtilityBuilder.executableFilesPatterns(context) +
            extraExecutables +
            context.getExtraExecutablePattern(OsFamily.MACOS)
+  }
+
+  /**
+   * @see org.jetbrains.intellij.build.NativeBinaryDownloader.getLauncher
+   */
+  @ApiStatus.Internal
+  open fun getDistributionUUID(context: BuildContext): UUID {
+    return UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
   }
 }

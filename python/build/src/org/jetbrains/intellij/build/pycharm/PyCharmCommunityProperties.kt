@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase() {
+class PyCharmCommunityProperties(protected val communityHome: Path) : PyCharmPropertiesBase() {
   override val customProductCode: String
     get() = "PC"
 
@@ -78,10 +78,10 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
   }
 
   override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
-    return PyCharmCommunityMacDistributionCustomizer(communityHome)
+    return PyCharmMacDistributionCustomizer(communityHome)
   }
 
-  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = "pycharm-ce"
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "pycharm-ce"
 }
 
 private class PyCharmCommunityWindowsDistributionCustomizer(projectHome: Path) : PyCharmWindowsDistributionCustomizer() {
@@ -106,16 +106,3 @@ private open class PyCharmCommunityLinuxDistributionCustomizer(projectHome: Path
   }
 }
 
-private class PyCharmCommunityMacDistributionCustomizer(projectHome: Path) : PyCharmMacDistributionCustomizer() {
-  init {
-    icnsPath = "$projectHome/python/build/resources/PyCharmCore.icns"
-    icnsPathForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP.icns"
-    bundleIdentifier = "com.jetbrains.pycharm.ce"
-    dmgImagePath = "$projectHome/python/build/resources/dmg_background.tiff"
-  }
-
-  override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-    val suffix = if (appInfo.isEAP) " ${appInfo.majorVersion}.${appInfo.minorVersion} EAP" else ""
-    return "PyCharm CE${suffix}.app"
-  }
-}
