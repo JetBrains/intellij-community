@@ -36,5 +36,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <httpRequestHandler implementation="org.jetbrains.ide.mcp.MCPService"/>
+        <notificationGroup id="MCPServerPlugin" displayType="BALLOON"/>
+        <postStartupActivity implementation="org.jetbrains.mcpserverplugin.MCPServerStartupValidator"/>
     </extensions>
 </idea-plugin>
