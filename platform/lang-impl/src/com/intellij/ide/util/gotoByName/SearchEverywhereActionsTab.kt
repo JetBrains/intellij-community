@@ -5,17 +5,15 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
 import com.intellij.platform.searchEverywhere.SearchEverywhereParams
-import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
 import com.intellij.platform.searchEverywhere.SearchEverywhereTab
-import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereTabHelper
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SearchEverywhereActionsTab(project: Project, sessionId: Int): SearchEverywhereTab {
-  private val helper = SearchEverywhereTabHelper(project,
-                                                 sessionId,
-                                                 listOf(SearchEverywhereProviderId("com.intellij.ActionsItemsProvider")))
+  //private val helper = SearchEverywhereTabHelper(project,
+  //                                               sessionId,
+  //                                               listOf(SearchEverywhereProviderId("com.intellij.ActionsItemsProvider")))
 
   override val name: String
     get() = LangBundle.message("tab.title.actions")
@@ -23,7 +21,7 @@ class SearchEverywhereActionsTab(project: Project, sessionId: Int): SearchEveryw
   override val shortName: String
     get() = name
 
-  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> =
-    helper.getItems(params)
+  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> = TODO()
+    //helper.getItems(params)
 }
 

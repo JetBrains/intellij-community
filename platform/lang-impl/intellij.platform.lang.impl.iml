@@ -116,6 +116,5 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.foldings" exported="" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere" />
-    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.frontend" />
   </component>
 </module>
