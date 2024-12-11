@@ -557,6 +557,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       // Consider creating a new MavenInvoker / MavenContext / MavenInvokerRequest for every call to the Embedder.
       // Then profiles will be activated by the MavenInvoker, and this extra step won't be needed.
       activateProfiles(activeProfiles, inactiveProfiles, request);
+      request.getUserProperties().putAll(customProperties);
 
       return request;
     }
