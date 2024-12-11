@@ -7,8 +7,6 @@ import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.java.chat.GeneratedCodeIntegrator
 import com.intellij.cce.java.chat.InEditorGeneratedCodeIntegrator
 import com.intellij.cce.java.chat.JavaApiCallExtractor
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
@@ -116,19 +114,12 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
                 public void foo() {
                     // Does nothing
                 }
+                <caret>
             }
         """.trimIndent()
 
     myFixture.configureByText("MyClass.java", existingCode)
 
-    val editor: Editor = myFixture.editor
-    val caretPosition = existingCode.length - 1
-
-    runBlocking {
-      writeAction {
-        editor.caretModel.moveToOffset(caretPosition)
-      }
-    }
     val code = """
                 public void bar() {
                     foo()
@@ -158,19 +149,12 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
                 public void bar(Integer t) {
                   bar()
                 }
+                <caret>
             }
         """.trimIndent()
 
     myFixture.configureByText("MyClass.java", existingCode)
 
-    val editor: Editor = myFixture.editor
-    val caretPosition = existingCode.length - 1
-
-    runBlocking {
-      writeAction {
-        editor.caretModel.moveToOffset(caretPosition)
-      }
-    }
     val code = """
                 public void bar() {
                     foo()
