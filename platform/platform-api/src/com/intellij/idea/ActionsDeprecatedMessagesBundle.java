@@ -16,10 +16,12 @@ final class ActionsDeprecatedMessagesBundle {
   private ActionsDeprecatedMessagesBundle() {
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
