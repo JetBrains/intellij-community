@@ -402,18 +402,19 @@ internal class WindowsDistributionBuilder(
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
-      launch = listOf(ProductInfoLaunchData(
-        os = OsFamily.WINDOWS.osName,
-        arch = arch.dirName,
-        launcherPath = "bin/${context.productProperties.baseFileName}64.exe",
-        javaExecutablePath = if (withRuntime) "jbr/bin/java.exe" else null,
-        vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions",
-        startupWmClass = null,
-        bootClassPathJarNames = context.bootClassPathJarNames,
-        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
-        mainClass = context.ideMainClassName,
-        customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData),
-      )),
+      launch = listOf(
+        ProductInfoLaunchData.create(
+          os = OsFamily.WINDOWS.osName,
+          arch = arch.dirName,
+          launcherPath = "bin/${context.productProperties.baseFileName}64.exe",
+          javaExecutablePath = if (withRuntime) "jbr/bin/java.exe" else null,
+          vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions",
+          bootClassPathJarNames = context.bootClassPathJarNames,
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
+          mainClass = context.ideMainClassName,
+          customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData),
+        )
+      ),
       context)
     writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
     return json

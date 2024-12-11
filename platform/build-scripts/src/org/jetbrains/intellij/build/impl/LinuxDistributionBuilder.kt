@@ -341,16 +341,16 @@ class LinuxDistributionBuilder(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
       launch = listOf(
-        ProductInfoLaunchData(
+        ProductInfoLaunchData.create(
           OsFamily.LINUX.osName,
           arch.dirName,
           launcherPath = "bin/${launcherFileName}",
           javaExecutablePath = if (withRuntime) "jbr/bin/java" else null,
           vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.vmoptions",
-          startupWmClass = getLinuxFrameClass(context),
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
           mainClass = context.ideMainClassName,
+          startupWmClass = getLinuxFrameClass(context),
           customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData)
         )
       ),

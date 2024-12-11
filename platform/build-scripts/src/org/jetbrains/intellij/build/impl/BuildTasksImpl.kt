@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -16,7 +17,6 @@ import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
-import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
@@ -790,7 +790,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     builtinModules = context.builtinModule,
     launch = sequenceOf(JvmArchitecture.x64, JvmArchitecture.aarch64).flatMap { arch ->
       listOf(
-        ProductInfoLaunchData(
+        ProductInfoLaunchData.create(
           os = OsFamily.WINDOWS.osName,
           arch = arch.dirName,
           launcherPath = "bin/${executableName}.bat",
@@ -800,18 +800,18 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isPortableDist = true),
           mainClass = context.ideMainClassName
         ),
-        ProductInfoLaunchData(
+        ProductInfoLaunchData.create(
           os = OsFamily.LINUX.osName,
           arch = arch.dirName,
           launcherPath = "bin/${executableName}.sh",
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
-          startupWmClass = getLinuxFrameClass(context),
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName
+          mainClass = context.ideMainClassName,
+          startupWmClass = getLinuxFrameClass(context)
         ),
-        ProductInfoLaunchData(
+        ProductInfoLaunchData.create(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
           launcherPath = "bin/${executableName}.sh",

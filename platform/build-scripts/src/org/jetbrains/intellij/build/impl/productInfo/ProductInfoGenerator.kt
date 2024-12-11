@@ -43,7 +43,7 @@ internal fun generateProductInfoJson(
   }
   val productProperties = context.productProperties
   val productFlavors = productProperties.getProductFlavors(context).map { ProductFlavorData(it) }
-  val json = ProductInfoData(
+  val json = ProductInfoData.create(
     name = appInfo.fullProductName,
     version = appInfo.fullVersion,
     versionSuffix = appInfo.versionSuffix,

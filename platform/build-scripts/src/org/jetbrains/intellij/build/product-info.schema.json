@@ -51,7 +51,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["os", "arch", "launcherPath", "vmOptionsFilePath"],
+        "required": ["os", "launcherPath", "vmOptionsFilePath"],
         "additionalProperties": false,
         "minItems": 1,
         "properties": {

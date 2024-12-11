@@ -351,13 +351,12 @@ class MacDistributionBuilder(
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
-    return ProductInfoLaunchData(
+    return ProductInfoLaunchData.create(
       OsFamily.MACOS.osName,
       arch.dirName,
       launcherPath = "../MacOS/${context.productProperties.baseFileName}",
       javaExecutablePath = if (withRuntime) "../jbr/Contents/Home/bin/java" else null,
       vmOptionsFilePath = "../bin/${context.productProperties.baseFileName}.vmoptions",
-      startupWmClass = null,
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
       mainClass = context.ideMainClassName,
