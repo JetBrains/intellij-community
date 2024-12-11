@@ -1,12 +1,9 @@
-package com.intellij.cce.evaluable.chat
+package com.intellij.cce.java.chat
 
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
-import com.intellij.cce.java.chat.GeneratedCodeIntegrator
-import com.intellij.cce.java.chat.InEditorGeneratedCodeIntegrator
-import com.intellij.cce.java.chat.JavaApiCallExtractor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
