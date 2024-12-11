@@ -96,8 +96,7 @@ class XMixedModeExecutionStack(
   private suspend fun prepareThreadBeforeFrameComputation() {
     val threadId = lowLevelExecutionStack.nativeThreadId
     val lowLevel = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
-    val highLevel = session.getDebugProcess(false) as XMixedModeHighLevelDebugProcess
-    lowLevel.prepareThreadBeforeFramesComputation({ highLevel.triggerBringingManagedThreadsToUnBlockedState() }, threadId)
+    lowLevel.prepareThreadBeforeFramesComputation(threadId)
   }
 
   override fun getNativeThreadId(): Long = lowLevelExecutionStack.nativeThreadId

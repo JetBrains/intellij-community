@@ -5,7 +5,6 @@ import com.intellij.xdebugger.frame.XSuspendContext
 
 interface XMixedModeHighLevelDebugProcess : XMixedModeDebugProcess {
   fun getFramesMatcher(): MixedModeFramesBuilder
-  suspend fun triggerBringingManagedThreadsToUnBlockedState()
   fun pauseMixedModeSession()
   suspend fun isStepWillBringIntoNativeCode(suspendContext: XSuspendContext): Boolean
 

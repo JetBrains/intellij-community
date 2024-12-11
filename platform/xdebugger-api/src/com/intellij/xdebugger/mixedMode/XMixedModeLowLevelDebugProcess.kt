@@ -12,10 +12,10 @@ interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
    *
    * NOTE: If the thread is not stopped by managed debugger in the described way, we'll do nothing, the thread will stay blocked in the kernel code
    **/
-  suspend fun pauseMixedModeSessionUnBlockStopEventThread(stopEventThreadId: Long, triggerBlockedByManagedDebuggerThreadSpin: (suspend () -> Unit))
+  suspend fun pauseMixedModeSessionUnBlockStopEventThread(stopEventThreadId: Long)
 
   fun pauseMixedModeSession(stopEventThreadId: Long)
   suspend fun findAndSetBreakpointInNativeFunction(steppingThreadId: Long, trigger: suspend (() -> Unit)): Int
   suspend fun removeTempBreakpoint(brId: Int)
-  suspend fun prepareThreadBeforeFramesComputation(triggerBringingManagedThreadsToUnBlockedState: suspend () -> Unit, threadId: Long)
+  suspend fun prepareThreadBeforeFramesComputation(threadId: Long)
 }

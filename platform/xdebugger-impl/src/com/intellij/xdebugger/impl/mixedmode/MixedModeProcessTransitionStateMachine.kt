@@ -142,9 +142,7 @@ class MixedModeProcessTransitionStateMachine(
               }
               else {
                 // No native evaluation is possible on blocked in kernel thread
-                low.pauseMixedModeSessionUnBlockStopEventThread(stopThreadId) {
-                  high.triggerBringingManagedThreadsToUnBlockedState()
-                }
+                low.pauseMixedModeSessionUnBlockStopEventThread(stopThreadId)
               }
             }
 
@@ -154,9 +152,7 @@ class MixedModeProcessTransitionStateMachine(
           is HighLevelDebuggerResumedForStepOnlyLowStopped -> {
             val stopThreadId = high.getStoppedThreadId(event.suspendContext)
             runBlocking(stateMachineHelperScope.coroutineContext) {
-              low.pauseMixedModeSessionUnBlockStopEventThread(stopThreadId) {
-                high.triggerBringingManagedThreadsToUnBlockedState()
-              }
+              low.pauseMixedModeSessionUnBlockStopEventThread(stopThreadId)
             }
 
             // Resume low level and stop it, it's made to have low level stack
