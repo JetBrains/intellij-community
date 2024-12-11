@@ -363,25 +363,27 @@ private suspend fun validatePythonAndGetVersion(pythonBinary: PythonBinary, flav
       GeneralCommandLine(pythonBinary.toString(), "-c", "print(1)").createProcess()
     }
     catch (e: ExecutionException) {
-      fileLogger.warn("$pythonBinary is bad, skipping", e)
+      fileLogger.warn("$pythonBinary can't be executed, skipping", e)
       return@withContext null
     }
   val timeout = 5.seconds
-  return@withContext withTimeoutOrNull(timeout) {
-    val exitCode = process.awaitExit()
-    return@withTimeoutOrNull if (exitCode != 0) {
-      fileLogger.warn("$pythonBinary returned $exitCode, skipping")
-      null
-    }
-    else {
-      flavor.getVersionString(pythonBinary.pathString)
-    }
-  }.also {
-    if (it == null) {
+  val exitCode = withTimeoutOrNull(timeout) {
+    process.awaitExit()
+  }
+  when (exitCode) {
+    null -> {
       fileLogger.warn("$pythonBinary didn't return in $timeout, skipping")
-      process.destroyForcibly()
+    }
+    0 -> {
+      return@withContext flavor.getVersionString(pythonBinary.pathString)
+    }
+    else -> {
+      fileLogger.warn("$pythonBinary exited with code ${exitCode}, skipping")
     }
   }
+  process.destroyForcibly()
+  withTimeoutOrNull(300.milliseconds) {
+    process.awaitExit()
+  }
+  return@withContext null
 }
-
-
