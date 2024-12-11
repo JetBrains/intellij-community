@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.Version
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
@@ -25,6 +26,8 @@ class BlackFormatterUtil {
     val LOG: Logger = thisLogger()
 
     const val PACKAGE_NAME: String = "black"
+
+    val MINIMAL_LINE_RANGES_COMPATIBLE_VERSION: Version = Version(23, 11, 0)
 
     fun isFileApplicable(vFile: VirtualFile): Boolean {
       return vFile.fileType == PythonFileType.INSTANCE || vFile.fileType == PyiFileType.INSTANCE

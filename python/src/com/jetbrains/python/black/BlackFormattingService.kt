@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -34,7 +33,6 @@ import kotlin.time.toKotlinDuration
 private val NAME: String = PyBundle.message("black.formatting.service.name")
 val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
 private val FEATURES: Set<FormattingService.Feature> = setOf(FormattingService.Feature.FORMAT_FRAGMENTS)
-private val minimalLineRangesCompatibleVersion = Version(23, 11, 0)
 private val FALLBACK_TO_DEFAULT_FORMATTER_KEY: Key<Boolean> = Key("BLACK_FALLBACK_TO_EMBEDDED_FORMATTER")
 
 class BlackFormattingService : AsyncDocumentFormattingService() {
@@ -93,9 +91,12 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
 
     val documentText = formattingRequest.documentText
     val isFormatFragmentAction = isFormatFragmentAction(documentText, formattingRequest)
+    val blackVersion = BlackFormatterVersionService.getVersion(project)
 
-    if (isFormatFragmentAction && BlackFormatterVersionService.getVersion(project) < minimalLineRangesCompatibleVersion) {
-      LOG.debug("Black version in lower than $minimalLineRangesCompatibleVersion, falling back to embedded formatter for fragment formatting")
+    if (isFormatFragmentAction && blackVersion < BlackFormatterUtil.MINIMAL_LINE_RANGES_COMPATIBLE_VERSION) {
+      LOG.debug("Black version $blackVersion is lower than minimal version that supports fragments' formatting, " +
+                "falling back to embedded formatter for fragment formatting")
+
       file.putUserData(FALLBACK_TO_DEFAULT_FORMATTER_KEY, true)
       showFormattedLinesInfo(editor, PyBundle.message("black.format.fragments.supported.info"), false)
       return FallBackFormatFragmentTask(formattingRequest)
