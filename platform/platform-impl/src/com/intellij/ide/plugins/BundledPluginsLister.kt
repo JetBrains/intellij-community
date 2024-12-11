@@ -23,6 +23,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
+import kotlin.io.path.relativeToOrSelf
 
 private class BundledPluginsLister : ModernApplicationStarter() {
   // not premain because FileTypeManager is used to report extensions
@@ -54,7 +55,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           layout.add(LayoutItemDescriptor(
             name = plugin.pluginId.idString,
             kind = ProductInfoLayoutItemKind.plugin,
-            classPath = jarFiles?.map { it.relativeTo(homeDir).invariantSeparatorsPathString } ?: emptyList()
+            classPath = jarFiles?.map { it.relativeToOrSelf(homeDir).invariantSeparatorsPathString } ?: emptyList()
           ))
 
           pluginIds.add(plugin.pluginId.idString)
