@@ -13,7 +13,6 @@ It will perform the following steps:
     * Install a script into a platform-specific path:
         - `~/.local/bin` on Unix
         - `%APPDATA%\Python\Scripts` on Windows
-    * Attempt to inform the user if they need to add this bin directory to their `$PATH`, as well as how to do so.
     * Upon failure, write an error log to `package-installer-error-<hash>.log and restore any previous environment.
 
 This script performs minimal magic, and should be relatively stable. However, it is optimized for interactive developer
@@ -40,11 +39,16 @@ from pathlib import Path
 from typing import Optional
 from urllib.request import Request
 from urllib.request import urlopen
+from enum import Enum
 
 SHELL = os.getenv("SHELL", "")
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 MINGW = sysconfig.get_platform().startswith("mingw")
 MACOS = sys.platform == "darwin"
+
+class PipRunCommand(Enum):
+    PIP = ("-m", "pip")
+    WHL = (f"pip-24.3.1-py2.py3-none-any.whl{os.sep}pip", )
 
 def data_dir(package_dir_name) -> Path:
     if WINDOWS:
@@ -213,9 +217,6 @@ class VirtualEnvironment:
 
         env = cls(target)
 
-        # this ensures that outdated system default pip does not trigger older bugs
-        env.pip("install", "--disable-pip-version-check", "--upgrade", "pip")
-
         return env
 
     @staticmethod
@@ -236,9 +237,15 @@ class VirtualEnvironment:
     def python(self, *args, **kwargs) -> subprocess.CompletedProcess:
         return self.run(self._python, *args, **kwargs)
 
-    def pip(self, *args, **kwargs) -> subprocess.CompletedProcess:
-        return self.python("-m", "pip", *args, **kwargs)
+    def pip(self, pip_command, *args, **kwargs) -> subprocess.CompletedProcess:
+        return self.python(*pip_command, *args, **kwargs)
 
+    def find_pip_command(self):
+        try:
+            self.pip(PipRunCommand.PIP.value, "--version")
+            return PipRunCommand.PIP
+        except:
+            return PipRunCommand.WHL
 
 class Installer:
     def __init__(
@@ -255,6 +262,8 @@ class Installer:
 
     @property
     def bin_dir(self) -> Path:
+        if self._path is not None:
+            return Path(self._path).resolve()
         if not self._bin_dir:
             self._bin_dir = bin_dir()
         return self._bin_dir
@@ -265,8 +274,8 @@ class Installer:
             self._data_dir = data_dir(self._name)
         return self._data_dir
 
-    def run(self) -> int:
-        install_version = self._path if self._path is not None else self._version
+    def run(self):
+        install_version = self._version
 
         self.display_pre_message()
         self.ensure_directories()
@@ -280,6 +289,9 @@ class Installer:
 
         self._write("")
         self.display_post_message_and_add_to_path(install_version)
+
+        execFile = "{package}.exe".format(package=self._name) if WINDOWS else "{package}".format(package=self._name)
+        self._write(str(self.bin_dir.joinpath(execFile)))
 
         return 0
 
@@ -360,14 +372,12 @@ class Installer:
     def install_package(self, version: str, env: VirtualEnvironment) -> None:
         self._install_comment(version, "Installing {package}".format(package=self._name))
 
-        if self._path:
-            specification = version
-        elif version is not None:
+        if version is not None:
             specification = "{package}=={version}".format(package=self._name, version=version)
         else:
             specification = "{package}".format(package=self._name)
 
-        env.pip("install", specification)
+        env.pip(env.find_pip_command().value, "install", specification)
 
     def display_pre_message(self) -> None:
         kwargs = {
@@ -380,13 +390,16 @@ class Installer:
         if version is None:
             version = "latest"
 
-        if WINDOWS:
-            return self.display_post_message_windows_and_add_to_path(version)
+        try:
+            if WINDOWS:
+                return self.display_post_message_windows_and_add_to_path(version)
 
-        if SHELL == "fish":
-            return self.display_post_message_fish_and_add_to_path(version)
+            if SHELL == "fish":
+                return self.display_post_message_fish_and_add_to_path(version)
 
-        return self.display_post_message_unix(version)
+            return self.display_post_message_unix(version)
+        except:
+            pass
 
     def display_post_message_windows_and_add_to_path(self, version: str) -> None:
         path = self.get_windows_path_var()
@@ -472,17 +485,8 @@ def main():
         description="Installs the latest (or given) version of package"
     )
     parser.add_argument("-n", "--name", required=True)
-    parser.add_argument("--version", help="install named version", dest="version")
-    parser.add_argument(
-        "--path",
-        dest="path",
-        action="store",
-        help=(
-            "Install from a given path (file or directory) instead of "
-            "fetching the latest version of package available online."
-        ),
-    )
-
+    parser.add_argument("-v", "--version", help="install named version", dest="version")
+    parser.add_argument("-p", "--path")
     args = parser.parse_args()
 
     installer = Installer(

@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.text.nullize
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
@@ -20,8 +21,9 @@ class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel, privat
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 
-  override fun savePathToExecutableToProperties() {
-    setUvExecutable(Path.of(executable.get()))
+  override fun savePathToExecutableToProperties(path: Path?) {
+    val savingPath = path ?: executable.get().nullize()?.let { Path.of(it) } ?: return
+    setUvExecutable(savingPath)
   }
 
   override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk> {

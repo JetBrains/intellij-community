@@ -27,11 +27,11 @@ import com.jetbrains.python.sdk.poetry.poetryToml
 import com.jetbrains.python.sdk.poetry.pyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
@@ -61,8 +61,9 @@ class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, pr
     basePythonComboBox.setItems(validatedInterpreters)
   }
 
-  override fun savePathToExecutableToProperties() {
-    PropertiesComponent.getInstance().poetryPath = executable.get().nullize()
+  override fun savePathToExecutableToProperties(path: Path?) {
+    val savingPath = path?.pathString ?: executable.get().nullize() ?: return
+    PropertiesComponent.getInstance().poetryPath = savingPath
   }
 
   override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk> {
