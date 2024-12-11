@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: receiver
-// IS_APPLICABLE: false
+// NO_OPTION: RECEIVER
+// CHOSEN_OPTION: PROPERTY
 
 annotation class A
 

@@ -1,5 +1,6 @@
-// CHOOSE_USE_SITE_TARGET: delegate
-// IS_APPLICABLE: false
+// NO_OPTION: PROPERTY_DELEGATE_FIELD
+// CHOSEN_OPTION: PROPERTY
+// AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A
 

@@ -1,0 +1,6 @@
+// NO_OPTION: FILE
+// CHOSEN_OPTION: PROPERTY
+
+annotation class A
+
+class Constructor(@property:A var foo: String)

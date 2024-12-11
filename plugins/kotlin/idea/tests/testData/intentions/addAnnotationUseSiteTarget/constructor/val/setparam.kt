@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: setparam
-// IS_APPLICABLE: false
+// NO_OPTION: SETTER_PARAMETER
+// CHOSEN_OPTION: PROPERTY
 
 annotation class A
 

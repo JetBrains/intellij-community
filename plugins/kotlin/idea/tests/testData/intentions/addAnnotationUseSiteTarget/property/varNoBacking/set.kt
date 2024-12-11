@@ -1,4 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: set
+// CHOSEN_OPTION: PROPERTY_SETTER
 // AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A

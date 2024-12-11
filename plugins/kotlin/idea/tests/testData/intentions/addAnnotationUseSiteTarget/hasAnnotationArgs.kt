@@ -1,4 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: field
+// CHOSEN_OPTION: FIELD
 
 annotation class A(val s: String)
 

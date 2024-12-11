@@ -1,6 +1,6 @@
-// CHOOSE_USE_SITE_TARGET: receiver
+// NO_OPTION: RECEIVER
+// CHOSEN_OPTION: PROPERTY
 // WITH_STDLIB
-// IS_APPLICABLE: false
 
 annotation class A
 

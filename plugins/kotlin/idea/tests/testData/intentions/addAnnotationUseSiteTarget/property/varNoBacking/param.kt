@@ -1,5 +1,6 @@
-// CHOOSE_USE_SITE_TARGET: param
-// IS_APPLICABLE: false
+// NO_OPTION: CONSTRUCTOR_PARAMETER
+// CHOSEN_OPTION: PROPERTY
+// AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A
 

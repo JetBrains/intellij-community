@@ -1,0 +1,9 @@
+// NO_OPTION: PROPERTY_DELEGATE_FIELD
+// CHOSEN_OPTION: PROPERTY
+
+annotation class A
+
+class Property {
+    @property:A
+    var foo: String = ""
+}

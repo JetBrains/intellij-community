@@ -1,5 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: setparam
-// IS_APPLICABLE: false
+// NO_OPTION: SETTER_PARAMETER
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

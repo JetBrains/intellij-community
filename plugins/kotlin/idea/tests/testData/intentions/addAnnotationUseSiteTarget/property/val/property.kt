@@ -1,4 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: property
+// CHOSEN_OPTION: PROPERTY
 
 annotation class A
 

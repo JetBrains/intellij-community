@@ -1,4 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: get
+// CHOSEN_OPTION: PROPERTY_GETTER
 // WITH_STDLIB
 
 annotation class A

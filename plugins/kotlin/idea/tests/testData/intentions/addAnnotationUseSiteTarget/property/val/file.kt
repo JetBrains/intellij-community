@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: file
-// IS_APPLICABLE: false
+// NO_OPTION: FILE
+// CHOSEN_OPTION: PROPERTY
 
 annotation class A
 

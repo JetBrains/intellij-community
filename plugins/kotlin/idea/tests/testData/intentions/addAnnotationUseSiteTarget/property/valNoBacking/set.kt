@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: set
-// IS_APPLICABLE: false
+// NO_OPTION: PROPERTY_SETTER
+// CHOSEN_OPTION: PROPERTY
 
 annotation class A
 

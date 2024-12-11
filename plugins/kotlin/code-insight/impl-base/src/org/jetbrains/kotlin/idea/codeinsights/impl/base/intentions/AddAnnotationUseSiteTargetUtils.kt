@@ -86,14 +86,7 @@ object AddAnnotationUseSiteTargetUtils {
             if (candidateTargets.isEmpty()) return emptyList()
         }
 
-        return if (isUnitTestMode()) {
-            val chosenTarget = containingKtFile.findDescendantOfType<PsiComment>()
-                ?.takeIf { it.text.startsWith("// CHOOSE_USE_SITE_TARGET:") }?.text?.split(":")?.getOrNull(1)?.trim()
-            if (chosenTarget.isNullOrBlank()) candidateTargets.take(1)
-            else candidateTargets.asSequence().filter { it.renderName == chosenTarget }.take(1).toList()
-        } else {
-            candidateTargets
-        }
+        return candidateTargets
     }
 
 

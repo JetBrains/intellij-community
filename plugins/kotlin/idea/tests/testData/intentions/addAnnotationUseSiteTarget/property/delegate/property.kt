@@ -1,4 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: property
+// CHOSEN_OPTION: PROPERTY
 // WITH_STDLIB
 
 annotation class A

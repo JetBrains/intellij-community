@@ -1,5 +1,4 @@
-// CHOOSE_USE_SITE_TARGET: file
-// IS_APPLICABLE: false
+// NO_OPTION: FILE
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

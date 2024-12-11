@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: delegate
-// IS_APPLICABLE: false
+// NO_OPTION: PROPERTY_DELEGATE_FIELD
+// CHOSEN_OPTION: VALUE_PARAMETER
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

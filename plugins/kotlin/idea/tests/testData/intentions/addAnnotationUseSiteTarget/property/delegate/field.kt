@@ -1,6 +1,6 @@
-// CHOOSE_USE_SITE_TARGET: field
+// NO_OPTION: FIELD
+// CHOSEN_OPTION: PROPERTY
 // WITH_STDLIB
-// IS_APPLICABLE: false
 
 annotation class A
 

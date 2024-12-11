@@ -28,12 +28,14 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
+import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.ExecutionException
@@ -224,7 +226,9 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
 
         try {
             if (isApplicableExpected) {
-                KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
+                registerDirectiveBasedChooserOptionInterceptor(fileText, myFixture.testRootDisposable).ifFalse {
+                    KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
+                }
 
                 val action = { intentionAction.invoke(project, editor, file) }
                 if (intentionAction.startInWriteAction()) {

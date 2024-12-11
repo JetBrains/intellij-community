@@ -1,0 +1,12 @@
+// NO_OPTION: PROPERTY_GETTER
+// CHOSEN_OPTION: PROPERTY
+
+@Target(AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY)
+@Repeatable
+annotation class A
+
+class Test {
+    @get:A
+    @property:A
+    val foo: String = ""
+}

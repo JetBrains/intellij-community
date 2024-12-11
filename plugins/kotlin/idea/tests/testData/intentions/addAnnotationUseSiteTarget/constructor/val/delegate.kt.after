@@ -1,0 +1,6 @@
+// NO_OPTION: PROPERTY_DELEGATE_FIELD
+// CHOSEN_OPTION: PROPERTY
+
+annotation class A
+
+class Constructor(@property:A val foo: String)

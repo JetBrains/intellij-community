@@ -1,0 +1,9 @@
+// NO_OPTION: CONSTRUCTOR_PARAMETER
+
+@Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
+annotation class C
+
+class Extension
+
+val @receiver:C Extension.bar: String
+    get() = ""

@@ -1,0 +1,10 @@
+// NO_OPTION: FIELD
+// CHOSEN_OPTION: PROPERTY
+
+annotation class A
+
+class Property {
+    @property:A
+    val foo: String
+        get() = ""
+}

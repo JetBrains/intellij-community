@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: param
-// IS_APPLICABLE: false
+// NO_OPTION: CONSTRUCTOR_PARAMETER
+
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C
