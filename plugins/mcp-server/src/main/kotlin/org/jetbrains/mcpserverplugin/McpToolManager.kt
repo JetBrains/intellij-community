@@ -29,6 +29,7 @@ class McpToolManager {
             GetBreakpointsTool(),
             ReplaceTextByPathTool(),
             ListFilesInFolderTool(),
+            SearchInFilesContentTool(),
         )
     }
 }

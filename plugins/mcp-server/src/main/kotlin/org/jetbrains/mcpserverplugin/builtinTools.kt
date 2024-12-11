@@ -1,5 +1,7 @@
 package org.jetbrains.mcpserverplugin
 
+import com.intellij.find.FindManager
+import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -16,20 +18,16 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.ProjectScope
+import com.intellij.usageView.UsageInfo
+import com.intellij.usages.FindUsagesProcessPresentation
+import com.intellij.usages.UsageViewPresentation
+import com.intellij.util.Processor
 import com.intellij.util.io.createParentDirectories
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import java.util.concurrent.CountDownLatch
-import kotlin.io.path.Path
-import kotlin.io.path.createFile
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 // tools
 
@@ -366,5 +364,54 @@ class ListFilesInFolderTool : AbstractMcpTool<ListFilesInFolderArgs>() {
                 Response(error = "Error listing directory: ${e.message}")
             }
         }
+    }
+}
+
+@Serializable
+data class SearchInFilesArgs(val searchText: String)
+
+class SearchInFilesContentTool : AbstractMcpTool<SearchInFilesArgs>() {
+    override val name: String = "search_in_files_content"
+    override val description: String = """
+        Searches for a text substring within all files in the project using IntelliJ's search engine.
+        Use this tool to find files containing specific text content.
+        Requires a searchText parameter specifying the text to find.
+        Returns a JSON array of objects containing file information:
+        - path: Path relative to project root
+        Returns an empty array ([]) if no matches are found.
+        Note: Only searches through text files within the project directory.
+    """
+
+    override fun handle(project: Project, args: SearchInFilesArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "Project directory not found")
+
+        val searchSubstring = args.searchText
+        if (searchSubstring.isNullOrBlank()) {
+            return Response(error = "contentSubstring parameter is required and cannot be blank")
+        }
+
+        val findModel = FindManager.getInstance(project).findInProjectModel.clone()
+        findModel.stringToFind = searchSubstring
+        findModel.isCaseSensitive = false
+        findModel.isWholeWordsOnly = false
+        findModel.isRegularExpressions = false
+        findModel.setProjectScope(true)
+
+        val results = mutableSetOf<String>()
+
+        val processor = Processor<UsageInfo> { usageInfo ->
+            val virtualFile = usageInfo.virtualFile ?: return@Processor true
+            try {
+                val relativePath = projectDir.relativize(Path(virtualFile.path)).toString()
+                results.add("""{"path": "$relativePath", "name": "${virtualFile.name}"}""")
+            } catch (e: IllegalArgumentException) {
+            }
+            true
+        }
+        FindInProjectUtil.findUsages(findModel, project, processor, FindUsagesProcessPresentation(UsageViewPresentation()))
+
+        val jsonResult = results.joinToString(",\n", prefix = "[", postfix = "]")
+        return Response(jsonResult)
     }
 }
