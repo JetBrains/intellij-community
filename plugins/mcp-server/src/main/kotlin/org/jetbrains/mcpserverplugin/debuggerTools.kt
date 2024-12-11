@@ -36,7 +36,7 @@ class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
     ): Response {
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
             ?: return Response(error = "can't find project dir")
-        val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(projectDir.resolve(args.filePathInProject))
+        val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(projectDir.resolveRel(args.filePathInProject))
 
         runWriteAction {
             val position = XSourcePositionImpl.create(virtualFile, args.line)

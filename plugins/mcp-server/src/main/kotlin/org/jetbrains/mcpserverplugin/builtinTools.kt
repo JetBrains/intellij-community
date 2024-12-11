@@ -26,10 +26,16 @@ import com.intellij.util.io.createParentDirectories
 import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
+import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.*
 
-// tools
+fun Path.resolveRel(pathInProject: String): Path {
+    return when (pathInProject) {
+        "/" -> this
+        else -> resolve(pathInProject.removePrefix("/"))
+    }
+}
 
 class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_open_in_editor_file_text"
@@ -139,10 +145,10 @@ class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>()
             runWriteCommandAction(project, "Replace File Text", null, {
                 val editor = getInstance(project).selectedTextEditor
                 val document = editor?.document
-                if(document != null) {
+                if (document != null) {
                     document.setText(args.text)
                     response = Response("ok")
-                } else{
+                } else {
                     response = Response(error = "no file open")
                 }
             })
@@ -173,8 +179,8 @@ class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
             ?: return Response(error = "can't find project dir")
 
-        val path = Path(args.pathInProject)
-        projectDir.resolve(path).createParentDirectories().createFile().writeText(args.text)
+        val path = projectDir.resolveRel(args.pathInProject)
+        path.createParentDirectories().createFile().writeText(args.text)
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
 
         return Response("ok")
@@ -184,7 +190,7 @@ class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
 @Serializable
 data class Query(val nameSubstring: String)
 
-class FindFilesByNameSubstring: AbstractMcpTool<Query>() {
+class FindFilesByNameSubstring : AbstractMcpTool<Query>() {
     override val name: String = "find_files_by_name_substring"
     override val description: String = """
         Searches for all files in the project whose names contain the specified substring (case-insensitive).
@@ -203,7 +209,8 @@ class FindFilesByNameSubstring: AbstractMcpTool<Query>() {
 
         val searchSubstring = args.nameSubstring.toLowerCase()
         return runReadAction {
-            Response(FilenameIndex.getAllFilenames(project)
+            Response(
+                FilenameIndex.getAllFilenames(project)
                 .filter { it.toLowerCase().contains(searchSubstring) }
                 .flatMap {
                     FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.projectScope(project))
@@ -249,7 +256,7 @@ class GetFileTextByPathTool : AbstractMcpTool<PathInProject>() {
 
         val text = runReadAction {
             val file = LocalFileSystem.getInstance()
-                .refreshAndFindFileByNioFile(projectDir.resolve(args.pathInProject))
+                .refreshAndFindFileByNioFile(projectDir.resolveRel(args.pathInProject))
                 ?: return@runReadAction Response(error = "file not found")
 
             if (GlobalSearchScope.allScope(project).contains(file)) {
@@ -261,7 +268,6 @@ class GetFileTextByPathTool : AbstractMcpTool<PathInProject>() {
         return text
     }
 }
-
 
 
 @Serializable
@@ -288,11 +294,10 @@ class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>() {
             ?: return Response(error = "project dir not found")
 
         var document: Document? = null
-        var file: VirtualFile? = null
 
         val readResult = runReadAction {
-            file = LocalFileSystem.getInstance()
-                .refreshAndFindFileByNioFile(projectDir.resolve(args.pathInProject))
+            var file: VirtualFile = LocalFileSystem.getInstance()
+                .refreshAndFindFileByNioFile(projectDir.resolveRel(args.pathInProject))
                 ?: return@runReadAction "file not found"
 
             if (!GlobalSearchScope.allScope(project).contains(file!!)) {
@@ -343,11 +348,7 @@ class ListFilesInFolderTool : AbstractMcpTool<ListFilesInFolderArgs>() {
 
         return runReadAction {
             try {
-                val targetDir = if (args.pathInProject == "/") {
-                    projectDir
-                } else {
-                    projectDir.resolve(args.pathInProject.removePrefix("/"))
-                }
+                val targetDir = projectDir.resolveRel(args.pathInProject)
 
                 if (!targetDir.exists()) {
                     return@runReadAction Response(error = "directory not found")
@@ -409,7 +410,12 @@ class SearchInFilesContentTool : AbstractMcpTool<SearchInFilesArgs>() {
             }
             true
         }
-        FindInProjectUtil.findUsages(findModel, project, processor, FindUsagesProcessPresentation(UsageViewPresentation()))
+        FindInProjectUtil.findUsages(
+            findModel,
+            project,
+            processor,
+            FindUsagesProcessPresentation(UsageViewPresentation())
+        )
 
         val jsonResult = results.joinToString(",\n", prefix = "[", postfix = "]")
         return Response(jsonResult)
