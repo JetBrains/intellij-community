@@ -150,7 +150,7 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
                                                        !context.withMembers,
                                                        !context.withPlainDirectories, context.withoutStubs,
                                                        context.withoutForeign)
-      PyUtil.filterTopPriorityResults(children.toTypedArray())
+      PyUtil.filterTopPriorityElements(children)
     }
   }
 }
