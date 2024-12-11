@@ -366,11 +366,13 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               highlighter.dispose();
             }
             startDumbIfPossible();
+            int offsetBefore = myEditor.getCaretModel().getOffset();
             try {
               tryRollback();
               PsiNamedElement var = getVariable();
               if (var != null) {
                 createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
+                myEditor.getCaretModel().moveToOffset(offsetBefore);
               }
             }
             finally {
