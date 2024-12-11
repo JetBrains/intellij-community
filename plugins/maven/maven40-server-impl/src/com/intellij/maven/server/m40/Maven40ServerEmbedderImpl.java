@@ -22,6 +22,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenContext;
+import org.apache.maven.cling.invoker.mvn.MavenInvoker;
 import org.apache.maven.cling.invoker.mvn.MavenInvokerRequest;
 import org.apache.maven.cling.invoker.mvn.MavenParser;
 import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenContext;
@@ -70,7 +71,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -130,7 +130,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   static class IdeaMavenInvoker extends ResidentMavenInvoker {
-    MavenContext myContext = null;
+    ResidentMavenContext myContext = null;
 
     IdeaMavenInvoker(ProtoLookup protoLookup) {
       super(protoLookup);
@@ -156,6 +156,18 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       //return execute(context);
       myContext = context;
       return 0;
+    }
+
+    /**
+     * adapted from {@link MavenInvoker#execute(MavenContext)}
+     */
+    protected MavenExecutionRequest createMavenExecutionRequest() throws Exception {
+      ResidentMavenContext context = myContext;
+      MavenExecutionRequest request = prepareMavenExecutionRequest();
+      toolchains(context, request);
+      populateRequest(context, context.lookup, request);
+      //return doExecute(context, request);
+      return request;
     }
 
     private boolean tryRun(ThrowingRunnable action) {
@@ -273,6 +285,17 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
           context.extensions,
           getJvmArguments(context.rootDirectory),
           (MavenOptions)context.options);
+      }
+
+      @Override
+      protected Path getRootDirectory(LocalContext context) throws ParserException {
+        Path rootDir = super.getRootDirectory(context);
+        if (null == rootDir) {
+          Path topDirectory = context.topDirectory;
+          MavenServerGlobals.getLogger().warn("Root dir not found for $topDirectory");
+          return topDirectory;
+        }
+        return rootDir;
       }
     };
     InvokerRequest invokerRequest;
@@ -528,10 +551,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
                                              @NotNull Properties customProperties) {
-
-    MavenExecutionRequest result = new DefaultMavenExecutionRequest();
-
     try {
+      return myMavenInvoker.createMavenExecutionRequest();
+    }
+    catch (Exception e) {
+      warn(e.getMessage(), e);
+      throw new RuntimeException(e);
+    }
+
+/*    try {
       injectDefaultRepositories(result);
       injectDefaultPluginRepositories(result);
 
@@ -572,7 +600,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
     catch (MavenExecutionRequestPopulationException e) {
       throw new RuntimeException(e);
-    }
+    }*/
   }
 
   private static Properties toProperties(Map<String, String> map) {
