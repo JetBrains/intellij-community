@@ -39,10 +39,44 @@ internal object EmptyTextAttributesProvider : TextAttributesProvider {
 internal class TextStyleAdapter(private val style: TextStyle,
                        private val colorPalette: TerminalColorPalette): TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TextStyleAdapter
+
+    return style == other.style
+  }
+
+  override fun hashCode(): Int {
+    return style.hashCode()
+  }
+
+  override fun toString(): String {
+    return "TextStyleAdapter(style=$style)"
+  }
 }
 
 internal class TextAttributesKeyAdapter(private val editor: Editor, private val textAttributesKey: TextAttributesKey) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = editor.colorsScheme.getAttributes(textAttributesKey)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TextAttributesKeyAdapter
+
+    return textAttributesKey == other.textAttributesKey
+  }
+
+  override fun hashCode(): Int {
+    return textAttributesKey.hashCode()
+  }
+
+  override fun toString(): String {
+    return "TextAttributesKeyAdapter(textAttributesKey=$textAttributesKey)"
+  }
 }
 
 internal fun List<TextWithAttributes>.toTextWithHighlightings(): TextWithHighlightings {
