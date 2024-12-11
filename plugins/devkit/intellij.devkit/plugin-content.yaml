@@ -23,6 +23,8 @@
   - name: intellij.devkit.uiDesigner
   - name: intellij.devkit.workspaceModel
   - name: intellij.kotlin.devkit
+  - name: intellij.kotlin.devkit.k1
+  - name: intellij.kotlin.devkit.k2
   - name: intellij.devkit.debugger
   - name: intellij.devkit.stacktrace
   - name: intellij.devkit.apiDump

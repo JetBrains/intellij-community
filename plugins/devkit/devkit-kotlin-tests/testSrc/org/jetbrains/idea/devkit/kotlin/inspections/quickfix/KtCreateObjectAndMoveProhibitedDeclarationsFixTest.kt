@@ -6,7 +6,7 @@ import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/createObjectAndMoveProhibitedDeclarationsFix")
-class KtCreateObjectAndMoveProhibitedDeclarationsFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtCreateObjectAndMoveProhibitedDeclarationsFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
   private val fixName = "Create an object and move the prohibited declarations"
 

@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.devkit" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.core" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.devkit" />
 </module>

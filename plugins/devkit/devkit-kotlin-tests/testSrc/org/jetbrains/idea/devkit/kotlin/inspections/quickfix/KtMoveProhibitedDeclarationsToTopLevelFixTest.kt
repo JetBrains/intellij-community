@@ -6,7 +6,7 @@ import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/moveProhibitedDeclarationsToTopLevelFix")
-class KtMoveProhibitedDeclarationsToTopLevelFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtMoveProhibitedDeclarationsToTopLevelFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
   private val fixName = "Move prohibited declarations to top level"
 

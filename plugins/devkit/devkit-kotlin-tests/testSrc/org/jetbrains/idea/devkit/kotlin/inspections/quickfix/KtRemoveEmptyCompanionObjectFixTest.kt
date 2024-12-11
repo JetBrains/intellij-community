@@ -6,7 +6,7 @@ import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/removeEmptyCompanionObjectFix")
-class KtRemoveEmptyCompanionObjectFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtRemoveEmptyCompanionObjectFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/removeEmptyCompanionObjectFix"
 
