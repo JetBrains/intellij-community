@@ -18,12 +18,14 @@ import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.client.generateJetBrainsClientAppBundleForMacOs
+import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.io.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
+import java.util.UUID
 import java.util.zip.Deflater
 import kotlin.io.path.exists
 import kotlin.io.path.extension
@@ -217,7 +219,9 @@ class MacDistributionBuilder(override val context: BuildContext,
     if (macCustomizer.useXPlatLauncher) {
       Files.delete(macDistDir.resolve("MacOS/executable"))
       val (execPath, licensePath) = NativeLauncherDownloader.downloadLauncher(context, OsFamily.MACOS, arch)
-      copyFile(execPath, macDistDir.resolve("MacOS/${executable}"))
+      val copy = macDistDir.resolve("MacOS/$executable")
+    copyFile(execPath, copy)
+    MachOUuid(copy, customizer.getDistributionUUID(context), context).patch()
       copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
     }
     else {
