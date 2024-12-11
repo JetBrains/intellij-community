@@ -235,7 +235,7 @@ class EelChannelToolsTest {
     Assertions.assertEquals(1, input.available(), "After receiving there must be 0 bytes")
     pipe.source.receive(allocate(bytesCount)).getOrThrow()
     Assertions.assertEquals(0, input.available(), "After receiving there must be 0 bytes")
-    pipe.close()
+    pipe.closePipe()
     sender.join()
     Assertions.assertEquals(0, input.available(), "Closed channel available must be 0 bytes")
   }
@@ -347,7 +347,7 @@ class EelChannelToolsTest {
     val error = Exception("some error")
     val expectedMessageError = "Pipe was broken with message: ${error.message}"
 
-    pipe.close(error)
+    pipe.closePipe(error)
     when (val r = pipe.sink.sendWholeText("D")) {
       is EelResult.Ok -> fail("Writing into broken pipe must be an error")
       is EelResult.Error -> assertEquals(expectedMessageError, r.error)

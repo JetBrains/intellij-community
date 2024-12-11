@@ -43,7 +43,7 @@ internal class IjentChildProcessAdapterDelegate(
         }
         stdErrClosed.join()
         stdoutClosed.join()
-        pipe.close()
+        pipe.closePipe()
       }
 
       inputStream = pipe.source.consumeAsInputStream(coroutineScope.coroutineContext)

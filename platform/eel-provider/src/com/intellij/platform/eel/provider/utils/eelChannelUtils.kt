@@ -49,12 +49,12 @@ fun EelSendChannel<ErrorString>.asOutputStream(blockingContext: CoroutineContext
  * Bidirectional [kotlinx.coroutines.channels.Channel.RENDEZVOUS] pipe much like [java.nio.channels.Pipe].
  * Closing [sink] makes [source] return [com.intellij.platform.eel.ReadResult.EOF]
  * Closing [source] makes [sink] return and [ErrorString]
- * Calling [close] closes both [sink] and [source], you might provide custom error.
+ * Calling [closePipe] closes both [sink] and [source], you might provide custom error that will be reported on a writing attempt.
  */
 interface EelPipe {
   val sink: EelSendChannel<ErrorString>
   val source: EelReceiveChannel<ErrorString>
-  fun close(error: Throwable? = null)
+  fun closePipe(error: Throwable? = null)
 }
 
 fun EelPipe(): EelPipe = EelPipeImpl()

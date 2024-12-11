@@ -95,7 +95,7 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
   }
 
 
-  override fun close(error: Throwable?) {
+  override fun closePipe(error: Throwable?) {
     if (bytesInQueue > 0) {
       // We still have some data to be delivered. Let's wait sometime to give change to read it
       Thread.sleep(200)
