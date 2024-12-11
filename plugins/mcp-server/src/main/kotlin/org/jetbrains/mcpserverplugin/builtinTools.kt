@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.Serializable
@@ -24,6 +25,10 @@ import org.jetbrains.ide.mcp.Response
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.Path
 import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 // tools
@@ -282,5 +287,52 @@ class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>() {
         }
 
         return Response("ok")
+    }
+}
+
+
+@Serializable
+data class ListFilesInFolderArgs(val pathInProject: String)
+
+class ListFilesInFolderTool : AbstractMcpTool<ListFilesInFolderArgs>() {
+    override val name: String = "list_files_in_folder"
+    override val description: String = """
+        Lists all files and directories in the specified project folder.
+        Use this tool to explore project structure and get contents of any directory.
+        Requires a pathInProject parameter (use "/" for project root).
+        Returns a JSON-formatted list of entries, where each entry contains:
+        - name: The name of the file or directory
+        - type: Either "file" or "directory"
+        - path: Full path relative to project root
+        Returns error if the specified path doesn't exist or is outside project scope.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: ListFilesInFolderArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "can't find project dir")
+
+        return runReadAction {
+            try {
+                val targetDir = if (args.pathInProject == "/") {
+                    projectDir
+                } else {
+                    projectDir.resolve(args.pathInProject.removePrefix("/"))
+                }
+
+                if (!targetDir.exists()) {
+                    return@runReadAction Response(error = "directory not found")
+                }
+
+                val entries = targetDir.listDirectoryEntries().map { entry ->
+                    val type = if (entry.isDirectory()) "directory" else "file"
+                    val relativePath = projectDir.relativize(entry).toString()
+                    """{"name": "${entry.name}", "type": "$type", "path": "$relativePath"}"""
+                }
+
+                Response(entries.joinToString(",\n", prefix = "[", postfix = "]"))
+            } catch (e: Exception) {
+                Response(error = "Error listing directory: ${e.message}")
+            }
+        }
     }
 }

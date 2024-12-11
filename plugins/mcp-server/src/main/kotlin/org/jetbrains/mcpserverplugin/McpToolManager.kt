@@ -28,6 +28,7 @@ class McpToolManager {
             ToggleBreakpointTool(),
             GetBreakpointsTool(),
             ReplaceTextByPathTool(),
+            ListFilesInFolderTool(),
         )
     }
 }
