@@ -20,13 +20,13 @@ import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
 import static com.intellij.openapi.util.text.Strings.isWhiteSpace;
 
 abstract class ChunkOptimizer<T> {
-  @NotNull protected final List<? extends T> myData1;
-  @NotNull protected final List<? extends T> myData2;
-  @NotNull private final FairDiffIterable myIterable;
+  protected final @NotNull List<? extends T> myData1;
+  protected final @NotNull List<? extends T> myData2;
+  private final @NotNull FairDiffIterable myIterable;
 
-  @NotNull protected final CancellationChecker myIndicator;
+  protected final @NotNull CancellationChecker myIndicator;
 
-  @NotNull private final List<Range> myRanges;
+  private final @NotNull List<Range> myRanges;
 
   ChunkOptimizer(@NotNull List<? extends T> data1,
                  @NotNull List<? extends T> data2,
@@ -40,8 +40,7 @@ abstract class ChunkOptimizer<T> {
     myRanges = new ArrayList<>();
   }
 
-  @NotNull
-  public FairDiffIterable build() {
+  public @NotNull FairDiffIterable build() {
     for (Range range : myIterable.iterateUnchanged()) {
       myRanges.add(range);
       processLastRanges();
@@ -121,8 +120,8 @@ abstract class ChunkOptimizer<T> {
    *      ex: "1.0.123 1.0.155" vs "1.0.123 1.0.134 1.0.155"
    */
   public static class WordChunkOptimizer extends ChunkOptimizer<InlineChunk> {
-    @NotNull private final CharSequence myText1;
-    @NotNull private final CharSequence myText2;
+    private final @NotNull CharSequence myText1;
+    private final @NotNull CharSequence myText2;
 
     public WordChunkOptimizer(@NotNull List<? extends InlineChunk> words1,
                               @NotNull List<? extends InlineChunk> words2,
@@ -230,8 +229,7 @@ abstract class ChunkOptimizer<T> {
      * search for an empty line boundary in unchanged lines
      * ie: we want insertion/deletion to go right before/after of an empty line
      */
-    @Nullable
-    private Integer getUnchangedBoundaryShift(@NotNull Side touchSide,
+    private @Nullable Integer getUnchangedBoundaryShift(@NotNull Side touchSide,
                                               int equalForward, int equalBackward,
                                               @NotNull Range range1, @NotNull Range range2,
                                               int threshold) {
@@ -248,8 +246,7 @@ abstract class ChunkOptimizer<T> {
      * search for an empty line boundary in changed lines
      * ie: we want insertion/deletion to start/end with an empty line
      */
-    @Nullable
-    private Integer getChangedBoundaryShift(@NotNull Side touchSide,
+    private @Nullable Integer getChangedBoundaryShift(@NotNull Side touchSide,
                                             int equalForward, int equalBackward,
                                             @NotNull Range range1, @NotNull Range range2,
                                             int threshold) {
@@ -278,8 +275,7 @@ abstract class ChunkOptimizer<T> {
       return -1;
     }
 
-    @Nullable
-    private static Integer getShift(int shiftForward, int shiftBackward) {
+    private static @Nullable Integer getShift(int shiftForward, int shiftBackward) {
       if (shiftForward == -1 && shiftBackward == -1) return null;
       if (shiftForward == 0 || shiftBackward == 0) return 0;
 

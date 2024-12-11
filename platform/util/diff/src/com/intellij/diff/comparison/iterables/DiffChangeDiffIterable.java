@@ -6,22 +6,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class DiffChangeDiffIterable extends ChangeDiffIterableBase {
-  @Nullable private final Diff.Change myChange;
+  private final @Nullable Diff.Change myChange;
 
   DiffChangeDiffIterable(@Nullable Diff.Change change, int length1, int length2) {
     super(length1, length2);
     myChange = change;
   }
 
-  @NotNull
   @Override
-  protected ChangeIterable createChangeIterable() {
+  protected @NotNull ChangeIterable createChangeIterable() {
     return new DiffChangeChangeIterable(myChange);
   }
 
   @SuppressWarnings("ConstantConditions")
   private static class DiffChangeChangeIterable implements ChangeIterable {
-    @Nullable private Diff.Change myChange;
+    private @Nullable Diff.Change myChange;
 
     DiffChangeChangeIterable(@Nullable Diff.Change change) {
       myChange = change;

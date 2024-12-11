@@ -9,7 +9,7 @@ import java.util.List;
 
 @Internal
 public class SubiterableDiffIterable extends ChangeDiffIterableBase {
-  @NotNull private final List<Range> myChanged;
+  private final @NotNull List<Range> myChanged;
   private final int myStart1;
   private final int myStart2;
   private final int myEnd1;
@@ -31,9 +31,8 @@ public class SubiterableDiffIterable extends ChangeDiffIterableBase {
     myFirstIndex = firstIndex;
   }
 
-  @NotNull
   @Override
-  protected ChangeIterable createChangeIterable() {
+  protected @NotNull ChangeIterable createChangeIterable() {
     return new SubiterableChangeIterable(myChanged, myStart1, myEnd1, myStart2, myEnd2, myFirstIndex);
   }
 

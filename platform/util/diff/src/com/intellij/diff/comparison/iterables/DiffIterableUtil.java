@@ -29,8 +29,7 @@ public final class DiffIterableUtil {
   /*
    * Compare two integer arrays
    */
-  @NotNull
-  public static FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull CancellationChecker indicator)
+  public static @NotNull FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
@@ -47,8 +46,7 @@ public final class DiffIterableUtil {
   /*
    * Compare two arrays, basing on equals() and hashCode() of it's elements
    */
-  @NotNull
-  public static <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull CancellationChecker indicator)
+  public static @NotNull <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
@@ -65,8 +63,7 @@ public final class DiffIterableUtil {
   /*
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
-  @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1,
+  public static @NotNull <T> FairDiffIterable diff(@NotNull List<? extends T> objects1,
                                           @NotNull List<? extends T> objects2,
                                           @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
@@ -78,51 +75,44 @@ public final class DiffIterableUtil {
   // Iterable
   //
 
-  @NotNull
-  public static DiffIterable create(@Nullable Diff.Change change, int length1, int length2) {
+  public static @NotNull DiffIterable create(@Nullable Diff.Change change, int length1, int length2) {
     DiffChangeDiffIterable iterable = new DiffChangeDiffIterable(change, length1, length2);
     verify(iterable);
     return iterable;
   }
 
-  @NotNull
-  public static DiffIterable createFragments(@NotNull List<? extends DiffFragment> fragments, int length1, int length2) {
+  public static @NotNull DiffIterable createFragments(@NotNull List<? extends DiffFragment> fragments, int length1, int length2) {
     DiffIterable iterable = new DiffFragmentsDiffIterable(fragments, length1, length2);
     verify(iterable);
     return iterable;
   }
 
-  @NotNull
-  public static DiffIterable create(@NotNull List<? extends Range> ranges, int length1, int length2) {
+  public static @NotNull DiffIterable create(@NotNull List<? extends Range> ranges, int length1, int length2) {
     DiffIterable iterable = new RangesDiffIterable(ranges, length1, length2);
     verify(iterable);
     return iterable;
   }
 
-  @NotNull
-  public static DiffIterable createUnchanged(@NotNull List<? extends Range> ranges, int length1, int length2) {
+  public static @NotNull DiffIterable createUnchanged(@NotNull List<? extends Range> ranges, int length1, int length2) {
     DiffIterable invert = invert(create(ranges, length1, length2));
     verify(invert);
     return invert;
   }
 
-  @NotNull
-  public static DiffIterable invert(@NotNull DiffIterable iterable) {
+  public static @NotNull DiffIterable invert(@NotNull DiffIterable iterable) {
     DiffIterable wrapper = new InvertedDiffIterableWrapper(iterable);
     verify(wrapper);
     return wrapper;
   }
 
-  @NotNull
-  public static FairDiffIterable fair(@NotNull DiffIterable iterable) {
+  public static @NotNull FairDiffIterable fair(@NotNull DiffIterable iterable) {
     if (iterable instanceof FairDiffIterable) return (FairDiffIterable)iterable;
     FairDiffIterable wrapper = new FairDiffIterableWrapper(iterable);
     verifyFair(wrapper);
     return wrapper;
   }
 
-  @NotNull
-  public static DiffIterable expandedIterable(@NotNull DiffIterable iterable, int offset1, int offset2, int length1, int length2) {
+  public static @NotNull DiffIterable expandedIterable(@NotNull DiffIterable iterable, int offset1, int offset2, int length1, int length2) {
     assert offset1 + iterable.getLength1() <= length1 &&
            offset2 + iterable.getLength2() <= length2;
     return new ExpandedDiffIterable(iterable, offset1, offset2, length1, length2);
@@ -135,8 +125,7 @@ public final class DiffIterableUtil {
   /**
    * Iterate both changed and unchanged ranges one-by-one.
    */
-  @NotNull
-  public static Iterable<Pair<Range, /* isUnchanged */ Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
+  public static @NotNull Iterable<Pair<Range, /* isUnchanged */ Boolean>> iterateAll(final @NotNull DiffIterable iterable) {
     return () -> new AllRangesIterator(iterable);
   }
 
@@ -290,16 +279,15 @@ public final class DiffIterableUtil {
       myChanges.add(new Range(start1, end1, start2, end2));
     }
 
-    @NotNull
-    public DiffIterable finish() {
+    public @NotNull DiffIterable finish() {
       doFinish();
       return create(myChanges, getLength1(), getLength2());
     }
   }
 
   public static class ExpandChangeBuilder extends ChangeBuilder {
-    @NotNull private final List<?> myObjects1;
-    @NotNull private final List<?> myObjects2;
+    private final @NotNull List<?> myObjects1;
+    private final @NotNull List<?> myObjects2;
 
     public ExpandChangeBuilder(@NotNull List<?> objects1, @NotNull List<?> objects2) {
       super(objects1.size(), objects2.size());
@@ -319,10 +307,9 @@ public final class DiffIterableUtil {
   //
 
   @SuppressWarnings("unused")
-  @NotNull
-  public static <T> List<LineRangeData> extractDataRanges(@NotNull List<? extends T> objects1,
-                                                          @NotNull List<? extends T> objects2,
-                                                          @NotNull DiffIterable iterable) {
+  public static @NotNull <T> List<LineRangeData> extractDataRanges(@NotNull List<? extends T> objects1,
+                                                                   @NotNull List<? extends T> objects2,
+                                                                   @NotNull DiffIterable iterable) {
     List<LineRangeData> result = new ArrayList<>();
 
     for (Pair<Range, Boolean> pair : iterateAll(iterable)) {
@@ -347,8 +334,8 @@ public final class DiffIterableUtil {
 
   public static class LineRangeData<T> {
     public final boolean equals;
-    @NotNull public final List<T> objects1;
-    @NotNull public final List<T> objects2;
+    public final @NotNull List<T> objects1;
+    public final @NotNull List<T> objects2;
 
     public LineRangeData(@NotNull List<T> objects1, @NotNull List<T> objects2, boolean equals) {
       this.equals = equals;

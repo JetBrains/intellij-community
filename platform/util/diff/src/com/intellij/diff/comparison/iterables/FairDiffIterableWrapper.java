@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 
 class FairDiffIterableWrapper implements FairDiffIterable {
-  @NotNull private final DiffIterable myIterable;
+  private final @NotNull DiffIterable myIterable;
 
   FairDiffIterableWrapper(@NotNull DiffIterable iterable) {
     myIterable = iterable;
@@ -24,14 +24,12 @@ class FairDiffIterableWrapper implements FairDiffIterable {
   }
 
   @Override
-  @NotNull
-  public Iterator<Range> changes() {
+  public @NotNull Iterator<Range> changes() {
     return myIterable.changes();
   }
 
   @Override
-  @NotNull
-  public Iterator<Range> unchanged() {
+  public @NotNull Iterator<Range> unchanged() {
     return myIterable.unchanged();
   }
 }
