@@ -396,6 +396,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   private @Nullable RangeHighlighter highlightConflictingElement(PsiElement conflictingElement) {
     if (conflictingElement != null) {
+      try {
+        conflictingElement = PsiTreeUtil.findSameElementInCopy(conflictingElement, myScope.getContainingFile());
+      }
+      catch (IllegalStateException ignored) {
+      }
       TextRange range = conflictingElement.getTextRange();
       if (conflictingElement instanceof PsiNameIdentifierOwner owner) {
         PsiElement identifier = owner.getNameIdentifier();
