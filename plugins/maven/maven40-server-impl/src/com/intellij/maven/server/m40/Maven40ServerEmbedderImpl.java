@@ -146,13 +146,21 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       activateLogging(context);
       helpOrVersionAndMayExit(context);
       preCommands(context);
-      tryRunAndRetryOnFailure(() -> container(context), () -> ((IdeaMavenInvokerRequest)context.invokerRequest).disableCoreExtensions());
+      tryRunAndRetryOnFailure(
+        "container",
+        () -> container(context),
+        () -> ((IdeaMavenInvokerRequest)context.invokerRequest).disableCoreExtensions()
+      );
       postContainer(context);
       pushUserProperties(context);
       lookup(context);
       init(context);
       postCommands(context);
-      tryRun(() -> settings(context));
+      tryRun(
+        "settings",
+        () -> settings(context),
+        () -> context.localRepositoryPath = localRepositoryPath(context)
+      );
       //return execute(context);
       myContext = context;
       return 0;
@@ -170,21 +178,23 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       return request;
     }
 
-    private boolean tryRun(ThrowingRunnable action) {
+    private boolean tryRun(String methodName, ThrowingRunnable action, Runnable onFailure) {
       try {
         action.run();
       }
       catch (Exception e) {
-        warn(e.getMessage(), e);
+        warn("IdeaMavenInvoker." + methodName + ": " + e.getMessage(), e);
+        if (null != onFailure) {
+          onFailure.run();
+        }
         return false;
       }
       return true;
     }
 
-    private void tryRunAndRetryOnFailure(ThrowingRunnable action, Runnable onFailure) {
-      if (!tryRun(action)) {
-        onFailure.run();
-        tryRun(action);
+    private void tryRunAndRetryOnFailure(String methodName, ThrowingRunnable action, Runnable onFailure) {
+      if (!tryRun(methodName, action, onFailure)) {
+        tryRun(methodName, action, null);
       }
     }
 
