@@ -12,10 +12,9 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor;
 
 import java.util.concurrent.TimeUnit;
-
-import static org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor.toGradleDependency;
 
 public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
 
@@ -170,10 +169,10 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
   }
 
   private static void directTransformationTest(@NotNull String gradleDependency, @NotNull String mavenDependency) {
-    assertEquals(gradleDependency, toGradleDependency(mavenDependency, false));
+    assertEquals(gradleDependency, new PasteMvnDependencyPreProcessor().toGradleDependency(mavenDependency, false));
   }
 
   private static void directTransformationTestKotlinDsl(@NotNull String gradleDependency, @NotNull String mavenDependency) {
-    assertEquals(gradleDependency, toGradleDependency(mavenDependency, true));
+    assertEquals(gradleDependency, new PasteMvnDependencyPreProcessor().toGradleDependency(mavenDependency, true));
   }
 }
