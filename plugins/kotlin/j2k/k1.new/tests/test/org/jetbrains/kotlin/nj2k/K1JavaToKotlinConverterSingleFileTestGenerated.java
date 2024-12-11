@@ -1382,6 +1382,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/comments/identicalComments.java");
         }
 
+        @TestMetadata("paramTagInJavaDoc.java")
+        public void testParamTagInJavaDoc() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/comments/paramTagInJavaDoc.java");
+        }
+
         @TestMetadata("removeNoInspectionComment.java")
         public void testRemoveNoInspectionComment() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/comments/removeNoInspectionComment.java");

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -169,8 +170,19 @@ internal class OptimizedImportsBuilder(
                 for (originalReference in references) {
                     val alternativeReference = referencesMap.findReferenceInCopy(originalReference)
 
-                    val originalSymbols = resolveToSymbolInfo(originalReference)
-                    val alternativeSymbols = resolveToSymbolInfo(alternativeReference)
+                    val originalSymbols = analyze(file) {
+                        // We use the original file to analyze the original reference, because if it is a dangling file,
+                        // it cannot depend on the fileWithReplacedImports.file which is also dangling by its nature.
+                        // 
+                        // This can happen during J2K conversion, for example. 
+                        // 
+                        // See KT-73836 for the details.
+                        
+                        resolveToSymbolInfo(originalReference) 
+                    }
+                    
+                    val alternativeSymbols = 
+                        resolveToSymbolInfo(alternativeReference)
 
                     if (!areTargetsEqual(originalSymbols, alternativeSymbols)) {
                         val isTypePosition = originalReference.element.parent is KtUserType
