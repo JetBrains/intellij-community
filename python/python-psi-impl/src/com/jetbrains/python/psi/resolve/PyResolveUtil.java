@@ -282,21 +282,17 @@ public final class PyResolveUtil {
       unqualifiedResults.addAll(resolveShortNameInSingleScope(curScope, firstName, resolveContext));
       curScope = ScopeUtil.getScopeOwner(curScope);
     }
-    
-    final StreamEx<RatedResolveResult> initialResults;
-    if (ContainerUtil.isEmpty(unqualifiedResults)) {
+
+    if (unqualifiedResults.isEmpty()) {
       final PsiElement builtin = PyBuiltinCache.getInstance(scopeOwner).getByName(firstName);
       if (builtin == null) {
         return Collections.emptyList();
       }
-      initialResults = StreamEx.of(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, builtin));
-    }
-    else {
-      initialResults = StreamEx.of(unqualifiedResults);
+      unqualifiedResults.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, builtin));
     }
 
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
-    final StreamEx<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(initialResults, (prev, name) ->
+    final List<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(StreamEx.of(unqualifiedResults), (prev, name) ->
       prev
         .map(RatedResolveResult::getElement)
         .select(PyTypedElement.class)
@@ -307,9 +303,10 @@ public final class PyResolveUtil {
           final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
           final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
-        }));
+        }))
+      .toList();
 
-    return Collections.unmodifiableList(PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new)));
+    return PyUtil.filterTopPriorityElements(result);
   }
 
   private static @NotNull List<? extends RatedResolveResult> resolveShortNameInSingleScope(@NotNull ScopeOwner scopeOwner,
