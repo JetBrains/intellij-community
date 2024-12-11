@@ -20,9 +20,7 @@ import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkHighligh
 import org.jetbrains.plugins.terminal.block.output.highlighting.CompositeTerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.session.*
-import org.jetbrains.plugins.terminal.block.ui.executeInBulk
-import org.jetbrains.plugins.terminal.block.ui.getDisposed
-import org.jetbrains.plugins.terminal.block.ui.invokeLater
+import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
@@ -98,7 +96,7 @@ internal class TerminalOutputController(
 
     // Create a block forcefully in a timeout if there are no content updates. Command can output nothing for some time.
     val createBlockRequest: () -> Unit = {
-      doWithScrollingAware {
+      editor.doWithScrollingAware {
         val terminalWidth = session.model.withContentLock { session.model.width }
         createNewBlock(newRunningCommandContext, terminalWidth)
       }
@@ -127,7 +125,7 @@ internal class TerminalOutputController(
 
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       val block = outputModel.getActiveBlock() ?: error("No active block")
-      doWithScrollingAware {
+      editor.doWithScrollingAware {
         trimLastEmptyLine(block)
       }
       disposeRunningCommandInteractivity()
@@ -231,16 +229,7 @@ internal class TerminalOutputController(
 
   @RequiresEdt
   fun scrollToBottom() {
-    val scrollingModel = editor.scrollingModel
-    // disable animation to perform scrolling atomically
-    scrollingModel.disableAnimation()
-    try {
-      val visibleArea = editor.scrollingModel.visibleArea
-      scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
-    }
-    finally {
-      scrollingModel.enableAnimation()
-    }
+    editor.scrollToBottom()
   }
 
   @RequiresEdt(generateAssertion = false)
@@ -267,7 +256,7 @@ internal class TerminalOutputController(
     if (editor.isDisposed) {
       return
     }
-    return doWithScrollingAware {
+    return editor.doWithScrollingAware {
       doUpdateCommandOutput(output)
     }
   }
@@ -355,22 +344,6 @@ internal class TerminalOutputController(
       .plus(replaceHighlightings)
       .toList()
     outputModel.putHighlightings(block, newHighlightings)
-  }
-
-  /**
-   * Scroll to bottom if we were at the bottom before executing the [action]
-   */
-  @RequiresEdt(generateAssertion = false)
-  private fun <T> doWithScrollingAware(action: () -> T): T {
-    val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
-    try {
-      return action()
-    }
-    finally {
-      if (wasAtBottom) {
-        scrollToBottom()
-      }
-    }
   }
 
   private fun TextStyle.toTextAttributesProvider(): TextAttributesProvider = TextStyleAdapter(this, session.colorPalette)

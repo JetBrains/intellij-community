@@ -60,8 +60,11 @@ import java.awt.event.KeyEvent
 import java.awt.font.FontRenderContext
 import java.awt.geom.Dimension2D
 import java.util.concurrent.CompletableFuture
+import javax.swing.JScrollBar
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 import kotlin.math.max
 
 internal object TerminalUiUtils {
@@ -312,6 +315,70 @@ internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> 
     result = block()
   }
   return result!!
+}
+
+/**
+ * Scroll to bottom if we were at the bottom before executing the [action]
+ */
+@RequiresEdt
+internal inline fun <T> Editor.doWithScrollingAware(action: () -> T): T {
+  val wasAtBottom = scrollingModel.visibleArea.let { it.y + it.height } == contentComponent.height
+  try {
+    return action()
+  }
+  finally {
+    if (wasAtBottom) {
+      scrollToBottom()
+    }
+  }
+}
+
+@RequiresEdt
+internal fun Editor.scrollToBottom() {
+  val scrollingModel = scrollingModel
+  // disable animation to perform scrolling atomically
+  scrollingModel.disableAnimation()
+  try {
+    val visibleArea = scrollingModel.visibleArea
+    scrollingModel.scrollVertically(contentComponent.height - visibleArea.height)
+  }
+  finally {
+    scrollingModel.enableAnimation()
+  }
+}
+
+internal fun stickScrollBarToBottom(verticalScrollBar: JScrollBar) {
+  verticalScrollBar.model.addChangeListener(object : ChangeListener {
+    var preventRecursion: Boolean = false
+    var prevValue: Int = 0
+    var prevMaximum: Int = 0
+    var prevExtent: Int = 0
+
+    override fun stateChanged(e: ChangeEvent?) {
+      if (preventRecursion) return
+
+      val model = verticalScrollBar.model
+      val maximum = model.maximum
+      val extent = model.extent
+
+      if (extent != prevExtent || maximum != prevMaximum) {
+        // stay at the bottom if the previous position was at the bottom
+        if (prevValue == prevMaximum - prevExtent) {
+          preventRecursion = true
+          try {
+            model.value = maximum - extent
+          }
+          finally {
+            preventRecursion = false
+          }
+        }
+      }
+
+      prevValue = model.value
+      prevMaximum = model.maximum
+      prevExtent = model.extent
+    }
+  })
 }
 
 /** @return the string without second part of double width character if any */

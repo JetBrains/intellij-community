@@ -17,13 +17,11 @@ import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
-import javax.swing.JScrollBar
-import javax.swing.event.ChangeEvent
-import javax.swing.event.ChangeListener
 import kotlin.math.min
 
 /**
@@ -72,40 +70,6 @@ internal class TerminalOutputView(
     editor.useTerminalDefaultBackground(this)
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
     return editor
-  }
-
-  private fun stickScrollBarToBottom(verticalScrollBar: JScrollBar) {
-    verticalScrollBar.model.addChangeListener(object : ChangeListener {
-      var preventRecursion: Boolean = false
-      var prevValue: Int = 0
-      var prevMaximum: Int = 0
-      var prevExtent: Int = 0
-
-      override fun stateChanged(e: ChangeEvent?) {
-        if (preventRecursion) return
-
-        val model = verticalScrollBar.model
-        val maximum = model.maximum
-        val extent = model.extent
-
-        if (extent != prevExtent || maximum != prevMaximum) {
-          // stay at the bottom if the previous position was at the bottom
-          if (prevValue == prevMaximum - prevExtent) {
-            preventRecursion = true
-            try {
-              model.value = maximum - extent
-            }
-            finally {
-              preventRecursion = false
-            }
-          }
-        }
-
-        prevValue = model.value
-        prevMaximum = model.maximum
-        prevExtent = model.extent
-      }
-    })
   }
 
   override fun dispose() {
