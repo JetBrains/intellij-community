@@ -190,7 +190,7 @@ class CodeInliner(
             },
             renderType = {
                 analyze(call) {
-                    it.render(position = Variance.INVARIANT)
+                    (it.approximateToSubPublicDenotable(true)?: it).render(position = Variance.INVARIANT)
                 }
             },
             isArrayType = {

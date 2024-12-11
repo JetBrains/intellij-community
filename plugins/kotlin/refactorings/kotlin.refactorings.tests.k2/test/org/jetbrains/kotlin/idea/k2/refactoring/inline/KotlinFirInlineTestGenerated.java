@@ -2310,6 +2310,21 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/InStringTemplates.kt");
             }
 
+            @TestMetadata("inferredOutProjection.kt")
+            public void testInferredOutProjection() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/inferredOutProjection.kt");
+            }
+
+            @TestMetadata("inferredProjection.kt")
+            public void testInferredProjection() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/inferredProjection.kt");
+            }
+
+            @TestMetadata("inferredStarProjection.kt")
+            public void testInferredStarProjection() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/inferredStarProjection.kt");
+            }
+
             @TestMetadata("InvokeFunction.kt")
             public void testInvokeFunction() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/InvokeFunction.kt");

@@ -2310,6 +2310,21 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/InStringTemplates.kt");
             }
 
+            @TestMetadata("inferredOutProjection.kt")
+            public void testInferredOutProjection() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/inferredOutProjection.kt");
+            }
+
+            @TestMetadata("inferredProjection.kt")
+            public void testInferredProjection() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/inferredProjection.kt");
+            }
+
+            @TestMetadata("inferredStarProjection.kt")
+            public void testInferredStarProjection() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/inferredStarProjection.kt");
+            }
+
             @TestMetadata("InvokeFunction.kt")
             public void testInvokeFunction() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/InvokeFunction.kt");
