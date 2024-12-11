@@ -180,7 +180,10 @@ class CreateNewFileWithTextTool : AbstractMcpTool<CreateNewFileWithTextArgs>() {
             ?: return Response(error = "can't find project dir")
 
         val path = projectDir.resolveRel(args.pathInProject)
-        path.createParentDirectories().createFile().writeText(args.text)
+        if (!path.exists()) {
+            path.createParentDirectories().createFile()
+        }
+        path.writeText(args.text)
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
 
         return Response("ok")
@@ -211,23 +214,23 @@ class FindFilesByNameSubstring : AbstractMcpTool<Query>() {
         return runReadAction {
             Response(
                 FilenameIndex.getAllFilenames(project)
-                .filter { it.toLowerCase().contains(searchSubstring) }
-                .flatMap {
-                    FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.projectScope(project))
-                }
-                .filter { file ->
-                    try {
-                        projectDir.relativize(Path(file.path))
-                        true
-                    } catch (e: IllegalArgumentException) {
-                        false
+                    .filter { it.toLowerCase().contains(searchSubstring) }
+                    .flatMap {
+                        FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.projectScope(project))
                     }
-                }
-                .map { file ->
-                    val relativePath = projectDir.relativize(Path(file.path)).toString()
-                    """{"path": "$relativePath", "name": "${file.name}"}"""
-                }
-                .joinToString(",\n", prefix = "[", postfix = "]")
+                    .filter { file ->
+                        try {
+                            projectDir.relativize(Path(file.path))
+                            true
+                        } catch (e: IllegalArgumentException) {
+                            false
+                        }
+                    }
+                    .map { file ->
+                        val relativePath = projectDir.relativize(Path(file.path)).toString()
+                        """{"path": "$relativePath", "name": "${file.name}"}"""
+                    }
+                    .joinToString(",\n", prefix = "[", postfix = "]")
             )
         }
     }
@@ -300,11 +303,11 @@ class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>() {
                 .refreshAndFindFileByNioFile(projectDir.resolveRel(args.pathInProject))
                 ?: return@runReadAction "file not found"
 
-            if (!GlobalSearchScope.allScope(project).contains(file!!)) {
+            if (!GlobalSearchScope.allScope(project).contains(file)) {
                 return@runReadAction "file not found"
             }
 
-            document = FileDocumentManager.getInstance().getDocument(file!!)
+            document = FileDocumentManager.getInstance().getDocument(file)
             if (document == null) {
                 return@runReadAction "could not get document"
             }
