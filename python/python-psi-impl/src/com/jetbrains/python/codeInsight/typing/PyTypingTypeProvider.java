@@ -865,6 +865,15 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       context.getTypeAliasStack().add(alias);
     }
     try {
+      final Ref<PyType> typeHintFromProvider = PyTypeHintProvider.Companion.parseTypeHint(
+        typeHint,
+        alias,
+        resolved,
+        context.getTypeContext()
+      );
+      if (typeHintFromProvider != null) {
+        return typeHintFromProvider;
+      }
       final Ref<PyType> typeFromParenthesizedExpression = getTypeFromParenthesizedExpression(resolved, context);
       if (typeFromParenthesizedExpression != null) {
         return typeFromParenthesizedExpression;
