@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.serialization.Serializable
+import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
@@ -15,12 +16,45 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
 
+class GetTerminalTextTool : AbstractMcpTool<NoArgs>() {
+    override val name: String = "get_terminal_text"
+    override val description: String = """
+        Retrieves the current text content from the first active terminal in the IDE.
+        Use this tool to access the terminal's output and command history.
+        Returns one of two possible responses:
+        - The terminal's text content if a terminal exists
+        - empty string if no terminal is open or available
+        Note: Only captures text from the first terminal if multiple terminals are open
+    """
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        // Retrieve the first terminal widget text
+        val text = com.intellij.openapi.application.runReadAction<String?> {
+            TerminalView.getInstance(project).getWidgets().firstOrNull()?.text
+        }
+        return Response(text ?: "")
+    }
+}
+
 @Serializable
 data class ExecuteTerminalCommandArgs(val command: String)
 
 class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>() {
     override val name: String = "execute_terminal_command"
-    override val description: String = "Execute any terminal command in JetBrains IDE"
+    override val description: String = """
+        Executes a specified shell command in the IDE's integrated terminal.
+        Use this tool to run terminal commands within the IDE environment.
+        Requires a command parameter containing the shell command to execute.
+        Important features and limitations:
+        - Limits output to 200 lines (truncates excess with a notification)
+        Returns one of these possible responses:
+        - The terminal output if command executes successfully
+        - "No output collected" if execution succeeds but no output is captured
+        - Error messages:
+          * "canceled" if user denies confirmation
+          * "Command execution timed out after 5 seconds" if execution exceeds timeout
+          * "Execution error: [details]" for other failures
+    """
 
     override fun handle(project: Project, args: ExecuteTerminalCommandArgs): Response {
         val future = CompletableFuture<Response>()

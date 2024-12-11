@@ -18,14 +18,24 @@ import org.jetbrains.ide.mcp.Response
 data class ToggleBreakpointArgs(val filePathInProject: String, val line: Int)
 class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
     override val name: String = "toggle_debugger_breakpoint"
-    override val description: String = "Toggle debugger breakpoint at specified location"
+    override val description: String = """
+        Toggles a debugger breakpoint at the specified line in a project file.
+        Use this tool to add or remove breakpoints programmatically.
+        Requires two parameters:
+        - filePathInProject: The relative path to the file within the project
+        - line: The line number where to toggle the breakpoint
+        Returns one of two possible responses:
+        - "ok" if the breakpoint was successfully toggled
+        - "can't find project dir" if the project directory cannot be determined
+        Note: Automatically navigates to the breakpoint location in the editor
+    """
 
     override fun handle(
         project: Project,
         args: ToggleBreakpointArgs
     ): Response {
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
-            ?: return Response("can't find project dir")
+            ?: return Response(error = "can't find project dir")
         val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(projectDir.resolve(args.filePathInProject))
 
         runWriteAction {
@@ -43,7 +53,15 @@ class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
 
 class GetBreakpointsTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_debugger_breakpoints"
-    override val description: String = "Get list of all debugger breakpoints in the project"
+    override val description: String = """
+        Retrieves a list of all line breakpoints currently set in the project.
+        Use this tool to get information about existing debugger breakpoints.
+        Returns a JSON-formatted list of breakpoints, where each entry contains:
+        - path: The absolute file path where the breakpoint is set
+        - line: The line number (1-based) where the breakpoint is located
+        Returns an empty list ([]) if no breakpoints are set.
+        Note: Only includes line breakpoints, not other breakpoint types (e.g., method breakpoints)
+    """
 
     override fun handle(
         project: Project,
