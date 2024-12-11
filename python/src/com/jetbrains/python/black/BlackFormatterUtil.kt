@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pyi.PyiFileType
 import com.jetbrains.python.pathValidation.PlatformAndRoot
@@ -38,13 +37,6 @@ class BlackFormatterUtil {
       return packageManager?.let {
         it.installedPackages.any { pyPackage -> pyPackage.name == PACKAGE_NAME }
       } ?: false
-    }
-
-    fun getBlackFormatterPackageInfo(sdk: Sdk?, project: Project): PythonPackage? {
-      val packageManager = sdk?.let { PythonPackageManager.forSdk(project, sdk) }
-      return packageManager?.let {
-        it.installedPackages.firstOrNull { pyPackage -> pyPackage.name == PACKAGE_NAME }
-      }
     }
 
     fun detectBlackExecutable(): File? {

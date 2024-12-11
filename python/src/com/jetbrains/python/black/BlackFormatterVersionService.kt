@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version
 import com.intellij.util.VersionUtil
+import com.jetbrains.python.black.BlackFormatterUtil.Companion.PACKAGE_NAME
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -31,6 +32,56 @@ class BlackFormatterVersionService(private val project: Project, private val ser
     private fun getInstance(project: Project): BlackFormatterVersionService = project.service()
 
     fun getVersion(project: Project): Version = getInstance(project).getVersion()
+
+    fun getVersionForExecutable(pathToExecutable: String): Version {
+      val targetEnvRequest = LocalTargetEnvironmentRequest()
+      val targetEnvironment = LocalTargetEnvironment(LocalTargetEnvironmentRequest())
+
+      val commandLineBuilder = TargetedCommandLineBuilder(targetEnvRequest)
+      commandLineBuilder.setExePath(pathToExecutable)
+      commandLineBuilder.addParameters("--version")
+
+      val targetCMD = commandLineBuilder.build()
+
+      val process = targetEnvironment.createProcess(targetCMD)
+
+      return runBlockingMaybeCancellable {
+        runCatching {
+          withContext(Dispatchers.IO) {
+            val processHandler = CapturingProcessHandler(process, targetCMD.charset, targetCMD.getCommandPresentation(targetEnvironment))
+            val processOutput = processHandler.runProcess(5000, true).stdout
+            VersionUtil.parseVersion(processOutput, PATTERN) ?: UNKNOWN_VERSION
+          }
+        }.getOrDefault(UNKNOWN_VERSION)
+      }
+    }
+
+    fun getVersionForPackage(sdk: Sdk?, project: Project): Version {
+      return getBlackFormatterPackageInfo(sdk, project)?.let { pythonPackage ->
+        parseVersionString(pythonPackage.version)
+      } ?: UNKNOWN_VERSION
+    }
+
+    private fun getBlackFormatterPackageInfo(sdk: Sdk?, project: Project): PythonPackage? {
+      val packageManager = sdk?.let { PythonPackageManager.forSdk(project, sdk) }
+      return packageManager?.let {
+        it.installedPackages.firstOrNull { pyPackage -> pyPackage.name == PACKAGE_NAME }
+      }
+    }
+
+    private fun parseVersionString(versionString: String): Version {
+
+      val parts = versionString
+        .split(".", "b")
+        .mapNotNull(String::toIntOrNull)
+        .filter { it >= 0 }
+
+      if (parts.size < 3) {
+        return UNKNOWN_VERSION
+      }
+
+      return Version(parts[0], parts[1], parts[2])
+    }
   }
 
   private var version: Version = UNKNOWN_VERSION
@@ -60,58 +111,16 @@ class BlackFormatterVersionService(private val project: Project, private val ser
         } ?: UNKNOWN_VERSION
       }
       BlackFormatterConfiguration.ExecutionMode.PACKAGE -> {
-        BlackFormatterUtil.getBlackFormatterPackageInfo(configuration.getSdk(), project)?.let {
-          getVersionForPackage(it)
-        } ?: UNKNOWN_VERSION
+        getVersionForPackage(configuration.getSdk(), project)
       }
     }
-  }
-
-  private fun getVersionForExecutable(pathToExecutable: String): Version {
-    val targetEnvRequest = LocalTargetEnvironmentRequest()
-    val targetEnvironment = LocalTargetEnvironment(LocalTargetEnvironmentRequest())
-
-    val commandLineBuilder = TargetedCommandLineBuilder(targetEnvRequest)
-    commandLineBuilder.setExePath(pathToExecutable)
-    commandLineBuilder.addParameters("--version")
-
-    val targetCMD = commandLineBuilder.build()
-
-    val process = targetEnvironment.createProcess(targetCMD)
-
-    return runBlockingMaybeCancellable {
-      runCatching {
-        withContext(Dispatchers.IO) {
-          val processHandler = CapturingProcessHandler(process, targetCMD.charset, targetCMD.getCommandPresentation(targetEnvironment))
-          val processOutput = processHandler.runProcess(5000, true).stdout
-          return@withContext VersionUtil.parseVersion(processOutput, PATTERN) ?: UNKNOWN_VERSION
-        }
-      }.getOrDefault(UNKNOWN_VERSION)
-    }
-  }
-
-  private fun getVersionForPackage(pythonPackage: PythonPackage): Version =
-    parseVersionString(pythonPackage.version)
-
-  private fun parseVersionString(versionString: String): Version {
-
-    val parts = versionString
-      .split(".", "b")
-      .mapNotNull(String::toIntOrNull)
-      .filter { it >= 0 }
-
-    if (parts.size < 3) {
-      return UNKNOWN_VERSION
-    }
-
-    return Version(parts[0], parts[1], parts[2])
   }
 
   private fun subscribeOnChanges() {
     val connection = project.messageBus.connect(this)
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(sdk: Sdk) {
-        version = getVersionFromSdkOrBinary()
+        version = getVersion()
       }
     })
   }
