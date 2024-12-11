@@ -190,79 +190,111 @@ class FindFilesByNameSubstring: AbstractMcpTool<Query>() {
     override val name: String = "find_files_by_name_substring"
     override val description: String = """
         Searches for all files in the project whose names contain the specified substring (case-insensitive).
-        Use this tool to locate files when you know part of the filename or searching for the files.
+        Use this tool to locate files when you know part of the filename.
         Requires a nameSubstring parameter for the search term.
-        Returns a comma-separated list of absolute file paths, with each path on a new line.
-        Returns an empty string if no matching files are found.
-        Searches through all project files, including those in dependencies and libraries.
+        Returns a JSON array of objects containing file information:
+        - path: Path relative to project root
+        - name: File name
+        Returns an empty array ([]) if no matching files are found.
+        Note: Only searches through files within the project directory, excluding libraries and external dependencies.
     """
 
     override fun handle(project: Project, args: Query): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "project dir not found")
+
         val searchSubstring = args.nameSubstring.toLowerCase()
         return runReadAction {
-            Response(FilenameIndex.getAllFilenames(project).filter {
-                it.toLowerCase().contains(searchSubstring)
-        }.flatMap {
-                FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.allScope(project))
-        }.map {
-            it.path
-            }.joinToString(",\n"))
+            Response(FilenameIndex.getAllFilenames(project)
+                .filter { it.toLowerCase().contains(searchSubstring) }
+                .flatMap {
+                    FilenameIndex.getVirtualFilesByName(it, GlobalSearchScope.projectScope(project))
+                }
+                .filter { file ->
+                    try {
+                        projectDir.relativize(Path(file.path))
+                        true
+                    } catch (e: IllegalArgumentException) {
+                        false
+                    }
+                }
+                .map { file ->
+                    val relativePath = projectDir.relativize(Path(file.path)).toString()
+                    """{"path": "$relativePath", "name": "${file.name}"}"""
+                }
+                .joinToString(",\n", prefix = "[", postfix = "]")
+            )
         }
     }
 }
-@Serializable
-data class Path(val absolutePath: String)
 
-class GetFileTextByPathTool : AbstractMcpTool<Path>() {
+
+@Serializable
+data class PathInProject(val pathInProject: String)
+
+class GetFileTextByPathTool : AbstractMcpTool<PathInProject>() {
     override val name: String = "get_file_text_by_path"
     override val description: String = """
-        Retrieves the text content of a file using its absolute path, if the file is within the project scope.
-        Use this tool to read file contents when you have the file's absolute path.
-        Requires an absolutePath parameter specifying the file location.
-        Returns one of two responses:
+        Retrieves the text content of a file using its path relative to project root.
+        Use this tool to read file contents when you have the file's project-relative path.
+        Requires a pathInProject parameter specifying the file location from project root.
+        Returns one of these responses:
         - The file's content if the file exists and belongs to the project
-        - empty string if the file doesn't exist or is outside the project scope
+        - error "project dir not found" if project directory cannot be determined
+        - error "file not found" if the file doesn't exist or is outside project scope
         Note: Automatically refreshes the file system before reading
     """
 
-    override fun handle(project: Project, args: Path): Response {
+    override fun handle(project: Project, args: PathInProject): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "project dir not found")
+
         val text = runReadAction {
-            val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path(args.absolutePath)) ?: return@runReadAction null
+            val file = LocalFileSystem.getInstance()
+                .refreshAndFindFileByNioFile(projectDir.resolve(args.pathInProject))
+                ?: return@runReadAction Response(error = "file not found")
+
             if (GlobalSearchScope.allScope(project).contains(file)) {
-                file.readText()
-            }
-            else {
-                ""
+                Response(file.readText())
+            } else {
+                Response(error = "file not found")
             }
         }
-        return Response(text)
+        return text
     }
 }
 
 
+
 @Serializable
-data class ReplaceTextByPathToolArgs(val absolutePath: String, val text: String)
+data class ReplaceTextByPathToolArgs(val pathInProject: String, val text: String)
+
 class ReplaceTextByPathTool : AbstractMcpTool<ReplaceTextByPathToolArgs>() {
     override val name: String = "replace_file_text_by_path"
     override val description: String = """
-        Replaces the entire content of a specified file with new text, if the file is within the project scope.
-        Use this tool to modify file contents when you have the file's absolute path.
+        Replaces the entire content of a specified file with new text, if the file is within the project.
+        Use this tool to modify file contents using a path relative to the project root.
         Requires two parameters:
-        - absolutePath: The complete path to the target file
+        - pathInProject: The path to the target file, relative to project root
         - text: The new content to write to the file
         Returns one of these responses:
         - "ok" if the file was successfully updated
-        - error "file not found" if the file doesn't exist or is outside project scope
+        - error "project dir not found" if project directory cannot be determined
+        - error "file not found" if the file doesn't exist
         - error "could not get document" if the file content cannot be accessed
         Note: Automatically saves the file after modification
     """
 
     override fun handle(project: Project, args: ReplaceTextByPathToolArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "project dir not found")
+
         var document: Document? = null
         var file: VirtualFile? = null
 
         val readResult = runReadAction {
-            file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path(args.absolutePath))
+            file = LocalFileSystem.getInstance()
+                .refreshAndFindFileByNioFile(projectDir.resolve(args.pathInProject))
                 ?: return@runReadAction "file not found"
 
             if (!GlobalSearchScope.allScope(project).contains(file!!)) {
