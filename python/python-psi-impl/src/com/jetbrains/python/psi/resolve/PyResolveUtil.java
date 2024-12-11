@@ -240,8 +240,10 @@ public final class PyResolveUtil {
   }
 
   /**
-   * Resolve a symbol by its qualified name, starting from the specified scope and then following the chain of type members.
-   * This type of resolve is stub-safe, i.e. it's not supposed to cause any un-stubbing of external files unless it explicitly
+   * Resolve a symbol by its qualified name, climbing up from the specified scope until the first component
+   * of the qualified is resolved and then following the chain of type members.
+   * <p> 
+   * This type of resolve is stub-safe, i.e. it's not supposed to cause any un-stubbing of external files unless it is explicitly
    * allowed by the given type evaluation context.
    *
    * @param qualifiedName name of a symbol to resolve
@@ -266,46 +268,21 @@ public final class PyResolveUtil {
 
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
-    final List<? extends RatedResolveResult> unqualifiedResults;
-    if (scopeOwner instanceof PyiFile fileScope) {
-      // pyi-stubs are special cased because
-      // `resolveMember` delegates to `multiResolveName(..., true)` and
-      // it skips elements that are imported without `as`
-      unqualifiedResults = fileScope.multiResolveName(firstName, false);
+    List<RatedResolveResult> unqualifiedResults = new ArrayList<>();
+    ScopeOwner curScope = scopeOwner;
+    // Ideally, we should do `while (curScope != null && unqualifiedResults.isEmpty())` but
+    // because of flow insensitivity it will break down for cases like the following in 
+    // flask_sqlalchemy/__init__.pyi:
+    // 
+    // from .model import DefaultMeta as DefaultMeta, Model as Model
+    //
+    // class SQLAlchemy:
+    //    Model: Model  # Model in the type hints resolves to its own target expression
+    while (curScope != null) {
+      unqualifiedResults.addAll(resolveShortNameInSingleScope(curScope, firstName, resolveContext));
+      curScope = ScopeUtil.getScopeOwner(curScope);
     }
-    else if (scopeOwner instanceof PyFunction functionScope) {
-      final Stream<PsiNamedElement> targets = StreamEx
-        .of(PsiTreeUtil.getStubChildrenOfTypeAsList(scopeOwner, PyTargetExpression.class))
-        .filter(it -> !it.isQualified())
-        .select(PsiNamedElement.class);
-
-      final Stream<PsiNamedElement> parameters = StreamEx
-        .of(functionScope.getParameterList().getParameters())
-        .select(PsiNamedElement.class);
-
-      unqualifiedResults = StreamEx
-        .of(targets)
-        .append(parameters)
-        .filter(it -> firstName.equals(it.getName()))
-        .map(it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
-        .append(resolveTypeParameters(functionScope, firstName))
-        .toList();
-    }
-    else if (scopeOwner instanceof PyTypeAliasStatement) {
-      unqualifiedResults = resolveTypeParameters((PyTypeParameterListOwner)scopeOwner, firstName);
-    }
-    else {
-      final PyType scopeType = context.getType((PyTypedElement)scopeOwner);
-      if (scopeType == null) return Collections.emptyList();
-      List<? extends RatedResolveResult> typeMembers = scopeType.resolveMember(firstName, null, AccessDirection.READ, resolveContext);
-      if (scopeOwner instanceof PyClass pyClass) {
-        unqualifiedResults = ContainerUtil.concat(ContainerUtil.notNullize(typeMembers), resolveTypeParameters(pyClass, firstName));
-      }
-      else {
-        unqualifiedResults = typeMembers;
-      }
-    }
-
+    
     final StreamEx<RatedResolveResult> initialResults;
     if (ContainerUtil.isEmpty(unqualifiedResults)) {
       final PsiElement builtin = PyBuiltinCache.getInstance(scopeOwner).getByName(firstName);
@@ -333,6 +310,49 @@ public final class PyResolveUtil {
         }));
 
     return Collections.unmodifiableList(PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new)));
+  }
+
+  private static @NotNull List<? extends RatedResolveResult> resolveShortNameInSingleScope(@NotNull ScopeOwner scopeOwner,
+                                                                                           @NotNull String name,
+                                                                                           @NotNull PyResolveContext resolveContext) {
+    if (scopeOwner instanceof PyiFile fileScope) {
+      // pyi-stubs are special cased because
+      // `resolveMember` delegates to `multiResolveName(..., true)` and
+      // it skips elements that are imported without `as`
+      return fileScope.multiResolveName(name, false);
+    }
+    else if (scopeOwner instanceof PyFunction functionScope) {
+      final Stream<PsiNamedElement> targets = StreamEx
+        .of(PsiTreeUtil.getStubChildrenOfTypeAsList(scopeOwner, PyTargetExpression.class))
+        .filter(it -> !it.isQualified())
+        .select(PsiNamedElement.class);
+
+      final Stream<PsiNamedElement> parameters = StreamEx
+        .of(functionScope.getParameterList().getParameters())
+        .select(PsiNamedElement.class);
+
+      return StreamEx
+        .of(targets)
+        .append(parameters)
+        .filter(it -> name.equals(it.getName()))
+        .map(it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+        .append(resolveTypeParameters(functionScope, name))
+        .toList();
+    }
+    else if (scopeOwner instanceof PyTypeAliasStatement) {
+      return resolveTypeParameters((PyTypeParameterListOwner)scopeOwner, name);
+    }
+    else {
+      final PyType scopeType = resolveContext.getTypeEvalContext().getType((PyTypedElement)scopeOwner);
+      if (scopeType == null) return Collections.emptyList();
+      List<? extends RatedResolveResult> typeMembers = scopeType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+      if (scopeOwner instanceof PyClass pyClass) {
+        return ContainerUtil.concat(ContainerUtil.notNullize(typeMembers), resolveTypeParameters(pyClass, name));
+      }
+      else {
+        return ContainerUtil.notNullize(typeMembers);
+      }
+    }
   }
 
   @Nullable
