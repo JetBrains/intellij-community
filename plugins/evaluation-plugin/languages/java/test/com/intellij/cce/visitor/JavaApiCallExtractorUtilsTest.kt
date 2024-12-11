@@ -10,7 +10,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
+class JavaApiCallExtractorUtilsTest : BasePlatformTestCase() {
   private lateinit var psiFileFactory: PsiFileFactoryImpl
   private lateinit var psiElementFactory: PsiElementFactory
 
