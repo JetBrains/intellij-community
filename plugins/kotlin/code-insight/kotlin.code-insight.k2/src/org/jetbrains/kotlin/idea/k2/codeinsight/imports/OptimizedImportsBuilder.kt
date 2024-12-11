@@ -251,12 +251,12 @@ internal class OptimizedImportsBuilder(
     private fun KaSession.canUseStarImport(importableSymbol: SymbolInfo, fqName: FqName): Boolean = when {
         fqName.parent().isRoot -> false
         // star import from objects is not allowed
-        (importableSymbol.run { containingClassSymbol() } as? KaClassSymbol)?.classKind?.isObject == true -> false
+        (containingClassSymbol(importableSymbol) as? KaClassSymbol)?.classKind?.isObject == true -> false
         else -> true
     }
 
     private fun KaSession.nameCountToUseStar(symbol: SymbolInfo): Int {
-        if (symbol.run { containingClassSymbol() } == null) {
+        if (containingClassSymbol(symbol) == null) {
             return codeStyleSettings.NAME_COUNT_TO_USE_STAR_IMPORT
         } else {
             return codeStyleSettings.NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS
