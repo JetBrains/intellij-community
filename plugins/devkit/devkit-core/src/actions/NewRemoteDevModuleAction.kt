@@ -16,7 +16,6 @@ import com.intellij.openapi.observable.util.onceWhenFocusGained
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.InheritedJdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.ui.DialogWrapper
@@ -31,6 +30,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import kotlinx.coroutines.*
+import org.jetbrains.idea.devkit.actions.ModuleType.*
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import javax.swing.JComponent
@@ -163,6 +163,8 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
 
     createPluginXml(project, module, moduleDirectories.resourcesDirectory, moduleType)
 
+    patchRemoteDevImls(project, module, moduleType)
+
     // add FacetManagers with Kotlin Compiler plugins
     addKotlinPlugins(project, moduleDirectories.moduleRoot, module)
   }
@@ -200,6 +202,25 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
     }
 
     saveFiles(project)
+  }
+
+  private suspend fun patchRemoteDevImls(project: Project, module: Module, moduleType: ModuleType) {
+    val moduleNameToPatch = when (moduleType) {
+      FRONTEND -> "intellij.platform.frontend.main"
+      BACKEND -> "intellij.platform.backend.main"
+    }
+    val moduleToPatch = readAction {
+      ModuleManager.getInstance(project).findModuleByName(moduleNameToPatch)
+    } ?: run {
+      LOG.info("$moduleNameToPatch module is not found in project modules")
+      return
+    }
+
+    writeAction {
+      ModuleRootModificationUtil.updateModel(moduleToPatch) {
+        it.addModuleOrderEntry(module)
+      }
+    }
   }
 
   private fun getPackageName(moduleName: String): String {
