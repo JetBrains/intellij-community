@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import org.jetbrains.mcpserverplugin.AbstractMcpTool
+import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalView
 import java.util.concurrent.CompletableFuture
@@ -81,15 +82,20 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
                 return@invokeAndWait
             }
 
-            val terminalWidget = terminalWidget(project)
-            terminalWidget?.sendCommandToExecute("clear; " + args.command)
+            val terminalWidget = ShTerminalRunner.run(project, "clear; " + args.command, project.basePath ?: "", "MCP Command", true)
+
+            val jediTermWidget = if (terminalWidget != null) ShellTerminalWidget.asShellJediTermWidget(terminalWidget) else null
+
+            if (jediTermWidget == null) {
+                future.complete(Response(error = "No terminal available"))
+                return@invokeAndWait
+            }
 
             // Schedule a single delayed task to collect output
             ApplicationManager.getApplication().executeOnPooledThread {
                 Thread.sleep(100) // Wait 100ms
-                val terminalOutput = TerminalView.getInstance(project)
-                    .getWidgets()
-                    .firstOrNull()?.text ?: "No output collected."
+
+                val terminalOutput = jediTermWidget.text
 
                 // Limit to 200 lines if needed
                 val lines = terminalOutput.lines()
@@ -110,10 +116,5 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
         } catch (e: Exception) {
             return Response(error = "Execution error: ${e.message}")
         }
-    }
-
-    private fun terminalWidget(project: Project): TerminalWidget? {
-        val terminalManager = TerminalToolWindowManager.getInstance(project)
-        return terminalManager.terminalWidgets.firstOrNull() ?: terminalManager.createNewSession()
     }
 }
