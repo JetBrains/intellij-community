@@ -8,28 +8,22 @@ import fleet.util.async.use
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class FleetService private constructor(val serviceId: UID,
-                                       private val job: Job) {
-  private suspend fun terminate(cause: CancellationException? = null) {
-    job.cancel(cause)
-    job.join()
-  }
-
-  suspend fun terminate(cause: String) {
-    terminate(CancellationException(cause))
-  }
-
+class FleetService private constructor(
+  val serviceId: UID,
+) {
   companion object {
-    suspend fun service(providerId: UID,
-                        transportFactory: FleetTransportFactory,
-                        services: RpcServiceLocator,
-                        rpcInterceptor: RpcExecutorMiddleware = RpcExecutorMiddleware,
-                        rpcCallDispatcher: CoroutineDispatcher? = null,
-                        body: suspend CoroutineScope.(FleetService) -> Unit) {
+    suspend fun service(
+      providerId: UID,
+      transportFactory: FleetTransportFactory,
+      services: RpcServiceLocator,
+      rpcInterceptor: RpcExecutorMiddleware = RpcExecutorMiddleware,
+      rpcCallDispatcher: CoroutineDispatcher? = null,
+      body: suspend CoroutineScope.(FleetService) -> Unit,
+    ) {
       coroutineScope {
         launch {
           val status = MutableStateFlow(false)
-          val (serviceJob, _) = connectionLoop("RpcExecutor for service provider ${providerId}") {
+          val (_, _) = connectionLoop("RpcExecutor for service provider ${providerId}") {
             transportFactory.connect(transportStats = null) { transport ->
               status.value = true
               try {
@@ -45,8 +39,8 @@ class FleetService private constructor(val serviceId: UID,
               }
             }
           }
-        }.use { serviceJob ->
-          body(FleetService(serviceId = providerId, job = serviceJob))
+        }.use {
+          body(FleetService(serviceId = providerId))
         }
       }
     }
