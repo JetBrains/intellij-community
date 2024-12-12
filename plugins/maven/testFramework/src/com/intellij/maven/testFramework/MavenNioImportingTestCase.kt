@@ -54,15 +54,15 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-@Deprecated("Use 'MavenNioImportingTestCase'")
-abstract class MavenImportingTestCase : MavenTestCase() {
+@Suppress("DuplicatedCode")
+abstract class MavenNioImportingTestCase : MavenNioTestCase() {
+
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null
   private var myNotificationAware: AutoImportProjectNotificationAware? = null
@@ -513,7 +513,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
-    FileUtil.delete(File(repositoryPath, relativePath))
+    FileUtil.delete(repositoryFile.resolve(relativePath))
   }
 
   protected fun setupJdkForModules(vararg moduleNames: String) {
