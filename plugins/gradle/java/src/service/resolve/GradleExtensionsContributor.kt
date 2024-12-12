@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
+import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleExtensionsData
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
+import javax.swing.Icon
 
 class GradleExtensionsContributor : NonCodeMembersContributor() {
 
@@ -96,6 +98,10 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
     class StaticVersionCatalogProperty(place: PsiElement, name: String, val clazz: PsiClass) : GroovyPropertyBase(name, place) {
       override fun getPropertyType(): PsiType {
         return PsiElementFactory.getInstance(project).createType(clazz, PsiSubstitutor.EMPTY)
+      }
+
+      override fun getIcon(flags: Int): Icon? {
+        return GradleIcons.Gradle
       }
     }
 
