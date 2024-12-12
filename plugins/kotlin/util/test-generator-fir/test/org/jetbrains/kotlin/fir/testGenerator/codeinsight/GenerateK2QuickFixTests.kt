@@ -69,6 +69,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/dataClassConstructorVsCopyVisibility", pattern = pattern)
             model("$idea/quickfix/addAnnotationTarget", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addAnnotationUseSiteTarget", pattern = pattern)
+            model("$idea/quickfix/addAnnotationUseSiteTargetForConstructorParameter", pattern = pattern)
             model("$idea/quickfix/addConstructorParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addConstructorParameterFromSuperTypeCall", pattern = pattern)
             model("$idea/quickfix/addConversionCall", pattern = pattern)

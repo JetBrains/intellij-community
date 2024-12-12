@@ -28,6 +28,21 @@ internal object WrongAnnotationTargetFixFactories {
         }
     }
 
+    val addAnnotationUseSiteTargetForConstructorParameterFixFactory =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AnnotationWillBeAppliedAlsoToPropertyOrField ->
+            val annotationEntry = diagnostic.psi
+            val useSiteTargets = annotationEntry.getApplicableUseSiteTargets()
+            val (constructorParameterTarget, restTargets) = useSiteTargets.partition { target ->
+                target == AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
+            }
+            if (constructorParameterTarget.size != 1) return@ModCommandBased emptyList()
+            diagnostic.useSiteDescription
+            buildList {
+                add(AddAnnotationUseSiteTargetFix(annotationEntry, constructorParameterTarget.single()))
+                addAll(restTargets.map { target -> ChangeConstructorParameterUseSiteTargetFix(annotationEntry, target) })
+            }
+        }
+
     private class ChooseAnnotationUseSiteTargetFix(
         element: KtAnnotationEntry,
         private val useSiteTargets: List<AnnotationUseSiteTarget>,
@@ -62,6 +77,23 @@ internal object WrongAnnotationTargetFixFactories {
             updater: ModPsiUpdater,
         ) {
             element.addUseSiteTarget(listOf(useSiteTarget), null)
+        }
+    }
+
+    private class ChangeConstructorParameterUseSiteTargetFix(
+        annotationEntry: KtAnnotationEntry,
+        private val useSiteTarget: AnnotationUseSiteTarget,
+    ) : PsiUpdateModCommandAction<KtAnnotationEntry>(annotationEntry) {
+        override fun invoke(
+            context: ActionContext,
+            element: KtAnnotationEntry,
+            updater: ModPsiUpdater
+        ) {
+            element.addUseSiteTarget(listOf(useSiteTarget), null)
+        }
+
+        override fun getFamilyName(): @IntentionFamilyName String {
+            return KotlinBundle.message("text.change.use.site.target.0", useSiteTarget.renderName)
         }
     }
 }

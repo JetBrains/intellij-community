@@ -6085,6 +6085,60 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter")
+    public static class AddAnnotationUseSiteTargetForConstructorParameter extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constructorParameterAndFieldChange.kt")
+        public void testConstructorParameterAndFieldChange() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/constructorParameterAndFieldChange.kt");
+        }
+
+        @TestMetadata("constructorParameterAndFieldKeep.kt")
+        public void testConstructorParameterAndFieldKeep() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/constructorParameterAndFieldKeep.kt");
+        }
+
+        @TestMetadata("constructorParameterAndPropertyChange.kt")
+        public void testConstructorParameterAndPropertyChange() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/constructorParameterAndPropertyChange.kt");
+        }
+
+        @TestMetadata("constructorParameterAndPropertyKeep.kt")
+        public void testConstructorParameterAndPropertyKeep() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/constructorParameterAndPropertyKeep.kt");
+        }
+
+        @TestMetadata("inapplicableNoProperty.kt")
+        public void testInapplicableNoProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/inapplicableNoProperty.kt");
+        }
+
+        @TestMetadata("threeTargetsChangeToField.kt")
+        public void testThreeTargetsChangeToField() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/threeTargetsChangeToField.kt");
+        }
+
+        @TestMetadata("threeTargetsChangeToProperty.kt")
+        public void testThreeTargetsChangeToProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/threeTargetsChangeToProperty.kt");
+        }
+
+        @TestMetadata("threeTargetsKeep.kt")
+        public void testThreeTargetsKeep() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/threeTargetsKeep.kt");
+        }
+    }
+
 
 
     @RunWith(JUnit3RunnerWithInners.class)

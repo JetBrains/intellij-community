@@ -433,7 +433,13 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
     testGroup("idea/tests", category = QUICKFIXES) {
         testClass<AbstractK1QuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kts?$"))
+            model(
+                "quickfix",
+                pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kts?$"),
+                excludedDirectories = listOf(
+                    "addAnnotationUseSiteTargetForConstructorParameter",
+                )
+            )
         }
 
         testClass<AbstractQuickFixMultiFileTest> {
