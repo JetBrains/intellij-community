@@ -2424,4 +2424,18 @@ def foo(param: str | int) -> TypeGuard[str]:
   public void testFunctoolsWrapsMultiFile() {
     doMultiFileTest();
   }
+
+  // PY-76059
+  public void testDataclassInstanceProtocol() {
+    doTestByText("""
+                   from dataclasses import dataclass, asdict
+                   
+                   @dataclass
+                   class MyDataClass:
+                       name:str
+                   
+                   asdict(MyDataClass(name="Bob"))
+                   asdict(<warning descr="Expected type 'DataclassInstance', got 'str' instead">"Bob"</warning>)
+                   """);
+  }
 }
