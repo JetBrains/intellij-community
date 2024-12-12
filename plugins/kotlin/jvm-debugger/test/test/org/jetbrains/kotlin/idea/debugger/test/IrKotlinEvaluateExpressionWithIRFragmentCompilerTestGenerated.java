@@ -2758,6 +2758,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/jvmMultiModule/inlineInternal.kt");
             }
 
+            @TestMetadata("inlineInternalWithDefaultParams.kt")
+            public void testInlineInternalWithDefaultParams() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/inlineInternalWithDefaultParams.kt");
+            }
+
             @TestMetadata("internalMembersInInlinedLambda.kt")
             public void testInternalMembersInInlinedLambda() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/internalMembersInInlinedLambda.kt");
