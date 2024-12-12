@@ -1470,6 +1470,32 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                     
                     def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">foo</warning>(x: int) -> TypeIs[float]:
                       ...
+                    
+                    def bar(x: float) -> TypeIs[float]:
+                      ...
+                    
+                    class A:
+                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f1</warning>(self, x: int) -> TypeIs[float]:
+                        ...
+                    
+                      def f2(self, x: float) -> TypeIs[float]:
+                        ...
+                    
+                      @classmethod
+                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f3</warning>(cls, x: int) -> TypeIs[float]:
+                        ...
+                    
+                      @classmethod
+                      def f4(cls, x: float) -> TypeIs[float]:
+                        ...
+
+                      @staticmethod
+                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f5</warning>(x: int) -> TypeIs[float]:
+                        ...
+                    
+                      @staticmethod
+                      def f6(x: float) -> TypeIs[float]:
+                        ...
                     """);
   }
 
@@ -1509,6 +1535,53 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                     
                     def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">foo</warning>() -> TypeIs[float]:
                       ...
+                    
+                    class A:
+                      def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">foo</warning>(self) -> TypeIs[float]:
+                        ...
+                    
+                      @classmethod
+                      def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">bar</warning>(cls) -> TypeIs[float]:
+                        ...
+                    
+                      @staticmethod
+                      def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">buz</warning>() -> TypeIs[float]:
+                        ...
+                    """);
+  }
+
+  public void testTypeGuardMissedParameter() {
+    doTestByText("""
+                    from typing import TypeGuard
+                    
+                    def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f1</warning>() -> TypeGuard[str]:
+                        ...
+                    
+                    def f2(x: bool) -> TypeGuard[str]:
+                        ...
+                    
+                    class A:
+                        def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f1</warning>(self) -> TypeGuard[str]:
+                            ...
+                    
+                        def f2(self, x: int) -> TypeGuard[str]:
+                            ...
+                    
+                        @classmethod
+                        def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f3</warning>(cls) -> TypeGuard[str]:
+                            ...
+                    
+                        @classmethod
+                        def f4(cls, x: float) -> TypeGuard[str]:
+                            ...
+                    
+                        @staticmethod
+                        def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f5</warning>() -> TypeGuard[str]:
+                            ...
+                    
+                        @staticmethod
+                        def f6(x: bool) -> TypeGuard[str]:
+                            ...
                     """);
   }
 
