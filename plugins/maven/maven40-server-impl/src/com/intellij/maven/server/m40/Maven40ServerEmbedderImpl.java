@@ -87,8 +87,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private final Maven40ServerConsoleLogger myConsoleWrapper;
 
-  private final Map<String, String> mySystemProperties;
-
   private final boolean myAlwaysUpdateSnapshots;
 
   @NotNull private final MavenRepositorySystem myRepositorySystem;
@@ -326,7 +324,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
 
-    mySystemProperties = invokerRequest.systemProperties();
+    Map<String, String> mySystemProperties = invokerRequest.systemProperties();
     if (serverSettings.getProjectJdk() != null) {
       mySystemProperties.put("java.home", serverSettings.getProjectJdk());
     }
@@ -580,49 +578,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       warn(e.getMessage(), e);
       throw new RuntimeException(e);
     }
-
-/*    try {
-      injectDefaultRepositories(result);
-      injectDefaultPluginRepositories(result);
-
-      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
-
-      String multiModuleProjectDirectory = myEmbedderSettings.getMultiModuleProjectDirectory();
-      if (null != multiModuleProjectDirectory) {
-        Path baseDir = FileSystems.getDefault().getPath(multiModuleProjectDirectory);
-        result.setRootDirectory(baseDir);
-      }
-      result.setPom(file);
-
-      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
-
-      result.setSystemProperties(toProperties(mySystemProperties));
-      Properties userProperties = new Properties();
-      if (file != null) {
-        userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
-      }
-      userProperties.putAll(customProperties);
-      result.setUserProperties(userProperties);
-
-      result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));
-      if (inactiveProfiles != null) {
-        result.setInactiveProfiles(inactiveProfiles);
-      }
-      result.setCacheNotFound(true);
-      result.setCacheTransferError(true);
-
-      result.setStartTime(new Date());
-
-      File mavenMultiModuleProjectDirectory = getMultimoduleProjectDir(file);
-      result.setBaseDirectory(mavenMultiModuleProjectDirectory);
-
-      result.setMultiModuleProjectDirectory(mavenMultiModuleProjectDirectory);
-
-      return result;
-    }
-    catch (MavenExecutionRequestPopulationException e) {
-      throw new RuntimeException(e);
-    }*/
   }
 
   private static void activateProfiles(@Nullable List<String> activeProfiles,
