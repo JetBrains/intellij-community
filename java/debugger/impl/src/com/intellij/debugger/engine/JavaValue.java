@@ -461,37 +461,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computeSourcePosition(@NotNull final XNavigatable navigatable) {
-    computeSourcePosition(navigatable, false);
-  }
-
-  private void computeSourcePosition(@NotNull final XNavigatable navigatable, final boolean inline) {
-    myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
-      @Override
-      public Priority getPriority() {
-        return inline ? Priority.LOWEST : Priority.NORMAL;
-      }
-
-      @Override
-      protected void commandCancelled() {
-        navigatable.setSourcePosition(null);
-      }
-
-      @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        ReadAction.nonBlocking(() -> {
-          SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), false);
-          if (position != null) {
-            navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
-          }
-          if (inline) {
-            position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), true);
-            if (position != null) {
-              navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position));
-            }
-          }
-        }).executeSynchronously();
-      }
-    });
+    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, navigatable, false);
   }
 
   @NotNull
@@ -501,7 +471,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     if (myValueDescriptor instanceof FieldDescriptor && myParent != null && !(myParent.myValueDescriptor instanceof ThisDescriptorImpl)) {
       return ThreeState.NO;
     }
-    computeSourcePosition(callback::computed, true);
+    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, callback::computed, true);
     return ThreeState.YES;
   }
 
