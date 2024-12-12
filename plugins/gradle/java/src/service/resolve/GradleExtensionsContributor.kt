@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
-//import org.jetbrains.plugins.gradle.service.resolve.static.getStaticallyHandledExtensions
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -102,9 +100,13 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
     }
 
     fun processPropertiesFromCatalog(name: String?, place: PsiElement, processor: PsiScopeProcessor, state: ResolveState) : Set<String>? {
-      if (!isNameOfVersionCatalog(name, place)) return emptySet()
-      val accessor = getVersionCatalogAccessor(place, name!!) ?: return emptySet()
-      if (!processor.execute(StaticVersionCatalogProperty(place, name, accessor), state)) {
+      if (name == null) {
+        // this case is possible when only a part of a catalog name is written and autocomplete is triggered
+        return processAllCatalogsOfBuild(place, processor, state)
+      }
+      val accessor = getVersionCatalogAccessor(place, name) ?: return emptySet()
+      val element = StaticVersionCatalogProperty(place, name, accessor)
+      if (!processor.execute(element, state)) {
         return null // to stop processing
       }
       return setOf(name)
@@ -119,10 +121,14 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
 
     internal const val PROPERTIES_FILE_ORIGINAL_INFO : String = "by gradle.properties"
 
-    private fun isNameOfVersionCatalog(catalogName: String?, place: PsiElement): Boolean {
-      catalogName ?: return false
-      val module = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
-      return getVersionCatalogFiles(module).contains(catalogName)
+    private fun processAllCatalogsOfBuild(place: PsiElement, processor: PsiScopeProcessor, state: ResolveState): Set<String>? {
+      val catalogNameToAccessor: Map<String, PsiClass> = getAccessorsForAllCatalogs(place)
+      catalogNameToAccessor.forEach { (catalogName, accessor) ->
+        if (!processor.execute(StaticVersionCatalogProperty(place, catalogName, accessor), state)) {
+          return null // to stop processing
+        }
+      }
+      return catalogNameToAccessor.keys
     }
   }
 }
