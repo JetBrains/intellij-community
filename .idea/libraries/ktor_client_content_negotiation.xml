@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ktor-client-content-negotiation" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-content-negotiation-jvm:2.3.12">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-content-negotiation-jvm:2.3.13">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/2.3.12/ktor-client-content-negotiation-jvm-2.3.12.jar">
-          <sha256sum>b65290ac100096363d01ea71027d970cec6a48d076b6e4b36de1cae2c183cd72</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/2.3.13/ktor-client-content-negotiation-jvm-2.3.13.jar">
+          <sha256sum>d2930b79843a4da5ea40074f8e905dbd4c5c571bfa004d301d50db241de3a09e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/2.3.12/ktor-client-content-negotiation-jvm-2.3.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/2.3.13/ktor-client-content-negotiation-jvm-2.3.13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/2.3.12/ktor-client-content-negotiation-jvm-2.3.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/2.3.13/ktor-client-content-negotiation-jvm-2.3.13-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

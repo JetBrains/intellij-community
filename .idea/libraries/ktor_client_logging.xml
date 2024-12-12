@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ktor-client-logging" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-logging-jvm:2.3.12">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-logging-jvm:2.3.13">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2.3.12/ktor-client-logging-jvm-2.3.12.jar">
-          <sha256sum>29023713116db9c910618edbd3ca0e7a0f07ed18a678523b892fd164d1c9dacf</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2.3.13/ktor-client-logging-jvm-2.3.13.jar">
+          <sha256sum>0592b54ddec3b0071c4db05bd0e5a9377d50d7625799a3aed8cfff1ef39999f4</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2.3.12/ktor-client-logging-jvm-2.3.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2.3.13/ktor-client-logging-jvm-2.3.13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2.3.12/ktor-client-logging-jvm-2.3.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2.3.13/ktor-client-logging-jvm-2.3.13-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

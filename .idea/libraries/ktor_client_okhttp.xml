@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ktor-client-okhttp" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-okhttp-jvm:2.3.12">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-okhttp-jvm:2.3.13">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-okhttp-jvm/2.3.12/ktor-client-okhttp-jvm-2.3.12.jar">
-          <sha256sum>31f4d9cfb02da8d874f050c9841b2cb31e535f9b13a9797af4799d5b0356d10a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-okhttp-jvm/2.3.13/ktor-client-okhttp-jvm-2.3.13.jar">
+          <sha256sum>b040ca8f5a636183be0e63955edec3a8db1d6dd09b731f4c17b4d40296b61cd7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-okhttp-jvm/2.3.12/ktor-client-okhttp-jvm-2.3.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-okhttp-jvm/2.3.13/ktor-client-okhttp-jvm-2.3.13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-okhttp-jvm/2.3.12/ktor-client-okhttp-jvm-2.3.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-okhttp-jvm/2.3.13/ktor-client-okhttp-jvm-2.3.13-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
