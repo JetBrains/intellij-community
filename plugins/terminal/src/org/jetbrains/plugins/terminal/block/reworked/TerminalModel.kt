@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
-import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jediterm.terminal.emulator.mouse.MouseFormat
@@ -36,8 +35,11 @@ internal class TerminalModel(
   @VisibleForTesting
   val highlightingsModel = HighlightingsModel()
 
-  private var trimmedCharsCount: Int = 0
+  @Volatile
   private var trimmedLinesCount: Int = 0
+  private var trimmedCharsCount: Int = 0
+
+  private var contentUpdateInProgress: Boolean = false
 
   private val mutableCaretOffsetState = MutableStateFlow(0)
   val caretOffsetState: StateFlow<Int> = mutableCaretOffsetState.asStateFlow()
@@ -46,7 +48,15 @@ internal class TerminalModel(
   val terminalState: StateFlow<TerminalState> = mutableTerminalStateFlow.asStateFlow()
 
   init {
-    editor.highlighter = TerminalTextHighlighter { highlightingsModel.getHighlightingsSnapshot() }
+    editor.highlighter = TerminalTextHighlighter {
+      // Highlightings are requested by the listeners of document change events during editor content updating.
+      // But highlightings may be not in sync with the document content, so it may cause exceptions.
+      // Also, there is no sense to provide a real highlighting until the update is finished, so return an empty snapshot in this case.
+      if (contentUpdateInProgress) {
+        TerminalOutputHighlightingsSnapshot(document, emptyList())
+      }
+      else highlightingsModel.getHighlightingsSnapshot()
+    }
   }
 
   @RequiresEdt
@@ -54,15 +64,18 @@ internal class TerminalModel(
   fun updateEditorContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
     CommandProcessor.getInstance().runUndoTransparentAction {
       editor.doWithScrollingAware {
-        DocumentUtil.executeInBulk(document) {
+        contentUpdateInProgress = true
+        try {
           val editorLineIndex = absoluteLineIndex - trimmedLinesCount
           doUpdateEditorContent(editorLineIndex, text, styles)
+        }
+        finally {
+          contentUpdateInProgress = false
         }
       }
     }
   }
 
-  @RequiresEdt
   fun updateCaretPosition(absoluteLineIndex: Int, columnIndex: Int) {
     val editorLineIndex = absoluteLineIndex - trimmedLinesCount
     val newOffset = editor.logicalPositionToOffset(LogicalPosition(editorLineIndex, columnIndex))
