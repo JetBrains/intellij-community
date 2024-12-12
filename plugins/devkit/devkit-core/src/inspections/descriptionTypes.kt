@@ -6,10 +6,15 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.patterns.PsiJavaPatterns.psiClass
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.xml.XmlAttribute
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.xml.DomUtil
@@ -86,6 +91,30 @@ internal enum class DescriptionType(
 }
 
 /**
+ * Additional user data provided by [DescriptionTypeResolver] implementations.
+ */
+internal object DescriptionTypeResolverKeys {
+
+  /**
+   * Overridden `getShortName()` method in inspection.
+   */
+  @JvmField
+  internal val INSPECTION_SHORT_NAME_METHOD = Key.create<PsiMethod?>("INSPECTION_SHORT_NAME_METHOD")
+
+  /**
+   * Short name provided via `plugin.xml`.
+   */
+  @JvmField
+  internal val INSPECTION_SHORT_NAME_IN_XML = Key.create<Boolean>("INSPECTION_SHORT_NAME_IN_XML")
+
+  /**
+   * [XmlAttribute] of 'shortName' attribute ([INSPECTION_SHORT_NAME_IN_XML]=true)
+   */
+  @JvmField
+  internal val INSPECTION_SHORT_NAME_XML_ATTRIBUTE = Key.create<XmlAttribute>("INSPECTION_SHORT_NAME_XML_ATTRIBUTE")
+}
+
+/**
  * Resolves *description* and *before|after* template files associated with the given class and description type.
  *
  * @param epFqn FQN of associated extension point if available
@@ -95,7 +124,7 @@ internal sealed class DescriptionTypeResolver(
   protected val descriptionType: DescriptionType,
   protected val module: Module, protected val psiClass: PsiClass,
   @NonNls private val epFqn: String? = null,
-) {
+) : UserDataHolder by UserDataHolderBase() {
 
   /**
    * @return whether to skip functionality if the given class is not registered in any `plugin.xml`
@@ -238,6 +267,14 @@ private class PostfixTemplateDescriptionTypeResolver(module: Module, psiClass: P
 
 private class InspectionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INSPECTION, module, psiClass) {
 
+  private val inspectionDescriptionInfo: InspectionDescriptionInfo = InspectionDescriptionInfo.create(module, psiClass)
+
+  init {
+    putUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_METHOD, inspectionDescriptionInfo.shortNameMethod)
+    putUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_IN_XML, inspectionDescriptionInfo.isShortNameInXml)
+    putUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_XML_ATTRIBUTE, inspectionDescriptionInfo.shortNameXmlAttribute)
+  }
+
   @NonNls
   private val INSPECTION_PROFILE_ENTRY: String = InspectionProfileEntry::class.java.getName()
 
@@ -246,11 +283,11 @@ private class InspectionDescriptionTypeResolver(module: Module, psiClass: PsiCla
   }
 
   override fun resolveDescriptionFile(): PsiFile? {
-    return InspectionDescriptionInfo.create(module, psiClass).descriptionFile
+    return inspectionDescriptionInfo.descriptionFile
   }
 
   override fun getDescriptionDirName(): String? {
-    return InspectionDescriptionInfo.create(module, psiClass).filename
+    return inspectionDescriptionInfo.filename
   }
 
   private fun isAnyPathMethodOverridden(psiClass: PsiClass): Boolean {

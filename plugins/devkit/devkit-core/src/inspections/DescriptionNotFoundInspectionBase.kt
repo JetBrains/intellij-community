@@ -2,13 +2,14 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil.isExtensionPointImplementationCandidate
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix
 
+@ApiStatus.OverrideOnly
 internal abstract class DescriptionNotFoundInspectionBase(private val descriptionType: DescriptionType) :
   DevKitJvmInspection.ForClass() {
 
@@ -22,7 +23,7 @@ internal abstract class DescriptionNotFoundInspectionBase(private val descriptio
     if (descriptionTypeResolver.skipIfNotRegisteredInPluginXml()) return
 
     if (descriptionTypeResolver.resolveDescriptionFile() == null) {
-      sink.highlight(getHasNotDescriptionError(module, psiClass),
+      sink.highlight(getHasNotDescriptionError(descriptionTypeResolver),
                      CreateHtmlDescriptionFix(descriptionTypeResolver.getDescriptionDirName(), module, descriptionType))
       return
     }
@@ -35,7 +36,7 @@ internal abstract class DescriptionNotFoundInspectionBase(private val descriptio
     }
   }
 
-  protected abstract fun getHasNotDescriptionError(module: Module, psiClass: PsiClass): @InspectionMessage String
+  protected abstract fun getHasNotDescriptionError(descriptionTypeResolver: DescriptionTypeResolver): @InspectionMessage String
 
   protected abstract fun getHasNotBeforeAfterError(): @InspectionMessage String
 }
