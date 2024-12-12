@@ -24,8 +24,8 @@ class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<KtReturnExp
 
     override fun getApplicableRanges(returnExpression: KtReturnExpression): List<TextRange> {
         val whenExpr = returnExpression.returnedExpression as? KtWhenExpression ?: return listOf()
-        if (!KtPsiUtil.checkWhenExpressionHasSingleElse(whenExpr)) return return listOf()
-        if (whenExpr.entries.any { it.expression == null }) return return listOf()
+        if (!KtPsiUtil.checkWhenExpressionHasSingleElse(whenExpr)) return listOf()
+        if (whenExpr.entries.any { it.expression == null }) return listOf()
 
         val returnKeywordRange = returnExpression.returnKeyword.textRangeIn(returnExpression)
         val whenKeywordRange = whenExpr.whenKeyword.textRangeIn(returnExpression)
