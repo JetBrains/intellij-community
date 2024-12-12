@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -188,8 +187,7 @@ public final class InspectionDescriptionInfo {
                                                                GlobalSearchScope.EMPTY_ARRAY,
                                                                Module::getModuleContentWithDependenciesScope);
           return scopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(scopes);
-        },
-        () -> GlobalSearchScopesCore.projectProductionScope(module.getProject())
+        }
       ).takeWhile(supplier -> !module.isDisposed())
       .map(Supplier::get)
       .pairMap((prev, next) -> next.intersectWith(GlobalSearchScope.notScope(prev)));
@@ -198,7 +196,7 @@ public final class InspectionDescriptionInfo {
   /**
    * Unlike {@link DescriptionType#getDescriptionFolderDirs(Module)} this includes dirs in dependent modules and even project dirs,
    * ordered by search scopes (first dirs in the current module, then dirs in module dependencies, then dirs in
-   * dependent modules, finally other project dirs).
+   * dependent modules).
    *
    * @param module module to search description directories for
    * @return lazily populated stream of candidate directories
