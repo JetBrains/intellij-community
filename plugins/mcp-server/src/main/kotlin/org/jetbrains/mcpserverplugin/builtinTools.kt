@@ -1,5 +1,8 @@
 package org.jetbrains.mcpserverplugin
 
+import com.intellij.execution.ProgramRunnerUtil.executeConfiguration
+import com.intellij.execution.RunManager
+import com.intellij.execution.executors.DefaultRunExecutor.getRunExecutorInstance
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.openapi.application.runInEdt
@@ -425,5 +428,51 @@ class SearchInFilesContentTool : AbstractMcpTool<SearchInFilesArgs>() {
 
         val jsonResult = results.joinToString(",\n", prefix = "[", postfix = "]")
         return Response(jsonResult)
+    }
+}
+
+class GetRunConfigurationsTool : AbstractMcpTool<NoArgs>() {
+    override val name: String
+        get() = "get_run_configurations"
+    override val description: String
+        get() = "Returns a list of run configurations for the current project. " +
+                "Use this tool to query the list of available run configurations in current project." +
+                "Then you shall to call \"run_configuration\" tool if you find anything relevant." +
+                "Returns JSON list of run configuration names. Empty list if no run configurations found."
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val runManager = RunManager.getInstance(project)
+
+        val configurations = runManager.allSettings.map { it.name }.joinToString(
+            prefix = "[",
+            postfix = "]",
+            separator = ","
+        ) { "\"$it\"" }
+
+        return Response(configurations)
+    }
+}
+
+@Serializable
+data class RunConfigArgs(val configName: String)
+
+class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>() {
+    override val name: String = "run_configuration"
+    override val description: String = "Run a specific run configuration in the current project. " +
+            "Use this tool to run a run configuration that you have found from \"get_run_configurations\" tool." +
+            "Returns one of two possible responses: " +
+            " - \"ok\" if the run configuration was successfully executed " +
+            " - \"error <error message>\" if the run configuration was not found or failed to execute"
+
+    override fun handle(project: Project, args: RunConfigArgs): Response {
+        val runManager = RunManager.getInstance(project)
+        val settings = runManager.allSettings.find { it.name == args.configName }
+        val executor = getRunExecutorInstance()
+        if (settings != null) {
+            executeConfiguration(settings, executor)
+        } else {
+            println("Run configuration with name '${args.configName}' not found.")
+        }
+        return Response("ok")
     }
 }

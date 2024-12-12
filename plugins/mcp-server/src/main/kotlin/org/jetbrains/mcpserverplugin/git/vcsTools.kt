@@ -18,9 +18,6 @@ import kotlin.io.path.Path
 data class CommitQuery(val text: String)
 
 class FindCommitByTextTool : AbstractMcpTool<CommitQuery>() {
-    init {
-        println()
-    }
     override val name: String = "find_commit_by_message"
     override val description: String = """
         Searches for a commit based on the provided text or keywords in the project history.

@@ -1,6 +1,7 @@
 package org.jetbrains.mcpserverplugin
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.mcpserverplugin.git.GetVcsStatusTool
 
 class McpToolManager {
     companion object {
@@ -30,6 +31,8 @@ class McpToolManager {
             ReplaceTextByPathTool(),
             ListFilesInFolderTool(),
             SearchInFilesContentTool(),
+            RunConfigurationTool(),
+            GetRunConfigurationsTool()
         )
     }
 }
