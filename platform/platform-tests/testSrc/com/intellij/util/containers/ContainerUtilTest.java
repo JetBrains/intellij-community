@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 public class ContainerUtilTest extends TestCase {
@@ -91,6 +92,67 @@ public class ContainerUtilTest extends TestCase {
       fail();
     }
     catch (ConcurrentModificationException ignore) {
+    }
+  }
+
+  private static Future<?> modifyListUntilStopped(List<Integer> list, AtomicBoolean stopped) {
+
+    return AppExecutorUtil.getAppExecutorService().submit(()-> {
+
+       // simple random generator (may overflow)
+       for (int seed = 13; !stopped.get(); seed += 907) {
+         // random [0-31] (sign clipped)
+         int rand = (seed^(seed>>5)) & 0x1f;
+
+         // grow or shrink the list randomly.
+         if (rand < list.size()) {
+           list.remove(rand);
+         }
+         else {
+           list.add(seed);
+         }
+       }
+     });
+  }
+
+  private static List<Integer> createFilledList(int size) {
+    List<Integer> list = ContainerUtil.createLockFreeCopyOnWriteList();
+
+    for(int i=0; i<size; ++i) {
+       list.add(i);
+    }
+
+    return list;
+  }
+
+  public void testConcatenatedDynamicListsAreIterable() throws Exception {
+    List<Integer> list1 = createFilledList(32);
+    List<Integer> list2 = createFilledList(32);
+    List<Integer> values = ContainerUtil.concat(list1, list2);
+
+    AtomicBoolean stop = new AtomicBoolean(false);
+    Future<?> future1 = modifyListUntilStopped(list1, stop);
+    Future<?> future2 = modifyListUntilStopped(list2, stop);
+
+    try {
+      long count = 0;
+      int n=0;
+      long until = System.currentTimeMillis() + 1000;
+      while (System.currentTimeMillis() < until) {
+
+        for (Integer value : values) {
+           count += value;
+        }
+
+        // must work on streams (even parallel), too.
+        count += values.parallelStream().count();
+        ++n;
+      }
+      stop.set(true);
+    } finally {
+      stop.set(true); // finally stop even in case of an error
+      future1.get();
+      future2.get();
     }
   }
 
