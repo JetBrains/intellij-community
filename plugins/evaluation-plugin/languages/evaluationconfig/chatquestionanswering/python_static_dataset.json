@@ -5,7 +5,8 @@
   "revision": "0f689585cb580a9e9f039048fcfdc1c79de673a4",
   "outputDir": "bin/ml-eval-chat-question-answering-python-output",
   "strategy": {
-    "collectContextOnly": false
+    "collectContextOnly": false,
+    "enableRAG": true
   },
   "actions": {
     "evaluationRoots": [
