@@ -77,6 +77,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
             model("${idea}/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
             model("${idea}/inspectionsLocal/unusedReceiverParameter")
+            model("${idea}/inspectionsLocal/selfReferenceConstructorParameter")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
