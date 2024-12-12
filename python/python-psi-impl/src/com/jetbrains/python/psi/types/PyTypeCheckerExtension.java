@@ -39,9 +39,10 @@ public interface PyTypeCheckerExtension {
    */
   @Deprecated(forRemoval = true)
   @NotNull
-  Optional<Boolean> match(@Nullable PyType expected,
-                          @Nullable PyType actual,
-                          @NotNull TypeEvalContext context,
-                          @NotNull Map<PyGenericType, PyType> substitutions);
-  
+  default Optional<Boolean> match(@Nullable PyType expected,
+                                  @Nullable PyType actual,
+                                  @NotNull TypeEvalContext context,
+                                  @NotNull Map<PyGenericType, PyType> substitutions) {
+    throw new UnsupportedOperationException();
+  }
 }
