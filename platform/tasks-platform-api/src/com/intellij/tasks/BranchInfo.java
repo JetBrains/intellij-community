@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -37,6 +38,7 @@ public class BranchInfo {
   @Attribute("original")
   public boolean original;
 
+  @Unmodifiable
   public static List<BranchInfo> fromTaskInfo(final VcsTaskHandler.TaskInfo taskInfo, final boolean original) {
     return ContainerUtil.map(taskInfo.getRepositories(), s -> {
       BranchInfo info = new BranchInfo();

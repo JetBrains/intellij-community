@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -28,6 +29,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
     return EP_NAME.getExtensionList();
   }
 
+  @Unmodifiable
   public static @NotNull List<Class<?>> getRepositoryClasses() {
     return ContainerUtil.map(getRepositoryTypes(), TaskRepositoryType::getRepositoryClass);
   }

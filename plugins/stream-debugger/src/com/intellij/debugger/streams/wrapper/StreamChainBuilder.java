@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.wrapper;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -20,5 +21,6 @@ public interface StreamChainBuilder {
   boolean isChainExists(@NotNull PsiElement startElement);
 
   @NotNull
+  @Unmodifiable
   List<StreamChain> build(@NotNull PsiElement startElement);
 }

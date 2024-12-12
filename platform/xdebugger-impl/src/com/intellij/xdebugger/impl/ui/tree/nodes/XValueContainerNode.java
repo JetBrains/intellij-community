@@ -280,6 +280,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends TreeNode> getChildren() {
     loadChildren();
 

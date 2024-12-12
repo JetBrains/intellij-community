@@ -55,6 +55,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -128,6 +129,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   @NotNull
+  @Unmodifiable
   private Collection<Language> getSupportedLanguages() {
     XDebuggerEditorsProvider editorsProvider = getEditorsProvider();
     if (myContext != null && editorsProvider instanceof XDebuggerEditorsProviderBase) {

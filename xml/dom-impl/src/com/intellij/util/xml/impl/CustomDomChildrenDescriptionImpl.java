@@ -9,6 +9,7 @@ import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomExtensionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -65,6 +66,7 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   }
 
   @Override
+  @Unmodifiable
   public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     return DomImplUtil.getCustomSubTags(handler, subTags, file);
   }

@@ -7,6 +7,7 @@ import com.intellij.vcs.log.graph.parser.CommitParser;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +46,7 @@ public final class TimedCommitParser {
     return HashImpl.build(Integer.toHexString(index));
   }
 
+  @Unmodifiable
   public static @NotNull List<TimedVcsCommit> log(@NotNull List<String> commits) {
     return ContainerUtil.map(commits, TimedCommitParser::parseTimestampParentHashes);
   }

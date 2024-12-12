@@ -461,6 +461,7 @@ public final class DvcsUtil {
     return rootCandidate;
   }
 
+  @Unmodifiable
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<? extends T> repositories) {
     List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
     return ContainerUtil.sorted(validRepositories, REPOSITORY_COMPARATOR);

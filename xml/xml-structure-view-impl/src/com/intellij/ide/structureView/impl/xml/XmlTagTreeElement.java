@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -35,6 +36,7 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
 
  @Override
  @NotNull
+ @Unmodifiable
  public Collection<StructureViewTreeElement> getChildrenBase() {
     return getStructureViewTreeElements(getElement().getSubTags());
   }

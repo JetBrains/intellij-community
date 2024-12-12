@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
@@ -19,6 +20,7 @@ public abstract class YAMLMappingImpl extends YAMLCompoundValueImpl implements Y
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<YAMLKeyValue> getKeyValues() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, YAMLKeyValue.class);
   }

@@ -1152,6 +1152,7 @@ public final class TreeUtil {
    * @param mapper a function to convert a selected tree path to a corresponding object
    * @return a list of objects which correspond to all selected paths
    */
+  @Unmodifiable
   public static @NotNull <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper) {
     return getSelection(tree, path -> isViewable(tree, path), mapper);
   }

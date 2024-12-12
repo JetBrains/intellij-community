@@ -105,6 +105,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
     return ContainerUtil.concat(myChildren, children);

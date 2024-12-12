@@ -34,6 +34,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return "CollectionChildDescription:" + getXmlName();
   }
 
+  @Unmodifiable
   List<XmlTag> getCollectionSubTags(DomInvocationHandler handler, @NotNull XmlTag tag, boolean processIncludes) {
     return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile(), processIncludes);
   }
@@ -115,6 +116,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
+  @Unmodifiable
   public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     return DomImplUtil.findSubTags(subTags, handler.createEvaluatedXmlName(getXmlName()), file);
   }

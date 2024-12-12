@@ -44,6 +44,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<StreamChain> build(@NotNull PsiElement startElement) {
     final MyChainCollectorVisitor visitor = new MyChainCollectorVisitor();
 
