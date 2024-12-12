@@ -117,9 +117,14 @@ public final class ClasspathBootstrap {
 
     final String pathString = path.toString();
 
-    if (result.add(pathString) && pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
-      if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
-        LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+    if (result.add(pathString)) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(pathString + " added to classpath to include " + aClass.getName());
+      }
+      if (pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
+        if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
+          LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+        }
       }
     }
   }
