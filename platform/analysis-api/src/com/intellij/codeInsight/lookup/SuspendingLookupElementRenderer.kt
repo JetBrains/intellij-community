@@ -7,6 +7,11 @@ abstract class SuspendingLookupElementRenderer<T : LookupElement> : LookupElemen
   /**
    * Render LookupElement in a coroutine. There is no guarantee that the element is valid.
    * The method will usually be called without a read lock.
+   *
+   * Avoid changing the dispatcher on which the coroutine runs, as this may cause
+   * spawning of hundreds of worker threads on unlimited dispatchers.
+   * E.g. `withContext`, `readAction`, `runBlocking`, `runBlockingCancellable` may move
+   * the coroutine to a different dispatcher.
    */
   abstract suspend fun renderElementSuspending(element: T, presentation: LookupElementPresentation)
 
