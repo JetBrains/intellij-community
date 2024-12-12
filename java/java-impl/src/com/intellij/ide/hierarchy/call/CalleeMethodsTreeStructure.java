@@ -35,24 +35,22 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     }
 
     List<PsiMethod> methods = new ArrayList<>();
-
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       collectCallees(body, methods);
     }
 
-    PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
-    PsiClass baseClass = baseMethod.getContainingClass();
+    PsiElement targetElement = ((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
+    PsiClass baseClass = (targetElement instanceof PsiMethod baseMethod) ? baseMethod.getContainingClass() : null;
 
-    Map<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
-
+    Map<PsiMethod, CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
     List<CallHierarchyNodeDescriptor> result = new ArrayList<>();
 
-    // also add overriding methods as children
-    Iterable<PsiMethod> methodsToAdd = ContainerUtil.concat(methods, OverridingMethodsSearch.search(method));
-    for (PsiMethod callee : methodsToAdd) {
-      if (!isInScope(baseClass, callee, myScopeType)
-        || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
+    // also add overriding methods as children when possible
+    Iterable<PsiMethod> allMethods = (baseClass == null) ? methods : ContainerUtil.concat(methods, OverridingMethodsSearch.search(method));
+    for (PsiMethod callee : allMethods) {
+      if (baseClass != null && !isInScope(baseClass, callee, myScopeType)
+          || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
         continue;
       }
 

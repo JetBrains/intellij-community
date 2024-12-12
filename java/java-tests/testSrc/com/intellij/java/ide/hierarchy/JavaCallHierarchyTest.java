@@ -109,6 +109,13 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     }, JavaHierarchyUtil.getComparator(myProject), "Action.java");
   }
 
+  public void testRecordCanonicalConstructorReverse2() throws Exception {
+    doHierarchyTest(() -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("Value", ProjectScope.getProjectScope(getProject()));
+      return new CalleeMethodsTreeStructure(getProject(), aClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(myProject), "Value.java");
+  }
+
   public void testMethodRef() throws Exception {
     doJavaCalleeTypeHierarchyTest("A", "testMethod", "A.java");
   }
