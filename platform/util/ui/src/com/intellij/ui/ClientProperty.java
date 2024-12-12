@@ -3,17 +3,16 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ContainerAdapter;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public final class ClientProperty {
   private ClientProperty() { }
