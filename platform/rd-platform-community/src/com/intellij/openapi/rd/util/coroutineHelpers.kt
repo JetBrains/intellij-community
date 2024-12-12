@@ -1,6 +1,5 @@
 package com.intellij.openapi.rd.util
 
-import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.assertClientIdConsistency
 import com.intellij.codeWithMe.currentThreadClientId
 import com.jetbrains.rd.framework.IRdDynamic
@@ -15,10 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-// TODO: remove when the same is merged in rd
 /**
- * Consider using [setSuspendPreserveClientId] to propagate [ClientId] into [handler]
- *
  * Sets suspend handler for the [IRdEndpoint].
  *
  * When a protocol call is occurred it starts a new coroutine passing [coroutineContext] and [coroutineStart] to it.
@@ -43,7 +39,7 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
 }
 
 /**
- * The same as [setSuspend] but add [ClientId] into [coroutineContext] to restore it in [handler]
+ * Shortcut for [setSuspend]
  */
 @ApiStatus.Internal
 @Deprecated("Use `setSuspend` instead`", ReplaceWith("setSuspend(coroutineContext, coroutineStart, handler)"))
@@ -55,10 +51,7 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
   setSuspend(coroutineContext, coroutineStart, handler)
 }
 
-// TODO: remove when the same is merged in rd
 /**
- * Consider using [adviseSuspendPreserveClientId] to propagate [ClientId] into [handler]
- *
  * Sets suspend handler for the [ISource].
  *
  * When a protocol call is occurred it starts a new coroutine passing [coroutineContext] and [coroutineStart] to it.
@@ -87,7 +80,7 @@ fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineC
 }
 
 /**
- * The same as [adviseSuspend] but adds ClientId into [coroutineContext] to restore it in [handler]
+ * Shortcut for [adviseSuspend]
  */
 @ApiStatus.Internal
 @Deprecated("Use `adviseSuspend` instead", ReplaceWith("adviseSuspend(lifetime, coroutineContext, coroutineStart, handler)"))
