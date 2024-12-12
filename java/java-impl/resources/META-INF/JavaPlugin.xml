@@ -665,7 +665,7 @@
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
     <java.programPatcher implementation="com.intellij.execution.ClasspathModificationPatcher" order="last"/>
 
-    <runConfigurationExtension implementation="com.intellij.execution.JavaVersionChecker"/>
+    <postStartupActivity implementation="com.intellij.openapi.projectRoots.JavaVersionChecker"/>
 
     <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
 
