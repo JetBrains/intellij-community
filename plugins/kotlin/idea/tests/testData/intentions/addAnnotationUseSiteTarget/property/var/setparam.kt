@@ -1,4 +1,6 @@
 // CHOSEN_OPTION: SETTER_PARAMETER
+// IGNORE_K2
+// Issue: KTIJ-32504
 
 annotation class A
 

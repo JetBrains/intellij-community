@@ -1,4 +1,6 @@
 // CHOSEN_OPTION: PROPERTY_SETTER
+// IGNORE_K2
+// Issue: KTIJ-32504
 
 annotation class A
 
