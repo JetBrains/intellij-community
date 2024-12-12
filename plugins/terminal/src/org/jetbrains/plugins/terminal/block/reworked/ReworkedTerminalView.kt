@@ -17,6 +17,7 @@ import kotlinx.coroutines.job
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
@@ -26,6 +27,8 @@ import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Dimension
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -85,6 +88,14 @@ internal class ReworkedTerminalView(
     encodingManager = TerminalKeyEncodingManager(model, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
     TerminalCaretPainter(model, coroutineScope.childScope("TerminalCaretPainter"))
+
+    component.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        val inputChannel = terminalSessionFuture.getNow(null)?.inputChannel ?: return
+        val newSize = getTerminalSize() ?: return
+        inputChannel.trySend(TerminalResizeEvent(newSize))
+      }
+    })
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
