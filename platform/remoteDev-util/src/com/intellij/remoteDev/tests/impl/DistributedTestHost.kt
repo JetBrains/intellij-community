@@ -13,7 +13,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
@@ -511,15 +510,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 }
 
 @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-private fun showNotification(text: String?): Notification? {
+private fun showNotification(text: String?) {
   if (ApplicationManager.getApplication().isHeadlessEnvironment || text.isNullOrBlank()) {
-    return null
+    return
   }
 
-  val notification = Notification("TestFramework",
-                                  "Test Framework",
-                                  text,
-                                  NotificationType.INFORMATION)
-  Notifications.Bus.notify(notification)
-  return notification
+  Notification("TestFramework", "Test Framework", text, NotificationType.INFORMATION).notify(null)
 }
