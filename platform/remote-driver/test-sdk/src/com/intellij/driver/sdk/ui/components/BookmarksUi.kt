@@ -1,6 +1,8 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.withRetries
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -11,8 +13,9 @@ fun Finder.bookmarksToolWindow(@Language("xpath") xpath: String? = null) =
 
 class BookmarksToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
 
-  val bookmarksTree
-    get() = x(".//div[@class='DnDAwareTree']", JTreeUiComponent::class.java)
+  val bookmarksTree by lazy {
+    tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
+  }
 
   fun rightClickOnBookmarkWithText(text: String, fullMatch: Boolean = true) = bookmarksTree.apply {
     rightClickRow(findBookmarkWithText(text, fullMatch).row)
@@ -69,8 +72,9 @@ fun Finder.bookmarksPopup(@Language("xpath") xpath: String? = null) =
 
 class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
 
-  private val bookmarksTree
-    get() = tree("//div[@class='DnDAwareTree']")
+  private val bookmarksTree by lazy {
+    tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
+  }
 
   fun getBookmarksList() = bookmarksTree.collectExpandedPaths().mapNotNull { it.path.lastOrNull() }
 
