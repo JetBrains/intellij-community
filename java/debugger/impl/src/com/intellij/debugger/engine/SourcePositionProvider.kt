@@ -5,7 +5,9 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.computeSafeIfAny
 import com.intellij.debugger.ui.tree.NodeDescriptor
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 
@@ -17,26 +19,35 @@ import com.intellij.openapi.project.Project
  * @see DefaultSourcePositionProvider
  */
 abstract class SourcePositionProvider {
-  protected abstract fun computeSourcePosition(
+  protected open fun computeSourcePosition(
     descriptor: NodeDescriptor,
     project: Project,
     context: DebuggerContextImpl,
     nearest: Boolean,
-  ): SourcePosition?
+  ): SourcePosition? = throw AbstractMethodError()
+
+  protected open suspend fun computeSourcePositionAsync(
+    descriptor: NodeDescriptor,
+    project: Project,
+    context: DebuggerContextImpl,
+    nearest: Boolean,
+  ): SourcePosition? = blockingContext {
+    ReadAction.nonBlocking<SourcePosition> { computeSourcePosition(descriptor, project, context, nearest) }.executeSynchronously()
+  }
 
   companion object {
     private val EP_NAME: ExtensionPointName<SourcePositionProvider> = ExtensionPointName.create("com.intellij.debugger.sourcePositionProvider")
 
     @JvmStatic
     @JvmOverloads
-    fun getSourcePosition(
+    suspend fun getSourcePosition(
       descriptor: NodeDescriptor,
       project: Project,
       context: DebuggerContextImpl,
       nearest: Boolean = false,
     ): SourcePosition? = computeSafeIfAny(EP_NAME) { provider ->
       try {
-        provider.computeSourcePosition(descriptor, project, context, nearest)
+        provider.computeSourcePositionAsync(descriptor, project, context, nearest)
       }
       catch (_: IndexNotReadyException) {
         null

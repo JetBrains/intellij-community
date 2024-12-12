@@ -34,6 +34,8 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.debugger.actions.ToggleFieldBreakpointActionUtilsKt.getSourcePositionNow;
+
 public class ToggleFieldBreakpointAction extends AnAction implements ActionRemoteBehaviorSpecification.Disabled {
 
   @Override
@@ -111,20 +113,7 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
         final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
         DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
         if (managerThread != null) { // if there is an active debug session
-          final Ref<SourcePosition> positionRef = new Ref<>(null);
-          managerThread.invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
-            @Override
-            public Priority getPriority() {
-              return Priority.HIGH;
-            }
-
-            @Override
-            public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-              ApplicationManager.getApplication().runReadAction(
-                () -> positionRef.set(SourcePositionProvider.getSourcePosition(descriptor, project, debuggerContext)));
-            }
-          });
-          final SourcePosition sourcePosition = positionRef.get();
+          final SourcePosition sourcePosition = getSourcePositionNow(managerThread, debuggerContext, descriptor);
           if (sourcePosition != null) {
             return sourcePosition;
           }

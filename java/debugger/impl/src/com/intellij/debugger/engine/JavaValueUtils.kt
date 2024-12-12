@@ -6,7 +6,6 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.xdebugger.frame.XNavigatable
 
@@ -23,20 +22,18 @@ internal fun scheduleSourcePositionCompute(
       navigatable.setSourcePosition(null)
     }
 
-    override fun contextAction(suspendContext: SuspendContextImpl) {
-      ReadAction.nonBlocking {
-        val debugContext = evaluationContext.debugProcess.debuggerContext
-        var position = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, false)
-        if (position != null) {
-          navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position))
-          if (inline) {
-            position = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, true)
-            if (position != null) {
-              navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position))
-            }
+    override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) {
+      val debugContext = evaluationContext.debugProcess.debuggerContext
+      var position = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, false)
+      if (position != null) {
+        readAction { navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position)) }
+        if (inline) {
+          position = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, true)
+          if (position != null) {
+            readAction { navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position)) }
           }
         }
-      }.executeSynchronously()
+      }
     }
   })
 }
