@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -116,7 +117,7 @@ object ChangeTypeQuickFixFactories {
         val property = this as? KtProperty
         val returnTypes = buildList {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
-                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }
+                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }?.takeUnless { it is KaErrorType }
             })
             if (!candidateType.isUnitType) {
                 add(candidateType)

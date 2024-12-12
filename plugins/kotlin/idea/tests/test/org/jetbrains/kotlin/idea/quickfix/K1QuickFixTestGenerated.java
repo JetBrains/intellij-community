@@ -19336,6 +19336,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/changeFunctionReturnTypeToMatchExpectedTypeOfCallLongNameRuntime.kt");
             }
 
+            @TestMetadata("changeReturnTypeForErrorType.kt")
+            public void testChangeReturnTypeForErrorType() throws Exception {
+                runTest("testData/quickfix/typeMismatch/changeReturnTypeForErrorType.kt");
+            }
+
             @TestMetadata("changeReturnTypeForTypeInference.kt")
             public void testChangeReturnTypeForTypeInference() throws Exception {
                 runTest("testData/quickfix/typeMismatch/changeReturnTypeForTypeInference.kt");

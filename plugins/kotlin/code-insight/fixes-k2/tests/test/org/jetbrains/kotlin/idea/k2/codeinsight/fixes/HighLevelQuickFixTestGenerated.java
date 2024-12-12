@@ -5374,6 +5374,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeFunctionReturnTypeToMatchExpectedTypeOfCallLongNameRuntime.kt");
         }
 
+        @TestMetadata("changeReturnTypeForErrorType.kt")
+        public void testChangeReturnTypeForErrorType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeForErrorType.kt");
+        }
+
         @TestMetadata("changeReturnTypeForTypeInference.kt")
         public void testChangeReturnTypeForTypeInference() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeForTypeInference.kt");
