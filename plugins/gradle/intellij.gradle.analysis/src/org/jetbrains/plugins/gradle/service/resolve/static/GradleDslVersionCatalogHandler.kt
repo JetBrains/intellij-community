@@ -34,6 +34,7 @@ class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
     val buildModel = getBuildModel(module) ?: return null
     val versionCatalogModel = buildModel.versionCatalogsModel
+    if (versionCatalogModel.getVersionCatalogModel(catalogName) == null) return null
     return SyntheticVersionCatalogAccessor(project, scope, versionCatalogModel, catalogName)
   }
 
