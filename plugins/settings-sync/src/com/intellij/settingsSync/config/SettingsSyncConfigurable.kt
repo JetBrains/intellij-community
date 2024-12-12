@@ -446,6 +446,4 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
 class SettingsSyncConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable = SettingsSyncConfigurable()
-
-  override fun canCreateConfigurable() = isSettingsSyncEnabledByKey()
 }

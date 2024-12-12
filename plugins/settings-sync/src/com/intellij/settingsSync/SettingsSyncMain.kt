@@ -9,15 +9,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
-import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-
-private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
-
-@ApiStatus.Internal
-fun isSettingsSyncEnabledByKey(): Boolean = SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, true)
 
 @ApiStatus.Internal
 fun isSettingsSyncEnabledInSettings(): Boolean = SettingsSyncSettings.getInstance().syncEnabled
@@ -33,7 +27,7 @@ class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
     val appConfigPath = PathManager.getConfigDir()
     val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore = componentStore, rootConfig = appConfigPath, enabledCondition = {
-      isSettingsSyncEnabledByKey() && isAvailable() && isSettingsSyncEnabledInSettings()
+      isAvailable() && isSettingsSyncEnabledInSettings()
     })
     controls = init(coroutineScope,
                     parentDisposable = this,

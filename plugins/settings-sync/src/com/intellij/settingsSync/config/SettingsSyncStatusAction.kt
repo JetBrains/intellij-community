@@ -7,9 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.SettingsSyncStatusTracker
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
-import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import com.intellij.ui.BadgeIconSupplier
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -41,10 +39,6 @@ internal class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(),
 
   override fun update(e: AnActionEvent) {
     val p = e.presentation
-    if (!isSettingsSyncEnabledByKey()) {
-      p.isEnabledAndVisible = false
-      return
-    }
     val status = getStatus()
     when (status) {
       SyncStatus.ON ->
