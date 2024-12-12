@@ -32,7 +32,9 @@ class McpToolManager {
             ListFilesInFolderTool(),
             SearchInFilesContentTool(),
             RunConfigurationTool(),
-            GetRunConfigurationsTool()
+            GetRunConfigurationsTool(),
+            GetProjectModulesTool(),
+            GetProjectDependenciesTool(),
         )
     }
 }

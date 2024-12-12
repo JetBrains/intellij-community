@@ -14,6 +14,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
@@ -474,5 +476,32 @@ class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>() {
             println("Run configuration with name '${args.configName}' not found.")
         }
         return Response("ok")
+    }
+}
+
+class GetProjectModulesTool : AbstractMcpTool<NoArgs>() {
+    override val name: String = "get_project_modules"
+    override val description: String = "Get list of all modules in the project with their dependencies. Returns JSON list of module names."
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val moduleManager = com.intellij.openapi.module.ModuleManager.getInstance(project)
+        val modules = moduleManager.modules.map { it.name }
+        return Response(modules.joinToString(",\n", prefix = "[", postfix = "]"))
+    }
+}
+
+class GetProjectDependenciesTool : AbstractMcpTool<NoArgs>() {
+    override val name: String = "get_project_dependencies"
+    override val description: String = "Get list of all dependencies defined in the project. Returns JSON list of dependency names."
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val moduleManager = com.intellij.openapi.module.ModuleManager.getInstance(project)
+        val dependencies = moduleManager.modules.flatMap { module ->
+            OrderEnumerator.orderEntries(module).librariesOnly().classes().roots.map { root ->
+                """{"name": "${root.name}", "type": "library"}"""
+            }
+        }.toHashSet()
+
+        return Response(dependencies.joinToString(",\n", prefix = "[", postfix = "]"))
     }
 }
