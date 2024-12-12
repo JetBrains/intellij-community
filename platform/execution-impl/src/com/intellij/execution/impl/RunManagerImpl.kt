@@ -58,6 +58,7 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -653,7 +654,12 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
     val element = Element("state")
 
-    workspaceSchemeManager.save()
+    if (EDT.isCurrentThreadEdt()) {
+      runWriteAction { workspaceSchemeManager.save() }
+    }
+    else {
+      workspaceSchemeManager.save()
+    }
 
     lock.read {
       workspaceSchemeManagerProvider.writeState(element)
