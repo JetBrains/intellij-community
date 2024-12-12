@@ -28,14 +28,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
-import kotlin.io.path.pathString
 
 private fun EelPlatform.toTargetPlatform(): TargetPlatform = when (this) {
   is EelPlatform.Posix -> TargetPlatform(Platform.UNIX)
@@ -106,8 +104,7 @@ class EelTargetEnvironmentRequest(override val configuration: Configuration) : B
   override var shouldCopyVolumes: Boolean = false
 }
 
-@Internal
-class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : TargetEnvironment(request) {
+private class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : TargetEnvironment(request) {
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
   private val myTargetPortBindings: MutableMap<TargetPortBinding, ResolvedPortBinding> = HashMap()
@@ -189,7 +186,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
     private fun targetRootPath(): Path {
-      return eel.fs.toNioFs().getPath(eel.fs.getPath(targetRoot).toString())
+      return eel.mapper.toNioPath(eel.fs.getPath(targetRoot))
     }
 
     override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
@@ -197,7 +194,6 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       val to = targetRootPath().resolve(relativePath).normalize()
       if (from == to) return
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
-      // TODO: For Docker it might be problematic to copy the owner attribute
       EelPathUtils.walkingTransfer(from, to, removeSource = false, copyAttributes = true)
     }
 
@@ -206,13 +202,11 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       val to = localRoot.resolve(relativePath).normalize()
       if (from == to) return
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
-      // TODO: For Docker it might be problematic to copy the owner attribute
       EelPathUtils.walkingTransfer(from, to, removeSource = false, copyAttributes = true)
     }
 
     override fun resolveTargetPath(relativePath: String): String {
-      val from = targetRootPath().resolve(relativePath)
-      return eel.mapper.getOriginalPath(from)?.toString() ?: from.pathString
+      return eel.mapper.getOriginalPath(targetRootPath().resolve(relativePath))!!.toString()
     }
 
     companion object {
