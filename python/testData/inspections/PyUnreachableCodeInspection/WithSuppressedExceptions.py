@@ -21,6 +21,11 @@ def f12():
         return g2()
     <warning descr="This code is unreachable">print(1) #pass</warning>
 
+def f13():
+    with C():
+        assert False
+    print(1) #pass
+
 
 class A1(TestCase):
     def f3(self):
