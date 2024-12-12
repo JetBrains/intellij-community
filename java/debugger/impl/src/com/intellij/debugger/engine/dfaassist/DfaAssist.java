@@ -117,7 +117,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
       cleanUp();
       return;
     }
-    DebuggerDfaRunnerUtils.scheduleDfaUpdate(this, newContext, element);
+    DebuggerDfaRunnerUtilsKt.scheduleDfaUpdate(this, newContext, element);
   }
 
   @Override

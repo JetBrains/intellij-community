@@ -55,7 +55,7 @@ public abstract class DfaAssistTest extends LightPlatformCodeInsightTestCase {
       protected void action() {
         ThreadReferenceProxyImpl threadProxy = ContainerUtil.getFirstItem(process.getVirtualMachineProxy().allThreads());
         StackFrameProxyImpl frameProxy = new StackFrameProxyImpl(threadProxy, frame, 1);
-        DebuggerDfaRunner runner = DebuggerDfaRunnerUtils.createDfaRunner(frameProxy, pointer);
+        DebuggerDfaRunner runner = DebuggerDfaRunnerUtilsKt.createDfaRunner(frameProxy, pointer);
         runnerRef.set(runner);
       }
     });
