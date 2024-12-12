@@ -12,10 +12,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
-/**
- * Use [PsiUpdateModCommandAction] if you don't need an elementContext.
- * See more in plugins/kotlin/docs/fir-ide/architecture/code-insights.md.
- */
 sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private constructor(
     element: E?,
     elementClass: KClass<E>?,
@@ -60,6 +56,10 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private co
         element: E,
     ): C?
 
+    /**
+     * Use [PsiUpdateModCommandAction] if you don't need an elementContext.
+     * See more in plugins/kotlin/docs/fir-ide/architecture/code-insights.md.
+     */
     abstract class ElementBased<E : PsiElement, C : Any>(
         element: E,
         @FileModifier.SafeFieldForPreview private val elementContext: C,
