@@ -109,8 +109,9 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     if (sourceType is PsiClassType) {
       val sourceClass = sourceType.resolve()
       // If this class has @JvmInline annotation, then it's a value class in Kotlin and has exactly one field. Workaround for IDEA-364405.
-      if (sourceClass?.annotations?.any { it.hasQualifiedName("kotlin.jvm.JvmInline") } == true && sourceClass.fields.size == 1) {
-        sourceType = sourceClass.fields[0].type
+      if (sourceClass?.annotations?.any { it.hasQualifiedName("kotlin.jvm.JvmInline") } == true) {
+        // Handle the possibility of a companion object being present
+        sourceType = sourceClass.fields.singleOrNull { !it.hasModifierProperty(PsiModifier.STATIC) }?.type ?: sourceType
       }
     }
 

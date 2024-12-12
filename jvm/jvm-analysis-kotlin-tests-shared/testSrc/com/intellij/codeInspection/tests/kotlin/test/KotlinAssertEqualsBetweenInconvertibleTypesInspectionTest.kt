@@ -1048,7 +1048,7 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
 
   @Ignore("We are aware of this edge case, but it seems not possible to fix with the current UAST API. See IDEA-362694")
   @Test
-  fun `Kotlin inline value class`() {
+  fun `Kotlin inline value class (JUnit 4)`() {
     @Language("kotlin") val code = """
       import org.junit.Test
       import org.junit.Assert
@@ -1070,7 +1070,7 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
   }
 
   @Test
-  fun `Kotlin inline value class (AssertJ) primitive type`() {
+  fun `Kotlin inline value class (AssertJ) simple`() {
     @Language("kotlin") val code = """
     import org.junit.Test
     import org.assertj.core.api.Assertions
@@ -1084,6 +1084,36 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
         val a = ValueClass(1)
         val b = ValueClass(2)
         Assertions.assertThat(a).isEqualTo(b)
+      }
+    }
+    """.trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  @Test
+  fun `Kotlin inline value class (AssertJ) with companion`() {
+    @Language("kotlin") val code = """
+    import org.junit.Test
+    import org.assertj.core.api.Assertions
+    
+    @JvmInline
+    value class FileSize(val prop: Long) {
+      val fooProp: Long get() = prop * 10
+     
+      companion object Comp {
+        val ZERO = 0
+      }
+    }
+    
+    class MySampleTest {
+      @Test
+      fun myTest() {
+        val a = FileSize(1024)
+        val b = 1024
+        val c = "bruh"
+        Assertions.assertThat(a).isEqualTo(b)
+        Assertions.assertThat(a).<warning descr="'isEqualTo()' between objects of inconvertible types 'long' and 'String'">isEqualTo</warning>(c)
       }
     }
     """.trimIndent()
