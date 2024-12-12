@@ -246,7 +246,7 @@ data class BuildOptions(
     const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY: String = "intellij.build.incremental.compilation.fallback.rebuild"
 
     /**
-     * If `true` then [org.jetbrains.intellij.build.impl.compilation.CompiledClasses] will be rebuilt from scratch
+     * If `true` then the compiled classes will be rebuilt from scratch
      */
     const val FORCE_REBUILD_PROPERTY: String = "intellij.jps.cache.rebuild.force"
 
