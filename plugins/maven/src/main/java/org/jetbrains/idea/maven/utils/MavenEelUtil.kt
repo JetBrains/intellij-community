@@ -40,6 +40,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
@@ -52,11 +53,6 @@ import javax.swing.event.HyperlinkEvent
 object MavenEelUtil : MavenUtil() {
   @JvmStatic
   fun EelApi?.resolveM2Dir(): Path {
-    return runBlockingMaybeCancellable { resolveM2DirAsync() }
-  }
-
-  @JvmStatic
-  suspend fun EelApi?.resolveM2DirAsync(): Path {
     val localUserHome = Path.of(SystemProperties.getUserHome())
     val userHome = if (this != null) fs.user.home.let(mapper::toNioPath) else localUserHome
 
@@ -65,7 +61,7 @@ object MavenEelUtil : MavenUtil() {
 
   @JvmStatic
   suspend fun Project?.resolveM2DirAsync(): Path {
-    return this?.getEelApi().resolveM2DirAsync()
+    return this?.getEelApi().resolveM2Dir()
   }
 
   suspend fun <T> resolveUsingEel(project: Project?, ordinary: suspend () -> T, eel: suspend (EelApi) -> T?): T {
