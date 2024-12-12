@@ -16,7 +16,7 @@ import org.jetbrains.idea.svn.dialogs.CopiesPanel.*
 import java.awt.Font
 import javax.swing.event.HyperlinkEvent
 
-private class WorkingCopyInfoPanel : HtmlPanel() {
+internal class WorkingCopyInfoPanel : HtmlPanel() {
   var info: WCInfo? = null
   var upgradeFormats: Collection<WorkingCopyFormat> = emptyList()
 

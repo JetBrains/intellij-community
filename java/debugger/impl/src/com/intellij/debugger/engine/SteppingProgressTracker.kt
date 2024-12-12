@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture
 
 private data class TrackedSteppingData(val stepCompetedStatus: CompletableDeferred<Unit>, val threadFilter: (ThreadReferenceProxy?) -> Boolean)
 
-private class SteppingProgressTracker(private val debuggerProcessImpl: DebugProcessImpl) {
+internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugProcessImpl) {
   private val trackedStepping = mutableListOf<TrackedSteppingData>()
 
   fun installListeners() {

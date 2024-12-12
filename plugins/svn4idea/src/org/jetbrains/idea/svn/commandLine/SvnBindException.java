@@ -20,8 +20,7 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static org.jetbrains.idea.svn.api.ErrorCategory.categoryCodeOf;
 
-public class SvnBindException extends VcsException {
-
+public final class SvnBindException extends VcsException {
   private static final @NlsSafe String ERROR_MESSAGE_FORMAT = "svn: E%d: %s";
 
   @NotNull private final MultiMap<Integer, String> errors = MultiMap.create();
