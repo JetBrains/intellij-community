@@ -606,7 +606,7 @@ public abstract class DialogWrapper {
       }
     });
     helpButton.getAccessibleContext().setAccessibleName(UIBundle.message("dialog.options.help.button.accessible.name"));
-    helpButton.getAccessibleContext().setAccessibleDescription(ActionsBundle.message("action.HelpTopics.description"));
+    helpButton.getAccessibleContext().setAccessibleDescription(ActionsBundle.actionDescription("HelpTopics"));
     return helpButton;
   }
 
