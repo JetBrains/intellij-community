@@ -92,6 +92,7 @@
     <orderEntry type="library" name="icu4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
