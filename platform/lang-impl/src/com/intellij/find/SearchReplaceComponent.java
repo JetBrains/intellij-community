@@ -352,7 +352,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   @Override
   public void addNotify() {
     super.addNotify();
-    updateInner("", "", false, false);
+    updateBindingsActionsAndFocus();
   }
 
   @Override
@@ -539,6 +539,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     updateReplaceComponent(replaceText);
     myReplaceFieldWrapper.setVisible(replaceMode);
     myReplaceToolbarWrapper.setVisible(replaceMode);
+    updateBindingsActionsAndFocus();
+  }
+
+  private void updateBindingsActionsAndFocus() {
     updateBindings();
     updateActions();
     List<Component> focusOrder = new ArrayList<>();
