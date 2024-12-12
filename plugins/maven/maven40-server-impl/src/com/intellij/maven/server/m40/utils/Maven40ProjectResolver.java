@@ -13,7 +13,6 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
-import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
 import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.eclipse.aether.RepositorySystemSession;
@@ -141,6 +140,17 @@ public class Maven40ProjectResolver {
       List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
         getProjectBuildingResults(request, files, session));
 
+      List<Exception> exceptions = new ArrayList<>();
+      List<MavenProject> projects = new ArrayList<>();
+      for (ProjectBuildingResult result : buildingResults) {
+        MavenProject project = result.getProject();
+        if (project != null) {
+          projects.add(project);
+        }
+      }
+      session.setProjects(projects);
+      afterProjectsRead(session, exceptions);
+
       // TODO: Cache does not work actually
       fillSessionCache(session, session.getRepositorySession(), buildingResults);
 
@@ -165,10 +175,6 @@ public class Maven40ProjectResolver {
           executionResults.add(createExecutionResult(project, newDependencyHash));
           continue;
         }
-
-        List<Exception> exceptions = new ArrayList<>();
-
-        loadExtensions(project, exceptions);
 
         //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
@@ -479,37 +485,23 @@ public class Maven40ProjectResolver {
   }
 
   /**
-   * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+   * adapted from {@link DefaultMaven#afterProjectsRead(MavenSession)}
    */
-  private void loadExtensions(MavenProject project, List<Exception> exceptions) {
+  private void afterProjectsRead(MavenSession session, List<Exception> exceptions) {
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants =
-      myEmbedder.getExtensionComponents(Collections.singletonList(project), AbstractMavenLifecycleParticipant.class);
-    if (!lifecycleParticipants.isEmpty()) {
-      LegacySupport legacySupport = myEmbedder.getComponent(LegacySupport.class);
-      MavenSession session = legacySupport.getSession();
-      if (null != session) {
-        session.setCurrentProject(project);
-        try {
-          // the method can be removed
-          session.setAllProjects(Collections.singletonList(project));
-        }
-        catch (NoSuchMethodError ignore) {
-        }
-        session.setProjects(Collections.singletonList(project));
-
-        for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
-          Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
-          try {
-            listener.afterProjectsRead(session);
-          }
-          catch (Exception e) {
-            exceptions.add(e);
-          }
-          finally {
-            Thread.currentThread().setContextClassLoader(originalClassLoader);
-          }
-        }
+      myEmbedder.getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class);
+    for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+      Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+      try {
+        listener.afterProjectsRead(session);
+      }
+      catch (Exception e) {
+        // Unlike Maven, IDEA sync shouldn't fail even if there is a problem with an extension
+        exceptions.add(e);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
       }
     }
   }

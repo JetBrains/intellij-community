@@ -744,13 +744,20 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   private void afterSessionStart(MavenSession mavenSession) {
-    try {
-      for (AbstractMavenLifecycleParticipant listener : getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class)) {
+    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+    Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants =
+      getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class);
+    for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+      Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+      try {
         listener.afterSessionStart(mavenSession);
       }
-    }
-    catch (MavenExecutionException e) {
-      throw new RuntimeException(e);
+      catch (MavenExecutionException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+      }
     }
   }
 
