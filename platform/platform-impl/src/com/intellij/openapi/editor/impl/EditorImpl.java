@@ -226,7 +226,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private MyEditable myEditable;
 
-  private @NotNull EditorColorsScheme myScheme;
+  private @NotNull MyColorSchemeDelegate myScheme;
   private final @NotNull SelectionModelImpl mySelectionModel;
   private final @NotNull EditorMarkupModelImpl myMarkupModel;
   private final @NotNull EditorFilteringMarkupModelEx myEditorFilteringMarkupModel;
@@ -373,7 +373,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myVirtualFile = file;
     myState = new EditorState();
     myState.refreshAll();
-    myScheme = createBoundColorSchemeDelegate(null);
+    final EditorColorsScheme boundColorScheme = createBoundColorSchemeDelegate(null);
+    if (boundColorScheme instanceof MyColorSchemeDelegate) {
+      myScheme = (MyColorSchemeDelegate)boundColorScheme;
+    } else {
+      LOG.warn("createBoundColorSchemeDelegate created delegate of type '%s'. Will wrap it with MyColorSchemeDelegate".formatted(boundColorScheme.getClass()),
+                new Throwable());
+      myScheme = new MyColorSchemeDelegate(boundColorScheme);
+    }
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myScrollPane.setBackground(JBColor.lazy(this::getBackgroundColor));
     myState.setViewer(viewer);
@@ -1032,14 +1039,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @RequiresEdt
   void reinitSettings(boolean updateGutterSize, boolean reinitSettings) {
-    for (EditorColorsScheme scheme = myScheme;
-         scheme instanceof DelegateColorScheme;
-         scheme = ((DelegateColorScheme)scheme).getDelegate()) {
-      if (scheme instanceof MyColorSchemeDelegate) {
-        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
-        break;
-      }
-    }
+    myScheme.updateGlobalScheme();
 
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
@@ -3608,38 +3608,44 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  /**
+   * This method doesn't set the scheme itself, but the delegate
+   * @param scheme - original scheme
+   * @see EditorImpl.MyColorSchemeDelegate
+   */
   @Override
-  public void setColorsScheme(@NotNull EditorColorsScheme scheme) {
+  public void setColorsScheme(@NotNull final EditorColorsScheme scheme) {
     assertIsDispatchThread();
+    final EditorImpl finalEditor = this;
     ReadAction.run(() -> {
-      logSchemeChangeIfNeeded(scheme);
-      myScheme = scheme;
+      final EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
+      if (colorsManager == null) {
+        LOG.info("Skipping attempt to set color scheme without EditorColorsManager");
+        return;
+      }
+      final EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
+      EditorColorsScheme rawScheme = scheme;
+      boolean isGlobal = (rawScheme == globalScheme);
+      boolean isBounded = (rawScheme instanceof MyColorSchemeDelegate);
+      while (!isGlobal && !isBounded && rawScheme instanceof DelegateColorScheme) {
+        rawScheme = ((DelegateColorScheme)rawScheme).getDelegate();
+        if (rawScheme == globalScheme) isGlobal = true;
+        if (rawScheme instanceof MyColorSchemeDelegate) {
+          isBounded = true;
+        }
+      }
+      if (isGlobal && !isBounded) {
+        LOG.warn("Attempted to set unbounded global scheme to editor '%s' (presentationMode=%b)"
+                    .formatted(finalEditor, UISettings.getInstance().getPresentationMode()));
+        LOG.debug(ExceptionUtil.currentStackTrace());
+      }
+      if (rawScheme instanceof MyColorSchemeDelegate) {
+        myScheme = (MyColorSchemeDelegate)rawScheme;
+      } else {
+        myScheme = new MyColorSchemeDelegate(rawScheme);
+      }
       reinitSettings();
     });
-  }
-
-  private static void logSchemeChangeIfNeeded(@NotNull EditorColorsScheme scheme) {
-    if (!LOG.isDebugEnabled()) return;
-    EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
-    if (colorsManager == null) return;
-
-    EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
-    boolean isGlobal = (scheme == globalScheme);
-    boolean isBounded = (scheme instanceof MyColorSchemeDelegate);
-
-    while (!isGlobal && !isBounded && scheme instanceof DelegateColorScheme) {
-      scheme = ((DelegateColorScheme)scheme).getDelegate();
-      if (scheme == globalScheme) isGlobal = true;
-      if (scheme instanceof MyColorSchemeDelegate) {
-        isBounded = true;
-      }
-    }
-
-    if (isGlobal && !isBounded) {
-      LOG.debug("Will set the unbounded global scheme to editor (presentationMode=%b)"
-                  .formatted(UISettings.getInstance().getPresentationMode()));
-      LOG.debug(ExceptionUtil.currentStackTrace());
-    }
   }
 
   @Override
@@ -5780,9 +5786,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void adjustGlobalFontSize(float size) {
     EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
-    if (myScheme instanceof MyColorSchemeDelegate) {
-      ((MyColorSchemeDelegate)myScheme).resetEditorFontSize();
-    }
+    myScheme.resetEditorFontSize();
     EditorColorsManagerImpl.fireGlobalSchemeChange(null);
   }
 

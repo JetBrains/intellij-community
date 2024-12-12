@@ -93,6 +93,11 @@ public interface EditorEx extends Editor {
 
   void setPermanentHeaderComponent(JComponent component);
 
+  /**
+   * This method doesn't set the scheme itself, but the delegate
+   * @param scheme - original scheme
+   * @see EditorImpl.MyColorSchemeDelegate
+   */
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
   void setInsertMode(boolean val);
