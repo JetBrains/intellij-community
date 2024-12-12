@@ -1611,6 +1611,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    from typing import cast
                    
                    def f(val: object):
+                       v0 = cast(int, 10) # ok
                        v1 = cast(list[int], val) # ok
                        v2 = cast('list[float]', val) # ok
                        v3 = cast(<warning descr="Expected a type">1</warning>, val)
