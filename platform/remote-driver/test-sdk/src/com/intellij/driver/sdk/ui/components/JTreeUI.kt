@@ -7,6 +7,7 @@ import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.remoteDev.*
+import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
@@ -24,8 +25,15 @@ fun Finder.tree(@Language("xpath") xpath: String? = null) =
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private val treeComponent get() = driver.cast(component, JTreeComponent::class)
+  private var cellRendererReader: CellRendererReader? = null
   val fixture: JTreeFixtureRef
-    get() = driver.new(JTreeFixtureRef::class, robot, component)
+    get() = driver.new(JTreeFixtureRef::class, robot, component).apply {
+      cellRendererReader?.let { replaceCellRendererReader(it) }
+    }
+
+  fun replaceCellRendererReader(reader: CellRendererReader) {
+    cellRendererReader = reader
+  }
 
   fun clickRow(row: Int) = fixture.clickRow(row)
   fun clickRow(predicate: (String) -> Boolean) {
@@ -172,6 +180,7 @@ interface JTreeFixtureRef : Component {
   fun selectRow(row: Int): JTreeFixtureRef?
   fun expandAll(timeoutMs: Int)
   fun getRowPoint(row: Int): Point
+  fun replaceCellRendererReader(reader: CellRendererReader)
 }
 
 @Remote("javax.swing.JTree")
