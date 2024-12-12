@@ -526,7 +526,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return null;
   }
 
-  private @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  protected @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }
 

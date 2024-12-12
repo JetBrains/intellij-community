@@ -1230,6 +1230,7 @@ a:com.intellij.codeInspection.InspectionProfileEntry
 - getBatchSuppressActions(com.intellij.psi.PsiElement):com.intellij.codeInspection.SuppressQuickFix[]
 - getDefaultLevel():com.intellij.codeHighlighting.HighlightDisplayLevel
 - getDescriptionAddendum():com.intellij.openapi.util.text.HtmlChunk
+- p:getDescriptionContextClass():java.lang.Class
 - getDescriptionFileName():java.lang.String
 - getDisplayName():java.lang.String
 - getEditorAttributesKey():java.lang.String
