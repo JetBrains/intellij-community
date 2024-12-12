@@ -41,7 +41,13 @@ internal class TerminalContentChangesTracker(
       }
 
       override fun widthResized() {
-        // TODO
+        // Consider resize of the width as a full replacement of the output.
+        // Because lines layout might be changed and our stored last changed visual line index might become incorrect.
+        // As a solution, we may track the last changed logical line - its index should not be affected by resizing.
+        // But there is a problem with resize: some lines might be discarded from the Text Buffer during this operation,
+        // and it is not tracked now.
+        // TODO: consider tracking of the discarded lines in case of resizing to not replace everything.
+        lastChangedVisualLine = 0
       }
     })
   }
