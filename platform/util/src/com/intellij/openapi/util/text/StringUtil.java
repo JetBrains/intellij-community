@@ -2843,6 +2843,14 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  public static boolean isLowerCase(@NotNull CharSequence sequence) {
+    for (int i = 0; i < sequence.length(); i++) {
+      if (!Character.isLowerCase(sequence.charAt(i))) return false;
+    }
+    return true;
+  }
+
+  @Contract(pure = true)
   public static @Nullable LineSeparator detectSeparators(@NotNull CharSequence text) {
     int index = indexOfAny(text, "\n\r");
     if (index == -1) return null;
