@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.*
+import com.intellij.modcommand.ModCommand.chooseAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -19,22 +19,41 @@ internal object WrongAnnotationTargetFixFactories {
             it.isNotEmpty()
         } ?: return@ModCommandBased emptyList()
 
-        listOf(
-            AddAnnotationUseSiteTargetFix(diagnostic.psi, applicableUseSiteTargets)
-        )
+        buildList {
+            if (applicableUseSiteTargets.size == 1) {
+                add(AddAnnotationUseSiteTargetFix(diagnostic.psi, applicableUseSiteTargets.single()))
+            } else {
+                add(ChooseAnnotationUseSiteTargetFix(diagnostic.psi, applicableUseSiteTargets))
+            }
+        }
+    }
+
+    private class ChooseAnnotationUseSiteTargetFix(
+        element: KtAnnotationEntry,
+        private val useSiteTargets: List<AnnotationUseSiteTarget>,
+    ) : PsiBasedModCommandAction<KtAnnotationEntry>(element) {
+        override fun perform(
+            context: ActionContext,
+            element: KtAnnotationEntry
+        ): ModCommand {
+            return chooseAction(
+                KotlinBundle.message("title.choose.use.site.target"),
+                useSiteTargets.map { target -> AddAnnotationUseSiteTargetFix(element, target) }
+            )
+        }
+
+        override fun getFamilyName(): @IntentionFamilyName String {
+            return KotlinBundle.message("add.use.site.target")
+        }
     }
 
     private class AddAnnotationUseSiteTargetFix(
         element: KtAnnotationEntry,
-        private val useSiteTargets: List<AnnotationUseSiteTarget>,
+        private val useSiteTarget: AnnotationUseSiteTarget,
     ) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
 
         override fun getFamilyName(): String {
-            return if (useSiteTargets.size == 1) {
-                KotlinBundle.message("text.add.use.site.target.0", useSiteTargets.first().renderName)
-            } else {
-                KotlinBundle.message("add.use.site.target")
-            }
+            return KotlinBundle.message("text.add.use.site.target.0", useSiteTarget.renderName)
         }
 
         override fun invoke(
@@ -42,7 +61,7 @@ internal object WrongAnnotationTargetFixFactories {
             element: KtAnnotationEntry,
             updater: ModPsiUpdater,
         ) {
-            element.addUseSiteTarget(useSiteTargets, null)
+            element.addUseSiteTarget(listOf(useSiteTarget), null)
         }
     }
 }
