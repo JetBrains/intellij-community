@@ -11,4 +11,6 @@ internal interface JediTerminalListener : EventListener {
   fun autoNewLineChanged(isEnabled: Boolean) {}
 
   fun altSendsEscapeChanged(isEnabled: Boolean) {}
+
+  fun beforeAlternateScreenBufferChanged(isEnabled: Boolean) {}
 }

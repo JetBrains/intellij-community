@@ -17,8 +17,6 @@ internal interface TerminalDisplayListener : EventListener {
 
   fun mouseFormatChanged(format: MouseFormat) {}
 
-  fun alternateScreenBufferChanged(isEnabled: Boolean) {}
-
   fun bracketedPasteModeChanged(isEnabled: Boolean) {}
 
   fun windowTitleChanged(title: String) {}

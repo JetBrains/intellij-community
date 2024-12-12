@@ -20,8 +20,6 @@ internal class TerminalDisplayImpl : TerminalDisplay {
     private set
   var mouseFormat: MouseFormat = MouseFormat.MOUSE_FORMAT_XTERM
     private set
-  var isAlternateScreenBuffer: Boolean = false
-    private set
   var isBracketedPasteMode: Boolean = false
     private set
   var windowTitleText: String = ""
@@ -56,13 +54,6 @@ internal class TerminalDisplayImpl : TerminalDisplay {
     }
   }
 
-  override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
-    if (isAlternateScreenBuffer != useAlternateScreenBuffer) {
-      isAlternateScreenBuffer = useAlternateScreenBuffer
-      dispatcher.multicaster.alternateScreenBufferChanged(useAlternateScreenBuffer)
-    }
-  }
-
   override fun getWindowTitle(): String? {
     return windowTitleText
   }
@@ -93,6 +84,10 @@ internal class TerminalDisplayImpl : TerminalDisplay {
       isBracketedPasteMode = bracketedPasteModeEnabled
       dispatcher.multicaster.bracketedPasteModeChanged(bracketedPasteModeEnabled)
     }
+  }
+
+  override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
+
   }
 
   override fun beep() {

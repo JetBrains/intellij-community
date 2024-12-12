@@ -25,6 +25,8 @@ internal class ObservableJediTerminal(
     private set
   var altSendsEscape: Boolean = true
     private set
+  var alternativeBufferEnabled: Boolean = false
+    private set
 
   fun addListener(listener: JediTerminalListener) {
     dispatcher.addListener(listener)
@@ -64,5 +66,13 @@ internal class ObservableJediTerminal(
       altSendsEscape = enabled
       dispatcher.multicaster.altSendsEscapeChanged(enabled)
     }
+  }
+
+  override fun useAlternateBuffer(enabled: Boolean) {
+    if (alternativeBufferEnabled != enabled) {
+      alternativeBufferEnabled = enabled
+      dispatcher.multicaster.beforeAlternateScreenBufferChanged(enabled)
+    }
+    super.useAlternateBuffer(enabled)
   }
 }

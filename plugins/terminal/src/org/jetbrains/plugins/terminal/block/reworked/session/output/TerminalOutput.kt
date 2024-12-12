@@ -62,7 +62,7 @@ internal fun createTerminalOutputChannel(
     cursorShape = terminalDisplay.cursorShape,
     mouseMode = terminalDisplay.mouseMode,
     mouseFormat = terminalDisplay.mouseFormat,
-    isAlternateScreenBuffer = terminalDisplay.isAlternateScreenBuffer,
+    isAlternateScreenBuffer = controller.alternativeBufferEnabled,
     isApplicationArrowKeys = controller.applicationArrowKeys,
     isApplicationKeypad = controller.applicationKeypad,
     isAutoNewLine = controller.isAutoNewLine,
@@ -99,6 +99,18 @@ internal fun createTerminalOutputChannel(
         collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
       }
     }
+
+    /**
+     * It is important to collect and send the output state before alternate buffer state is changed in the TextBuffer.
+     * Because right after switch, Text Buffer will provide the lines from the buffer of the new state,
+     * while currently non-reported changes relate to the previous state.
+     */
+    override fun beforeAlternateScreenBufferChanged(isEnabled: Boolean) {
+      textBuffer.withLock {
+        curState = curState.copy(isAlternateScreenBuffer = isEnabled)
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+      }
+    }
   })
 
   terminalDisplay.addListener(object : TerminalDisplayListener {
@@ -126,13 +138,6 @@ internal fun createTerminalOutputChannel(
     override fun mouseFormatChanged(format: MouseFormat) {
       textBuffer.withLock {
         curState = curState.copy(mouseFormat = format)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
-      }
-    }
-
-    override fun alternateScreenBufferChanged(isEnabled: Boolean) {
-      textBuffer.withLock {
-        curState = curState.copy(isAlternateScreenBuffer = isEnabled)
         collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
       }
     }
