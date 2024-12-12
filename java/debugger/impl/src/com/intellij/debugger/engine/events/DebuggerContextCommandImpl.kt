@@ -1,95 +1,87 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.engine.events;
+package com.intellij.debugger.engine.events
 
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.SuspendManager;
-import com.intellij.debugger.engine.SuspendManagerUtil;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.request.EventRequest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.SuspendManagerUtil
+import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.openapi.diagnostic.Logger
+import com.sun.jdi.ObjectCollectedException
+import com.sun.jdi.ThreadReference
+import com.sun.jdi.request.EventRequest
 
-public abstract class DebuggerContextCommandImpl extends SuspendContextCommandImpl {
-  private static final Logger LOG = Logger.getInstance(DebuggerContextCommandImpl.class);
+/**
+ *  This command tries to find the [com.intellij.debugger.engine.SuspendContext] suitable for execution,
+ *  or cancels if it is not found.
+ *
+ * @param customThread thread to perform command in
+ */
+abstract class DebuggerContextCommandImpl @JvmOverloads protected constructor(
+  val debuggerContext: DebuggerContextImpl,
+  private val customThread: ThreadReferenceProxyImpl? = null,
+) : SuspendContextCommandImpl(debuggerContext.suspendContext) {
 
-  private final @NotNull DebuggerContextImpl myDebuggerContext;
-  private final ThreadReferenceProxyImpl myCustomThread; // thread to perform command in
-  private SuspendContextImpl myCustomSuspendContext;
+  private var myCustomSuspendContext: SuspendContextImpl? = null
 
-  protected DebuggerContextCommandImpl(@NotNull DebuggerContextImpl debuggerContext) {
-    this(debuggerContext, null);
-  }
-
-  protected DebuggerContextCommandImpl(@NotNull DebuggerContextImpl debuggerContext, @Nullable ThreadReferenceProxyImpl customThread) {
-    super(debuggerContext.getSuspendContext());
-    myDebuggerContext = debuggerContext;
-    myCustomThread = customThread;
-  }
-
-  @Nullable
-  @Override
-  public SuspendContextImpl getSuspendContext() {
-    if (myCustomSuspendContext == null) {
-      myCustomSuspendContext = super.getSuspendContext();
-      ThreadReferenceProxyImpl thread = getThread();
-      if (myCustomThread != null &&
-          (myCustomSuspendContext == null || myCustomSuspendContext.isResumed() || !myCustomSuspendContext.suspends(thread))) {
-        myCustomSuspendContext = SuspendManagerUtil.findContextByThread(myDebuggerContext.getDebugProcess().getSuspendManager(), thread);
+  override val suspendContext: SuspendContextImpl?
+    get() {
+      if (myCustomSuspendContext != null) return myCustomSuspendContext
+      return run {
+        val context = super.suspendContext
+        when {
+          customThread == null -> context
+          context == null || context.isResumed || !context.suspends(customThread) -> {
+            SuspendManagerUtil.findContextByThread(debuggerContext.debugProcess!!.suspendManager, customThread)
+          }
+          else -> context
+        }
+      }.also {
+        myCustomSuspendContext = it
       }
     }
-    return myCustomSuspendContext;
-  }
 
-  @Nullable
-  private ThreadReferenceProxyImpl getThread() {
-    return myCustomThread != null ? myCustomThread : myDebuggerContext.getThreadProxy();
-  }
+  private val thread: ThreadReferenceProxyImpl?
+    get() = customThread ?: debuggerContext.threadProxy
 
-  @NotNull
-  public final DebuggerContextImpl getDebuggerContext() {
-    return myDebuggerContext;
-  }
+  final override fun contextAction(suspendContext: SuspendContextImpl) {
+    val suspendManager = suspendContext.debugProcess.suspendManager
+    val thread = this.thread
 
-  @Override
-  public final void contextAction(@NotNull SuspendContextImpl suspendContext) {
-    SuspendManager suspendManager = suspendContext.getDebugProcess().getSuspendManager();
-    ThreadReferenceProxyImpl thread = getThread();
-    boolean isSuspended;
-    if (thread == null) {
-      isSuspended = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
+    val isSuspended = if (thread == null) {
+      suspendContext.suspendPolicy == EventRequest.SUSPEND_ALL
     }
     else {
       try {
-        isSuspended = suspendManager.isSuspended(thread);
+        suspendManager.isSuspended(thread)
       }
-      catch (ObjectCollectedException ignored) {
-        notifyCancelled();
-        return;
+      catch (_: ObjectCollectedException) {
+        notifyCancelled()
+        return
       }
     }
+
     if (isSuspended) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Context thread " + suspendContext.getThread());
-        LOG.debug("Debug thread " + thread);
+        LOG.debug("Context thread " + suspendContext.getThread())
+        LOG.debug("Debug thread $thread")
       }
-      threadAction(suspendContext);
+      threadAction(suspendContext)
     }
     else {
       // no suspend context currently available
-      SuspendContextImpl suspendContextForThread = myCustomThread != null ? suspendContext :
-                                                   SuspendManagerUtil.findContextByThread(suspendManager, thread);
+      val suspendContextForThread = if (customThread != null) suspendContext else SuspendManagerUtil.findContextByThread(suspendManager, thread)
       if (suspendContextForThread != null && (thread == null || thread.status() != ThreadReference.THREAD_STATUS_ZOMBIE)) {
-        suspendContextForThread.postponeCommand(this);
+        suspendContextForThread.postponeCommand(this)
       }
       else {
-        notifyCancelled();
+        notifyCancelled()
       }
     }
   }
 
-  public abstract void threadAction(@NotNull SuspendContextImpl suspendContext);
+  abstract fun threadAction(suspendContext: SuspendContextImpl)
+
+  companion object {
+    private val LOG = Logger.getInstance(DebuggerContextCommandImpl::class.java)
+  }
 }
