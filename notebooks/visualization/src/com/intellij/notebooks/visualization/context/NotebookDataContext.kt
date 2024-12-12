@@ -29,6 +29,10 @@ object NotebookDataContext {
 
   val DataContext.selectedCellInterval: NotebookCellLines.Interval?
     get() {
+      val cached = getData(NOTEBOOK_CELL_LINES_INTERVAL)
+      if (cached != null)
+        return cached
+
       val editor = notebookEditor ?: return null
       val selectionModel = editor.cellSelectionModel ?: return null
       return selectionModel.primarySelectedCell
