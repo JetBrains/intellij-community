@@ -3556,6 +3556,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("applicabilityRange.kt")
+                public void testApplicabilityRange() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToWhen/applicabilityRange.kt");
+                }
+
                 @TestMetadata("innerWhenTransformed.kt")
                 public void testInnerWhenTransformed() throws Exception {
                     runTest("testData/intentions/branched/unfolding/returnToWhen/innerWhenTransformed.kt");

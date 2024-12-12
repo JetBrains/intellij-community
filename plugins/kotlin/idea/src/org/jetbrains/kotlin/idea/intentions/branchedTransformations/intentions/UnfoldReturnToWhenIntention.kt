@@ -10,9 +10,9 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.inspections.createReturnExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -22,14 +22,15 @@ import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
 class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<KtReturnExpression, Unit>(KtReturnExpression::class) {
 
-    override fun getApplicableRanges(element: KtReturnExpression): List<TextRange> {
-        val whenExpr = element.returnedExpression as? KtWhenExpression ?: return listOf()
-        if (!KtPsiUtil.checkWhenExpressionHasSingleElse(whenExpr)) return listOf()
-        if (whenExpr.entries.any { it.expression == null }) return listOf()
+    override fun getApplicableRanges(returnExpression: KtReturnExpression): List<TextRange> {
+        val whenExpr = returnExpression.returnedExpression as? KtWhenExpression ?: return listOf()
+        if (!KtPsiUtil.checkWhenExpressionHasSingleElse(whenExpr)) return return listOf()
+        if (whenExpr.entries.any { it.expression == null }) return return listOf()
 
-        return ApplicabilityRange.multiple(element) {
-            listOf(it.returnKeyword, whenExpr.whenKeyword)
-        }
+        val returnKeywordRange = returnExpression.returnKeyword.textRangeIn(returnExpression)
+        val whenKeywordRange = whenExpr.whenKeyword.textRangeIn(returnExpression)
+
+        return listOf(returnKeywordRange.union(whenKeywordRange))
     }
 
     override fun invoke(
