@@ -244,11 +244,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
     override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
         require(module is KtSourceModuleByModuleInfo)
         val moduleInfo = module.moduleInfo as ModuleSourceInfo
-        return when (moduleInfo) {
-            is ModuleProductionSourceInfo -> KaSourceModuleKind.PRODUCTION
-            is ModuleTestSourceInfo -> KaSourceModuleKind.TEST
-            else -> error("Unexpected platform: ${moduleInfo.platform}")
-        }
+        return moduleInfo.sourceModuleKind
     }
 
     override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
