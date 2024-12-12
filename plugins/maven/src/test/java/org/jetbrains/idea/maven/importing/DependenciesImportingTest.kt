@@ -1437,7 +1437,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUsingMirrors() = runBlocking {
-    needFixForMaven4()
     repositoryPath = dir.path + "/repo"
     val mirrorPath = pathTransformer.toRemotePath(FileUtil.toSystemIndependentName(dir.path + "/mirror"))
 
