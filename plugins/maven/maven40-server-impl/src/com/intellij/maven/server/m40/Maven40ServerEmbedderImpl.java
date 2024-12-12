@@ -685,27 +685,34 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     DefaultMavenExecutionResult result = new DefaultMavenExecutionResult();
 
+    // https://youtrack.jetbrains.com/issue/IDEA-356125
+    // Temporary solution for Maven 4
+    // There's a race condition between sessionScope.enter and sessionScope.seed
+    // in sessionScope.enter a new ScopeState is added to the beginning of List<ScopeState> values
+    // in sessionScope.seed values[0] is modified
+    // Consider creating a new MavenInvoker / MavenContext / MavenInvokerRequest for every call to the Embedder.
+    synchronized (this) {
+      sessionScope.enter();
+      MavenChainedWorkspaceReader chainedWorkspaceReader =
+        new MavenChainedWorkspaceReader(workspaceReader, ideWorkspaceReader);
+      try (RepositorySystemSession.CloseableSession closeableSession = newCloseableSession(request, chainedWorkspaceReader, irsf)) {
+        MavenSession session = new MavenSession(closeableSession, request, result);
+        session.setSession(defaultSessionFactory.newSession(session));
 
-    sessionScope.enter();
-    MavenChainedWorkspaceReader chainedWorkspaceReader =
-      new MavenChainedWorkspaceReader(workspaceReader, ideWorkspaceReader);
-    try (RepositorySystemSession.CloseableSession closeableSession = newCloseableSession(request, chainedWorkspaceReader, irsf)) {
-      MavenSession session = new MavenSession(closeableSession, request, result);
-      session.setSession(defaultSessionFactory.newSession(session));
+        sessionScope.seed(MavenSession.class, session);
+        sessionScope.seed(Session.class, session.getSession());
+        sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(session.getSession()));
 
-      sessionScope.seed(MavenSession.class, session);
-      sessionScope.seed(Session.class, session.getSession());
-      sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(session.getSession()));
+        legacySupport.setSession(session);
 
-      legacySupport.setSession(session);
+        afterSessionStart(session);
 
-      afterSessionStart(session);
-
-      runnable.accept(session);
-    }
-    finally {
-      legacySupport.setSession(null);
-      sessionScope.exit();
+        runnable.accept(session);
+      }
+      finally {
+        legacySupport.setSession(null);
+        sessionScope.exit();
+      }
     }
 
     return result;
