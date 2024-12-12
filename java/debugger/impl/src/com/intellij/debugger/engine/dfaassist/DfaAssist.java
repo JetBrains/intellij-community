@@ -4,25 +4,15 @@ package com.intellij.debugger.engine.dfaassist;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.jdi.StackFrameProxyEx;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
@@ -30,14 +20,10 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.intellij.xdebugger.impl.dfaassist.DfaAssistBase;
 import com.intellij.xdebugger.impl.dfaassist.DfaResult;
-import com.sun.jdi.*;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
-
-import java.util.Objects;
-import java.util.concurrent.Callable;
 
 import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
 
@@ -53,6 +39,14 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
     project.getMessageBus().connect(this).subscribe(XDebuggerManager.TOPIC, this);
     myManager = manager;
     updateFromSettings();
+  }
+
+  void setComputation(CancellablePromise<?> computation) {
+    myComputation = computation;
+  }
+
+  void displayInlaysInternal(DfaResult result) {
+    displayInlays(result);
   }
 
   private void updateFromSettings() {
@@ -123,30 +117,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
       cleanUp();
       return;
     }
-    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
-    Objects.requireNonNull(newContext.getManagerThread()).schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
-      @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        StackFrameProxyImpl proxy = suspendContext.getFrameProxy();
-        if (proxy == null) {
-          cleanUp();
-          return;
-        }
-        DebuggerDfaRunner.Pupa runnerPupa = makePupa(proxy, pointer);
-        if (runnerPupa == null) {
-          cleanUp();
-          return;
-        }
-        myComputation = ReadAction.nonBlocking(() -> {
-            DebuggerDfaRunner runner = runnerPupa.transform();
-            return runner == null ? DfaResult.EMPTY : runner.computeHints();
-          })
-          .withDocumentsCommitted(myProject)
-          .coalesceBy(DfaAssist.this)
-          .finishOnUiThread(ModalityState.nonModal(), hints -> DfaAssist.this.displayInlays(hints))
-          .submit(AppExecutorUtil.getAppExecutorService());
-      }
-    });
+    DebuggerDfaRunnerUtils.scheduleDfaUpdate(this, newContext, element);
   }
 
   @Override
@@ -170,38 +141,6 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
   protected void cleanUp() {
     cancelComputation();
     super.cleanUp();
-  }
-
-  public static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy,
-                                                            @NotNull SmartPsiElementPointer<PsiElement> pointer) {
-    DebuggerDfaRunner.Pupa pupa = makePupa(proxy, pointer);
-    if (pupa == null) return null;
-    return ReadAction.nonBlocking(pupa::transform).withDocumentsCommitted(pointer.getProject()).executeSynchronously();
-  }
-
-  @Nullable
-  private static DebuggerDfaRunner.Pupa makePupa(@NotNull StackFrameProxyEx proxy, @NotNull SmartPsiElementPointer<PsiElement> pointer) {
-    Callable<DebuggerDfaRunner.Larva> action = () -> {
-      try {
-        return DebuggerDfaRunner.Larva.hatch(proxy, pointer.getElement());
-      }
-      catch (VMDisconnectedException | VMOutOfMemoryException | InternalException |
-             EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
-        return null;
-      }
-    };
-    Project project = pointer.getProject();
-    DebuggerDfaRunner.Larva larva = ReadAction.nonBlocking(action).withDocumentsCommitted(project).executeSynchronously();
-    if (larva == null) return null;
-    DebuggerDfaRunner.Pupa pupa;
-    try {
-      pupa = larva.pupate();
-    }
-    catch (VMDisconnectedException | VMOutOfMemoryException | InternalException |
-           EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
-      return null;
-    }
-    return pupa;
   }
 
   /**
