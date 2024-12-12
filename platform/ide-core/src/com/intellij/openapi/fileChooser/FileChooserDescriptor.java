@@ -273,12 +273,7 @@ public class FileChooserDescriptor implements Cloneable {
     }
 
     if (!file.isDirectory()) {
-      if (isArchive(file)) {
-        if (!myChooseJarContents) {
-          return false;
-        }
-      }
-      else if (!myChooseFiles) {
+      if (!myChooseFiles && !(myChooseJarContents && isArchive(file))) {
         return false;
       }
       if (!matchesFilters(file)) {
@@ -328,7 +323,7 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * Called upon <em>OK</em> action before closing dialog (after closing for native choosers).
-   * Override to customize validation of user input.
+   * Override to customize the validation of user input.
    *
    * @param files selected files to be checked
    * @throws Exception if selected files cannot be accepted, the exception message will be shown in the UI.
