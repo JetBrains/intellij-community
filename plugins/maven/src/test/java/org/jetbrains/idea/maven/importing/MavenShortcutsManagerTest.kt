@@ -20,7 +20,6 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
 
   override fun setUp() {
     super.setUp()
-    needFixForMaven4()
     myShortcutsManager = MavenShortcutsManager.getInstance(project)
     myShortcutsManager!!.doInit(project)
     initProjectsManager(true)
@@ -123,7 +122,6 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testActionWhenSeveralSimilarPlugins() = runBlocking {
-    needFixForMaven4()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
