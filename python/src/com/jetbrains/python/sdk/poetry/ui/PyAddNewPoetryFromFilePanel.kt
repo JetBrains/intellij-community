@@ -9,6 +9,8 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.validatePoetryExecutable
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.nio.file.Path
 import javax.swing.JPanel
@@ -35,7 +37,9 @@ class PyAddNewPoetryFromFilePanel(private val module: Module) : JPanel() {
     add(formPanel, BorderLayout.NORTH)
   }
 
-  fun validateAll(): List<ValidationInfo> = listOfNotNull(validatePoetryExecutable(Path.of(poetryPathField.text)))
+  fun validateAll(): List<ValidationInfo> = runWithModalBlockingOrInBackground(module.project, PyBundle.message("python.sdk.validating.environment")) {
+    listOfNotNull(validatePoetryExecutable(Path.of(poetryPathField.text)))
+  }
 
   data class Data(val poetryPath: Path)
 }
