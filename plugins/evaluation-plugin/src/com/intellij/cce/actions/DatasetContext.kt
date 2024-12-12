@@ -18,7 +18,7 @@ class DatasetContext(
   private val actionWorkspace: EvaluationWorkspace?,
   internal val configPath: String?,
 ) {
-  private val datasetDir = Paths.get("ml-eval-datasets")
+  private val datasetDir = Paths.get("bin/ml-eval-datasets")
 
   /*
     EvaluationDataset should be extracted into 3 parts - steps, dataset creation and dataset.
