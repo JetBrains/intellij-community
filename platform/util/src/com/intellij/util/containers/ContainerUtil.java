@@ -1441,6 +1441,24 @@ public final class ContainerUtil {
       public int size() {
         return size;
       }
+
+      /**
+       * Returns an iterator over the <em>actual elements</em> in this list based on the underlying lists.
+       *
+       * @implNote
+       * This implementation replaces the straightforward implementation based on index operations.
+       * Those fail badly, if the underlying lists change since creation of this concatenated list:
+       * either by an {@link IndexOutOfBoundsException} if any list shrinks unexpectedly,
+       * or by missing all elements added later on.
+       *
+       * @return Returns an iterator over the <em>actual elements</em> of both lists.
+       */
+      @Override
+      public Iterator<T> iterator() {
+        final Iterable<? extends T> it1 = list1;
+        final Iterable<? extends T> it2 = list2;
+        return concat(it1, it2).iterator();
+      }
     };
   }
 
