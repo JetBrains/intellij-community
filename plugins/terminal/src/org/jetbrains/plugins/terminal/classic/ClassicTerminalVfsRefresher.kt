@@ -12,11 +12,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.util.addModelListener
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class ClassicTerminalVfsRefresher(private val widget: ShellTerminalWidget, private val coroutineScope: CoroutineScope) {
+internal class ClassicTerminalVfsRefresher(private val widget: ShellTerminalWidget) {
   private val currentWatcherRef: AtomicReference<CommandRunWatcher?> = AtomicReference()
 
   @Volatile
@@ -50,7 +51,7 @@ internal class ClassicTerminalVfsRefresher(private val widget: ShellTerminalWidg
   private inner class CommandRunWatcher(private val isPromptSame: () -> Boolean): Disposable {
     private val changes: MutableSharedFlow<Unit> = MutableSharedFlow(0, 1, BufferOverflow.DROP_OLDEST)
 
-    private val job: Job = coroutineScope.launch(Dispatchers.Default) {
+    private val job: Job = terminalProjectScope(widget.project).launch(Dispatchers.Default) {
       changes.collectLatest {
         delay(VFS_REFRESH_DELAY_MS)
         refreshVfsIfSamePromptIsShown()

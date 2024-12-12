@@ -36,8 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.jetbrains.plugins.terminal.util.TerminalCoroutineKt.terminalProjectScope;
-
 public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
@@ -65,7 +63,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
 
-    ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this, terminalProjectScope(project));
+    ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this);
     getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
       handleAnyKeyPressed();
