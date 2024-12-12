@@ -75,6 +75,7 @@
 
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
     <projectPathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
+    <buildProcess.parametersProvider implementation="org.jetbrains.idea.maven.utils.MavenBuildProcessParameterProvider"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"
               fileNames="maven.config"/>
