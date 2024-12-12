@@ -34,10 +34,11 @@ class InEditorGeneratedCodeIntegrator : GeneratedCodeIntegrator {
 class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeIntegrator) : ApiCallExtractor {
   override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
     val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY)!!
-    val method = extractMethodFromGeneratedSnippet(project, code, methodName) ?: return emptyList()
+    val psiFileWithGeneratedCode = writeAction { createPsiFile(code, project, "dummy1.java") }
+    val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return emptyList()
 
     val integratedCode = generatedCodeIntegrator.integrate(project, method)
-    val psiFileWithIntegratedCode = writeAction { createPsiFile(integratedCode, project) }
+    val psiFileWithIntegratedCode = writeAction { createPsiFile(integratedCode, project, "dummy2.java") }
 
     return smartReadActionBlocking(project) {
       val method = psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }
@@ -46,8 +47,19 @@ class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeInt
     }
   }
 
-  private suspend fun extractMethodFromGeneratedSnippet(project: Project, code: String, methodName: String): String? {
-    val psiFileWithGeneratedCode = writeAction { createPsiFile(code, project) }
+  private fun createPsiFile(code: String, project: Project, name: String): PsiFile {
+    return PsiFileFactory.getInstance(project).createFileFromText(
+      name,
+      PlatformLanguage.findLanguageByID("JAVA")!!,
+      code,
+    )
+  }
+
+  private suspend fun extractMethodFromGeneratedSnippet(
+    project: Project,
+    psiFileWithGeneratedCode: PsiFile,
+    methodName: String,
+  ): String? {
     return smartReadActionBlocking(project) { psiFileWithGeneratedCode.findMethodsByName(methodName).firstOrNull()?.text }
   }
 }
@@ -59,14 +71,6 @@ class JavaApiCallExtractorProvider : ApiCallExtractorProvider {
   }
 }
 
-private fun createPsiFile(code: String, project: Project): PsiFile {
-  val platformLangId = "JAVA"
-  return PsiFileFactory.getInstance(project).createFileFromText(
-    "dummy.java",
-    PlatformLanguage.findLanguageByID(platformLangId)!!,
-    code,
-  )
-}
 
 private fun PsiFile.findMethodsByName(methodName: String): List<PsiMethod> {
   val foundMethods = mutableListOf<PsiMethod>()
