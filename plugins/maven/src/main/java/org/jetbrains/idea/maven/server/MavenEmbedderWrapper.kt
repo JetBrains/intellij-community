@@ -27,6 +27,7 @@ import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.Throws
 
 // FIXME: still some missing transforms?
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
@@ -177,6 +178,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     artifacts: List<MavenArtifactInfo>,
     remoteRepositories: List<MavenRemoteRepository>,
   ): MavenArtifactResolveResult {
+    if (artifacts.isEmpty()) return MavenArtifactResolveResult(emptyList(), null)
     return runBlockingMaybeCancellable {
       getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
     }.transform()
@@ -186,6 +188,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     artifacts: List<MavenArtifactInfo>,
     remoteRepositories: List<MavenRemoteRepository>,
   ): MavenArtifactResolveResult {
+    if (artifacts.isEmpty()) return MavenArtifactResolveResult(emptyList(), null)
     return getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken).transform()
   }
 

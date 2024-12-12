@@ -1238,6 +1238,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
     MavenToken token) {
     MavenServerUtil.checkToken(token);
+    if (artifacts.isEmpty()) return new MavenArtifactResolveResult(new ArrayList<>(), null);
     try {
       return resolveArtifactsTransitively(artifacts, remoteRepositories);
     }
