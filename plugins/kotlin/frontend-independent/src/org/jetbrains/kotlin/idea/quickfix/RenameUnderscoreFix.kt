@@ -23,6 +23,6 @@ class RenameUnderscoreFix(element: KtDeclaration) : PsiUpdateModCommandAction<Kt
         updater: ModPsiUpdater
     ) {
         if (element !is PsiNameIdentifierOwner) return
-        updater.rename(element, emptyList<String>())
+        updater.rename(element, listOfNotNull(element.nameIdentifier?.text))
     }
 }
