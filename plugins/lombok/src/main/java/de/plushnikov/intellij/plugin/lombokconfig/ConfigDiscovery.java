@@ -160,7 +160,7 @@ public class ConfigDiscovery {
 
     Collections.reverse(properties);
 
-    Set<String> result = new HashSet<>();
+    Set<String> result = new LinkedHashSet<>();
 
     for (String configProperty : properties) {
       if (StringUtil.isNotEmpty(configProperty)) {
