@@ -310,6 +310,26 @@ public class FileChooserDescriptor implements Cloneable {
     return myChooseFiles || myChooseJarContents && isArchive(file);
   }
 
+  @ApiStatus.Internal
+  @SuppressWarnings("MethodMayBeStatic")
+  public final boolean isHidden(@NotNull VirtualFile file) {
+    return file.is(VFileProperty.HIDDEN) || file.getName().startsWith(".") || FileTypeManager.getInstance().isFileIgnored(file);
+  }
+
+  @ApiStatus.Internal
+  public final boolean isSelectable(@NotNull VirtualFile file) {
+    if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
+      return false;
+    }
+    if (file.isDirectory()) {
+      return myChooseFolders;
+    }
+    if (!matchesFilters(file)) {
+      return false;
+    }
+    return myChooseFiles || myChooseJarContents && isArchive(file);
+  }
+
   private boolean matchesFilters(VirtualFile file) {
     return
       (myExtensionFilter == null || ContainerUtil.exists(myExtensionFilter.second, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext))) &&
