@@ -4,11 +4,8 @@ package com.intellij.debugger.engine.dfaassist
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider
-import com.intellij.codeInspection.dataFlow.lang.ir.Instruction
-import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Larva
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Pupa
@@ -19,6 +16,9 @@ import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
@@ -26,69 +26,64 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.impl.dfaassist.DfaResult
 import com.sun.jdi.*
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.function.Consumer
+import java.util.concurrent.ExecutionException
 
 
-@RequiresReadLock
 @Throws(EvaluateException::class)
-private fun hatch(proxy: StackFrameProxyEx, element: PsiElement?): Larva? {
-  if (element == null || !element.isValid()) return null
-  val project = element.getProject()
-  if (isDumb(project)) return null
+private suspend fun hatch(proxy: StackFrameProxyEx, pointer: SmartPsiElementPointer<PsiElement?>): Larva? {
+  val project = pointer.project
+  val (e, provider) = constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+    val element = pointer.element ?: return@constrainedReadAction null
+    if (!element.isValid) return@constrainedReadAction null
+    if (isDumb(project)) return@constrainedReadAction null
+    val provider = DfaAssistProvider.EP_NAME.forLanguage(element.getLanguage()) ?: return@constrainedReadAction null
+    element to provider
+  } ?: return null
 
-  val provider = DfaAssistProvider.EP_NAME.forLanguage(element.getLanguage()) ?: return null
   try {
-    if (!provider.locationMatches(element, proxy.location())) return null
+    val match = syncReadAction { provider.locationMatches(e, proxy.location()) }
+    if (!match) return null
   }
   catch (iea: IllegalArgumentException) {
     throw EvaluateException(iea.message, iea)
   }
-  val anchor = provider.getAnchor(element) ?: return null
-  val body = provider.getCodeBlock(anchor) ?: return null
-  val factory = DfaValueFactory(project)
-  val flow = DataFlowIRProvider.forElement(body, factory) ?: return null
-  val modificationStamp = PsiModificationTracker.getInstance(project).getModificationCount()
-  val offset = flow.getStartOffset(anchor).getInstructionOffset()
-  if (offset < 0) return null
-  val jdiToDfa = createPreliminaryJdiMap(provider, anchor, flow, proxy)
+
+
+  val (anchor, flow, factory, body, modificationStamp, offset, dfaVariableValues) =
+    constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+      val element = pointer.element ?: return@constrainedReadAction null
+      if (!element.isValid) return@constrainedReadAction null
+      val anchor = provider.getAnchor(element) ?: return@constrainedReadAction null
+      val body = provider.getCodeBlock(anchor) ?: return@constrainedReadAction null
+      val factory = DfaValueFactory(project)
+      val flow = DataFlowIRProvider.forElement(body, factory) ?: return@constrainedReadAction null
+      val modificationStamp = PsiModificationTracker.getInstance(project).getModificationCount()
+      val offset = flow.getStartOffset(anchor).getInstructionOffset()
+      if (offset < 0) return@constrainedReadAction null
+      val descriptors = flow.instructions
+        .flatMap { it.getRequiredDescriptors(factory) }
+        .toSet()
+      val dfaVariableValues = factory.values.toList().asSequence().flatMap { dfaValue ->
+        descriptors.asSequence().map { it.createValue(factory, dfaValue) }.plus(dfaValue)
+      }.filterIsInstance<DfaVariableValue>().distinct().toList()
+
+      LarvaData(anchor, flow, factory, body, modificationStamp, offset, dfaVariableValues)
+    } ?: return null
+  val valueToVariableMapping = HashMap<Value, MutableList<DfaVariableValue>>()
+  for (dfaVar in dfaVariableValues) {
+    val jdiValue = resolveJdiValue(provider, anchor, proxy, dfaVar) ?: continue
+    valueToVariableMapping.computeIfAbsent(jdiValue) { v -> ArrayList() }.add(dfaVar)
+  }
+  val jdiToDfa = valueToVariableMapping
   if (jdiToDfa.isEmpty()) return null
   return Larva(project, anchor, body, flow, factory, modificationStamp, provider, jdiToDfa, proxy, offset)
 }
 
 @Throws(EvaluateException::class)
-private fun createPreliminaryJdiMap(
-  provider: DfaAssistProvider,
-  anchor: PsiElement,
-  flow: ControlFlow,
-  proxy: StackFrameProxyEx,
-): MutableMap<Value, MutableList<DfaVariableValue?>> {
-  val factory = flow.factory
-  val descriptors = StreamEx.of<Instruction?>(*flow.instructions)
-    .flatCollection<VariableDescriptor?> { it.getRequiredDescriptors(factory) }
-    .toSet()
-  val myMap = HashMap<Value, MutableList<DfaVariableValue?>>()
-  val stream = StreamEx.of<DfaValue?>(*factory.values.toTypedArray())
-    .flatMap<DfaValue> { dfaValue ->
-      StreamEx.of<VariableDescriptor?>(descriptors).map<DfaValue> { desc ->
-        desc.createValue(factory, dfaValue)
-      }.append(dfaValue)
-    }
-    .select<DfaVariableValue?>(DfaVariableValue::class.java)
-    .distinct()
-  for (dfaVar in stream) {
-    val jdiValue = resolveJdiValue(provider, anchor, proxy, dfaVar) ?: continue
-    myMap.computeIfAbsent(jdiValue) { v -> ArrayList<DfaVariableValue?>() }.add(dfaVar)
-  }
-  return myMap
-}
-
-@Throws(EvaluateException::class)
-private fun resolveJdiValue(
+private suspend fun resolveJdiValue(
   provider: DfaAssistProvider,
   anchor: PsiElement,
   proxy: StackFrameProxyEx,
@@ -100,35 +95,33 @@ private fun resolveJdiValue(
     // Assume that assertions are enabled if we cannot fetch the status
     return location.virtualMachine().mirrorOf(status == ThreeState.NO)
   }
-  return provider.getJdiValueForDfaVariable(proxy, variableValue, anchor)
+  return syncReadAction { provider.getJdiValueForDfaVariable(proxy, variableValue, anchor) }
 }
 
-private fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementPointer<PsiElement?>): Pupa? {
-  val project = pointer.getProject()
-  val larva = ReadAction.nonBlocking<Larva?> {
-    try {
-      hatch(proxy, pointer.getElement())
-    }
-    catch (_: VMDisconnectedException) {
-      null
-    }
-    catch (_: VMOutOfMemoryException) {
-      null
-    }
-    catch (_: InternalException) {
-      null
-    }
-    catch (_: EvaluateException) {
-      null
-    }
-    catch (_: InconsistentDebugInfoException) {
-      null
-    }
-    catch (_: InvalidStackFrameException) {
-      null
-    }
-  }.withDocumentsCommitted(project).executeSynchronously() ?: return null
+private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementPointer<PsiElement?>): Pupa? {
+  val larva = try {
+    hatch(proxy, pointer)
+  }
+  catch (_: VMDisconnectedException) {
+    null
+  }
+  catch (_: VMOutOfMemoryException) {
+    null
+  }
+  catch (_: InternalException) {
+    null
+  }
+  catch (_: EvaluateException) {
+    null
+  }
+  catch (_: InconsistentDebugInfoException) {
+    null
+  }
+  catch (_: InvalidStackFrameException) {
+    null
+  }
 
+  if (larva == null) return null
   return try {
     larva.pupate()
   }
@@ -153,20 +146,20 @@ private fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementPointer<P
 }
 
 @VisibleForTesting
-fun createDfaRunner(
+suspend fun createDfaRunner(
   proxy: StackFrameProxyEx,
   pointer: SmartPsiElementPointer<PsiElement?>,
 ): DebuggerDfaRunner? {
   val pupa = makePupa(proxy, pointer) ?: return null
-  return ReadAction.nonBlocking<DebuggerDfaRunner?> { pupa.transform() }
-    .withDocumentsCommitted(pointer.getProject())
-    .executeSynchronously()
+  return constrainedReadAction(ReadConstraint.withDocumentsCommitted(pointer.getProject())) {
+    pupa.transform()
+  }
 }
 
 internal fun scheduleDfaUpdate(assist: DfaAssist, newContext: DebuggerContextImpl, element: PsiElement) {
   val pointer = SmartPointerManager.createPointer<PsiElement?>(element)
   newContext.getManagerThread()!!.schedule(object : SuspendContextCommandImpl(newContext.suspendContext) {
-    override fun contextAction(suspendContext: SuspendContextImpl) {
+    override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) {
       val proxy = suspendContext.getFrameProxy()
       if (proxy == null) {
         assist.cleanUp()
@@ -177,14 +170,35 @@ internal fun scheduleDfaUpdate(assist: DfaAssist, newContext: DebuggerContextImp
         assist.cleanUp()
         return
       }
-      val computation = ReadAction.nonBlocking<DfaResult> {
-        runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
+      blockingContext {
+        val computation = ReadAction.nonBlocking<DfaResult> {
+          runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
+        }
+          .withDocumentsCommitted(suspendContext.debugProcess.project)
+          .coalesceBy(assist)
+          .finishOnUiThread(ModalityState.nonModal()) { hints -> assist.displayInlaysInternal(hints) }
+          .submit(AppExecutorUtil.getAppExecutorService())
+        assist.setComputation(computation)
       }
-        .withDocumentsCommitted(suspendContext.debugProcess.project)
-        .coalesceBy(assist)
-        .finishOnUiThread(ModalityState.nonModal()) { hints -> assist.displayInlaysInternal(hints) }
-        .submit(AppExecutorUtil.getAppExecutorService())
-      assist.setComputation(computation)
     }
   })
+}
+
+private data class LarvaData(
+  val anchor: PsiElement,
+  val flow: ControlFlow,
+  val factory: DfaValueFactory,
+  val body: PsiElement,
+  val modificationStamp: Long,
+  val offset: Int,
+  val dfaVariableValues: List<DfaVariableValue>,
+)
+
+private suspend fun <T> syncReadAction(action: () -> T): T = blockingContext {
+  try {
+    ReadAction.nonBlocking(action).executeSynchronously()
+  }
+  catch (e: ExecutionException) {
+    throw e.cause ?: e
+  }
 }
