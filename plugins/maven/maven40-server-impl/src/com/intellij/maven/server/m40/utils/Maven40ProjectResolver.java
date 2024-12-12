@@ -15,11 +15,13 @@ import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
+import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -458,8 +460,22 @@ public class Maven40ProjectResolver {
       cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
     }
     mavenSession.setProjectMap(mavenProjectMap);
-    Maven40WorkspaceMapReader reader = (Maven40WorkspaceMapReader)session.getWorkspaceReader();
-    reader.setCacheModelMap(cacheMavenModelMap);
+    Maven40WorkspaceMapReader maven40WorkspaceMapReader = null;
+    WorkspaceReader reader = session.getWorkspaceReader();
+    if (reader instanceof Maven40WorkspaceMapReader) {
+      maven40WorkspaceMapReader = (Maven40WorkspaceMapReader)reader;
+    }
+    else if (reader instanceof MavenChainedWorkspaceReader) {
+      for (WorkspaceReader chainedReader : ((MavenChainedWorkspaceReader)reader).getReaders()) {
+        if (chainedReader instanceof Maven40WorkspaceMapReader) {
+          maven40WorkspaceMapReader = (Maven40WorkspaceMapReader)chainedReader;
+          break;
+        }
+      }
+    }
+    if (null != maven40WorkspaceMapReader) {
+      maven40WorkspaceMapReader.setCacheModelMap(cacheMavenModelMap);
+    }
   }
 
   /**

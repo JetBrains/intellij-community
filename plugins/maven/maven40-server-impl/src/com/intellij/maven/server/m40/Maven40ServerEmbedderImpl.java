@@ -30,7 +30,6 @@ import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenInvoker;
 import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
-import org.apache.maven.internal.impl.InternalSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
@@ -45,6 +44,7 @@ import org.apache.maven.plugin.PluginResolutionException;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.apache.maven.resolver.RepositorySystemSessionFactory;
 import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
@@ -56,6 +56,7 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
@@ -529,11 +530,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   private <T> T getComponentIfExists(Class<T> clazz) {
-    return myContainer.lookup(clazz);
+    return myContainer.lookupOptional(clazz).orElse(null);
   }
 
   private <T> T getComponentIfExists(Class<T> clazz, String roleHint) {
-    return myContainer.lookup(clazz, roleHint);
+    return myContainer.lookupOptional(clazz, roleHint).orElse(null);
   }
 
   private static MavenId extractIdFromException(Throwable exception) {
@@ -663,48 +664,47 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return new ArrayList<>(result);
   }
 
+  /**
+   * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+   */
   public MavenExecutionResult executeWithMavenSession(@NotNull MavenExecutionRequest request,
                                                       @NotNull MavenWorkspaceMap workspaceMap,
                                                       @Nullable MavenServerConsoleIndicatorImpl indicator,
                                                       Consumer<MavenSession> runnable) {
-    DefaultMavenExecutionResult result = new DefaultMavenExecutionResult();
-    myImporterSpy.setIndicator(indicator);
-
-    SessionScope sessionScope = getComponent(SessionScope.class);
-    sessionScope.enter();
-    LegacySupport legacySupport = getComponent(LegacySupport.class);
-    MavenSession oldSession = legacySupport.getSession();
-
-
-    RepositorySystemSessionFactory coreFactory = getCoreSystemSessionFactory();
-    IdeaRepositorySystemSessionFactory sessionFactory = new IdeaRepositorySystemSessionFactory(
-      coreFactory,
-      workspaceMap, indicator
+    RepositorySystemSessionFactory rsf = getComponent(RepositorySystemSessionFactory.class);
+    IdeaRepositorySystemSessionFactory irsf = new IdeaRepositorySystemSessionFactory(
+      rsf,
+      workspaceMap,
+      indicator
     );
+    WorkspaceReader workspaceReader = new Maven40WorkspaceMapReader(workspaceMap);
+    WorkspaceReader ideWorkspaceReader = getComponentIfExists(WorkspaceReader.class, "ide");
+    SessionScope sessionScope = getComponent(SessionScope.class);
+    DefaultSessionFactory defaultSessionFactory = getComponent(DefaultSessionFactory.class);
+    LegacySupport legacySupport = getComponent(LegacySupport.class);
 
-    DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
-    try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionFactory.newRepositorySessionBuilder(request).build()) {
-      MavenSession mavenSession = new MavenSession(repositorySystemSession, request, result);
-      InternalSession internalSession = factory.newSession(mavenSession);
-
-      //noinspection SSBasedInspection
-      internalSession.withRemoteRepositories(request.getRemoteRepositories().stream().map(
-        r -> internalSession.getRemoteRepository(RepositoryUtils.toRepo(r))
-      ).collect(Collectors.toList()));
-
-      mavenSession.setSession(internalSession);
-      sessionScope.seed(MavenSession.class, mavenSession);
-      sessionScope.seed(Session.class, mavenSession.getSession());
-      sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(mavenSession.getSession()));
-      sessionScope.seed(InternalSession.class, internalSession);
+    DefaultMavenExecutionResult result = new DefaultMavenExecutionResult();
 
 
-      legacySupport.setSession(mavenSession);
-      notifyAfterSessionStart(mavenSession);
-      runnable.accept(mavenSession);
+    sessionScope.enter();
+    MavenChainedWorkspaceReader chainedWorkspaceReader =
+      new MavenChainedWorkspaceReader(workspaceReader, ideWorkspaceReader);
+    try (RepositorySystemSession.CloseableSession closeableSession = newCloseableSession(request, chainedWorkspaceReader, irsf)) {
+      MavenSession session = new MavenSession(closeableSession, request, result);
+      session.setSession(defaultSessionFactory.newSession(session));
+
+      sessionScope.seed(MavenSession.class, session);
+      sessionScope.seed(Session.class, session.getSession());
+      sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(session.getSession()));
+
+      legacySupport.setSession(session);
+
+      afterSessionStart(session);
+
+      runnable.accept(session);
     }
     finally {
-      legacySupport.setSession(oldSession);
+      legacySupport.setSession(null);
       sessionScope.exit();
     }
 
@@ -727,8 +727,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
+  private static RepositorySystemSession.CloseableSession newCloseableSession(MavenExecutionRequest request,
+                                                                              WorkspaceReader workspaceReader,
+                                                                              RepositorySystemSessionFactory repositorySessionFactory) {
+    return repositorySessionFactory
+      .newRepositorySessionBuilder(request)
+      .setWorkspaceReader(workspaceReader)
+      .build();
+  }
 
-  private void notifyAfterSessionStart(MavenSession mavenSession) {
+  private void afterSessionStart(MavenSession mavenSession) {
     try {
       for (AbstractMavenLifecycleParticipant listener : getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class)) {
         listener.afterSessionStart(mavenSession);
