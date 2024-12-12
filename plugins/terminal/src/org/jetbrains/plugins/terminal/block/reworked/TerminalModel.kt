@@ -33,9 +33,8 @@ internal class TerminalModel(
 ) {
   private val document = editor.document
 
-  private val colorPalette: TerminalColorPalette = BlockTerminalColorPalette()
-  private val highlightings: MutableList<HighlightingInfo> = ArrayDeque()
-  private var highlightingsSnapshot: TerminalOutputHighlightingsSnapshot? = null
+  @VisibleForTesting
+  val highlightingsModel = HighlightingsModel()
 
   private var trimmedCharsCount: Int = 0
   private var trimmedLinesCount: Int = 0
@@ -47,7 +46,7 @@ internal class TerminalModel(
   val terminalState: StateFlow<TerminalState> = mutableTerminalStateFlow.asStateFlow()
 
   init {
-    editor.highlighter = TerminalTextHighlighter { getHighlightingsSnapshot() }
+    editor.highlighter = TerminalTextHighlighter { highlightingsModel.getHighlightingsSnapshot() }
   }
 
   @RequiresEdt
@@ -100,43 +99,10 @@ internal class TerminalModel(
     val replaceStartOffset = document.getLineStartOffset(editorLineIndex)
     document.replaceString(replaceStartOffset, document.textLength, text)
 
-    updateHighlightings(replaceStartOffset, styles)
+    highlightingsModel.removeAfter(replaceStartOffset)
+    highlightingsModel.addHighlightings(replaceStartOffset, styles)
 
     trimToSize()
-  }
-
-  @RequiresEdt
-  private fun updateHighlightings(editorStartOffset: Int, styles: List<StyleRange>) {
-    val absoluteStartOffset = editorStartOffset + trimmedCharsCount
-
-    // Remove previous highlightings that are overlapped by the new highlightings.
-    val highlightingIndex = highlightings.binarySearch { it.endOffset.compareTo(absoluteStartOffset) }
-    val removeFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex + 1
-    for (ind in (highlightings.size - 1) downTo removeFromIndex) {
-      highlightings.removeAt(ind)
-    }
-
-    val replaceHighlightings = styles.map {
-      HighlightingInfo(absoluteStartOffset + it.startOffset, absoluteStartOffset + it.endOffset, TextStyleAdapter(it.style, colorPalette))
-    }
-    highlightings.addAll(replaceHighlightings)
-
-    highlightingsSnapshot = null
-  }
-
-  @VisibleForTesting
-  @RequiresEdt
-  fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
-    if (highlightingsSnapshot != null) {
-      return highlightingsSnapshot!!
-    }
-
-    val editorRelativeHighlightings = highlightings.map {
-      HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, it.textAttributesProvider)
-    }
-    val snapshot = TerminalOutputHighlightingsSnapshot(document, editorRelativeHighlightings)
-    highlightingsSnapshot = snapshot
-    return snapshot
   }
 
   private fun trimToSize() {
@@ -153,15 +119,79 @@ internal class TerminalModel(
     val removeUntilOffset = textLength - maxLength
     document.deleteString(0, removeUntilOffset)
 
-    val absoluteRemoveUntilOffset = removeUntilOffset + trimmedCharsCount
-    val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteRemoveUntilOffset) }
-    val removeUntilHighlightingIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
-    repeat(removeUntilHighlightingIndex) {
-      highlightings.removeAt(0)
-    }
-    highlightingsSnapshot = null
+    highlightingsModel.removeBefore(removeUntilOffset)
 
     trimmedCharsCount += removeUntilOffset
     trimmedLinesCount += lineCountBefore - document.lineCount
+  }
+
+  @VisibleForTesting
+  inner class HighlightingsModel {
+    private val colorPalette: TerminalColorPalette = BlockTerminalColorPalette()
+
+    /**
+     * Contains sorted ranges of the text that are highlighted differently than default.
+     * Indexes of the ranges are absolute to support trimming the start of the list
+     * without reassigning indexes for the remaining ranges: [removeBefore].
+     */
+    private val highlightings: MutableList<HighlightingInfo> = ArrayDeque()
+
+    /**
+     * Contains sorted ranges of the highlightings that cover all document length.
+     * Indexes of the ranges are editor-relative, so the first range always starts with 0.
+     */
+    private var highlightingsSnapshot: TerminalOutputHighlightingsSnapshot? = null
+
+    @RequiresEdt
+    fun getHighlightingsSnapshot(): TerminalOutputHighlightingsSnapshot {
+      if (highlightingsSnapshot != null) {
+        return highlightingsSnapshot!!
+      }
+
+      val editorRelativeHighlightings = highlightings.map {
+        HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, it.textAttributesProvider)
+      }
+      val snapshot = TerminalOutputHighlightingsSnapshot(document, editorRelativeHighlightings)
+      highlightingsSnapshot = snapshot
+      return snapshot
+    }
+
+    @RequiresEdt
+    fun addHighlightings(editorOffset: Int, styles: List<StyleRange>) {
+      val absoluteOffset = editorOffset + trimmedCharsCount
+
+      check(highlightings.isEmpty() || highlightings.last().endOffset <= absoluteOffset) { "New highlightings overlap with existing" }
+
+      val newHighlightings = styles.map {
+        HighlightingInfo(absoluteOffset + it.startOffset, absoluteOffset + it.endOffset, TextStyleAdapter(it.style, colorPalette))
+      }
+      highlightings.addAll(newHighlightings)
+
+      highlightingsSnapshot = null
+    }
+
+    @RequiresEdt
+    fun removeAfter(editorOffset: Int) {
+      val absoluteOffset = editorOffset + trimmedCharsCount
+      val highlightingIndex = highlightings.binarySearch { it.endOffset.compareTo(absoluteOffset) }
+      val removeFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex + 1
+      for (ind in (highlightings.size - 1) downTo removeFromIndex) {
+        highlightings.removeAt(ind)
+      }
+
+      highlightingsSnapshot = null
+    }
+
+    @RequiresEdt
+    fun removeBefore(editorOffset: Int) {
+      val absoluteOffset = editorOffset + trimmedCharsCount
+      val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteOffset) }
+      val removeUntilHighlightingIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
+      repeat(removeUntilHighlightingIndex) {
+        highlightings.removeAt(0)
+      }
+
+      highlightingsSnapshot = null
+    }
   }
 }

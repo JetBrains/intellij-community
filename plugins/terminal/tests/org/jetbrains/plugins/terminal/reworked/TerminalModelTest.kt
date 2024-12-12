@@ -71,7 +71,7 @@ internal class TerminalModelTest : BasePlatformTestCase() {
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
 
     assertEquals(expectedText, model.editor.document.text)
-    assertEquals(expectedHighlightingsSnapshot, model.getHighlightingsSnapshot())
+    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
   }
 
   @Test
@@ -102,7 +102,7 @@ internal class TerminalModelTest : BasePlatformTestCase() {
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
 
     assertEquals(expectedText, model.editor.document.text)
-    assertEquals(expectedHighlightingsSnapshot, model.getHighlightingsSnapshot())
+    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
   }
 
   @Test
@@ -140,7 +140,7 @@ internal class TerminalModelTest : BasePlatformTestCase() {
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
 
     assertEquals(expectedText, model.editor.document.text)
-    assertEquals(expectedHighlightingsSnapshot, model.getHighlightingsSnapshot())
+    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
   }
 
   private fun createTerminalModel(maxLength: Int = 0): TerminalModel {
