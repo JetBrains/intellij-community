@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransformations
 
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -41,12 +43,6 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
         element.replace(newIfExpression)
     }
 
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.return.with.if.expression")
-
-    context(KaSession)
-    override fun prepareContext(element: KtReturnExpression) {
-    }
-
     override fun getApplicableRanges(returnExpression: KtReturnExpression): List<TextRange> {
         val ifExpression = returnExpression.returnedExpression as? KtIfExpression ?: return emptyList()
         if (ifExpression.then == null) return emptyList()
@@ -60,4 +56,13 @@ internal class UnfoldReturnToIfIntention : KotlinApplicableModCommandAction<KtRe
     }
 
     override fun isApplicableByPsi(element: KtReturnExpression): Boolean = element.returnedExpression is KtIfExpression
+
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.return.with.if.expression")
+
+    override fun getPresentation(context: ActionContext, element: KtReturnExpression): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
+
+    context(KaSession)
+    override fun prepareContext(element: KtReturnExpression) {
+    }
 }

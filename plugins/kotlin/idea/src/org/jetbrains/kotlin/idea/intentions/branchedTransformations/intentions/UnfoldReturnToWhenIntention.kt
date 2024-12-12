@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -22,8 +24,8 @@ class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<KtReturnExp
 
     override fun getApplicableRanges(element: KtReturnExpression): List<TextRange> {
         val whenExpr = element.returnedExpression as? KtWhenExpression ?: return listOf()
-        if (!KtPsiUtil.checkWhenExpressionHasSingleElse(whenExpr)) return return listOf()
-        if (whenExpr.entries.any { it.expression == null }) return return listOf()
+        if (!KtPsiUtil.checkWhenExpressionHasSingleElse(whenExpr)) return listOf()
+        if (whenExpr.entries.any { it.expression == null }) return listOf()
 
         return ApplicabilityRange.multiple(element) {
             listOf(it.returnKeyword, whenExpr.whenKeyword)
@@ -53,6 +55,9 @@ class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<KtReturnExp
     override fun getFamilyName(): @IntentionFamilyName String {
         return KotlinBundle.message("replace.return.with.when.expression")
     }
+
+    override fun getPresentation(context: ActionContext, element: KtReturnExpression): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     context(KaSession)
     override fun prepareContext(element: KtReturnExpression) {
