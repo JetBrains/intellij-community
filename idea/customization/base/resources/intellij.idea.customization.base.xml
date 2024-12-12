@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
@@ -35,8 +36,10 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
   </extensions>
 
-  <actions>
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="ProjectViewToolbar" anchor="first"/>
+    </action>
 
     <group id="OpenProjectGroup">
       <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true" searchable="false"/>
