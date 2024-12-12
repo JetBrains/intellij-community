@@ -16,12 +16,6 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-jvm_resources(
-  name = "kotlin-code-insight-intentions-shared_resources_1",
-  files = glob(["resources-en/**/*"]),
-  strip_prefix = "resources-en"
-)
-
 jvm_library(
   name = "kotlin-code-insight-intentions-shared",
   module_name = "kotlin.code-insight.intentions.shared",
@@ -57,8 +51,7 @@ jvm_library(
     "//platform/core-ui",
   ],
   runtime_deps = [
-    ":kotlin-code-insight-intentions-shared_resources",
-    ":kotlin-code-insight-intentions-shared_resources_1",
+    ":kotlin-code-insight-intentions-shared_resources"
   ]
 )
 ### auto-generated section `build kotlin.code-insight.intentions.shared` end
