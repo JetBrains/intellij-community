@@ -311,7 +311,7 @@ public final class PersistentHashMapValueStorage {
   private static final ThreadLocalCachedByteArray myBuffer = new ThreadLocalCachedByteArray();
   private static final int ourBufferLength = 1024;
 
-  @Contract(mutates = "param1")
+  @Contract(mutates = "this,param1")
   private long compactValuesWithoutChunks(@NotNull List<CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
@@ -376,7 +376,7 @@ public final class PersistentHashMapValueStorage {
     return fragments | ((long)newFragments << 32);
   }
 
-  @Contract(mutates = "param1")
+  @Contract(mutates = "this,param1")
   long compactValues(@NotNull List<CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage) throws IOException {
     if (myOptions.myHasNoChunks) {
       return compactValuesWithoutChunks(infos, storage);

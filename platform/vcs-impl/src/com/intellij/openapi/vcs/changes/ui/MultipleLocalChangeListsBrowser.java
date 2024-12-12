@@ -398,7 +398,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       add(myChooser, BorderLayout.CENTER);
     }
 
-    @Contract(mutates = "param1")
+    @Contract(mutates = "this,param1")
     public void setAvailableLists(@NotNull List<LocalChangeList> lists) {
       LocalChangeList currentList = ContainerUtil.find(lists, getSelectedChangeList());
       if (currentList == null) currentList = lists.get(0);

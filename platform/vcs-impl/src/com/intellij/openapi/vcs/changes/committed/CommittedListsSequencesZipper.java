@@ -29,7 +29,7 @@ public class CommittedListsSequencesZipper {
     };
   }
 
-  @Contract(mutates = "param2")
+  @Contract(mutates = "this,param2")
   public void add(@NotNull RepositoryLocation location, @NotNull List<? extends CommittedChangeList> lists) {
     myInLocations.add(location);
     lists.sort(myComparator);

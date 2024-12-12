@@ -468,7 +468,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return savedChanges;
   }
 
-  @Contract(mutates = "param2")
+  @Contract(mutates = "param1,param2")
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
                                                                     @NotNull List<? extends CommittedChangeList> newChanges)
     throws IOException {

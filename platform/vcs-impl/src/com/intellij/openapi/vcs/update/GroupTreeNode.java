@@ -170,7 +170,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
   }
 
-  @Contract(mutates = "param2")
+  @Contract(mutates = "this,param2")
   private void addFiles(@NotNull AbstractTreeNode parentNode,
                         @NotNull List<? extends File> roots,
                         @NotNull final Collection<? extends File> files,

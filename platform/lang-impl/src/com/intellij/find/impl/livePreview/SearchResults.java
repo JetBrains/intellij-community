@@ -433,7 +433,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     myEditor.getDocument().removeDocumentListener(this);
   }
 
-  @Contract(mutates = "param1")
+  @Contract(mutates = "this,param1")
   private void searchCompleted(@NotNull List<FindResult> occurrences, @NotNull Editor editor, @Nullable FindModel findModel,
                                boolean toChangeSelection, @Nullable TextRange next, int stamp) {
     if (stamp < myLastUpdatedStamp){
