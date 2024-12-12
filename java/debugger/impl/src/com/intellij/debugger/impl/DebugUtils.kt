@@ -2,6 +2,7 @@
 package com.intellij.debugger.impl
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.sun.jdi.InternalException
 import com.sun.jdi.ObjectCollectedException
@@ -33,3 +34,18 @@ catch (e: Throwable) {
   }
   defaultValue
 }
+
+// do not catch VMDisconnectedException
+inline fun <T : Any, R> computeSafeIfAny(ep: ExtensionPointName<T>, processor: (T) -> R?): R? =
+  ep.extensionList.firstNotNullOfOrNull { t ->
+    try {
+      processor(t)
+    }
+    catch (e: Exception) {
+      if (e is ProcessCanceledException || e is VMDisconnectedException || e is CancellationException) {
+        throw e
+      }
+      fileLogger().error(e)
+      null
+    }
+  }

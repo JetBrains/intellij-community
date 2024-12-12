@@ -3,7 +3,7 @@ package com.intellij.debugger.engine
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.impl.DebuggerContextImpl
-import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.computeSafeIfAny
 import com.intellij.debugger.ui.tree.NodeDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.IndexNotReadyException
@@ -34,7 +34,7 @@ abstract class SourcePositionProvider {
       project: Project,
       context: DebuggerContextImpl,
       nearest: Boolean = false,
-    ): SourcePosition? = DebuggerUtilsImpl.computeSafeIfAny<SourcePositionProvider, SourcePosition?>(EP_NAME) { provider ->
+    ): SourcePosition? = computeSafeIfAny(EP_NAME) { provider ->
       try {
         provider.computeSourcePosition(descriptor, project, context, nearest)
       }

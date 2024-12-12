@@ -481,30 +481,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     }
   }
 
-  // do not catch VMDisconnectedException
-  public static <T, R> R computeSafeIfAny(ExtensionPointName<T> ep, @NotNull Function<? super T, ? extends R> processor) {
-    for (T t : ep.getIterable()) {
-      if (t == null) {
-        return null;
-      }
-
-      try {
-        R result = processor.apply(t);
-        if (result != null) {
-          return result;
-        }
-      }
-      catch (VMDisconnectedException | ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    return null;
-  }
-
   public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,
                                                   @NotNull ClassType type,
                                                   @NotNull String methodName,
