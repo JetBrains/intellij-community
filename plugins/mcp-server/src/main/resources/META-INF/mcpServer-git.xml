@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <mcpServer.mcpTool implementation="org.jetbrains.mcpserverplugin.git.FindCommitByTextTool"/>
+    </extensions>
+</idea-plugin>

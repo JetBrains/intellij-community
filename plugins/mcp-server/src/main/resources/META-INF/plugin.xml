@@ -27,6 +27,7 @@
 
     <depends>com.intellij.modules.lang</depends>
     <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
+    <depends config-file="mcpServer-git.xml" optional="true">Git4Idea</depends>
 
     <extensionPoints>
         <extensionPoint name="mcpTool"
