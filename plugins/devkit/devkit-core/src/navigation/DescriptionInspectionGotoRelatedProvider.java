@@ -24,6 +24,7 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
+import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolver;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
@@ -115,8 +116,8 @@ final class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider
   }
 
   private static boolean isTargetInspectionPsiClass(PsiClass psiClass, PsiFile descriptionPsiFile, Module module) {
-    InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
-    return descriptionPsiFile.equals(info.getDescriptionFile());
+    DescriptionTypeResolver resolver = DescriptionType.INSPECTION.createDescriptionTypeResolver(module, psiClass);
+    return descriptionPsiFile.equals(resolver.resolveDescriptionFile());
   }
 
   private static List<GotoRelatedItem> createGotoRelatedItem(PsiClass psiClass) {
