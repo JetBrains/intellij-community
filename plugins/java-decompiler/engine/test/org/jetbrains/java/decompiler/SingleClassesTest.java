@@ -99,7 +99,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
   @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
   @Test public void testIffSimplification() { doTest("pkg/TestIffSimplification"); }
-  @Test public void testKotlinConstructor() { doTest("pkg/TestKotlinConstructorKt"); }
   @Test public void testAsserts() { doTest("pkg/TestAsserts"); }
   @Test public void testLocalsNames() { doTest("pkg/TestLocalsNames"); }
   @Test public void testAnonymousParamNames() { doTest("pkg/TestAnonymousParamNames"); }
@@ -256,5 +255,4 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testTryCatchFinallyMismatched() { doTest("pkg/TestTryCatchFinallyMismatched"); }
   @Test public void testNestedCalls() { doTest("pkg/TestNestedCalls"); }
   @Test public void testBreakpointsContextProvider() { doTest("com/intellij/tasks/context/java/BreakpointsContextProvider"); }
-  @Test public void testKotlinDefaultValueConstructor() {doTest("pkg/KotlinDefaultValue"); }
 }

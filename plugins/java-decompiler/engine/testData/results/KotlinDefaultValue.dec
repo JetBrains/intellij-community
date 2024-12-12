@@ -15,6 +15,15 @@ public final class KotlinDefaultValue {
       this.age = age;
    }
 
+   // $FF: synthetic method
+   public KotlinDefaultValue(int var1, int var2, DefaultConstructorMarker var3) {
+      if ((var2 & 1) != 0) {
+         var1 = 1;
+      }
+
+      this(var1);
+   }
+
    public final int getAge() {
       return this.age;// 1
    }
@@ -34,24 +43,38 @@ class 'KotlinDefaultValue' {
       9      15
    }
 
+   method '<init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V' {
+      0      19
+      1      19
+      2      19
+      3      19
+      6      20
+      7      20
+      9      23
+      a      23
+      b      23
+      c      23
+      d      24
+   }
+
    method 'getAge ()I' {
-      0      18
-      1      18
-      2      18
-      3      18
-      4      18
+      0      27
+      1      27
+      2      27
+      3      27
+      4      27
    }
 
    method '<init> ()V' {
-      1      22
-      2      22
-      3      22
-      4      22
-      5      22
-      6      22
-      7      23
+      1      31
+      2      31
+      3      31
+      4      31
+      5      31
+      6      31
+      7      32
    }
 }
 
 Lines mapping:
-1 <-> 19
+1 <-> 28
