@@ -1362,7 +1362,12 @@ public final class TreeUtil {
 
   public static @Nullable Object getUserObject(@Nullable Object node) {
     if (node instanceof DefaultMutableTreeNode treeNode) return treeNode.getUserObject();
-    if (node instanceof TreeNodeViewModel nodeModel) return nodeModel.getUserObject();
+    if (
+      node instanceof TreeNodeViewModel nodeModel &&
+      nodeModel.getDomainModel() instanceof LegacyCompatibilityTreeNode legacyNode
+    ) {
+      return legacyNode.getUserObject();
+    }
     return node;
   }
 

@@ -207,7 +207,7 @@ private fun TreeNodeViewModel.makeVisible() {
 private class TreeNodeViewModelImpl(
   val parentImpl: TreeNodeViewModelImpl?,
   private val nodeScope: CoroutineScope,
-  private val domainModel: TreeNodeDomainModel,
+  override val domainModel: TreeNodeDomainModel,
   private val schedule: TreeNodeViewModelImpl.(NodeUpdate) -> Unit,
 ) : TreeNodeViewModel {
   private val presentationLoaded = AtomicBoolean()
@@ -253,8 +253,6 @@ private class TreeNodeViewModelImpl(
     debugWithTrace { "Scheduling ${if (isExpanded) "expanding" else "collapsing"} of $this" }
     schedule(NodeUpdate(isExpanded = isExpanded))
   }
-
-  override fun getUserObject(): Any = domainModel.getUserObject()
 
   private fun ensurePresentationIsLoading() {
     if (presentationLoaded.compareAndSet(false, true)) {
@@ -446,8 +444,6 @@ private class FakeRootDomainModel(private val treeModel: TreeDomainModel) : Tree
     val realRoot = treeModel.computeRoot()
     return if (realRoot == null) emptyList() else listOf(realRoot)
   }
-
-  override fun getUserObject(): Any = Unit
 }
 
 internal class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentationBuilder {

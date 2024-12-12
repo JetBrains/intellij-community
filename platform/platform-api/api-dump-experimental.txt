@@ -835,6 +835,7 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - a:isExpanded():Z
 *:com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getChildren():kotlinx.coroutines.flow.Flow
+- a:getDomainModel():com.intellij.ui.treeStructure.TreeNodeDomainModel
 - a:getParent():com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getState():kotlinx.coroutines.flow.Flow
 - a:setExpanded(Z):V

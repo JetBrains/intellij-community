@@ -10,6 +10,7 @@ import com.intellij.ui.treeStructure.TreeNodeDomainModel
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.util.SmartList
+import com.intellij.util.ui.tree.LegacyCompatibilityTreeNode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.sync.Semaphore
@@ -60,7 +61,7 @@ class TreeStructureDomainModelAdapter(
     return TreeStructureNodeDomainModel(descriptor)
   }
 
-  private inner class TreeStructureNodeDomainModel(private val userObject: NodeDescriptor<*>) : TreeNodeDomainModel {
+  private inner class TreeStructureNodeDomainModel(private val userObject: NodeDescriptor<*>) : TreeNodeDomainModel, LegacyCompatibilityTreeNode {
     override fun getUserObject(): Any = userObject
 
     override suspend fun computeIsLeaf(): Boolean = accessData {

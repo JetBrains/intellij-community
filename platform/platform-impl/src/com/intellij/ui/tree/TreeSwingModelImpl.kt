@@ -268,7 +268,7 @@ private class TreeSwingModelImpl(
   }
 
   private fun createCachedNode(treePresentation: CachedTreePresentation, parent: Node?, cachedObject: Any): Node {
-    val cachedViewModel = cachedObject as? CachedViewModel ?: CachedViewModel(parent?.viewModel, treePresentation, cachedObject)
+    val cachedViewModel = cachedObject as? CachedViewModel ?: CachedViewModel(CachedDomainModel(treePresentation, cachedObject), parent?.viewModel, treePresentation)
     val cachedNode = CachedNode(treePresentation, parent, cachedViewModel)
     nodes[cachedNode.viewModel] = cachedNode
     return cachedNode
@@ -390,7 +390,7 @@ private class TreeSwingModelImpl(
       else if (this@TreeSwingModelImpl.showLoadingNode) {
         // Need this for clients who expect the "loading..." node to appear immediately,
         // e.g. for com.intellij.ide.projectView.impl.ProjectViewDirectoryExpandDurationMeasurer.
-        children = listOf(RealNode(this, LoadingNodeViewModel(viewModel)))
+        children = listOf(RealNode(this, LoadingNodeViewModel(LoadingDomainModel(),  viewModel)))
       }
       childrenLoadingJob = nodeScope.launch(CoroutineName("Load children of $this")) {
         viewModel.children.collect { loaded ->
@@ -561,19 +561,39 @@ private class TreeDomainModelDelegatingVisitor(
     "TreeDomainModelDelegatingVisitor(model=$model, delegate=$delegate)"
 }
 
+private class CachedDomainModel(
+  treePresentation: CachedTreePresentation,
+  val cachedObject: Any,
+) : TreeNodeDomainModel {
+  val cachedPresentation: TreeNodePresentationImpl = buildCachedPresentation(treePresentation, cachedObject)
+  val cachedChildren: List<CachedDomainModel>? = treePresentation.getChildren(cachedObject)?.map {
+    CachedDomainModel(treePresentation, it)
+  }
+
+  override suspend fun computeIsLeaf(): Boolean = cachedPresentation.isLeaf
+
+  override suspend fun computePresentation(builder: TreeNodePresentationBuilder): Flow<TreeNodePresentation> = flowOf(cachedPresentation)
+
+  override suspend fun computeChildren(): List<TreeNodeDomainModel> = cachedChildren ?: emptyList()
+
+  override fun toString(): String {
+    return "CachedDomainModel(cachedObject=$cachedObject, cachedPresentation=$cachedPresentation)"
+  }
+}
+
 private class CachedViewModel(
+  override val domainModel: CachedDomainModel,
   override val parent: TreeNodeViewModel?,
   treePresentation: CachedTreePresentation,
-  private val cachedObject: Any,
 ) : TreeNodeViewModel {
-  val cachedPresentation: TreeNodePresentationImpl = buildCachedPresentation(treePresentation, cachedObject)
-  val cachedChildren: List<CachedViewModel>? = treePresentation.getChildren(cachedObject)?.map {
-    CachedViewModel(this, treePresentation, it)
+  val cachedPresentation: TreeNodePresentationImpl = domainModel.cachedPresentation
+  val cachedChildren: List<CachedViewModel>? = domainModel.cachedChildren?.map {
+    CachedViewModel(it, this, treePresentation)
   }
 
   private val stateFlow = MutableStateFlow(TreeNodeStateImpl(
     presentation = cachedPresentation,
-    isExpanded = treePresentation.isExpanded(cachedObject)
+    isExpanded = treePresentation.isExpanded(domainModel.cachedObject)
   ))
 
   override val state: Flow<TreeNodeState>
@@ -588,10 +608,8 @@ private class CachedViewModel(
     stateFlow.value = stateFlow.value.copy(isExpanded = isExpanded)
   }
 
-  override fun getUserObject(): Any = cachedObject
-
   override fun toString(): String {
-    return "CachedViewModel(cachedObject=$cachedObject)"
+    return "CachedViewModel(domainModel=$domainModel)"
   }
 }
 
@@ -604,17 +622,28 @@ private fun buildCachedPresentation(treePresentation: CachedTreePresentation, ca
 private fun TreeNodeViewModel.path(): TreePath =
   parent?.path()?.pathByAddingChild(this) ?: CachingTreePath(this)
 
-private class LoadingNodeViewModel(override val parent: TreeNodeViewModel?) : TreeNodeViewModel {
-  private val _userObject = LoadingNode()
+private class LoadingDomainModel : TreeNodeDomainModel {
+  val presentation = TreeNodePresentationImpl(
+    isLeaf = true,
+    icon = null,
+    mainText = LoadingNode.getText(),
+    fullText = listOf(TreeNodeTextFragment(LoadingNode.getText(), SimpleTextAttributes.GRAY_ATTRIBUTES)),
+    toolTip = null,
+  )
 
+  override suspend fun computeIsLeaf(): Boolean = true
+
+  override suspend fun computePresentation(builder: TreeNodePresentationBuilder): Flow<TreeNodePresentation> = flowOf(presentation)
+
+  override suspend fun computeChildren(): List<TreeNodeDomainModel> = emptyList()
+}
+
+private class LoadingNodeViewModel(
+  override val domainModel: LoadingDomainModel,
+  override val parent: TreeNodeViewModel?,
+) : TreeNodeViewModel {
   private val _state = TreeNodeStateImpl(
-    presentation = TreeNodePresentationImpl(
-      isLeaf = true,
-      icon = null,
-      mainText = LoadingNode.getText(),
-      fullText = listOf(TreeNodeTextFragment(LoadingNode.getText(), SimpleTextAttributes.GRAY_ATTRIBUTES)),
-      toolTip = null,
-    ),
+    presentation = domainModel.presentation,
     isExpanded = false,
   )
 
@@ -627,8 +656,6 @@ private class LoadingNodeViewModel(override val parent: TreeNodeViewModel?) : Tr
   override fun stateSnapshot(): TreeNodeState = _state
 
   override fun setExpanded(isExpanded: Boolean) { }
-
-  override fun getUserObject(): Any = _userObject
 }
 
 private val LOG = logger<TreeSwingModelImpl>()
