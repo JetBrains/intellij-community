@@ -26,6 +26,7 @@ internal interface WhatsNewEnvironmentAccessor {
   suspend fun getWhatsNewContent(): WhatsNewContent?
   fun findAction(): WhatsNewAction?
   suspend fun showWhatsNew(project: Project, action: WhatsNewAction)
+  fun isDefaultWhatsNewEnabledAndReadyToShow(): Boolean
 }
 
 private class WhatsNewEnvironmentAccessorImpl : WhatsNewEnvironmentAccessor {
@@ -47,6 +48,28 @@ private class WhatsNewEnvironmentAccessorImpl : WhatsNewEnvironmentAccessor {
   override fun findAction() = ActionManager.getInstance().getAction("WhatsNewAction") as? WhatsNewAction
   override suspend fun showWhatsNew(project: Project, action: WhatsNewAction) {
     action.openWhatsNew(project)
+  }
+  override fun isDefaultWhatsNewEnabledAndReadyToShow(): Boolean {
+    val updateStrategyCustomization = UpdateStrategyCustomization.getInstance()
+    val enabledModernWay = updateStrategyCustomization.showWhatIsNewPageAfterUpdate
+    @Suppress("DEPRECATION") val enabledLegacyWay = ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate
+
+    if (enabledModernWay || enabledLegacyWay) {
+      val problem = "This could lead to issues with the Vision-based What's New. Mixing of web-based and Vision-based What's New is not supported."
+      if (enabledModernWay) {
+        logger.error("${updateStrategyCustomization.javaClass}'s showWhatIsNewPageAfterUpdate is overridden to true. $problem")
+      }
+
+      if (enabledLegacyWay) {
+        logger.error("show-on-update attribute on the <whatsnew> element in the application info XML is set. $problem")
+      }
+
+      if (WhatsNewUtil.isWhatsNewAvailable()) { // if we are really able to show old What's New here, then terminate.
+        return true
+      }
+    }
+
+    return false
   }
 }
 
@@ -70,23 +93,8 @@ internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNew
         if (WhatsNewContentVersionChecker.isNeedToShowContent(content).also { logger.info("Should show What's New: $it") }) {
           val whatsNewAction = environment.findAction()
           if (whatsNewAction != null) {
-            val updateStrategyCustomization = UpdateStrategyCustomization.getInstance()
-            val enabledModernWay = updateStrategyCustomization.showWhatIsNewPageAfterUpdate
-            @Suppress("DEPRECATION") val enabledLegacyWay = ApplicationInfoEx.getInstanceEx().isShowWhatsNewOnUpdate
-
-            if (enabledModernWay || enabledLegacyWay) {
-              val problem = "This could lead to issues with the Vision-based What's New. Mixing of web-based and Vision-based What's New is not supported."
-              if (enabledModernWay) {
-                logger.error("${updateStrategyCustomization.javaClass}'s showWhatIsNewPageAfterUpdate is overridden to true. $problem")
-              }
-
-              if (enabledLegacyWay) {
-                logger.error("show-on-update attribute on the <whatsnew> element in the application info XML is set. $problem")
-              }
-
-              if (WhatsNewUtil.isWhatsNewAvailable()) { // if we are really able to show old What's New here, then terminate.
-                return@withContext
-              }
+            if (environment.isDefaultWhatsNewEnabledAndReadyToShow()) {
+              return@withContext
             }
 
             val activityTracker = ProjectInitializationDiagnosticService.registerTracker(project, "OpenWhatsNewOnStart")

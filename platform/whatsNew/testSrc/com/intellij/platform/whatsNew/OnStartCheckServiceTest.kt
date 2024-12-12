@@ -52,6 +52,7 @@ class OnStartCheckServiceTest {
       override suspend fun showWhatsNew(project: Project, action: WhatsNewAction) {
         isCalled.set(true)
       }
+      override fun isDefaultWhatsNewEnabledAndReadyToShow() = false
     }
 
     return environment to isCalled
