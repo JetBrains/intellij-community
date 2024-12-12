@@ -38,6 +38,18 @@ class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
     return SyntheticVersionCatalogAccessor(project, scope, versionCatalogModel, catalogName)
   }
 
+  override fun getAccessorsForAllCatalogs(context: PsiElement): Map<String, PsiClass> {
+    val project = context.project
+    val scope = context.resolveScope
+    val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return emptyMap()
+    val catalogsModel = getBuildModel(module)?.versionCatalogsModel ?: return emptyMap()
+    val result = mutableMapOf<String, PsiClass>()
+    catalogsModel.catalogNames().forEach { catalogName ->
+      result.putIfAbsent(catalogName, SyntheticVersionCatalogAccessor(project, scope, catalogsModel, catalogName))
+    }
+    return result
+  }
+
   private fun getBuildModel(module: Module): ProjectBuildModel? {
     val buildPath = ExternalSystemModulePropertyManager.getInstance(module)
       .getLinkedProjectPath() ?: return null
