@@ -12,7 +12,6 @@ import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -58,9 +57,7 @@ object TrustedProjectsDialog {
       val dialog = TrustedProjectStartupDialog(
         project, projectRoot, pathsToExclude, title, message, trustButtonText, distrustButtonText, cancelButtonText
       )
-      writeIntentReadAction {
-        dialog.show()
-      }
+      dialog.show()
       dialog
     }
     val openChoice = dialog.getOpenChoice()
