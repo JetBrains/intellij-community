@@ -25,9 +25,9 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -175,8 +175,11 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
   private static final Key<AtomicInteger> RUNNING_REDETECTS_KEY = Key.create("DETECTING_ENCODING_KEY");
 
   private static int addNumberOfRequestedRedetects(@NotNull Document document, int delta) {
-    AtomicInteger oldData = ConcurrencyUtil.computeIfAbsent(document, RUNNING_REDETECTS_KEY, () -> new AtomicInteger());
-    return oldData.addAndGet(delta);
+    AtomicInteger data = document.getUserData(RUNNING_REDETECTS_KEY);
+    if (data == null) {
+      data = ((UserDataHolderEx)document).putUserDataIfAbsent(RUNNING_REDETECTS_KEY, new AtomicInteger());
+    }
+    return data.addAndGet(delta);
   }
 
   void queueUpdateEncodingFromContent(@NotNull Document document) {
