@@ -49,9 +49,11 @@ internal class MachOUuid(private val executable: Path, private val newUuid: UUID
           buffer.putLong(newUuid.mostSignificantBits)
           buffer.putLong(newUuid.leastSignificantBits)
           buffer.flip()
-          channel.position(channel.position() - 16)
-          channel.write(buffer)
-          context.messages.info("new UUID of $executable: $newUuid")
+          if (!context.options.isInDevelopmentMode) {
+            channel.position(channel.position() - 16)
+            channel.write(buffer)
+            context.messages.info("new UUID of $executable: $newUuid")
+          }
           return
         }
         else {
