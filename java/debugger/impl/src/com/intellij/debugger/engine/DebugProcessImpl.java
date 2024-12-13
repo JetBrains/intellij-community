@@ -1360,6 +1360,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         LOG.debug("Invoke in " + context);
         assertThreadSuspended(thread, context);
       }
+      ThreadReference threadReference = thread.getThreadReference(); // init threadReference in the current debugger manager thread request
       context.getManagerThread().startLongProcessAndFork(() -> {
         try {
           try {
@@ -1407,7 +1408,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             int invokePolicy = getInvokePolicy(context);
             invocationWatcherRef.set(myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context));
             myMethodInvocations.incrementAndGet();
-            result.set(invokeMethod(thread.getThreadReference(), invokePolicy, myMethod, myArgs));
+            result.set(invokeMethod(threadReference, invokePolicy, myMethod, myArgs));
           }
           finally {
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {

@@ -221,16 +221,23 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
       LOG.debug { "Switching back to $request" }
 
+      var cancelled = false
       super.invokeAndWait(object : DebuggerCommandImpl() {
         override fun action() {
           switchToRequest(request)
         }
 
         override fun commandCancelled() {
+          cancelled = true
           LOG.debug { "Event queue was closed, killing request $request" }
           request.requestStop()
         }
       })
+
+      // the queue is already closed - we need to stop asap
+      if (cancelled) {
+        throw VMDisconnectedException()
+      }
     }
   }
 

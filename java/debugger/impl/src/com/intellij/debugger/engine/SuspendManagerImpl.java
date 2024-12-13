@@ -204,8 +204,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public List<SuspendContextImpl> getEventContexts() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return new ArrayList<>(myEventContexts);
+    return List.copyOf(myEventContexts);
   }
 
   @Override
@@ -374,7 +373,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public @NotNull List<SuspendContextImpl> getPausedContexts() {
-    return new ArrayList<>(myPausedContexts);
+    return List.copyOf(myPausedContexts);
   }
 
   public boolean hasPausedContext(SuspendContextImpl suspendContext) {
