@@ -1,5 +1,7 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.pycharm.community.customization.plugin" implementation-detail="true">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.pycharm.community.customization.plugin"
+             implementation-detail="true">
+
   <name>PyCharm Community Customization</name>
   <id>com.jetbrains.pycharm.community.customization</id>
   <vendor>JetBrains</vendor>
@@ -8,15 +10,12 @@
   <dependencies>
     <plugin id="com.intellij.modules.pycharm.community"/>
     <plugin id="com.intellij.modules.python"/>
+    <plugin id="intellij.pycharm.community.customization.shared"/>
   </dependencies>
 
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
   <content>
-    <module name="intellij.pycharm.community.ide.impl"/>
-    <module name="intellij.pycharm.community.ide.implTraining"/>
     <module name="intellij.jupyter.viewOnly"/> <!-- notebooks preview itself-->
-    <module name="intellij.platform.whatsNew"/>
-
     <module name="intellij.pycharm.community.ide.impl.promotion"/> <!-- mostly promo of Pro -->
   </content>
 </idea-plugin>

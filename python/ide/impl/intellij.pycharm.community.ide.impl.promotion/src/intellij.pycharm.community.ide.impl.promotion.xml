@@ -1,5 +1,5 @@
 <idea-plugin package="com.intellij.pycharm.community.ide.impl.promotion">
-  <!--Customization code for Community Pycharm only. Promotes PyCharm Prof-->
+  <!--Customization code for Community Pycharm only. Promotes PyCharm Prof.-->
 
   <dependencies>
     <plugin id="PythonCore"/>

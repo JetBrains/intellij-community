@@ -1,0 +1,18 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin implementation-detail="true">
+
+  <name>PyCharm Community and Prof Customization Shared Parts</name>
+  <id>intellij.pycharm.community.customization.shared</id>
+  <vendor>JetBrains</vendor>
+
+  <content>
+    <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.pycharm.community.ide.implTraining"/>
+    <module name="intellij.platform.whatsNew"/>
+  </content>
+</idea-plugin>
+
+
+
+
+

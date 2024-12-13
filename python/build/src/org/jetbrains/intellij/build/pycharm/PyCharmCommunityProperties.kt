@@ -32,6 +32,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
       sequenceOf(
         "intellij.python.community.plugin", // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
+        "intellij.pycharm.community.customization.shared",
         "intellij.vcs.github.community",
         "intellij.vcs.gitlab.community") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))

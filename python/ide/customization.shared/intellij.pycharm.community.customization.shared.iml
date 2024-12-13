@@ -2,16 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/ide">
-      <sourceFolder url="file://$MODULE_DIR$/ide/resources" type="java-resource" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.pycharm.community.ide.impl" scope="RUNTIME" />
-    <orderEntry type="library" name="tips-pycharm-community" level="project" />
-    <orderEntry type="module" module-name="intellij.jupyter.viewOnly" />
-    <orderEntry type="module" module-name="intellij.pycharm.community.ide.impl.promotion" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.pycharm.community.ide.implTraining" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.pycharm.community.customization.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="RUNTIME" />
   </component>
 </module>
