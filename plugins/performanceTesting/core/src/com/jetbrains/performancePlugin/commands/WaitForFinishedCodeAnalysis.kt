@@ -50,7 +50,12 @@ private fun Collection<FileEditor>.getWorthy(): List<TextEditor> {
   }
 }
 
-private fun isTrafficLightExists(editor: Editor): Boolean = (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null
+private fun isTrafficLightExists(editor: Editor): Boolean {
+  //MD file in preview mode doesn't have traffic light.
+  //TODO Learn how to determine MD file view mode
+  val isMdFile = editor.virtualFile.extension?.contains("md", ignoreCase = true) ?: false
+  return (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null || isMdFile
+}
 
 private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.traffic.light")
 
