@@ -8,16 +8,15 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.findScopeByFileName
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.loadBundle
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory
-import org.junit.Test
 import java.io.File
 import java.nio.charset.StandardCharsets
 
 class TextMateLexerPerformanceTest : UsefulTestCase() {
   fun testPerformance() {
-    val syntaxTable = TextMateSyntaxTable()
+    val syntaxTable = TextMateSyntaxTableCore()
     val matchers = syntaxTable.loadBundle(TestUtil.JAVA)
     val myFile = File(PlatformTestUtil.getCommunityPath() + "/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java")
     syntaxTable.compact()

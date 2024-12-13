@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.containers.Interner
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -26,9 +25,11 @@ import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleT
 import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings
 import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings
 import org.jetbrains.plugins.textmate.editor.fileNameExtensions
+import org.jetbrains.plugins.textmate.language.TextMateHashSetInterner
+import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.preferences.*
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils
 import java.nio.file.Files
@@ -47,11 +48,11 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
   private val customHighlightingColors = HashMap<CharSequence, TextMateTextAttributesAdapter>()
   private var extensionMapping: Map<TextMateFileNameMatcher, CharSequence> = java.util.Map.of()
-  private val syntaxTable = TextMateSyntaxTable()
+  private val syntaxTable = TextMateSyntaxTableCore()
   private val snippetRegistry = SnippetsRegistryImpl()
   private val preferenceRegistry = PreferencesRegistryImpl()
   private val shellVariablesRegistry = ShellVariablesRegistryImpl()
-  private val interner = Interner.createWeakInterner<CharSequence>()
+  private val interner: TextMateInterner = TextMateHashSetInterner()
 
   init {
     val app = ApplicationManager.getApplication()
@@ -139,6 +140,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     syntaxTable.clear()
     snippetRegistry.clear()
     shellVariablesRegistry.clear()
+    interner.clear()
   }
 
   override fun getCustomHighlightingColors(): Map<CharSequence, TextMateTextAttributesAdapter> {
@@ -308,7 +310,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     val grammarIterator = reader.readGrammars().iterator()
     while (grammarIterator.hasNext()) {
       val grammar = grammarIterator.next()
-      val rootScopeName = syntaxTable.loadSyntax(grammar.plist.value, interner) ?: continue
+      val rootScopeName = syntaxTable.addSyntax(grammar.plist.value, interner) ?: continue
       for (fileNameMatcher in grammar.fileNameMatchers) {
         if (fileNameMatcher is TextMateFileNameMatcher.Name) {
           val newName = fileNameMatcher.fileName.lowercase()

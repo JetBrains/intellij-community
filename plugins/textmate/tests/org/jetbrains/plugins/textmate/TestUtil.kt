@@ -1,16 +1,16 @@
 package org.jetbrains.plugins.textmate
 
-import com.intellij.util.containers.Interner
 import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable
+import org.jetbrains.plugins.textmate.language.TextMateHashSetInterner
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 
-fun TextMateSyntaxTable.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
+fun TextMateSyntaxTableCore.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
   val matchers = HashMap<TextMateFileNameMatcher, CharSequence>()
-  val myInterner = Interner.createWeakInterner<CharSequence>()
+  val myInterner = TextMateHashSetInterner()
   val grammars = TestUtil.readBundle(bundleName).readGrammars().iterator()
   while (grammars.hasNext()) {
     val grammar = grammars.next()
-    loadSyntax(grammar.plist.value, myInterner)?.let { rootScope ->
+    addSyntax(grammar.plist.value, myInterner)?.let { rootScope ->
       grammar.fileNameMatchers.forEach { matcher ->
         matchers[matcher] = rootScope
       }
