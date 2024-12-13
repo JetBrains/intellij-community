@@ -5582,6 +5582,7 @@ f:com.intellij.util.ui.html.WbrView
 - getText(I,I):javax.swing.text.Segment
 - getViewIndex(F,F,java.awt.Shape):I
 - getViewIndex(I,javax.swing.text.Position$Bias):I
+- paint(java.awt.Graphics,java.awt.Shape):V
 - setSize(F,F):V
 a:com.intellij.util.ui.tree.AbstractTreeModel
 - com.intellij.openapi.util.CheckedDisposable
