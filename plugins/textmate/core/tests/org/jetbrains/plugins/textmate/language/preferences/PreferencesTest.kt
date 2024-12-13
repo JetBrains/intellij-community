@@ -1,164 +1,156 @@
-package org.jetbrains.plugins.textmate.language.preferences;
+package org.jetbrains.plugins.textmate.language.preferences
 
-import com.intellij.openapi.util.text.Strings;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.TestUtil;
-import org.jetbrains.plugins.textmate.bundles.TextMatePreferences;
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
-import org.junit.Test;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 
-import java.util.*;
-
-import static java.util.Collections.emptySet;
-import static org.junit.Assert.*;
-
-public class PreferencesTest {
+class PreferencesTest {
   @Test
-  public void retrievePreferencesBySelector_1() {
-    final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    final List<Preferences> preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.basic"));
-    assertEquals(1, preferences.size());
-    assertEquals(newHashSet(new TextMateAutoClosingPair("\"", "\"", null)), preferences.get(0).getSmartTypingPairs());
-    assertEquals(newHashSet(new TextMateBracePair("`", "`")), preferences.get(0).getHighlightingPairs());
+  fun retrievePreferencesBySelector_1() {
+    val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
+    val preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.basic"))
+    assertEquals(1, preferences.size.toLong())
+    assertEquals(setOf(TextMateAutoClosingPair("\"", "\"", null)),
+                 preferences[0].smartTypingPairs)
+    assertEquals(setOf(TextMateBracePair("`", "`")), preferences[0].highlightingPairs)
   }
 
   @Test
-  public void retrievePreferencesBySelector_2() {
-    final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    final List<Preferences> preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php string"));
-    assertEquals(1, preferences.size());
-    assertEquals(newHashSet(new TextMateAutoClosingPair("(", ")", null)), preferences.get(0).getSmartTypingPairs());
-    assertEquals(newHashSet(new TextMateBracePair("[", "]")), preferences.get(0).getHighlightingPairs());
+  fun retrievePreferencesBySelector_2() {
+    val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
+    val preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php string"))
+    assertEquals(1, preferences.size.toLong())
+    assertEquals(setOf(TextMateAutoClosingPair("(", ")", null)),
+                 preferences[0].smartTypingPairs)
+    assertEquals(setOf(TextMateBracePair("[", "]")), preferences[0].highlightingPairs)
   }
 
   @Test
-  public void retrievePreferencesBySelectorCorrespondingToSelectorWeight() {
-    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    List<Preferences> preferences =
-      preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html source.php string.quoted.double.php"));
-    assertEquals(2, preferences.size());
-    assertEquals(newHashSet(new TextMateAutoClosingPair("(", ")", null)), preferences.get(0).getSmartTypingPairs());
-    assertEquals(newHashSet(new TextMateBracePair("[", "]")), preferences.get(0).getHighlightingPairs());
+  fun retrievePreferencesBySelectorCorrespondingToSelectorWeight() {
+    val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
+    val preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html source.php string.quoted.double.php"))
+    assertEquals(2, preferences.size.toLong())
+    assertEquals(setOf(TextMateAutoClosingPair("(", ")", null)),
+                 preferences[0].smartTypingPairs)
+    assertEquals(setOf(TextMateBracePair("[", "]")), preferences[0].highlightingPairs)
 
-    assertEquals(newHashSet(new TextMateAutoClosingPair("\"", "\"", null)), preferences.get(1).getSmartTypingPairs());
-    assertEquals(newHashSet(new TextMateBracePair("`", "`")), preferences.get(1).getHighlightingPairs());
+    assertEquals(setOf(TextMateAutoClosingPair("\"", "\"", null)),
+                 preferences[1].smartTypingPairs)
+    assertEquals(setOf(TextMateBracePair("`", "`")), preferences[1].highlightingPairs)
   }
 
   @Test
-  public void loadingWithTheSameScope() {
-    final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    final Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("same.scope")));
-    assertEquals(newHashSet(new TextMateAutoClosingPair("[", "]", null),
-                            new TextMateAutoClosingPair("(", ")", null)), preferences.getSmartTypingPairs());
+  fun loadingWithTheSameScope() {
+    val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
+    val preferences: Preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("same.scope")))
+    assertEquals(setOf(TextMateAutoClosingPair("[", "]", null),
+                       TextMateAutoClosingPair("(", ")", null)), preferences.smartTypingPairs)
   }
 
   @Test
-  public void loadHighlightingPairs() {
-    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.MARKDOWN_TEXTMATE);
-    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")));
-    assertEquals(newHashSet(new TextMateBracePair("[", "]"), new TextMateBracePair("`", "`")), preferences.getHighlightingPairs());
+  fun loadHighlightingPairs() {
+    val preferencesRegistry = loadPreferences(TestUtil.MARKDOWN_TEXTMATE)
+    val preferences: Preferences = mergeAll(
+      preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")))
+    assertEquals(setOf(TextMateBracePair("[", "]"), TextMateBracePair("`", "`")),
+                 preferences.highlightingPairs)
   }
 
   @Test
-  public void loadSmartTypingPairs() {
-    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.MARKDOWN_TEXTMATE);
-    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")));
-    assertEquals(newHashSet(
-      new TextMateAutoClosingPair("{", "}", null),
-      new TextMateAutoClosingPair("(", ")", null),
-      new TextMateAutoClosingPair("\"", "\"", null)
-    ), preferences.getSmartTypingPairs());
+  fun loadSmartTypingPairs() {
+    val preferencesRegistry = loadPreferences(TestUtil.MARKDOWN_TEXTMATE)
+    val preferences: Preferences = mergeAll(
+      preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")))
+    assertEquals(setOf(
+      TextMateAutoClosingPair("{", "}", null),
+      TextMateAutoClosingPair("(", ")", null),
+      TextMateAutoClosingPair("\"", "\"", null)
+    ), preferences.smartTypingPairs)
   }
 
   @Test
-  public void loadDisabledPairs() {
-    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.LATEX);
-    TextMateScope scope = TestUtil.scopeFromString("text.tex constant.character.escape.tex");
-    Preferences preferences = preferencesRegistry.getPreferences(scope).iterator().next();
-    @Nullable Set<TextMateAutoClosingPair> smartTypingPairs = preferences.getSmartTypingPairs();
-    assertNotNull(smartTypingPairs);
-    assertEquals(0, smartTypingPairs.size());
+  fun loadDisabledPairs() {
+    val preferencesRegistry = loadPreferences(TestUtil.LATEX)
+    val scope = TestUtil.scopeFromString("text.tex constant.character.escape.tex")
+    val preferences = preferencesRegistry.getPreferences(scope).iterator().next()
+    val smartTypingPairs = preferences.smartTypingPairs
+    assertNotNull(smartTypingPairs)
+    assertEquals(0, smartTypingPairs.size)
   }
 
   @Test
-  public void loadIndentationRules() {
-    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PHP_VSC);
-    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.php")));
-    assertFalse(preferences.getIndentationRules().isEmpty());
-    assertNotNull(preferences.getIndentationRules().getIncreaseIndentPattern());
+  fun loadIndentationRules() {
+    val preferencesRegistry = loadPreferences(TestUtil.PHP_VSC)
+    val preferences: Preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.php")))
+    assertFalse(preferences.indentationRules.isEmpty)
+    assertNotNull(preferences.indentationRules.increaseIndentPattern)
   }
 
   @Test
-  public void loadOnEnterRules() {
-    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.RESTRUCTURED_TEXT);
-    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.rst")));
-    assertNotNull(preferences.getOnEnterRules());
-    assertFalse(preferences.getOnEnterRules().isEmpty());
+  fun loadOnEnterRules() {
+    val preferencesRegistry = loadPreferences(TestUtil.RESTRUCTURED_TEXT)
+    val preferences: Preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.rst")))
+    assertNotNull(preferences.onEnterRules)
+    assertFalse(preferences.onEnterRules!!.isEmpty())
   }
 
-  @NotNull
-  private static PreferencesRegistry loadPreferences(@NotNull String bundleName) {
-    Iterator<TextMatePreferences> preferences = TestUtil.readBundle(bundleName).readPreferences().iterator();
-    assertNotNull(preferences);
-    PreferencesRegistryImpl preferencesRegistry = new PreferencesRegistryImpl();
+  private fun loadPreferences(bundleName: String): PreferencesRegistry {
+    val preferences = TestUtil.readBundle(bundleName).readPreferences().iterator()
+    assertNotNull(preferences)
+    val preferencesRegistry = PreferencesRegistryImpl()
     while (preferences.hasNext()) {
-      TextMatePreferences next = preferences.next();
-      preferencesRegistry.addPreferences(new Preferences(next.getScopeName(),
-                                                         next.getHighlightingPairs(),
-                                                         next.getSmartTypingPairs(),
-                                                         emptySet(),
-                                                         null,
-                                                         next.getIndentationRules(),
-                                                         next.getOnEnterRules()));
+      val next = preferences.next()
+      preferencesRegistry.addPreferences(Preferences(next.scopeName,
+                                                     next.highlightingPairs,
+                                                     next.smartTypingPairs,
+                                                     mutableSetOf<TextMateBracePair?>(),
+                                                     null,
+                                                     next.indentationRules,
+                                                     next.onEnterRules))
     }
-    return preferencesRegistry;
+    return preferencesRegistry
   }
 
-  @NotNull
-  private static Preferences mergeAll(@NotNull List<Preferences> preferences) {
-    Set<TextMateBracePair> highlightingPairs = new HashSet<>();
-    Set<TextMateAutoClosingPair> smartTypingPairs = new HashSet<>();
-    Set<TextMateBracePair> surroundingPairs = new HashSet<>();
-    Set<Character> autoCloseBefore = new HashSet<>();
-    IndentationRules indentationRules = IndentationRules.empty();
-    Set<OnEnterRule> onEnterRules = new HashSet<>();
+  private fun mergeAll(preferences: List<Preferences>): Preferences {
+    val highlightingPairs = mutableSetOf<TextMateBracePair?>()
+    val smartTypingPairs = mutableSetOf<TextMateAutoClosingPair?>()
+    val surroundingPairs = mutableSetOf<TextMateBracePair?>()
+    val autoCloseBefore = mutableSetOf<Char?>()
+    var indentationRules = IndentationRules.empty()
+    val onEnterRules = mutableSetOf<OnEnterRule?>()
 
-    for (Preferences preference : preferences) {
-      final Set<TextMateBracePair> localHighlightingPairs = preference.getHighlightingPairs();
-      final @Nullable Set<TextMateAutoClosingPair> localSmartTypingPairs = preference.getSmartTypingPairs();
-      final Set<TextMateBracePair> localSurroundingPairs = preference.getSurroundingPairs();
-      final String localAutoCloseBefore = preference.getAutoCloseBefore();
-      indentationRules = indentationRules.updateWith(preference.getIndentationRules());
+    for (preference in preferences) {
+      val localHighlightingPairs = preference.highlightingPairs
+      val localSmartTypingPairs = preference.smartTypingPairs
+      val localSurroundingPairs = preference.surroundingPairs
+      val localAutoCloseBefore = preference.autoCloseBefore
+      indentationRules = indentationRules.updateWith(preference.indentationRules)
       if (localHighlightingPairs != null) {
-        highlightingPairs.addAll(localHighlightingPairs);
+        highlightingPairs.addAll(localHighlightingPairs)
       }
       if (localSmartTypingPairs != null) {
-        smartTypingPairs.addAll(localSmartTypingPairs);
+        smartTypingPairs.addAll(localSmartTypingPairs)
       }
       if (localSurroundingPairs != null) {
-        surroundingPairs.addAll(localSurroundingPairs);
+        surroundingPairs.addAll(localSurroundingPairs)
       }
       if (localAutoCloseBefore != null) {
-        for (char c : localAutoCloseBefore.toCharArray()) {
-          autoCloseBefore.add(c);
+        for (c in localAutoCloseBefore.toCharArray()) {
+          autoCloseBefore.add(c)
         }
       }
-      if (preference.getOnEnterRules() != null){
-        onEnterRules.addAll(preference.getOnEnterRules());
+      if (preference.onEnterRules != null) {
+        onEnterRules.addAll(preference.onEnterRules!!)
       }
     }
-    return new Preferences("",
-                           highlightingPairs,
-                           smartTypingPairs,
-                           surroundingPairs,
-                           Strings.nullize(Strings.join(autoCloseBefore, "")),
-                           indentationRules,
-                           onEnterRules);
-  }
-
-  private static <T> Set<T> newHashSet(T... pairs) {
-    //noinspection SSBasedInspection
-    return new HashSet<>(Arrays.asList(pairs));
+    return Preferences("",
+                       highlightingPairs,
+                       smartTypingPairs,
+                       surroundingPairs,
+                       autoCloseBefore.joinToString().ifEmpty { null },
+                       indentationRules,
+                       onEnterRules)
   }
 }

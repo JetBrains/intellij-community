@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import com.intellij.openapi.util.text.Strings;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import kotlin.text.StringsKt;
 import kotlinx.collections.immutable.ExtensionsKt;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
@@ -295,7 +295,7 @@ public final class TextMateLexer {
                                     ? SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures(captureName, string, matchData)
                                     : captureName;
         int selectorStartOffset = 0;
-        int indexOfSpace = Strings.indexOf(scopeName, ' ', selectorStartOffset);
+        int indexOfSpace = StringsKt.indexOf(scopeName, ' ', selectorStartOffset, false);
         if (indexOfSpace == -1) {
           openScopeSelector(output, scopeName, startLineOffset + captureRange.start);
           activeCaptureRanges.push(captureRange);
@@ -304,7 +304,7 @@ public final class TextMateLexer {
           while (indexOfSpace >= 0) {
             openScopeSelector(output, scopeName.subSequence(selectorStartOffset, indexOfSpace), startLineOffset + captureRange.start);
             selectorStartOffset = indexOfSpace + 1;
-            indexOfSpace = Strings.indexOf(scopeName, ' ', selectorStartOffset);
+            indexOfSpace = StringsKt.indexOf(scopeName, ' ', selectorStartOffset, false);
             activeCaptureRanges.push(captureRange);
           }
           openScopeSelector(output, scopeName.subSequence(selectorStartOffset, scopeName.length()), startLineOffset + captureRange.start);
@@ -333,13 +333,13 @@ public final class TextMateLexer {
 
   private void openScopeSelector(@NotNull Queue<Token> output, @Nullable CharSequence name, int position) {
     addToken(output, position);
-    int indexOfSpace = name != null ? Strings.indexOf(name, ' ', 0) : -1;
+    int indexOfSpace = name != null ? StringsKt.indexOf(name, ' ', 0, false) : -1;
     int prevIndexOfSpace = 0;
     int count = 0;
     while (indexOfSpace >= 0) {
       myCurrentScope = myCurrentScope.add(name.subSequence(prevIndexOfSpace, indexOfSpace));
       prevIndexOfSpace = indexOfSpace + 1;
-      indexOfSpace = Strings.indexOf(name, ' ', prevIndexOfSpace);
+      indexOfSpace = StringsKt.indexOf(name, ' ', prevIndexOfSpace, false);
       count++;
     }
     myCurrentScope = myCurrentScope.add(name != null ? name.subSequence(prevIndexOfSpace, name.length()) : null);

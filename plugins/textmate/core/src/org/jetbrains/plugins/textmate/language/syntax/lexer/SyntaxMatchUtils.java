@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.intellij.openapi.util.text.Strings;
+import kotlin.text.StringsKt;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.NotNull;
@@ -229,7 +229,8 @@ public final class SyntaxMatchUtils {
         }
         if (hasGroupIndex && matchData.count() > groupIndex) {
           TextMateRange range = matchData.byteOffset(groupIndex);
-          Strings.escapeToRegexp(new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8), result);
+          String replacement = new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8);
+          result.append(BACK_REFERENCE_REPLACEMENT_REGEX.matcher(replacement).replaceAll("\\\\$0"));
           charIndex = digitIndex;
           continue;
         }
@@ -240,6 +241,7 @@ public final class SyntaxMatchUtils {
     return result.toString();
   }
 
+  private static final Pattern BACK_REFERENCE_REPLACEMENT_REGEX = Pattern.compile("[\\-\\\\{}*+?|^$.,\\[\\]()#\\s]");
   private static final Pattern CAPTURE_GROUP_REGEX = Pattern.compile("\\$([0-9]+)|\\$\\{([0-9]+):/(downcase|upcase)}");
 
   /**
@@ -269,8 +271,7 @@ public final class SyntaxMatchUtils {
         result.append(string, lastPosition, matcher.start());
         TextMateRange range = matchData.byteOffset(groupIndex);
         String capturedText = new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8);
-        int numberOfDotsAtTheBeginning = Strings.countChars(capturedText, '.', 0, true);
-        String replacement = capturedText.substring(numberOfDotsAtTheBeginning);
+        String replacement = StringsKt.trimStart(capturedText, '.');
         String command = matcher.group(3);
         if ("downcase".equals(command)) {
           result.append(replacement.toLowerCase(Locale.ROOT));
