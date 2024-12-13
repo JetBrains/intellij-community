@@ -81,8 +81,8 @@ public final class SyntaxMatchUtils {
       resultState =
         moreImportantState(resultState,
                            matchFirstChild(regexFactory, child, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope));
-      if (resultState.matchData.matched() && resultState.matchData.byteOffset().start == byteOffset) {
-        // optimization. There cannot be anything more `important` than current state matched from the very beginning
+      if (resultState.matchData.matched && resultState.matchData.byteOffset().start == byteOffset) {
+        // optimization. There cannot be anything more `important` than the current state matched from the very beginning
         break;
       }
     }
@@ -117,10 +117,10 @@ public final class SyntaxMatchUtils {
 
   @NotNull
   private static TextMateLexerState moreImportantState(@NotNull TextMateLexerState oldState, @NotNull TextMateLexerState newState) {
-    if (!newState.matchData.matched()) {
+    if (!newState.matchData.matched) {
       return oldState;
     }
-    else if (!oldState.matchData.matched()) {
+    else if (!oldState.matchData.matched) {
       return newState;
     }
     int newScore = newState.matchData.byteOffset().start;
@@ -195,7 +195,7 @@ public final class SyntaxMatchUtils {
   /**
    * Replaces parts like \1 or \20 in string parameter with group captures from matchData.
    * <p/>
-   * E.g. given string "\1-\2" and matchData consists of two groups: "first" and "second"
+   * E.g., given string "\1-\2" and matchData consists of two groups: "first" and "second"
    * then string "first-second" will be returned.
    *
    * @param string         string pattern
@@ -206,7 +206,7 @@ public final class SyntaxMatchUtils {
   public static String replaceGroupsWithMatchDataInRegex(@NotNull CharSequence string,
                                                          @Nullable TextMateString matchingString,
                                                          @NotNull MatchData matchData) {
-    if (matchingString == null || !matchData.matched()) {
+    if (matchingString == null || !matchData.matched) {
       return string.toString();
     }
     StringBuilder result = new StringBuilder();
@@ -257,7 +257,7 @@ public final class SyntaxMatchUtils {
   public static CharSequence replaceGroupsWithMatchDataInCaptures(@NotNull CharSequence string,
                                                                   @NotNull TextMateString matchingString,
                                                                   @NotNull MatchData matchData) {
-    if (!matchData.matched()) {
+    if (!matchData.matched) {
       return string;
     }
     Matcher matcher = CAPTURE_GROUP_REGEX.matcher(string);

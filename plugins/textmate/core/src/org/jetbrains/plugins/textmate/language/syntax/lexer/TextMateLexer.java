@@ -114,7 +114,7 @@ public final class TextMateLexer {
     boolean matchBeginOfString = lineStartOffset == 0;
     int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
 
-    TextMateString string = new TextMateString(line);
+    TextMateString string = TextMateString.fromCharSequence(line);
 
     FList<TextMateLexerState> whileStates = states;
     while (!whileStates.isEmpty()) {
@@ -124,7 +124,7 @@ public final class TextMateLexer {
         MatchData matchWhile = SyntaxMatchUtils.matchStringRegex(myRegexFactory,
                                                                  Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
                                                                  matchBeginOfString, whileState);
-        if (matchWhile.matched()) {
+        if (matchWhile.matched) {
           // todo: support whileCaptures
           if (anchorByteOffset == -1) {
             anchorByteOffset = matchWhile.byteOffset().end;
@@ -154,12 +154,12 @@ public final class TextMateLexer {
       MatchData endMatch =
         SyntaxMatchUtils.matchStringRegex(myRegexFactory,
                                           Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState);
-      if (endMatch.matched() && (!currentMatch.matched() ||
+      if (endMatch.matched && (!currentMatch.matched ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
         // todo: applyEndPatternLast
         TextMateLexerState poppedState = states.getHead();
-        if (poppedState.matchData.matched() && !poppedState.matchedEOL) {
+        if (poppedState.matchData.matched && !poppedState.matchedEOL) {
           // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
           anchorByteOffset = poppedState.matchData.byteOffset().end;
         }
@@ -185,7 +185,7 @@ public final class TextMateLexer {
         }
         localStates.remove(poppedState);
       }
-      else if (currentMatch.matched()) {
+      else if (currentMatch.matched) {
         anchorByteOffset = currentMatch.byteOffset().end;
 
         TextMateRange currentRange = currentMatch.charRange(line, string.bytes);
@@ -312,7 +312,7 @@ public final class TextMateLexer {
       }
       else if (capture instanceof TextMateCapture.Rule) {
         CharSequence capturedString = line.subSequence(0, captureRange.end);
-        TextMateString capturedTextMateString = new TextMateString(capturedString);
+        TextMateString capturedTextMateString = TextMateString.fromCharSequence(capturedString);
         TextMateLexerState captureState = new TextMateLexerState(((TextMateCapture.Rule)capture).getNode(),
                                                                  matchData,
                                                                  TextMateWeigh.Priority.NORMAL,

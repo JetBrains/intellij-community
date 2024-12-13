@@ -1,101 +1,102 @@
-package org.jetbrains.plugins.textmate.language.preferences;
+package org.jetbrains.plugins.textmate.language.preferences
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.language.TextMateScopeComparator
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 
-import java.util.*;
+class PreferencesRegistryImpl : PreferencesRegistry {
+  private val myPreferences: MutableSet<Preferences> = hashSetOf()
+  private val myLeftHighlightingBraces: IntSet = IntOpenHashSet()
+  private val myRightHighlightingBraces: IntSet = IntOpenHashSet()
+  private val myLeftSmartTypingBraces: IntSet = IntOpenHashSet()
+  private val myRightSmartTypingBraces: IntSet = IntOpenHashSet()
 
-public final class PreferencesRegistryImpl implements PreferencesRegistry {
-  @NotNull private final Set<Preferences> myPreferences = new HashSet<>();
-  @NotNull private final IntSet myLeftHighlightingBraces = new IntOpenHashSet();
-  @NotNull private final IntSet myRightHighlightingBraces = new IntOpenHashSet();
-  @NotNull private final IntSet myLeftSmartTypingBraces = new IntOpenHashSet();
-  @NotNull private final IntSet myRightSmartTypingBraces = new IntOpenHashSet();
-
-  public PreferencesRegistryImpl() {
-    fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS);
-    fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
+  init {
+    fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS)
+    fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS)
   }
 
-  public synchronized void addPreferences(Preferences preferences) {
-    fillHighlightingBraces(preferences.getHighlightingPairs());
-    fillSmartTypingBraces(preferences.getSmartTypingPairs());
-    myPreferences.add(preferences);
+  @Synchronized
+  fun addPreferences(preferences: Preferences) {
+    fillHighlightingBraces(preferences.highlightingPairs)
+    fillSmartTypingBraces(preferences.smartTypingPairs)
+    myPreferences.add(preferences)
   }
 
-  private synchronized void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
+  @Synchronized
+  private fun fillHighlightingBraces(highlightingPairs: Collection<TextMateBracePair>?) {
     if (highlightingPairs != null) {
-      for (TextMateBracePair pair : highlightingPairs) {
-        if (!pair.getLeft().isEmpty()) {
-          myLeftHighlightingBraces.add(pair.getLeft().charAt(0));
+      for (pair in highlightingPairs) {
+        if (!pair.left.isEmpty()) {
+          myLeftHighlightingBraces.add(pair.left[0].code)
         }
-        if (!pair.getRight().isEmpty()) {
-          myRightHighlightingBraces.add(pair.getRight().charAt(pair.getRight().length() - 1));
+        if (!pair.right.isEmpty()) {
+          myRightHighlightingBraces.add(pair.right[pair.right.length - 1].code)
         }
       }
     }
   }
 
-  private void fillSmartTypingBraces(Collection<TextMateAutoClosingPair> smartTypingPairs) {
+  private fun fillSmartTypingBraces(smartTypingPairs: Collection<TextMateAutoClosingPair>?) {
     if (smartTypingPairs != null) {
-      for (TextMateAutoClosingPair pair : smartTypingPairs) {
-        if (!pair.getLeft().isEmpty()) {
-          myLeftSmartTypingBraces.add(pair.getLeft().charAt(pair.getLeft().length() - 1));
+      for (pair in smartTypingPairs) {
+        if (!pair.left.isEmpty()) {
+          myLeftSmartTypingBraces.add(pair.left[pair.left.length - 1].code)
         }
-        if (!pair.getRight().isEmpty()) {
-          myRightSmartTypingBraces.add(pair.getRight().charAt(pair.getRight().length() - 1));
+        if (!pair.right.isEmpty()) {
+          myRightSmartTypingBraces.add(pair.right[pair.right.length - 1].code)
         }
       }
     }
   }
 
-  @Override
-  public synchronized boolean isPossibleLeftHighlightingBrace(char firstLeftBraceChar) {
-    return myLeftHighlightingBraces.contains(firstLeftBraceChar) || (firstLeftBraceChar != ' ' && myLeftSmartTypingBraces.contains(
-      firstLeftBraceChar));
+  @Synchronized
+  override fun isPossibleLeftHighlightingBrace(firstLeftBraceChar: Char): Boolean {
+    return myLeftHighlightingBraces.contains(firstLeftBraceChar.code) ||
+           (firstLeftBraceChar != ' ' && myLeftSmartTypingBraces.contains(firstLeftBraceChar.code))
   }
 
-  @Override
-  public synchronized boolean isPossibleRightHighlightingBrace(char lastRightBraceChar) {
-    return myRightHighlightingBraces.contains(lastRightBraceChar) || (lastRightBraceChar != ' ' && myRightSmartTypingBraces.contains(
-      lastRightBraceChar));
+  @Synchronized
+  override fun isPossibleRightHighlightingBrace(lastRightBraceChar: Char): Boolean {
+    return myRightHighlightingBraces.contains(lastRightBraceChar.code) ||
+           (lastRightBraceChar != ' ' && myRightSmartTypingBraces.contains(lastRightBraceChar.code))
   }
 
-  @Override
-  public synchronized boolean isPossibleLeftSmartTypingBrace(char lastLeftBraceChar) {
-    return myLeftSmartTypingBraces.contains(lastLeftBraceChar);
+  @Synchronized
+  override fun isPossibleLeftSmartTypingBrace(lastLeftBraceChar: Char): Boolean {
+    return myLeftSmartTypingBraces.contains(lastLeftBraceChar.code)
   }
 
-  @Override
-  public synchronized boolean isPossibleRightSmartTypingBrace(char lastRightBraceChar) {
-    return myRightSmartTypingBraces.contains(lastRightBraceChar);
+  @Synchronized
+  override fun isPossibleRightSmartTypingBrace(lastRightBraceChar: Char): Boolean {
+    return myRightSmartTypingBraces.contains(lastRightBraceChar.code)
   }
 
   /**
    * Returns preferences by scope selector.
    *
    * @param scope selector of current context.
-   * @return preferences from table for given scope sorted by descending weigh
+   * @return preferences from table for given scope sorted by descending weight
    * of rule selector relative to scope selector.
    */
-  @Override @NotNull
-  public synchronized List<Preferences> getPreferences(@NotNull TextMateScope scope) {
-    return new TextMateScopeComparator<>(scope, Preferences::getScopeSelector).sortAndFilter(myPreferences);
+  @Synchronized
+  override fun getPreferences(scope: TextMateScope): List<Preferences> {
+    return TextMateScopeComparator<Preferences>(scope, Preferences::getScopeSelector)
+      .sortAndFilter(myPreferences)
   }
 
-  public synchronized void clear() {
-    myPreferences.clear();
+  @Synchronized
+  fun clear() {
+    myPreferences.clear()
 
-    myLeftHighlightingBraces.clear();
-    myRightHighlightingBraces.clear();
-    fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS);
+    myLeftHighlightingBraces.clear()
+    myRightHighlightingBraces.clear()
+    fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS)
 
-    myLeftSmartTypingBraces.clear();
-    myRightSmartTypingBraces.clear();
-    fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
+    myLeftSmartTypingBraces.clear()
+    myRightSmartTypingBraces.clear()
+    fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS)
   }
 }

@@ -1,31 +1,33 @@
-package org.jetbrains.plugins.textmate.regex;
+package org.jetbrains.plugins.textmate.regex
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.nio.CharBuffer
+import java.nio.charset.StandardCharsets
+import kotlin.text.toByteArray
 
-public final class TextMateString {
-  public final Object id = new Object();
-  public final byte[] bytes;
+class TextMateString private constructor(@JvmField val bytes: ByteArray) {
+  @JvmField
+  val id: Any = Any()
 
-  public TextMateString(String string) {
-    bytes = string.getBytes(StandardCharsets.UTF_8);
+  companion object {
+    @JvmStatic
+    fun fromString(string: String): TextMateString {
+      return TextMateString(string.toByteArray(StandardCharsets.UTF_8))
+    }
+
+    @JvmStatic
+    fun fromCharSequence(string: CharSequence): TextMateString {
+      val byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(string))
+      val bytes = ByteArray(byteBuffer.remaining())
+      byteBuffer.get(bytes)
+      return TextMateString(bytes)
+    }
   }
 
-  public TextMateString(CharSequence string) {
-    ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(string));
-    bytes = new byte[byteBuffer.remaining()];
-    byteBuffer.get(bytes);
+  override fun hashCode(): Int {
+    return bytes.contentHashCode()
   }
 
-  @Override
-  public int hashCode() {
-    return Arrays.hashCode(bytes);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof TextMateString && Arrays.equals(bytes, ((TextMateString)obj).bytes);
+  override fun equals(obj: Any?): Boolean {
+    return obj is TextMateString && bytes.contentEquals(obj.bytes)
   }
 }

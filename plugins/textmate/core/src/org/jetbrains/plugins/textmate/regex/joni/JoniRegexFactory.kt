@@ -45,6 +45,6 @@ class JoniRegexFactory : RegexFactory {
   }
 
   override fun string(string: CharSequence): TextMateString {
-    return TextMateString(string)
+    return TextMateString.fromCharSequence(string)
   }
 }

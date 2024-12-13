@@ -1,92 +1,69 @@
-package org.jetbrains.plugins.textmate.regex;
+package org.jetbrains.plugins.textmate.regex
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.joni.Region;
+import org.jetbrains.plugins.textmate.regex.RegexUtil.codePointsRangeByByteRange
+import org.joni.Region
+import kotlin.math.max
 
-import java.util.Arrays;
-
-public final class MatchData {
-  public static final MatchData NOT_MATCHED = new MatchData(false, new int[0]);
-
-  private final boolean matched;
-  private final int @NotNull [] offsets;
-
-  private MatchData(boolean matched, int @NotNull [] offsets) {
-    this.matched = matched;
-    this.offsets = offsets;
+class MatchData private constructor(@JvmField val matched: Boolean,
+                                    private val offsets: IntArray) {
+  fun count(): Int {
+    return offsets.size / 2
   }
 
-  public static MatchData fromRegion(@Nullable Region matchedRegion) {
-    if (matchedRegion != null) {
-      int[] offsets = new int[matchedRegion.getNumRegs() * 2];
-      for (int i = 0; i < matchedRegion.getNumRegs(); i++) {
-        int startIndex = i * 2;
-        offsets[startIndex] = Math.max(matchedRegion.getBeg(i), 0);
-        offsets[startIndex + 1] = Math.max(matchedRegion.getEnd(i), 0);
+  @JvmOverloads
+  fun byteOffset(group: Int = 0): TextMateRange {
+    val endIndex = group * 2 + 1
+    return TextMateRange(offsets[endIndex - 1], offsets[endIndex])
+  }
+
+  @JvmOverloads
+  fun charRange(s: CharSequence, stringBytes: ByteArray?, group: Int = 0): TextMateRange {
+    val range = codePointRange(stringBytes, group)
+    return TextMateRange(Character.offsetByCodePoints(s, 0, range.start),
+                         Character.offsetByCodePoints(s, 0, range.end))
+  }
+
+  @JvmOverloads
+  fun codePointRange(stringBytes: ByteArray?, group: Int = 0): TextMateRange {
+    return codePointsRangeByByteRange(stringBytes, byteOffset(group))
+  }
+
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+
+    val matchData = o as MatchData
+
+    if (matched != matchData.matched) return false
+    if (!offsets.contentEquals(matchData.offsets)) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return 31 * (if (matched) 1 else 0) + offsets.contentHashCode()
+  }
+
+  override fun toString(): String {
+    return "{ matched=" + matched + ", offsets=" + offsets.contentToString() + '}'
+  }
+
+  companion object {
+    @JvmField
+    val NOT_MATCHED: MatchData = MatchData(false, IntArray(0))
+
+    @JvmStatic
+    fun fromRegion(matchedRegion: Region?): MatchData {
+      if (matchedRegion != null) {
+        val offsets = IntArray(matchedRegion.numRegs * 2)
+        for (i in 0..<matchedRegion.numRegs) {
+          val startIndex = i * 2
+          offsets[startIndex] = max(matchedRegion.getBeg(i).toDouble(), 0.0).toInt()
+          offsets[startIndex + 1] = max(matchedRegion.getEnd(i).toDouble(), 0.0).toInt()
+        }
+        return MatchData(true, offsets)
       }
-      return new MatchData(true, offsets);
+      return NOT_MATCHED
     }
-    return NOT_MATCHED;
-  }
-
-  public int count() {
-    return offsets.length / 2;
-  }
-
-  public TextMateRange byteOffset() {
-    return byteOffset(0);
-  }
-
-  @NotNull
-  public TextMateRange byteOffset(int group) {
-    int endIndex = group * 2 + 1;
-    return new TextMateRange(offsets[endIndex - 1], offsets[endIndex]);
-  }
-
-  public TextMateRange charRange(CharSequence s, byte[] stringBytes) {
-    return charRange(s, stringBytes, 0);
-  }
-
-  public TextMateRange charRange(CharSequence s, byte[] stringBytes, int group) {
-    TextMateRange range = codePointRange(stringBytes, group);
-    return new TextMateRange(Character.offsetByCodePoints(s, 0, range.start),
-                             Character.offsetByCodePoints(s, 0, range.end));
-  }
-
-  public TextMateRange codePointRange(byte[] stringBytes) {
-    return codePointRange(stringBytes, 0);
-  }
-
-  @NotNull
-  public TextMateRange codePointRange(byte[] stringBytes, int group) {
-    return RegexUtil.codePointsRangeByByteRange(stringBytes, byteOffset(group));
-  }
-
-  public boolean matched() {
-    return matched;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    MatchData matchData = (MatchData)o;
-
-    if (matched != matchData.matched) return false;
-    if (!Arrays.equals(offsets, matchData.offsets)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * (matched ? 1 : 0) + Arrays.hashCode(offsets);
-  }
-
-  @Override
-  public String toString() {
-    return "{ matched=" + matched + ", offsets=" + Arrays.toString(offsets) + '}';
   }
 }

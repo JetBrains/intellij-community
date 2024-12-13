@@ -10,7 +10,7 @@ public class RegexFacadeTest {
   @Test
   public void matching() {
     RegexFacade regex = regex("[0-9]+");
-    TextMateString string = new TextMateString("12:00pm");
+    TextMateString string = TextMateString.fromString("12:00pm");
     MatchData match = regex.match(string, null);
     assertEquals(new TextMateRange(0, 2), match.codePointRange(string.bytes));
   }
@@ -18,7 +18,7 @@ public class RegexFacadeTest {
   @Test
   public void matchingFromPosition() {
     RegexFacade regex = regex("[0-9]+");
-    TextMateString string = new TextMateString("12:00pm");
+    TextMateString string = TextMateString.fromString("12:00pm");
     MatchData match = regex.match(string, 2, -1, true, null);
     assertEquals(new TextMateRange(3, 5), match.codePointRange(string.bytes));
   }
@@ -26,7 +26,7 @@ public class RegexFacadeTest {
   @Test
   public void matchingWithGroups() {
     RegexFacade regex = regex("([0-9]+):([0-9]+)");
-    TextMateString string = new TextMateString("12:00pm");
+    TextMateString string = TextMateString.fromString("12:00pm");
     MatchData match = regex.match(string, null);
     assertEquals(new TextMateRange(0, 5), match.codePointRange(string.bytes));
     assertEquals(new TextMateRange(0, 2), match.codePointRange(string.bytes, 1));
@@ -37,7 +37,7 @@ public class RegexFacadeTest {
   public void cyrillicMatchingSinceIndex() {
     RegexFacade regex = regex("мир");
     String text = "привет, мир; привет, мир!";
-    TextMateString string = new TextMateString(text);
+    TextMateString string = TextMateString.fromString(text);
     MatchData match = regex.match(string, RegexUtil.byteOffsetByCharOffset(text, 0, 9), -1, true, null);
     assertEquals(new TextMateRange(21, 24), match.codePointRange(string.bytes));
   }
@@ -45,7 +45,7 @@ public class RegexFacadeTest {
   @Test
   public void cyrillicMatching() {
     RegexFacade regex = regex("мир");
-    TextMateString string = new TextMateString("привет, мир!");
+    TextMateString string = TextMateString.fromString("привет, мир!");
     MatchData match = regex.match(string, null);
     assertEquals(new TextMateRange(8, 11), match.codePointRange(string.bytes));
   }
@@ -55,7 +55,7 @@ public class RegexFacadeTest {
     RegexFacade regex = regex("мир");
     //noinspection NonAsciiCharacters
     String string = "\uD83D\uDEA7\uD83D\uDEA7\uD83D\uDEA7 привет, мир!";
-    TextMateString textMateString = new TextMateString(string);
+    TextMateString textMateString = TextMateString.fromString(string);
     MatchData match = regex.match(textMateString, null);
     TextMateRange range = match.charRange(string, textMateString.bytes);
     assertEquals("мир", string.substring(range.start, range.end));

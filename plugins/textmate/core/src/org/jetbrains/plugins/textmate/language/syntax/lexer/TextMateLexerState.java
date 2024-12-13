@@ -28,8 +28,8 @@ public final class TextMateLexerState {
     this.matchData = matchData;
     this.priorityMatch = priority;
     this.enterByteOffset = enterByteOffset;
-    this.matchedEOL = matchData.matched() && line != null && matchData.byteOffset().end == line.bytes.length;
-    string = matchData.matched() ? line : null;
+    this.matchedEOL = matchData.matched && line != null && matchData.byteOffset().end == line.bytes.length;
+    string = matchData.matched ? line : null;
     hashcode = Objects.hash(syntaxRule, matchData, priorityMatch, stringId());
   }
 

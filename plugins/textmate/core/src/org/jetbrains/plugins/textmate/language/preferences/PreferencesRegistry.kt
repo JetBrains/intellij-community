@@ -1,23 +1,19 @@
-package org.jetbrains.plugins.textmate.language.preferences;
+package org.jetbrains.plugins.textmate.language.preferences
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
-
-import java.util.List;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 
 /**
  * Table of textmate preferences.
- * Table represents mapping from scopeNames to set of preferences {@link Preferences}
+ * Table represents mapping from scopeNames to set of preferences [Preferences]
  */
-public interface PreferencesRegistry {
+interface PreferencesRegistry {
+  fun isPossibleLeftHighlightingBrace(firstLeftBraceChar: Char): Boolean
 
-  boolean isPossibleLeftHighlightingBrace(char firstLeftBraceChar);
+  fun isPossibleRightHighlightingBrace(lastRightBraceChar: Char): Boolean
 
-  boolean isPossibleRightHighlightingBrace(char lastRightBraceChar);
+  fun isPossibleLeftSmartTypingBrace(lastLeftBraceChar: Char): Boolean
 
-  boolean isPossibleLeftSmartTypingBrace(char lastLeftBraceChar);
-
-  boolean isPossibleRightSmartTypingBrace(char lastRightBraceChar);
+  fun isPossibleRightSmartTypingBrace(lastRightBraceChar: Char): Boolean
 
   /**
    * Returns preferences by scope selector.
@@ -26,6 +22,5 @@ public interface PreferencesRegistry {
    * @return preferences from table for given scope sorted by descending weigh
    * of rule selector relative to scope selector.
    */
-  @NotNull
-  List<Preferences> getPreferences(@NotNull TextMateScope scope);
+  fun getPreferences(scope: TextMateScope): List<Preferences>
 }

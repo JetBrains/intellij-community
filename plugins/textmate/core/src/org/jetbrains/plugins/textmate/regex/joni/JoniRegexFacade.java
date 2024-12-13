@@ -50,7 +50,7 @@ public final class JoniRegexFacade implements RegexFacade {
     MatchData lastMatch = lastResult != null ? lastResult.lastMatch : MatchData.NOT_MATCHED;
 
     if (lastId == string.id && lastOffset <= byteOffset && lastOptions == options && (!hasGMatch || lastGosOffset == gosOffset)) {
-      if (!lastMatch.matched() || lastMatch.byteOffset().start >= byteOffset) {
+      if (!lastMatch.matched || lastMatch.byteOffset().start >= byteOffset) {
         checkMatched(lastMatch, string);
         return lastMatch;
       }
@@ -77,7 +77,7 @@ public final class JoniRegexFacade implements RegexFacade {
   }
 
   private static void checkMatched(MatchData match, TextMateString string) {
-    if (match.matched() && match.byteOffset().end > string.bytes.length) {
+    if (match.matched && match.byteOffset().end > string.bytes.length) {
       throw new IllegalStateException(
         "Match data out of bounds: " + match.byteOffset().start + " > " + string.bytes.length + "\n" +
         new String(string.bytes, StandardCharsets.UTF_8));

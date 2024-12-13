@@ -1,39 +1,38 @@
-package org.jetbrains.plugins.textmate.regex;
+package org.jetbrains.plugins.textmate.regex
 
-import org.jcodings.specific.NonStrictUTF8Encoding;
-import org.jcodings.specific.UTF8Encoding;
-import org.jetbrains.annotations.NotNull;
+import org.jcodings.specific.NonStrictUTF8Encoding
+import org.jcodings.specific.UTF8Encoding
 
-public final class RegexUtil {
-  private RegexUtil() {
-  }
-
-  public static int byteOffsetByCharOffset(@NotNull CharSequence charSequence,
-                                           int startOffset,
-                                           int targetOffset) {
+object RegexUtil {
+  @JvmStatic
+  fun byteOffsetByCharOffset(
+    charSequence: CharSequence,
+    startOffset: Int,
+    targetOffset: Int,
+  ): Int {
     if (targetOffset <= 0) {
-      return 0;
+      return 0
     }
-    int result = 0;
-    int i = startOffset;
+    var result = 0
+    var i = startOffset
     while (i < targetOffset) {
-      result += UTF8Encoding.INSTANCE.codeToMbcLength(charSequence.charAt(i));
-      i++;
+      result += UTF8Encoding.INSTANCE.codeToMbcLength(charSequence.get(i).code)
+      i++
     }
-    return result;
+    return result
   }
 
-  @NotNull
-  public static TextMateRange codePointsRangeByByteRange(byte[] bytes, @NotNull TextMateRange byteRange) {
-    int startOffset = codePointOffsetByByteOffset(bytes, byteRange.start);
-    int endOffset = codePointOffsetByByteOffset(bytes, byteRange.end);
-    return new TextMateRange(startOffset, endOffset);
+  @JvmStatic
+  fun codePointsRangeByByteRange(bytes: ByteArray?, byteRange: TextMateRange): TextMateRange {
+    val startOffset = codePointOffsetByByteOffset(bytes, byteRange.start)
+    val endOffset = codePointOffsetByByteOffset(bytes, byteRange.end)
+    return TextMateRange(startOffset, endOffset)
   }
 
-  private static int codePointOffsetByByteOffset(byte[] stringBytes, int byteOffset) {
+  private fun codePointOffsetByByteOffset(stringBytes: ByteArray?, byteOffset: Int): Int {
     if (byteOffset <= 0) {
-      return 0;
+      return 0
     }
-    return NonStrictUTF8Encoding.INSTANCE.strLength(stringBytes, 0, byteOffset);
+    return NonStrictUTF8Encoding.INSTANCE.strLength(stringBytes, 0, byteOffset)
   }
 }
