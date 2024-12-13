@@ -1833,6 +1833,22 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Rpc functions must be suspend" text="interface $Class$: RemoteApi&lt;Unit&gt; {&#10;  suspend fun $Method$ ($Parameter$ : $ParameterType$)&#10;&#10;  fun $Method2$($Parameter2$ : $ParameterType2$)&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Class" within="" contains="" />
+        <constraint name="Method" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="ParameterType" within="" contains="" />
+        <constraint name="Method2" target="true" within="" contains="" />
+        <constraint name="Parameter2" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="ParameterType2" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Rpc interfaces should be marked with @Rpc" text="@$Annotation$ &#10;interface $Name$: $Interface$ { &#10;  &#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Annotation" regexp="Rpc" minCount="0" maxCount="0" within="" contains="" />
+        <constraint name="Name" target="true" within="" contains="" />
+        <constraint name="Interface" regexp="RemoteApi&lt;Unit&gt;" withinHierarchy="true" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="searchable configurable should not contain JComponent fields" text="class $Class$ implements SearchableConfigurable{ &#10;  @Modifier(&quot;Instance&quot;) $FieldType$ $FieldName$ = $Init$;&#10;  public void disposeUIResources(){}&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" target="true" within="" contains="" />
         <constraint name="FieldType" regexp="javax.swing.JComponent" withinHierarchy="true" formalTypeWithinHierarchy="true" within="" contains="" />
