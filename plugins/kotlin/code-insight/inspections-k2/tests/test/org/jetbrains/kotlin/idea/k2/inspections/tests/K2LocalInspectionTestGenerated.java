@@ -11645,4 +11645,23 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/selfReferenceConstructorParameter/vararg.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/canBeVal")
+    public static class CanBeVal extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("lateinitVar.kt")
+        public void testLateinitVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canBeVal/lateinitVar.kt");
+        }
+    }
 }

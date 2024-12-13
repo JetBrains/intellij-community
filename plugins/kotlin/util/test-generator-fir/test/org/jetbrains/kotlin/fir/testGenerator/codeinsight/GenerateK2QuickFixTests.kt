@@ -44,6 +44,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/supercalls", pattern = pattern)
             model("$idea/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs", pattern = pattern)
             model("$idea/quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
+            model("$idea/quickfix/variables/changeMutability/canBeVal", pattern = pattern)
             model("$idea/quickfix/variables/removeValVarFromParameter", pattern = pattern)
             model("$idea/quickfix/when", pattern = pattern)
             model("$idea/quickfix/wrapWithSafeLetCall", pattern = pattern)
