@@ -21,11 +21,11 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 internal class TerminalCaretPainter(
-  private val model: TerminalModel,
+  private val outputModel: TerminalOutputModel,
   private val coroutineScope: CoroutineScope,
 ) {
   private val editor: EditorEx
-    get() = model.editor
+    get() = outputModel.editor
   private val caretColor: Color
     get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CARET_DARK, CARET_LIGHT)
 
@@ -33,7 +33,7 @@ internal class TerminalCaretPainter(
     coroutineScope.launch {
       var caretPaintingJob: Job? = null
 
-      model.caretOffsetState.collect { offset ->
+      outputModel.cursorOffsetState.collect { offset ->
         caretPaintingJob?.cancel()
         caretPaintingJob = coroutineScope.launch(Dispatchers.EDT) {
           paintCaret(offset)

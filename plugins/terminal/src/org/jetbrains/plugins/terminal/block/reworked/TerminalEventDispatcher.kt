@@ -214,13 +214,13 @@ internal fun setupKeyEventDispatcher(
 
 internal fun setupMouseListener(
   editor: EditorEx,
-  model: TerminalModel,
+  sessionModel: TerminalSessionModel,
   settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalEventsHandler,
   disposable: Disposable,
 ) {
   fun isRemoteMouseAction(e: MouseEvent): Boolean {
-    return model.terminalState.value.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !e.isShiftDown
+    return sessionModel.terminalState.value.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !e.isShiftDown
   }
 
   // TODO: I suspect that Y positions should be screen-start based (without history).

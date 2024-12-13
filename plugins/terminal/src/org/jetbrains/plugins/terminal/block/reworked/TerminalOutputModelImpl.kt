@@ -4,12 +4,8 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.jediterm.terminal.emulator.mouse.MouseFormat
-import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,27 +21,23 @@ import org.jetbrains.plugins.terminal.block.ui.doWithScrollingAware
 /**
  * [maxOutputLength] limits the length of the editor document. Zero means unlimited length.
  */
-internal class TerminalModel(
-  val editor: EditorEx,
-  private val settings: JBTerminalSystemSettingsProviderBase,
+internal class TerminalOutputModelImpl(
+  override val editor: EditorEx,
   private val maxOutputLength: Int,
-) {
+) : TerminalOutputModel {
   private val document = editor.document
 
   @VisibleForTesting
   val highlightingsModel = HighlightingsModel()
+
+  private val mutableCursorOffsetState: MutableStateFlow<Int> = MutableStateFlow(0)
+  override val cursorOffsetState: StateFlow<Int> = mutableCursorOffsetState.asStateFlow()
 
   @Volatile
   private var trimmedLinesCount: Int = 0
   private var trimmedCharsCount: Int = 0
 
   private var contentUpdateInProgress: Boolean = false
-
-  private val mutableCaretOffsetState = MutableStateFlow(0)
-  val caretOffsetState: StateFlow<Int> = mutableCaretOffsetState.asStateFlow()
-
-  private val mutableTerminalStateFlow = MutableStateFlow(getInitialState())
-  val terminalState: StateFlow<TerminalState> = mutableTerminalStateFlow.asStateFlow()
 
   init {
     editor.highlighter = TerminalTextHighlighter {
@@ -59,9 +51,7 @@ internal class TerminalModel(
     }
   }
 
-  @RequiresEdt
-  @RequiresWriteLock
-  fun updateEditorContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
+  override fun updateContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
     CommandProcessor.getInstance().runUndoTransparentAction {
       editor.doWithScrollingAware {
         contentUpdateInProgress = true
@@ -76,30 +66,10 @@ internal class TerminalModel(
     }
   }
 
-  fun updateCaretPosition(absoluteLineIndex: Int, columnIndex: Int) {
+  override fun updateCursorPosition(absoluteLineIndex: Int, columnIndex: Int) {
     val editorLineIndex = absoluteLineIndex - trimmedLinesCount
     val newOffset = editor.logicalPositionToOffset(LogicalPosition(editorLineIndex, columnIndex))
-    mutableCaretOffsetState.value = newOffset
-  }
-
-  fun updateTerminalState(state: TerminalState) {
-    mutableTerminalStateFlow.value = state
-  }
-
-  private fun getInitialState(): TerminalState {
-    return TerminalState(
-      isCursorVisible = true,
-      cursorShape = settings.cursorShape,
-      mouseMode = MouseMode.MOUSE_REPORTING_NONE,
-      mouseFormat = MouseFormat.MOUSE_FORMAT_XTERM,
-      isAlternateScreenBuffer = false,
-      isApplicationArrowKeys = false,
-      isApplicationKeypad = false,
-      isAutoNewLine = false,
-      isAltSendsEscape = true,
-      isBracketedPasteMode = false,
-      windowTitle = ""
-    )
+    mutableCursorOffsetState.value = newOffset
   }
 
   @RequiresEdt
@@ -118,12 +88,14 @@ internal class TerminalModel(
     trimToSize()
   }
 
+  @RequiresEdt
   private fun trimToSize() {
     if (maxOutputLength > 0 && document.textLength > maxOutputLength) {
       trimToSize(maxOutputLength)
     }
   }
 
+  @RequiresEdt
   private fun trimToSize(maxLength: Int) {
     val textLength = document.textLength
     check(textLength > maxLength) { "This method should be called only if text length $textLength is greater than max length $maxLength" }

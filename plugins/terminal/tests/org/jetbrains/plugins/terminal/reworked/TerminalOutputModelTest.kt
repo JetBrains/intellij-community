@@ -10,11 +10,11 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jediterm.terminal.TextStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
-import org.jetbrains.plugins.terminal.block.reworked.TerminalModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.junit.Test
@@ -22,12 +22,12 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-internal class TerminalModelTest : BasePlatformTestCase() {
+internal class TerminalOutputModelTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   @Test
   fun `update editor content`() = runBlocking(Dispatchers.EDT) {
-    val model = createTerminalModel()
+    val model = createOutputModel()
 
     val text = """
       123 sdfsdf sdfsdf
@@ -38,14 +38,14 @@ internal class TerminalModelTest : BasePlatformTestCase() {
       
     """.trimIndent()
 
-    model.updateEditor(0, text, emptyList())
+    model.update(0, text, emptyList())
 
     assertEquals(text, model.editor.document.text)
   }
 
   @Test
   fun `update editor content incrementally with styles`() = runBlocking(Dispatchers.EDT) {
-    val model = createTerminalModel()
+    val model = createOutputModel()
 
     val text1 = """
       first line
@@ -59,8 +59,8 @@ internal class TerminalModelTest : BasePlatformTestCase() {
     """.trimIndent()
     val styles2 = listOf(styleRange(0, 8), styleRange(9, 15), styleRange(21, 26))
 
-    model.updateEditor(0, text1, styles1)
-    model.updateEditor(1, text2, styles2)
+    model.update(0, text1, styles1)
+    model.update(1, text2, styles2)
 
     val expectedText = """
       first line
@@ -76,7 +76,7 @@ internal class TerminalModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content incrementally with overflow`() = runBlocking(Dispatchers.EDT) {
-    val model = createTerminalModel(maxLength = 16)
+    val model = createOutputModel(maxLength = 16)
 
     val text1 = """
       foofoo
@@ -90,8 +90,8 @@ internal class TerminalModelTest : BasePlatformTestCase() {
     """.trimIndent()
     val styles2 = listOf(styleRange(0, 6), styleRange(7, 13))
 
-    model.updateEditor(0, text1, styles1)
-    model.updateEditor(1, text2, styles2)
+    model.update(0, text1, styles1)
+    model.update(1, text2, styles2)
 
     val expectedText = """
       oo
@@ -107,7 +107,7 @@ internal class TerminalModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content after overflow`() = runBlocking(Dispatchers.EDT) {
-    val model = createTerminalModel(maxLength = 16)
+    val model = createOutputModel(maxLength = 16)
 
     val text1 = """
       foofoo
@@ -127,9 +127,9 @@ internal class TerminalModelTest : BasePlatformTestCase() {
     """.trimIndent()
     val styles3 = listOf(styleRange(0, 6), styleRange(7, 13))
 
-    model.updateEditor(0, text1, styles1)
-    model.updateEditor(1, text2, styles2)
-    model.updateEditor(2, text3, styles3)
+    model.update(0, text1, styles1)
+    model.update(1, text2, styles2)
+    model.update(2, text3, styles3)
 
     val expectedText = """
       az
@@ -143,19 +143,19 @@ internal class TerminalModelTest : BasePlatformTestCase() {
     assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
   }
 
-  private fun createTerminalModel(maxLength: Int = 0): TerminalModel {
+  private fun createOutputModel(maxLength: Int = 0): TerminalOutputModelImpl {
     val document = EditorFactory.getInstance().createDocument("")
     val editor = EditorFactory.getInstance().createEditor(document, project) as EditorEx
     Disposer.register(testRootDisposable) {
       EditorFactory.getInstance().releaseEditor(editor)
     }
 
-    return TerminalModel(editor, JBTerminalSystemSettingsProvider(), maxLength)
+    return TerminalOutputModelImpl(editor, maxLength)
   }
 
-  private suspend fun TerminalModel.updateEditor(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
+  private suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
     writeAction {
-      updateEditorContent(absoluteLineIndex, text, styles)
+      updateContent(absoluteLineIndex, text, styles)
     }
   }
 

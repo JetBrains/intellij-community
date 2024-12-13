@@ -17,7 +17,8 @@ import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalStat
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class TerminalSessionController(
-  private val model: TerminalModel,
+  private val sessionModel: TerminalSessionModel,
+  private val outputModel: TerminalOutputModel,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -45,19 +46,19 @@ internal class TerminalSessionController(
 
   private suspend fun handleEvent(event: TerminalOutputEvent) {
     when (event) {
-      is TerminalContentUpdatedEvent -> updateEditorContent(event)
-      is TerminalCursorPositionChangedEvent -> model.updateCaretPosition(event.logicalLineIndex, event.columnIndex)
+      is TerminalContentUpdatedEvent -> updateOutputContent(event)
+      is TerminalCursorPositionChangedEvent -> outputModel.updateCursorPosition(event.logicalLineIndex, event.columnIndex)
       is TerminalStateChangedEvent -> {
         val state = event.state.toTerminalState(settings.cursorShape)
-        model.updateTerminalState(state)
+        sessionModel.updateTerminalState(state)
       }
     }
   }
 
-  private suspend fun updateEditorContent(event: TerminalContentUpdatedEvent) {
+  private suspend fun updateOutputContent(event: TerminalContentUpdatedEvent) {
     withContext(Dispatchers.EDT) {
       writeAction {
-        model.updateEditorContent(event.startLineLogicalIndex, event.text, event.styles)
+        outputModel.updateContent(event.startLineLogicalIndex, event.text, event.styles)
       }
     }
   }

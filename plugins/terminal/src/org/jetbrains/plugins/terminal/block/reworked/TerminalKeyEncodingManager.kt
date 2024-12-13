@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
  * Listens for terminal state changes and updates keys encoding.
  */
 internal class TerminalKeyEncodingManager(
-  private val model: TerminalModel,
+  private val sessionModel: TerminalSessionModel,
   coroutineScope: CoroutineScope,
 ) {
   // TODO: TerminalKeyEncoder accepts OS platform as a parameter.
@@ -24,7 +24,7 @@ internal class TerminalKeyEncodingManager(
     coroutineScope.launch(Dispatchers.EDT) {
       var curEncodingState: EncodingState? = null
 
-      model.terminalState.collect { terminalState ->
+      sessionModel.terminalState.collect { terminalState ->
         val newEncodingState = terminalState.toEncodingState()
         if (curEncodingState != newEncodingState) {
           curEncodingState = newEncodingState

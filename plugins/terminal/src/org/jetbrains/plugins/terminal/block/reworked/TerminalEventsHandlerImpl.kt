@@ -29,7 +29,8 @@ import kotlin.math.abs
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
 internal open class TerminalEventsHandlerImpl(
-  private val model: TerminalModel,
+  private val sessionModel: TerminalSessionModel,
+  private val outputModel: TerminalOutputModel,
   private val encodingManager: TerminalKeyEncodingManager,
   private val inputChannel: SendChannel<TerminalInputEvent>,
   private val settings: JBTerminalSystemSettingsProviderBase,
@@ -38,14 +39,14 @@ internal open class TerminalEventsHandlerImpl(
   private var lastMotionReport: Point? = null
 
   private val terminalState: TerminalState
-    get() = model.terminalState.value
+    get() = sessionModel.terminalState.value
 
   override fun keyTyped(e: KeyEvent) {
-    val selectionModel = model.editor.selectionModel
+    val selectionModel = outputModel.editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
     }
-    model.editor.scrollToBottom()
+    outputModel.editor.scrollToBottom()
 
     if (ignoreNextKeyTypedEvent) {
       e.consume()
@@ -211,7 +212,7 @@ internal open class TerminalEventsHandlerImpl(
 
   override fun mouseWheelMoved(x: Int, y: Int, event: MouseWheelEvent) {
     if (settings.enableMouseReporting() && terminalState.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !event.isShiftDown) {
-      model.editor.selectionModel.removeSelection()
+      outputModel.editor.selectionModel.removeSelection()
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
       mousePressed(x, y, event)
     }

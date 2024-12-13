@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -43,16 +42,15 @@ internal class ReworkedTerminalView(
 
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 
-  private val editor: EditorImpl
-
-  private val model: TerminalModel
+  private val outputModel: TerminalOutputModel
+  private val sessionModel: TerminalSessionModel
   private val controller: TerminalSessionController
   private val encodingManager: TerminalKeyEncodingManager
 
   override val component: JComponent
-    get() = editor.component
+    get() = outputModel.editor.component
   override val preferredFocusableComponent: JComponent
-    get() = editor.contentComponent
+    get() = outputModel.editor.contentComponent
 
   init {
     Disposer.register(this) {
@@ -74,7 +72,7 @@ internal class ReworkedTerminalView(
     }
 
     val document = EditorFactory.getInstance().createDocument("")
-    editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
     Disposer.register(this) {
       EditorFactory.getInstance().releaseEditor(editor)
     }
@@ -83,11 +81,13 @@ internal class ReworkedTerminalView(
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
 
     val maxOutputLength = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
-    model = TerminalModel(editor, settings, maxOutputLength)
-    controller = TerminalSessionController(model, settings, coroutineScope.childScope("TerminalSessionController"))
-    encodingManager = TerminalKeyEncodingManager(model, coroutineScope.childScope("TerminalKeyEncodingManager"))
+    outputModel = TerminalOutputModelImpl(editor, maxOutputLength)
 
-    TerminalCaretPainter(model, coroutineScope.childScope("TerminalCaretPainter"))
+    sessionModel = TerminalSessionModelImpl(settings)
+    controller = TerminalSessionController(sessionModel, outputModel, settings, coroutineScope.childScope("TerminalSessionController"))
+    encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
+
+    TerminalCaretPainter(outputModel, coroutineScope.childScope("TerminalCaretPainter"))
 
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
@@ -104,9 +104,9 @@ internal class ReworkedTerminalView(
 
     controller.handleEvents(session.outputChannel)
 
-    val eventsHandler = TerminalEventsHandlerImpl(model, encodingManager, session.inputChannel, settings)
-    setupKeyEventDispatcher(model.editor, eventsHandler, disposable = this)
-    setupMouseListener(model.editor, model, settings, eventsHandler, disposable = this)
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, outputModel, encodingManager, session.inputChannel, settings)
+    setupKeyEventDispatcher(outputModel.editor, eventsHandler, disposable = this)
+    setupMouseListener(outputModel.editor, sessionModel, settings, eventsHandler, disposable = this)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
@@ -123,9 +123,9 @@ internal class ReworkedTerminalView(
   }
 
   override fun getTerminalSize(): TermSize? {
-    val width = component.width - editor.scrollPane.verticalScrollBar.width
+    val width = component.width - outputModel.editor.scrollPane.verticalScrollBar.width
     val height = component.height
-    val charSize = editor.getCharSize()
+    val charSize = outputModel.editor.getCharSize()
 
     return if (width > 0 && height > 0) {
       TerminalUiUtils.calculateTerminalSize(Dimension(width, height), charSize)
