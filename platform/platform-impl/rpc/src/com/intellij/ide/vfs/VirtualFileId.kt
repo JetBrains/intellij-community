@@ -3,14 +3,12 @@ package com.intellij.ide.vfs
 
 import com.intellij.ide.rpc.deserializeFromRpc
 import com.intellij.ide.rpc.serializeToRpc
-import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.vfs.VirtualFile
 import fleet.util.openmap.SerializedValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
 
 private val LOG = fileLogger()
 

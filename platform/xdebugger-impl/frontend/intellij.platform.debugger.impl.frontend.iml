@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.core" />

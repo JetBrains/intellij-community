@@ -41,4 +41,7 @@ fun IconId.icon(): Icon {
 
 @ApiStatus.Internal
 @Serializable
-class IconId internal constructor(@Serializable internal val serializedValue: SerializedValue? = null, @Transient internal val localIcon: Icon? = null)
+class IconId internal constructor(
+  @Serializable @JvmField internal val serializedValue: SerializedValue? = null,
+  @Transient @JvmField internal val localIcon: Icon? = null,
+)

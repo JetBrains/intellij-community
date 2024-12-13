@@ -62,4 +62,9 @@ data class XDebuggerEvaluatorId(val eid: EID)
 
 @ApiStatus.Internal
 @Serializable
-data class XValuePresentation(val icon: IconId?, val type: String?, val value: String, val hasChildren: Boolean)
+data class XValuePresentation(
+  @JvmField val icon: IconId?,
+  @JvmField val type: String?,
+  @JvmField val value: String,
+  @JvmField val hasChildren: Boolean,
+)
