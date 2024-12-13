@@ -57,6 +57,10 @@ private val LOG = logger<GpgAgentConfigurator>()
 internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope): Disposable {
   companion object {
     const val GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY = "pinentry-program"
+    const val GPG_AGENT_DEFAULT_CACHE_TTL_CONF_KEY = "default-cache-ttl"
+    const val GPG_AGENT_DEFAULT_CACHE_TTL_CONF_VALUE = "1800"
+    const val GPG_AGENT_MAX_CACHE_TTL_CONF_KEY = "max-cache-ttl"
+    const val GPG_AGENT_MAX_CACHE_TTL_CONF_VALUE = "7200"
 
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean {
@@ -229,7 +233,10 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     val pinentryAppLauncherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
     val (configPath, configContent) = config
     val configToSave = configContent.toMutableMap()
+    configToSave.put(GPG_AGENT_DEFAULT_CACHE_TTL_CONF_KEY, GPG_AGENT_DEFAULT_CACHE_TTL_CONF_VALUE)
+    configToSave.put(GPG_AGENT_MAX_CACHE_TTL_CONF_KEY, GPG_AGENT_MAX_CACHE_TTL_CONF_VALUE)
     configToSave.put(GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY, pinentryAppLauncherConfigPath)
+
     val notificator = project.service<GpgAgentConfigurationNotificator>()
     try {
       FileUtil.writeToFile(configPath.toFile(),
