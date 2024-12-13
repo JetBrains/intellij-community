@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="library" name="jackson" level="project" />

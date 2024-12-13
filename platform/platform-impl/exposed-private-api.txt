@@ -1,5 +1,4 @@
 com/intellij/application/options/schemes/SchemesCombo$MySchemeListItem
-com/intellij/codeInsight/inline/completion/logs/InlineCompletionUsageTracker$ShownEvents$FinishType
 com/intellij/diagnostic/ActivityCategory
 com/intellij/ide/RecentProjectColorInfo
 com/intellij/ide/actions/cache/RecoveryScope

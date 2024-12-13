@@ -39,7 +39,7 @@ import kotlin.math.min
 @ApiStatus.Internal
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
-class CommandCompletionService(
+internal class CommandCompletionService(
   private val project: Project,
   val coroutineScope: CoroutineScope,
 ) : Disposable {
@@ -48,9 +48,7 @@ class CommandCompletionService(
     private val EP_NAME: LanguageExtension<CommandCompletionFactory> = LanguageExtension<CommandCompletionFactory>("com.intellij.codeInsight.completion.command.factory")
   }
 
-
   override fun dispose() {
-
   }
 
   fun filterLookup(typed: Char, editor: Editor, file: PsiFile, lookup: LookupImpl): Boolean {
