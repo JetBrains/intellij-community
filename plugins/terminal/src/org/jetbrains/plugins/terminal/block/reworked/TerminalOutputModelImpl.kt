@@ -85,6 +85,8 @@ internal class TerminalOutputModelImpl(
     highlightingsModel.removeAfter(replaceStartOffset)
     highlightingsModel.addHighlightings(replaceStartOffset, styles)
 
+    editor.repaint(replaceStartOffset, document.textLength)
+
     trimToSize()
   }
 
