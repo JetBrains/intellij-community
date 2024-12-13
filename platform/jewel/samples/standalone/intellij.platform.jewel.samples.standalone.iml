@@ -75,6 +75,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.decoratedWindow" />
+    <orderEntry type="module" module-name="intellij.libraries.skiko" />
     <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.intUiStandaloneStyling" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
@@ -134,7 +135,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.skiko" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
   </component>
 </module>
