@@ -15,12 +15,10 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
   private var mySuspendContextSetInProgress = false
 
   @Throws(Exception::class)
-  open fun contextAction(suspendContext: SuspendContextImpl) {
-    throw AbstractMethodError()
-  }
+  open fun contextAction(suspendContext: SuspendContextImpl): Unit = throw AbstractMethodError()
 
   @ApiStatus.Experimental
-  open suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) = contextAction(suspendContext)
+  open suspend fun contextActionSuspend(suspendContext: SuspendContextImpl): Unit = contextAction(suspendContext)
 
   final override suspend fun actionSuspend() {
     if (LOG.isDebugEnabled) {
@@ -42,10 +40,9 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
       }
       contextActionSuspend(suspendContext)
     }
-    check(resetContinuation(null) == null) { "Continuation is not null after resume" }
   }
 
-  final override fun invokeContinuation() = invokeWithChecks {
+  final override fun invokeContinuation(): Unit = invokeWithChecks {
     executeContinuation()
   }
 

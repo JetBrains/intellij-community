@@ -39,10 +39,15 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   private var myDisposed = false
 
   private val myDebuggerThreadDispatcher = DebuggerThreadDispatcher(this)
-  val unfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
+
+  /**
+   * This set is used for testing purposes as it is the only way to check that there are any (possibly async) debugger commands.
+   */
+  @ApiStatus.Internal
+  val unfinishedCommands: MutableSet<DebuggerCommandImpl> = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
 
   @ApiStatus.Internal
-  var coroutineScope = createScope()
+  var coroutineScope: CoroutineScope = createScope()
     private set
 
   init {
@@ -147,7 +152,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
             try {
               currentRequest.join()
             }
-            catch (ignored: InterruptedException) {
+            catch (_: InterruptedException) {
             }
             catch (e: Exception) {
               throw RuntimeException(e)
@@ -410,7 +415,7 @@ fun executeOnDMT(
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   onCommandCancelled: (() -> Unit)? = null,
   action: suspend () -> Unit,
-) = executeOnDMT(suspendContext.managerThread, priority, suspendContext, onCommandCancelled, action)
+): Unit = executeOnDMT(suspendContext.managerThread, priority, suspendContext, onCommandCancelled, action)
 
 /**
  * Runs [action] in debugger manager thread as a [SuspendContextCommandImpl].
