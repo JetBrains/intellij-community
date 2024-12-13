@@ -627,7 +627,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(runnable);
+      EdtTestUtil.runInEdtAndWait(wrapTestRunnable(runnable));
     }
     else {
       runnable.run();

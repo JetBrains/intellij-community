@@ -154,7 +154,7 @@ private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
 
     // It may take some time after the editor will be opened, but the onboarding tips are not installed yet (some race may be here)
     if (onboardingTipsInstallationInfoKey.get(project) != null ||
-        project.filePathsWithOnboardingTips?.contains(editor.virtualFile?.path) == true) {
+        editor.virtualFile?.path?.let { project.filePathsWithOnboardingTips?.contains(it) } == true) {
       DocRenderManager.setDocRenderingEnabled(editor, true)
     }
   }
