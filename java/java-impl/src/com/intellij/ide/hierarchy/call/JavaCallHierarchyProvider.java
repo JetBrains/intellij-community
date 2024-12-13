@@ -17,7 +17,8 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element instanceof PsiField || element instanceof PsiClass aClass && aClass.isRecord()) return element;
+    if (element instanceof PsiField || element instanceof PsiRecordComponent
+        || element instanceof PsiClass aClass && aClass.isRecord()) return element;
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 

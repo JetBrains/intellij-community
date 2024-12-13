@@ -61,7 +61,8 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Override
   protected boolean isApplicableElement(@NotNull PsiElement e) {
-    return e instanceof PsiMethod || e instanceof PsiField || e instanceof PsiClass aClass && aClass.isRecord();
+    return e instanceof PsiMethod || e instanceof PsiField || e instanceof PsiRecordComponent
+           || e instanceof PsiClass aClass && aClass.isRecord();
   }
 
   @Override
