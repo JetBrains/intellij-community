@@ -22,7 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements PsiFileStub<T> {
+  @ApiStatus.Internal
   public static final IStubFileElementType TYPE = new IStubFileElementType(Language.ANY);
+
   private volatile T myFile;
   private volatile String myInvalidationReason;
   private volatile PsiFileStub[] myStubRoots;
