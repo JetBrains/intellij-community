@@ -59,7 +59,7 @@ abstract class JupyterAbstractAboveCellToolbar(
     layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   }
 
-  override fun installPopupHandler(customizable: Boolean, popupActionGroup: ActionGroup?, customizationRootDepth: Int, popupActionId: String?): Unit = Unit
+  override fun installPopupHandler(customizable: Boolean, popupActionGroup: ActionGroup?, popupActionId: String?) = Unit
   protected abstract fun getArcSize(): Int
   protected abstract fun getHorizontalPadding(): Int
   protected open fun getVerticalPadding(): Int = getHorizontalPadding()

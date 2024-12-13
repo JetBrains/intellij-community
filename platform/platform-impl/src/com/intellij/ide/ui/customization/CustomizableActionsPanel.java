@@ -176,10 +176,6 @@ public class CustomizableActionsPanel {
     onModified();
   }
 
-  protected int minSelectionPathLength() {
-    return 2;
-  }
-
   private static boolean isMoveSupported(JTree tree, int dir) {
     final TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths != null) {
@@ -639,7 +635,7 @@ public class CustomizableActionsPanel {
     }
 
     protected int minSelectionPathLength() {
-      return CustomizableActionsPanel.this.minSelectionPathLength();
+      return 2;
     }
 
     protected final boolean isSingleSelection() {
@@ -708,7 +704,7 @@ public class CustomizableActionsPanel {
 
     @Override
     protected int minSelectionPathLength() {
-      return super.minSelectionPathLength() - 1;
+      return 1;
     }
   }
 
