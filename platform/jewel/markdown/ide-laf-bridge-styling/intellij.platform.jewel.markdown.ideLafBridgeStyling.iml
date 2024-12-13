@@ -37,7 +37,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
