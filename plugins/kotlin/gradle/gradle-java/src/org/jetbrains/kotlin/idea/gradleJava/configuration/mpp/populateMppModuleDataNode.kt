@@ -174,15 +174,11 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
         if (externalProject == null) return
         moduleDataNode.isMppDataInitialized = true
 
-
         mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
             val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
-            val declaredSourceSetsOfCompilations = target.jar!!.compilations.flatMap { it.declaredSourceSets }.toSet()
-            val availableViaDependsOn = declaredSourceSetsOfCompilations
-                .flatMap { it.allDependsOnSourceSets }
-                .mapNotNull { mppModel.sourceSetsByName[it] }
+            val allSourceSetOfCompilation = target.jar!!.compilations.flatMap { it.allSourceSets }
 
-            declaredSourceSetsOfCompilations.union(availableViaDependsOn).forEach { sourceSet ->
+            allSourceSetOfCompilation.forEach { sourceSet ->
                 resolverCtx.artifactsMap.storeModuleId(
                     artifactPath = path,
                     moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),

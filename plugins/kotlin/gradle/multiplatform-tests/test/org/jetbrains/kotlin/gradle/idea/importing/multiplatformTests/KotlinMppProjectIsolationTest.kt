@@ -11,6 +11,7 @@ import org.junit.Test
 @TestMetadata("multiplatform/core/features/projectIsolation")
 class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     @Test
+    @PluginTargetVersions(pluginVersion = "2.1.20-dev-10000+")
     fun testJvmOnly() {
         doTest {
             onlyCheckers(

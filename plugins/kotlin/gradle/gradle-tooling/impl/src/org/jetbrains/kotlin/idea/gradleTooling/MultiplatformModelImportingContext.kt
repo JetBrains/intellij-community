@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.tooling.core.Interner
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 interface HasDependencyResolver {
@@ -105,7 +106,12 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
     IMPORT_ORPHAN_SOURCE_SETS("import_orphan_source_sets", true),
     ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", true),
     LEGACY_TEST_SOURCE_SET_DETECTION("kotlin.mpp.import.legacyTestSourceSetDetection", false),
+    GRADLE_ISOLATED_PROJECTS("org.gradle.unsafe.isolated-projects", false),
     ;
+}
+
+internal enum class KotlinGradlePluginVersionKeyVersion(val version: KotlinToolingVersion) {
+    KGP_WITH_ISOLATED_PROJECTS_SUPPORT(KotlinToolingVersion("2.1.20")),
 }
 
 internal fun MultiplatformModelImportingContext.useKgpDependencyResolution(): Boolean {

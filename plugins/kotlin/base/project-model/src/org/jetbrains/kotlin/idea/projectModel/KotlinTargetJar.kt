@@ -11,5 +11,6 @@ interface KotlinTargetJar : Serializable {
      * Usually it's just the main compilation, but target can potentially be configured to include outputs of multiple compilations.
      * Note: it's currently impossible (or at least not straightforward) to make such configurations work for non-JVM targets.
      */
+    @Deprecated("This property is unsupported since Kotlin 2.1.20. Please don't use it.")
     val compilations: Collection<KotlinCompilation>
 }
