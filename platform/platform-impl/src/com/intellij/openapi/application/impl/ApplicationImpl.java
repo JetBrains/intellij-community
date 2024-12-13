@@ -259,7 +259,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
     ModalityState state = getDefaultModalityState();
     if (getReportInvokeLaterWithoutModality() && state == ModalityState.any()) {
-      getLogger().error("Application.invokeLater() was called without modality state and default modality state is ANY");
+      getLogger().error("Application.invokeLater() was called without modality state and default modality state is ANY\n" +
+                        "Current thread context is: " + ThreadContext.currentThreadContext());
     }
     invokeLater(runnable, state, expired);
   }
