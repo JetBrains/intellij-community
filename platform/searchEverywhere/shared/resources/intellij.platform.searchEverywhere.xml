@@ -13,4 +13,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.SearchEverywhereEntityTypeProvider"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderFactoryMockLocal"/>
+  </extensions>
 </idea-plugin>

@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereFrontendService
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class SearchEverywhereActionsInitiatorAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
@@ -13,13 +12,7 @@ class SearchEverywhereActionsInitiatorAction : DumbAwareAction(), ActionRemoteBe
     val project = e.project ?: return
     val service = SearchEverywhereFrontendService.getInstance(project)
     service.coroutineScope.launch {
-      val popup = service.createPopup()
-      popup.setSearchPattern("Zoom")
-      popup.searchResults.collectLatest { resultsFlow ->
-        resultsFlow.collect { itemData ->
-          println("Found action: ${itemData.presentation.text}")
-        }
-      }
+      service.showPopup()
     }
   }
 }

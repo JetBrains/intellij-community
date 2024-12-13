@@ -8,18 +8,22 @@ import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
-class SearchEverywherePopupVm(private val coroutineScope: CoroutineScope, private val project: Project, private val sessionId: EID, onClose: suspend () -> Unit) {
+class SearchEverywherePopupVm(val coroutineScope: CoroutineScope,
+                              private val project: Project,
+                              private val sessionId: EID,
+                              private val onClose: suspend () -> Unit) {
 
-  val currentTab: StateFlow<SearchEverywhereTabVm> get() = _currentTab.asStateFlow()
-  val searchResults: Flow<Flow<SearchEverywhereItemData>> = currentTab.flatMapLatest { it.searchResults }
+  val currentTab: StateFlow<SearchEverywhereTabVm>
+  val searchResults: Flow<Flow<SearchEverywhereItemData>>
 
-  private val searchPattern = MutableStateFlow("")
+  val searchPattern = MutableStateFlow("")
 
-  private val tabVms: List<SearchEverywhereTabVm> = SearchEverywhereTabProvider.EP_NAME.extensionList.map {
+  val tabVms: List<SearchEverywhereTabVm> = SearchEverywhereTabProvider.EP_NAME.extensionList.map {
     val tab = it.getTab(project, sessionId)
     SearchEverywhereTabVm(coroutineScope, tab, searchPattern)
   }
@@ -28,14 +32,23 @@ class SearchEverywherePopupVm(private val coroutineScope: CoroutineScope, privat
 
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
-    _currentTab = MutableStateFlow(tabVms.first())
+
+    val activeTab = tabVms.first()
+    _currentTab = MutableStateFlow(activeTab)
+    currentTab = _currentTab.asStateFlow()
+    searchResults = currentTab.flatMapLatest { it.searchResults }
+    activeTab.setActive(true)
   }
 
   fun selectTab(index: Int) {
+    _currentTab.value.setActive(false)
     _currentTab.value = tabVms[index.coerceIn(0..<tabVms.size)]
+    _currentTab.value.setActive(true)
   }
 
-  fun setSearchPattern(pattern: String) {
-    searchPattern.value = pattern
+  fun dispose() {
+    coroutineScope.launch {
+      onClose()
+    }
   }
 }

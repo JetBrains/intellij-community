@@ -8,4 +8,8 @@
             class="com.intellij.platform.searchEverywhere.frontend.actions.SearchEverywhereActionsInitiatorAction"
             text="Search Actions in SE 2.0"/>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMock1"/>
+  </extensions>
 </idea-plugin>

@@ -11,8 +11,10 @@ sealed interface SearchEverywhereParams {
 }
 
 @ApiStatus.Experimental
+@Serializable
 data class SearchEverywhereTextSearchParams(override val text: String) : SearchEverywhereParams
 
 @ApiStatus.Internal
+@Serializable
 data class ActionSearchParams(override val text: String,
                               val includeDisabled: Boolean): SearchEverywhereParams

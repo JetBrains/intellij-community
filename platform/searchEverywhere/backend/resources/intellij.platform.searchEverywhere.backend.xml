@@ -9,5 +9,6 @@
       implementation="com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereRemoteApiProvider"/>
 
     <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBackendEntityTypeProvider"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.mocks.SearchEverywhereItemsProviderFactoryMockBackend"/>
   </extensions>
 </idea-plugin>

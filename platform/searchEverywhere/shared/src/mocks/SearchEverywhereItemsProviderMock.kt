@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.testFramework
+package com.intellij.platform.searchEverywhere.mocks
 
 import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.delay
@@ -10,15 +10,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class SearchEverywhereItemsProviderMock(
   val resultPrefix: String = "item",
+  override val id: String = "SearchEverywhereItemsProviderMock_$resultPrefix",
   private val size: Int = 100,
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
 ) : SearchEverywhereItemsProvider {
-  override val id = "SearchEverywhereItemsProviderMock_$resultPrefix"
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem> {
     return flow {
-      if (delayStep <= 0) delay(delayMillis)
+      delay(delayMillis)
 
       repeat(size) { index ->
         val item = SearchEverywhereItemMock("$resultPrefix $index")

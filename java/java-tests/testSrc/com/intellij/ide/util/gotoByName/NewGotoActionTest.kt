@@ -8,7 +8,7 @@ package com.intellij.ide.util.gotoByName
 import com.intellij.platform.searchEverywhere.ActionSearchParams
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
 import com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
-import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemsProviderMock
+import com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
 

@@ -18,6 +18,7 @@ class SearchEverywhereTabVm(
   searchPattern: StateFlow<String>,
 ) {
   val searchResults: StateFlow<Flow<SearchEverywhereItemData>> get() = _searchResults.asStateFlow()
+  val name: String get() = tab.name
 
   private val _searchResults: MutableStateFlow<Flow<SearchEverywhereItemData>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
