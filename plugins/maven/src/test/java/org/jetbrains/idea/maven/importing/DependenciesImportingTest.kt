@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionNioImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeAction
@@ -9,15 +9,17 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
 import org.junit.Test
 import java.util.*
+import kotlin.io.path.exists
 
-class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
+class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
 
   override fun setUp() {
     super.setUp()
@@ -1406,8 +1408,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingFromRepositoriesIfSeveral() = runBlocking {
-    val fixture = MavenCustomRepositoryHelper(dir, "local1")
-    repositoryPath = fixture.getTestDataPath("local1")
+    val fixture = MavenCustomNioRepositoryHelper(dir, "local1")
+    repositoryPath = fixture.getTestData("local1").toCanonicalPath()
     removeFromLocalRepository("junit")
 
     val file = fixture.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
@@ -1437,8 +1439,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUsingMirrors() = runBlocking {
-    repositoryPath = dir.path + "/repo"
-    val mirrorPath = pathTransformer.toRemotePath(FileUtil.toSystemIndependentName(dir.path + "/mirror"))
+    repositoryPath = dir.resolve("repo").toCanonicalPath()
+    val mirrorPath = pathTransformer.toRemotePath(dir.resolve("mirror").toCanonicalPath())
 
     updateSettingsXmlFully("""<settings>
   <mirrors>
@@ -2131,8 +2133,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testDoNotFailToConfigureUnresolvedVersionRangeDependencies() = runBlocking {
     // should not throw NPE when accessing CustomArtifact.getPath();
-    val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val repoPath = helper.getTestDataPath("local1")
+    val helper = MavenCustomNioRepositoryHelper(dir, "local1")
+    val repoPath = helper.getTestData("local1").toCanonicalPath()
     repositoryPath = repoPath
 
     importProjectAsync("""
@@ -2167,8 +2169,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testVersionRangeInDependencyManagementDoesntBreakIndirectDependency() = runBlocking {
-    val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val repoPath = helper.getTestDataPath("local1")
+    val helper = MavenCustomNioRepositoryHelper(dir, "local1")
+    val repoPath = helper.getTestData("local1").toCanonicalPath()
     repositoryPath = repoPath
 
     createProjectPom("""
