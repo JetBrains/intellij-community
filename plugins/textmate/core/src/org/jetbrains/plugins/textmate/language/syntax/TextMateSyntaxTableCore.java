@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import com.intellij.openapi.diagnostic.LoggerRt;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -10,6 +9,8 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.TextMateInterner;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,13 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * Table of textmate syntax rules.
  * Table represents mapping from scopeNames to set of syntax rules {@link SyntaxNodeDescriptor}.
  * <p/>
- * In order to lexing some file with this rules you should retrieve syntax rule
+ * To lexing some file with this rule you should retrieve syntax rule
  * by scope name of target language {@link #getSyntax(CharSequence)}.
  * <p/>
- * Scope name of target language can be find in syntax files of TextMate bundles.
+ * Scope name of the target language can be found in syntax files of TextMate bundles.
  */
 public class TextMateSyntaxTableCore {
-  private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSyntaxTableCore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TextMateSyntaxTableCore.class);
   private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new ConcurrentHashMap<>();
   private Object2IntMap<String> ruleIds; // guarded by this
 
@@ -34,9 +35,9 @@ public class TextMateSyntaxTableCore {
   }
 
   /**
-   * Append table with new syntax rules in order to support new language.
+   * Append table with new syntax rules to support the new language.
    *
-   * @param plist Plist represented syntax file (*.tmLanguage) of target language.
+   * @param plist Plist represented a syntax file (*.tmLanguage) of the target language.
    * @return language scope root name
    */
   @Nullable
@@ -48,7 +49,7 @@ public class TextMateSyntaxTableCore {
    * Returns root syntax rule by scope name.
    *
    * @param scopeName Name of scope defined for some language.
-   * @return root syntax rule from table for language with given scope name.
+   * @return root syntax rule from table for language with a given scope name.
    * If tables don't contain syntax rule for given scope,
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
@@ -56,7 +57,7 @@ public class TextMateSyntaxTableCore {
   public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
-      LOG.info("Can't find syntax node for scope: '" + scopeName + "'");
+      LOG.info("Can't find syntax node for scope: '{}'", scopeName);
       return SyntaxNodeDescriptor.EMPTY_NODE;
     }
     return syntaxNodeDescriptor;

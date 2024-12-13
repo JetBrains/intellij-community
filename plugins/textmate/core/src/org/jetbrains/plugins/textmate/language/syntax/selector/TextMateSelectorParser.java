@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
-import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -13,7 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public final class TextMateSelectorParser {
-  private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSelectorParser.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TextMateSelectorParser.class);
   private static final int NESTING_WEIGH_INITIAL = 100;
   private static final int BASE_WEIGH = NESTING_WEIGH_INITIAL * 10;
 
@@ -30,7 +31,7 @@ public final class TextMateSelectorParser {
   public Node parse() {
     Node result = parseSelectorList();
     if (!eof()) {
-      LOG.error("Cannot parse highlighting selector: " + myHighlightingSelector);
+      LOG.error("Cannot parse highlighting selector: {}", myHighlightingSelector);
     }
     return result;
   }
