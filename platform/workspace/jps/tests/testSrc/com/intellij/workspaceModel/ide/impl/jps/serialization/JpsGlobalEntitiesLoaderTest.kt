@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
  import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
+ import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.SdkEntity
