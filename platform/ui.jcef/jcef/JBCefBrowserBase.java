@@ -681,10 +681,17 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   private void loadUrlImpl(@NotNull String url) {
     synchronized (myUrlLock) {
-      if (Objects.equals(myLoadingUrl, url))
+      if (Objects.equals(myLoadingUrl, url)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("URL already requested, skipping: " + url);
+        }
         return;
+      }
       myLoadingUrl = url;
       setLastRequestedUrl(""); // will be set to a correct value in onBeforeBrowse()
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Loading URL: " + url);
     }
     getCefBrowser().loadURL(url);
   }
