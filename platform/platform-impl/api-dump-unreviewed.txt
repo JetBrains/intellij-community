@@ -9951,6 +9951,20 @@ f:com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 - s:groupConfigurables(java.util.List):java.util.Map
 com.intellij.openapi.options.ex.ConfigurableFilter
 - a:isIncluded(com.intellij.openapi.options.Configurable):Z
+f:com.intellij.openapi.options.ex.ConfigurableGroupEP
+- com.intellij.openapi.extensions.PluginAware
+- bundle:java.lang.String
+- descriptionKey:java.lang.String
+- displayNameKey:java.lang.String
+- helpTopic:java.lang.String
+- id:java.lang.String
+- parentId:java.lang.String
+- weight:I
+- <init>():V
+- s:find(java.lang.String):com.intellij.openapi.options.ex.ConfigurableGroupEP
+- getDescription():java.lang.String
+- getDisplayName():java.lang.String
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 a:com.intellij.openapi.options.ex.ConfigurableVisitor
 - java.util.function.Predicate
 - sf:ALL:java.util.function.Predicate

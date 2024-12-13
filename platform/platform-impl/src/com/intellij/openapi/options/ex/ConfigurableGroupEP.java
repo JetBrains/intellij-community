@@ -10,7 +10,6 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,6 @@ import java.util.ResourceBundle;
  * Therefore, do not use groups to create a hierarchy of configurables, especially if there are very few of them.
  * It is recommended to create a hierarchy using {@link com.intellij.openapi.options.ConfigurableEP#parentId ConfigurableEP}.
  */
-@ApiStatus.Internal
 public final class ConfigurableGroupEP implements PluginAware {
   private static final ExtensionPointName<ConfigurableGroupEP> EP = new ExtensionPointName<>("com.intellij.groupConfigurable");
 
