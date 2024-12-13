@@ -610,5 +610,7 @@
                     interface="com.intellij.ui.content.impl.ToolWindowContentPostProcessor"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.actionGroupCustomization" interface="com.intellij.ide.ui.customization.ActionGroupCustomizationExtension" dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>

@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.customization.ActionGroupCustomizationExtension
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -552,4 +553,8 @@ private fun schemaChanged() {
     TouchbarSupport.reloadAllActions()
   }
   CustomActionsListener.fireSchemaChanged()
+}
+
+internal class MainToolbarActionGroupCustomization : ActionGroupCustomizationExtension {
+  override fun getReadOnlyActionGroupIds(): Set<String> = setOf(MAIN_TOOLBAR_ID)
 }
