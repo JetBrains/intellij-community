@@ -190,7 +190,7 @@ internal class ReworkedTerminalView(
   ): TerminalOutputModel {
     val model = TerminalOutputModelImpl(editor, maxOutputLength)
 
-    TerminalCaretPainter.install(model, coroutineScope.childScope("TerminalCaretPainter"))
+    TerminalCursorPainter.install(model, coroutineScope.childScope("TerminalCursorPainter"))
 
     val eventsHandler = TerminalEventsHandlerImpl(sessionModel, model, encodingManager, terminalSessionFuture, settings)
     val parentDisposable = coroutineScope.asDisposable()
