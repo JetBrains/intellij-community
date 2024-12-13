@@ -150,19 +150,17 @@ open class MarketplacePluginDownloadService {
   }
 
   @Throws(IOException::class)
-  private fun getBlockMapFromZip(input: InputStream): BlockMap = input.buffered().use { source ->
-    ZipInputStream(source).use { zip ->
-      var entry = zip.nextEntry
-      while (entry.name != BLOCKMAP_FILENAME && entry.name != null) entry = zip.nextEntry
-      if (entry.name == BLOCKMAP_FILENAME) {
-        // there must be only one entry otherwise we can't properly read it because we don't know its size (entry.size returns -1)
-        objectMapper.readValue(zip.readBytes(), BlockMap::class.java)
+  private fun getBlockMapFromZip(input: InputStream): BlockMap =
+    ZipInputStream(input.buffered()).use { zip ->
+      while (true) {
+        val entry = zip.nextEntry ?: break
+        if (entry.name == BLOCKMAP_FILENAME) {
+          // there must be only one entry, otherwise we can't properly read it because we don't know its size (entry.size returns -1)
+          return@use objectMapper.readValue(zip.readBytes(), BlockMap::class.java)
+        }
       }
-      else {
-        throw IOException("There is no entry $BLOCKMAP_FILENAME")
-      }
+      throw IOException("There is no entry $BLOCKMAP_FILENAME")
     }
-  }
 
   private fun guessPluginFilenameAndRenameDownloadedFile(contentDisposition: String?, url: String, file: Path, pluginUrl: String): Path {
     val fileName = guessFileName(contentDisposition, url, file, pluginUrl)
