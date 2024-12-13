@@ -4,7 +4,10 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -19,8 +22,8 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -46,7 +49,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -264,27 +266,16 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   @Nullable
-  protected static Value invokeExceptionGetStackTrace(ObjectReference exceptionObj, EvaluationContextImpl evaluationContext)
-    throws EvaluateException {
-    Method method = DebuggerUtils.findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
-    if (method != null) {
-      return evaluationContext.getDebugProcess().invokeInstanceMethod(
-        evaluationContext, exceptionObj, method, Collections.emptyList(), 0, true);
-    }
-    return null;
-  }
-
-  @Nullable
   private static ObjectReference getTargetExceptionWithStackTraceFilled(@Nullable EvaluationContextImpl evaluationContext,
                                                                         EvaluateException ex,
                                                                         boolean printToConsole) {
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null && evaluationContext != null) {
       try {
-        Value trace = invokeExceptionGetStackTrace(exceptionObj, evaluationContext);
+        Value trace = DebuggerUtilsImpl.invokeThrowableGetStackTrace(exceptionObj, evaluationContext, false);
 
         // print to console as well
-        if (printToConsole && trace instanceof ArrayReference) {
+        if (printToConsole && trace != null) {
           evaluationContext.getDebugProcess().printToConsole(DebuggerUtilsImpl.getExceptionText(evaluationContext, exceptionObj));
         }
       }

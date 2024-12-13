@@ -544,4 +544,18 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                      Collections.singletonList(exceptionObject));
     return value != null ? ((StringReference)value).value() : null;
   }
+
+  @Nullable
+  public static Value invokeThrowableGetStackTrace(@NotNull ObjectReference exceptionObj,
+                                                   @NotNull EvaluationContextImpl evaluationContext,
+                                                   boolean keepResult) throws EvaluateException {
+    if (instanceOf(exceptionObj.type(), "java.lang.Throwable")) {
+      Method method = findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
+      DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+      ThrowableComputable<Value, EvaluateException> invoker = () -> debugProcess.invokeInstanceMethod(
+        evaluationContext, exceptionObj, Objects.requireNonNull(method), Collections.emptyList(), 0, true);
+      return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
+    }
+    return null;
+  }
 }
