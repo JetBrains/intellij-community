@@ -11,8 +11,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -111,13 +109,6 @@ public final class PyArgumentListInspection extends PyInspection {
       if (callableType != null) {
         final PyCallable callable = callableType.getCallable();
         if (callable instanceof PyFunction function) {
-
-          // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
-          if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||
-              decoratedClassInitCall(call.getCallee(), function, resolveContext)) {
-            return;
-          }
-
           if (objectMethodCallViaSuper(call, function)) return;
         }
       }
@@ -138,25 +129,6 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
     highlightStarArgumentTypeMismatch(node, holder, context);
-  }
-
-  private static boolean decoratedClassInitCall(@Nullable PyExpression callee,
-                                                @NotNull PyFunction function,
-                                                @NotNull PyResolveContext resolveContext) {
-    if (callee instanceof PyReferenceExpression && PyUtil.isInitMethod(function)) {
-      final PsiPolyVariantReference classReference = ((PyReferenceExpression)callee).getReference(resolveContext);
-
-      return Arrays
-        .stream(classReference.multiResolve(false))
-        .map(ResolveResult::getElement)
-        .anyMatch(
-          element ->
-            element instanceof PyClass &&
-            PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, resolveContext.getTypeEvalContext())
-        );
-    }
-
-    return false;
   }
 
   private static boolean objectMethodCallViaSuper(@NotNull PyCallExpression call, @NotNull PyFunction function) {

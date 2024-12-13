@@ -17,8 +17,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyKnownDecorator.*;
 
@@ -141,16 +143,6 @@ public final class PyKnownDecoratorUtil {
   public static boolean hasUnknownOrChangingSignatureDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
     final List<PyKnownDecorator> decorators = getKnownDecorators(decoratable, context);
     return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(UNITTEST_MOCK_PATCH);
-  }
-
-  public static boolean hasUnknownOrChangingReturnTypeDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
-    final List<PyKnownDecorator> decorators = getKnownDecorators(decoratable, context);
-
-    if (!allDecoratorsAreKnown(decoratable, decorators)) {
-      return true;
-    }
-
-    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH);
   }
 
   public static boolean hasChangingReturnTypeDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
