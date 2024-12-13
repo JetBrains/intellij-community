@@ -20,7 +20,7 @@ interface SearchEverywhereMlService {
      */
     @JvmStatic
     fun getInstance(): SearchEverywhereMlService? {
-      val extensions = EP_NAME.extensions
+      val extensions = EP_NAME.extensionList
       if (extensions.size > 1) {
         val logger = Logger.getInstance(SearchEverywhereMlService::class.java)
         logger.warn("Multiple implementations of ${SearchEverywhereMlService::class.java.name}. Using the first.")
