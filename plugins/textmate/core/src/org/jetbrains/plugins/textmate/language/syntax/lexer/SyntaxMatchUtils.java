@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
@@ -265,7 +264,7 @@ public final class SyntaxMatchUtils {
     StringBuilder result = new StringBuilder();
     int lastPosition = 0;
     while (matcher.find()) {
-      int groupIndex = StringUtilRt.parseInt(matcher.group(1) != null ? matcher.group(1) : matcher.group(2), -1);
+      int groupIndex = parseGroupIndex(matcher.group(1) != null ? matcher.group(1) : matcher.group(2));
       if (groupIndex >= 0 && matchData.count() > groupIndex) {
         result.append(string, lastPosition, matcher.start());
         TextMateRange range = matchData.byteOffset(groupIndex);
@@ -289,6 +288,14 @@ public final class SyntaxMatchUtils {
       result.append(string.subSequence(lastPosition, string.length()));
     }
     return result.toString();
+  }
+
+  private static int parseGroupIndex(@Nullable String string) {
+    if (string != null) {
+      try { return Integer.parseInt(string); }
+      catch (NumberFormatException ignored) { }
+    }
+    return -1;
   }
 
   private static final class MatchKey {

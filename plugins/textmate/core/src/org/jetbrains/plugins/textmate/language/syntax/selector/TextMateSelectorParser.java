@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
@@ -142,9 +142,10 @@ public final class TextMateSelectorParser {
   }
 
   private static final class Selector implements Node {
+    @NotNull
     private final String selector;
 
-    Selector(String selector) {
+    Selector(@NotNull String selector) {
       this.selector = selector;
     }
 
@@ -152,13 +153,37 @@ public final class TextMateSelectorParser {
     public TextMateWeigh weigh(@NotNull TextMateScope scope) {
       CharSequence scopeName = scope.getScopeName();
       if (scopeName != null && (selector.isEmpty() ||
-                                StringUtilRt.startsWith(scopeName, selector + ".") ||
-                                StringUtilRt.equal(scopeName, selector, true))) {
+                                startsWith(scopeName, selector + ".") ||
+                                equal(scopeName, selector))) {
         return new TextMateWeigh(BASE_WEIGH - scope.getDotsCount() + Strings.countChars(selector, '.'),
                                  TextMateWeigh.Priority.NORMAL);
       }
       return TextMateWeigh.ZERO;
     }
+  }
+
+  @Contract(pure = true)
+  private static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
+    int l1 = text.length();
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i) != prefix.charAt(i)) return false;
+    }
+
+    return true;
+  }
+
+  private static boolean equal(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    if (s1 == s2) return true;
+    if (s1.length() != s2.length()) return false;
+    for (int i = 0; i < s1.length(); i++) {
+      if (s1.charAt(i) != s2.charAt(i)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static final class ScopeSelector implements Node {
