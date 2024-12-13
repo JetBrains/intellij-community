@@ -20,7 +20,7 @@ import java.awt.geom.Rectangle2D
 import kotlin.math.ceil
 import kotlin.math.floor
 
-internal class TerminalCaretPainter(
+internal class TerminalCaretPainter private constructor(
   private val outputModel: TerminalOutputModel,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -114,5 +114,9 @@ internal class TerminalCaretPainter(
   companion object {
     private val CARET_LIGHT: Color = Gray._255
     private val CARET_DARK: Color = Gray._0
+
+    fun install(outputModel: TerminalOutputModel, coroutineScope: CoroutineScope) {
+      TerminalCaretPainter(outputModel, coroutineScope)
+    }
   }
 }

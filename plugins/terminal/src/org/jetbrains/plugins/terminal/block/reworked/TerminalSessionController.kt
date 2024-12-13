@@ -19,6 +19,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal class TerminalSessionController(
   private val sessionModel: TerminalSessionModel,
   private val outputModel: TerminalOutputModel,
+  private val alternateBufferModel: TerminalOutputModel,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -47,7 +48,7 @@ internal class TerminalSessionController(
   private suspend fun handleEvent(event: TerminalOutputEvent) {
     when (event) {
       is TerminalContentUpdatedEvent -> updateOutputContent(event)
-      is TerminalCursorPositionChangedEvent -> outputModel.updateCursorPosition(event.logicalLineIndex, event.columnIndex)
+      is TerminalCursorPositionChangedEvent -> updateCursorPosition(event)
       is TerminalStateChangedEvent -> {
         val state = event.state.toTerminalState(settings.cursorShape)
         sessionModel.updateTerminalState(state)
@@ -58,8 +59,18 @@ internal class TerminalSessionController(
   private suspend fun updateOutputContent(event: TerminalContentUpdatedEvent) {
     withContext(Dispatchers.EDT) {
       writeAction {
-        outputModel.updateContent(event.startLineLogicalIndex, event.text, event.styles)
+        val model = getCurrentOutputModel()
+        model.updateContent(event.startLineLogicalIndex, event.text, event.styles)
       }
     }
+  }
+
+  private fun updateCursorPosition(event: TerminalCursorPositionChangedEvent) {
+    val model = getCurrentOutputModel()
+    model.updateCursorPosition(event.logicalLineIndex, event.columnIndex)
+  }
+
+  private fun getCurrentOutputModel(): TerminalOutputModel {
+    return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferModel else outputModel
   }
 }
