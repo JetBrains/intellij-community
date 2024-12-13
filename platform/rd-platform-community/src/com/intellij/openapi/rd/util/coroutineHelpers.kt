@@ -6,6 +6,7 @@ import com.jetbrains.rd.framework.IRdDynamic
 import com.jetbrains.rd.framework.IRdEndpoint
 import com.jetbrains.rd.framework.util.toRdTask
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
@@ -46,6 +47,8 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
 fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
+  cancellationScheduler: IScheduler? = null,
+  handlerScheduler: IScheduler? = null,
   handler: suspend (Lifetime, TReq) -> TRes) {
   @OptIn(DelicateCoroutinesApi::class)
   setSuspend(coroutineContext, coroutineStart, handler)
