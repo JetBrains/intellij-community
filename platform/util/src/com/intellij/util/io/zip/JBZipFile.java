@@ -574,6 +574,8 @@ public class JBZipFile implements Closeable {
     /* central directory               */ + DWORD
     /* size of the central directory   */ + DWORD;
 
+  private static final int EOCD_OPTIMIZATION_BUFFER_SIZE = 64 * 1024;
+
   /**
    * Searches for the &quot;End of central dir record&quot;, parses
    * it and positions the stream at the first central directory
@@ -584,24 +586,37 @@ public class JBZipFile implements Closeable {
     long off = getSize() - MIN_EOCD_SIZE;
     if (off >= 0) {
       myArchive.position(off);
-      byte[] sig = JBZipOutputStream.EOCD_SIG;
-      int curr = readByte();
-      while (curr != -1) {
-        if (curr == sig[0]) {
-          curr = readByte();
-          if (curr == sig[1]) {
-            curr = readByte();
-            if (curr == sig[2]) {
-              curr = readByte();
-              if (curr == sig[3]) {
-                found = true;
-                break;
-              }
+      byte[] attempt = new byte[WORD];
+      myArchive.read(ByteBuffer.wrap(attempt));
+      found = Arrays.equals(attempt, JBZipOutputStream.EOCD_SIG);
+      if (!found) {
+
+        int limit = Math.min(EOCD_OPTIMIZATION_BUFFER_SIZE, (int)off);
+
+        ByteBuffer buffer = ByteBuffer.allocate(limit);
+        off -= limit - WORD;
+        outer:
+        while (true) {
+          buffer.clear();
+          myArchive.position(off);
+          myArchive.read(buffer);
+          int bufferLocalPosition = limit - WORD; // position just before possible central directory
+          while (bufferLocalPosition >= 0) {
+            buffer.position(bufferLocalPosition);
+            buffer.get(attempt);
+            if (Arrays.equals(attempt, JBZipOutputStream.EOCD_SIG)) {
+              off += bufferLocalPosition;
+              myArchive.position(off);
+              found = true;
+              break outer;
             }
+            bufferLocalPosition -= 1;
           }
+          if (off <= 0) {
+            break;
+          }
+          off -= Math.min(EOCD_OPTIMIZATION_BUFFER_SIZE - WORD, off);
         }
-        myArchive.position(--off);
-        curr = readByte();
       }
     }
     if (!found) {
@@ -642,6 +657,16 @@ public class JBZipFile implements Closeable {
       currentCfdOffset = ZipLong.getValue(cfdOffset);
       myArchive.position(currentCfdOffset);
     }
+  }
+
+  private boolean hasMatchForEocd(SeekableByteChannel channel) throws IOException {
+    byte[] byteArray = new byte[MIN_EOCD_SIZE];
+    int read = channel.read(ByteBuffer.wrap(byteArray));
+    if (read < 0) {
+      return false;
+    }
+    return byteArray[0] == JBZipOutputStream.EOCD_SIG[0] && byteArray[1] == JBZipOutputStream.EOCD_SIG[1] &&
+           byteArray[2] == JBZipOutputStream.EOCD_SIG[2] && byteArray[3] == JBZipOutputStream.EOCD_SIG[3];
   }
 
   /**
