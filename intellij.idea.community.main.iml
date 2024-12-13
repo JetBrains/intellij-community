@@ -228,5 +228,10 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.byteCodeViewer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.github.json" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="RUNTIME" />
   </component>
 </module>
