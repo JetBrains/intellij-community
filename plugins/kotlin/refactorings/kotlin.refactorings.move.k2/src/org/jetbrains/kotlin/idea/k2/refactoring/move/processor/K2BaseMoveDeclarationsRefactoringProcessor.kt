@@ -122,6 +122,7 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
                         allDeclarationsToMove = operationDescriptor.sourceElements,
                         targetDir = moveDescriptor.target.baseDirectory,
                         targetPkg = moveDescriptor.target.pkgName,
+                        target = moveDescriptor.target,
                         usages = usages
                             .filterIsInstance<MoveRenameUsageInfo>()
                             .filter { it.referencedElement.willBeMoved(operationDescriptor.sourceElements) },
@@ -144,15 +145,13 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
                     preprocessUsages(moveDescriptor.project, moveDescriptor.source, usages.toList())
 
                     val elementsToMove = moveDescriptor.source.elements.withContext()
-                    val targetFile = moveDescriptor.target.getOrCreateTarget(operationDescriptor.dirStructureMatchesPkg)
                     val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
 
                     elementsToMove.forEach { elementToMove ->
                         if (elementToMove !is KtNamedDeclaration) return@forEach
                         preprocessDeclaration(moveDescriptor, elementToMove)
                     }
-
-                    val oldToNewMap = elementsToMove.moveInto(targetFile)
+                    val oldToNewMap = moveDescriptor.target.addElementsToTarget(elementsToMove, operationDescriptor.dirStructureMatchesPkg)
                     moveDescriptor.source.elements.forEach(::deleteMovedElement)
                     // Delete files if they are effectively empty after moving declarations out of them
                     sourceFiles.filter { it.isEffectivelyEmpty() }.forEach { it.delete() }

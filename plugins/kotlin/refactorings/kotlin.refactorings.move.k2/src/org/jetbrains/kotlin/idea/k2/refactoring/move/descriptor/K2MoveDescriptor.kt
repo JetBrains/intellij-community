@@ -17,6 +17,6 @@ sealed class K2MoveDescriptor(
     class Declarations(
       override val project: Project,
       override val source: K2MoveSourceDescriptor.ElementSource,
-      override val target: K2MoveTargetDescriptor.File
+      override val target: K2MoveTargetDescriptor.DeclarationTarget<*>
     ) : K2MoveDescriptor(project, source, target)
 }

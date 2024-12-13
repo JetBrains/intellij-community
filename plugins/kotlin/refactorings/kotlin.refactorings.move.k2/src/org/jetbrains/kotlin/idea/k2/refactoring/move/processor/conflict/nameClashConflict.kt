@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.renderForConflict
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 private sealed interface TypeData {
@@ -106,6 +107,7 @@ internal fun checkNameClashConflicts(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     targetPkg: FqName,
     targetKaModule: KaModule,
+    targetContainer: KtClassOrObject? = null,
 ): MultiMap<PsiElement, String> {
 
     // Note: This does not detect 100% of conflicts currently
@@ -170,7 +172,7 @@ internal fun checkNameClashConflicts(
             }
 
         }
-        currentScope.containingDeclaration?.let { walkDeclarations(it, signatureToCheck, report) }
+        currentScope.containingDeclaration?.let {  walkDeclarations(it, signatureToCheck, report) }
     }
 
     val conflicts = MultiMap<PsiElement, String>()
@@ -180,13 +182,17 @@ internal fun checkNameClashConflicts(
                 declaration.symbol.toSignatureData()
             }
             analyze(targetKaModule) {
-                // TODO(KTIJ-32265): logic should rewritten to support unrelated modules
                 if (!declaration.canBeAnalysed()) return@analyze
 
-                val packageSymbol = findPackage(targetPkg) ?: return@analyze
-                walkDeclarations(packageSymbol, signatureData) { conflictingSymbol, conflictingScope ->
+                val containerSymbol = if (targetContainer is KtClassOrObject) {
+                    targetContainer.symbol
+                } else findPackage(targetPkg)
+
+                if (containerSymbol == null) return@analyze
+                walkDeclarations(containerSymbol, signatureData) { conflictingSymbol, conflictingScope ->
                     val renderedDeclaration = analyze(declaration) {
-                        // Needs to be a nested declaration
+                        // This needs to be in a nested analyze call because the KaModules might
+                        // differ between source and target
                         declaration.symbol.renderForConflict()
                     }
                     val message = KotlinBundle.message(

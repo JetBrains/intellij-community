@@ -15542,9 +15542,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveToCompanion/genericFunction.kt");
         }
 
+        @TestMetadata("genericFunctionK2.kt")
+        public void testGenericFunctionK2() throws Exception {
+            runTest("testData/intentions/moveToCompanion/genericFunctionK2.kt");
+        }
+
         @TestMetadata("genericProperty.kt")
         public void testGenericProperty() throws Exception {
             runTest("testData/intentions/moveToCompanion/genericProperty.kt");
+        }
+
+        @TestMetadata("genericPropertyK2.kt")
+        public void testGenericPropertyK2() throws Exception {
+            runTest("testData/intentions/moveToCompanion/genericPropertyK2.kt");
         }
 
         @TestMetadata("implicitDispatchReceiver.kt")
@@ -15577,14 +15587,29 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveToCompanion/overriddenFunction.kt");
         }
 
+        @TestMetadata("overriddenFunctionK2.kt")
+        public void testOverriddenFunctionK2() throws Exception {
+            runTest("testData/intentions/moveToCompanion/overriddenFunctionK2.kt");
+        }
+
         @TestMetadata("overriddenProperty.kt")
         public void testOverriddenProperty() throws Exception {
             runTest("testData/intentions/moveToCompanion/overriddenProperty.kt");
         }
 
+        @TestMetadata("overriddenPropertyK2.kt")
+        public void testOverriddenPropertyK2() throws Exception {
+            runTest("testData/intentions/moveToCompanion/overriddenPropertyK2.kt");
+        }
+
         @TestMetadata("propertyUsingClassInstance.kt")
         public void testPropertyUsingClassInstance() throws Exception {
             runTest("testData/intentions/moveToCompanion/propertyUsingClassInstance.kt");
+        }
+
+        @TestMetadata("propertyUsingClassInstanceK2.kt")
+        public void testPropertyUsingClassInstanceK2() throws Exception {
+            runTest("testData/intentions/moveToCompanion/propertyUsingClassInstanceK2.kt");
         }
 
         @TestMetadata("propertyWithOverride.kt")
@@ -15595,6 +15620,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("redeclarationConflict.kt")
         public void testRedeclarationConflict() throws Exception {
             runTest("testData/intentions/moveToCompanion/redeclarationConflict.kt");
+        }
+
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("testData/intentions/moveToCompanion/redeclarationConflictK2.kt");
         }
 
         @TestMetadata("topLevelFunction.kt")

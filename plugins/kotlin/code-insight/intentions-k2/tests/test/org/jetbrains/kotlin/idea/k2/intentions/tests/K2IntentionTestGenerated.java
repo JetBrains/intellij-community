@@ -12098,7 +12098,159 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/moveToCompanion")
+    public static class MoveToCompanion extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractFunction.kt")
+        public void testAbstractFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/abstractFunction.kt");
+        }
+
+        @TestMetadata("abstractProperty.kt")
+        public void testAbstractProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/abstractProperty.kt");
+        }
+
+        @TestMetadata("doNotQualifyThisLabel.kt")
+        public void testDoNotQualifyThisLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/doNotQualifyThisLabel.kt");
+        }
+
+        @TestMetadata("dropFinal.kt")
+        public void testDropFinal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/dropFinal.kt");
+        }
+
+        @TestMetadata("dropOpen.kt")
+        public void testDropOpen() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/dropOpen.kt");
+        }
+
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/enumEntry.kt");
+        }
+
+        @TestMetadata("expectClass.kt")
+        public void testExpectClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/expectClass.kt");
+        }
+
+        @TestMetadata("functionWithOverride.kt")
+        public void testFunctionWithOverride() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/functionWithOverride.kt");
+        }
+
+        @TestMetadata("functionWithoutBody.kt")
+        public void testFunctionWithoutBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/functionWithoutBody.kt");
+        }
+
+        @TestMetadata("genericFunction.kt")
+        public void testGenericFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericFunction.kt");
+        }
+
+        @TestMetadata("genericFunctionK2.kt")
+        public void testGenericFunctionK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericFunctionK2.kt");
+        }
+
+        @TestMetadata("genericProperty.kt")
+        public void testGenericProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericProperty.kt");
+        }
+
+        @TestMetadata("genericPropertyK2.kt")
+        public void testGenericPropertyK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericPropertyK2.kt");
+        }
+
+        @TestMetadata("implicitDispatchReceiver.kt")
+        public void testImplicitDispatchReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/implicitDispatchReceiver.kt");
+        }
+
+        @TestMetadata("inInnerClass.kt")
+        public void testInInnerClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inInnerClass.kt");
+        }
+
+        @TestMetadata("inLocalClass.kt")
+        public void testInLocalClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inLocalClass.kt");
+        }
+
+        @TestMetadata("inObject.kt")
+        public void testInObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inObject.kt");
+        }
+
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/localFunction.kt");
+        }
+
+        @TestMetadata("overriddenFunction.kt")
+        public void testOverriddenFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenFunction.kt");
+        }
+
+        @TestMetadata("overriddenFunctionK2.kt")
+        public void testOverriddenFunctionK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenFunctionK2.kt");
+        }
+
+        @TestMetadata("overriddenProperty.kt")
+        public void testOverriddenProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenProperty.kt");
+        }
+
+        @TestMetadata("overriddenPropertyK2.kt")
+        public void testOverriddenPropertyK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenPropertyK2.kt");
+        }
+
+        @TestMetadata("propertyUsingClassInstance.kt")
+        public void testPropertyUsingClassInstance() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyUsingClassInstance.kt");
+        }
+
+        @TestMetadata("propertyUsingClassInstanceK2.kt")
+        public void testPropertyUsingClassInstanceK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyUsingClassInstanceK2.kt");
+        }
+
+        @TestMetadata("propertyWithOverride.kt")
+        public void testPropertyWithOverride() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyWithOverride.kt");
+        }
+
+        @TestMetadata("redeclarationConflict.kt")
+        public void testRedeclarationConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/redeclarationConflict.kt");
+        }
+
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/redeclarationConflictK2.kt");
+        }
+
+        @TestMetadata("topLevelFunction.kt")
+        public void testTopLevelFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/topLevelFunction.kt");
+        }
+    }
 
 
 

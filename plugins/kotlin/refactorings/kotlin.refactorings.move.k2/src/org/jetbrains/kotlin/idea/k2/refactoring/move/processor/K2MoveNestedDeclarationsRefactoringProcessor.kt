@@ -14,10 +14,13 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.DeclarationTarget
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.DeclarationTarget.DeclarationTargetType
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.ImplicitCompanionAsDispatchReceiverUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
@@ -217,7 +220,7 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
         originalDeclaration: PsiElement,
         newDeclaration: PsiElement
     ) {
-        val outerInstanceParameterName = operationDescriptor.outerInstanceParameterName ?: return
+        val outerInstanceParameterName = operationDescriptor.outerInstanceParameterName
         when (newDeclaration) {
             is KtClass -> {
                 val primaryConstructor = newDeclaration.primaryConstructor ?: return
@@ -226,8 +229,16 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
             }
 
             is KtNamedFunction -> {
-                val addedParameter = newDeclaration.valueParameterList?.parameters?.firstOrNull() ?: return
-                shortenReferences(addedParameter)
+                if (outerInstanceParameterName != null) {
+                    val addedParameter = newDeclaration.valueParameterList?.parameters?.firstOrNull() ?: return
+                    shortenReferences(addedParameter)
+                }
+                val moveTargetType = (moveTarget as? DeclarationTarget<*>)?.getTargetType()
+                if (moveTargetType == DeclarationTargetType.COMPANION_OBJECT || moveTargetType == DeclarationTargetType.OBJECT) {
+                    newDeclaration.removeModifier(KtTokens.OPEN_KEYWORD)
+                    newDeclaration.removeModifier(KtTokens.FINAL_KEYWORD)
+                    newDeclaration.reformatted(true)
+                }
             }
         }
     }

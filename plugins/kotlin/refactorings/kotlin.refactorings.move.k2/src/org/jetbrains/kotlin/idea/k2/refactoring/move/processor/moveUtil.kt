@@ -4,12 +4,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.siblings
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.util.takeWhileInclusive
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
@@ -50,20 +48,6 @@ internal fun Collection<KtNamedDeclaration>.withContext(): Collection<PsiElement
         allElementsToMove.addAll(last.siblings(forward = true, withSelf = false).toList().filter { it.isContextElement() }.dropLastWhile { it is PsiWhiteSpace })
     }
     return allElementsToMove
-}
-
-internal fun Iterable<PsiElement>.moveInto(targetFile: KtFile): Map<KtNamedDeclaration, KtNamedDeclaration> {
-    val oldToNewMap = mutableMapOf<KtNamedDeclaration, KtNamedDeclaration>()
-    forEach { oldElement ->
-        val movedElement = targetFile.add(oldElement)
-        if (movedElement is KtNamedDeclaration) {
-            // we assume that the children are in the same order before and after the move
-            for ((oldChild, newChild) in oldElement.withChildDeclarations().zip(movedElement.withChildDeclarations())) {
-                oldToNewMap[oldChild] = newChild
-            }
-        }
-    }
-    return oldToNewMap
 }
 
 internal fun PsiElement.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList()

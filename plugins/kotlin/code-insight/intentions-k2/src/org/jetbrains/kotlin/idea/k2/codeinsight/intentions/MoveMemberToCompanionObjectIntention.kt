@@ -13,31 +13,46 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationD
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usesOuterInstanceParameter
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class MoveMemberToTopLevelIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
+class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
     elementType = KtNamedDeclaration::class.java,
-    textGetter = KotlinBundle.lazyMessage("move.to.top.level")
+    textGetter = KotlinBundle.lazyMessage("move.to.companion.object")
 ) {
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return null
-        if (element.containingClassOrObject !is KtClassOrObject) return null
-        if (element is KtObjectDeclaration && element.isCompanion()) return null
-        return element.nameIdentifier?.textRange
+        if (element is KtEnumEntry) return null
+        if (element is KtNamedFunction && element.bodyExpression == null) return null
+        if (element is KtNamedFunction && element.valueParameterList == null) return null
+        if ((element is KtNamedFunction || element is KtProperty) && element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
+        if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
+        val containingClass = element.containingClassOrObject as? KtClass ?: return null
+        if (containingClass.isLocal || containingClass.isInner()) return null
+
+        val nameIdentifier = element.nameIdentifier ?: return null
+        if (element is KtProperty && element.hasModifier(KtTokens.CONST_KEYWORD) && !element.isVar) {
+            val constElement = element.modifierList?.allChildren?.find { it.node.elementType == KtTokens.CONST_KEYWORD }
+            if (constElement != null) return TextRange(constElement.startOffset, nameIdentifier.endOffset)
+        }
+        return nameIdentifier.textRange
     }
 
     override fun startInWriteAction(): Boolean = false
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
+        val containingClass = element.containingClassOrObject as? KtClass ?: return
+
         val moveDescriptor = K2MoveDescriptor.Declarations(
             element.project,
             K2MoveSourceDescriptor.ElementSource(setOf(element)),
-            K2MoveTargetDescriptor.File(element.containingKtFile)
+            K2MoveTargetDescriptor.CompanionObject(containingClass)
         )
-
-        if (element.containingClassOrObject == null) return
 
         val instanceName = allowAnalysisOnEdt {
             if (element.usesOuterInstanceParameter()) {
@@ -45,8 +60,6 @@ class MoveMemberToTopLevelIntention : SelfTargetingRangeIntention<KtNamedDeclara
             } else null
         }
 
-        // This intention used to also delete containing objects if they are empty after moving the declaration out, but
-        // this seems rather dangerous and only rarely useful, so it is not enabled in K2.
         val processor = K2MoveOperationDescriptor.NestedDeclarations(
             element.project,
             listOf(moveDescriptor),
