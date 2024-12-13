@@ -531,6 +531,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = runUnderModalProgressIfIsEdt {
       val file = toCanonicalName(path)
       removeProjectConfigurationAndCaches(file)
+      TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
       val project = instantiateProject(projectStoreBaseDir = file, options = options)
       initProject(
         file = file,
@@ -796,6 +797,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun newProject(file: Path, options: OpenProjectTask): Project? {
     removeProjectConfigurationAndCaches(file)
+    TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
 
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
@@ -824,6 +826,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
     withContext(Dispatchers.IO) {
       removeProjectConfigurationAndCaches(file)
+      TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
     }
 
     val project = instantiateProject(file, options)
