@@ -24,12 +24,16 @@ internal class TerminalContentChangesTracker(
   init {
     textBuffer.addChangesListener(object : TextBufferChangesListener {
       override fun linesChanged(fromIndex: Int) {
-        val line = textBuffer.historyLinesCount + fromIndex
+        val line = textBuffer.effectiveHistoryLinesCount + fromIndex
         lastChangedVisualLine = min(lastChangedVisualLine, line)
         anyLineChanged = true
       }
 
       override fun linesDiscardedFromHistory(lines: List<TerminalLine>) {
+        if (textBuffer.isUsingAlternateBuffer) {
+          return
+        }
+
         if (lastChangedVisualLine >= lines.size) {
           lastChangedVisualLine -= lines.size
         }
@@ -78,18 +82,18 @@ internal class TerminalContentChangesTracker(
     check(anyLineChanged) { "It is expected that this method is called only if something is changed" }
 
     // Transform to the TextBuffer coordinates: negative indexes for history, positive for the screen.
-    var startLine = lastChangedVisualLine - textBuffer.historyLinesCount
+    var startLine = lastChangedVisualLine - textBuffer.effectiveHistoryLinesCount
 
     // Ensure that startLine is either not a wrapped line or the start of the wrapped line.
-    while (startLine - 1 >= -textBuffer.historyLinesCount && textBuffer.getLine(startLine - 1).isWrapped) {
+    while (startLine - 1 >= -textBuffer.effectiveHistoryLinesCount && textBuffer.getLine(startLine - 1).isWrapped) {
       startLine--
     }
 
     val output: StyledCommandOutput = scrapeOutput(startLine, additionalLines)
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)
-    val logicalLineIndex = textBuffer.getLogicalLineIndex(startLine) + discardedHistoryTracker.discardedLogicalLinesCount - additionalLines.size
+    val logicalLineIndex = textBuffer.getLogicalLineIndex(startLine) + discardedHistoryTracker.getDiscardedLogicalLinesCount() - additionalLines.size
 
-    lastChangedVisualLine = textBuffer.historyLinesCount + textBuffer.screenLinesCount
+    lastChangedVisualLine = textBuffer.effectiveHistoryLinesCount + textBuffer.screenLinesCount
     anyLineChanged = false
 
     return TerminalContentUpdatedEvent(output.text, output.styleRanges, logicalLineIndex)
@@ -114,10 +118,13 @@ internal class TerminalContentChangesTracker(
  */
 internal fun TerminalTextBuffer.getLogicalLineIndex(visualLine: Int): Int {
   var count = 0
-  for (ind in -historyLinesCount until visualLine) {
+  for (ind in -effectiveHistoryLinesCount until visualLine) {
     if (!getLine(ind).isWrapped) {
       count++
     }
   }
   return count
 }
+
+private val TerminalTextBuffer.effectiveHistoryLinesCount: Int
+  get() = if (isUsingAlternateBuffer) 0 else historyLinesCount

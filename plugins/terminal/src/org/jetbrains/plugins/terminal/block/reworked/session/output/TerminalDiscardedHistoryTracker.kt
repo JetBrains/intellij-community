@@ -5,13 +5,20 @@ import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
 
-internal class TerminalDiscardedHistoryTracker(textBuffer: TerminalTextBuffer) {
-  var discardedLogicalLinesCount: Int = 0
-    private set
+internal class TerminalDiscardedHistoryTracker(private val textBuffer: TerminalTextBuffer) {
+  private var discardedLogicalLinesCount: Int = 0
+
+  fun getDiscardedLogicalLinesCount(): Int {
+    return if (textBuffer.isUsingAlternateBuffer) 0 else discardedLogicalLinesCount
+  }
 
   init {
     textBuffer.addChangesListener(object : TextBufferChangesListener {
       override fun linesDiscardedFromHistory(lines: List<TerminalLine>) {
+        if (textBuffer.isUsingAlternateBuffer) {
+          return
+        }
+
         for (line in lines) {
           if (!line.isWrapped) {
             discardedLogicalLinesCount++
