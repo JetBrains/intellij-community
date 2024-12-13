@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.macOS
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.io.runProcess
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.Files
@@ -49,18 +51,22 @@ internal class MachOUuid(private val executable: Path, private val newUuid: UUID
           buffer.putLong(newUuid.mostSignificantBits)
           buffer.putLong(newUuid.leastSignificantBits)
           buffer.flip()
-          if (!context.options.isInDevelopmentMode) {
-            channel.position(channel.position() - 16)
-            channel.write(buffer)
-            context.messages.info("new UUID of $executable: $newUuid")
-          }
-          return
+          channel.position(channel.position() - 16)
+          channel.write(buffer)
+          context.messages.info("new UUID of $executable: $newUuid")
+          return@use
         }
         else {
           channel.position(channel.position() + cmdSize - 8)
         }
       }
       context.messages.error("LC_UUID not found in $executable")
+    }
+
+    if (context.options.isInDevelopmentMode) {
+      runBlocking {
+        runProcess(listOf("codesign", "-s", "-", "--force", executable.toString()))
+      }
     }
   }
 }
