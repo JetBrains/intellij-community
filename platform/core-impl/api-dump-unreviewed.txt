@@ -4257,7 +4257,6 @@ c:com.intellij.psi.stubs.ObjectStubTree
 c:com.intellij.psi.stubs.PsiFileStubImpl
 - com.intellij.psi.stubs.StubBase
 - com.intellij.psi.stubs.PsiFileStub
-- sf:TYPE:com.intellij.psi.tree.IStubFileElementType
 - <init>(com.intellij.psi.PsiFile):V
 - clearPsi(java.lang.String):V
 - f:getDiagnostics():java.lang.String
