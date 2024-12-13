@@ -118,6 +118,15 @@ class ShardedIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
 
   @Override
   public void clear() throws StorageException {
+    //MAYBE RC: about exception processing here: it may be useful to catch the exceptions from individual shards, and
+    //  continue processing other shards, and only rethrow all the collected exceptions at the end. This way we clean
+    //  as many shards as it is possible -- but at the cost of much more complicated code (see IOUtils.closeAllSafely()
+    //  for an example of how much space exception processing could take).
+    //  The benefit of clearing all the shards except for the failing ones -- is not clear now: btw, this .clear() still
+    //  fails, and the overall (sharded) storage state is still messy after that, so that the pluses? Currently I see none,
+    //  but benefits may arise if/when we'll develop shards into more self-contained entities with capacity to move/rebuild
+    //  individual shards -- in this scenario it may be beneficial to clean 'ok' shards, and, say, rebuild failing ones afterwards
+    //  (Same is true for .flush() method)
     for (IndexStorage<K, V> shard : shards) {
       shard.clear();
     }

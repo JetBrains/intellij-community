@@ -37,6 +37,9 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   /**
    * If buffering is enabled, updates are accumulated only in inMemoryStorage.
    * Otherwise, updates go both inMemoryStorage and underlyingStorage.
+   * MAYBE RC: 'mode switching' is not the best approach here, given all the thread-safety concerns.
+   *           Ideally, 'buffering' should be a property of each update but currently we can't add a new param to
+   *           update methods, since they are defined by IndexStorage iface
    */
   private boolean bufferingEnabled;
   private final List<BufferingStateListener> bufferingStateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
