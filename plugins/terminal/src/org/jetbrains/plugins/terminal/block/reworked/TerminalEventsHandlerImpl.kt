@@ -8,9 +8,8 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.ui.scrollToBottom
 import java.awt.Point
@@ -20,6 +19,7 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CompletableFuture
 import javax.swing.SwingUtilities
 import kotlin.math.abs
 
@@ -32,7 +32,7 @@ internal open class TerminalEventsHandlerImpl(
   private val sessionModel: TerminalSessionModel,
   private val outputModel: TerminalOutputModel,
   private val encodingManager: TerminalKeyEncodingManager,
-  private val inputChannel: SendChannel<TerminalInputEvent>,
+  private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val settings: JBTerminalSystemSettingsProviderBase,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
@@ -307,7 +307,9 @@ internal open class TerminalEventsHandlerImpl(
   }
 
   private fun sendUserInput(bytes: ByteArray) {
-    inputChannel.trySend(TerminalWriteBytesEvent(bytes))
+    terminalSessionFuture.thenAccept { session ->
+      session?.inputChannel?.trySend(TerminalWriteBytesEvent(bytes))
+    }
   }
 
   companion object {

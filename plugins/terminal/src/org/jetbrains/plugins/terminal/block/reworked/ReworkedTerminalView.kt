@@ -89,6 +89,10 @@ internal class ReworkedTerminalView(
 
     TerminalCaretPainter(outputModel, coroutineScope.childScope("TerminalCaretPainter"))
 
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, outputModel, encodingManager, terminalSessionFuture, settings)
+    setupKeyEventDispatcher(outputModel.editor, eventsHandler, disposable = this)
+    setupMouseListener(outputModel.editor, sessionModel, settings, eventsHandler, disposable = this)
+
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
         val inputChannel = terminalSessionFuture.getNow(null)?.inputChannel ?: return
@@ -103,10 +107,6 @@ internal class ReworkedTerminalView(
     terminalSessionFuture.complete(session)
 
     controller.handleEvents(session.outputChannel)
-
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, outputModel, encodingManager, session.inputChannel, settings)
-    setupKeyEventDispatcher(outputModel.editor, eventsHandler, disposable = this)
-    setupMouseListener(outputModel.editor, sessionModel, settings, eventsHandler, disposable = this)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
