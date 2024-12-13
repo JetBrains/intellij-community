@@ -297,11 +297,11 @@ public final class PlatformTestUtil {
     assertMaxWaitTimeSince(startTimeMillis, MAX_WAIT_TIME);
   }
 
-  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
+  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeoutMillis) {
     long took = getMillisSince(startTimeMillis);
-    if (took > timeout) {
+    if (took > timeoutMillis) {
       assert false : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms\nThread dump: %s",
-                                   timeout, took, ThreadDumper.dumpThreadsToString());
+                                   timeoutMillis, took, ThreadDumper.dumpThreadsToString());
     }
   }
 
@@ -358,15 +358,15 @@ public final class PlatformTestUtil {
     return waitForPromise(promise, MAX_WAIT_TIME, false);
   }
 
-  public static <T> @Nullable T waitForPromise(@NotNull Promise<T> promise, long timeout) {
-    return waitForPromise(promise, timeout, false);
+  public static <T> @Nullable T waitForPromise(@NotNull Promise<T> promise, long timeoutMillis) {
+    return waitForPromise(promise, timeoutMillis, false);
   }
 
   public static <T> @Nullable T assertPromiseSucceeds(@NotNull Promise<T> promise) {
     return waitForPromise(promise, MAX_WAIT_TIME, true);
   }
 
-  private static @Nullable <T> T waitForPromise(@NotNull Promise<T> promise, long timeout, boolean assertSucceeded) {
+  private static @Nullable <T> T waitForPromise(@NotNull Promise<T> promise, long timeoutMillis, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
     long start = System.currentTimeMillis();
     while (true) {
@@ -385,7 +385,7 @@ public final class PlatformTestUtil {
           return null;
         }
       }
-      assertMaxWaitTimeSince(start, timeout);
+      assertMaxWaitTimeSince(start, timeoutMillis);
     }
   }
 
@@ -611,28 +611,28 @@ public final class PlatformTestUtil {
     ActionUtil.performActionDumbAwareWithCallbacks(action, event);
   }
 
-  public static void assertTiming(@NotNull String message, long expectedMs, long actual) {
+  public static void assertTiming(@NotNull String message, long expectedMillis, long actualMillis) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    long expectedOnMyMachine = Math.max(1, expectedMs * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
+    long expectedOnMyMachine = Math.max(1, expectedMillis * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
 
     // Allow 10% more in case of test machine is busy.
     String logMessage = message;
-    if (actual > expectedOnMyMachine) {
-      int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
+    if (actualMillis > expectedOnMyMachine) {
+      int percentage = (int)(100.0 * (actualMillis - expectedOnMyMachine) / expectedOnMyMachine);
       logMessage += ". Operation took " + percentage + "% longer than expected";
     }
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
-                  " Actual: " + actual + "." +
-                  " Expected on Standard machine: " + expectedMs + ";" +
+                  " Actual: " + actualMillis + "." +
+                  " Expected on Standard machine: " + expectedMillis + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
                   ", I/O=" + Timings.IO_TIMING + ".";
     double acceptableChangeFactor = 1.1;
-    if (actual < expectedOnMyMachine) {
+    if (actualMillis < expectedOnMyMachine) {
       System.out.println(logMessage);
       TeamCityLogger.info(logMessage);
     }
-    else if (actual < expectedOnMyMachine * acceptableChangeFactor) {
+    else if (actualMillis < expectedOnMyMachine * acceptableChangeFactor) {
       TeamCityLogger.warning(logMessage, null);
     }
     else {
@@ -718,18 +718,18 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static void assertTiming(@NotNull String message, long expected, @NotNull Runnable actionToMeasure) {
-    assertTiming(message, expected, 4, actionToMeasure);
+  public static void assertTiming(@NotNull String message, long expectedMillis, @NotNull Runnable actionToMeasure) {
+    assertTiming(message, expectedMillis, 4, actionToMeasure);
   }
 
   @SuppressWarnings("CallToSystemGC")
-  public static void assertTiming(@NotNull String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
+  public static void assertTiming(@NotNull String message, long expectedMillis, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
       waitForAllBackgroundActivityToCalmDown();
       long duration = TimeoutUtil.measureExecutionTime(actionToMeasure::run);
       try {
-        assertTiming(message, expected, duration);
+        assertTiming(message, expectedMillis, duration);
         break;
       }
       catch (AssertionFailedError e) {
