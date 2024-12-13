@@ -74,7 +74,7 @@ internal class TerminalOutputModelImpl(
 
   @RequiresEdt
   private fun doUpdateEditorContent(editorLineIndex: Int, text: String, styles: List<StyleRange>) {
-    if (editorLineIndex >= document.lineCount && document.textLength > 0) {
+    if (editorLineIndex > 0 && editorLineIndex >= document.lineCount) {
       val newLines = "\n".repeat(editorLineIndex - document.lineCount + 1)
       document.insertString(document.textLength, newLines)
     }
