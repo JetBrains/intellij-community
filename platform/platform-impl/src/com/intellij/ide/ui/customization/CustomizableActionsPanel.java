@@ -28,6 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -45,8 +46,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -219,6 +220,40 @@ public class CustomizableActionsPanel {
     return false;
   }
 
+  @RequiresBackgroundThread // loading extensions might be required here
+  private static CustomizationRoots getCustomizationRoots() {
+    return new CustomizationRoots(ActionGroupCustomizationService.getInstance().getReadOnlyActionGroupIds());
+  }
+
+  private static class CustomizationRoots {
+    private final @NotNull Set<String> myReadOnlyActionGroupIds;
+
+    CustomizationRoots(@NotNull Set<String> readOnlyActionGroupIds) {
+      myReadOnlyActionGroupIds = readOnlyActionGroupIds;
+    }
+
+    private boolean isUnderCustomizationRoot(@Nullable TreePath path) {
+      if (path == null) return false;
+      var parent = path.getParentPath();
+      return isCustomizationRoot(parent) || isUnderCustomizationRoot(parent);
+    }
+
+    private boolean isCustomizationRoot(@Nullable TreePath path) {
+      if (path == null) return false;
+      if (isReadOnlyGroup(path)) return false; // can't customize read-only groups, only their children
+      var parent = path.getParentPath();
+      if (parent == null) return false; // we have an invisible root in the tree, so all top-level groups have a parent
+      return isReadOnlyGroup(parent);
+    }
+
+    private boolean isReadOnlyGroup(@Nullable TreePath path) {
+      if (path == null) return false;
+      var group = CustomizationUtil.getGroupForNode((DefaultMutableTreeNode)path.getLastPathComponent());
+      if (group == null) return false;
+      if (myReadOnlyActionGroupIds.contains(group.getId())) return true;
+      return path.getPathCount() == 1; // by default, only the invisible root is read-only
+    }
+  }
 
   public JPanel getPanel() {
     return myPanel;
@@ -636,20 +671,20 @@ public class CustomizableActionsPanel {
         return;
       }
       for (TreePath path : selectionPaths) {
-        if (path.getPath().length <= minSelectionPathLength()) {
+        if (isNotApplicableForPath(path)) {
           e.getPresentation().setEnabled(false);
           return;
         }
       }
     }
 
+    protected boolean isNotApplicableForPath(@NotNull TreePath path) {
+      return !getCustomizationRoots().isUnderCustomizationRoot(path);
+    }
+
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
-    }
-
-    protected int minSelectionPathLength() {
-      return 2;
     }
 
     protected static boolean isSingleSelection(@NotNull AnActionEvent e) {
@@ -717,8 +752,8 @@ public class CustomizableActionsPanel {
     }
 
     @Override
-    protected int minSelectionPathLength() {
-      return 1;
+    protected boolean isNotApplicableForPath(@NotNull TreePath path) {
+      return getCustomizationRoots().isReadOnlyGroup(path);
     }
   }
 
