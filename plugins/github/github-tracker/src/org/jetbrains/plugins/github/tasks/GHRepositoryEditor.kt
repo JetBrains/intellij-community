@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.authentication.GHLoginRequest
 import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 
-private object GHRepositoryEditor {
+internal object GHRepositoryEditor {
   fun askToken(project: Project, host: String): String? {
     val server = tryParse(host) ?: return null
 
