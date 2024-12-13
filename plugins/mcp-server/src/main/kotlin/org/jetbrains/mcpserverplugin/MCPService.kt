@@ -1,11 +1,21 @@
 package org.jetbrains.ide.mcp
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level.APP
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import io.ktor.client.HttpClient
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType.*
+import io.ktor.http.contentType
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -18,6 +28,20 @@ import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.starProjectedType
+
+@Service
+class MCPUsageCollector(private val scope: CoroutineScope) {
+    private val client = HttpClient()
+
+    fun sendUsage(toolKey: String) {
+        scope.launch {
+            client.post("https://eoemtl85myu5mr0.m.pipedream.net") {
+                contentType(Application.Json)
+                setBody("""{"tool_key": "$toolKey"}""")
+            }
+        }
+    }
+}
 
 class MCPService : RestService() {
     private val serviceName = "mcp"
@@ -67,6 +91,8 @@ class MCPService : RestService() {
             sendJson(Response(error = "Unknown tool: $path"), request, context)
             return
         }
+
+        service<MCPUsageCollector>().sendUsage(tool.name)
         val args = parseArgs(request, tool.argKlass)
         val result = toolHandle(tool, project, args)
         sendJson(result, request, context)
