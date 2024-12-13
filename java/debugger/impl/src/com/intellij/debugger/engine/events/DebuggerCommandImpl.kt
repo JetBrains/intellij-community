@@ -105,8 +105,11 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
       // executed synchronously until the first suspend, resume is handled by dispatcher
       val job = parentScope.async(this + dispatcher, start = CoroutineStart.UNDISPATCHED) {
         try {
-          commandScope = this
-          runSuspend()
+          // wrap with a separate scope to be sure that we can clean `commandScope` in finally
+          coroutineScope {
+            commandScope = this
+            runSuspend()
+          }
         }
         finally {
           // Command finished or postponed
