@@ -1703,6 +1703,7 @@ f:com.intellij.openapi.actionSystem.Separator
 - <init>(java.util.function.Supplier):V
 - s:create():com.intellij.openapi.actionSystem.Separator
 - s:create(java.lang.String):com.intellij.openapi.actionSystem.Separator
+- equals(java.lang.Object):Z
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:getInstance():com.intellij.openapi.actionSystem.Separator
 - getText():java.lang.String
