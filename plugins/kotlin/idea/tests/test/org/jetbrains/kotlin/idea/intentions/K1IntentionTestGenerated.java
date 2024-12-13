@@ -16464,6 +16464,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
         }
 
+        @TestMetadata("recursiveFunNoBody.kt")
+        public void testRecursiveFunNoBody() throws Exception {
+            runTest("testData/intentions/removeExplicitType/recursiveFunNoBody.kt");
+        }
+
         @TestMetadata("referenceExpressionInitializer.kt")
         public void testReferenceExpressionInitializer() throws Exception {
             runTest("testData/intentions/removeExplicitType/referenceExpressionInitializer.kt");

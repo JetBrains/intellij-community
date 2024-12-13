@@ -4509,6 +4509,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
         }
 
+        @TestMetadata("recursiveFunNoBody.kt")
+        public void testRecursiveFunNoBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/recursiveFunNoBody.kt");
+        }
+
         @TestMetadata("referenceExpressionInitializer.kt")
         public void testReferenceExpressionInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/referenceExpressionInitializer.kt");

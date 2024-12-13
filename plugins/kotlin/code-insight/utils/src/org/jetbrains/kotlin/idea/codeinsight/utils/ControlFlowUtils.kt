@@ -5,6 +5,7 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 
 /**
  * Consider a property initialization `val f: (Int) -> Unit = { println(it) }`. The type annotation `(Int) -> Unit` in this case is required
@@ -60,4 +61,15 @@ fun findRelevantLoopForExpression(expression: KtExpression): KtLoopExpression? {
     }
 
     return null
+}
+
+fun KtNamedFunction.isRecursive(): Boolean {
+    return bodyExpression?.includesCallOf(this) == true
+}
+
+private fun KtExpression.includesCallOf(function: KtNamedFunction): Boolean {
+    val refDescriptor = mainReference?.resolve()
+    return function == refDescriptor || anyDescendantOfType<KtExpression> {
+        it !== this && it !is KtLabelReferenceExpression && function == it.mainReference?.resolve()
+    }
 }
