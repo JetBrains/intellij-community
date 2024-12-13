@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
+import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -18,7 +18,7 @@ abstract class AbstractActionCompletionCommand(
   override val i18nName: @Nls String,
   override val icon: Icon?,
   override val priority: Int? = null
-) : OldCompletionCommand() {
+) : ApplicableCompletionCommand() {
   private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {

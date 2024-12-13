@@ -6,9 +6,11 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.NeedsIndex
+import com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection
 
+@NeedsIndex.SmartMode(reason = "it requires highlighting")
 class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
-  @NeedsIndex.SmartMode(reason = "require highlighting")
+
   fun testFormat() {
     Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -31,7 +33,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
-  @NeedsIndex.SmartMode(reason = "require highlighting")
   fun testCommandsOnlyGoToDeclaration() {
     Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -59,7 +60,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
-  @NeedsIndex.SmartMode(reason = "require highlighting")
   fun testRedCode() {
     Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -82,7 +82,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
-  @NeedsIndex.SmartMode(reason = "require highlighting")
   fun testComment() {
     Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -105,7 +104,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
-  @NeedsIndex.SmartMode(reason = "require highlighting")
   fun testFlipIntention() {
     Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -126,5 +124,30 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         } 
       }
     """.trimIndent())
+  }
+
+  fun testInspection() {
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    myFixture.enableInspections(SizeReplaceableByIsEmptyInspection())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import java.util.List;
+      class A { 
+        void foo(List<String> a) {
+          if(a.size()==0)<caret>{}
+        } 
+      }
+      """.trimIndent())
+    myFixture.doHighlighting()
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("isEmpty", ignoreCase = true) })
+    myFixture.checkResult("""
+      import java.util.List;
+      class A { 
+        void foo(List<String> a) {
+          if(a.isEmpty()){}
+        } 
+      }
+      """.trimIndent())
   }
 }

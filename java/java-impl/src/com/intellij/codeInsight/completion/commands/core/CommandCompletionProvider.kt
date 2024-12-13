@@ -52,6 +52,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (parameters.editor is EditorWindow) return
     if (parameters.originalFile.virtualFile is LightVirtualFile) return
     if (parameters.completionType != CompletionType.BASIC) return
+    //todo don't support dumb right now
     if (DumbService.getInstance(parameters.editor.project ?: return).isDumb) return
     val service = parameters.editor.project?.getService(CommandCompletionService::class.java)
     if (service == null) return
@@ -79,7 +80,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       override fun accepts(t: String, context: ProcessingContext?): Boolean {
         return commandCompletionType.suffix == "." && t == "."
       }
-    }));
+    }))
 
     // Fetch commands applicable to the position
     getCommandsForContext(commandCompletionFactory,
@@ -94,6 +95,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         val i18nName = command.i18nName.replace("_", "").replace("...", "")
         val tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " ($i18nName)"
         var element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name)
+                                                                      .withLookupString(i18nName)
                                                                       .withTypeText(tailText)
                                                                       .withIcon(command.icon ?: Lightning)
                                                                       .withInsertHandler(CommandInsertHandler(command))
@@ -119,12 +121,12 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         }
       })
     val location = CompletionLocation(completionParameters)
-    val mlWeigher = MLWeigherUtil.findMLWeigher(location);
+    val mlWeigher = MLWeigherUtil.findMLWeigher(location)
     if (mlWeigher != null) {
-      weigher = MLWeigherUtil.addWeighersToNonDefaultSorter(weigher, location, "proximity");
-      weigher = weigher.weigh(mlWeigher);
+      weigher = MLWeigherUtil.addWeighersToNonDefaultSorter(weigher, location, "proximity")
+      weigher = weigher.weigh(mlWeigher)
     }
-    return weigher;
+    return weigher
   }
 
   private fun findCommandCompletionType(
@@ -190,9 +192,10 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (adjustedOffset <= 0) return null
     val adjustedText = originalDocument.getText(TextRange(0, adjustedOffset)) + originalDocument.getText(TextRange(offset, originalDocument.textLength))
 
-    val file = PsiFileFactory.getInstance(parameters.editor.project).createFileFromText(originalFile.getName(), originalFile.getLanguage(), adjustedText, true, true)
+    val file = PsiFileFactory.getInstance(parameters.editor.project)
+      .createFileFromText(originalFile.getName(), originalFile.getLanguage(), adjustedText, true, true, false, parameters.originalFile.virtualFile)
     if (file is PsiFileImpl) {
-      file.setOriginalFile(originalFile);
+      file.setOriginalFile(originalFile)
     }
     return AdjustedCompletionParameters(file, adjustedOffset)
   }

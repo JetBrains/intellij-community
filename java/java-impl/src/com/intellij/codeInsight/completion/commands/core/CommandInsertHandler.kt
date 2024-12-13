@@ -4,7 +4,6 @@ package com.intellij.codeInsight.completion.commands.core
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
-import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -21,12 +20,7 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     // Execute the command
     ApplicationManager.getApplication().invokeLater {
       CommandProcessor.getInstance().executeCommand(context.project, {
-        if (completionCommand is OldCompletionCommand) {
-          completionCommand.execute(startOffset, context.file, context.editor)
-        }
-        else {
-          completionCommand.execute(startOffset, context.file)
-        }
+        completionCommand.execute(startOffset, context.file, context.editor)
       }, completionCommand.name, completionCommand)
     }
   }

@@ -38,7 +38,7 @@ public final class WrongPackageStatementInspection extends AbstractBaseJavaLocal
 
     if (JavaHighlightUtil.isJavaHashBangScript(javaFile)) return null;
 
-    PsiDirectory directory = javaFile.getContainingDirectory();
+    PsiDirectory directory = javaFile.getOriginalFile().getContainingDirectory();
     if (directory == null) return null;
     PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (dirPackage == null) return null;

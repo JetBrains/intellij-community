@@ -14,13 +14,15 @@ import com.intellij.psi.PsiFile
 
 
 class GenerateCommandProvider : CommandProvider {
-  override fun getCommands(project: Project,
-                           editor: Editor,
-                           offset: Int,
-                           psiFile: PsiFile,
-                           originalEditor: Editor,
-                           originalOffset: Int,
-                           originalFile: PsiFile): List<CompletionCommand> {
+  override fun getCommands(
+    project: Project,
+    editor: Editor,
+    offset: Int,
+    psiFile: PsiFile,
+    originalEditor: Editor,
+    originalOffset: Int,
+    originalFile: PsiFile,
+  ): List<CompletionCommand> {
     val element = psiFile.findElementAt(offset)
     val dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
@@ -39,7 +41,6 @@ class GenerateCommandProvider : CommandProvider {
       }
     }
     return generateActions.map { GenerateCompletionCommand(it) }
-      .filter { it.isApplicable(offset, psiFile, editor) }
   }
 
   override fun getId(): String {

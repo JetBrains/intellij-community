@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
+import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.icons.AllIcons
 import com.intellij.lang.ContextAwareActionHandler
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -17,7 +17,7 @@ import com.intellij.refactoring.actions.IntroduceVariableAction
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class IntroduceVariableCommand : OldCompletionCommand() {
+class IntroduceVariableCommand : ApplicableCompletionCommand() {
   override val name: String
     get() = "Introduce variable"
 
@@ -44,7 +44,9 @@ class IntroduceVariableCommand : OldCompletionCommand() {
     val dataContext = dataContext(psiFile, editor, context)
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ActionUiKind.NONE, null)
-    action.update(event)
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+    }
   }
 }

@@ -1496,7 +1496,7 @@
                             implementationClass="com.intellij.codeInsight.completion.JigsawCompletionContributor"/>
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.InlineVariableCompletionCommand" />
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.ExtensionPointCommandProvider" />
-    <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.IntentionCommandProvider"  order="first"/>
+    <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.DirectIntentionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.GenerateCommandProvider" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToDeclarationCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.RenameActionCompletionCommand" />
@@ -2768,9 +2768,6 @@
     <completion.contributor language="JAVA" id="commands" order="first, after liveTemplates"
                             implementationClass="com.intellij.codeInsight.completion.commands.core.CommandCompletionContributor"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionCharFilter" order="first" id="commandCompletion"/>
-    <typedHandler implementation="com.intellij.codeInsight.completion.commands.core.CommandTypeHandler" id="commandPreviousCompletion" order="first"/>
-
-    <show.intention.cached.intentions.handler implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionServiceImpl"/>
 
     <registryKey key="java.completion.command.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="true"/>

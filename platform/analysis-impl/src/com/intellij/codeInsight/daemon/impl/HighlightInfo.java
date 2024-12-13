@@ -1120,6 +1120,13 @@ public class HighlightInfo implements Segment {
     return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @Nullable
+  public PsiReference getUnresolvedReference() {
+    return unresolvedReference;
+  }
+
   static @NotNull HighlightInfo createComposite(@NotNull List<? extends HighlightInfo> infos) {
     // derive composite's offsets from an info with tooltip, if present
     HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);

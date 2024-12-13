@@ -5,18 +5,18 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy.NEVER_AUTOCOMPLETE
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
-import com.intellij.modcommand.ModHighlight.HighlightInfo
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Experimental
-//todo customize
 class CommandCompletionLookupElement(
   lookupElement: LookupElement,
   val startOffset: Int,
   val suffix: String,
   val icon: Icon?,
-  val highlighting: HighlightInfo?
+  val highlighting: HighlightInfoLookup?,
 ) : LookupElementDecorator<LookupElement>(lookupElement) {
   override fun isWorthShowingInAutoPopup(): Boolean {
     return true
@@ -26,3 +26,10 @@ class CommandCompletionLookupElement(
     return NEVER_AUTOCOMPLETE
   }
 }
+
+@ApiStatus.Experimental
+data class HighlightInfoLookup(
+  val range: TextRange,
+  val attributesKey: TextAttributesKey,
+  val priority: Int, //higher is on the top
+)

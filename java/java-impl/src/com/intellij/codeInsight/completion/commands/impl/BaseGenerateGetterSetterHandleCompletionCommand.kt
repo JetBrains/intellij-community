@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
+import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
 import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo
@@ -33,7 +33,7 @@ abstract class BaseGenerateGetterSetterHandleCompletionCommand(
   val generateSetter: Boolean,
   override val name: String,
   override val i18nName: String,
-) : OldCompletionCommand() {
+) : ApplicableCompletionCommand() {
 
   override val icon: Icon? = null
 
