@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.html
 
+import java.awt.Graphics
 import java.awt.Shape
 import javax.swing.text.Element
 import javax.swing.text.Position
@@ -10,10 +11,14 @@ import javax.swing.text.html.InlineView
 
 class WbrView(elem: Element) : InlineView(elem) {
 
+  override fun paint(g: Graphics?, a: Shape?) {
+    // does not paint
+  }
+
   override fun getMinimumSpan(axis: Int): Float = 0f
 
   override fun getMaximumSpan(axis: Int): Float =
-    if (axis == View.X_AXIS)
+    if (axis == X_AXIS)
       0f
     else
       Int.MAX_VALUE.toFloat()
