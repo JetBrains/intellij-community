@@ -640,7 +640,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     }
 
     if (toolWindowGroup != null) {
-      group.addAll(toolWindowGroup);
+      group.add(toolWindowGroup);
     }
 
     final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
