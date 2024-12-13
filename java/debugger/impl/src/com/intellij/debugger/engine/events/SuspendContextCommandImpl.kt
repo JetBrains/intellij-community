@@ -34,11 +34,17 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
       return
     }
 
-    invokeWithChecks {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Executing suspend-context-command: $this")
+    try {
+      suspendContext.addUnfinishedCommand(this)
+      invokeWithChecks {
+        if (LOG.isDebugEnabled) {
+          LOG.debug("Executing suspend-context-command: $this")
+        }
+        contextActionSuspend(suspendContext)
       }
-      contextActionSuspend(suspendContext)
+    }
+    finally {
+      suspendContext.removeUnfinishedCommand(this)
     }
   }
 

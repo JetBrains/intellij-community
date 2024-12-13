@@ -2,6 +2,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -64,6 +65,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   protected volatile boolean myIsGoingToResume;
 
   private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<>();
+
+  /**
+   * These commands are started but can be switched to another dispatcher, so they are not present in DMT.
+   * However, they should be canceled on context resume, so they are tracked via this set.
+   */
+  private final Set<SuspendContextCommandImpl> myUnfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet();
   public volatile boolean myInProgress;
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<>();
   private EvaluationContextImpl myEvaluationContext = null;
@@ -445,6 +452,14 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
+  public final void addUnfinishedCommand(final SuspendContextCommandImpl command) {
+    myUnfinishedCommands.add(command);
+  }
+
+  public final void removeUnfinishedCommand(final SuspendContextCommandImpl command) {
+    myUnfinishedCommands.remove(command);
+  }
+
   public final void postponeCommand(final SuspendContextCommandImpl command) {
     if (!isResumed()) {
       // Important! when postponing increment the holds counter, so that the action is not released too early.
@@ -461,6 +476,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     for (SuspendContextCommandImpl postponed = pollPostponedCommand(); postponed != null; postponed = pollPostponedCommand()) {
       postponed.notifyCancelled();
     }
+    for (SuspendContextCommandImpl command : myUnfinishedCommands) {
+      command.notifyCancelled();
+    }
+    myUnfinishedCommands.clear();
   }
 
   public final SuspendContextCommandImpl pollPostponedCommand() {
