@@ -20,11 +20,12 @@ internal class StylesCollectingTerminalLinesCollector(
 
     line.forEachEntry { entry ->
       val text = entry.text.normalize()
-      if (text.isNotEmpty() && !entry.isNul) {
-        delegate.write(text)
+      if (text.isNotEmpty() && (!entry.isNul || entry.style != TextStyle.EMPTY)) {
+        val nonNullText = if (entry.isNul) " ".repeat(text.length) else text
+        delegate.write(nonNullText)
         if (entry.style != TextStyle.EMPTY) {
           val endOffset = delegate.length()
-          val startOffset = endOffset - text.length
+          val startOffset = endOffset - nonNullText.length
           val style = StyleRange(startOffset, endOffset, entry.style)
           stylesConsumer(style)
         }
