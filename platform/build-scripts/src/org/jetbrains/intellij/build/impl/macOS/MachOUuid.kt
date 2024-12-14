@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.macOS
 
+import com.intellij.openapi.util.SystemInfoRt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.io.runProcess
@@ -63,7 +64,7 @@ internal class MachOUuid(private val executable: Path, private val newUuid: UUID
       context.messages.error("LC_UUID not found in $executable")
     }
 
-    if (context.options.isInDevelopmentMode) {
+    if (context.options.isInDevelopmentMode && SystemInfoRt.isMac) {
       runBlocking {
         runProcess(listOf("codesign", "-s", "-", "--force", executable.toString()))
       }
