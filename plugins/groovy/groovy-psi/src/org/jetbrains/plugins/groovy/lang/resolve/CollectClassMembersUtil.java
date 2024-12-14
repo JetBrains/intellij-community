@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.CachedValueBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -38,9 +39,12 @@ public final class CollectClassMembersUtil {
 
   @NotNull
   private static ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
-    CachedValue<ClassMembers> cached = aClass.getUserData(getMemberCacheKey(includeSynthetic));
-    if (cached != null && cached.hasUpToDateValue()) {
-      return cached.getValue();
+    CachedValueBase<ClassMembers> cached = (CachedValueBase<ClassMembers>)aClass.getUserData(getMemberCacheKey(includeSynthetic));
+    if (cached != null) {
+      CachedValueBase.Data<ClassMembers> data = cached.getUpToDateOrNull();
+      if (data != null) {
+        return data.getValue();
+      }
     }
 
     return buildCache(aClass, includeSynthetic && checkClass(aClass));
@@ -82,7 +86,7 @@ public final class CollectClassMembersUtil {
   }
 
   @NotNull
-  private static ClassMembers buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
+  private static ClassMembers buildCache(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return CachedValuesManager.getCachedValue(aClass, getMemberCacheKey(includeSynthetic), () -> {
       ClassMembers result = new ClassMembers();
       processClass(aClass, result.fields, result.methods, result.innerClasses, new HashSet<>(), PsiSubstitutor.EMPTY, includeSynthetic);

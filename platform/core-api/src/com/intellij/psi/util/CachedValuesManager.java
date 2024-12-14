@@ -7,16 +7,16 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * A service used to create and store {@link CachedValue} objects.<p/>
@@ -35,7 +35,7 @@ public abstract class CachedValuesManager {
   /**
    * Creates new CachedValue instance with given provider. If the return value is marked as trackable, it's treated as
    * yet another dependency and must comply with its specification.
-   * See {@link CachedValueProvider.Result#getDependencyItems()} for the details.
+   * See {@link Result#getDependencyItems()} for the details.
    *
    * @param provider computes values.
    * @param trackValue if value tracking is required. T should be trackable in this case.
@@ -141,53 +141,113 @@ public abstract class CachedValuesManager {
    * Invalidate on any PSI change in the project.
    * The passed cached value provider may only depend on the passed context PSI element and project/application components/services,
    * see {@link CachedValue} documentation for more details.
+   *
    * @return The cached value
    */
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public static <E extends PsiElement, T> T getProjectPsiDependentCache(@NotNull E context, @NotNull Function<? super E, ? extends T> provider) {
-    return getCachedValue(context, getKeyForClass(provider.getClass(), globalKeyForProvider), () -> {
-      CachedValueProvider.Result<? extends T> result = CachedValueProvider.Result.create(
-        provider.apply(context), PsiModificationTracker.MODIFICATION_COUNT);
-      CachedValueProfiler.onResultCreated(result, provider);
-      return result;
-    });
+    Key<? extends CachedValue<? extends T>> key = getKeyForClass(provider.getClass(), globalKeyForProvider);
+    ParameterizedCachedValue<T, PsiElement> value = (ParameterizedCachedValue<T, PsiElement>)context.getUserData((Key)key);
+    if (value != null) {
+      return value.getValue(context);
+    }
+
+    CachedValuesManager manager = getManager(context.getProject());
+    return (T)manager.getParameterizedCachedValue(context, (Key)key, new PsiDependentHandlerProvider<>((Function)provider), false, context);
+  }
+
+  private static final class PsiDependentHandlerProvider<T> implements ParameterizedCachedValueProvider<T, PsiElement> {
+    private final @NotNull Function<PsiElement, ? extends T> delegate;
+
+    private PsiDependentHandlerProvider(@NotNull Function<PsiElement, ? extends T> delegate) { this.delegate = delegate; }
+
+    @Override
+    public Result<T> compute(PsiElement context) {
+      T data = delegate.apply(context);
+      if (!context.isPhysical()) {
+        PsiFile file = context.getContainingFile();
+        if (file != null) {
+          Result<T> adjusted = Result.create(data, file, PsiModificationTracker.MODIFICATION_COUNT);
+          CachedValueProfiler.onResultCreated(adjusted, null);
+          return adjusted;
+        }
+      }
+
+      return Result.createSingleDependency(data, PsiModificationTracker.MODIFICATION_COUNT);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      PsiDependentHandlerProvider<?> provider = (PsiDependentHandlerProvider<?>)o;
+      return Objects.equals(delegate, provider.delegate);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(delegate);
+    }
+
+    @Override
+    public String toString() {
+      return delegate.toString();
+    }
   }
 
   /**
    * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
    * The passed cached value provider may only depend on the passed context PSI element and project/application components/services,
    * see {@link CachedValue} documentation for more details.
+   *
    * @return The cached value
    */
-  public static <T> T getCachedValue(final @NotNull PsiElement context, @NotNull Key<CachedValue<T>> key, final @NotNull CachedValueProvider<T> provider) {
-    CachedValue<T> value = context.getUserData(key);
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public static <T> T getCachedValue(@NotNull PsiElement context, @NotNull Key<CachedValue<T>> key, @NotNull CachedValueProvider<T> provider) {
+    ParameterizedCachedValue<T, PsiElement> value = (ParameterizedCachedValue<T, PsiElement>)context.getUserData((Key)key);
     if (value != null) {
-      Supplier<T> data = value.getUpToDateOrNull();
-      if (data != null) {
-        return data.get();
-      }
+      return value.getValue(context);
     }
 
-    return getManager(context.getProject()).getCachedValue(context, key, new CachedValueProvider<T>() {
-      @Override
-      public @Nullable Result<T> compute() {
-        CachedValueProvider.Result<T> result = provider.compute();
-        if (result != null && !context.isPhysical()) {
-          PsiFile file = context.getContainingFile();
-          if (file != null) {
-            Result<T> adjusted = Result.create(
-              result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
-            CachedValueProfiler.onResultCreated(adjusted, result);
-            return adjusted;
-          }
-        }
-        return result;
-      }
+    CachedValuesManager manager = getManager(context.getProject());
+    return (T)manager.getParameterizedCachedValue(context, (Key)key, new NonPhysicalPsiHandlerProvider<>(provider), false, context);
+  }
 
-      @Override
-      public String toString() {
-        return provider.toString();
+  private static final class NonPhysicalPsiHandlerProvider<T> implements ParameterizedCachedValueProvider<T, PsiElement> {
+    private final @NotNull CachedValueProvider<T> delegate;
+
+    private NonPhysicalPsiHandlerProvider(@NotNull CachedValueProvider<T> delegate) { this.delegate = delegate; }
+
+    @Override
+    public Result<T> compute(PsiElement context) {
+      Result<T> result = delegate.compute();
+      if (result != null && !context.isPhysical()) {
+        PsiFile file = context.getContainingFile();
+        if (file != null) {
+          Result<T> adjusted = Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file,
+                                                                                 ArrayUtil.OBJECT_ARRAY_FACTORY));
+          CachedValueProfiler.onResultCreated(adjusted, result);
+          return adjusted;
+        }
       }
-    }, false);
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      NonPhysicalPsiHandlerProvider<?> provider = (NonPhysicalPsiHandlerProvider<?>)o;
+      return Objects.equals(delegate, provider.delegate);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(delegate);
+    }
+
+    @Override
+    public String toString() {
+      return delegate.toString();
+    }
   }
 
   private static final ConcurrentMap<String, Key<CachedValue<?>>> globalKeyForProvider = new ConcurrentHashMap<>();

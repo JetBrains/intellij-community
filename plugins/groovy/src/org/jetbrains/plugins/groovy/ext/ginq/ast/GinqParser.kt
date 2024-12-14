@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parents
+import com.intellij.util.CachedValueBase
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -341,9 +342,14 @@ private fun isApproximatelyGinq(e: PsiElement): Boolean {
 
 private val INJECTED_GINQ_KEY: Key<CachedValue<Pair<List<ParsingError>, GenericGinqExpression?>>> = Key.create("root ginq expression")
 
-internal fun PsiElement.isGinqRoot() : Boolean = getUserData(INJECTED_GINQ_KEY) != null
+internal fun PsiElement.isGinqRoot() : Boolean = cachedInjectedGinq() != null
 
-internal fun PsiElement.getStoredGinq() : GinqExpression? = this.getUserData(INJECTED_GINQ_KEY)?.upToDateOrNull?.get()?.second?.asSafely<GinqExpression>()
+@Suppress("UNCHECKED_CAST")
+private fun PsiElement.cachedInjectedGinq(): CachedValueBase<Pair<List<ParsingError>, GenericGinqExpression?>>? {
+  return getUserData(INJECTED_GINQ_KEY) as CachedValueBase<Pair<List<ParsingError>, GenericGinqExpression?>>?
+}
+
+internal fun PsiElement.getStoredGinq() : GinqExpression? = this.cachedInjectedGinq()?.upToDateOrNull?.get()?.second?.asSafely<GinqExpression>()
 
 private val GINQ_UNTRANSFORMED_ELEMENT: Key<Unit> = Key.create("Untransformed psi element within Groovy macro")
 

@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.CachedValueBase;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -276,11 +277,14 @@ public final class JsonCachedValues {
     return value == JsonSchemaObjectReadingUtils.NULL_OBJ ? null : value;
   }
 
+  @SuppressWarnings("unchecked")
   public static boolean hasComputedSchemaObjectForFile(@NotNull PsiFile file) {
-    CachedValue<JsonSchemaObject> data = CompletionUtil.getOriginalOrSelf(file).getUserData(OBJECT_FOR_FILE_KEY);
+    CachedValueBase<JsonSchemaObject> data = (CachedValueBase<JsonSchemaObject>)CompletionUtil.getOriginalOrSelf(file).getUserData(OBJECT_FOR_FILE_KEY);
     if (data == null) return false;
+
     Getter<JsonSchemaObject> cachedValueGetter = data.getUpToDateOrNull();
     if (cachedValueGetter == null) return false;
+
     JsonSchemaObject upToDateCachedValueOrNull = cachedValueGetter.get();
     return upToDateCachedValueOrNull != null && upToDateCachedValueOrNull != JsonSchemaObjectReadingUtils.NULL_OBJ;
   }
