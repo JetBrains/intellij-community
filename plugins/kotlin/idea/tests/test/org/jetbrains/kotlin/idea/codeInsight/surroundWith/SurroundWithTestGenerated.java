@@ -795,6 +795,11 @@ public abstract class SurroundWithTestGenerated extends AbstractSurroundWithTest
         public void testSingleStatement() throws Exception {
             runTest("testData/codeInsight/surroundWith/functionLiteral/singleStatement.kt");
         }
+
+        @TestMetadata("statementWithElvis.kt")
+        public void testStatementWithElvis() throws Exception {
+            runTest("testData/codeInsight/surroundWith/functionLiteral/statementWithElvis.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
