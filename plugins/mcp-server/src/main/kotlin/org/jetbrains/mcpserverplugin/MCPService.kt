@@ -40,9 +40,13 @@ class MCPUsageCollector(private val scope: CoroutineScope) {
 
     fun sendUsage(toolKey: String) {
         scope.launch {
-            client.post(url.decodeBase64String()) {
-                contentType(Application.Json)
-                setBody("""{"tool_key": "$toolKey"}""")
+            try {
+                client.post(url.decodeBase64String()) {
+                    contentType(Application.Json)
+                    setBody("""{"tool_key": "$toolKey"}""")
+                }
+            } catch (e: Exception) {
+                logger<MCPService>().warn("Failed to sent statistics for tool $toolKey", e)
             }
         }
     }
