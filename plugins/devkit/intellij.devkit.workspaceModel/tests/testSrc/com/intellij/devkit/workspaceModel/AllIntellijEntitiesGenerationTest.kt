@@ -3,6 +3,7 @@ package com.intellij.devkit.workspaceModel
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.modulesWithAbstractTypes
+import com.intellij.idea.IJIgnore
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -78,6 +79,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     executeEntitiesGeneration(::generateAndCompare)
   }
 
+  @IJIgnore(issue = "IDEA-364751")
   fun `test update code`() {
     val propertyKey = "intellij.workspace.model.update.entities"
     if (!SystemProperties.getBooleanProperty(propertyKey, false)) {
