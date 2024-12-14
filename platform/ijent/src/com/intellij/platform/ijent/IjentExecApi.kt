@@ -8,8 +8,10 @@ import com.intellij.platform.eel.EelExecApi
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
    * stdin, stdout and stderr of the process are always forwarded, if there are.
    *
-   * Beware that processes with [ExecuteProcessOptions.pty] usually don't have stderr.
+   * Beware that processes with [Pty] usually don't have stderr.
    * The [IjentChildProcess.stderr] must be an empty stream in such case.
+   *
+   * In other words, `stderr` is always redirected to `stdout` there as if [RedirectStdErr] always set
    *
    * By default, environment is always inherited from the running IJent instance, which may be unwanted. [ExecuteProcessOptions.env] allows
    * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an

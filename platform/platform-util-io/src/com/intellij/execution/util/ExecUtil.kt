@@ -274,7 +274,7 @@ object ExecUtil {
       .args(rest)
       .workingDirectory(workingDir)
       .env(env)
-      .pty(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
+      .ptyOrStdErrSettings(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
 
     return runBlockingMaybeCancellable {
       execute(options.build()).getOrThrow().convertToJavaProcess()

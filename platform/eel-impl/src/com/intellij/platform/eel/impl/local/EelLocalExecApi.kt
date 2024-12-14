@@ -14,34 +14,36 @@ import java.io.IOException
 class EelLocalExecApi : EelExecApi {
   override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
     val args = builder.args.toTypedArray()
-    val pty = builder.pty
+    val pty = builder.ptyOrStdErrSettings
 
     val process: LocalEelProcess =
       try {
         // Inherit env vars, because lack of `PATH` might break things
         var environment = System.getenv().toMutableMap()
         environment.putAll(builder.env)
-        if (pty != null) {
-          // when emulating tty, TERM must be set either by caller or by us (for remote side it is done by ijent)
-          if ("TERM" !in environment) {
-            environment.getOrPut("TERM") { "xterm" }
-          }
-          LocalEelProcess(PtyProcessBuilder()
-                            .setConsole(true)
-                            .setCommand(arrayOf(builder.exe) + args)
-                            .setEnvironment(environment)
-                            .setDirectory(builder.workingDirectory)
-                            .setInitialColumns(pty.columns)
-                            .setInitialRows(pty.rows)
-                            .start())
-        }
-        else {
-          LocalEelProcess(ProcessBuilder(builder.exe, *args).apply {
-            environment().putAll(environment)
-            builder.workingDirectory?.let {
-              directory(File(it))
+        when (val p = pty) {
+          is EelExecApi.Pty -> {
+            if ("TERM" !in environment) {
+              environment.getOrPut("TERM") { "xterm" }
             }
-          }.start())
+            LocalEelProcess(PtyProcessBuilder()
+                              .setConsole(true)
+                              .setCommand(arrayOf(builder.exe) + args)
+                              .setEnvironment(environment)
+                              .setDirectory(builder.workingDirectory)
+                              .setInitialColumns(p.columns)
+                              .setInitialRows(p.rows)
+                              .start())
+          }
+          EelExecApi.RedirectStdErr, null -> {
+            LocalEelProcess(ProcessBuilder(builder.exe, *args).apply {
+              environment().putAll(environment)
+              redirectErrorStream(p != null)
+              builder.workingDirectory?.let {
+                directory(File(it))
+              }
+            }.start())
+          }
         }
       }
       catch (e: IOException) {

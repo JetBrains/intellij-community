@@ -20,12 +20,10 @@ import java.util.concurrent.TimeUnit
 class IjentChildProcessAdapter(
   coroutineScope: CoroutineScope,
   private val ijentChildProcess: IjentChildProcess,
-  redirectStderr: Boolean,
 ) : Process(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
     coroutineScope,
     ijentChildProcess,
-    redirectStderr = redirectStderr,
   )
 
   override fun toString(): String = "${javaClass.simpleName}($ijentChildProcess)"
