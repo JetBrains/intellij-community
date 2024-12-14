@@ -8,7 +8,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
-data class TTYState(val size: Size?) {
+data class TTYState(val size: Size?, val termName: String?) {
   companion object {
     private val mapper = ObjectMapper().registerKotlinModule()
 

@@ -52,7 +52,7 @@ internal fun startTtyAndExitHelper() {
   System.err.print('\n')
   System.err.flush()
 
-  val ttyState = TTYState(terminalSize?.let { Size(cols = it.columns, rows = it.rows) })
+  val ttyState = TTYState(terminalSize?.let { Size(cols = it.columns, rows = it.rows) }, termName = System.getenv("TERM"))
 
   // Then, print terminal info to the stdout, again in chunks as in a slow process
   for (chunk in ttyState.serialize().chunked(2)) {
