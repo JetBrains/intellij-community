@@ -102,7 +102,7 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun getCompileFiles(files: List<KtFile>, configuration: CompilerConfiguration): GenerationState {
-        return GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, { PackagePartProvider.Empty })
+        return GenerationUtils.compileFiles(files, configuration, ClassBuilderFactories.TEST, { PackagePartProvider.Empty }).first
     }
 
     public override fun tearDown() {

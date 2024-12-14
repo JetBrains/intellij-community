@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldDataFromJava
@@ -19,7 +20,7 @@ import org.jetbrains.kotlin.nj2k.types.arrayInnerType
 import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.nj2k.types.updateNullabilityRecursively
 
-class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {

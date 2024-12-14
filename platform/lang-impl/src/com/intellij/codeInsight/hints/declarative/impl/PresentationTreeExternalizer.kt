@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
@@ -19,30 +19,40 @@ internal object PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
   override fun serdeVersion(): Int = SERDE_VERSION + super.serdeVersion()
 
   override fun writeDataPayload(output: DataOutput, payload: Any?) {
-      when (payload) {
-        is String? -> {
-          writeINT(output, 0)
-          writeNullableString(output, payload)
-        }
-        is ActionWithContent -> {
-          writeINT(output, 1)
-          writeUTF(output, payload.content as String)
-          writeInlayActionData(output, payload.actionData)
-        }
-        else -> throw IllegalArgumentException("unknown data payload type: $payload")
+    when (payload) {
+      is String? -> {
+        writeINT(output, 0)
+        writeNullableString(output, payload)
       }
+      is ActionWithContent -> {
+        writeINT(output, 1)
+        writeUTF(output, payload.content as String)
+        writeInlayActionData(output, payload.actionData)
+      }
+      is InlayActionData -> {
+        writeINT(output, 2)
+        writeInlayActionData(output, payload)
+      }
+      else -> throw IllegalArgumentException("unknown data payload type: $payload")
+    }
   }
 
   override fun readDataPayload(input: DataInput): Any? {
     val type = readINT(input)
-    if (type == 0) {
-      val string = readNullableString(input) ?: return null
-      return decorateIfDebug(string)
-    } else if (type == 1) {
-      val content = decorateIfDebug(readUTF(input))
-      return ActionWithContent(readInlayActionData(input), content)
+    when (type) {
+      0 -> {
+        val string = readNullableString(input) ?: return null
+        return decorateIfDebug(string)
+      }
+      1 -> {
+        val content = decorateIfDebug(readUTF(input))
+        return ActionWithContent(readInlayActionData(input), content)
+      }
+      2 -> {
+        return readInlayActionData(input)
+      }
+      else -> throw IllegalStateException("unknown data payload type: $type")
     }
-    throw IllegalStateException("unknown data payload type: $type")
   }
 
   private fun writeNullableString(output: DataOutput, value: String?) {

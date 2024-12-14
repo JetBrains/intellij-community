@@ -578,10 +578,8 @@ com.intellij.openapi.roots.ModifiableRootModel
 - a:setInvalidSdk(java.lang.String,java.lang.String):V
 - a:setSdk(com.intellij.openapi.projectRoots.Sdk):V
 a:com.intellij.openapi.roots.ModuleExtension
-- com.intellij.openapi.Disposable
 - <init>():V
 - a:commit():V
-- dispose():V
 - a:getModifiableModel(Z):com.intellij.openapi.roots.ModuleExtension
 - a:isChanged():Z
 - readExternal(org.jdom.Element):V

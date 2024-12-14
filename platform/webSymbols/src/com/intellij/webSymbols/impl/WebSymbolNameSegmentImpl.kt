@@ -57,6 +57,10 @@ class WebSymbolNameSegmentImpl internal constructor(
     WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName,
                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
 
+  internal fun withSymbols(symbols: List<WebSymbol>) =
+    WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName,
+                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
+
   internal fun copy(
     apiStatus: WebSymbolApiStatus?,
     priority: WebSymbol.Priority?,

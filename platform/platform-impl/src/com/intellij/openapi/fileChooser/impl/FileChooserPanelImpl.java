@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -226,7 +226,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
     var finder = new LocalFsFinder(false).withBaseDir(null);
     var filter = (FileLookup.LookupFilter)
-      f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
+      f -> myShowHiddenFiles || !myDescriptor.isHidden(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()));
     var ignored = new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this) {
       @Override
       protected void setTextToFile(FileLookup.LookupFile file) {
@@ -605,11 +605,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
 
         var virtualFile = new LazyDirectoryOrFile(vfsDirectory, file, attrs);
-        if (!myDescriptor.isFileVisible(virtualFile, true)) {
-          return true;  // not hidden, just ignored
-        }
-        var visible = myDescriptor.isFileVisible(virtualFile, false);
-        var selectable = myDescriptor.isFileSelectable(virtualFile);
+        var visible = !myDescriptor.isHidden(virtualFile);
+        var selectable = myDescriptor.isSelectable(virtualFile);
         var icon = myDetectProjectDirectories || !virtualFile.isDirectory() ? myDescriptor.getIcon(virtualFile) : AllIcons.Nodes.Folder;
         var item = new FsItem(file, file.getFileName().toString(), attrs, visible, selectable, icon);
         update(id, cancelled, () -> {
@@ -697,7 +694,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
             LOG.debug(e);
           }
         }
-        var item = new FsItem(root, name, null, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
+        var item = new FsItem(root, name, null, true, myDescriptor.isSelectable(virtualFile), AllIcons.Nodes.Folder);
         update(id, cancelled, () -> myModel.addRow(item));
         if (pathToSelect != null && root.equals(pathToSelect)) {
           selection.set(item);
@@ -997,7 +994,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     @Override
     public VirtualFile[] getChildren() {
       return myChildren == null
-             ? VirtualFile.EMPTY_ARRAY
+             ? EMPTY_ARRAY
              : myChildren.values().stream().map(o -> o.orElse(null)).filter(Objects::nonNull).toArray(VirtualFile[]::new);
     }
   }

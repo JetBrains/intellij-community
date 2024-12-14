@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.compose.preview
+package com.intellij.markdown.compose.preview
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape

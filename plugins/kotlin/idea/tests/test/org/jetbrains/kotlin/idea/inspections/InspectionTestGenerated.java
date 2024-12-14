@@ -126,11 +126,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/conflictingExtensionProperty/inspectionData/inspections.test");
         }
 
-        @TestMetadata("constantConditionIf/inspectionData/inspections.test")
-        public void testConstantConditionIf_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/constantConditionIf/inspectionData/inspections.test");
-        }
-
         @TestMetadata("convertLambdaToReference/inspectionData/inspections.test")
         public void testConvertLambdaToReference_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/convertLambdaToReference/inspectionData/inspections.test");

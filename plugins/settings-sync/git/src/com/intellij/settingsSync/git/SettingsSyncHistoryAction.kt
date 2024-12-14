@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.settingsSync.SettingsSyncBundle
 import com.intellij.settingsSync.SettingsSyncMain
-import com.intellij.settingsSync.isSettingsSyncEnabledByKey
+import com.intellij.settingsSync.isSettingsSyncEnabledInSettings
 import git4idea.GitVcs
 import git4idea.log.showExternalGitLogInToolwindow
 import java.util.function.Supplier
@@ -44,6 +44,6 @@ private class SettingsSyncHistoryAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null && isSettingsSyncEnabledByKey()
+    e.presentation.isEnabledAndVisible = e.project != null
   }
 }

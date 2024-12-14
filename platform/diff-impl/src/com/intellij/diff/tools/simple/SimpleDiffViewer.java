@@ -428,6 +428,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   @RequiresEdt
+  @Unmodifiable
   protected List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
     EditorEx editor = getEditor(side);
     BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -860,6 +861,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   private class MyChangedRangeProvider implements DiffChangedRangeProvider {
     @Override
+    @Unmodifiable
     public @Nullable List<TextRange> getChangedRanges(@NotNull Editor editor) {
       Side side = Side.fromValue(getEditors(), editor);
       if (side == null) return null;

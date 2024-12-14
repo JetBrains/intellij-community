@@ -14,6 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.Path
+import kotlin.io.path.appendText
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -23,8 +24,10 @@ import kotlin.io.path.writeText
  * Syntax: %measureVfsMassUpdate ACTION [fileExtension] [numberOfFiles]
  *  ACTION:
  *   - CREATE fileExtension numberOfFiles
+ *   - MODIFY
  *   - DELETE
- *   - REFRESH MassVfsRefreshSpan.CREATE|MassVfsRefreshSpan.DELETE
+ *   - REFRESH MassVfsRefreshSpan.CREATE|MODIFY|DELETE
+ *   - REFRESH CREATE|MODIFY|DELETE
  * Example: @measureVfsMassUpdate CREATE java 200000
  * Example: @measureVfsMassUpdate REFRESH MassVfsRefreshSpan.CREATE
  */
@@ -41,7 +44,7 @@ class MeasureVfsMassUpdateCommand(text: String, line: Int) : PlaybackCommandCoro
     val arguments = extractCommandArgument(PREFIX).split(" ")
     val disposer = Disposer.newDisposable()
 
-    if (arguments.isEmpty()) throw IllegalArgumentException("The action should be either CREATE or DELETE or REFRESH")
+    if (arguments.isEmpty()) throw IllegalArgumentException("The action should be either CREATE or MODIFY or DELETE or REFRESH")
     val action = arguments[0]
 
     if (action == "CREATE") {
@@ -54,10 +57,14 @@ class MeasureVfsMassUpdateCommand(text: String, line: Int) : PlaybackCommandCoro
       }
       return
 
-    } else if (action == "DELETE") {
-      if (Files.walk(pathForFiles).filter { Files.isDirectory(it) }.noneMatch { it.fileName.toString().startsWith("TempFolder") }) {
-        throw IllegalStateException("No TempFolder directories found. Have you run the CREATE action first?")
+    } else if (action == "MODIFY") {
+      ensureCreateHasBeenRun(pathForFiles)
+      PerformanceTestSpan.TRACER.spanBuilder("massModifyFiles").use {
+        modifyFilesContent(pathForFiles)
       }
+
+    } else if (action == "DELETE") {
+      ensureCreateHasBeenRun(pathForFiles)
       PerformanceTestSpan.TRACER.spanBuilder("massDeleteFiles").use {
         deleteFiles(pathForFiles)
       }
@@ -86,7 +93,7 @@ class MeasureVfsMassUpdateCommand(text: String, line: Int) : PlaybackCommandCoro
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true)
       mutex.lock()
 
-    } else throw IllegalArgumentException("The action should be either CREATE or DELETE or REFRESH")
+    } else throw IllegalArgumentException("The action should be either CREATE or MODIFY or DELETE or REFRESH")
   }
 
   private fun createFiles(extension: String, numberOfFiles: Int, projectPath: Path) {
@@ -110,9 +117,23 @@ class MeasureVfsMassUpdateCommand(text: String, line: Int) : PlaybackCommandCoro
     }
   }
 
+  private fun modifyFilesContent(pathForFiles: Path) {
+    Files.walk(pathForFiles)
+      .filter { !Files.isDirectory(it) && it.fileName.toString().startsWith("TempClass") }
+      .forEach { file ->
+        file.appendText("\n// Modified")
+      }
+  }
+
   private fun deleteFiles(path: Path) {
     Files.list(path)
       .filter { it.fileName.toString().startsWith("TempFolder") }
       .forEach { FileUtil.delete(it) }
+  }
+}
+
+private fun ensureCreateHasBeenRun(pathForFiles: Path) {
+  if (Files.walk(pathForFiles).filter { Files.isDirectory(it) }.noneMatch { it.fileName.toString().startsWith("TempFolder") }) {
+    throw IllegalStateException("No TempFolder directories found. Have you run the CREATE action first?")
   }
 }

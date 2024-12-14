@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -31,7 +30,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinMethodReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
@@ -131,9 +130,9 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
             val declaration = element.namedUnwrappedElement as? KtNamedDeclaration
             if (declaration != null) {
-                ExpectActualUtils.liftToExpected(declaration)?.let { expectDeclaration ->
+                ExpectActualUtils.liftToExpect(declaration)?.let { expectDeclaration ->
                     allRenames[expectDeclaration] = safeNewName
-                    expectDeclaration.actualsForExpected().forEach { allRenames[it] = safeNewName }
+                    expectDeclaration.actualsForExpect().forEach { allRenames[it] = safeNewName }
                 }
             }
         }

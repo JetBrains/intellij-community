@@ -249,7 +249,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   private boolean useCache() {
     if (!isPhysical()) return false;
     if (ApplicationManager.getApplication().isDispatchThread()) return false;
-    return getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE;
+    return PsiFileEx.isBatchReferenceProcessingEnabled(this);
   }
 
   @NotNull

@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.SourcePositionProvider
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.impl.watch.*
 import com.intellij.debugger.ui.tree.*
@@ -21,8 +22,8 @@ import com.intellij.xdebugger.XTestValueNode
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.sun.jdi.ArrayType
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
-import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.DelegateDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
@@ -162,9 +163,9 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
         }
 
         val debugProcess = suspendContext.debugProcess
-        return debugProcess.invokeInManagerThread { debuggerContext ->
-            runReadAction {
-                SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debuggerContext)
+        return runBlocking {
+            withDebugContext(suspendContext) {
+                SourcePositionProvider.getSourcePosition(descriptor, debugProcess.project, debugProcess.debuggerContext)
             }
         }
     }

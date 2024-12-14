@@ -1147,6 +1147,7 @@ f:com.intellij.execution.runners.ExecutionUtil
 - s:runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.Executor,J):V
 - s:runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.Executor,com.intellij.execution.ExecutionTarget):V
 - s:runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.Executor,com.intellij.execution.ExecutionTarget,J):V
+- s:withLiveIndicator(javax.swing.Icon):javax.swing.Icon
 a:com.intellij.execution.runners.GenericProgramRunner
 - com.intellij.execution.runners.ProgramRunner
 - <init>():V
@@ -1766,6 +1767,7 @@ com.intellij.execution.ui.ExecutionConsoleEx
 - com.intellij.execution.ui.ExecutionConsole
 - a:buildUi(com.intellij.execution.ui.RunnerLayoutUi):V
 - a:getExecutionConsoleId():java.lang.String
+com.intellij.execution.ui.NoStackTraceFoldingPanel
 com.intellij.execution.ui.ObservableConsoleView
 - a:addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
 com.intellij.execution.ui.ObservableConsoleView$ChangeListener

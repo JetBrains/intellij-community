@@ -24,6 +24,7 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
   }
 
   @Override
+  @Unmodifiable
   protected @NotNull List<StubElement<?>> enumerateStubs(@NotNull Stub root) {
     return ((StubBase<?>)root).myStubList.finalizeLoadingStage().toPlainList();
   }

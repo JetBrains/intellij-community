@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportList
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -162,11 +161,10 @@ class NewJavaToKotlinConverter(
             inputElements.any { it == element || it.isAncestor(element, strict = true) }
 
         val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, ::isInConversionContext)
-        val context = NewJ2kConverterContext(
+        val context = ConverterContext(
             symbolProvider,
             typeFactory,
             converter = this,
-            ::isInConversionContext,
             importStorage,
             JKElementInfoStorage(),
             externalCodeProcessing,

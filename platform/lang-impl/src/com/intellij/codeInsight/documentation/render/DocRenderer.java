@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationFontSize;
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
+import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
@@ -251,7 +252,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (nextLineNumber < document.getLineCount()) {
         int lineStartOffset = document.getLineStartOffset(nextLineNumber);
         int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
-        return editor.offsetToXY(contentStartOffset, true, true).x;
+        int vfmtRightShift = VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, contentStartOffset, contentStartOffset);
+        return editor.offsetToXY(contentStartOffset, false, true).x + vfmtRightShift;
       }
     }
     return editor.getInsets().left;

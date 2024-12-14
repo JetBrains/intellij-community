@@ -113,7 +113,7 @@ fun submitFeedback(feedbackData: FeedbackRequestDataHolder,
       FeedbackRequestType.PRODUCTION_REQUEST -> PRODUCTION_FEEDBACK_URL
     }
 
-    val regionalFeedbackUrl = RegionUrlMapper.mapUrl(feedbackUrl) ?: feedbackUrl
+    val regionalFeedbackUrl = RegionUrlMapper.tryMapUrlBlocking(feedbackUrl)
     LOG.info("Feedback sent to $regionalFeedbackUrl")
     sendFeedback(regionalFeedbackUrl, feedbackData, onDone, onError)
   }

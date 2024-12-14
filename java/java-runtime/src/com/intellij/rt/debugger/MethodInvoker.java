@@ -9,7 +9,7 @@ import java.lang.invoke.WrongMethodTypeException;
 @SuppressWarnings({"SSBasedInspection", "unused"})
 public final class MethodInvoker {
   // TODO: may leak objects here
-  static ThreadLocal<Object> returnValue = new ThreadLocal<>();
+  static ThreadLocal<Object> keptValue = new ThreadLocal<>();
 
   public static Object invoke0(MethodHandles.Lookup lookup, Class<?> cls, Object obj, String nameAndDescriptor, ClassLoader loader)
     throws Throwable {
@@ -207,11 +207,16 @@ public final class MethodInvoker {
       }
 
       Object result = method.invokeWithArguments(args);
-      returnValue.set(result);
+      keptValue.set(result);
       return result;
     }
     catch (WrongMethodTypeException | ClassCastException e) {
       e.printStackTrace();
+      keptValue.set(e);
+      throw e;
+    }
+    catch (Throwable e) {
+      keptValue.set(e);
       throw e;
     }
   }

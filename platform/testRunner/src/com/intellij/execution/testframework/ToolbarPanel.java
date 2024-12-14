@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
@@ -68,10 +68,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       sortGroup.addAction(suitesAlwaysOnTop);
     }
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
-                                                             ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
+                                                            ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
                                                              properties, TestConsoleProperties.SORT_ALPHABETICALLY));
-    
+
+    sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.name"),
+                                                            ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.description"),
+                                                            AllIcons.ObjectBrowser.SortByType,
+                                                            properties, TestConsoleProperties.SORT_BY_DECLARATION_ORDER));
+
     final ToggleModelAction sortByStatistics = new SortByDurationAction(properties);
     myActions.add(sortByStatistics);
     sortGroup.addAction(sortByStatistics);
@@ -177,6 +182,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       action.setModel(model);
     }
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, createComparatorPropertyListener(model), model, true);
+    TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DECLARATION_ORDER, createComparatorPropertyListener(model), model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, createComparatorPropertyListener(model), model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SUITES_ALWAYS_ON_TOP, createComparatorPropertyListener(model), model, true);
   }

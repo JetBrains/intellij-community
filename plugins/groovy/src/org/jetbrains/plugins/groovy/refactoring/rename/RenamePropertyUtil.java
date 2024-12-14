@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.components.JBBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +140,7 @@ public final class RenamePropertyUtil {
       gr.add(myRbRenameMember);
       myRbRenameProperty.setSelected(true);
 
-      Box box = Box.createVerticalBox();
+      JBBox box = JBBox.createVerticalBox();
       box.add(Box.createVerticalStrut(5));
       box.add(myRbRenameProperty);
       box.add(myRbRenameMember);

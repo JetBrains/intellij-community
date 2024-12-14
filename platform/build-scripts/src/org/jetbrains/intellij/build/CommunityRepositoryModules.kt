@@ -216,7 +216,8 @@ object CommunityRepositoryModules {
       )
     ),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
-    githubPlugin("intellij.vcs.github.community", kind = "community"),
+    githubPlugin("intellij.vcs.github.community", productCode = "IC"),
+    gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
@@ -290,6 +291,7 @@ object CommunityRepositoryModules {
     pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
+      spec.semanticVersioning = true
       spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
         val pluginXml = pluginXmlSupplier()
         if (pluginXml.indexOf("<version>") != -1) {
@@ -650,15 +652,26 @@ object CommunityRepositoryModules {
     }
   }
 
-  fun githubPlugin(mainModuleName: String, kind: String): PluginLayout {
+  fun githubPlugin(mainModuleName: String, productCode: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
-      spec.directoryName = "vcs-github-$kind"
+      spec.directoryName = "vcs-github-$productCode"
       spec.mainJarName = "vcs-github.jar"
       spec.withModules(listOf(
         "intellij.vcs.github"
       ))
       spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$version-$kind")
+        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
+      }
+    }
+  }
+
+  // inspired by CommunityRepositoryModules.githubPlugin
+  fun gitlabPlugin(mainModuleName: String, productCode: String): PluginLayout {
+    return plugin(mainModuleName) { spec ->
+      spec.directoryName = "vcs-gitlab-$productCode"
+      spec.mainJarName = "vcs-gitlab.jar"
+      spec.withCustomVersion { _, version, _ ->
+        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
       }
     }
   }

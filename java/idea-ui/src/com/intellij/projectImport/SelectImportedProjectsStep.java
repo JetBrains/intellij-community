@@ -8,6 +8,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBBox;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.JBInsets;
@@ -55,7 +56,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
         fileChooser.setAllElementsMarked(false);
       }
     };
-    JComponent actionToolbar = Box.createHorizontalBox();
+    JComponent actionToolbar = JBBox.createHorizontalBox();
     actionToolbar.add(Box.createHorizontalGlue());
     actionToolbar.add(new JButton(selectAllAction));
     actionToolbar.add(new JButton(unselectAllAction));

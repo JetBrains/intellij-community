@@ -15,50 +15,48 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 
-public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
-  private final @NotNull SmartPsiElementPointer<PyFunction> myFunction;
+public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<PyFunction> {
   private final String myReturnTypeName;
 
   public PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    this(function, getReturnTypeName(function, context));
-  }
-
-  private PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function, @NotNull String returnTypeName) {
-    SmartPointerManager manager = SmartPointerManager.getInstance(function.getProject());
-    myFunction = manager.createSmartPsiElementPointer(function);
-    myReturnTypeName = returnTypeName;
+    super(function);
+    myReturnTypeName = getReturnTypeName(function, context);
   }
 
   @NotNull
   private static String getReturnTypeName(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    final PyType type = function.getInferredReturnType(context);
+    PyType type = function.getInferredReturnType(context);
+    if (function.isAsync()) {
+      var unwrappedType = PyTypingTypeProvider.unwrapCoroutineReturnType(type);
+      if (unwrappedType != null) {
+        type = unwrappedType.get();
+      }
+    }
     return PythonDocumentationProvider.getTypeHint(type, context);
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    PyFunction function = myFunction.getElement();
-    String functionName = function != null ? function.getName() : "function";
-    return PyPsiBundle.message("QFIX.make.function.return.type", functionName, myReturnTypeName);
+  @Nullable
+  protected Presentation getPresentation(@NotNull ActionContext context, @NotNull PyFunction function) {
+    return Presentation.of(PyPsiBundle.message("QFIX.make.function.return.type", function.getName(), myReturnTypeName));
   }
 
   @Override
@@ -68,11 +66,8 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyFunction function = myFunction.getElement();
-    if (function == null) return;
-    
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+  protected void invoke(@NotNull ActionContext context, @NotNull PyFunction function, @NotNull ModPsiUpdater updater) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(function.getProject());
 
     boolean shouldAddImports = false;
 
@@ -96,28 +91,18 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
     }
     
     if (shouldAddImports) {
-      addImportsForTypeAnnotations(TypeEvalContext.userInitiated(project, function.getContainingFile()));
+      addImportsForTypeAnnotations(function);
     }
   }
 
-  private void addImportsForTypeAnnotations(@NotNull TypeEvalContext context) {
-    PyFunction function = myFunction.getElement();
-    if (function == null) return;
+  private static void addImportsForTypeAnnotations(@NotNull PyFunction function) {
     PsiFile file = function.getContainingFile();
     if (file == null) return;
+    TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), file);
     
     PyType typeForImports = function.getInferredReturnType(context);
     if (typeForImports != null) {
       PyTypeHintGenerationUtil.addImportsForTypeAnnotations(List.of(typeForImports), context, file);
     }
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PyFunction function = PyRefactoringUtil.findSameElementForPreview(myFunction, target);
-    if (function == null) {
-      return null;
-    }
-    return new PyMakeFunctionReturnTypeQuickFix(function, myReturnTypeName);
   }
 }

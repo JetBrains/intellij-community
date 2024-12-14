@@ -18,6 +18,7 @@ class ExternalSystemExecutionTracer {
 
   val stdout: MutableList<String> = ArrayList()
   val stderr: MutableList<String> = ArrayList()
+  val output: MutableList<String> = ArrayList()
   val messages: MutableList<MessageEvent> = ArrayList()
 
   inline fun <R> traceExecution(mode: PrintOutputMode = PrintOutputMode.NEVER, action: () -> R): R {
@@ -42,6 +43,7 @@ class ExternalSystemExecutionTracer {
 
   fun install(parentDisposable: Disposable) {
     whenExternalSystemTaskOutputAdded(parentDisposable) { _, text, stdOut ->
+      output.add(text)
       when (stdOut) {
         true -> stdout.add(text)
         else -> stderr.add(text)

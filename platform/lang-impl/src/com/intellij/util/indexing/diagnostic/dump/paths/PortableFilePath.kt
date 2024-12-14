@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.intellij.util.indexing.diagnostic.dump.paths.providers.IdePortableFilePathProvider
+import java.util.Locale
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 sealed class PortableFilePath {
@@ -37,7 +38,7 @@ sealed class PortableFilePath {
     enum class LibraryType {
       APPLICATION, PROJECT, MODULE;
 
-      override fun toString(): String = name.toLowerCase()
+      override fun toString(): String = name.lowercase(Locale.getDefault())
     }
 
     override val presentablePath: String

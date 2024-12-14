@@ -11,11 +11,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-private class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposable {
-
+internal class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposable {
   private val scope = CoroutineScope(SupervisorJob())
 
   init {

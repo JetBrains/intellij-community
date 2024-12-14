@@ -13,7 +13,7 @@ import java.util.List;
 public final class JavaMethodOverloadSwitchActionPromoter implements ActionPromoter {
   @Override
   @Unmodifiable
-  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  public List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     return ContainerUtil.findAll(actions, a -> a instanceof JavaMethodOverloadSwitchUpAction ||
                                                a instanceof JavaMethodOverloadSwitchDownAction);
   }

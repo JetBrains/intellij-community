@@ -15,15 +15,19 @@ import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
-import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
+import com.jetbrains.python.newProjectWizard.collector.PyProjectTypeGenerator
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
+import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
+import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import kotlin.reflect.jvm.jvmName
 
 /**
  * Extend this class to register a new project generator.
@@ -39,11 +43,12 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val _newProjectName: @NlsSafe String? = null,
-) : DirectoryProjectGenerator<PyV3BaseProjectSettings> {
+) : DirectoryProjectGenerator<PyV3BaseProjectSettings>, PyProjectTypeGenerator {
   private val baseSettings = PyV3BaseProjectSettings()
   private var uiServices: PyV3UIServices = PyV3UIServicesProd
   val newProjectName: @NlsSafe String get() = _newProjectName ?: "${name.replace(" ", "")}Project"
 
+  override val projectTypeForStatistics: @NlsSafe String = this::class.jvmName
 
   /**
    * Run this method as before any other to substitute services with mock for tests
@@ -58,7 +63,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope
     coroutineScope.launch {
-      val sdk = settings.generateAndGetSdk(module, baseDir).getOrElse {
+      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir).getOrElse {
         withContext(Dispatchers.EDT) {
           uiServices.errorSink.emit(it.localizedMessage) // Show error generation to user
         }
@@ -70,6 +75,12 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
           VirtualFileManager.getInstance().syncRefresh()
         }
       }
+
+      val pythonVersion = withContext(Dispatchers.IO) { sdk.version }
+      logPythonNewProjectGenerated(interpreterStatistics,
+                                   pythonVersion,
+                                   this@PyV3ProjectBaseGenerator,
+                                   emptyList())
 
       // Project view must be expanded (PY-75909) but it can't be unless it contains some files.
       // Either base settings (which create venv) might generate some or type specific settings (like Django) may.

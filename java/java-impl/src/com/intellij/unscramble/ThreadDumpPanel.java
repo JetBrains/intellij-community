@@ -4,6 +4,7 @@ package com.intellij.unscramble;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.NoStackTraceFoldingPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ExporterToTextFile;
@@ -52,7 +53,7 @@ import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
  * @author Jeka
  * @author Konstantin Bulenkov
  */
-public final class ThreadDumpPanel extends JPanel implements UiDataProvider {
+public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoStackTraceFoldingPanel {
   private static final Icon PAUSE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Pause, Daemon_sign});
   private static final Icon LOCKED_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Debugger.MuteBreakpoints, Daemon_sign});
   private static final Icon RUNNING_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Resume, Daemon_sign});

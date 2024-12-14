@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ktor-client-java" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-java-jvm:2.3.12">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-java-jvm:2.3.13">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.12/ktor-client-java-jvm-2.3.12.jar">
-          <sha256sum>580511f2299c1c0ead906fcb4bbdd24cbc8068f027b4c3ad0d8de5e900d8cabd</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.13/ktor-client-java-jvm-2.3.13.jar">
+          <sha256sum>8479371db1a26f42f304b8f24005095add0185d7092939d5ba662ba98fe4ed8b</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.12/ktor-client-java-jvm-2.3.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.13/ktor-client-java-jvm-2.3.13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.12/ktor-client-java-jvm-2.3.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.13/ktor-client-java-jvm-2.3.13-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

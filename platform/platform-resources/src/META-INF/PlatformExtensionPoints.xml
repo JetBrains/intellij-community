@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory"/>
@@ -18,8 +19,6 @@
                     dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>
-
-    <extensionPoint name="eelProvider" interface="com.intellij.platform.eel.provider.EelProvider" dynamic="true"/>
 
     <extensionPoint name="applicationConfigurable"
                     dynamic="true"
@@ -610,6 +609,8 @@
     <extensionPoint qualifiedName="com.intellij.ui.content.impl.toolWindowContentPostprocessor"
                     interface="com.intellij.ui.content.impl.ToolWindowContentPostProcessor"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.actionGroupCustomization" interface="com.intellij.ide.ui.customization.ActionGroupCustomizationExtension" dynamic="true"/>
 
   </extensionPoints>
 </idea-plugin>

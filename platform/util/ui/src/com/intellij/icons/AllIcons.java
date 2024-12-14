@@ -704,7 +704,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 756397077, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 1387966645, 2);
     /** 16x16 */ public static final @NotNull Icon HectorSyntax = load("ide/hectorSyntax.svg", -415840178, 2);
-    /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("ide/incomingChangesOn.svg", -1613666636, 2);
+    /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("expui/vcs/shelve.svg", "ide/incomingChangesOn.svg", -1613666636, 2);
     /** 20x20 */ public static final @NotNull Icon Like = load("ide/like.svg", 1499648038, 2);
     /** 20x20 */ public static final @NotNull Icon LikeDimmed = load("ide/likeDimmed.svg", 449955239, 2);
     /** 20x20 */ public static final @NotNull Icon LikeSelected = load("ide/likeSelected.svg", 1058551001, 2);
@@ -1203,7 +1203,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Tibero = load("providers/tibero.svg", 1044999302, 2);
     /** 16x16 */ public static final @NotNull Icon Tidb = load("providers/tidb.svg", 32027773, 0);
     /** 16x16 */ public static final @NotNull Icon Trino = load("providers/trino.svg", 1032883598, 2);
-    /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", -232219975, 2);
+    /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", 237190308, 2);
     /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -644567085, 2);
   }
 
@@ -1475,7 +1475,7 @@ public class AllIcons {
 
     public static final class Mouse {
       /** 16x16 */ public static final @NotNull Icon CursorPointingHand = load("expui/windows/mouse/cursorPointingHand.svg", 1179133742, 0);
-      /** 16x16 */ public static final @NotNull Icon CursorText = load("expui/windows/mouse/cursorText.svg", 484468598, 0);
+      /** 16x16 */ public static final @NotNull Icon CursorText = load("expui/windows/mouse/cursorText.svg", 679255143, 0);
     }
 
     /** 16x16 */ public static final @NotNull Icon Restore = load("expui/windows/restore.svg", "windows/restore.svg", 11845937, 2);

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo;
+import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -76,19 +76,11 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
     if (tailRegion != null && tailRegion == headerRegion) return;
 
-    final var virtualGuideInfo = VirtualFormattingIndentGuideInfo.getInstance();
-    final var isVirtualFormattingEnabled = virtualGuideInfo.isVirtualFormattingEnabled(editor);
-
-    if (!isVirtualFormattingEnabled && indentColumn == 0) return; // 0 is impossible outside Rider virtual formatting context
-
-    var vfmtRightShift = 0;
-    if (virtualGuideInfo.isVirtualFormattingEnabled(editor)) {
-      vfmtRightShift = virtualGuideInfo
-        .getVisualFormattingInlineInlays(editor, startOffset, startOffset)
-        .stream()
-        .map(inlay -> inlay.getWidthInPixels())
-        .reduce(0, Integer::sum);
-    }
+    final var vfmtInlaysInfo = VirtualFormattingInlaysInfo.getInstance();
+    final var isVfmtEnabled = vfmtInlaysInfo.isVirtualFormattingEnabled(editor);
+    if (!isVfmtEnabled && indentColumn == 0) return; // 0 is impossible outside Rider virtual formatting context
+    var vfmtRightShift = VirtualFormattingInlaysInfo
+      .measureVirtualFormattingInlineInlays(vfmtInlaysInfo, editor, startOffset, startOffset);
 
     final boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
     final boolean stickyPainting = editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting();

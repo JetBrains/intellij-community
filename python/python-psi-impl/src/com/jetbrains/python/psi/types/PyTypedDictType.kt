@@ -136,7 +136,10 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
    */
   data class TypedDictFieldQualifiers(val isRequired: Boolean? = true, val isReadOnly: Boolean = false)
 
-  data class FieldTypeAndTotality(val value: PyExpression?, val type: PyType?, val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers())
+  data class FieldTypeAndTotality(val value: PyExpression?, val type: PyType?, val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers()) {
+    val isRequired: Boolean get() = qualifiers.isRequired ?: true
+    val isReadOnly: Boolean get() = qualifiers.isReadOnly
+  }
 
   companion object {
 
@@ -216,7 +219,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             match = false
           }
           else {
-            return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+            return TypeCheckingResult(false)
           }
         }
         val expectedType = expectedArguments[key]?.second
@@ -237,7 +240,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
               missingKeys.addAll(innerMissingKeys)
             }
             else if (!innerMatch) {
-              return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+              return TypeCheckingResult(false)
             }
           }
         }
@@ -254,7 +257,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             match = false
           }
           else {
-            return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+            return TypeCheckingResult(false)
           }
         }
       }
@@ -267,12 +270,12 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
           match = false
         }
         else {
-          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+          return TypeCheckingResult(false)
         }
       }
 
       return if (typedDictInstanceCreation) TypeCheckingResult(match, valueTypeErrors, missingKeys, extraKeys)
-      else TypeCheckingResult(true, emptyList(), emptyList(), emptyList())
+      else TypeCheckingResult(true)
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
@@ -291,28 +294,47 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         val elementTypes = expected.elementTypes
         return TypeCheckingResult(elementTypes.size == 2
                                   && builtinCache.strType == elementTypes[0]
-                                  && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name), emptyList(),
-                                  emptyList(), emptyList())
+                                  && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name))
       }
 
-      if (expected !is PyTypedDictType) return null
-
-      expected.fields.forEach {
-        val expectedTypeAndTotality = it.value
-        val actualTypeAndTotality = actual.fields[it.key]
-
-        if (actualTypeAndTotality == null
-            || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
-            || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
-            || expectedTypeAndTotality.qualifiers.isRequired != actualTypeAndTotality.qualifiers.isRequired) {
-          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+      if (expected !is PyTypedDictType) {
+        // A TypedDict isn’t assignable to any Dict[...] type
+        if (expected is PyClassType && expected.classQName == PyNames.DICT) {
+          return TypeCheckingResult(false)
         }
+        return null
+      }
 
-        if (!actual.fields.containsKey(it.key)) {
-          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+      for ((expectedKey, expectedField) in expected.fields) {
+        if (expectedField.isReadOnly && !expectedField.isRequired && expectedField.type?.name == PyNames.OBJECT) {
+          continue
+        }
+        val actualField = actual.fields[expectedKey]
+        if (actualField == null) {
+          return TypeCheckingResult(false)
+        }
+        if (!strictUnionMatch(expectedField.type, actualField.type, context)) {
+          return TypeCheckingResult(false)
+        }
+        if (!expectedField.isReadOnly) {
+          if (!(strictUnionMatch(actualField.type, expectedField.type, context) && !actualField.isReadOnly)) {
+            return TypeCheckingResult(false)
+          }
+        }
+        if (expectedField.isRequired) {
+          if (!actualField.isRequired) {
+            return TypeCheckingResult(false)
+          }
+        }
+        else {
+          if (!expectedField.isReadOnly) {
+            if (actualField.isRequired) {
+              return TypeCheckingResult(false)
+            }
+          }
         }
       }
-      return TypeCheckingResult(true, emptyList(), emptyList(), emptyList())
+      return TypeCheckingResult(true)
     }
   }
 
@@ -325,5 +347,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
   data class TypeCheckingResult(val match: Boolean,
                                 val valueTypeErrors: List<ValueTypeError>,
                                 val missingKeys: List<MissingKeysError>,
-                                val extraKeys: List<ExtraKeyError>)
+                                val extraKeys: List<ExtraKeyError>) {
+
+    constructor(match: Boolean) : this(match, emptyList(), emptyList(), emptyList())
+  }
 }

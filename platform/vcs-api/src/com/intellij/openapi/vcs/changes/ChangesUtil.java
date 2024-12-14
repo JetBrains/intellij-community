@@ -78,6 +78,14 @@ public final class ChangesUtil {
   @Unmodifiable
   public static @NotNull Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcsManager.getAllActiveVcss().length == 1) {
+      for (Change change : changes) {
+        AbstractVcs vcs = vcsManager.getVcsFor(getFilePath(change));
+        if (vcs != null) return Collections.singleton(vcs);
+      }
+      return Collections.emptySet();
+    }
+
     return ContainerUtil.map2SetNotNull(changes, change -> vcsManager.getVcsFor(getFilePath(change)));
   }
 
@@ -85,6 +93,14 @@ public final class ChangesUtil {
   public static @NotNull Set<AbstractVcs> getAffectedVcsesForFilePaths(@NotNull Collection<? extends FilePath> files,
                                                                        @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcsManager.getAllActiveVcss().length == 1) {
+      for (FilePath file : files) {
+        AbstractVcs vcs = vcsManager.getVcsFor(file);
+        if (vcs != null) return Collections.singleton(vcs);
+      }
+      return Collections.emptySet();
+    }
+
     return ContainerUtil.map2SetNotNull(files, file -> vcsManager.getVcsFor(file));
   }
 
@@ -101,10 +117,12 @@ public final class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
   }
 
+  @Unmodifiable
   public static @NotNull List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
     return iteratePaths(changes).toList();
   }
 
+  @Unmodifiable
   public static @NotNull List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return iteratePaths(changes)
       .map(FilePath::getIOFile)

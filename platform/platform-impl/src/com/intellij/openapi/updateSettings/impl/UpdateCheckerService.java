@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -178,7 +179,9 @@ class UpdateCheckerService {
 
   @VisibleForTesting
   static boolean shouldShowWhatsNew(@NotNull BuildNumber current, boolean majorEap) {
-    if (ExperimentalUI.Companion.getForcedSwitchedUi()) {
+    if (ExperimentalUI.Companion.getForcedSwitchedUi() ||
+        // TODO this is done temporarily, see LLM-13591
+        (PlatformUtils.isIdeaCommunity() || PlatformUtils.isPyCharmCommunity()) && !ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
     UpdateSettings settings = UpdateSettings.getInstance();

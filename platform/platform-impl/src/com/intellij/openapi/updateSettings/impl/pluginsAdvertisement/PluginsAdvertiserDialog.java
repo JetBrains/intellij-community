@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
@@ -21,45 +21,50 @@ import java.util.function.Predicate;
 public final class PluginsAdvertiserDialog extends DialogWrapper {
   private final Collection<PluginDownloader> myPluginToInstall;
   private final @Nullable Project myProject;
-  private final @NotNull List<PluginNode> myCustomPlugins;
   private final @Nullable Consumer<Boolean> myFinishFunction;
   private final boolean mySelectAllSuggestions;
   private @Nullable DetectedPluginsPanel myPanel;
 
-  PluginsAdvertiserDialog(@Nullable Project project,
-                          @NotNull Collection<PluginDownloader> pluginsToInstall,
-                          @NotNull List<PluginNode> customPlugins,
-                          boolean selectAllSuggestions,
-                          @Nullable Consumer<Boolean> finishFunction) {
+  PluginsAdvertiserDialog(
+    @Nullable Project project,
+    @NotNull Collection<PluginDownloader> pluginsToInstall,
+    boolean selectAllSuggestions,
+    @Nullable Consumer<Boolean> finishFunction
+  ) {
     super(project);
     myProject = project;
     myPluginToInstall = pluginsToInstall;
-    myCustomPlugins = customPlugins;
     myFinishFunction = finishFunction;
     mySelectAllSuggestions = selectAllSuggestions;
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
     init();
 
-    JRootPane rootPane = getPeer().getRootPane();
+    var rootPane = getPeer().getRootPane();
     if (rootPane != null) {
       rootPane.setPreferredSize(new JBDimension(800, 600));
     }
   }
 
-  public PluginsAdvertiserDialog(@Nullable Project project,
-                                 @NotNull Collection<PluginDownloader> pluginsToInstall,
-                                 @NotNull List<PluginNode> customPlugins) {
-    this(project, pluginsToInstall, customPlugins, false, null);
+  public PluginsAdvertiserDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> pluginsToInstall) {
+    this(project, pluginsToInstall, false, null);
+  }
+
+  /**
+   * @deprecated custom repositories are no longer supported by the plugin advertiser;
+   * use {@link #PluginsAdvertiserDialog(Project, Collection<PluginDownloader>)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public PluginsAdvertiserDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> pluginsToInstall, @NotNull List<PluginNode> ignored) {
+    this(project, pluginsToInstall, false, null);
   }
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
       myPanel = new DetectedPluginsPanel(myProject);
-
-      // all or nothing, single plugin always gets selected automatically
-      boolean checkAll = mySelectAllSuggestions || myPluginToInstall.size() == 1;
-      for (PluginDownloader downloader : myPluginToInstall) {
+      // all or nothing, a single plugin always gets selected automatically
+      var checkAll = mySelectAllSuggestions || myPluginToInstall.size() == 1;
+      for (var downloader : myPluginToInstall) {
         myPanel.setChecked(downloader, checkAll);
       }
       myPanel.addAll(myPluginToInstall);
@@ -81,8 +86,8 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   }
 
   /**
-   * @param showDialog if the dialog will be shown to a user or not
-   * @param modalityState modality state used by plugin installation process.
+   * @param showDialog    whether the dialog will be shown to a user
+   * @param modalityState modality state used by the plugin installation process.
    *                      {@code modalityState} will taken into account only if {@code showDialog} is <code>false</code>.
    *                      If {@code null} is passed, {@code ModalityState.NON_MODAL} will be used
    */
@@ -96,7 +101,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   }
 
   private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate, @NotNull ModalityState modalityState) {
-    return new PluginsAdvertiserDialogPluginInstaller(myProject, myPluginToInstall, myCustomPlugins, myFinishFunction)
+    return new PluginsAdvertiserDialogPluginInstaller(myProject, myPluginToInstall, List.of(), myFinishFunction)
       .doInstallPlugins(predicate, modalityState);
   }
 }

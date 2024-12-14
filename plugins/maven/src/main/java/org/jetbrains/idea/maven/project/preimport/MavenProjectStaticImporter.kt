@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PREIMPORT_ACTIVITY
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFileOrDirectory
@@ -640,11 +639,6 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
   companion object {
     @JvmStatic
     fun getInstance(project: Project): MavenProjectStaticImporter = project.service()
-
-    @JvmStatic
-    fun setPreimport(value: Boolean) {
-      Registry.get("maven.preimport.project").setValue(value)
-    }
   }
 }
 

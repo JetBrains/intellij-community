@@ -15,6 +15,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -152,25 +153,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
   }
 
   private @NotNull SemServiceImpl.SemData getCacheHolder(@NotNull PsiElement psi) {
-    SemData cacheHolder = psi.getUserData(SEM_CACHE_KEY);
-    if (cacheHolder != null) {
-      return cacheHolder;
-    }
-
-    if (psi instanceof UserDataHolderEx) {
-      return ((UserDataHolderEx)psi).putUserDataIfAbsent(SEM_CACHE_KEY, new SemData(getModCount()));
-    }
-
-    SemData semData;
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (psi) {
-      semData = psi.getUserData(SEM_CACHE_KEY);
-      if (semData == null) {
-        semData = new SemData(getModCount());
-        psi.putUserData(SEM_CACHE_KEY, semData);
-      }
-    }
-    return semData;
+    return ConcurrencyUtil.computeIfAbsent(psi, SEM_CACHE_KEY, () -> new SemData(getModCount()));
   }
 
   private long getModCount() {

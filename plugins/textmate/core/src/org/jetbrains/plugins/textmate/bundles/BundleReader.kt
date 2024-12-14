@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.textmate.bundles
 
-import com.intellij.openapi.diagnostic.LoggerRt
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistReader
+import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -17,7 +17,7 @@ import kotlin.io.path.pathString
 
 interface TextMateBundleReader {
   companion object {
-    internal val logger = LoggerRt.getInstance(TextMateBundleReader::class.java)
+    internal val logger = LoggerFactory.getLogger(TextMateBundleReader::class.java)
   }
 
   val bundleName: String
@@ -165,7 +165,7 @@ private fun readPlistInDirectory(directory: Path, plistReader: PlistReader, glob
   }.getOrElse { e ->
     when (e) {
       is NoSuchFileException -> {}
-      else -> TextMateBundleReader.logger.warn("Can't load plists from directory: " + directory.pathString, e)
+      else -> TextMateBundleReader.logger.warn("Can't load plists from directory: ${directory.pathString}", e)
     }
     emptySequence()
   }

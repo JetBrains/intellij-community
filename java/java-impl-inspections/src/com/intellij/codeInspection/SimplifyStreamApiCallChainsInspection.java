@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -26,8 +26,8 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -1403,15 +1403,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
         qualifier = tryCast(call.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
       }
       if (qualifier == null) return null;
-      PsiField field = tryCast(qualifier.resolve(), PsiField.class);
-      if (field == null) return null;
-      PsiClass containingClass = field.getContainingClass();
-      if (containingClass != null && JAVA_LANG_BOOLEAN.equals(containingClass.getQualifiedName())) {
-        String name = field.getName();
-        if ("TRUE".equals(name)) return Boolean.TRUE;
-        if ("FALSE".equals(name)) return Boolean.FALSE;
-      }
-      return null;
+      return BoolUtils.fromBoxedConstantReference(qualifier);
     }
 
     /**

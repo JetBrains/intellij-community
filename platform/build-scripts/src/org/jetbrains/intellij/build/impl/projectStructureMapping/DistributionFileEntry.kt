@@ -10,6 +10,15 @@ internal data class ContentReport(
   @JvmField val bundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
   @JvmField val nonBundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
 ) {
+  init {
+    val intersection = bundledPlugins
+      .map { it.first.layout.mainModule }
+      .intersect(nonBundledPlugins.map { it.first.layout.mainModule })
+    require(intersection.none()) {
+      "Plugins cannot be both bundled and non-bundled for the same IDE: $intersection"
+    }
+  }
+
   fun all(): Sequence<DistributionFileEntry> {
     return sequence {
       yieldAll(platform)

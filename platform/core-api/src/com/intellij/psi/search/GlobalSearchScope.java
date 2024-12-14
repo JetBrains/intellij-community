@@ -72,6 +72,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns descriptions of unloaded modules whose content might be included in this scope if they had been loaded. Actually, search in
    * unloaded modules isn't performed, so this method is used to determine whether a warning about possible missing results should be shown.
    */
+  @Unmodifiable
   public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return Collections.emptySet();
   }

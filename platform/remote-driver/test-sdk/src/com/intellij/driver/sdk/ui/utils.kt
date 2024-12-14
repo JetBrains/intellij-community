@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -44,6 +45,8 @@ val UiComponent.boundsOnScreen
   }
 
 val UiComponent.accessibleName: String? get() = component.getAccessibleContext()?.getAccessibleName()
+
+val Component.rdTarget get() = (this as RefWrapper).getRef().rdTarget()
 
 @Remote("com.intellij.util.IJSwingUtilities")
 interface IJSwingUtilities {

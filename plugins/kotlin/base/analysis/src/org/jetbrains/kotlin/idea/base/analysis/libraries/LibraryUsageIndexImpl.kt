@@ -44,12 +44,6 @@ class LibraryUsageIndexImpl(private val project: Project) : LibraryUsageIndex {
         }
     }
 
-    override fun hasDependentModule(libraryInfo: LibraryInfo, module: Module): Boolean {
-        // TODO: probably it is not fully true in the case of hmpp (as in getDependentModules)
-        // but we accept it as a more performant
-        return module in moduleDependentsByLibrary.value[libraryInfo.library]
-    }
-
     private fun computeLibraryModuleDependents(): MultiMap<Library, Module> = runReadAction {
         val moduleDependentsByLibrary = MultiMap.createSet<Library, Module>()
         val libraryCache = LibraryInfoCache.getInstance(project)

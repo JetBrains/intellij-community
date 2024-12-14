@@ -1733,6 +1733,7 @@ public final class DiffUtil {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<DiffNotificationProvider> getNotificationProviders(@NotNull UserDataHolder holder) {
     return ContainerUtil.notNullize(holder.getUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS));
   }
@@ -1745,6 +1746,7 @@ public final class DiffUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<JComponent> wrapEditorNotificationBorders(@NotNull List<? extends JComponent> notifications) {
     return ContainerUtil.map(notifications, component -> wrapEditorNotificationComponent(component));
   }

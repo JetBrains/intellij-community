@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIEL
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.j2k.resolve
@@ -47,7 +48,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
     @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
         val ktElement = elements.firstIsInstanceOrNull<KtElement>() ?: return
         val context = runReadAction {
             allowAnalysisOnEdt {
@@ -62,7 +63,7 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
         }
     }
 
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
         val context = prepareContext(elements)
         return Applier(context)
     }

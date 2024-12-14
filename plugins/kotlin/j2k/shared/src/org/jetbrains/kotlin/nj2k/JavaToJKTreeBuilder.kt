@@ -74,11 +74,7 @@ class JavaToJKTreeBuilder(
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
         nullabilityInfo = null
-
-        val file = psi as? PsiJavaFile ?: psi.containingFile as? PsiJavaFile
-        if (file != null) {
-            collectNullabilityInfo(file)
-        }
+        (psi.containingFile as? PsiJavaFile)?.let { collectNullabilityInfo(it) }
 
         return when (psi) {
             is PsiJavaFile -> psi.toJK()
@@ -1174,10 +1170,10 @@ class JavaToJKTreeBuilder(
     /**
      * See also [org.jetbrains.kotlin.nj2k.conversions.NullabilityConversion]
      */
-    private fun collectNullabilityInfo(element: PsiJavaFile) {
+    private fun collectNullabilityInfo(file: PsiJavaFile) {
         val nullityInferrer = J2KNullityInferrer()
         try {
-            nullityInferrer.collect(element)
+            nullityInferrer.collect(file)
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (t: Throwable) {

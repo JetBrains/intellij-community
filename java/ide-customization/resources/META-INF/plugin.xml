@@ -59,7 +59,9 @@
   </extensions>
 
   <actions>
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="ProjectViewToolbar" anchor="first"/>
+    </action>
 
     <group id="OpenProjectGroup">
       <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true" searchable="false"/>

@@ -219,7 +219,7 @@ object XBreakpointUtil {
       for (line in lineStart..linesEnd) {
         var maxPriority = 0
         for (type in lineTypes) {
-          maxPriority = max(maxPriority.toDouble(), type.priority.toDouble()).toInt()
+          maxPriority = max(maxPriority, type.priority)
           val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line)
           if ((type.canPutAt(file, line, project) || breakpoint != null) &&
               (typeWinner.isEmpty() || type.priority > typeWinner[0].priority)

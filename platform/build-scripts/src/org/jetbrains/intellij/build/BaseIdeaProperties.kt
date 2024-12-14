@@ -65,7 +65,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.vcs.git",
   "intellij.vcs.svn",
   "intellij.vcs.hg",
-  "intellij.vcs.gitlab",
   "intellij.groovy",
   "intellij.junit",
   "intellij.testng",

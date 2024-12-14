@@ -3,10 +3,17 @@
 
 package org.jetbrains.idea.devkit.dom.templates
 
+import com.intellij.icons.AllIcons
+import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.*
 import org.jetbrains.idea.devkit.dom.Option
+import javax.swing.Icon
 
-internal class TemplateSetDescription: DomFileDescription<TemplateSet>(TemplateSet::class.java, "templateSet")
+internal class TemplateSetDescription: DomFileDescription<TemplateSet>(TemplateSet::class.java, "templateSet") {
+
+  override fun getFileIcon(file: XmlFile, flags: Int): Icon? = AllIcons.Nodes.Template
+
+}
 
 @DefinesXml
 interface TemplateSet: DomElement {

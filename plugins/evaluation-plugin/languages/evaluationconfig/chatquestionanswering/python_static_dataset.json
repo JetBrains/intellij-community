@@ -1,9 +1,12 @@
 {
   "language": "Python",
-  "projectPath": "../../ml-eval/spyder",
-  "outputDir": "ml-eval-chat-question-answering-python-output",
+  "projectPath": "../ml-eval/spyder",
+  "repository": "https://github.com/spyder-ide/spyder",
+  "revision": "0f689585cb580a9e9f039048fcfdc1c79de673a4",
+  "outputDir": "bin/ml-eval-chat-question-answering-python-output",
   "strategy": {
-    "collectContextOnly": false
+    "collectContextOnly": false,
+    "enableRAG": true
   },
   "actions": {
     "evaluationRoots": [

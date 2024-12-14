@@ -9,8 +9,12 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * @author Konstantin Bulenkov
  */
-@ApiStatus.Internal
 public final class ExperimentalFeatureImpl extends ExperimentalFeature{
+  @ApiStatus.Internal
+  public ExperimentalFeatureImpl() {
+  }
+
+  @ApiStatus.Internal
   @Override
   public boolean isEnabled() {
     Application app = ApplicationManager.getApplication();

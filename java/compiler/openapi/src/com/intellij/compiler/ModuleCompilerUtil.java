@@ -70,6 +70,7 @@ public final class ModuleCompilerUtil {
     }));
   }
 
+  @Unmodifiable
   public static @NotNull List<Chunk<ModuleSourceSet>> computeSourceSetCycles(@NotNull ModulesProvider provider) {
     Graph<ModuleSourceSet> graph = createModuleSourceDependenciesGraph(provider);
     Collection<Chunk<ModuleSourceSet>> chunks = GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph);

@@ -50,6 +50,11 @@ public class KotlinLambdasHintsProviderGenerated extends AbstractKotlinLambdasHi
         runTest("testData/codeInsight/hints/lambda/If.kt");
     }
 
+    @TestMetadata("IfBranchValue.kt")
+    public void testIfBranchValue() throws Exception {
+        runTest("testData/codeInsight/hints/lambda/IfBranchValue.kt");
+    }
+
     @TestMetadata("ImplicitIt.kt")
     public void testImplicitIt() throws Exception {
         runTest("testData/codeInsight/hints/lambda/ImplicitIt.kt");

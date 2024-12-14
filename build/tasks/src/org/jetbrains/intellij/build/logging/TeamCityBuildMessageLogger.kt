@@ -60,7 +60,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       }
       finally {
         if (TeamCityHelper.isUnderTeamCity) {
-          print(ServiceMessageTypes.FLOW_FINSIHED)
+          println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_FINSIHED, attributes = java.util.Map.of()))
         }
       }
     }

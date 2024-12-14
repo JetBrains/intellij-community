@@ -10,7 +10,7 @@ import java.nio.file.attribute.FileAttributeView
 import java.nio.file.attribute.FileStoreAttributeView
 
 internal class IjentNioFileStore(
-  private val path: EelPath.Absolute,
+  private val path: EelPath,
   private val ijentFsApi: IjentFileSystemApi,
 ) : FileStore() {
 

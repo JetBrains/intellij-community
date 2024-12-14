@@ -2,15 +2,20 @@
 package com.intellij.execution.ijent
 
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.ijent.*
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.ErrorString
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.provider.utils.EelPipe
+import com.intellij.platform.eel.provider.utils.asOutputStream
+import com.intellij.platform.eel.provider.utils.consumeAsInputStream
+import com.intellij.platform.eel.provider.utils.copy
+import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.platform.ijent.spi.IjentThreadPool
-import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.asCompletableFuture
 import java.io.ByteArrayInputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
@@ -24,27 +29,46 @@ internal class IjentChildProcessAdapterDelegate(
 ) {
   val inputStream: InputStream
 
-  val outputStream: OutputStream = IjentStdinOutputStream(coroutineScope.coroutineContext, ijentChildProcess)
+  val outputStream: OutputStream = ijentChildProcess.stdin.asOutputStream(coroutineScope.coroutineContext)
 
   val errorStream: InputStream
 
   init {
     if (redirectStderr) {
-      val merged = Channel<ByteArray>()
+      val pipe = EelPipe()
 
       coroutineScope.launch {
-        ijentChildProcess.stdout.consumeEach { chunk -> merged.send(chunk) }
-      }
-      coroutineScope.launch {
-        ijentChildProcess.stderr.consumeEach { chunk -> merged.send(chunk) }
+        launch {
+          copyToPipe(ijentChildProcess.stdout, pipe)
+        }
+        launch {
+          copyToPipe(ijentChildProcess.stderr, pipe)
+        }
+        launch {
+          ijentChildProcess.exitCode.await()
+          // When the process dies, we close its stream.
+          // That will be done by ijentChildProcess anyway, but the operation is idempotent
+          pipe.closePipe()
+        }
       }
 
-      inputStream = ChannelInputStream.forArrays(coroutineScope, merged)
+      inputStream = pipe.source.consumeAsInputStream(coroutineScope.coroutineContext)
       errorStream = ByteArrayInputStream(byteArrayOf())
     }
     else {
-      inputStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stdout)
-      errorStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stderr)
+      inputStream = ijentChildProcess.stdout.consumeAsInputStream(coroutineScope.coroutineContext)
+      errorStream = ijentChildProcess.stderr.consumeAsInputStream(coroutineScope.coroutineContext)
+    }
+  }
+
+  /**
+   * Copy from [from] to [pipe] and close [pipe] once read finished.
+   * When `stderr` redirected to `stdout` we close `stdout` as soon as either `stderr` or `stdout` gets closed
+   */
+  private suspend fun copyToPipe(from: EelReceiveChannel<ErrorString>, pipe: EelPipe) {
+    when (val r = copy(from, pipe.sink)) {
+      is EelResult.Error -> pipe.closePipe(IOException("pipe closed: ${r.error}"))
+      is EelResult.Ok -> pipe.closePipe()
     }
   }
 
@@ -62,8 +86,7 @@ internal class IjentChildProcessAdapterDelegate(
       withTimeoutOrNull(unit.toMillis(timeout).milliseconds) {
         ijentChildProcess.exitCode.await()
         true
-      }
-      ?: false
+      } == true
     }
 
   fun destroyForcibly() {

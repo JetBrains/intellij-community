@@ -18,12 +18,6 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.EventLoopGroup;
-import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.handler.codec.protobuf.ProtobufDecoder;
-import io.netty.resolver.AddressResolverGroup;
-import io.netty.util.NetUtil;
 import kotlinx.metadata.jvm.JvmMetadataUtil;
 import net.n3.nanoxml.IXMLBuilder;
 import org.h2.mvstore.MVStore;
@@ -42,8 +36,10 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -56,12 +52,14 @@ public final class ClasspathBootstrap {
   private ClasspathBootstrap() { }
 
   private static final Class<?>[] COMMON_REQUIRED_CLASSES = {
-    NetUtil.class, // netty common
-    EventLoopGroup.class, // netty transport
-    AddressResolverGroup.class, // netty resolver
-    ByteBufAllocator.class, // netty buffer
-    ByteToMessageDecoder.class, // netty codec http
-    ProtobufDecoder.class,  // netty codec protobuf
+    // Uncomment to use the same netty that is used in the rest of IDE
+    //NetUtil.class, // netty common
+    //EventLoopGroup.class, // netty transport
+    //AddressResolverGroup.class, // netty resolver
+    //ByteBufAllocator.class, // netty buffer
+    //ByteToMessageDecoder.class, // netty codec http
+    //ProtobufDecoder.class,  // netty codec protobuf
+    
     Message.class, // protobuf
   };
 
@@ -82,7 +80,36 @@ public final class ClasspathBootstrap {
     "jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"
   };
 
-  private static void addToClassPath(Class<?> aClass, Set<String> result) {
+  private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
+  private static final String NETTY_JPS_VERSION = "4.1.115.Final";
+  private static final String NETTY_JPS_DISTRIBUTION_JAR_NAME = "netty-jps.jar";
+  private static final String[] NETTY_ARTIFACT_NAMES = {
+    "netty-buffer", "netty-codec-http", "netty-codec-http2", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
+  };
+
+  private static void getNettyForJpsClasspath(Consumer<Path> consumer) {
+    Path rootPath = Path.of(getResourcePath(ExternalJavacProcess.class));
+    Path nettyDistributionPath = rootPath.resolveSibling("rt").resolve(NETTY_JPS_DISTRIBUTION_JAR_NAME);
+    if (Files.isRegularFile(rootPath) && Files.exists(nettyDistributionPath)) {
+      // running regular installation
+      consumer.accept(nettyDistributionPath);
+    }
+    else {
+      // running from sources or on the build server
+      // take the library from the local maven repository
+      Path artifactRoot = getMavenLocalRepositoryDir().resolve("io").resolve("netty");
+      for (String artifactName : NETTY_ARTIFACT_NAMES) {
+        consumer.accept(artifactRoot.resolve(artifactName).resolve(NETTY_JPS_VERSION).resolve(artifactName + "-" + NETTY_JPS_VERSION + ".jar"));
+      }
+    }
+  }
+
+  private static @NotNull Path getMavenLocalRepositoryDir() {
+    final String userHome = System.getProperty("user.home", null);
+    return userHome != null ? Path.of(userHome, DEFAULT_MAVEN_REPOSITORY_PATH) : Path.of(DEFAULT_MAVEN_REPOSITORY_PATH);
+  }
+
+  private static void addToClassPath(Set<String> result, Class<?> aClass) {
     Path path = PathManager.getJarForClass(aClass);
     if (path == null) {
       return;
@@ -90,16 +117,21 @@ public final class ClasspathBootstrap {
 
     final String pathString = path.toString();
 
-    if (result.add(pathString) && pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
-      if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
-        LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+    if (result.add(pathString)) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(pathString + " added to classpath to include " + aClass.getName());
+      }
+      if (pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
+        if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
+          LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+        }
       }
     }
   }
 
   private static void addToClassPath(Set<String> cp, @NotNull Class<?> @NotNull [] classes) {
     for (Class<?> aClass : classes) {
-      addToClassPath(aClass, cp);
+      addToClassPath(cp, aClass);
     }
   }
 
@@ -107,42 +139,43 @@ public final class ClasspathBootstrap {
     // predictable order
     Set<String> cp = new LinkedHashSet<>();
 
-    addToClassPath(BuildMain.class, cp);
-    addToClassPath(ExternalJavacProcess.class, cp);  // intellij.platform.jps.build.javac.rt part
-    addToClassPath(JavacReferenceCollector.class, cp);  // jps-javac-extension library
+    addToClassPath(cp, BuildMain.class);
+    addToClassPath(cp, ExternalJavacProcess.class);  // intellij.platform.jps.build.javac.rt part
+    addToClassPath(cp, JavacReferenceCollector.class);  // jps-javac-extension library
 
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
 
     ClassPathUtil.addKotlinStdlib(cp);
-    addToClassPath(JvmMetadataUtil.class, cp);  // kotlin metadata parsing
+    addToClassPath(cp, JvmMetadataUtil.class);  // kotlin metadata parsing
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
+    getNettyForJpsClasspath(path -> cp.add(path.toString()));
 
-    addToClassPath(ClassWriter.class, cp);  // asm
-    addToClassPath(ClassVisitor.class, cp);  // asm-commons
-    addToClassPath(RuntimeModuleRepository.class, cp); // intellij.platform.runtime.repository
-    addToClassPath(JpsModel.class, cp);  // intellij.platform.jps.model
-    addToClassPath(JpsModelImpl.class, cp);  // intellij.platform.jps.model.impl
-    addToClassPath(JpsProjectLoader.class, cp);  // intellij.platform.jps.model.serialization
-    addToClassPath(AlienFormFileException.class, cp);  // intellij.java.guiForms.compiler
-    addToClassPath(GridConstraints.class, cp);  // intellij.java.guiForms.rt
-    addToClassPath(CellConstraints.class, cp);  // jGoodies-forms
+    addToClassPath(cp, ClassWriter.class);  // asm
+    addToClassPath(cp, ClassVisitor.class);  // asm-commons
+    addToClassPath(cp, RuntimeModuleRepository.class); // intellij.platform.runtime.repository
+    addToClassPath(cp, JpsModel.class);  // intellij.platform.jps.model
+    addToClassPath(cp, JpsModelImpl.class);  // intellij.platform.jps.model.impl
+    addToClassPath(cp, JpsProjectLoader.class);  // intellij.platform.jps.model.serialization
+    addToClassPath(cp, AlienFormFileException.class);  // intellij.java.guiForms.compiler
+    addToClassPath(cp, GridConstraints.class);  // intellij.java.guiForms.rt
+    addToClassPath(cp, CellConstraints.class);  // jGoodies-forms
     cp.addAll(getInstrumentationUtilRoots());
-    addToClassPath(IXMLBuilder.class, cp);  // nano-xml
-    addToClassPath(JavaProjectBuilder.class, cp);  // QDox lightweight java parser
-    addToClassPath(Gson.class, cp);  // gson
+    addToClassPath(cp, IXMLBuilder.class);  // nano-xml
+    addToClassPath(cp, JavaProjectBuilder.class);  // QDox lightweight java parser
+    addToClassPath(cp, Gson.class);  // gson
     // caffeine
-    addToClassPath(Caffeine.class, cp);
+    addToClassPath(cp, Caffeine.class);
     // Hashing
-    addToClassPath(Hashing.class, cp);
-    addToClassPath(MVStore.class, cp);
+    addToClassPath(cp, Hashing.class);
+    addToClassPath(cp, MVStore.class);
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
-    addToClassPath(Tracer.class, cp); // tracing infrastructure
+    addToClassPath(cp, Tracer.class); // tracing infrastructure
 
     try {
       Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
-      addToClassPath(cmdLineWrapper, cp);  // idea_rt.jar
+      addToClassPath(cp, cmdLineWrapper);  // idea_rt.jar
     }
     catch (Throwable ignored) { }
 
@@ -159,7 +192,7 @@ public final class ClasspathBootstrap {
   }
 
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
-    // Important! All dependencies must be java 6 compatible (the oldest supported javac to be launched)
+    // Important! All dependencies must be java 7 compatible (the oldest supported javac to be launched)
     final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
@@ -168,6 +201,7 @@ public final class ClasspathBootstrap {
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
     }
+    getNettyForJpsClasspath(path -> cp.add(path.toFile()));
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");

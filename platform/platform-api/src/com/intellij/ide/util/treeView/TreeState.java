@@ -28,6 +28,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -443,7 +444,7 @@ public final class TreeState implements JDOMExternalizable {
     element.addContent(root);
   }
 
-  private static List<PathElement[]> createPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
+  private static List<PathElement[]> createPaths(@NotNull JTree tree, @NotNull @Unmodifiable List<? extends TreePath> paths) {
     List<PathElement[]> list = new ArrayList<>();
     for (TreePath o : paths) {
       if (o.getPathCount() > 1 || tree.isRootVisible()) {

@@ -1316,6 +1316,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("disableOnPackageDirective.kt")
+        public void testDisableOnPackageDirective() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/disableOnPackageDirective.kt");
+        }
+
         @TestMetadata("doNotWrapFirstElement.kt")
         public void testDoNotWrapFirstElement() throws Exception {
             runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement.kt");
@@ -2796,6 +2801,89 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     @TestMetadata("../testData/intentions/unfolding")
     public abstract static class Unfolding extends AbstractSharedK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/assignmentToIf")
+        public static class AssignmentToIf extends AbstractSharedK1IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("innerIfTransformed.kt")
+            public void testInnerIfTransformed() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/innerIfTransformed.kt");
+            }
+
+            @TestMetadata("nestedIfs.kt")
+            public void testNestedIfs() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/nestedIfs.kt");
+            }
+
+            @TestMetadata("simpleIf.kt")
+            public void testSimpleIf() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIf.kt");
+            }
+
+            @TestMetadata("simpleIfWithAugmentedAssignment.kt")
+            public void testSimpleIfWithAugmentedAssignment() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithAugmentedAssignment.kt");
+            }
+
+            @TestMetadata("simpleIfWithBlocks.kt")
+            public void testSimpleIfWithBlocks() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithBlocks.kt");
+            }
+
+            @TestMetadata("simpleIfWithComplexAssignmentLHS.kt")
+            public void testSimpleIfWithComplexAssignmentLHS() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithComplexAssignmentLHS.kt");
+            }
+
+            @TestMetadata("simpleIfWithoutAssignment.kt")
+            public void testSimpleIfWithoutAssignment() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithoutAssignment.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/assignmentToWhen")
+        public static class AssignmentToWhen extends AbstractSharedK1IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("innerWhenTransformed.kt")
+            public void testInnerWhenTransformed() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/innerWhenTransformed.kt");
+            }
+
+            @TestMetadata("simpleWhen.kt")
+            public void testSimpleWhen() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/simpleWhen.kt");
+            }
+
+            @TestMetadata("simpleWhenWithBlocks.kt")
+            public void testSimpleWhenWithBlocks() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/simpleWhenWithBlocks.kt");
+            }
+
+            @TestMetadata("simpleWhenWithComplexAssignmentLHS.kt")
+            public void testSimpleWhenWithComplexAssignmentLHS() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/simpleWhenWithComplexAssignmentLHS.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/intentions/unfolding/functionCallToIf")
         public static class FunctionCallToIf extends AbstractSharedK1IntentionTest {
             @java.lang.Override
@@ -2880,6 +2968,90 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             @TestMetadata("simple2.kt")
             public void testSimple2() throws Exception {
                 runTest("../testData/intentions/unfolding/functionCallToWhen/simple2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/returnToIf")
+        public static class ReturnToIf extends AbstractSharedK1IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("branchWithRun.kt")
+            public void testBranchWithRun() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/branchWithRun.kt");
+            }
+
+            @TestMetadata("ifWithBreak.kt")
+            public void testIfWithBreak() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithBreak.kt");
+            }
+
+            @TestMetadata("ifWithContinue.kt")
+            public void testIfWithContinue() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithContinue.kt");
+            }
+
+            @TestMetadata("ifWithInnerReturn.kt")
+            public void testIfWithInnerReturn() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithInnerReturn.kt");
+            }
+
+            @TestMetadata("ifWithNothing.kt")
+            public void testIfWithNothing() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithNothing.kt");
+            }
+
+            @TestMetadata("ifWithThrow.kt")
+            public void testIfWithThrow() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithThrow.kt");
+            }
+
+            @TestMetadata("ifWithoutElse.kt")
+            public void testIfWithoutElse() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithoutElse.kt");
+            }
+
+            @TestMetadata("ifWithoutThen.kt")
+            public void testIfWithoutThen() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/ifWithoutThen.kt");
+            }
+
+            @TestMetadata("inApplicableRange.kt")
+            public void testInApplicableRange() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/inApplicableRange.kt");
+            }
+
+            @TestMetadata("innerIfTransformed.kt")
+            public void testInnerIfTransformed() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/innerIfTransformed.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/labeledReturn.kt");
+            }
+
+            @TestMetadata("notInApplicableRange.kt")
+            public void testNotInApplicableRange() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/notInApplicableRange.kt");
+            }
+
+            @TestMetadata("simpleIf.kt")
+            public void testSimpleIf() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/simpleIf.kt");
+            }
+
+            @TestMetadata("simpleIfWithBlocks.kt")
+            public void testSimpleIfWithBlocks() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToIf/simpleIfWithBlocks.kt");
             }
         }
     }

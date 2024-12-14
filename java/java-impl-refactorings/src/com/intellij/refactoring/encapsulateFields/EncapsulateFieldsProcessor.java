@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -249,6 +250,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
+  @Unmodifiable
   protected Iterable<? extends PsiReference> getFieldReferences(@NotNull PsiField field) {
     return ReferencesSearch.search(field);
   }

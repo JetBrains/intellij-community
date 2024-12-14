@@ -145,6 +145,7 @@ public final class ExternalSystemApiUtil {
     return library.getName() != null && StringUtil.startsWithIgnoreCase(library.getName(), externalSystemId.getId() + ": ");
   }
 
+  @Contract(mutates = "param1")
   public static void orderAwareSort(@NotNull List<?> data) {
     data.sort(ORDER_AWARE_COMPARATOR);
   }

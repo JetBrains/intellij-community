@@ -2,7 +2,7 @@ package org.jetbrains.jewel.samples.standalone
 
 import org.jetbrains.jewel.ui.icon.PathIconKey
 
-object StandaloneSampleIcons {
+internal object StandaloneSampleIcons {
     val componentsMenu = PathIconKey("icons/structure.svg", StandaloneSampleIcons::class.java)
     val gitHub = PathIconKey("icons/github.svg", StandaloneSampleIcons::class.java)
     val jewelLogo = PathIconKey("icons/jewel-logo.svg", StandaloneSampleIcons::class.java)

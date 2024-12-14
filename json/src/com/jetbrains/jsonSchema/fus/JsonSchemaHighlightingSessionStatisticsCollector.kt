@@ -6,11 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import kotlinx.coroutines.CancellationException
-import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
-@ApiStatus.Internal
-class JsonSchemaHighlightingSessionStatisticsCollector {
+internal class JsonSchemaHighlightingSessionStatisticsCollector {
   companion object {
     @JvmStatic
     fun getInstance(): JsonSchemaHighlightingSessionStatisticsCollector {
@@ -19,9 +17,9 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
   }
 
   private inner class JsonSchemaHighlightingSession {
-    val featuresWithCount = mutableMapOf<JsonSchemaFusFeature, Int>()
+    val featuresWithCount = HashMap<JsonSchemaFusFeature, Int>()
     var schemaType: String? = null
-    val requestedRemoteSchemas = mutableSetOf<String>()
+    val requestedRemoteSchemas = HashSet<String>()
   }
 
   private val currentHighlightingSession = ThreadLocal<JsonSchemaHighlightingSession?>()
@@ -41,7 +39,7 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
     }
   }
 
-  fun reportSchemaUsageFeature(featureKind: JsonSchemaFusFeature) {
+  fun reportSchemaUsageFeature(featureKind: JsonSchemaFusCountedFeature) {
     val currentSession = getCurrentSession() ?: return
     currentSession.featuresWithCount[featureKind] = currentSession.featuresWithCount.getOrDefault(featureKind, 0) + 1
   }

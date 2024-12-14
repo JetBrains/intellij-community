@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -53,6 +54,7 @@ public final class RunAnythingRunConfigurationProvider extends com.intellij.ide.
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return ContainerUtil.emptyList();
   }

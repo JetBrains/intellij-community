@@ -31,7 +31,7 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
 
             boolean storeValues = DotEnvSettings.getInstance().storeValues;
 
-            for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.getEnvVariablesProviders()) {
                 for (KeyValuePsiElement keyValueElement : provider.getElements(fileContent.getPsiFile())) {
                     if (storeValues) {
                         map.put(keyValueElement.getKey(), keyValueElement.getShortValue());
@@ -61,7 +61,7 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
         return file -> {
-            for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.getEnvVariablesProviders()) {
                 if (provider.acceptFile(file).isAccepted()) return true;
             }
 

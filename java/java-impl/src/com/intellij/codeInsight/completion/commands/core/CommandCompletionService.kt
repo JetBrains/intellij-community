@@ -2,45 +2,35 @@
 package com.intellij.codeInsight.completion.commands.core
 
 import com.intellij.codeInsight.completion.commands.api.CommandCompletionFactory
-import com.intellij.codeInsight.daemon.impl.CollectedCachedIntentionHandler
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HintRenderer
-import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.codeInsight.editorLineStripeHint.EditorLineStripeTextRenderer
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.impl.CachedIntentions
-import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateColors
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -91,7 +81,7 @@ class CommandCompletionService(
         lookup.editor.document.immutableCharSequence.substring(offsetOfFullIndex, lookup.lookupOriginalStart) != fullSuffix) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
-    lookup.arranger.prefixChanged(lookup);
+    lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
     lookup.refreshUi(false, true)
     lookup.ensureSelectionVisible(true)
@@ -102,84 +92,15 @@ class CommandCompletionService(
     if (userData == true) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
-    lookup.arranger.prefixChanged(lookup);
+    lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
     lookup.refreshUi(false, true)
     lookup.ensureSelectionVisible(true)
   }
 
-  fun getPreviousHighlighting(editor: Editor, document: Document, offset: Int): HighlightingContainer? {
-    val highlightInfoContainer = editor.getUserData(PREVIOUS_HIGHLIGHT_INFO_CONTAINER_KEY)
-    val actionContainers = editor.getUserData(PREVIOUS_HIGHLIGHT_CACHED_CONTAINER_INFO_CONTAINER_KEY)
-    if (highlightInfoContainer == null || actionContainers == null) return null
-    if (document.immutableCharSequence.hashCode() != highlightInfoContainer.hashcode) return null
-    if (highlightInfoContainer.offset != offset) return null
-    val actionContainer = actionContainers.firstOrNull { it.hashcode == highlightInfoContainer.hashcode } ?: return null
-    val allActions = mutableListOf<IntentionActionWithTextCaching>()
-    allActions.addAll(actionContainer.highlighters.allActions)
-    val revertMap: MutableMap<IntentionAction, RangeHighlighterEx> = mutableMapOf()
-    for (highlighterEx in highlightInfoContainer.highlighters) {
-      val info = HighlightInfo.fromRangeHighlighter(highlighterEx)
-      info?.findRegisteredQuickFix { t, u ->
-        revertMap[t.action] = highlighterEx
-        return@findRegisteredQuickFix null
-      }
-    }
-    val map: MutableMap<IntentionActionWithTextCaching, RangeHighlighterEx?> = mutableMapOf()
-    for (action in allActions) {
-      val highlighterEx = revertMap[action.action]
-      map[action] = highlighterEx
-    }
-    val newIntentionContainer = CachedIntentions(actionContainer.highlighters.project, actionContainer.highlighters.file, actionContainer.highlighters.editor)
-
-    newIntentionContainer.intentions.addAll(actionContainer.highlighters.intentions)
-    newIntentionContainer.errorFixes.addAll(actionContainer.highlighters.errorFixes)
-    newIntentionContainer.inspectionFixes.addAll(actionContainer.highlighters.inspectionFixes)
-    return HighlightingContainer(newIntentionContainer, map)
-  }
-
-  fun cacheActions(editor: Editor, psiFile: PsiFile, intentions: CachedIntentions) {
-    if (intentions.allActions.isEmpty()) return
-    val data = editor.getUserData(PREVIOUS_HIGHLIGHT_CACHED_CONTAINER_INFO_CONTAINER_KEY)
-    val completionFactory = getFactory(psiFile.language) ?: return
-    val filterSuffix = completionFactory.filterSuffix() ?: return
-    val offset = editor.caretModel.offset
-    val index = findActualIndex(completionFactory.suffix() + filterSuffix.toString(), editor.document.immutableCharSequence, offset)
-    val newList: MutableList<PreviousActionInfoContainer> = if (index != 0) {
-      val previousBeforeDot = data?.firstOrNull()
-      val last = data?.firstOrNull()
-      if (previousBeforeDot != null && last != null) {
-        val newString = editor.document.immutableCharSequence.substring(0, offset - index) + editor.document.immutableCharSequence.substring(offset)
-        if (newString.hashCode() == previousBeforeDot.hashcode) {
-          mutableListOf(previousBeforeDot)
-        }
-        else if (editor.document.immutableCharSequence.hashCode() == last.hashcode) {
-          data.take((data.size - 1).coerceAtLeast(3)).toMutableList()
-        }
-        else {
-          data.takeLast((data.size - 1).coerceAtLeast(3)).toMutableList()
-        }
-      }
-      else {
-        mutableListOf()
-      }
-    }
-    else {
-      editor.removeUserData(PREVIOUS_HIGHLIGHT_CACHED_CONTAINER_INFO_CONTAINER_KEY)
-      mutableListOf()
-    }
-    val document = editor.document
-    val lineNumber = document.getLineNumber(offset)
-    val lineStart = document.getLineStartOffset(lineNumber)
-    val lineEnd = document.getLineEndOffset(lineNumber)
-    val container = PreviousActionInfoContainer(intentions, editor.caretModel.offset, editor.document.immutableCharSequence.hashCode(), editor.document.immutableCharSequence.substring(lineStart, lineEnd))
-    newList.add(container)
-    editor.putUserData(PREVIOUS_HIGHLIGHT_CACHED_CONTAINER_INFO_CONTAINER_KEY, newList.toMutableList())
-  }
-
   fun setHint(lookup: LookupImpl) {
-    if (lookup.getUserData(INSTALLED_HIHT_KEY) == false) return
-    lookup.putUserData(INSTALLED_HIHT_KEY, false)
+    if (lookup.getUserData(INSTALLED_HINT_KEY) == false) return
+    lookup.putUserData(INSTALLED_HINT_KEY, false)
     val psiFile = lookup.psiFile ?: return
     val completionService = lookup.project.service<CommandCompletionService>()
     val completionFactory = completionService.getFactory(psiFile.language) ?: return
@@ -201,7 +122,7 @@ class CommandCompletionService(
     Disposer.register(lookup) { lookup.removeUserData(INSTALLED_HINT) }
 
     lookup.putUserData(INSTALLED_HINT, inlineElement)
-    lookup.putUserData(INSTALLED_HIHT_KEY, true)
+    lookup.putUserData(INSTALLED_HINT_KEY, true)
   }
 
   @ApiStatus.Internal
@@ -213,15 +134,13 @@ class CommandCompletionService(
 }
 
 private val INSTALLED_HINT: Key<Inlay<HintRenderer?>> = Key.create("completion.command.installed.hint")
-private val INSTALLED_HIHT_KEY: Key<Boolean> = Key.create("completion.command.installed.hint")
+private val INSTALLED_HINT_KEY: Key<Boolean> = Key.create("completion.command.installed.hint")
 private val INSTALLED_ADDITIONAL_MATCHER_KEY: Key<Boolean> = Key.create("completion.command.installed.additional.matcher")
 private val INSTALLED_LISTENER_KEY: Key<AtomicBoolean> = Key.create("completion.command.installed.lookup.command.listener")
 private val SUPPRESS_PREDICATE_KEY = Key.create<EditorHighlightingPredicate>("completion.command.suppress.completion.predicate")
 private val PROMPT_HIGHLIGHTING = Key.create<RangeHighlighter>("completion.command.prompt.highlighting")
 private val LOOKUP_HIGHLIGHTING = Key.create<List<RangeHighlighter>>("completion.command.lookup.highlighting")
 private val ICON_RENDER = Key.create<Inlay<PresentationRenderer?>>("completion.command.icon.render")
-private val PREVIOUS_HIGHLIGHT_INFO_CONTAINER_KEY = Key.create<PreviousHighlightInfoContainer>("completion.command.previous.container")
-val PREVIOUS_HIGHLIGHT_CACHED_CONTAINER_INFO_CONTAINER_KEY: Key<List<PreviousActionInfoContainer>?> = Key.create<List<PreviousActionInfoContainer>>("completion.cached.command.previous.container")
 private const val PROMPT_LAYER = HighlighterLayer.ERROR + 10
 
 private class CommandCompletionListener : LookupManagerListener {
@@ -300,7 +219,7 @@ private class CommandCompletionHighlightingListener(
   }
 
   private fun update(lookup: LookupImpl, item: CommandCompletionLookupElement) {
-    var installed = lookup.putUserDataIfAbsent(INSTALLED_LISTENER_KEY, AtomicBoolean(false))
+    var installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_LISTENER_KEY) { AtomicBoolean(false) }
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
     val endOffset = lookup.editor.caretModel.offset
     if (!installed.get()) {
@@ -344,17 +263,18 @@ private class CommandCompletionHighlightingListener(
     val startOffset = lookup.lookupOriginalStart - findActualIndex(element.suffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
-    val endOffset = min(highlightInfo.range().endOffset, startOffset)
-    if (highlightInfo.range().startOffset <= endOffset) {
-      highlightManager.addRangeHighlight(lookup.editor, highlightInfo.range().startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, highlightInfo.hideByTextChange, rangeHighlighters)
+    val endOffset = min(highlightInfo.range.endOffset, startOffset)
+    if (highlightInfo.range.startOffset <= endOffset) {
+      highlightManager.addRangeHighlight(lookup.editor, highlightInfo.range.startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
     }
     if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) {
-      for (it in lookup.items) {
-        val element = it?.`as`(CommandCompletionLookupElement::class.java) ?: continue
-        val info = element.highlighting ?: continue
-        val endOffset = min(info.range().endOffset, startOffset)
-        if (info.range().startOffset <= min(info.range().endOffset, startOffset)) {
-          highlightManager.addRangeHighlight(lookup.editor, info.range().startOffset, endOffset, info.attributesKey, highlightInfo.hideByTextChange, rangeHighlighters)
+      for (info in lookup.items
+        .mapNotNull { it?.`as`(CommandCompletionLookupElement::class.java) }
+        .mapNotNull { it.highlighting }
+        .sortedByDescending { it.priority }) {
+        val endOffset = min(info.range.endOffset, startOffset)
+        if (info.range.startOffset <= min(info.range.endOffset, startOffset)) {
+          highlightManager.addRangeHighlight(lookup.editor, info.range.startOffset, endOffset, info.attributesKey, false, rangeHighlighters)
         }
       }
     }
@@ -390,72 +310,5 @@ private class CommandCompletionCharFilter : CharFilter() {
     val element = lookup.currentItem ?: return null
     element.`as`(CommandCompletionLookupElement::class.java) ?: return null
     return Result.ADD_TO_PREFIX
-  }
-}
-
-private class CommandTypeHandler : TypedHandlerDelegate() {
-  override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
-    if (!Registry.`is`("java.completion.command.enabled")) return super.beforeCharTyped(c, project, editor, file, fileType)
-    val commandCompletionService = project.getService(CommandCompletionService::class.java)
-    val completionFactory = commandCompletionService.getFactory(file.language)
-    if (completionFactory?.suffix() != c) return super.beforeCharTyped(c, project, editor, file, fileType)
-    val offset = editor.caretModel.offset
-    if (completionFactory.suffix() == completionFactory.filterSuffix()) {
-      val immutableCharSequence = editor.document.immutableCharSequence
-      if (immutableCharSequence.isNotEmpty() && immutableCharSequence[offset - 1] == completionFactory.suffix()) {
-        return super.beforeCharTyped(c, project, editor, file, fileType)
-      }
-    }
-    collectHighlighting(editor)
-    return super.beforeCharTyped(c, project, editor, file, fileType)
-  }
-
-  private fun collectHighlighting(editor: Editor) {
-    editor.removeUserData(PREVIOUS_HIGHLIGHT_INFO_CONTAINER_KEY)
-    val document = editor.document
-    val project = editor.project ?: return
-    val offset = editor.caretModel.offset
-    val immutableCharSequence = document.immutableCharSequence
-
-    val lineNumber = document.getLineNumber(offset)
-    val lineStart = document.getLineStartOffset(lineNumber)
-    val lineEnd = document.getLineEndOffset(lineNumber)
-
-    val highlighters = mutableListOf<RangeHighlighterEx>()
-
-    DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.INFORMATION, lineStart, (offset + 1).coerceAtLeast(immutableCharSequence.length)) { info ->
-      if (info is HighlightInfo && info.highlighter is RangeHighlighterEx) {
-        highlighters.add(info.highlighter)
-      }
-      return@processHighlights true
-    }
-
-    val container = PreviousHighlightInfoContainer(highlighters, offset, immutableCharSequence.hashCode(), immutableCharSequence.substring(lineStart, lineEnd))
-    editor.putUserData(PREVIOUS_HIGHLIGHT_INFO_CONTAINER_KEY, container)
-  }
-}
-
-
-private data class PreviousHighlightInfoContainer(
-  val highlighters: List<RangeHighlighterEx>,
-  val offset: Int,
-  val hashcode: Int,
-  val lineText: String,
-)
-
-data class PreviousActionInfoContainer(
-  val highlighters: CachedIntentions,
-  val offset: Int,
-  val hashcode: Int,
-  val lineText: String,
-)
-
-data class HighlightingContainer(val cachedIntentions: CachedIntentions, val map: Map<IntentionActionWithTextCaching, RangeHighlighterEx?>)
-
-class CommandCompletionServiceImpl : CollectedCachedIntentionHandler {
-  override fun processCollectedCachedIntentions(editor: Editor, file: PsiFile, intentions: CachedIntentions) {
-    if (!Registry.`is`("java.completion.command.enabled")) return
-    val completionService = file.project.getService<CommandCompletionService>(CommandCompletionService::class.java)
-    completionService?.cacheActions(editor, file, intentions)
   }
 }

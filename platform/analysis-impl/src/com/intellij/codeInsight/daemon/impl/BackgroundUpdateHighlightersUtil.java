@@ -314,7 +314,6 @@ public final class BackgroundUpdateHighlightersUtil {
     if (salvagedHighlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
-      info.setHighlighter(highlighter);
     }
     else {
       highlighter = salvagedHighlighter;

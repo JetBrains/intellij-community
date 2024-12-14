@@ -15,18 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.service.execution
 
-import org.gradle.tooling.CancellationToken
+import com.intellij.testFramework.utils.notImplemented
 import org.gradle.tooling.LongRunningOperation
-import org.gradle.tooling.events.OperationType
-import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.BuildIdentifier
 import org.gradle.tooling.model.build.BuildEnvironment
 import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
 import java.nio.file.Path
-import java.util.ArrayList
-import kotlin.collections.addAll
 
 abstract class GradleExecutionHelperJvmArgumentsTestCase {
 
@@ -47,13 +41,11 @@ abstract class GradleExecutionHelperJvmArgumentsTestCase {
 
   private class MockBuildEnvironment(
     private val buildIdentifier: BuildIdentifier,
-  ) : BuildEnvironment {
+  ) : BuildEnvironment by notImplemented<BuildEnvironment>() {
     override fun getBuildIdentifier(): BuildIdentifier = buildIdentifier
-    override fun getGradle() = throw UnsupportedOperationException()
-    override fun getJava() = throw UnsupportedOperationException()
   }
 
-  class MockLongRunningOperation : LongRunningOperation {
+  class MockLongRunningOperation : LongRunningOperation by notImplemented<LongRunningOperation>() {
 
     var jvmArguments: MutableList<String> = ArrayList()
       private set
@@ -73,22 +65,5 @@ abstract class GradleExecutionHelperJvmArgumentsTestCase {
     override fun addJvmArguments(jvmArguments: Iterable<String>) = apply {
       this.jvmArguments.addAll(jvmArguments)
     }
-
-    override fun setStandardOutput(outputStream: OutputStream) = throw UnsupportedOperationException()
-    override fun setStandardError(outputStream: OutputStream) = throw UnsupportedOperationException()
-    override fun setColorOutput(colorOutput: Boolean) = throw UnsupportedOperationException()
-    override fun setStandardInput(inputStream: InputStream) = throw UnsupportedOperationException()
-    override fun setJavaHome(javaHome: File?) = throw UnsupportedOperationException()
-    override fun withSystemProperties(systemProperties: Map<String, String>) = throw UnsupportedOperationException()
-    override fun withArguments(vararg arguments: String) = throw UnsupportedOperationException()
-    override fun withArguments(arguments: Iterable<String>?) = throw UnsupportedOperationException()
-    override fun addArguments(vararg arguments: String) = throw UnsupportedOperationException()
-    override fun addArguments(arguments: Iterable<String>) = throw UnsupportedOperationException()
-    override fun setEnvironmentVariables(envVariables: Map<String, String>?) = throw UnsupportedOperationException()
-    override fun addProgressListener(listener: org.gradle.tooling.ProgressListener) = throw UnsupportedOperationException()
-    override fun addProgressListener(listener: ProgressListener) = throw UnsupportedOperationException()
-    override fun addProgressListener(listener: ProgressListener, operationTypes: Set<OperationType>) = throw UnsupportedOperationException()
-    override fun addProgressListener(listener: ProgressListener, vararg operationTypes: OperationType) = throw UnsupportedOperationException()
-    override fun withCancellationToken(cancellationToken: CancellationToken) = throw UnsupportedOperationException()
   }
 }

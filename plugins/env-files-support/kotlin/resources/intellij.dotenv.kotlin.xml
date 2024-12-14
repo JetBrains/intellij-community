@@ -1,0 +1,15 @@
+<idea-plugin package="ru.adelf.idea.dotenv.kotlin">
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="kotlin" implementationClass="ru.adelf.idea.dotenv.kotlin.KotlinEnvCompletionContributor"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.kotlin.KotlinEnvCompletionContributor"/>
+    <completion.confidence language="kotlin" implementationClass="ru.adelf.idea.dotenv.kotlin.KotlinCompletionConfidence"
+                           id="envStringCompletionConfidence" order="first"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.kotlin.KotlinEnvironmentVariablesUsagesProvider"/>
+  </extensions>
+</idea-plugin>

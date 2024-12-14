@@ -51,6 +51,9 @@
     <extensionPoint dynamic="true" name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
     </extensionPoint>
+    <!--We need to define extension point for Eel Provider here because it is used in GeneralCommandLine.
+        If something unfortunate happens to GeneralCommandLine, we would need to remove this definition -->
+    <extensionPoint name="eelProvider" interface="com.intellij.platform.eel.provider.EelProvider" dynamic="true"/>
     <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
     <extensionPoint name="inspection.basicVisitor" beanClass="com.intellij.psi.BasicInspectionVisitorBean" dynamic="true">
       <with attribute="class" implements="com.intellij.psi.PsiElementVisitor"/>

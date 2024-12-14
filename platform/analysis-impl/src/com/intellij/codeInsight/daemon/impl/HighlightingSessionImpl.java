@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -155,10 +156,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                                             @NotNull Number daemonCancelEventCount,
                                                                             @NotNull TextRange compositeDocumentDirtyRange) {
     // no assertIsDispatchThread() is necessary
-    Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
-    if (map == null) {
-      map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, new ConcurrentHashMap<>());
-    }
+    Map<PsiFile, List<HighlightingSession>> map = ConcurrencyUtil.computeIfAbsent(progressIndicator, HIGHLIGHTING_SESSION, () -> new ConcurrentHashMap<>());
     HighlightingSessionImpl session = new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);
     map.compute(psiFile, (__, oldSessions) -> ContainerUtil.append(ContainerUtil.notNullize(oldSessions), session));
     return session;

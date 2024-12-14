@@ -622,7 +622,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertLibraryExcludedRoots("project.main", depName, excludedRoots);
     assertLibraryExcludedRoots("project.test", depName, excludedRoots);
-    assertLibraryExcludedRoots("project.main", depJar.getPresentableUrl(), ArrayUtil.EMPTY_STRING_ARRAY);
+    assertLibraryExcludedRoots("project.main", convertToLibraryName(depJar), ArrayUtil.EMPTY_STRING_ARRAY);
     assertLibraryExcludedRoots("project.main", "Gradle: junit:junit:4.11", ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
@@ -2093,20 +2093,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDeps("project.main", ArrayUtil.EMPTY_STRING_ARRAY);
 
 
-    BiPredicate<? super String, ? super String> predicate;
-    if (isGradleOlderThan("6.9")) {
-      predicate = (String actual, String expected) -> {
-        return actual.contains("build" + File.separatorChar + ".transforms" + File.separatorChar) &&
-               new File(actual).getName().equals(new File(expected).getName());
-      };
-    } else {
-      predicate = (String actual, String expected) -> {
-        return actual.contains(File.separatorChar + "transformed" + File.separatorChar) &&
-               new File(actual).getName().equals(new File(expected).getName());
-      };
-    }
+    BiPredicate<? super String, ? super String> predicate = (String actual, String expected) -> {
+      return actual.equals(expected);
+    };
 
-    assertModuleLibDeps(predicate, "project.main", "lib-1.jar", "lib-2.jar");
+    assertModuleLibDeps(predicate, "project.main", "Gradle: lib-1.jar", "Gradle: lib-2.jar");
   }
 
   @Test

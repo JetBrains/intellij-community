@@ -32,6 +32,7 @@ import static com.intellij.psi.CommonClassNames.*;
 
 final class StreamConversion {
 
+  @Unmodifiable
   static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null) return Collections.emptyList();

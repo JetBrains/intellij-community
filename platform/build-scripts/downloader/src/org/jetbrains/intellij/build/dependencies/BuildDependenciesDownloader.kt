@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractTa
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractZip
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.listDirectory
 import org.jetbrains.intellij.build.downloadFileToCacheLocationSync
+import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.math.BigInteger
@@ -171,8 +172,18 @@ options:${getExtractOptionsShortString(options)}
 
       // update file modification time to maintain FIFO caches, i.e., in persistent cache folder on TeamCity agent
       val now = FileTime.from(Instant.now())
-      Files.setLastModifiedTime(targetDirectory, now)
-      Files.setLastModifiedTime(flagFile, now)
+
+      try {
+        Files.setLastModifiedTime(targetDirectory, now)
+      } catch (e: IOException) {
+        LOG.fine("Error targetDirectory.setLastModifiedTime: $e")
+      }
+
+      try {
+        Files.setLastModifiedTime(flagFile, now)
+      } catch (e: IOException) {
+        LOG.fine("Error flagFile.setLastModifiedTime: $e")
+      }
       return
     }
     if (Files.exists(targetDirectory)) {

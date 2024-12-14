@@ -17,6 +17,7 @@ import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,7 @@ import java.util.Set;
 
 class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
-  ExtractInterfaceDialog(Project project, PsiClass sourceClass, Set<PsiElement> selectedMembers) {
+  ExtractInterfaceDialog(Project project, PsiClass sourceClass, @Unmodifiable Set<PsiElement> selectedMembers) {
     super(project, sourceClass, collectMembers(sourceClass, selectedMembers), ExtractInterfaceHandler.getRefactoringName());
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();

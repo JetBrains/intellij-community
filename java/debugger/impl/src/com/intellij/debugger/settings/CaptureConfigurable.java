@@ -33,7 +33,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
@@ -489,7 +488,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
                                                                                (e, annotation) -> consumer.accept(capture, e, annotation),
                                                                                PsiMethod.class, PsiParameter.class));
     }
-    catch (IndexNotReadyException | ProcessCanceledException | AlreadyDisposedException ignore) {
+    catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
     catch (Exception e) {
       LOG.error(e);

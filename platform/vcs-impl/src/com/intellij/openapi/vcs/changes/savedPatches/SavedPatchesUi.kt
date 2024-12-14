@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.shouldHaveSplitterDiffPreview
 import com.intellij.ui.*
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
@@ -23,13 +24,15 @@ import java.awt.FlowLayout
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
-open class SavedPatchesUi(project: Project,
-                          @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
-                          private val isVertical: () -> Boolean,
-                          private val isWithSplitDiffPreview: () -> Boolean,
-                          private val isShowDiffWithLocal: () -> Boolean,
-                          focusMainUi: (Component?) -> Unit,
-                          disposable: Disposable) :
+open class SavedPatchesUi(
+  private val project: Project,
+  @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
+  private val isVertical: () -> Boolean,
+  private val isWithSplitDiffPreview: () -> Boolean,
+  private val isShowDiffWithLocal: () -> Boolean,
+  focusMainUi: (Component?) -> Unit,
+  disposable: Disposable,
+) :
   JPanel(BorderLayout()), Disposable, UiDataProvider {
 
   protected val patchesTree: SavedPatchesTree
@@ -140,7 +143,7 @@ open class SavedPatchesUi(project: Project,
 
   private fun updateLayout(isInitial: Boolean) {
     val isVertical = isVertical()
-    val isWithSplitPreview = !isVertical && isWithSplitDiffPreview()
+    val isWithSplitPreview = shouldHaveSplitterDiffPreview(project, isVertical) && isWithSplitDiffPreview()
     val isChangesSplitterVertical = isVertical || isWithSplitPreview
     if (treeChangesSplitter.orientation != isChangesSplitterVertical) {
       treeChangesSplitter.orientation = isChangesSplitterVertical

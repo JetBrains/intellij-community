@@ -50,3 +50,11 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
  */
 @get:ApiStatus.Internal
 val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()
+
+
+/**
+ * - `false` means Application.invokeLater() with implicit ModalityState.any() is not reported.
+ * - `true` means Application.invokeLater() with implicit ModalityState.any() is reported as LOG.error().
+ */
+@get:ApiStatus.Internal
+val reportInvokeLaterWithoutModality: Boolean = System.getProperty("ijpl.report.invoke.without.modal", "false").toBoolean()

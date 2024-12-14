@@ -7,6 +7,11 @@ const LC_KEYS = {
 };
 const EXTERNAL_VARIABLES = {}
 
+const ERROR_HIGHLIGHT = " <<<----<<< ";
+const WARNING_HIGHLIGHT = " <<<~~~~<<< ";
+const SUCCESS_HIGHLIGHT = " <<<++++<<< ";
+const HIGHLIGHTS = [ERROR_HIGHLIGHT, WARNING_HIGHLIGHT, SUCCESS_HIGHLIGHT];
+
 
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
@@ -156,7 +161,7 @@ function updatePopup(sessionDiv) {
 
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
-  const lineDiff = new Diff();
+  const lineDiff = new HighlightResistantDiff(HIGHLIGHTS);
 
   sessionDiv.classList.add("diffView")
   sessionDiv.classList.remove("features", "contexts","suggestions")
@@ -169,8 +174,9 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
 
   unifiedDiff.forEach(line => {
     const lineDiv = document.createElement("DIV");
-    lineDiv.textContent = line.content;
-    lineDiv.style.whiteSpace = "pre"; // Ensure indentation is preserved
+    const text = highlightedText(line.content);
+    text.style.display = "inline";
+    lineDiv.appendChild(text);
 
     const oldLineNumberSpan = document.createElement("span");
     oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
@@ -321,10 +327,7 @@ function addAiaDiagnosticsBlock(description, field, popup, lookup) {
   if (!(field in lookup["additionalInfo"])) return
   let contextBlock = document.createElement("DIV")
   contextBlock.style.whiteSpace = "inherit"
-  let code = document.createElement("code")
-  code.textContent = `${description}:\n\n${lookup["additionalInfo"][field]}`
-  contextBlock.appendChild(code)
-  code.style.whiteSpace = "inherit"
+  contextBlock.appendChild(highlightedText(`${description}:\n\n${lookup["additionalInfo"][field]}`))
   popup.appendChild(contextBlock)
 }
 
@@ -682,6 +685,91 @@ function showMultilinePrefixAndSuffix(event) {
 function showMetrics() {
   let metricsDiv = document.getElementById("metrics-column")
   metricsDiv.style.display = metricsDiv.style.display === "none" ? "" : "none"
+}
+
+function highlightedText(text) {
+  const container = [];
+  let previousText = undefined;
+
+  function addText(text, inlineComment) {
+    let textElement;
+    let resultElement;
+
+    if (inlineComment !== undefined) {
+      textElement = document.createElement("span");
+      textElement.innerText = text;
+
+      const commentComponent = document.createElement("span");
+      commentComponent.style.marginLeft = "10px";
+      commentComponent.innerText = inlineComment;
+      commentComponent.style.textDecoration = "";
+      commentComponent.style.color = "grey";
+
+      resultElement = document.createElement("pre");
+      resultElement.appendChild(textElement);
+      resultElement.appendChild(commentComponent);
+    }
+    else {
+      textElement = document.createElement("pre");
+      textElement.innerText = text;
+      resultElement = textElement;
+    }
+
+    const leadingNewLineCount = text.match(/^\n+/)?.[0]?.length || 0
+    for (let i = 0; i < leadingNewLineCount; i++) {
+      container.push(document.createElement("br"));
+    }
+
+    container.push(resultElement);
+
+    const trailingNewLineCount = text.match(/\n+$/)?.[0]?.length || 0;
+    for (let i = 0; i < trailingNewLineCount; i++) {
+      container.push(document.createElement("br"));
+    }
+
+    return textElement;
+  }
+
+  for (const line of text.split('\n')) {
+    const highlight = HIGHLIGHTS.find(highlight => line.includes(highlight));
+    if (highlight !== undefined) {
+      if (previousText !== undefined) {
+        addText(previousText);
+        previousText = undefined;
+      }
+
+      const [text, message] = line.split(highlight);
+
+      const lineElement = addText(text, message);
+      lineElement.style.textDecoration = "underline";
+      lineElement.style.textDecorationThickness = "2px";
+      if (highlight === ERROR_HIGHLIGHT) {
+        lineElement.style.textDecorationColor = "red";
+      }
+      else if (highlight === WARNING_HIGHLIGHT) {
+        lineElement.style.textDecorationColor = "orange";
+      }
+      else if (highlight === SUCCESS_HIGHLIGHT) {
+        lineElement.style.textDecorationColor = "green";
+      }
+    }
+    else {
+      previousText = previousText === undefined ? line : `${previousText}\n${line}`;
+    }
+  }
+
+  if (previousText !== undefined) {
+    addText(previousText)
+  }
+
+  if (container.length === 1) {
+    return container[0];
+  }
+  else {
+    const div = document.createElement("div");
+    div.append(...container);
+    return div;
+  }
 }
 
 document.getElementById("defaultTabOpen")?.click()

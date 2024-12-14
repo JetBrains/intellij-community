@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
 
 internal object LocalEelArchiveApiImpl : EelArchiveApi {
-  override suspend fun extract(archive: EelPath.Absolute, target: EelPath.Absolute) {
+  override suspend fun extract(archive: EelPath, target: EelPath) {
     // This task occupies both CPU and IO resources, so the CPU-bound dispatcher is chosen.
     withContext(Dispatchers.Default) {
       // TODO Use file magic?

@@ -78,6 +78,11 @@ class PyTypeHintsInspection : PyInspection() {
         checkTypeVarTupleArguments(node, getTargetFromAssignment(node))
       }
 
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.CAST) in calleeQName ||
+          QualifiedName.fromDottedString(PyTypingTypeProvider.CAST_EXT) in calleeQName) {
+        checkCastArguments(node.arguments)
+      }
+
       checkInstanceAndClassChecks(node)
 
       checkParenthesesOnGenerics(node)
@@ -246,11 +251,13 @@ class PyTypeHintsInspection : PyInspection() {
       val returnType = myTypeEvalContext.getReturnType(node);
       if (returnType is PyNarrowedType) {
         val parameters = node.getParameters(myTypeEvalContext)
-        if (parameters.size == 0) {
-          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.has.zero.arguments"))
+        val isInstanceOrClassMethod = node.asMethod() != null && node.modifier != PyAstFunction.Modifier.STATICMETHOD
+        val parameterIndex = if (isInstanceOrClassMethod) 1 else 0
+        if (parameterIndex >= parameters.size) {
+          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.has.zero.parameters"))
         }
         else if (returnType.typeIs) {
-          val parameter = parameters[0]
+          val parameter = parameters[parameterIndex]
           val parameterType = parameter.getType(myTypeEvalContext)
           if (!PyTypeChecker.match(parameterType, returnType.narrowedType, myTypeEvalContext)) {
             registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.does.not.match",
@@ -333,6 +340,14 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    private fun checkCastArguments(arguments: Array<PyExpression>) {
+      if (arguments.size == 2) {
+        if (PyTypingTypeProvider.getType(arguments[0], myTypeEvalContext) == null) {
+          registerProblem(arguments[0], PyPsiBundle.message("INSP.type.hints.expected.a.type"))
+        }
+      }
+    }
+
     private fun checkTypeVarArguments(call: PyCallExpression, target: PyExpression?) {
       var covariant = false
       var contravariant = false
@@ -375,6 +390,11 @@ class PyTypeHintsInspection : PyInspection() {
             registerProblem(it, PyPsiBundle.message("INSP.type.hints.typevar.constraints.cannot.be.parametrized.by.type.variables"))
           }
         }
+      }
+
+      val boundType = bound?.let { PyTypingTypeProvider.getType(it, myTypeEvalContext)?.get() }
+      if (boundType is PyClassLikeType && boundType.classQName == PyTypingTypeProvider.TYPED_DICT) {
+        registerProblem(bound, PyPsiBundle.message("INSP.type.hints.typed.dict.is.not.allowed.as.a.bound.for.a.type.var"))
       }
     }
 
@@ -427,12 +447,12 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
-      checkInstanceAndClassChecksOnTypeVar(base)
+      checkInstanceAndClassChecksOnExpression(base)
       checkInstanceAndClassChecksOnReference(base)
       checkInstanceAndClassChecksOnSubscription(base)
     }
 
-    private fun checkInstanceAndClassChecksOnTypeVar(base: PyExpression) {
+    private fun checkInstanceAndClassChecksOnExpression(base: PyExpression) {
       val type = myTypeEvalContext.getType(base)
       if (type is PyTypeVarType && !type.isDefinition ||
           type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType } && !type.isDefinition) {
@@ -440,6 +460,16 @@ class PyTypeHintsInspection : PyInspection() {
                         PyPsiBundle.message("INSP.type.hints.type.variables.cannot.be.used.with.instance.class.checks"),
                         ProblemHighlightType.GENERIC_ERROR)
 
+      }
+      if (type is PyTypedDictType) {
+        registerProblem(base,
+                        PyPsiBundle.message("INSP.type.hints.typed.dict.type.cannot.be.used.in.isinstance.tests"),
+                        ProblemHighlightType.GENERIC_ERROR)
+      }
+      if (type is PyTypingNewType) {
+        registerProblem(base,
+                        PyPsiBundle.message("INSP.type.hints.new.type.type.cannot.be.used.in.isinstance.tests"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 

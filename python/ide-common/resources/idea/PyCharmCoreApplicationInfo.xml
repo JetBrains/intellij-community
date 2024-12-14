@@ -10,6 +10,7 @@
 
   <essential-plugin>PythonCore</essential-plugin>
   <essential-plugin>com.jetbrains.pycharm.community.customization</essential-plugin>
+  <essential-plugin>intellij.pycharm.community.customization.shared</essential-plugin>
 
   <!-- Required for PythonCore plugin -->
   <essential-plugin>org.toml.lang</essential-plugin>

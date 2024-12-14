@@ -18,12 +18,11 @@ internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {
     val projectId = project.projectId()
     change {
       shared {
-        ProjectEntity.new {
+        ProjectEntity.upsert(ProjectEntity.ProjectIdValue, projectId) {
           it[ProjectEntity.ProjectIdValue] = projectId
         }
       }
     }
-    LOG.info("Project entity created for $projectId")
   }
 
   override suspend fun removeProjectEntity(project: Project): Unit = withKernel {

@@ -17,6 +17,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
@@ -140,9 +141,7 @@ open class PluginAdvertiserServiceImpl(
   private val cs: CoroutineScope,
 ) : PluginAdvertiserService {
 
-  companion object {
-    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
-  }
+  private val notificationManager = SingletonNotificationManager(getPluginSuggestionNotificationGroup().displayId, NotificationType.INFORMATION)
 
   override suspend fun run(
     customPlugins: List<PluginNode>,
@@ -240,7 +239,7 @@ open class PluginAdvertiserServiceImpl(
       fun putFeature(data: PluginData) {
         val pluginId = data.pluginId
         if (ignoredPluginSuggestionState.isIgnored(pluginId) && !includeIgnored) { // globally ignored
-          LOG.info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
+          thisLogger().info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
           return
         }
 
@@ -434,13 +433,14 @@ open class PluginAdvertiserServiceImpl(
           tryUltimate(pluginId = null, suggestedIde = ideaUltimate, project, FUSEventSource.NOTIFICATION)
         },
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
-          FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
+          FUSEventSource.NOTIFICATION.ignoreUltimateAndLog(project)
         },
       )
     }
     else {
       if (includeIgnored) {
-        notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+        getPluginSuggestionNotificationGroup()
+          .createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
           .setDisplayId("advertiser.no.plugins")
           .notify(project)
       }
@@ -664,7 +664,7 @@ fun tryUltimate(
   val eventSource = fusEventSource ?: FUSEventSource.EDITOR
   if (Registry.`is`("ide.try.ultimate.automatic.installation") && project != null) {
     eventSource.logTryUltimate(project, pluginId)
-    project.service<UltimateInstallationService>().install(pluginId, suggestedIde)
+    project.service<UltimateInstallationService>().install(pluginId, suggestedIde, eventSource)
   }
   else {
     fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project,

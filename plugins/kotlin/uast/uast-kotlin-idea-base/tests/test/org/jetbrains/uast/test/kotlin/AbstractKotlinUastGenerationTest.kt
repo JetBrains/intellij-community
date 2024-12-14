@@ -25,7 +25,6 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.refreshed
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.kotlin.generate.KotlinUastElementFactory
-import org.jetbrains.uast.visitor.UastVisitor
 import kotlin.test.fail as kfail
 
 abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -717,27 +716,4 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
             assertNotNull(expression)
         }
     }
-}
-
-// it is a copy of org.jetbrains.uast.UastUtils.asRecursiveLogString with `appendLine` instead of `appendln` to avoid windows related issues
-fun UElement.asRecursiveLogString(render: (UElement) -> String = { it.asLogString() }): String {
-    val stringBuilder = StringBuilder()
-    val indent = "    "
-
-    accept(object : UastVisitor {
-        private var level = 0
-
-        override fun visitElement(node: UElement): Boolean {
-            stringBuilder.append(indent.repeat(level))
-            stringBuilder.appendLine(render(node))
-            level++
-            return false
-        }
-
-        override fun afterVisitElement(node: UElement) {
-            super.afterVisitElement(node)
-            level--
-        }
-    })
-    return stringBuilder.toString()
 }

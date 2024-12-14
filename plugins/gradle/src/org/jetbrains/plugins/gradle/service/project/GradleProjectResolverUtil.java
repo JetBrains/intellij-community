@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -454,14 +455,10 @@ public final class GradleProjectResolverUtil {
     Map<String, Map<LibraryPathType, List<String>>> pathsCache = null;
     if (context != null) {
       // skip already processed libraries
-      Set<LibraryData> libsCache = context.getUserData(LIBRARIES_CACHE);
-      if (libsCache == null) {
-        libsCache = context.putUserDataIfAbsent(LIBRARIES_CACHE, Collections.newSetFromMap(new IdentityHashMap<>()));
-      }
+      Set<LibraryData> libsCache = ConcurrencyUtil.computeIfAbsent(context, LIBRARIES_CACHE, () -> Collections.newSetFromMap(new IdentityHashMap<>()));
       if (!libsCache.add(libraryData)) return;
 
-      pathsCache = context.getUserData(PATHS_CACHE);
-      if (pathsCache == null) pathsCache = context.putUserDataIfAbsent(PATHS_CACHE, new HashMap<>());
+      pathsCache = ConcurrencyUtil.computeIfAbsent(context, PATHS_CACHE, () -> new HashMap<>());
     }
 
     for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
@@ -731,6 +728,17 @@ public final class GradleProjectResolverUtil {
         for (File artifact : projectDependency.getProjectDependencyArtifacts()) {
           libraryDependencyData.getTarget().addPath(LibraryPathType.BINARY, artifact.getPath());
         }
+
+        if (projectDependency.getProjectDependencyArtifacts().size() == 1) {
+          projectDependency.getProjectDependencyArtifacts().stream()
+            .findFirst()
+            .filter(file -> file.getName().endsWith(".jar"))
+            .ifPresent(file -> {
+              String fileName = file.getName();
+              libraryDependencyData.getTarget().setInternalName("Gradle: " + fileName);
+              libraryDependencyData.getTarget().setExternalName(fileName);
+            });
+        }
         resultDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
       else {
@@ -873,6 +881,17 @@ public final class GradleProjectResolverUtil {
           defaultFCDep.isExcludedFromIndexing()) {
         library.addPath(LibraryPathType.EXCLUDED, file.getPath());
       }
+    }
+
+    if (fileCollectionDependency.getFiles().size() == 1) {
+      fileCollectionDependency.getFiles().stream()
+        .findFirst()
+        .filter(file -> file.getName().endsWith(".jar"))
+        .ifPresent(file -> {
+          String fileName = file.getName();
+          library.setInternalName("Gradle: " + fileName);//
+          library.setExternalName(fileName);
+        });
     }
 
     ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);

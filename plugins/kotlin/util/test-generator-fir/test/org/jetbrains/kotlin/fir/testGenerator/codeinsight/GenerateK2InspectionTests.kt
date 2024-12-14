@@ -23,10 +23,12 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("${idea}/inspectionsLocal/implicitThis")
             model("${idea}/inspectionsLocal/doubleNegation")
+            model("${idea}/inspectionsLocal/safeCastWithReturn")
             model("${idea}/inspectionsLocal/enumValuesSoftDeprecate")
             model("${idea}/inspectionsLocal/branched/ifThenToElvis", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/branched/ifThenToSafeAccess", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
+            model("${idea}/inspectionsLocal/cascadeIf")
             model("${idea}/inspectionsLocal/nullableBooleanElvis")
             model("${idea}/inspectionsLocal/redundantElvisReturnNull")
             model("${idea}/inspectionsLocal/replaceCollectionCountWithSize")
@@ -44,6 +46,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantUnitExpression")
             model("${idea}/inspectionsLocal/useExpressionBody")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
+            model("${idea}/inspectionsLocal/explicitThis")
             model("${idea}/inspectionsLocal/redundantIf")
             model("${idea}/inspectionsLocal/mayBeConstant")
             model("${idea}/inspectionsLocal/moveLambdaOutsideParentheses")
@@ -72,6 +75,10 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceIsEmptyWithIfEmpty")
             model("${idea}/inspectionsLocal/booleanLiteralArgument")
             model("${idea}/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
+            model("${idea}/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
+            model("${idea}/inspectionsLocal/unusedReceiverParameter")
+            model("${idea}/inspectionsLocal/selfReferenceConstructorParameter")
+            model("${idea}/inspectionsLocal/canBeVal")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
@@ -132,6 +139,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/createFromUsage/createFunction/call/abstract", pattern = pattern)
             model("${idea}/quickfix/typeMismatch/convertCollection", pattern = pattern)
             model("${idea}/quickfix/typeMismatch/wrapWithCollectionLiteral", pattern = pattern)
+            model("${idea}/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileQuickFixTest> {

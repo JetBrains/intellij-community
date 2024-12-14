@@ -1014,6 +1014,7 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - s:showPopupForEditorLine(com.intellij.openapi.ui.popup.JBPopup,com.intellij.openapi.editor.Editor,I):V
 - s:showValuePopup(com.intellij.xdebugger.frame.XFullValueEvaluator,java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - s:showXBreakpointEditorBalloon(com.intellij.openapi.project.Project,java.awt.Point,javax.swing.JComponent,Z,com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- s:showXBreakpointEditorBalloon(com.intellij.openapi.project.Project,java.awt.Point,javax.swing.JComponent,Z,Z,com.intellij.xdebugger.breakpoints.XBreakpoint):V
 c:com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 - sf:EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.project.Project):V

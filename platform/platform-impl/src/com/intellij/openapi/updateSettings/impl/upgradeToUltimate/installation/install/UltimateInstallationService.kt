@@ -41,8 +41,6 @@ import javax.swing.Icon
 
 private const val TOOLBOX_INSTALL_BASE_URL: String = "http://localhost:52829/install/IDEA-U"
 private const val TOOLBOX_ORIGIN: String = "https://toolbox.app"
-private val cancelButton = IdeBundle.message("plugins.advertiser.try.ultimate.cancel.button")
-private val openWebsite = IdeBundle.message("plugins.advertiser.try.ultimate.dialog.open.website")
 
 @Service(Service.Level.PROJECT)
 class UltimateInstallationService(
@@ -61,16 +59,19 @@ class UltimateInstallationService(
     }
   }
 
-  fun install(pluginId: PluginId? = null, suggestedIde: SuggestedIde) {
+  fun install(pluginId: PluginId? = null, suggestedIde: SuggestedIde, eventSource: FUSEventSource) {
+    if (!canBeAutoInstalled(suggestedIde)) {
+      eventSource.openDownloadPageAndLog(project = project,
+                                         url = suggestedIde.defaultDownloadUrl,
+                                         suggestedIde = suggestedIde,
+                                         pluginId = pluginId)
+      return
+    }
+
     coroutineScope.launch {
       try {
         installerLock.withLock {
           withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade", suggestedIde.name), true) {
-            if (!canBeAutoInstalled(suggestedIde)) {
-              useFallback(pluginId, suggestedIde.defaultDownloadUrl)
-              return@withBackgroundProgress
-            }
-
             val productData = UpdateChecker.loadProductData(null)
             val status = if (Registry.`is`("ide.try.ultimate.use.eap")) ChannelStatus.EAP else ChannelStatus.RELEASE
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
@@ -188,8 +189,10 @@ class UltimateInstallationService(
   }
 
   private suspend fun showProcessErrorDialogWithRetry(message: @Nls String, pluginId: PluginId?, suggestedIde: SuggestedIde, retryFunc: suspend () -> Unit) {
-    val tryAgainButton = IdeBundle.message("plugins.advertiser.try.ultimate.dialog.try.again")
-    val dialogResult = messageDialog(message, suggestedIde.name, listOf(tryAgainButton, openWebsite, cancelButton), Messages.getErrorIcon())
+    val dialogResult = messageDialog(message, suggestedIde.name,
+                                     listOf(IdeBundle.message("plugins.advertiser.try.ultimate.dialog.try.again"),
+                                            IdeBundle.message("plugins.advertiser.try.ultimate.dialog.open.website"),
+                                            IdeBundle.message("plugins.advertiser.try.ultimate.cancel.button")), Messages.getErrorIcon())
 
     when (dialogResult) {
       0 -> retryFunc.invoke()
@@ -199,7 +202,9 @@ class UltimateInstallationService(
   }
 
   private suspend fun showOpenProcessErrorDialog(message: @Nls String, pluginId: PluginId?, suggestedIde: SuggestedIde) {
-    val result = messageDialog(message, suggestedIde.name, listOf(openWebsite, cancelButton), Messages.getErrorIcon())
+    val result = messageDialog(message, suggestedIde.name,
+                               listOf(IdeBundle.message("plugins.advertiser.try.ultimate.dialog.open.website"),
+                                      IdeBundle.message("plugins.advertiser.try.ultimate.cancel.button")), Messages.getErrorIcon())
     when (result) {
       0 -> useFallback(pluginId = pluginId, defaultDownloadUrl = suggestedIde.defaultDownloadUrl)
       else -> Unit

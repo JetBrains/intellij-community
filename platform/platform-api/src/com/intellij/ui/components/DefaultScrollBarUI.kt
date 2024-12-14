@@ -100,6 +100,10 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     return isOpaque(state.scrollBar) || state.animationBehavior.trackFrame > 0
   }
 
+  private fun isMousePressedOnVisiblePart(event: MouseEvent): Boolean {
+    return event.id == MouseEvent.MOUSE_PRESSED && isThumbContains(event.x, event.y)
+  }
+
   open val isTrackExpandable: Boolean
     get() = false
 
@@ -108,7 +112,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   }
 
   fun isThumbContains(x: Int, y: Int): Boolean {
-    return installedState!!.thumb.bounds.contains(x, y)
+    return installedState?.thumb?.bounds?.contains(x, y) == true
   }
 
   protected open fun paintTrack(g: Graphics2D, c: JComponent) {
@@ -429,8 +433,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
     }
 
-    fun redispatchIfTrackNotClickable(event: MouseEvent): Boolean {
-      if (isTrackClickable()) {
+    fun passMouseEventThroughInvisibleScrollbar(event: MouseEvent): Boolean {
+      if (isTrackClickable() || isMousePressedOnVisiblePart(event)) {
         return false
       }
 
@@ -448,13 +452,13 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     override fun mouseClicked(e: MouseEvent) {
       val scrollBar = installedState?.scrollBar ?: return
       if (scrollBar.isEnabled) {
-        redispatchIfTrackNotClickable(e)
+        passMouseEventThroughInvisibleScrollbar(e)
       }
     }
 
     override fun mousePressed(event: MouseEvent) {
       val scrollBar = installedState?.scrollBar ?: return
-      if (!scrollBar.isEnabled || redispatchIfTrackNotClickable(event) || SwingUtilities.isRightMouseButton(event)) {
+      if (!scrollBar.isEnabled || passMouseEventThroughInvisibleScrollbar(event) || SwingUtilities.isRightMouseButton(event)) {
         return
       }
 
@@ -511,7 +515,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
 
       scrollBar.valueIsAdjusting = false
-      if (redispatchIfTrackNotClickable(event)) {
+      if (passMouseEventThroughInvisibleScrollbar(event)) {
         return
       }
       if (SwingUtilities.isRightMouseButton(event)) {

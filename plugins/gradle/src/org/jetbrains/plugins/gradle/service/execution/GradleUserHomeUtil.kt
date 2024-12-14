@@ -43,6 +43,6 @@ fun gradleUserHomeDir(project: Project): Path {
         return@runBlocking nioUserHome
       }
     }
-    return@runBlocking eel.userInfo.home.toNioPath(eel).resolve(GRADLE_HOME_FOLDER_PATH)
+    return@runBlocking eel.userInfo.home.toNioPath(eel).resolve(".gradle")
   }
 }

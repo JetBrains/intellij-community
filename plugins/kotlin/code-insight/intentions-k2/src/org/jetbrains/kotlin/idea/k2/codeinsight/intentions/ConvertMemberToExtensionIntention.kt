@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.liftToExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.liftToExpect
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -74,7 +74,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
 
         var allowExpected = true
 
-        liftToExpected(element)?.actualsForExpected()?.let {
+        liftToExpect(element)?.actualsForExpect()?.let {
             if (it.isEmpty()) {
                 allowExpected = askIfExpectedIsAllowed()
             }
@@ -296,7 +296,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
     private fun createExtensionCallableAndPrepareBodyToSelect(
         element: KtCallableDeclaration, allowExpected: Boolean = true
     ): Pair<KtCallableDeclaration, GeneratedBodyType> {
-        val expectedDeclaration = liftToExpected(element) as? KtCallableDeclaration
+        val expectedDeclaration = liftToExpect(element) as? KtCallableDeclaration
         if (expectedDeclaration != null) {
             withExpectedActuals(element).filterIsInstance<KtCallableDeclaration>().forEach {
                 if (it != element) {

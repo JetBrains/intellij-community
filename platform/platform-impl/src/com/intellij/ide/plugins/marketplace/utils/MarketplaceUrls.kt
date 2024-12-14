@@ -49,7 +49,10 @@ object MarketplaceUrls {
     "${getPluginManagerUrl()}/api/search/aggregation/$field"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
+  @Deprecated("Use getSearchPluginsUpdatesUrl() instead")
   fun getSearchCompatibleUpdatesUrl() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/compatibleUpdates").toExternalForm()
+
+  fun getSearchPluginsUpdatesUrl() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/compatible").toExternalForm()
 
   fun getSearchNearestUpdate() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/nearest").toExternalForm()
 

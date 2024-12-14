@@ -252,7 +252,7 @@ internal class ProjectWizardJdkComboBoxService(
   fun childScope(name: String): CoroutineScope = coroutineScope.childScope(name)
 }
 
-private inline fun guardEelKey(producer: () -> EelApiKey): EelApiKey? {
+private inline fun guardEelDescriptor(producer: () -> EelDescriptor): EelDescriptor? {
   return if (Registry.`is`("java.home.finder.use.eel")) {
     producer()
   }
@@ -282,15 +282,15 @@ class ProjectWizardJdkComboBox(
   private var downloadOpenJdkJob: Job? = null
   private var addExistingJdkJob: Job? = null
 
-  // todo: remote nullability from EelApiKey here we enable Eel by default in JDK detection
-  var currentEelKey: EelApiKey? = guardEelKey { LocalEelKey }
+  // todo: remove nullability from EelDescriptor here we enable Eel by default in JDK detection
+  var currentEelDescriptor: EelDescriptor? = guardEelDescriptor { LocalEelDescriptor }
 
   init {
     model = DefaultComboBoxModel(Vector())
 
     disposable.whenDisposed { coroutineScope.cancel() }
 
-    reloadJdks(guardEelKey { LocalEelKey })
+    reloadJdks(guardEelDescriptor { LocalEelDescriptor })
 
     isSwingPopup = false
     ClientProperty.put(this, ANIMATION_IN_RENDERER_ALLOWED, true)
@@ -378,14 +378,14 @@ class ProjectWizardJdkComboBox(
 
   fun projectLocationChanged(newLocation: String) {
     projectLocation = newLocation
-    val key = guardEelKey { Path(newLocation).getEelApiKey() }
-    if (key != currentEelKey) {
-      currentEelKey = key
+    val key = guardEelDescriptor { Path(newLocation).getEelDescriptor() }
+    if (key != currentEelDescriptor) {
+      currentEelDescriptor = key
       reloadJdks(key)
     }
   }
 
-  private fun reloadJdks(key: EelApiKey?) {
+  private fun reloadJdks(key: EelDescriptor?) {
     for (item in jdkItems) {
       removeItem(item)
     }
@@ -512,7 +512,7 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   }
 }
 
-private fun computeRegisteredSdks(key: EelApiKey?): List<ExistingJdk> {
+private fun computeRegisteredSdks(key: EelDescriptor?): List<ExistingJdk> {
   // Add JDKs from the ProjectJdkTable
   return ProjectJdkTable.getInstance().allJdks
     .filter { jdk ->

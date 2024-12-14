@@ -5,7 +5,7 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
-import org.cef.handler.CefRenderHandler;
+import org.cef.handler.CefNativeRenderHandler;
 import org.cef.handler.CefScreenInfo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -111,7 +111,7 @@ public class JBCefJSQueryOSRTest {
     });
   }
 
-  private static class MyRenderHandler implements CefRenderHandler {
+  private static class MyRenderHandler implements CefNativeRenderHandler {
     @Override
     public Rectangle getViewRect(CefBrowser browser) {
       return new Rectangle(0, 0, 100, 100);
@@ -157,5 +157,17 @@ public class JBCefJSQueryOSRTest {
     @Override
     public void updateDragCursor(CefBrowser browser, int operation) {
     }
+
+    @Override
+    public void onPaintWithSharedMem(CefBrowser browser,
+                                     boolean popup,
+                                     int dirtyRectsCount,
+                                     String sharedMemName,
+                                     long boostHandle,
+                                     int width,
+                                     int height) { }
+
+    @Override
+    public void disposeNativeResources() { }
   }
 }

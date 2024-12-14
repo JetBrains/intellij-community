@@ -2,7 +2,7 @@ package org.jetbrains.jewel.samples.ideplugin.releasessample
 
 import kotlinx.datetime.LocalDate
 
-abstract class ContentSource<T : ContentItem> {
+internal abstract class ContentSource<T : ContentItem> {
     abstract val items: List<T>
 
     abstract val displayName: String
@@ -21,13 +21,13 @@ abstract class ContentSource<T : ContentItem> {
         }
 }
 
-data class FilteredContentSource<T : ContentItem>(override val items: List<T>, val original: ContentSource<*>) :
+internal data class FilteredContentSource<T : ContentItem>(override val items: List<T>, val original: ContentSource<*>) :
     ContentSource<T>() {
     override val displayName: String
         get() = original.displayName
 }
 
-object AndroidReleases : ContentSource<ContentItem.AndroidRelease>() {
+internal object AndroidReleases : ContentSource<ContentItem.AndroidRelease>() {
     override val items =
         listOf(
             ContentItem.AndroidRelease(

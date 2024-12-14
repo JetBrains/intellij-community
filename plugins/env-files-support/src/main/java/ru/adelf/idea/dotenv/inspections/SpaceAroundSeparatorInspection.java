@@ -71,6 +71,7 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
             return "Remove spaces surrounding '='";
         }
 
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
                 DotEnvProperty dotEnvProperty = (DotEnvProperty) descriptor.getPsiElement();
@@ -90,6 +91,7 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
             }
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
             return getName();

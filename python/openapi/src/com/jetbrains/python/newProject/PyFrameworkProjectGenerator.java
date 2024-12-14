@@ -6,10 +6,15 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 
+/**
+ * @deprecated Use {@link com.jetbrains.python.newProjectWizard}
+ */
+@Deprecated(forRemoval = true)
 public interface PyFrameworkProjectGenerator {
 
   @NotNull
-  @NlsSafe String getFrameworkTitle();
+  @NlsSafe
+  String getFrameworkTitle();
 
   boolean isFrameworkInstalled(@NotNull Sdk sdk);
 }

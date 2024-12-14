@@ -1,3 +1,4 @@
+// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
 fun foo() {
     var a: Int? = null
     fun isOddNumber(n: Int?): Boolean? {

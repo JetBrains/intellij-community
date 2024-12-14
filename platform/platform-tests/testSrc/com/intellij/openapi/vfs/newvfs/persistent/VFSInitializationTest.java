@@ -3,13 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverLockFreeFileCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.testFramework.TemporaryDirectory;
-import com.intellij.util.io.PageCacheUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Rule;
@@ -198,10 +196,7 @@ public class VFSInitializationTest {
 
 
     //skip IN_MEMORY impl, since it is not really persistent
-    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (fails otherwise)
-    List<PersistentFSRecordsStorageFactory> allStorageKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                                              List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
-                                                              List.of(new OverMMappedFile());
+    List<PersistentFSRecordsStorageFactory> allStorageKinds = List.of(new OverMMappedFile());
 
     List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
     for (PersistentFSRecordsStorageFactory storageKind : allStorageKinds) {
@@ -272,10 +267,7 @@ public class VFSInitializationTest {
   @Test
   public void VFS_isRebuilt_OnlyIf_ImplementationVersionChanged() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
-    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (will fail)
-    final List<PersistentFSRecordsStorageFactory> allKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
-                                                             List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
-                                                             List.of(new OverMMappedFile());
+    final List<PersistentFSRecordsStorageFactory> allKinds = List.of(new OverMMappedFile());
 
     //check all combinations (from->to) of implementations:
     for (PersistentFSRecordsStorageFactory kindBefore : allKinds) {

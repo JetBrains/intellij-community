@@ -693,7 +693,7 @@ public final class JavacMain {
 
     static {
       Method getterMethod = null;
-      Method clearMethod = null;
+      Method clearMethod;
       try {
         //trying JDK 6
         clearMethod = Class.forName("com.sun.tools.javac.zip.ZipFileIndex").getDeclaredMethod("clearCache");

@@ -2,9 +2,10 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.commands.api.CompletionCommand
+import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
@@ -13,7 +14,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class FormatCodeCompletionCommand : CompletionCommand() {
+class FormatCodeCompletionCommand : ApplicableCompletionCommand() {
   override val name: String
     get() = "format"
 
@@ -23,12 +24,12 @@ class FormatCodeCompletionCommand : CompletionCommand() {
   override val icon: Icon
     get() = AllIcons.Actions.ReformatCode // Use the reformat icon
 
-  override fun isApplicable(offset: Int, psiFile: PsiFile): Boolean {
+  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     // Always applicable
     return true
   }
 
-  override fun execute(offset: Int, psiFile: PsiFile) {
+  override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val element = getContext(offset, psiFile) ?: return
     val target = element.parents(true).first { it is PsiMember || it is PsiCodeBlock || it is PsiStatement }
     ReformatCodeProcessor(element.containingFile, arrayOf(target.textRange)).run()

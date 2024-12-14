@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
+import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
-import static org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand;
 import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
@@ -45,15 +45,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
 
   protected final Charset myDefaultCharset;
-  private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
-  private final LocalShellIntegrationInjector shellIntegrationInjector;
-  private final LocalOptionsConfigurer localOptionsConfigurer;
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = StandardCharsets.UTF_8;
-    shellIntegrationInjector = new LocalShellIntegrationInjector(() -> isBlockTerminalEnabled());
-    localOptionsConfigurer = new LocalOptionsConfigurer(myProject);
   }
 
   @NotNull
@@ -63,9 +58,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
-    ShellStartupOptions updatedOptions = localOptionsConfigurer.configureStartupOptions(baseOptions);
+    ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
     if (enableShellIntegration()) {
-      updatedOptions = shellIntegrationInjector.configureStartupOptions(updatedOptions);
+      updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions, isBlockTerminalEnabled());
     }
     return applyTerminalCustomizers(updatedOptions);
   }
@@ -209,14 +204,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
    * @param envs environment variables
    * @return initial command. The result command to execute is calculated by applying
    *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
-   * @deprecated Use {@link #configureStartupOptions}
+   * @deprecated Use {@link LocalTerminalStartCommandBuilder#convertShellPathToCommand(String)}
    */
   @Deprecated(since = "2024.3", forRemoval = true)
   @SuppressWarnings("unused") // Has external usages
   public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-    ShellStartupOptions startupOptions = myStartupOptionsThreadLocal.get(); // It looks like always empty
-    List<String> shellCommand = startupOptions != null ? startupOptions.getShellCommand() : null;
-    return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
+    return LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath());
   }
 
   @ApiStatus.Internal
@@ -234,7 +227,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public @NotNull List<String> getCommand(@NotNull String shellPath,
                                                  @NotNull Map<String, String> envs,
                                                  boolean shellIntegration) {
-    List<String> command = convertShellPathToCommand(shellPath);
+    List<String> command = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
     if (shellIntegration) {
       ShellStartupOptions options = injectShellIntegration(command, envs);
       return Objects.requireNonNull(options.getShellCommand());
@@ -245,7 +238,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
-    return shellIntegrationInjector.configureStartupOptions(options);
+    return LocalShellIntegrationInjector.injectShellIntegration(options, isBlockTerminalEnabled());
   }
 
   /**

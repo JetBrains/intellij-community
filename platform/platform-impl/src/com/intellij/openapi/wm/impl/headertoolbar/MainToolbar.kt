@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.customization.ActionGroupCustomizationExtension
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -34,6 +35,7 @@ import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isMenuButtonInToolbar
@@ -395,6 +397,14 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
       component.foreground = JBColor.namedColor("MainToolbar.foreground", component.foreground)
     }
     (component as? ActionButton)?.setMinimumButtonSize(ActionToolbar.experimentalToolbarMinimumButtonSize())
+    if (component is ToolbarComboButton) {
+      component.preferredHeightSupplier = { ActionToolbar.experimentalToolbarMinimumButtonSize().height }
+      val insets = mainToolbarButtonInsets().apply {
+        left = 0
+        right = 0
+      }
+      component.border = JBUI.Borders.empty(insets)
+    }
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
@@ -552,4 +562,8 @@ private fun schemaChanged() {
     TouchbarSupport.reloadAllActions()
   }
   CustomActionsListener.fireSchemaChanged()
+}
+
+internal class MainToolbarActionGroupCustomization : ActionGroupCustomizationExtension {
+  override fun getReadOnlyActionGroupIds(): Set<String> = setOf(MAIN_TOOLBAR_ID)
 }

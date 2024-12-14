@@ -1,9 +1,0 @@
-fragment pullRequestReviewerInfo on RequestedReviewer {
-  __typename
-  ... on User {
-    ...userInfo
-  }
-  ... on Team {
-    ...teamInfo
-  }
-}

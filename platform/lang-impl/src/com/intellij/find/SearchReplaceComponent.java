@@ -79,6 +79,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final JPanel myReplaceToolbarWrapper;
 
   private final @Nullable JPanel myModePanel;
+  private final @Nullable ActionToolbarImpl myModeToolbar;
 
   private final Project myProject;
   private final JComponent myTargetComponent;
@@ -250,17 +251,18 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     float initialProportion = maximizeLeftPanelOnResize? MAX_LEFT_PANEL_PROP : DEFAULT_PROP;
 
     if (isNewUI && myReplaceRunnable != null) {
-      ActionToolbar modeToolbar = createToolbar(new DefaultActionGroup(modeAction));
-      modeToolbar.setReservePlaceAutoPopupIcon(false);
-      JComponent modeToolbarComponent = modeToolbar.getComponent();
+      myModeToolbar = createToolbar(new DefaultActionGroup(modeAction));
+      myModeToolbar.setReservePlaceAutoPopupIcon(false);
+      JComponent modeToolbarComponent = myModeToolbar.getComponent();
       modeToolbarComponent.setBorder(JBUI.Borders.empty());
       modeToolbarComponent.setOpaque(false);
 
-      myModePanel = JBUI.Panels.simplePanel().addToTop(modeToolbar.getComponent());
+      myModePanel = JBUI.Panels.simplePanel().addToTop(myModeToolbar.getComponent());
       myModePanel.setOpaque(false);
       add(myModePanel, BorderLayout.WEST);
     }
     else {
+      myModeToolbar = null;
       myModePanel = null;
     }
 
@@ -345,6 +347,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       myModePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
                                                   JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets())));
     }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    updateBindingsActionsAndFocus();
   }
 
   @Override
@@ -521,8 +529,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     boolean needToResetReplaceFocus = myReplaceTextComponent != null && myReplaceTextComponent.hasFocus();
     if (needToResetReplaceFocus) myReplaceTextComponent.requestFocusInWindow();
     if (needToResetSearchFocus) mySearchTextComponent.requestFocusInWindow();
-    updateBindings();
-    updateActions();
     revalidate();
     repaint();
   }
@@ -533,11 +539,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     updateReplaceComponent(replaceText);
     myReplaceFieldWrapper.setVisible(replaceMode);
     myReplaceToolbarWrapper.setVisible(replaceMode);
+    updateBindingsActionsAndFocus();
+  }
+
+  private void updateBindingsActionsAndFocus() {
+    updateBindings();
+    updateActions();
     List<Component> focusOrder = new ArrayList<>();
     focusOrder.add(mySearchTextComponent);
     focusOrder.add(myReplaceTextComponent);
     focusOrder.addAll(myExtraSearchButtons);
     focusOrder.addAll(myExtraReplaceButtons);
+    focusOrder.addAll(List.of(mySearchActionsToolbar.getComponents()));
+    focusOrder.addAll(List.of(myReplaceActionsToolbar.getComponents()));
+    if (myModeToolbar != null && myModeToolbar.getComponents().length > 0) {
+      focusOrder.add(myModeToolbar.getComponent(0));
+    }
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new ListFocusTraversalPolicy(focusOrder));
   }

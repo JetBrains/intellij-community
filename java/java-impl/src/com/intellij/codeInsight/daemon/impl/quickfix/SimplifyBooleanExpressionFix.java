@@ -607,7 +607,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
           final Boolean constBoolean = getConstBoolean(operand);
           if (constBoolean != null) {
             markAndCheckCreateResult();
-            if (constBoolean == Boolean.TRUE) {
+            if (constBoolean) {
               negate = !negate;
             }
             continue;

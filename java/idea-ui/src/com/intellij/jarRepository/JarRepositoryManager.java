@@ -55,10 +55,13 @@ import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -73,11 +76,15 @@ import static com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider
 public final class JarRepositoryManager {
   private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
 
-  private static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
+  static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
+
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
   private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
 
   private static final Map<String, OrderRootType> ourClassifierToRootType = new HashMap<>();
+
+  // slf4j logger handles format strings with a throwable in the end
+  private static final org.slf4j.Logger slf4jLogger = LoggerFactory.getLogger(JarRepositoryManager.class);
 
   static {
     ourClassifierToRootType.put(ArtifactKind.ARTIFACT.getClassifier(), OrderRootType.CLASSES);
@@ -161,7 +168,7 @@ public final class JarRepositoryManager {
 
   @NotNull
   private static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
-                                                                       Collection<? extends OrderRoot> roots) {
+                                                                       Collection<OrderRoot> roots) {
     return new NewLibraryConfiguration(
       suggestLibraryName(props),
       RepositoryLibraryType.getInstance(),
@@ -199,10 +206,11 @@ public final class JarRepositoryManager {
         }
         catch (IOException ignored) {
         }
-        ourLocalRepositoryPath = repoPath;
-        return repoPath;
       }
+      ourLocalRepositoryPath = repoPath;
+      return repoPath;
     }
+
     final String userHome = System.getProperty("user.home", null);
     repoPath = userHome != null ? new File(userHome, DEFAULT_REPOSITORY_PATH) : new File(DEFAULT_REPOSITORY_PATH);
     ourLocalRepositoryPath = repoPath;
@@ -296,7 +304,7 @@ public final class JarRepositoryManager {
   }
 
   /**
-   * Get list of remote repositories meeting the priority:
+   * Get a list of remote repositories meeting the priority:
    * <ol>
    * <li>from {@code repositories} param if not null and not empty</li>
    * <li>from {@code desc} library descriptor found by {@link JpsMavenRepositoryLibraryDescriptor#getJarRepositoryId} if present</li>
@@ -398,7 +406,7 @@ public final class JarRepositoryManager {
                                      String coord,
                                      String packaging,
                                      Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
-    if (coord == null || coord.length() == 0) {
+    if (coord == null || coord.isEmpty()) {
       return;
     }
     final RepositoryArtifactDescription template;
@@ -424,7 +432,7 @@ public final class JarRepositoryManager {
                 }
                 for (RepositoryArtifactDescription artifact : artifacts) {
                   final RemoteRepositoryDescription repository = map.get(artifact.getRepositoryId());
-                  // if the artifact is provided by an unsupported repository just skip it
+                  // if the artifact is provided by an unsupported repository, just skip it
                   // because it won't be resolved anyway
                   if (repository != null) {
                     resultList.add(Pair.create(artifact, repository));
@@ -636,7 +644,7 @@ public final class JarRepositoryManager {
         }
 
         if (DO_REFRESH) {
-          // search for jar file first otherwise lib root won't be found!
+          // search for a jar file first otherwise lib root won't be found!
           manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(toFile.getPath()));
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
           final VirtualFile file = manager.refreshAndFindFileByUrl(url);
@@ -690,21 +698,38 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<Artifact> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
-      long ms = System.currentTimeMillis();
+      var startTime = Instant.now();
+
+      slf4jLogger.debug("LibraryResolveJob({}) #{} started", myDesc.getMavenId(), Thread.currentThread().getId());
+
       final String version = myDesc.getVersion();
       try {
         Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
                                                                              myDesc.isIncludeTransitiveDependencies(),
                                                                              myDesc.getExcludedDependencies());
+
+        slf4jLogger.debug("LibraryResolveJob({}) #{} successfully finished in {}ms with {} artifacts", myDesc.getMavenId(),
+                          Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis(),
+                          artifacts.size());
+
         return artifacts;
       }
       catch (TransferCancelledException e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         throw new ProcessCanceledException(e);
       }
       catch (RepositoryOfflineException e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         throw e;
       }
       catch (Exception e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         final String resolvedVersion = resolveVersion(manager, version);
         if (Objects.equals(version, resolvedVersion)) { // no changes
           throw e;
@@ -719,7 +744,7 @@ public final class JarRepositoryManager {
       }
       finally {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Artifact " + myDesc + " resolved in " + (System.currentTimeMillis() - ms) + "ms");
+          LOG.trace("Artifact " + myDesc + " resolved in " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
         }
       }
     }
@@ -761,7 +786,14 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<String> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
-      return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
+      var startTime = Instant.now();
+
+      slf4jLogger.debug("VersionResolveJob({}:{}) #{} started", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId());
+      try {
+        return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
+      } finally {
+        slf4jLogger.debug("VersionResolveJob({}:{}) #{} finished in {}ms", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis());
+      }
     }
 
     @Override

@@ -7,12 +7,12 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ContextCol
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.hasUnknownLabel
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.psi.KtTypeElement
 
 class MutabilityContextCollector(
     resolutionFacade: ResolutionFacade,
-    private val converterContext: NewJ2kConverterContext
+    private val converterContext: ConverterContext
 ) : ContextCollector(resolutionFacade) {
     override fun ClassReference.getState(typeElement: KtTypeElement?): State = when {
         typeElement == null -> State.UNUSED

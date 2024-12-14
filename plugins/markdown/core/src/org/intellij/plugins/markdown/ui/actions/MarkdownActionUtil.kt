@@ -16,11 +16,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.jetbrains.annotations.ApiStatus
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 @ApiStatus.Internal
 object MarkdownActionUtil {
@@ -47,7 +47,7 @@ object MarkdownActionUtil {
     val splitEditor = findSplitEditor(event) ?: return null
     val editor = splitEditor.previewEditor
     return when {
-      editor !is MarkdownPreviewFileEditor || !editor.getComponent().isVisible -> null
+      editor !is MarkdownPreviewFileEditor || !editor.component.isVisible -> null
       else -> editor
     }
   }
@@ -56,7 +56,7 @@ object MarkdownActionUtil {
   fun findMarkdownEditor(event: AnActionEvent): Editor? {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      file.language.isMarkdownLanguage() -> event.getData(CommonDataKeys.EDITOR)
+      file.language.supportsMarkdown() -> event.getData(CommonDataKeys.EDITOR)
       else -> null
     }
   }

@@ -2,6 +2,6 @@ fun foo() {}
 
 fun test(b: Boolean) {
     if (b) {
-        /* aaa */ /* bbb */ foo() // ccc
+        /* aaa */ /* bbb */ foo() // ccc 
     }
 }

@@ -11,10 +11,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -112,6 +109,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   }
 
   @NotNull
+  @Unmodifiable
   public abstract List<LocalChangeList> getChangeLists();
 
   @NotNull

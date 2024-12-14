@@ -31,6 +31,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -217,6 +218,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<PsiReference> findReferencesToHighlight(final @NotNull PsiElement target, final @NotNull SearchScope searchScope) {
     if (target instanceof PsiMethod) {
       Set<PsiMethod> superTargets = new LinkedHashSet<>();

@@ -112,25 +112,25 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
         val transferableData = values.single() as MyTransferableData
         val text = TextBlockTransferable.convertLineSeparators(editor, transferableData.text, values)
-        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor.document, caretOffset, bounds) ?: return
-        PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
+        val targetData = getTargetData(project, editor.document, caretOffset, bounds) ?: return
+        PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
 
-        val pasteTarget = detectPasteTarget(targetFile, targetBounds.startOffset, targetBounds.endOffset) ?: return
+        val pasteTarget = detectPasteTarget(targetData.file, targetData.bounds.startOffset, targetData.bounds.endOffset) ?: return
         val javaConversionContext = detectJavaConversionContext(pasteTarget.kotlinPasteContext, text, project) ?: return
 
         if (!confirmConvertJavaOnPaste(project, isPlainText = true)) return
 
         val copiedJavaCode = prepareCopiedJavaCodeByContext(text, javaConversionContext, pasteTarget)
-        val dataForConversion = DataForConversion.prepare(copiedJavaCode, project)
-        val j2kKind = getJ2kKind(targetFile)
+        val conversionData = ConversionData.prepare(copiedJavaCode, project)
+        val j2kKind = getJ2kKind(targetData.file)
 
-        val converter = J2KTextCopyPasteConverter(project, editor, dataForConversion, j2kKind, targetFile, targetBounds, targetDocument)
+        val converter = J2KTextCopyPasteConverter(project, editor, conversionData, targetData, j2kKind)
         val conversionTime = measureTimeMillis { converter.convert() }
         J2KFusCollector.log(
             type = ConversionType.TEXT_EXPRESSION,
             isNewJ2k = j2kKind == K1_NEW,
             conversionTime,
-            linesCount = dataForConversion.elementsAndTexts.lineCount(),
+            linesCount = conversionData.elementsAndTexts.lineCount(),
             filesCount = 1
         )
 

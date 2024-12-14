@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -45,8 +46,8 @@ class IjentNioFileSystem internal constructor(
       is IjentFileSystemPosixApi -> listOf(getPath("/"))
       is IjentFileSystemWindowsApi -> fsBlocking {
         fs.getRootDirectories().map { it.toNioPath() }
+      }
     }
-  }
 
   override fun getFileStores(): Iterable<FileStore> {
     val home = ijentFs.user.home
@@ -66,12 +67,15 @@ class IjentNioFileSystem internal constructor(
 
   override fun getPath(first: String, vararg more: String): IjentNioPath {
     val os = when (ijentFs) {
-      is IjentFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
-      is IjentFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
+      is IjentFileSystemPosixApi -> EelPath.OS.UNIX
+      is IjentFileSystemWindowsApi -> EelPath.OS.WINDOWS
     }
-    return EelPath.parse(first, os)
-      .resolve(EelPath.Relative.build(*more))
-      .toNioPath()
+    return try {
+      more.fold(EelPath.parse(first, os)) { path, newPart -> path.resolve(newPart) }.toNioPath()
+    }
+    catch (_: EelPathException) {
+      RelativeIjentNioPath(first.split('/', '\\') + more, this)
+    }
   }
 
   override fun getPathMatcher(syntaxAndPattern: String): PathMatcher {
@@ -87,7 +91,7 @@ class IjentNioFileSystem internal constructor(
   }
 
   private fun EelPath.toNioPath(): IjentNioPath =
-    IjentNioPath(
+    AbsoluteIjentNioPath(
       eelPath = this,
       nioFs = this@IjentNioFileSystem,
       cachedAttributes = null,

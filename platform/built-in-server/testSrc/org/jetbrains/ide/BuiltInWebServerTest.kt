@@ -2,7 +2,9 @@
 package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
+import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -16,6 +18,7 @@ import com.intellij.util.io.write
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
 import org.jetbrains.builtInWebServer.acquireToken
 import org.junit.BeforeClass
@@ -127,6 +130,29 @@ internal class HeavyBuiltInWebServerTest {
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK, asSignedRequest = true)
     }
   }
+
+  @Test
+  fun `service worker in safe mode`() {
+    val projectDir = tempDirManager.newPath()
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
+      projectDir.resolve("sw.js").write("")
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
+      createModule(projectDir, project)
+
+      val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
+      val builder = HttpRequest.newBuilder(URI("$host/${project.name}/sw.js"))
+      builder.header(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
+      builder.header("Service-Worker", "script")
+
+      val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+      val responseTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+      assertThat(HttpResponseStatus.valueOf(responseTrusted.statusCode())).isEqualTo(HttpResponseStatus.OK)
+
+      project.setTrusted(false)
+      val responseNotTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+      assertThat(HttpResponseStatus.valueOf(responseNotTrusted.statusCode())).isEqualTo(HttpResponseStatus.NOT_FOUND)
+    }
+  }
 }
 
 internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
@@ -149,4 +175,5 @@ internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
     assertThat(HttpResponseStatus.valueOf(response.statusCode())).isEqualTo(HttpResponseStatus.OK)
     assertThat(response.body().reader().readText()).isEqualTo("hello")
   }
+
 }

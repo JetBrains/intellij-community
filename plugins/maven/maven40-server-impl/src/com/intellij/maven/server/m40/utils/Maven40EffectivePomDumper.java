@@ -12,7 +12,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingResult;
-import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlWriterUtil;
@@ -111,7 +110,7 @@ public final class Maven40EffectivePomDumper {
 
           MavenProject project = buildingResult.getProject();
 
-          XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+          XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
                                                       "\n", null, null);
 
           writeHeader(writer);
@@ -128,6 +127,14 @@ public final class Maven40EffectivePomDumper {
     }
 
     return w.toString();
+  }
+
+  private static String repeat(String str, int repeat) {
+    StringBuilder buffer = new StringBuilder(repeat * str.length());
+    for (int i = 0; i < repeat; i++) {
+      buffer.append(str);
+    }
+    return buffer.toString();
   }
 
   /**
@@ -161,7 +168,11 @@ public final class Maven40EffectivePomDumper {
    */
   private static void cleanModel(Model pom) {
     Properties properties = new SortedProperties();
-    properties.putAll(pom.getProperties());
+    Properties originalProperties = pom.getProperties();
+    for (String key : originalProperties.stringPropertyNames()) {
+      String value = originalProperties.getProperty(key);
+      properties.setProperty(key, value);
+    }
     pom.setProperties(properties);
   }
 

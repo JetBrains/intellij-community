@@ -82,8 +82,6 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
             put(KaCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
             put(KaCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
-            // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
-            put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
         }
 
         return analyze(codeFragment) {

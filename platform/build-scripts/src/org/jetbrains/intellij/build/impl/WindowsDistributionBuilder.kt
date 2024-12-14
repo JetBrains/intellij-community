@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
@@ -401,18 +402,19 @@ internal class WindowsDistributionBuilder(
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
-      launch = listOf(ProductInfoLaunchData(
-        os = OsFamily.WINDOWS.osName,
-        arch = arch.dirName,
-        launcherPath = "bin/${context.productProperties.baseFileName}64.exe",
-        javaExecutablePath = if (withRuntime) "jbr/bin/java.exe" else null,
-        vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions",
-        startupWmClass = null,
-        bootClassPathJarNames = context.bootClassPathJarNames,
-        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
-        mainClass = context.ideMainClassName,
-        customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData),
-      )),
+      launch = listOf(
+        ProductInfoLaunchData.create(
+          os = OsFamily.WINDOWS.osName,
+          arch = arch.dirName,
+          launcherPath = "bin/${context.productProperties.baseFileName}64.exe",
+          javaExecutablePath = if (withRuntime) "jbr/bin/java.exe" else null,
+          vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions",
+          bootClassPathJarNames = context.bootClassPathJarNames,
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
+          mainClass = context.ideMainClassName,
+          customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData),
+        )
+      ),
       context)
     writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
     return json

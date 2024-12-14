@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 
 class InvertedDiffIterableWrapper implements DiffIterable {
-  @NotNull private final DiffIterable myIterable;
+  private final @NotNull DiffIterable myIterable;
 
   InvertedDiffIterableWrapper(@NotNull DiffIterable iterable) {
     myIterable = iterable;
@@ -24,14 +24,12 @@ class InvertedDiffIterableWrapper implements DiffIterable {
   }
 
   @Override
-  @NotNull
-  public Iterator<Range> changes() {
+  public @NotNull Iterator<Range> changes() {
     return myIterable.unchanged();
   }
 
   @Override
-  @NotNull
-  public Iterator<Range> unchanged() {
+  public @NotNull Iterator<Range> unchanged() {
     return myIterable.changes();
   }
 }

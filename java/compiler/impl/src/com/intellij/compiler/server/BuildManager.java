@@ -79,7 +79,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -1079,6 +1078,10 @@ public final class BuildManager implements Disposable {
     return _future;
   }
 
+  private static boolean canUseEel() {
+    return Registry.is("compiler.build.can.use.eel");
+  }
+
   private boolean isProcessPreloadingEnabled(Project project) {
     // automatically disable process preloading when debugging or testing
     if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || myBuildProcessDebuggingEnabled) {
@@ -1136,8 +1139,10 @@ public final class BuildManager implements Disposable {
     return startListening(inetAddress);
   }
 
-  private synchronized int getWslPort(WSLDistribution dist, int localPort) {
-    return myWslProxyCache.computeIfAbsent(dist.getId() + ":" + localPort, key -> new WslProxy(dist, localPort)).getWslIngressPort();
+  private synchronized int getWslPort(WSLDistribution dist, InetSocketAddress localAddress) {
+    return myWslProxyCache
+      .computeIfAbsent(dist.getId() + ":" + localAddress, key -> new WslProxy(dist, localAddress))
+      .getWslIngressPort();
   }
 
   private synchronized void cleanWslProxies(WSLDistribution dist) {
@@ -1353,26 +1358,41 @@ public final class BuildManager implements Disposable {
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
 
     InetAddress listenAddress = InetAddress.getLoopbackAddress();
-    int listenPort = ensureListening(listenAddress);
+    InetSocketAddress listenSocketAddress = new InetSocketAddress(listenAddress, ensureListening(listenAddress));
     String buildProcessConnectHost = listenAddress.getHostAddress();
-    int buildProcessConnectPort = listenPort;
+    int buildProcessConnectPort = listenSocketAddress.getPort();
 
     BuildCommandLineBuilder cmdLine;
-    WslPath wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
-    if (wslPath != null) {
-      WSLDistribution sdkDistribution = wslPath.getDistribution();
-      if (!sdkDistribution.equals(projectWslDistribution)) {
-        throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match", sdkName + " (WSL " + sdkDistribution.getPresentableName() + ")", MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
-      }
-      cmdLine = new WslBuildCommandLineBuilder(project, sdkDistribution, wslPath.getLinuxPath(), progressIndicator);
-      buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on linux side
-      buildProcessConnectPort = getWslPort(sdkDistribution, listenPort);
+    WslPath wslPath;
+    if (canUseEel()) {
+      wslPath = null;
+      EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
+      cmdLine = eelBuilder;
+      cmdLine.addParameter("-Dide.jps.remote.path.prefix=" + eelBuilder.pathPrefix().replace('\\', '/'));
+      buildProcessConnectHost = "127.0.0.1";
+      int listenPort = listenSocketAddress.getPort();
+      buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project); // TODO maybeRunReverseTunnel must return InetSocketAddress
     }
     else {
-      if (projectWslDistribution != null) {
-        throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match", sdkName, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
+      wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
+      if (wslPath != null) {
+        WSLDistribution sdkDistribution = wslPath.getDistribution();
+        if (!sdkDistribution.equals(projectWslDistribution)) {
+          throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match",
+                                                                  sdkName + " (WSL " + sdkDistribution.getPresentableName() + ")",
+                                                                  MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
+        }
+        cmdLine = new WslBuildCommandLineBuilder(project, sdkDistribution, wslPath.getLinuxPath(), progressIndicator);
+        buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on linux side
+        buildProcessConnectPort = getWslPort(sdkDistribution, listenSocketAddress);
       }
-      cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);
+      else {
+        if (projectWslDistribution != null) {
+          throw new ExecutionException(
+            JavaCompilerBundle.message("build.process.wsl.distribution.dont.match", sdkName, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
+        }
+        cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);
+      }
     }
 
     boolean profileWithYourKit = false;
@@ -1424,7 +1444,7 @@ public final class BuildManager implements Disposable {
     String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
     if (jnaBootLibraryPath != null && wslPath == null) {
       //noinspection SpellCheckingInspection
-      cmdLine.addParameter("-Djna.boot.library.path=" + jnaBootLibraryPath);
+      cmdLine.addParameter("-Djna.boot.library.path=" + cmdLine.copyPathToHostIfRequired(Path.of(jnaBootLibraryPath)));
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.nosys=true");
       //noinspection SpellCheckingInspection
@@ -1618,6 +1638,7 @@ public final class BuildManager implements Disposable {
 
     //noinspection SpellCheckingInspection
     cmdLine.addParameter("-Dide.propagate.context=false");
+    cmdLine.addParameter("-Dintellij.platform.log.sync=true");
 
     @SuppressWarnings("UnnecessaryFullyQualifiedName") final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
 
@@ -2005,9 +2026,6 @@ public final class BuildManager implements Disposable {
           ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).buildFinished(myProject, sessionId, myIsAutomake);
         }
         catch (ProcessCanceledException ignored) {
-        }
-        catch (AlreadyDisposedException e) {
-          LOG.warn(e);
         }
         catch (Throwable e) {
           LOG.error(e);

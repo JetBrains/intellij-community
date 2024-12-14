@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl.qodana
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.impl.productInfo.CustomCommandLaunchData
+import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 
 
 internal fun generateQodanaLaunchData(

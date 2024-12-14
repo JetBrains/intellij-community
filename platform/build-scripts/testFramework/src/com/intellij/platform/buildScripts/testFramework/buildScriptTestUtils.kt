@@ -19,6 +19,7 @@ import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
@@ -55,7 +56,10 @@ private inline fun createBuildOptionsForTest(productProperties: ProductPropertie
 fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo?) {
   options.skipDependencySetup = skipDependencySetup
   options.isTestBuild = true
-
+  /**
+   * Differs from [SnapshotBuildNumber] to closer match the production
+   */
+  options.buildNumber = "${SnapshotBuildNumber.BASE}.1"
   options.buildStepsToSkip += listOf(
     BuildOptions.LIBRARY_URL_CHECK_STEP,
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,

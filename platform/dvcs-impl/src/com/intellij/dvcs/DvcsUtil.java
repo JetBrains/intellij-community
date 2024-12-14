@@ -75,6 +75,7 @@ public final class DvcsUtil {
   };
 
   @NotNull
+  @Unmodifiable
   public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<? extends VirtualFile> virtualFiles) {
     return ContainerUtil.sorted(virtualFiles, VIRTUAL_FILE_PRESENTATION_COMPARATOR);
   }
@@ -460,6 +461,7 @@ public final class DvcsUtil {
     return rootCandidate;
   }
 
+  @Unmodifiable
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<? extends T> repositories) {
     List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
     return ContainerUtil.sorted(validRepositories, REPOSITORY_COMPARATOR);

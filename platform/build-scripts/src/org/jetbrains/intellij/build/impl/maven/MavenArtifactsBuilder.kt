@@ -114,7 +114,9 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.rpc.server",
       "fleet.util.core",
       "fleet.util.logging.api",
+      "fleet.util.multiplatform",
       "fleet.util.os",
+      "fleet.util.multiplatform",
     )
   }
 
@@ -300,7 +302,7 @@ data class MavenCoordinates(
   val directoryPath: String
     get() = "${groupId.replace('.', '/')}/$artifactId/$version"
 
-  fun getFileName(classifier: String, packaging: String): String {
+  fun getFileName(classifier: String = "", packaging: String): String {
     return "$artifactId-$version${if (classifier.isEmpty()) "" else "-$classifier"}.$packaging"
   }
 }
@@ -407,10 +409,10 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
         Files.createDirectories(artifactDir)
 
         generatePomXmlData(artifactData = artifactData,
-                           file = artifactDir.resolve(artifactData.coordinates.getFileName("", "pom")))
+                           file = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "pom")))
 
         buildJar(
-          targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("", "jar")),
+          targetFile = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "jar")),
           sources = modulesWithSources.map {
             val moduleOutput = context.getModuleOutputDir(it)
             if (moduleOutput.toString().endsWith(".jar")) {

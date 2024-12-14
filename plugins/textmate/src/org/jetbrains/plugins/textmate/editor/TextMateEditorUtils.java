@@ -27,7 +27,7 @@ public final class TextMateEditorUtils {
   @Nullable
   public static TextMateScope getCurrentScopeSelector(@NotNull EditorEx editor) {
     TextMateScope result = getCurrentScopeFromEditor(editor);
-    //retrieve root scope of file
+    //retrieve the root scope of a file
     if (result == null) {
       final VirtualFile file = editor.getVirtualFile();
       if (file != null) {
@@ -90,7 +90,7 @@ public final class TextMateEditorUtils {
 
   private static Set<TextMateBracePair> getAllPairsForMatcher(@Nullable TextMateScope selector) {
     if (selector == null) {
-      return Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS;
+      return Constants.Companion.getDEFAULT_HIGHLIGHTING_BRACE_PAIRS();
     }
     Set<TextMateBracePair> result = new HashSet<>();
     List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(selector);
@@ -109,7 +109,7 @@ public final class TextMateEditorUtils {
 
   public static Set<TextMateAutoClosingPair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
     if (currentScope == null) {
-      return Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS;
+      return Constants.Companion.getDEFAULT_SMART_TYPING_BRACE_PAIRS();
     }
     List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
     final HashSet<TextMateAutoClosingPair> result = new HashSet<>();

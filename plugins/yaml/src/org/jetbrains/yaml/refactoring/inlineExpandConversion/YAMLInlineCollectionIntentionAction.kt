@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.refactoring.inlineExpandConversion
 
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.readAction
@@ -28,7 +29,7 @@ import org.jetbrains.yaml.psi.impl.YAMLArrayImpl
 import org.jetbrains.yaml.psi.impl.YAMLHashImpl
 import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl
 
-class YAMLInlineCollectionIntentionAction : PsiElementBaseIntentionAction() {
+class YAMLInlineCollectionIntentionAction : PsiElementBaseIntentionAction(), LowPriorityAction {
   override fun startInWriteAction(): Boolean = false
 
   override fun getText(): String = YAMLBundle.message("yaml.intention.name.inline.collection")

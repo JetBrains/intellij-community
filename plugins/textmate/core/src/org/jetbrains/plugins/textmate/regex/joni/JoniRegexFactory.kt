@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.regex.joni
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.openapi.diagnostic.LoggerRt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import org.jcodings.specific.UTF8Encoding
@@ -13,6 +12,8 @@ import org.joni.Option
 import org.joni.Regex
 import org.joni.WarnCallback
 import org.joni.exception.JOniException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
@@ -25,7 +26,7 @@ class JoniRegexFactory : RegexFactory {
       .build()
 
     private val FAILED_REGEX: Regex = Regex("^$", UTF8Encoding.INSTANCE)
-    private val LOGGER: LoggerRt = LoggerRt.getInstance(JoniRegexFactory::class.java)
+    private val LOGGER: Logger = LoggerFactory.getLogger(JoniRegexFactory::class.java)
 
   }
 
@@ -36,7 +37,7 @@ class JoniRegexFactory : RegexFactory {
         Regex(bytes, 0, bytes.size, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE)
       }
       catch (e: JOniException) {
-        LOGGER.info(String.format("Failed to parse textmate regex '%s' with %s: %s", regexString, e::class.java.getName(), e.message))
+        LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", regexString, e::class.java.getName(), e.message)
         FAILED_REGEX
       }
       JoniRegexFacade(regex, regexString.contains("\\G"))
@@ -44,6 +45,6 @@ class JoniRegexFactory : RegexFactory {
   }
 
   override fun string(string: CharSequence): TextMateString {
-    return TextMateString(string)
+    return TextMateString.fromCharSequence(string)
   }
 }

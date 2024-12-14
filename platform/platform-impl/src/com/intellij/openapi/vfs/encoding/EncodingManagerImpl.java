@@ -175,11 +175,11 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
   private static final Key<AtomicInteger> RUNNING_REDETECTS_KEY = Key.create("DETECTING_ENCODING_KEY");
 
   private static int addNumberOfRequestedRedetects(@NotNull Document document, int delta) {
-    AtomicInteger oldData = document.getUserData(RUNNING_REDETECTS_KEY);
-    if (oldData == null) {
-      oldData = ((UserDataHolderEx)document).putUserDataIfAbsent(RUNNING_REDETECTS_KEY, new AtomicInteger());
+    AtomicInteger data = document.getUserData(RUNNING_REDETECTS_KEY);
+    if (data == null) {
+      data = ((UserDataHolderEx)document).putUserDataIfAbsent(RUNNING_REDETECTS_KEY, new AtomicInteger());
     }
-    return oldData.addAndGet(delta);
+    return data.addAndGet(delta);
   }
 
   void queueUpdateEncodingFromContent(@NotNull Document document) {

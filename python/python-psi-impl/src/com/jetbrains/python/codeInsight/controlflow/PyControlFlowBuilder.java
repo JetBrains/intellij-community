@@ -956,7 +956,17 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression[] args = node.getArguments();
     // assert False
     if (args.length >= 1 && !PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
-      abruptFlow(node);
+      myBuilder.processPending((pendingScope, instruction) -> {
+        final PsiElement pendingElement = instruction.getElement();
+        if (pendingElement != null && PsiTreeUtil.isAncestor(node, pendingElement, false)) {
+          myBuilder.addEdge(null, instruction);
+        }
+        else {
+          myBuilder.addPendingEdge(pendingScope, instruction);
+        }
+      });
+      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+      myBuilder.flowAbrupted();
       return;
     }
     PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator();
@@ -986,7 +996,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       final PsiElement element = instruction.getElement();
       if (element != null &&
           PsiTreeUtil.isAncestor(node, element, true) &&
-          (suppressor && canRaiseExceptions(instruction) || PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null)) {
+          (suppressor && canRaiseExceptions(instruction) 
+           || PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null
+           || PsiTreeUtil.getParentOfType(element, PyAssertStatement.class) != null
+           )) {
         myBuilder.addPendingEdge(node, instruction);
       }
       myBuilder.addPendingEdge(pendingScope, instruction);

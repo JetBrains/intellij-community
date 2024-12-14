@@ -13,7 +13,7 @@ public abstract class TableViewModel<Item> extends AbstractTableModel implements
    * Set the model source data to make UI show the data from this list
    * @param items must be mutable to be able to accommodate the changes from UI
    */
-  @Contract(mutates = "param1")
+  @Contract(mutates = "this,param1")
   public abstract void setItems(@NotNull List<Item> items);
   @Unmodifiable
   public abstract @NotNull List<Item> getItems();

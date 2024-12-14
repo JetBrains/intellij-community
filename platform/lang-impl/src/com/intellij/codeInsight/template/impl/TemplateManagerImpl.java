@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -483,6 +484,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
   }
 
+  @Unmodifiable
   public static @NotNull List<TemplateContextType> getAllContextTypes() {
     return TemplateContextTypes.getAllContextTypes();
   }

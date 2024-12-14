@@ -5,12 +5,13 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ProjectRootManager
+import java.nio.file.Path
 
 class MavenAsyncUtil {
   companion object {
-    suspend fun setupProjectSdk(project: Project) {
+    suspend fun setupProjectSdk(project: Project, rootDirectory: Path) {
       if (ProjectRootManager.getInstance(project).projectSdk == null) {
-        val projectSdk = MavenUtil.suggestProjectSdk(project) ?: return
+        val projectSdk = MavenUtil.suggestProjectSdk(rootDirectory) ?: return
         writeAction {
           JavaSdkUtil.applyJdkToProject(project, projectSdk)
         }

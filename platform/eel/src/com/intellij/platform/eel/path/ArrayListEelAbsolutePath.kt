@@ -3,48 +3,37 @@ package com.intellij.platform.eel.path
 
 internal class ArrayListEelAbsolutePath private constructor(
   private val _root: Root,
-  private val parts: List<String>,
-) : EelPath.Absolute {
+  override val parts: List<String>,
+) : EelPath, Comparable<EelPath> {
   init {
     // TODO To be removed when the class is thoroughly covered with unit tests.
     require(parts.all(String::isNotEmpty)) { "An empty string in the path parts: $parts" }
   }
 
-  override val os: EelPath.Absolute.OS
-    get() = when (_root) {
-      Root.Unix -> EelPath.Absolute.OS.UNIX
-      is Root.Windows -> EelPath.Absolute.OS.WINDOWS
-    }
-
-  override val root: EelPath.Absolute by lazy {
+  override val root: EelPath by lazy {
     if (parts.isEmpty()) this
     else ArrayListEelAbsolutePath(_root, listOf())
   }
 
-  override val parent: EelPath.Absolute?
+  override val parent: EelPath?
     get() =
       if (parts.isEmpty()) null
       else ArrayListEelAbsolutePath(_root, parts.dropLast(1))
 
-  override fun startsWith(other: EelPath.Absolute): Boolean =
+  override fun startsWith(other: EelPath): Boolean =
     nameCount >= other.nameCount &&
     root.fileName == other.root.fileName &&
     (0..<other.nameCount).all { getName(it) == other.getName(it) }
 
-  override fun normalize(): EelPath.Absolute {
+  override fun normalize(): EelPath {
     val result = mutableListOf<String>()
     for (part in parts) {
       when (part) {
         "." -> Unit
 
         ".." -> if (result.isNotEmpty() && result.last() != "..") {
+          // going beyond root is a no-op operation
           result.removeLast()
-        }
-        else {
-          // we are either accessing a region of FS outside current relative path, or we are referencing an unknown parent
-          // either way, this kind of normalization requires an access to the FS, which is out of the scope of `normalize`
-          // for further normalization, `canonicalize` is required
-          result += part
         }
 
         else ->
@@ -54,31 +43,25 @@ internal class ArrayListEelAbsolutePath private constructor(
     return ArrayListEelAbsolutePath(_root, result)
   }
 
-  override fun resolve(other: EelPath.Relative): EelPath.Absolute {
-    val result = parts.toMutableList()
-    for (index in 0..<other.nameCount) {
-      val name = other.getName(index).fileName
+  override fun resolve(other: String): EelPath {
+    val otherParts = other.split('/', '\\')
+    for (name in otherParts) {
       if (name.isNotEmpty()) {
         val error = checkFileName(name)
         if (error != null) throw EelPathException(other.toString(), error)
-        result += name
       }
     }
-    return ArrayListEelAbsolutePath(_root, result)
+    val newList = parts + otherParts
+    return ArrayListEelAbsolutePath(_root, newList)
   }
 
-  override fun getChild(name: String): EelPath.Absolute {
+  override fun getChild(name: String): EelPath {
     val error = checkFileName(name)
     return if (error == null)
       ArrayListEelAbsolutePath(_root, parts + name)
     else
       throw EelPathException(name, error)
   }
-
-  override fun scan(): Sequence<EelPath.Absolute> =
-    parts.asSequence().scan(ArrayListEelAbsolutePath(_root, listOf())) { parent, name ->
-      ArrayListEelAbsolutePath(_root, parent.parts + name)
-    }
 
   override fun toString(): String =
     when (_root) {
@@ -102,19 +85,11 @@ internal class ArrayListEelAbsolutePath private constructor(
   override val nameCount: Int
     get() = parts.size
 
-  override fun getName(index: Int): EelPath.Relative {
-    if (parts.isEmpty()) return EelPath.Relative.EMPTY
-
-    require(index in parts.indices) { "$index !in ${parts.indices}" }
-    return EelPath.Relative.build(parts[index])
+  override fun getName(index: Int): String {
+    return parts[index]
   }
 
-  override fun endsWith(other: EelPath.Relative): Boolean {
-    val diff = nameCount - other.nameCount
-    return diff >= 0 && (0..<other.nameCount).all { getName(it + diff) == other.getName(it) }
-  }
-
-  override fun compareTo(other: EelPath.Absolute): Int {
+  override fun compareTo(other: EelPath): Int {
     run {
       val cmp = root.fileName.compareTo(other.root.fileName)
       if (cmp != 0) {
@@ -132,32 +107,8 @@ internal class ArrayListEelAbsolutePath private constructor(
     return nameCount - other.nameCount
   }
 
-  override fun relativize(other: EelPath.Absolute): EelPath.Relative {
-    if (root != other.root) {
-      throw EelPathException(other.root.toString(), "The other path has a different root")
-    }
-
-    var firstDifferenceIndex = 0
-    while (firstDifferenceIndex < nameCount.coerceAtMost(other.nameCount)) {
-      val different = getName(firstDifferenceIndex) != other.getName(firstDifferenceIndex)
-      ++firstDifferenceIndex
-      if (different) break
-    }
-
-    val result = mutableListOf<String>()
-    repeat(nameCount - firstDifferenceIndex) {
-      result += ".."
-    }
-
-    for (index in firstDifferenceIndex..<other.nameCount) {
-      result += other.getName(index).fileName
-    }
-
-    return EelPath.Relative.build(result)
-  }
-
   override fun equals(other: Any?): Boolean =
-    other is EelPath.Absolute &&
+    other is EelPath &&
     nameCount == other.nameCount &&
     root.fileName == other.root.fileName &&
     (0..<nameCount).all { getName(it) == other.getName(it) }
@@ -172,12 +123,12 @@ internal class ArrayListEelAbsolutePath private constructor(
     })
 
   companion object {
-    fun build(parts: List<String>, os: EelPath.Absolute.OS?): EelPath.Absolute {
+    fun build(parts: List<String>, os: EelPath.OS?): EelPath {
       require(parts.isNotEmpty()) { "Can't build an absolute path from no path parts" }
 
       val windowsRoot = when (os) {
-        EelPath.Absolute.OS.WINDOWS, null -> findAbsoluteUncPath(parts.first()) ?: findAbsoluteTraditionalDosPath(parts.first())
-        EelPath.Absolute.OS.UNIX -> null
+        EelPath.OS.WINDOWS, null -> findAbsoluteUncPath(parts.first()) ?: findAbsoluteTraditionalDosPath(parts.first())
+        EelPath.OS.UNIX -> null
       }
       when (windowsRoot) {
         null -> {
@@ -208,15 +159,10 @@ internal class ArrayListEelAbsolutePath private constructor(
     }
 
     @Throws(EelPathException::class)
-    fun parseOrNull(raw: String, os: EelPath.Absolute.OS?): ArrayListEelAbsolutePath? =
+    fun parseOrNull(raw: String, os: EelPath.OS?): ArrayListEelAbsolutePath? =
       when (os) {
-        EelPath.Absolute.OS.WINDOWS ->
-          findAbsoluteUncPath(raw)
-          ?: findAbsoluteTraditionalDosPath(raw)
-
-        EelPath.Absolute.OS.UNIX ->
-          findAbsoluteUnixPath(raw)
-
+        EelPath.OS.WINDOWS -> findAbsoluteUncPath(raw) ?: findAbsoluteTraditionalDosPath(raw)
+        EelPath.OS.UNIX -> findAbsoluteUnixPath(raw)
         null ->
           findAbsoluteUncPath(raw)
           ?: findAbsoluteTraditionalDosPath(raw)

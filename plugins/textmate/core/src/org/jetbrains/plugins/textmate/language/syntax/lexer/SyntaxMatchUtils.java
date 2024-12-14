@@ -2,8 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
+import kotlin.text.StringsKt;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.NotNull;
@@ -82,8 +81,8 @@ public final class SyntaxMatchUtils {
       resultState =
         moreImportantState(resultState,
                            matchFirstChild(regexFactory, child, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope));
-      if (resultState.matchData.matched() && resultState.matchData.byteOffset().start == byteOffset) {
-        // optimization. There cannot be anything more `important` than current state matched from the very beginning
+      if (resultState.matchData.matched && resultState.matchData.byteOffset().start == byteOffset) {
+        // optimization. There cannot be anything more `important` than the current state matched from the very beginning
         break;
       }
     }
@@ -118,10 +117,10 @@ public final class SyntaxMatchUtils {
 
   @NotNull
   private static TextMateLexerState moreImportantState(@NotNull TextMateLexerState oldState, @NotNull TextMateLexerState newState) {
-    if (!newState.matchData.matched()) {
+    if (!newState.matchData.matched) {
       return oldState;
     }
-    else if (!oldState.matchData.matched()) {
+    else if (!oldState.matchData.matched) {
       return newState;
     }
     int newScore = newState.matchData.byteOffset().start;
@@ -196,7 +195,7 @@ public final class SyntaxMatchUtils {
   /**
    * Replaces parts like \1 or \20 in string parameter with group captures from matchData.
    * <p/>
-   * E.g. given string "\1-\2" and matchData consists of two groups: "first" and "second"
+   * E.g., given string "\1-\2" and matchData consists of two groups: "first" and "second"
    * then string "first-second" will be returned.
    *
    * @param string         string pattern
@@ -207,7 +206,7 @@ public final class SyntaxMatchUtils {
   public static String replaceGroupsWithMatchDataInRegex(@NotNull CharSequence string,
                                                          @Nullable TextMateString matchingString,
                                                          @NotNull MatchData matchData) {
-    if (matchingString == null || !matchData.matched()) {
+    if (matchingString == null || !matchData.matched) {
       return string.toString();
     }
     StringBuilder result = new StringBuilder();
@@ -230,7 +229,8 @@ public final class SyntaxMatchUtils {
         }
         if (hasGroupIndex && matchData.count() > groupIndex) {
           TextMateRange range = matchData.byteOffset(groupIndex);
-          Strings.escapeToRegexp(new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8), result);
+          String replacement = new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8);
+          result.append(BACK_REFERENCE_REPLACEMENT_REGEX.matcher(replacement).replaceAll("\\\\$0"));
           charIndex = digitIndex;
           continue;
         }
@@ -241,6 +241,7 @@ public final class SyntaxMatchUtils {
     return result.toString();
   }
 
+  private static final Pattern BACK_REFERENCE_REPLACEMENT_REGEX = Pattern.compile("[\\-\\\\{}*+?|^$.,\\[\\]()#\\s]");
   private static final Pattern CAPTURE_GROUP_REGEX = Pattern.compile("\\$([0-9]+)|\\$\\{([0-9]+):/(downcase|upcase)}");
 
   /**
@@ -258,20 +259,19 @@ public final class SyntaxMatchUtils {
   public static CharSequence replaceGroupsWithMatchDataInCaptures(@NotNull CharSequence string,
                                                                   @NotNull TextMateString matchingString,
                                                                   @NotNull MatchData matchData) {
-    if (!matchData.matched()) {
+    if (!matchData.matched) {
       return string;
     }
     Matcher matcher = CAPTURE_GROUP_REGEX.matcher(string);
     StringBuilder result = new StringBuilder();
     int lastPosition = 0;
     while (matcher.find()) {
-      int groupIndex = StringUtilRt.parseInt(matcher.group(1) != null ? matcher.group(1) : matcher.group(2), -1);
+      int groupIndex = parseGroupIndex(matcher.group(1) != null ? matcher.group(1) : matcher.group(2));
       if (groupIndex >= 0 && matchData.count() > groupIndex) {
         result.append(string, lastPosition, matcher.start());
         TextMateRange range = matchData.byteOffset(groupIndex);
         String capturedText = new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8);
-        int numberOfDotsAtTheBeginning = Strings.countChars(capturedText, '.', 0, true);
-        String replacement = capturedText.substring(numberOfDotsAtTheBeginning);
+        String replacement = StringsKt.trimStart(capturedText, '.');
         String command = matcher.group(3);
         if ("downcase".equals(command)) {
           result.append(replacement.toLowerCase(Locale.ROOT));
@@ -289,6 +289,14 @@ public final class SyntaxMatchUtils {
       result.append(string.subSequence(lastPosition, string.length()));
     }
     return result.toString();
+  }
+
+  private static int parseGroupIndex(@Nullable String string) {
+    if (string != null) {
+      try { return Integer.parseInt(string); }
+      catch (NumberFormatException ignored) { }
+    }
+    return -1;
   }
 
   private static final class MatchKey {

@@ -39,6 +39,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
+import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -236,7 +237,11 @@ private suspend fun downloadFileToCacheLocation(url: String,
       ))
 
       // update file modification time to maintain FIFO caches, i.e., in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(target, FileTime.from(Instant.now()))
+      try {
+        Files.setLastModifiedTime(target, FileTime.from(Instant.now()))
+      } catch (e: IOException) {
+        Span.current().addEvent("update asset file modification time failed: $e")
+      }
       return target
     }
 

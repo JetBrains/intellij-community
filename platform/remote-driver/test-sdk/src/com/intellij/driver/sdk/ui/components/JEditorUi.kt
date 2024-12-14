@@ -2,7 +2,9 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.DriverCallException
+import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.remoteDev.BeControlClass
@@ -32,7 +34,7 @@ fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiCom
   x(xpath ?: "//div[@class='EditorComponentImpl']", JEditorUiComponent::class.java).action()
 }
 
-class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
+open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   private val editorComponent get() = driver.cast(component, EditorComponentImpl::class)
   private val document: Document by lazy { editor.getDocument() }
   private val caretPosition
@@ -116,7 +118,7 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun setCaretPosition(line: Int, column: Int) {
     click()
     interact {
-      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1, (this as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT))
     }
   }
 

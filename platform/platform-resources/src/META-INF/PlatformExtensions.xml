@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
@@ -493,6 +494,7 @@
     <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                         serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
 
+    <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
                         serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
 
@@ -621,6 +623,10 @@
 
     <postStartupActivity implementation="com.intellij.ide.ProjectWindowCustomizerListener" order="last"/>
 
+    <applicationService
+      serviceInterface="com.intellij.platform.ide.productInfo.IdeProductInfo"
+      serviceImplementation="com.intellij.platform.ide.impl.productInfo.IdeProductInfoImpl"/>
+    
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 
@@ -950,6 +956,7 @@
       implementationClass="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ui.customization.AddQuickActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GTDUCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GoToDeclarationCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
@@ -1582,7 +1589,7 @@
                              instance="com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable"
                              groupId="root"/>
 
-    <advancedSetting id="ide.ui.native.file.chooser" default="false" groupKey="group.advanced.settings.ui"/>
+    <advancedSetting id="ide.ui.native.file.chooser" default="true" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.always.show.tool.window.header.icons" default="false" groupKey="group.advanced.settings.tool.windows"/>
     <advancedSetting id="ide.tool.window.header.dnd" default="true" groupKey="group.advanced.settings.tool.windows"/>
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
@@ -1844,6 +1851,9 @@
                         serviceImplementation="com.intellij.auth.LocalGenericAuthService"
                         client="local"/>
     <project.projectIdResolver implementation="com.intellij.ide.lightEdit.project.LightEditProjectIdResolver" />
+    
+    <actionGroupCustomization
+      implementation="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarActionGroupCustomization" />
   </extensions>
 
   <applicationListeners>

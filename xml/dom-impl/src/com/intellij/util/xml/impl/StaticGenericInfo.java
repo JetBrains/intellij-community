@@ -14,6 +14,7 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -181,6 +182,7 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<? extends CustomDomChildrenDescriptionImpl> getCustomNameChildrenDescription() {
     return ContainerUtil.createMaybeSingletonList(myCustomDescription);
   }

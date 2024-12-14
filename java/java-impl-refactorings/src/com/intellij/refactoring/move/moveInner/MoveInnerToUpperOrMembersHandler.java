@@ -33,6 +33,7 @@ import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.components.JBBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,7 +137,7 @@ public final class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate 
 
       RadioUpDownListener.installOn(myRbMoveInner, myRbMoveMembers);
 
-      Box box = Box.createVerticalBox();
+      JBBox box = JBBox.createVerticalBox();
       box.add(Box.createVerticalStrut(5));
       box.add(myRbMoveInner);
       box.add(myRbMoveMembers);

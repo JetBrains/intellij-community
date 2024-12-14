@@ -253,9 +253,12 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     }
 }
 
-internal fun callMethodFromHelper(helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>): Value? {
+internal fun callMethodFromHelper(
+    helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>,
+    vararg additionalClassesToLoad: String
+): Value? {
     try {
-        return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args)
+        return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args, true, *additionalClassesToLoad)
     } catch (e: Exception) {
         val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
         DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,

@@ -33,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -366,6 +367,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     searchField.selectAll();
   }
   @NotNull
+  @Unmodifiable
   List<String> getHistoryItems() {
     if (!isShown()) return ContainerUtil.emptyList();
 

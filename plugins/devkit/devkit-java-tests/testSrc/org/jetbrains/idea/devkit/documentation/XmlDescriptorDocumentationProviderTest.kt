@@ -269,7 +269,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
 
 private class TestXmlDescriptorDocumentationTargetProvider : AbstractXmlDescriptorDocumentationTargetProvider() {
 
-  override val docYamlCoordinates = DocumentationDataCoordinates("any", "/documentation/xml-plugin-descriptor-documentation-test.yaml")
+  override val docYamlCoordinates = DocumentationDataCoordinates("FAKE_URL", "/documentation/xml-plugin-descriptor-documentation-test.yaml")
 
   override fun isApplicable(element: PsiElement, originalElement: PsiElement?): Boolean {
     return originalElement?.containingFile?.name == TEST_XML_FILE_NAME

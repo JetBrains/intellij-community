@@ -12,7 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TestUtilKt;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     PlatformTestUtil.getCommunityPath() + "/plugins/textmate/testData/lexer";
 
   private CharSequence myRootScope;
-  private TextMateSyntaxTable mySyntaxTable;
+  private TextMateSyntaxTableCore mySyntaxTable;
 
   @Parameterized.Parameter
   public String myFileName;
@@ -59,7 +59,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
 
   @Before
   public void before() {
-    mySyntaxTable = new TextMateSyntaxTable();
+    mySyntaxTable = new TextMateSyntaxTableCore();
     var matchers = TestUtilKt.loadBundle(mySyntaxTable, getBundleName());
     List<String> extraBundleNames = getExtraBundleNames();
     for (String bundleName : extraBundleNames) {

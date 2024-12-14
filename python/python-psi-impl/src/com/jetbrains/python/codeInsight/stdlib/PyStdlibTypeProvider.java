@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -24,16 +23,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-import static com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getOpenFunctionCallType;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
 public final class PyStdlibTypeProvider extends PyTypeProviderBase {
-
-  @NotNull
-  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("os.fdopen", "posix.fdopen");
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
@@ -281,10 +279,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = function.getQualifiedName();
     if (qname != null) {
-      if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        return getOpenFunctionCallType(function, (PyCallExpression)callSite, LanguageLevel.forElement(callSite), context);
-      }
-      else if ("tuple.__new__".equals(qname) && callSite instanceof PyCallExpression) {
+      if ("tuple.__new__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
       }
       else if ("tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {

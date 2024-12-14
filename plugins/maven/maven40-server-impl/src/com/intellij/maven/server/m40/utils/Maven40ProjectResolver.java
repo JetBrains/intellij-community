@@ -13,13 +13,14 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
-import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
+import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -139,6 +140,17 @@ public class Maven40ProjectResolver {
       List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
         getProjectBuildingResults(request, files, session));
 
+      List<Exception> exceptions = new ArrayList<>();
+      List<MavenProject> projects = new ArrayList<>();
+      for (ProjectBuildingResult result : buildingResults) {
+        MavenProject project = result.getProject();
+        if (project != null) {
+          projects.add(project);
+        }
+      }
+      session.setProjects(projects);
+      afterProjectsRead(session, exceptions);
+
       // TODO: Cache does not work actually
       fillSessionCache(session, session.getRepositorySession(), buildingResults);
 
@@ -163,10 +175,6 @@ public class Maven40ProjectResolver {
           executionResults.add(createExecutionResult(project, newDependencyHash));
           continue;
         }
-
-        List<Exception> exceptions = new ArrayList<>();
-
-        loadExtensions(project, exceptions);
 
         //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
@@ -399,7 +407,7 @@ public class Maven40ProjectResolver {
         String message = Maven40ServerEmbedderImpl.getRootMessage(exception);
         Artifact artifact = RepositoryUtils.toArtifact(unresolvedDependency.getArtifact());
         MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(artifact, myLocalRepositoryFile);
-        problems.add(MavenProjectProblem.createUnresolvedArtifactProblem(path, message, true, mavenArtifact));
+        problems.add(MavenProjectProblem.createUnresolvedArtifactProblem(path, message, false, mavenArtifact));
         break;
       }
     }
@@ -458,42 +466,42 @@ public class Maven40ProjectResolver {
       cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
     }
     mavenSession.setProjectMap(mavenProjectMap);
-    Maven40WorkspaceMapReader reader = (Maven40WorkspaceMapReader)session.getWorkspaceReader();
-    reader.setCacheModelMap(cacheMavenModelMap);
+    Maven40WorkspaceMapReader maven40WorkspaceMapReader = null;
+    WorkspaceReader reader = session.getWorkspaceReader();
+    if (reader instanceof Maven40WorkspaceMapReader) {
+      maven40WorkspaceMapReader = (Maven40WorkspaceMapReader)reader;
+    }
+    else if (reader instanceof MavenChainedWorkspaceReader) {
+      for (WorkspaceReader chainedReader : ((MavenChainedWorkspaceReader)reader).getReaders()) {
+        if (chainedReader instanceof Maven40WorkspaceMapReader) {
+          maven40WorkspaceMapReader = (Maven40WorkspaceMapReader)chainedReader;
+          break;
+        }
+      }
+    }
+    if (null != maven40WorkspaceMapReader) {
+      maven40WorkspaceMapReader.setCacheModelMap(cacheMavenModelMap);
+    }
   }
 
   /**
-   * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+   * adapted from {@link DefaultMaven#afterProjectsRead(MavenSession)}
    */
-  private void loadExtensions(MavenProject project, List<Exception> exceptions) {
+  private void afterProjectsRead(MavenSession session, List<Exception> exceptions) {
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants =
-      myEmbedder.getExtensionComponents(Collections.singletonList(project), AbstractMavenLifecycleParticipant.class);
-    if (!lifecycleParticipants.isEmpty()) {
-      LegacySupport legacySupport = myEmbedder.getComponent(LegacySupport.class);
-      MavenSession session = legacySupport.getSession();
-      if (null != session) {
-        session.setCurrentProject(project);
-        try {
-          // the method can be removed
-          session.setAllProjects(Collections.singletonList(project));
-        }
-        catch (NoSuchMethodError ignore) {
-        }
-        session.setProjects(Collections.singletonList(project));
-
-        for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
-          Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
-          try {
-            listener.afterProjectsRead(session);
-          }
-          catch (Exception e) {
-            exceptions.add(e);
-          }
-          finally {
-            Thread.currentThread().setContextClassLoader(originalClassLoader);
-          }
-        }
+      myEmbedder.getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class);
+    for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+      Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+      try {
+        listener.afterProjectsRead(session);
+      }
+      catch (Exception e) {
+        // Unlike Maven, IDEA sync shouldn't fail even if there is a problem with an extension
+        exceptions.add(e);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
       }
     }
   }
@@ -573,7 +581,7 @@ public class Maven40ProjectResolver {
                                      ProjectBuildingRequest projectBuildingRequest,
                                      File pomFile) {
     try {
-      ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
+      ProjectBuildingResult build = builder.build(Collections.singletonList(pomFile), false, projectBuildingRequest).get(0);
       buildingResults.add(build);
     }
     catch (ProjectBuildingException e) {

@@ -2,10 +2,13 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.impl.TrustedPaths
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
@@ -27,6 +30,8 @@ import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
+private const val untrustedJpsProjectNotificationPart = "Configuration files aren't loaded for projects opened in the safe mode."
+
 class LoadInvalidProjectTest {
   companion object {
     @JvmField
@@ -45,6 +50,11 @@ class LoadInvalidProjectTest {
   @Rule
   val disposable = DisposableRule()
   private val errors = ArrayList<ConfigurationErrorDescription>()
+
+  private fun getNotifications(project: Project, groupId: String = "Project Loading Error"): List<Notification> {
+    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(Notification::class.java, project)
+    return notifications.filter { it.groupId == groupId }.toList()
+  }
 
   @Before
   fun setUp() {
@@ -120,22 +130,68 @@ class LoadInvalidProjectTest {
     }
   }
 
-  @Test
-  fun `remote iml paths must not be loaded in untrusted projects`() {
-    IoTestUtil.assumeWindows()
+  private fun loadUntrustedProjectCheckResults(
+    projectTemplate: Path,
+    task: suspend (Project) -> Unit,
+  ) {
     fun createUntrustedProject(targetDir: VirtualFile): Path {
       val projectDir = VfsUtil.virtualToIoFile(targetDir)
-      FileUtil.copyDir(testDataRoot.resolve("remote-iml-path").toFile(), projectDir)
+      FileUtil.copyDir(projectTemplate.toFile(), projectDir)
       VfsUtil.markDirtyAndRefresh(false, true, true, targetDir)
       val projectDirPath = projectDir.toPath()
       TrustedPaths.getInstance().setProjectPathTrusted(projectDirPath, false)
       return projectDirPath
     }
     runBlocking {
-      createOrLoadProject(tempDirectory, ::createUntrustedProject, loadComponentState = true, useDefaultProjectSettings = false) {
-        assertThat(errors).hasSize(1)
-        assertThat(errors.single().description).contains("remote locations")
-      }
+      createOrLoadProject(tempDirectory, ::createUntrustedProject, loadComponentState = true, useDefaultProjectSettings = false, task = task)
+    }
+  }
+
+  private suspend fun checkUntrustedModuleIsNotLoaded(project: Project, moduleName: String) {
+    val moduleEntities = blockingContext {
+      WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java)
+    }
+
+    assertThat(moduleEntities.find { module -> module.name == moduleName }).isNull()
+  }
+
+  private fun checkProjectHasNotification(project: Project, contentBeginning: String) {
+    val notifications = getNotifications(project)
+    assertThat(notifications).hasSize(1)
+    assertThat(notifications.single().content).startsWith(contentBeginning)
+  }
+
+  @Test
+  fun `remote iml paths must not be loaded in untrusted projects`() {
+    IoTestUtil.assumeWindows()
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-iml-path")) { project ->
+      checkProjectHasNotification(project, untrustedJpsProjectNotificationPart)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
+    }
+  }
+
+  @Test
+  fun `remote iml paths must not be loaded in untrusted projects (with protocol)`() {
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-iml-path-with-protocol")) { project ->
+      checkProjectHasNotification(project, untrustedJpsProjectNotificationPart)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
+    }
+  }
+
+  @Test
+  fun `remote roots must not be loaded in untrusted projects`() {
+    IoTestUtil.assumeWindows()
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-roots")) { project ->
+      checkProjectHasNotification(project, untrustedJpsProjectNotificationPart)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
+    }
+  }
+
+  @Test
+  fun `remote roots must not be loaded in untrusted projects (with protocol)`() {
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-roots-with-protocol")) { project ->
+      checkProjectHasNotification(project, untrustedJpsProjectNotificationPart)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
     }
   }
 

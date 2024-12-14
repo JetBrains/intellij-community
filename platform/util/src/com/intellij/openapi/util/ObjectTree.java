@@ -190,18 +190,15 @@ final class ObjectTree {
       return;
     }
 
-    ProcessCanceledException processCanceledException = null;
     for (Throwable exception : exceptions) {
-      if (!(exception instanceof ProcessCanceledException)) {
+      if (exception instanceof ProcessCanceledException) {
+        // wrap with RuntimeException to avoid logger warning about logging ControlFlowException
+        // we don't want to rethrow PCEs as well because it may fail a pipeline of disposals
+        getLogger().error(new RuntimeException("PCE must not be thrown from a dispose() implementation", exception));
+      }
+      else {
         getLogger().error(exception);
       }
-      else if (processCanceledException == null) {
-        processCanceledException = (ProcessCanceledException)exception;
-      }
-    }
-
-    if (processCanceledException != null) {
-      throw processCanceledException;
     }
   }
 

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
-import org.jetbrains.kotlin.idea.highlighting.highlighters.getDslStyleId
+import org.jetbrains.kotlin.idea.highlighting.analyzers.getDslStyleId
 import org.jetbrains.kotlin.psi.KtClass
 import javax.swing.JComponent
 

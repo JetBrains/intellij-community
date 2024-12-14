@@ -868,30 +868,6 @@ public class PyTypeTest extends PyTestCase {
            "expr = open('foo', 'rb')\n");
   }
 
-  public void testIoOpenDefault() {
-    doTest("TextIO",
-           """
-             import io
-             expr = io.open('foo')
-             """);
-  }
-
-  public void testIoOpenText() {
-    doTest("TextIO",
-           """
-             import io
-             expr = io.open('foo', 'r')
-             """);
-  }
-
-  public void testIoOpenBinary() {
-    doTest("BinaryIO",
-           """
-             import io
-             expr = io.open('foo', 'rb')
-             """);
-  }
-
   public void testNoResolveToFunctionsInTypes() {
     doTest("Union[C, Any]",
            """
@@ -3803,6 +3779,13 @@ public class PyTypeTest extends PyTestCase {
                      UserId = NewType('UserId', int)
                      expr = UserId(12)""")
     );
+
+    doTest("UserId",
+           """
+             from typing import NewType
+             UserId = NewType(tp=int, name='UserId')
+             expr = UserId(12)
+             """);
 
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,

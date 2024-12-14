@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItem
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
@@ -175,6 +176,8 @@ interface BuildContext : CompilationContext {
   )
 
   val pluginAutoPublishList: PluginAutoPublishList
+
+  val isNightlyBuild: Boolean
 }
 
 suspend inline fun <T> BuildContext.executeStep(
@@ -215,19 +218,6 @@ class BuiltinModulesFileData(
   @JvmField var layout: List<ProductInfoLayoutItem> = emptyList(),
   @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
 )
-
-@Serializable
-data class ProductInfoLayoutItem(
-  @JvmField val name: String,
-  @JvmField val kind: ProductInfoLayoutItemKind,
-  @JvmField val classPath: List<String> = emptyList(),
-)
-
-@Suppress("EnumEntryName")
-@Serializable
-enum class ProductInfoLayoutItemKind {
-  plugin, pluginAlias, productModuleV2, moduleV2
-}
 
 sealed interface DistFileContent {
   fun readAsStringForDebug(): String

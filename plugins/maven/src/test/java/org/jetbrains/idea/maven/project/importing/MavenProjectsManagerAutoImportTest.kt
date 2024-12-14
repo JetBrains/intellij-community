@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.writeText
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
@@ -486,7 +487,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() = runBlocking {
-    createProjectPom("""
+    val p = createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -524,13 +525,23 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModules("project", "m1", "m2")
     assertModuleModuleDeps("m1", "m2")
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
-    WriteCommandAction.writeCommandAction(project).run<IOException> { m2.delete(this) }
+
+    WriteCommandAction.writeCommandAction(project).run<IOException> {
+      p.writeText(createPomXml("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <packaging>pom</packaging>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """.trimIndent()))
+      m2.delete(this)
+    }
 
     scheduleProjectImportAndWait()
     assertModules("project", "m1")
     assertModuleModuleDeps("m1")
-
-    updateAllProjects()
     assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 

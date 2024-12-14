@@ -1,4 +1,4 @@
-<!--suppress PluginXmlDynamicPlugin -->
+<!--suppress PluginXmlDynamicPlugin, PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensionPoints>
     <!-- only bundled plugin can define extension -->
@@ -108,12 +108,12 @@
     <registryKey
       key="auto.hide.all.tool.windows.on.focus.change"
       description="If enabled, hide all auto-hide tool windows on any focus change, otherwise hide only the one that lost focus"
-      defaultValue="false"
+      defaultValue="true"
     />
     <registryKey
       key="auto.hide.all.tool.windows.on.any.action"
       description="If enabled, any action will cause auto-hide tool windows to be hidden"
-      defaultValue="false"
+      defaultValue="true"
     />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
@@ -159,8 +159,8 @@
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
 
     <applicationService
-      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo"
-      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingIndentGuideInfo" />
+      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo"
+      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingInlaysInfo" />
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     

@@ -64,6 +64,16 @@ class SortedMap<K, V> internal constructor(
     }
   }
 
+  fun clear(): SortedMap<K, V> {
+    if (isLinear) {
+      root = SortedMapNodes.BlackLeaf as SortedMapNodes.Node<K, V>
+      return this
+    }
+    else {
+      return SortedMap<K, V>(SortedMapNodes.BlackLeaf as SortedMapNodes.Node<K, V>, false, comparator)
+    }
+  }
+
   override fun get(key: K): V? = get(key, null)
 
   fun get(key: K, defaultValue: V?): V? {

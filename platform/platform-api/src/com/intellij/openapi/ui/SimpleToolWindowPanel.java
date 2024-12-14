@@ -14,6 +14,7 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -152,6 +153,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<AnAction> getActions(boolean originalProvider) {
     return collectActions(myToolbar);
   }
@@ -204,6 +206,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     }
   }
 
+  @Unmodifiable
   public static @NotNull List<AnAction> collectActions(@Nullable JComponent component) {
     return UIUtil.uiTraverser(component).traverse()
       .filter(ActionToolbar.class)

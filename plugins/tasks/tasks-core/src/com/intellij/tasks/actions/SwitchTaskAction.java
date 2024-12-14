@@ -275,7 +275,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final TaskManager manager = TaskManager.getManager(project);
     LocalTask activeTask = manager.getActiveTask();
     List<LocalTask> localTasks = manager.getLocalTasks();
-    localTasks.sort(TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    localTasks = ContainerUtil.sorted(localTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     ArrayList<LocalTask> temp = new ArrayList<>();
     for (final LocalTask task : localTasks) {
       if (task == activeTask) {

@@ -13,6 +13,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +43,7 @@ public abstract class XDebuggerEditorsProvider {
   public void afterEditorCreated(@Nullable Editor editor) {}
 
   @NotNull
+  @Unmodifiable
   public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     FileType type = getFileType();
     return type instanceof LanguageFileType ? Collections.singleton(((LanguageFileType)type).getLanguage()) : Collections.emptyList();

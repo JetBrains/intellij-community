@@ -11,6 +11,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
@@ -54,7 +55,10 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         }
 
         configureDependencies(defaultFile)
-        doTestProviders(file = k2File ?: defaultFile)
+        val file = k2File ?: defaultFile
+        IgnoreTests.runTestIfNotDisabledByFileDirective(file.toPath(), IgnoreTests.DIRECTIVES.of(pluginMode)) {
+            doTestProviders(file = file)
+        }
     }
 
     private val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")

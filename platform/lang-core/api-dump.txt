@@ -483,6 +483,7 @@ f:com.intellij.openapi.projectRoots.JdkUtil
 - sf:PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL:java.lang.String
 - s:checkForJdk(java.lang.String):Z
 - s:checkForJdk(java.nio.file.Path):Z
+- s:checkForJdk(java.nio.file.Path,Z):Z
 - s:checkForJre(java.lang.String):Z
 - s:checkForJre(java.nio.file.Path):Z
 - s:getJdkMainAttribute(com.intellij.openapi.projectRoots.Sdk,java.util.jar.Attributes$Name):java.lang.String

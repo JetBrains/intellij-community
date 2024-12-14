@@ -2,7 +2,7 @@
   "language": "Java",
   "projectPath": "./",
   "projectName": "intellij",
-  "outputDir": "ml-eval-chat-context-collection-intellij",
+  "outputDir": "bin/ml-eval-chat-context-collection-intellij",
   "strategy": {
     "delayInSeconds": 3
   },
@@ -10,7 +10,7 @@
     "evaluationRoots": [
       "."
     ],
-    "sourceFile": "intellij_dataset.json"
+    "sourceFile": "../../staticdataset/chatcontextcollection/intellij_dataset.json"
   },
   "interpret": {
     "saveLogs": true,

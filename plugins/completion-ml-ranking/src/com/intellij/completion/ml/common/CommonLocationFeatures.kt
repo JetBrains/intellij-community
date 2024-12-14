@@ -51,7 +51,11 @@ class CommonLocationFeatures : ContextFeatureProvider {
   private fun MutableMap<String, MLFeatureValue>.addTextFeatures(environment: CompletionEnvironment) {
     val lookup = environment.lookup
     val editor = lookup.topLevelEditor
-    val caretOffset = lookup.lookupStart
+    val caretOffset = try {
+      lookup.lookupStart
+    } catch (_: AssertionError) {
+      return
+    }
     val logicalPosition = editor.offsetToLogicalPosition(caretOffset)
     val document = editor.document
     val lineStartOffset = document.getLineStartOffset(logicalPosition.line)

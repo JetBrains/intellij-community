@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AnnotationEntryR
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CommentHolder
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ExpressionReplacementPerformer
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.RECEIVER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
@@ -191,7 +190,7 @@ class CodeInliner(
             },
             renderType = {
                 analyze(call) {
-                    it.render(position = Variance.INVARIANT)
+                    (it.approximateToSubPublicDenotable(true)?: it).render(position = Variance.INVARIANT)
                 }
             },
             isArrayType = {

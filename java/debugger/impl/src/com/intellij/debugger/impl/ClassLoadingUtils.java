@@ -9,14 +9,18 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 import static com.intellij.debugger.impl.DebuggerUtilsEx.enableCollection;
 
@@ -77,32 +81,73 @@ public final class ClassLoadingUtils {
    * May modify class loader in evaluationContext
    */
   @Nullable
-  public static ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext) throws EvaluateException {
-    // TODO [egor]: cache and load in bootstrap class loader
+  public static ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext,
+                                         String... additionalClassesToLoad) throws EvaluateException {
     String name = cls.getName();
     evaluationContext = evaluationContext.withAutoLoadClasses(true);
     DebugProcess process = evaluationContext.getDebugProcess();
+    ClassLoaderReference currentClassLoader = evaluationContext.getClassLoader();
     try {
-      return (ClassType)process.findClass(evaluationContext, name, evaluationContext.getClassLoader());
+      return (ClassType)process.findClass(evaluationContext, name, currentClassLoader);
     }
     catch (EvaluateException e) {
       Throwable cause = e.getCause();
       if (cause instanceof InvocationException) {
         if ("java.lang.ClassNotFoundException".equals(((InvocationException)cause).exception().type().name())) {
           // need to define
-          ClassLoaderReference classLoader = getClassLoader(evaluationContext, process);
-          try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
-            if (stream == null) return null;
-            defineClass(name, stream.readAllBytes(), evaluationContext, process, classLoader);
-            evaluationContext.setClassLoader(classLoader);
-            return (ClassType)process.findClass(evaluationContext, name, classLoader);
+          boolean newClassLoader = Registry.is("debugger.evaluate.load.helper.in.separate.classloader") || currentClassLoader == null;
+          ClassLoaderReference classLoaderForDefine = newClassLoader ? getClassLoader(evaluationContext, process)
+                                                                     : getTopClassloader(evaluationContext, currentClassLoader);
+
+          for (String fqn : ContainerUtil.prepend(Arrays.asList(additionalClassesToLoad), name)) {
+            if (!defineClass(fqn, cls, evaluationContext, classLoaderForDefine)) return null;
           }
-          catch (IOException ioe) {
-            throw new EvaluateException("Unable to read " + name + " class bytes", ioe);
+
+          ClassLoaderReference classLoaderForFind = newClassLoader ? classLoaderForDefine : currentClassLoader;
+          if (newClassLoader) {
+            evaluationContext.setClassLoader(classLoaderForDefine);
           }
+          return (ClassType)process.findClass(evaluationContext, name, classLoaderForFind);
         }
       }
       throw e;
+    }
+  }
+
+  /**
+   * Determines the top-level class loader in a hierarchy, starting from the given {@code currentClassLoader}.
+   * <p>
+   * It is used to define the helper class to avoid defining it in every classloader for performance reasons
+   */
+  private static @NotNull ClassLoaderReference getTopClassloader(EvaluationContextImpl evaluationContext,
+                                                                 ClassLoaderReference currentClassLoader) throws EvaluateException {
+    DebugProcessImpl process = evaluationContext.getDebugProcess();
+    ReferenceType classLoaderClass = process.findClass(evaluationContext, "java.lang.ClassLoader", currentClassLoader);
+    Method parentMethod = DebuggerUtils.findMethod(classLoaderClass, "getParent", "()Ljava/lang/ClassLoader;");
+    Objects.requireNonNull(parentMethod, "getParent method is not available");
+
+    ClassLoaderReference classLoader = currentClassLoader;
+
+    while (true) {
+      Value parent = process.invokeInstanceMethod(evaluationContext, classLoader, parentMethod, Collections.emptyList(), 0, true);
+      if (!(parent instanceof ClassLoaderReference classLoaderReference)) {
+        return classLoader;
+      }
+      classLoader = classLoaderReference;
+    }
+  }
+
+  private static boolean defineClass(String name,
+                                     Class<?> cls,
+                                     EvaluationContextImpl evaluationContext,
+                                     ClassLoaderReference classLoader) throws EvaluateException {
+    try (InputStream stream = cls.getResourceAsStream('/' + name.replace('.', '/') + ".class")) {
+      if (stream == null) return false;
+      defineClass(name, stream.readAllBytes(), evaluationContext, evaluationContext.getDebugProcess(), classLoader);
+      return true;
+    }
+    catch (IOException ioe) {
+      throw new EvaluateException("Unable to read " + name + " class bytes", ioe);
     }
   }
 }

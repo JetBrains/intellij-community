@@ -85,11 +85,11 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         }
     }
 
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
         error("Not supported in K2 J2K")
     }
 
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
         val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return Applier.EMPTY }
         val psiFactory = KtPsiFactory(converterContext.project)
         val searcher = JKInMemoryFilesSearcher.create(ktElements)

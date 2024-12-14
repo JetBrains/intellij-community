@@ -88,24 +88,35 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         }
 
     private var _compilerSettings: CompilerSettings? = null
+    private var _lastKnownCompilerSettingsData: CompilerSettingsData? = null
     override var compilerSettings: CompilerSettings?
         get() {
-            if (_compilerSettings != null) {
+            val currentCompilerSettingsData = entity.compilerSettings
+            if (_compilerSettings != null && currentCompilerSettingsData == _lastKnownCompilerSettingsData) {
+                // Cache is valid, return the cached value
                 return _compilerSettings
             }
 
-            val compilerSettingsData = entity.compilerSettings ?: return null
-            _compilerSettings = compilerSettingsData.toCompilerSettings { newSettings ->
+            if (currentCompilerSettingsData == null) {
+                _compilerSettings = null
+                _lastKnownCompilerSettingsData = null
+                return null
+            }
+
+            _compilerSettings = currentCompilerSettingsData.toCompilerSettings { newSettings ->
                 entity.compilerSettings = newSettings.toCompilerSettingsData()
                 updateMergedArguments()
             }
+            _lastKnownCompilerSettingsData = currentCompilerSettingsData
 
             return _compilerSettings
         }
         set(value) {
-            entity.compilerSettings = value.toCompilerSettingsData()
+            val newCompilerSettingsData = value.toCompilerSettingsData()
+            entity.compilerSettings = newCompilerSettingsData
             updateMergedArguments()
             _compilerSettings = null
+            _lastKnownCompilerSettingsData = null
         }
 
     private var _dependsOnModuleNames: List<String> = entity.dependsOnModuleNames

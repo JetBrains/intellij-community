@@ -28,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -315,12 +316,14 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @NotNull
       @Override
+      @Unmodifiable
       public List<HighlightInfo> doHighlighting() {
         return LightQuickFixTestCase.this.doHighlighting();
       }
 
       @NotNull
       @Override
+      @Unmodifiable
       public List<IntentionAction> getAvailableActions() {
         return LightQuickFixTestCase.this.getAvailableActions();
       }
@@ -347,12 +350,14 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     };
   }
 
+  @Unmodifiable
   protected List<IntentionAction> getAvailableActions() {
     doHighlighting();
     return getAvailableActions(getEditor(), getFile());
   }
 
   @NotNull
+  @Unmodifiable
   public static List<IntentionAction> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file);
   }

@@ -5,24 +5,32 @@ import com.intellij.maven.server.m40.utils.*;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.ReflectionUtilRt;
-import org.apache.commons.cli.ParseException;
 import org.apache.maven.*;
 import org.apache.maven.api.*;
+import org.apache.maven.api.cli.InvokerRequest;
+import org.apache.maven.api.cli.ParserException;
+import org.apache.maven.api.cli.ParserRequest;
+import org.apache.maven.api.cli.extensions.CoreExtension;
+import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
+import org.apache.maven.api.services.Lookup;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
-import org.apache.maven.cli.MavenCli;
-import org.apache.maven.cli.internal.extension.model.CoreExtension;
+import org.apache.maven.cling.invoker.ProtoLookup;
+import org.apache.maven.cling.invoker.mvn.MavenContext;
+import org.apache.maven.cling.invoker.mvn.MavenInvoker;
+import org.apache.maven.cling.invoker.mvn.MavenInvokerRequest;
+import org.apache.maven.cling.invoker.mvn.MavenParser;
+import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenContext;
+import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenInvoker;
 import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
-import org.apache.maven.internal.impl.InternalSession;
+import org.apache.maven.jline.JLineMessageBuilderFactory;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -32,27 +40,23 @@ import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.plugin.LegacySupport;
+import org.apache.maven.plugin.PluginResolutionException;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.apache.maven.resolver.RepositorySystemSessionFactory;
 import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
 import org.apache.maven.settings.building.SettingsBuilder;
-import org.codehaus.plexus.DefaultPlexusContainer;
-import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.codehaus.plexus.logging.BaseLoggerManager;
-import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.util.ExceptionUtils;
-import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
@@ -65,25 +69,24 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
+import static org.apache.maven.cling.invoker.Utils.getCanonicalPath;
 
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
-  @NotNull private final DefaultPlexusContainer myContainer;
+  @NotNull private final Maven40ServerEmbedderImpl.IdeaMavenInvoker myMavenInvoker;
+  @NotNull private final Lookup myContainer;
   @NotNull private final Settings myMavenSettings;
 
   private final Maven40ServerConsoleLogger myConsoleWrapper;
-
-  private final Properties mySystemProperties;
 
   private final boolean myAlwaysUpdateSnapshots;
 
@@ -93,130 +96,135 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
 
+  static class IdeaMavenInvokerRequest extends MavenInvokerRequest {
+    IdeaMavenInvokerRequest(ParserRequest parserRequest,
+                            Path cwd,
+                            Path installationDirectory,
+                            Path userHomeDirectory,
+                            Map<String, String> userProperties,
+                            Map<String, String> systemProperties,
+                            Path topDirectory,
+                            Path rootDirectory,
+                            InputStream in,
+                            OutputStream out,
+                            OutputStream err,
+                            List<CoreExtension> coreExtensions,
+                            List<String> jvmArguments,
+                            MavenOptions options) {
+      super(parserRequest, cwd, installationDirectory, userHomeDirectory, userProperties, systemProperties, topDirectory, rootDirectory, in,
+            out, err, coreExtensions, jvmArguments, options);
+    }
+
+    private boolean coreExtensionsDisabled = false;
+
+    void disableCoreExtensions() {
+      coreExtensionsDisabled = true;
+    }
+
+    @Override
+    public Optional<List<CoreExtension>> coreExtensions() {
+      if (coreExtensionsDisabled) return Optional.empty();
+      return super.coreExtensions();
+    }
+  }
+
+  static class IdeaMavenInvoker extends ResidentMavenInvoker {
+    ResidentMavenContext myContext = null;
+
+    IdeaMavenInvoker(ProtoLookup protoLookup) {
+      super(protoLookup);
+    }
+
+    @Override
+    protected int doInvoke(ResidentMavenContext context) throws Exception {
+      pushCoreProperties(context);
+      validate(context);
+      prepare(context);
+      configureLogging(context);
+      createTerminal(context);
+      activateLogging(context);
+      helpOrVersionAndMayExit(context);
+      preCommands(context);
+      tryRunAndRetryOnFailure(
+        "container",
+        () -> container(context),
+        () -> ((IdeaMavenInvokerRequest)context.invokerRequest).disableCoreExtensions()
+      );
+      postContainer(context);
+      pushUserProperties(context);
+      lookup(context);
+      init(context);
+      postCommands(context);
+      tryRun(
+        "settings",
+        () -> settings(context),
+        () -> context.localRepositoryPath = localRepositoryPath(context)
+      );
+      //return execute(context);
+      myContext = context;
+      return 0;
+    }
+
+    /**
+     * adapted from {@link MavenInvoker#execute(MavenContext)}
+     */
+    protected MavenExecutionRequest createMavenExecutionRequest() throws Exception {
+      ResidentMavenContext context = myContext;
+      MavenExecutionRequest request = prepareMavenExecutionRequest();
+      toolchains(context, request);
+      populateRequest(context, context.lookup, request);
+      //return doExecute(context, request);
+      return request;
+    }
+
+    private boolean tryRun(String methodName, ThrowingRunnable action, Runnable onFailure) {
+      try {
+        action.run();
+      }
+      catch (Exception e) {
+        warn("IdeaMavenInvoker." + methodName + ": " + e.getMessage(), e);
+        if (null != onFailure) {
+          onFailure.run();
+        }
+        return false;
+      }
+      return true;
+    }
+
+    private void tryRunAndRetryOnFailure(String methodName, ThrowingRunnable action, Runnable onFailure) {
+      if (!tryRun(methodName, action, onFailure)) {
+        tryRun(methodName, action, null);
+      }
+    }
+
+    @FunctionalInterface
+    interface ThrowingRunnable {
+      void run() throws Exception;
+    }
+  }
+
   public Maven40ServerEmbedderImpl(MavenEmbedderSettings settings) {
     myEmbedderSettings = settings;
 
-    String multiModuleProjectDirectory = settings.getMultiModuleProjectDirectory();
-    if (multiModuleProjectDirectory != null) {
-      System.setProperty("user.dir", multiModuleProjectDirectory);
-      System.setProperty("maven.multiModuleProjectDirectory", multiModuleProjectDirectory);
-    }
-    else {
-      // initialize maven.multiModuleProjectDirectory property to avoid failure in org.apache.maven.cli.MavenCli#initialize method
-      System.setProperty("maven.multiModuleProjectDirectory", "");
-    }
+    String mmpDir = settings.getMultiModuleProjectDirectory();
+    String multiModuleProjectDirectory = mmpDir == null ? "" : mmpDir;
 
     MavenServerSettings serverSettings = settings.getSettings();
-    String mavenHome = serverSettings.getMavenHomePath();
-    if (mavenHome != null) {
-      System.setProperty("maven.home", mavenHome);
-    }
+    String mh = serverSettings.getMavenHomePath();
+    String mavenHome = null == mh ? "" : mh;
 
     myConsoleWrapper = new Maven40ServerConsoleLogger();
     myConsoleWrapper.setThreshold(serverSettings.getLoggingLevel());
 
     ClassWorld classWorld = new ClassWorld("plexus.core", Thread.currentThread().getContextClassLoader());
-    MavenCli cli = new MavenCli(classWorld) {
-      @Override
-      protected void customizeContainer(PlexusContainer container) {
-        ((DefaultPlexusContainer)container).setLoggerManager(new BaseLoggerManager() {
-          @Override
-          protected Logger createLogger(String s) {
-            return myConsoleWrapper;
-          }
-        });
-      }
-    };
+    myMavenInvoker = new IdeaMavenInvoker(ProtoLookup.builder().addMapping(ClassWorld.class, classWorld).build());
+    String userHomeProperty = System.getProperty("user.home");
+    String userHome = userHomeProperty == null ? multiModuleProjectDirectory : userHomeProperty;
+    Path mavenHomeDirectory = getCanonicalPath(Paths.get(mavenHome));
+    Path userHomeDirectory = getCanonicalPath(Paths.get(userHome));
+    Path cwd = getCanonicalPath(Paths.get(multiModuleProjectDirectory));
 
-    SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
-    Class<?> cliRequestClass;
-    try {
-      cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.CliRequest");
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException("unable to find maven CliRequest class");
-    }
-
-    Object cliRequest;
-    try {
-      List<String> commandLineOptions = createCommandLineOptions(serverSettings);
-      myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
-
-      Constructor<?> constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
-      constructor.setAccessible(true);
-      //noinspection SSBasedInspection
-      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
-
-      for (String each : new String[]{"initialize", "cli", "logging", "properties"}) {
-        Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
-        m.setAccessible(true);
-        m.invoke(cli, cliRequest);
-      }
-    }
-    catch (Exception e) {
-      ParseException cause = ExceptionUtilRt.findCause(e, ParseException.class);
-      if (cause != null) {
-        String workingDir = settings.getMultiModuleProjectDirectory();
-        if (workingDir == null) {
-          workingDir = System.getProperty("user.dir");
-        }
-        throw new MavenConfigParseException(cause.getMessage(), workingDir);
-      }
-      throw new RuntimeException(e);
-    }
-
-    // reset threshold
-    try {
-      Method m = MavenCli.class.getDeclaredMethod("container", cliRequestClass);
-      m.setAccessible(true);
-      myContainer = (DefaultPlexusContainer)m.invoke(cli, cliRequest);
-    }
-    catch (Exception e) {
-      if (e instanceof InvocationTargetException) {
-        if (((InvocationTargetException)e).getTargetException().getClass().getCanonicalName()
-          .equals("org.apache.maven.cli.internal.ExtensionResolutionException")) {
-          MavenId id = extractIdFromException(((InvocationTargetException)e).getTargetException());
-          throw new MavenCoreInitializationException(
-            wrapToSerializableRuntimeException(((InvocationTargetException)e).getTargetException()), id);
-        }
-      }
-      throw wrapToSerializableRuntimeException(e);
-    }
-
-    myContainer.getLoggerManager().setThreshold(serverSettings.getLoggingLevel());
-
-    mySystemProperties = ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
-
-    if (serverSettings.getProjectJdk() != null) {
-      mySystemProperties.setProperty("java.home", serverSettings.getProjectJdk());
-    }
-
-    myMavenSettings = Maven40SettingsBuilder.buildSettings(
-      settingsBuilder,
-      serverSettings,
-      mySystemProperties,
-      ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties")
-    );
-
-    myRepositorySystem = getComponent(MavenRepositorySystem.class);
-
-    Maven40ImporterSpy importerSpy = getComponentIfExists(Maven40ImporterSpy.class);
-
-    if (importerSpy == null) {
-      importerSpy = new Maven40ImporterSpy();
-      myContainer.addComponent(importerSpy, Maven40ImporterSpy.class.getName());
-    }
-    myImporterSpy = importerSpy;
-  }
-
-  public File getMultiModuleProjectDirectory() {
-    String directory = myEmbedderSettings.getMultiModuleProjectDirectory();
-    return null == directory ? null : new File(directory);
-  }
-
-  @NotNull
-  private static List<String> createCommandLineOptions(MavenServerSettings serverSettings) {
-    List<String> commandLineOptions = new ArrayList<String>(serverSettings.getUserProperties().size());
+    List<String> commandLineOptions = new ArrayList<>(serverSettings.getUserProperties().size());
     for (Map.Entry<Object, Object> each : serverSettings.getUserProperties().entrySet()) {
       commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
     }
@@ -243,7 +251,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     String globalSettingsPath = serverSettings.getGlobalSettingsPath();
     if (globalSettingsPath != null && new File(globalSettingsPath).isFile()) {
-      commandLineOptions.add("-gs");
+      commandLineOptions.add("-is");
       commandLineOptions.add(globalSettingsPath);
     }
     String userSettingsPath = serverSettings.getUserSettingsPath();
@@ -256,7 +264,95 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       commandLineOptions.add("-o");
     }
 
-    return commandLineOptions;
+    ParserRequest parserRequest = ParserRequest.builder(
+        "",
+        "",
+        commandLineOptions,
+        myConsoleWrapper,
+        new JLineMessageBuilderFactory()
+      )
+      .userHome(userHomeDirectory)
+      .mavenHome(mavenHomeDirectory)
+      .cwd(cwd)
+      .build();
+
+    MavenParser mavenParser = new MavenParser() {
+      @Override
+      protected MavenInvokerRequest getInvokerRequest(LocalContext context) {
+        return new IdeaMavenInvokerRequest(
+          context.parserRequest,
+          context.cwd,
+          context.installationDirectory,
+          context.userHomeDirectory,
+          context.userProperties,
+          context.systemProperties,
+          context.topDirectory,
+          context.rootDirectory,
+          context.parserRequest.in(),
+          context.parserRequest.out(),
+          context.parserRequest.err(),
+          context.extensions,
+          getJvmArguments(context.rootDirectory),
+          (MavenOptions)context.options);
+      }
+
+      @Override
+      protected Path getRootDirectory(LocalContext context) throws ParserException {
+        Path rootDir = super.getRootDirectory(context);
+        if (null == rootDir) {
+          Path topDirectory = context.topDirectory;
+          MavenServerGlobals.getLogger().warn("Root dir not found for " + topDirectory);
+          return topDirectory;
+        }
+        return rootDir;
+      }
+    };
+    InvokerRequest invokerRequest;
+    try {
+      invokerRequest = mavenParser.parseInvocation(parserRequest);
+    }
+    catch (ParserException e) {
+      throw new MavenConfigParseException(e.getMessage(), multiModuleProjectDirectory);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    myMavenInvoker.invoke(invokerRequest);
+    myContainer = myMavenInvoker.myContext.lookup;
+
+    SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
+
+    myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
+
+    Map<String, String> mySystemProperties = invokerRequest.systemProperties();
+    if (serverSettings.getProjectJdk() != null) {
+      mySystemProperties.put("java.home", serverSettings.getProjectJdk());
+    }
+
+    Map<String, String> userProperties = invokerRequest.userProperties();
+    myMavenSettings = Maven40SettingsBuilder.buildSettings(
+      settingsBuilder,
+      serverSettings,
+      toProperties(mySystemProperties),
+      toProperties(userProperties)
+    );
+
+    myRepositorySystem = getComponent(MavenRepositorySystem.class);
+
+    Maven40ImporterSpy importerSpy = getComponentIfExists(Maven40ImporterSpy.class);
+
+    if (importerSpy == null) {
+      importerSpy = new Maven40ImporterSpy();
+      //TODO: importer spy
+      //myContainer.addComponent(importerSpy, Maven40ImporterSpy.class.getName());
+    }
+    myImporterSpy = importerSpy;
+  }
+
+  public File getMultiModuleProjectDirectory() {
+    String directory = myEmbedderSettings.getMultiModuleProjectDirectory();
+    return null == directory ? null : new File(directory);
   }
 
   @NotNull
@@ -292,7 +388,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
           "projectResolver.resolveProjects", () -> projectResolver.resolveProjects());
         telemetry.shutdown();
-        return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token));
+        return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
       }
       finally {
         resetComponents();
@@ -353,7 +449,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         }
       }
       else {
-        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
+        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), false));
       }
     }
     return problems;
@@ -391,11 +487,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
       String message = getRootMessage(ex);
       MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
-      result.add(MavenProjectProblem.createRepositoryProblem(path, message, true, mavenArtifact));
+      result.add(MavenProjectProblem.createRepositoryProblem(path, message, false, mavenArtifact));
     }
     else {
       myConsoleWrapper.error("Maven server structure problem", ex);
-      result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), true));
+      result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), false));
     }
     return result;
   }
@@ -405,13 +501,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     String baseMessage = each.getMessage() != null ? each.getMessage() : "";
     Throwable rootCause = ExceptionUtils.getRootCause(each);
     String rootMessage = rootCause != null ? rootCause.getMessage() : "";
-    return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
+    return isNotEmpty(rootMessage) ? rootMessage : baseMessage;
+  }
+
+  private static boolean isNotEmpty(String str) {
+    return ((str != null) && (!str.isEmpty()));
   }
 
   @Nullable
   private static Artifact getProblemTransferArtifact(Throwable each) {
     Throwable[] throwables = ExceptionUtils.getThrowables(each);
-    if (throwables == null) return null;
     for (Throwable throwable : throwables) {
       if (throwable instanceof ArtifactTransferException) {
         return RepositoryUtils.toArtifact(((ArtifactTransferException)throwable).getArtifact());
@@ -422,48 +521,29 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @SuppressWarnings({"unchecked"})
   private <T> T getComponent(Class<T> clazz, String roleHint) {
-    try {
-      return (T)myContainer.lookup(clazz.getName(), roleHint);
-    }
-    catch (ComponentLookupException e) {
-      throw new RuntimeException(e);
-    }
+    return myContainer.lookup(clazz, roleHint);
   }
 
   @SuppressWarnings("unchecked")
   public <T> T getComponent(Class<T> clazz) {
-    try {
-      return (T)myContainer.lookup(clazz.getName());
-    }
-    catch (ComponentLookupException e) {
-      throw new RuntimeException(e);
-    }
+    return myContainer.lookup(clazz);
   }
 
   private <T> T getComponentIfExists(Class<T> clazz) {
-    try {
-      return (T)myContainer.lookup(clazz.getName());
-    }
-    catch (ComponentLookupException e) {
-      return null;
-    }
+    return myContainer.lookupOptional(clazz).orElse(null);
   }
 
   private <T> T getComponentIfExists(Class<T> clazz, String roleHint) {
-    try {
-      return (T)myContainer.lookup(clazz.getName(), roleHint);
-    }
-    catch (ComponentLookupException e) {
-      return null;
-    }
+    return myContainer.lookupOptional(clazz, roleHint).orElse(null);
   }
 
   private static MavenId extractIdFromException(Throwable exception) {
     try {
       Field field = exception.getClass().getDeclaredField("extension");
       field.setAccessible(true);
-      CoreExtension extension = (CoreExtension)field.get(exception);
-      return new MavenId(extension.getGroupId(), extension.getArtifactId(), extension.getVersion());
+      return null;
+      //CoreExtension extension = (CoreExtension)field.get(exception);
+      //return new MavenId(extension.getGroupId(), extension.getArtifactId(), extension.getVersion());
     }
     catch (Throwable e) {
       return null;
@@ -480,51 +560,49 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
                                              @NotNull Properties customProperties) {
-
-    MavenExecutionRequest result = new DefaultMavenExecutionRequest();
-
     try {
-      injectDefaultRepositories(result);
-      injectDefaultPluginRepositories(result);
+      MavenExecutionRequest request = myMavenInvoker.createMavenExecutionRequest();
 
-      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
-
-      String multiModuleProjectDirectory = myEmbedderSettings.getMultiModuleProjectDirectory();
-      if (null != multiModuleProjectDirectory) {
-        Path baseDir = FileSystems.getDefault().getPath(multiModuleProjectDirectory);
-        result.setRootDirectory(baseDir);
-      }
-      result.setPom(file);
-
-      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
-
-      result.setSystemProperties(mySystemProperties);
-      Properties userProperties = new Properties();
+      // Consider creating a new MavenInvoker / MavenContext / MavenInvokerRequest for every call to the Embedder.
+      // Then profiles will be activated by the MavenInvoker, and this extra step won't be needed.
+      // Similarly, user properties will be handled by the MavenInvoker.
+      activateProfiles(activeProfiles, inactiveProfiles, request);
+      Properties userProperties = request.getUserProperties();
       if (file != null) {
         userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
       }
       userProperties.putAll(customProperties);
-      result.setUserProperties(userProperties);
 
-      result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));
-      if (inactiveProfiles != null) {
-        result.setInactiveProfiles(inactiveProfiles);
-      }
-      result.setCacheNotFound(true);
-      result.setCacheTransferError(true);
-
-      result.setStartTime(new Date());
-
-      File mavenMultiModuleProjectDirectory = getMultimoduleProjectDir(file);
-      result.setBaseDirectory(mavenMultiModuleProjectDirectory);
-
-      result.setMultiModuleProjectDirectory(mavenMultiModuleProjectDirectory);
-
-      return result;
+      return request;
     }
-    catch (MavenExecutionRequestPopulationException e) {
+    catch (Exception e) {
+      warn(e.getMessage(), e);
       throw new RuntimeException(e);
     }
+  }
+
+  private static void activateProfiles(@Nullable List<String> activeProfiles,
+                                       @Nullable List<String> inactiveProfiles,
+                                       MavenExecutionRequest request) {
+    ProfileActivation profileActivation = request.getProfileActivation();
+    if (null != activeProfiles) {
+      for (String profileId : activeProfiles) {
+        profileActivation.addProfileActivation(profileId, true, false);
+      }
+    }
+    if (null != inactiveProfiles) {
+      for (String profileId : inactiveProfiles) {
+        profileActivation.addProfileActivation(profileId, false, false);
+      }
+    }
+  }
+
+  private static Properties toProperties(Map<String, String> map) {
+    Properties result = new Properties();
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      result.setProperty(entry.getKey(), entry.getValue());
+    }
+    return result;
   }
 
   private void injectDefaultRepositories(MavenExecutionRequest request)
@@ -586,49 +664,55 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return new ArrayList<>(result);
   }
 
+  /**
+   * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+   */
   public MavenExecutionResult executeWithMavenSession(@NotNull MavenExecutionRequest request,
                                                       @NotNull MavenWorkspaceMap workspaceMap,
                                                       @Nullable MavenServerConsoleIndicatorImpl indicator,
                                                       Consumer<MavenSession> runnable) {
-    DefaultMavenExecutionResult result = new DefaultMavenExecutionResult();
-    myImporterSpy.setIndicator(indicator);
-
-    SessionScope sessionScope = getComponent(SessionScope.class);
-    sessionScope.enter();
-    LegacySupport legacySupport = getComponent(LegacySupport.class);
-    MavenSession oldSession = legacySupport.getSession();
-
-
-    RepositorySystemSessionFactory coreFactory = getCoreSystemSessionFactory();
-    IdeaRepositorySystemSessionFactory sessionFactory = new IdeaRepositorySystemSessionFactory(
-      coreFactory,
-      workspaceMap, indicator
+    RepositorySystemSessionFactory rsf = getComponent(RepositorySystemSessionFactory.class);
+    IdeaRepositorySystemSessionFactory irsf = new IdeaRepositorySystemSessionFactory(
+      rsf,
+      workspaceMap,
+      indicator
     );
+    WorkspaceReader workspaceReader = new Maven40WorkspaceMapReader(workspaceMap);
+    WorkspaceReader ideWorkspaceReader = getComponentIfExists(WorkspaceReader.class, "ide");
+    SessionScope sessionScope = getComponent(SessionScope.class);
+    DefaultSessionFactory defaultSessionFactory = getComponent(DefaultSessionFactory.class);
+    LegacySupport legacySupport = getComponent(LegacySupport.class);
 
-    DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
-    try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionFactory.newRepositorySessionBuilder(request).build()) {
-      MavenSession mavenSession = new MavenSession(repositorySystemSession, request, result);
-      InternalSession internalSession = factory.newSession(mavenSession);
+    DefaultMavenExecutionResult result = new DefaultMavenExecutionResult();
 
-      //noinspection SSBasedInspection
-      internalSession.withRemoteRepositories(request.getRemoteRepositories().stream().map(
-        r -> internalSession.getRemoteRepository(RepositoryUtils.toRepo(r))
-      ).collect(Collectors.toList()));
+    // https://youtrack.jetbrains.com/issue/IDEA-356125
+    // Temporary solution for Maven 4
+    // There's a race condition between sessionScope.enter and sessionScope.seed
+    // in sessionScope.enter a new ScopeState is added to the beginning of List<ScopeState> values
+    // in sessionScope.seed values[0] is modified
+    // Consider creating a new MavenInvoker / MavenContext / MavenInvokerRequest for every call to the Embedder.
+    synchronized (this) {
+      sessionScope.enter();
+      MavenChainedWorkspaceReader chainedWorkspaceReader =
+        new MavenChainedWorkspaceReader(workspaceReader, ideWorkspaceReader);
+      try (RepositorySystemSession.CloseableSession closeableSession = newCloseableSession(request, chainedWorkspaceReader, irsf)) {
+        MavenSession session = new MavenSession(closeableSession, request, result);
+        session.setSession(defaultSessionFactory.newSession(session));
 
-      mavenSession.setSession(internalSession);
-      sessionScope.seed(MavenSession.class, mavenSession);
-      sessionScope.seed(Session.class, mavenSession.getSession());
-      sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(mavenSession.getSession()));
-      sessionScope.seed(InternalSession.class, internalSession);
+        sessionScope.seed(MavenSession.class, session);
+        sessionScope.seed(Session.class, session.getSession());
+        sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(session.getSession()));
 
+        legacySupport.setSession(session);
 
-      legacySupport.setSession(mavenSession);
-      notifyAfterSessionStart(mavenSession);
-      runnable.accept(mavenSession);
-    }
-    finally {
-      legacySupport.setSession(oldSession);
-      sessionScope.exit();
+        afterSessionStart(session);
+
+        runnable.accept(session);
+      }
+      finally {
+        legacySupport.setSession(null);
+        sessionScope.exit();
+      }
     }
 
     return result;
@@ -650,15 +734,30 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
+  private static RepositorySystemSession.CloseableSession newCloseableSession(MavenExecutionRequest request,
+                                                                              WorkspaceReader workspaceReader,
+                                                                              RepositorySystemSessionFactory repositorySessionFactory) {
+    return repositorySessionFactory
+      .newRepositorySessionBuilder(request)
+      .setWorkspaceReader(workspaceReader)
+      .build();
+  }
 
-  private void notifyAfterSessionStart(MavenSession mavenSession) {
-    try {
-      for (AbstractMavenLifecycleParticipant listener : getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class)) {
+  private void afterSessionStart(MavenSession mavenSession) {
+    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+    Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants =
+      getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class);
+    for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
+      Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());
+      try {
         listener.afterSessionStart(mavenSession);
       }
-    }
-    catch (MavenExecutionException e) {
-      throw new RuntimeException(e);
+      catch (MavenExecutionException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+      }
     }
   }
 
@@ -666,17 +765,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
    * adapted from {@link DefaultMaven#getExtensionComponents(Collection, Class)} as of 10.01.2024
    */
   public <T> Collection<T> getExtensionComponents(Collection<MavenProject> projects, Class<T> role) {
-    Collection<T> foundComponents = new LinkedHashSet<>();
-
-    try {
-      foundComponents.addAll(getContainer().lookupList(role));
-    } catch (ComponentLookupException e) {
-      // this is just silly, lookupList should return an empty list!
-      warn("Failed to lookup " + role, e);
-    }
-
+    Collection<T> foundComponents = new LinkedHashSet<>(getContainer().lookupList(role));
     foundComponents.addAll(getProjectScopedExtensionComponents(projects, role));
-
     return foundComponents;
   }
 
@@ -696,13 +786,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
         if (projectRealm != null && scannedRealms.add(projectRealm)) {
           currentThread.setContextClassLoader(projectRealm);
-
-          try {
-            foundComponents.addAll(getContainer().lookupList(role));
-          } catch (ComponentLookupException e) {
-            // this is just silly, lookupList should return an empty list!
-            warn("Failed to lookup " + role, e);
-          }
+          foundComponents.addAll(getContainer().lookupList(role));
         }
       }
       return foundComponents;
@@ -715,7 +799,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenServerGlobals.getLogger().warn(new RuntimeException(message, e));
   }
 
-  private PlexusContainer getContainer() {
+  private Lookup getContainer() {
     return myContainer;
   }
 
@@ -823,7 +907,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         }
       };
 
-      DependencyNode node = pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
+      DependencyNode node = resolvePluginDependencies(
+        pluginDependenciesResolver, plugin, pluginArtifact, dependencyFilter, remoteRepos, session
+      );
 
       PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
       node.accept(nlg);
@@ -853,6 +939,20 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
+  private static DependencyNode resolvePluginDependencies(PluginDependenciesResolver pluginDependenciesResolver,
+                                                          Plugin plugin,
+                                                          org.eclipse.aether.artifact.Artifact pluginArtifact,
+                                                          DependencyFilter dependencyFilter,
+                                                          List<RemoteRepository> remoteRepos,
+                                                          RepositorySystemSession session) throws PluginResolutionException {
+    // retry resolution twice because there seems to be a race condition leading to PluginResolutionException (as of Maven 4.0.0-rc-1)
+    try {
+      return pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
+    }
+    catch (PluginResolutionException firstException) {
+      return pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
+    }
+  }
 
   @Nullable
   @Override
@@ -963,8 +1063,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       Map<String, Object> inputOptions = new HashMap<>();
       inputOptions.put(ModelProcessor.SOURCE, new FileModelSource(file));
 
-      ModelReader reader = null;
-      if (!StringUtilRt.endsWithIgnoreCase(file.getName(), "xml")) {
+      //TODO:polyglot
+/*      if (!StringUtilRt.endsWithIgnoreCase(file.getName(), "xml")) {
         try {
           Object polyglotManager = myContainer.lookup("org.sonatype.maven.polyglot.PolyglotModelManager");
           if (polyglotManager != null) {
@@ -972,20 +1072,13 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
             reader = (ModelReader)getReaderFor.invoke(polyglotManager, inputOptions);
           }
         }
-        catch (ComponentLookupException ignore) {
-        }
         catch (Throwable e) {
           MavenServerGlobals.getLogger().warn(e);
         }
-      }
+      }*/
 
-      if (reader == null) {
-        try {
-          reader = myContainer.lookup(ModelReader.class);
-        }
-        catch (ComponentLookupException ignore) {
-        }
-      }
+      ModelReader reader = myContainer.lookup(ModelReader.class);
+
       if (reader != null) {
         try {
           Model model = reader.read(file, inputOptions);
@@ -1007,7 +1100,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   public void release(MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      myContainer.dispose();
+      myMavenInvoker.close();
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -1152,6 +1245,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
     MavenToken token) {
     MavenServerUtil.checkToken(token);
+    if (artifacts.isEmpty()) return new MavenArtifactResolveResult(new ArrayList<>(), null);
     try {
       return resolveArtifactsTransitively(artifacts, remoteRepositories);
     }
@@ -1162,7 +1256,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       MavenProjectProblem problem;
       if (transferArtifact != null) {
         MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
-        problem = MavenProjectProblem.createRepositoryProblem("", message, true, mavenArtifact);
+        problem = MavenProjectProblem.createRepositoryProblem("", message, false, mavenArtifact);
       }
       else {
         problem = MavenProjectProblem.createStructureProblem("", message);
@@ -1197,7 +1291,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
         DependencyCoordinates dependencyCoordinate = session.createDependencyCoordinates(coordinate);
 
-        Node dependencyNode = session.collectDependencies(dependencyCoordinate);
+        // TODO: what's the correct PathScope here?
+        Node dependencyNode = session.collectDependencies(dependencyCoordinate, PathScope.MAIN_COMPILE);
 
         List<DependencyCoordinates> dependencyCoordinates = dependencyNode.stream()
           .filter(node -> node != dependencyNode)

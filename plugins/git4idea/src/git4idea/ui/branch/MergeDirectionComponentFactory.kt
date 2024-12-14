@@ -146,7 +146,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                                                                                  applySelection: (RepoMapping?, GitBranch?) -> Unit,
                                                                                  items: List<RepoMapping>) {
 
-      val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items, currentRepo)
+      val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items.toMutableList(), currentRepo)
       val branchModel = MutableCollectionComboBoxModel<GitBranch>()
 
       repoModel.addListDataListener(object : ListDataListener {

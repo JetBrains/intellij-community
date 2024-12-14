@@ -11,7 +11,6 @@ import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
-import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -28,14 +27,9 @@ class K2MoveHandler : MoveHandlerDelegate() {
         if (elements.none { it is KtElement }) return false // only handle the refactoring if it includes Kotlin elements
         (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
 
-        return targetContainer?.isValidTarget() != false
-    }
-
-    private fun PsiElement.isValidTarget(): Boolean {
-        return when (this) {
-            is PsiDirectory -> getPackage() != null
-            else -> true
-        }
+        // We allow declarations to be moved into non-source roots here,
+        // but in this case they will be moved as files rather than individual declarations.
+        return true
     }
 
     override fun tryToMove(

@@ -26,7 +26,7 @@ abstract class GradleApplicationEnvironmentProviderTestCase : GradleSettingsImpo
     tracer.traceExecution {
       runAppAndWait(configurationSettings)
     }
-    val output = tracer.stdout.joinToString("")
+    val output = tracer.output.joinToString("")
     for (check in checks) {
       Assertions.assertThat(output)
         .contains(check)

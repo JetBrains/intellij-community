@@ -152,7 +152,7 @@
     <localInspection language="JVM" shortName="InspectionDescriptionNotFoundInspection"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"
                      key="inspection.inspection.description.not.found.inspection.display.name"/>
     <localInspection language="JVM" shortName="checkReturnValue"
@@ -176,7 +176,7 @@
     <localInspection language="JVM" shortName="IntentionDescriptionNotFoundInspection"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"
                      key="inspection.intention.description.not.found.inspection.display.name"/>
     <localInspection language="JVM"
@@ -184,7 +184,7 @@
                      key="inspections.component.postfix.template.not.found.description.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="UAST" shortName="ComponentRegistrationProblems"
@@ -489,6 +489,7 @@
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.I18nReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ExtensionReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.AdvancedSettingsIdContributor"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.IconsXmlReferencesContributor"/>
@@ -645,6 +646,8 @@
 
     <!-- INTERNAL -->
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
+
+    <properties.extendedUseScopeProvider implementation="org.jetbrains.idea.devkit.references.BundleExtendedUseScopeProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

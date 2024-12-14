@@ -1,5 +1,0 @@
-- name: lib/vcs-gitlab.jar
-  modules:
-  - name: intellij.vcs.gitlab
-  contentModules:
-  - name: intellij.vcs.gitlab.yaml

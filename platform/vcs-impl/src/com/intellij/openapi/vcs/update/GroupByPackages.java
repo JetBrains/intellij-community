@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -76,6 +77,7 @@ public class GroupByPackages {
   }
 
   @NotNull
+  @Unmodifiable
   public List<File> getChildren(File file) {
     Collection<File> collection = myParentToChildrenMap.get(file);
     if (collection == null) {

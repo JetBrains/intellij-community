@@ -109,6 +109,7 @@ public final class PathEnvironmentVariableUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<String> getPathDirs(@NotNull String pathEnvVarValue) {
     return StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
   }

@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.EditorNotifications
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.DependencyResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
-import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -29,20 +27,19 @@ import java.util.concurrent.ConcurrentHashMap
 fun KtFile.getScriptAnnotationsList(): List<String> = annotationEntries.map { it.text }.sorted()
 
 internal class ReloadDependenciesScriptAction : AnAction() {
-    val previousAnnotations = ConcurrentHashMap<VirtualFile, List<String>>()
+    val annotations = ConcurrentHashMap<VirtualFile, List<String>>()
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val file = getKotlinScriptFile(editor) ?: return
-        val dependencyResolutionService = project.service<DependencyResolutionService>()
 
-        dependencyResolutionService.resolveInBackground {
+        DependencyResolutionService.getInstance(project).resolveInBackground {
             project.scriptConfigurationsSourceOfType<DependentScriptConfigurationsSource>()?.updateDependenciesAndCreateModules(
                 listOf(BaseScriptModel(file))
             )
 
-            previousAnnotations[file] = readAction {
+            annotations[file] = readAction {
                 PsiManager.getInstance(project).findFile(file)?.safeAs<KtFile>()?.getScriptAnnotationsList() ?: emptyList()
             }
 
@@ -72,8 +69,13 @@ internal class ReloadDependenciesScriptAction : AnAction() {
 
         val actualAnnotations = PsiManager.getInstance(project).findFile(file)?.safeAs<KtFile>()?.getScriptAnnotationsList() ?: emptyList()
 
-        val fileAnnotations = previousAnnotations[file] ?: emptyList()
-        return fileAnnotations.isEmpty() || actualAnnotations != fileAnnotations
+        val previous = annotations[file] ?: emptyList()
+
+        return if (previous.isEmpty() && actualAnnotations.isEmpty()) {
+            false
+        } else {
+            previous != actualAnnotations
+        }
     }
 }
 

@@ -28,6 +28,7 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -117,6 +118,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
     return result;
   }
 
+  @Unmodifiable
   private static List<TextRange> getWordIndicesInOrderPart(String orderPart) {
     return StringUtil.getWordIndicesIn(orderPart, Set.of(' ', ':'));
   }

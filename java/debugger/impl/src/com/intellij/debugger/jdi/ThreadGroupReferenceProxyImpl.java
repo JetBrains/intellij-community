@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ThreadGroupReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -59,10 +60,12 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     getThreadGroupReference().resume();
   }
 
+  @Unmodifiable
   public List<ThreadReferenceProxyImpl> threads() {
     return ContainerUtil.map(getThreadGroupReference().threads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
+  @Unmodifiable
   public List<ThreadGroupReferenceProxyImpl> threadGroups() {
     return ContainerUtil.map(getThreadGroupReference().threadGroups(), getVirtualMachineProxy()::getThreadGroupReferenceProxy);
   }

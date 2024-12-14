@@ -4,4 +4,22 @@ package com.intellij.ide.wizard
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-data class OnboardingTipsInstallationInfo(val simpleSampleText: String, val fileName: String, val offsetForBreakpoint: (CharSequence) -> Int?)
+class OnboardingTipsInstallationFileInfo internal constructor(
+  val fileName: String,
+  val offsetsForBreakpoint: (CharSequence) -> List<Int>,
+)
+
+// better to make a method constructor, so it would be easier to change the onboarding information in the future
+@ApiStatus.Internal
+fun onboardingTipsWithCommentsAndBreakpoints(fileName: String, offsetsForBreakpoint: (CharSequence) -> List<Int>): OnboardingTipsInstallationFileInfo =
+  OnboardingTipsInstallationFileInfo(fileName, offsetsForBreakpoint)
+
+@ApiStatus.Internal
+data class OnboardingTipsInstallationInfo(val infos: List<OnboardingTipsInstallationFileInfo>) {
+  constructor(fileName: String, offsetForBreakpoint: (CharSequence) -> Int?) : this(listOf(
+    onboardingTipsWithCommentsAndBreakpoints(fileName) { listOfNotNull(offsetForBreakpoint(it)) }
+  ))
+
+  @Deprecated("Use constructor without simpleSampleText", ReplaceWith("OnboardingTipsInstallationInfo(fileName, offsetForBreakpoint)"))
+  constructor(simpleSampleText: String, fileName: String, offsetForBreakpoint: (CharSequence) -> Int?) : this(fileName, offsetForBreakpoint)
+}

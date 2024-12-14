@@ -14,7 +14,11 @@ import org.jetbrains.annotations.ApiStatus;
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
-@ApiStatus.Internal
 public final class ErrorOptionsProviderEP extends ConfigurableEP<ErrorOptionsProvider> {
+  @ApiStatus.Internal
   public static final ExtensionPointName<ErrorOptionsProviderEP> EP_NAME = ExtensionPointName.create("com.intellij.errorOptionsProvider");
+
+  @ApiStatus.Internal
+  public ErrorOptionsProviderEP() {
+  }
 }

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.tools.projectWizard.compatibility
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
-import org.jetbrains.kotlin.idea.facet.setLanguageAndApiVersionInKotlinFacet
 import org.jetbrains.kotlin.idea.test.createFacet
 
 class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
@@ -20,7 +20,7 @@ class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
         val groupId = "org.jetbrains.kotlinx"
         val artifactId = "kotlinx-coroutines-core"
 
-        myFixture.module.setLanguageAndApiVersionInKotlinFacet(version.toString(), version.toString())
+        KotlinJpsPluginSettings.getInstance(project).setVersion("${version.major}.${version.minor}.0")
 
         return provider.getVersion(myFixture.module, groupId, artifactId)
     }

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +26,7 @@ public final class JarFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return PsiFileReferenceHelper.getContextsForScope(module.getProject(), "", module.getModuleWithDependenciesScope());
   }

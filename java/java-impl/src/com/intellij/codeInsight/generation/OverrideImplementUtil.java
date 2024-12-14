@@ -269,6 +269,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
   }
 
+  @Unmodifiable
   public static @NotNull List<PsiGenerationInfo<PsiMethod>> overrideOrImplementMethods(@NotNull PsiClass aClass,
                                                                                        @NotNull Collection<? extends PsiMethodMember> candidates,
                                                                                        boolean toCopyJavaDoc,

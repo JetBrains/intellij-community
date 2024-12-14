@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.text.TextRangeUtil;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.parsing.XmlParserBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +30,8 @@ public final class TemplateFormatUtil {
   private static final List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
 
   private static final String[] IGNORABLE_ERROR_MESSAGES = {
-    XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing"),
-    XmlPsiBundle.message("xml.parsing.closing.tag.name.missing")
+    XmlParserBundle.message("xml.parsing.closing.tag.matches.nothing"),
+    XmlParserBundle.message("xml.parsing.closing.tag.name.missing")
   };
 
   private TemplateFormatUtil() {

@@ -92,6 +92,7 @@
     <orderEntry type="library" name="icu4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
@@ -109,6 +110,7 @@
     <orderEntry type="library" name="HdrHistogram" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
@@ -141,5 +143,6 @@
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
   </component>
 </module>

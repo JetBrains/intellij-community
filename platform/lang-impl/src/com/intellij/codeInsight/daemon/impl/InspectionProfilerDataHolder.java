@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -37,6 +38,7 @@ class InspectionProfilerDataHolder {
    * - second, contexts with inspection tools which produced warnings in previous run, ordered by latency to the 1st created warning
    * - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
    */
+  @Contract(mutates = "param2")
   static void sortByLatencies(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init,
                               @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
     init.sort((context1, context2) -> {

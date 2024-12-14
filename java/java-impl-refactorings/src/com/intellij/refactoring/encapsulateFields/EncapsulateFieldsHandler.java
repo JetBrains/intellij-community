@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -195,6 +196,7 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
     final EncapsulateFieldsDescriptor descriptor = new EncapsulateOnPreviewDescriptor(fieldDescriptor);
     final EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, descriptor) {
       @Override
+      @Unmodifiable
       protected Iterable<PsiReferenceExpression> getFieldReferences(@NotNull PsiField field) {
         return VariableAccessUtils.getVariableReferences(field);
       }

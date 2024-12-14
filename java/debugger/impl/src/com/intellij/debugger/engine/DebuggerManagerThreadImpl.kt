@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -38,10 +39,15 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   private var myDisposed = false
 
   private val myDebuggerThreadDispatcher = DebuggerThreadDispatcher(this)
-  val unfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
+
+  /**
+   * This set is used for testing purposes as it is the only way to check that there are any (possibly async) debugger commands.
+   */
+  @ApiStatus.Internal
+  val unfinishedCommands: MutableSet<DebuggerCommandImpl> = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
 
   @ApiStatus.Internal
-  var coroutineScope = createScope()
+  var coroutineScope: CoroutineScope = createScope()
     private set
 
   init {
@@ -146,7 +152,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
             try {
               currentRequest.join()
             }
-            catch (ignored: InterruptedException) {
+            catch (_: InterruptedException) {
             }
             catch (e: Exception) {
               throw RuntimeException(e)
@@ -218,20 +224,25 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     finally {
       val request = getCurrentThreadRequest()
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Switching back to $request")
-      }
+      LOG.debug { "Switching back to $request" }
 
+      var cancelled = false
       super.invokeAndWait(object : DebuggerCommandImpl() {
         override fun action() {
           switchToRequest(request)
         }
 
         override fun commandCancelled() {
-          LOG.debug("Event queue was closed, killing request")
+          cancelled = true
+          LOG.debug { "Event queue was closed, killing request $request" }
           request.requestStop()
         }
       })
+
+      // the queue is already closed - we need to stop asap
+      if (cancelled) {
+        throw VMDisconnectedException()
+      }
     }
   }
 
@@ -404,7 +415,7 @@ fun executeOnDMT(
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   onCommandCancelled: (() -> Unit)? = null,
   action: suspend () -> Unit,
-) = executeOnDMT(suspendContext.managerThread, priority, suspendContext, onCommandCancelled, action)
+): Unit = executeOnDMT(suspendContext.managerThread, priority, suspendContext, onCommandCancelled, action)
 
 /**
  * Runs [action] in debugger manager thread as a [SuspendContextCommandImpl].
@@ -470,7 +481,9 @@ suspend fun <T> withDebugContext(
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   suspendContext: SuspendContextImpl? = null,
   block: suspend () -> T,
-): T = suspendCancellableCoroutine { continuation ->
+): T = if (managerThread === InvokeThread.currentThread()) {
+  block()
+} else suspendCancellableCoroutine { continuation ->
   executeOnDMT(managerThread, priority, suspendContext,
                onCommandCancelled = { continuation.cancel() }
   ) {

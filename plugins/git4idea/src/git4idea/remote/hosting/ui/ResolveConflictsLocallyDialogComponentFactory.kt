@@ -7,7 +7,7 @@ import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 object ResolveConflictsLocallyDialogComponentFactory {
   private fun ResolveConflictsMethod.toMessage(): @Nls String = when (this) {
     ResolveConflictsMethod.REBASE -> GitBundle.message("rebasing.merge.commits.button.rebase")

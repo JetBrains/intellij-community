@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Contract;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ public final class FilterDescendantVirtualFiles extends AbstractFilterChildren<V
   }
 
   @Override
+  @Contract(mutates = "param1")
   protected void sortAscending(final List<? extends VirtualFile> virtualFiles) {
     virtualFiles.sort(FilePathComparator.getInstance());
   }

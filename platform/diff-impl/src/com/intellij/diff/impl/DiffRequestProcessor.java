@@ -69,10 +69,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -775,6 +772,7 @@ public abstract class DiffRequestProcessor
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<VirtualFile> getFilesToRefresh() {
     DiffRequest request = getActiveRequest();
     if (request != null) {
@@ -864,6 +862,7 @@ public abstract class DiffRequestProcessor
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
+    @Unmodifiable
     private @NotNull List<ShowInExternalToolAction> getShowActions() {
       Map<ExternalToolGroup, List<ExternalTool>> externalTools = ExternalDiffSettings.getInstance().getExternalTools();
       List<ExternalTool> diffTools = externalTools.getOrDefault(ExternalToolGroup.DIFF_TOOL, Collections.emptyList());

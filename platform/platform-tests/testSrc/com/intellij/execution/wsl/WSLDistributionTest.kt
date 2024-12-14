@@ -36,6 +36,7 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.haveSize
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
+import io.kotest.matchers.shouldNot
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -499,6 +500,10 @@ class WSLDistributionTest {
       mockWslDistribution.patchCommandLine(sourceCommandLine, null, options)
       withClue("WslIjentManager substitutes setProcessCreator") {
         sourceCommandLine.isProcessCreatorSet should be(true)
+      }
+
+      withClue("Eel should not be set for a patched command line") {
+        sourceCommandLine.tryGetEel() should beNull()
       }
 
       withClue("Checking that the mock works") {

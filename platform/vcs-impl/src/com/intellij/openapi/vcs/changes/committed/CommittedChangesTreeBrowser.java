@@ -37,10 +37,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -279,8 +276,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
   }
 
   @NotNull
-  public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
-    selectedChangeLists.sort(CommittedChangeListByDateComparator.ASCENDING);
+  public static List<Change> collectChanges(@Unmodifiable List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
+    selectedChangeLists = ContainerUtil.sorted(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
 
     List<Change> changes = new ArrayList<>();
     for (CommittedChangeList cl : selectedChangeLists) {

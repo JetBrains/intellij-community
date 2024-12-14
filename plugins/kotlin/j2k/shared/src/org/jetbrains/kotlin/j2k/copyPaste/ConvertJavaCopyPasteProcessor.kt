@@ -65,15 +65,15 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         if (DumbService.getInstance(project).isDumb) return
         if (!KotlinEditorOptions.getInstance().isEnableJavaToKotlinConversion) return
 
-        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor.document, caretOffset, bounds) ?: return
-        if (!isConversionSupportedAtPosition(targetFile, targetBounds.startOffset)) return
+        val targetData = getTargetData(project, editor.document, caretOffset, bounds) ?: return
+        if (!isConversionSupportedAtPosition(targetData.file, targetData.bounds.startOffset)) return
 
         val copiedJavaCode = values.single() as CopiedJavaCode
-        val dataForConversion = DataForConversion.prepare(copiedJavaCode, project)
-        val j2kKind = getJ2kKind(targetFile)
+        val conversionData = ConversionData.prepare(copiedJavaCode, project)
+        val j2kKind = getJ2kKind(targetData.file)
 
         val converter = J2kConverterExtension.extension(j2kKind)
-            .createCopyPasteConverter(project, editor, dataForConversion, j2kKind, targetFile, targetBounds, targetDocument)
+            .createCopyPasteConverter(project, editor, conversionData, targetData)
 
         val textLength = copiedJavaCode.startOffsets.indices.sumOf { copiedJavaCode.endOffsets[it] - copiedJavaCode.startOffsets[it] }
         if (textLength < MAX_TEXT_LENGTH_TO_CONVERT_WITHOUT_ASKING_USER && converter.convertAndRestoreReferencesIfTextIsUnchanged()) {
@@ -89,7 +89,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             type = ConversionType.PSI_EXPRESSION,
             isNewJ2k = j2kKind == K1_NEW,
             conversionTime,
-            linesCount = dataForConversion.elementsAndTexts.lineCount(),
+            linesCount = conversionData.elementsAndTexts.lineCount(),
             filesCount = 1
         )
 

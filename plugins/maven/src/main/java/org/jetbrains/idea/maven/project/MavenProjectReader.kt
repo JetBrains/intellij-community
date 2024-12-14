@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.Throws
 
 private const val UNKNOWN = MavenId.UNKNOWN_VALUE
 private const val MODEL_VERSION_4_0_0 = "4.0.0"
@@ -168,7 +169,7 @@ class MavenProjectReader(private val myProject: Project) {
       problems.add(MavenProjectProblem.createProblem(
         file.path, MavenProjectBundle.message("maven.project.problem.recursiveInheritance"),
         MavenProjectProblem.ProblemType.PARENT,
-        false))
+        true))
       return model
     }
     recursionGuard.add(file)
@@ -183,7 +184,7 @@ class MavenProjectReader(private val myProject: Project) {
               file.path,
               MavenProjectBundle.message("maven.project.problem.selfInheritance"),
               MavenProjectProblem.ProblemType.PARENT,
-              false))
+              true))
           return model
         }
         parentDesc[0] = MavenParentDesc(parent.mavenId, parent.relativePath)
@@ -222,7 +223,7 @@ class MavenProjectReader(private val myProject: Project) {
           MavenProjectBundle.message("maven.project.problem.parentHasProblems",
                                      parentModel.mavenId),
           MavenProjectProblem.ProblemType.PARENT,
-          false))
+          true))
       }
 
       val modelWithInheritance = myReadHelper.assembleInheritance(projectPomDir, parentModel, model, file)
@@ -372,7 +373,7 @@ class MavenProjectReader(private val myProject: Project) {
     if (version != null) return version
     problems.add(MavenProjectProblem(file.path, MavenProjectBundle.message("consumer.pom.cannot.determine.parent.version"),
                                      MavenProjectProblem.ProblemType.STRUCTURE,
-                                     false))
+                                     true))
     return UNKNOWN
   }
 
@@ -665,7 +666,7 @@ class MavenProjectReader(private val myProject: Project) {
     return MavenJDOMUtil.read(file, object : MavenJDOMUtil.ErrorHandler {
       override fun onReadError(e: IOException?) {
         MavenLog.LOG.warn("Cannot read the pom file: $e")
-        problems.add(MavenProjectProblem.createProblem(file.path, e!!.message, type, false))
+        problems.add(MavenProjectProblem.createProblem(file.path, e!!.message, type, true))
       }
 
       override fun onSyntaxError(message: String, startOffset: Int, endOffset: Int) {

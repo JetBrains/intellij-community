@@ -150,6 +150,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportingFiresRootChangesOnlyOnce() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -161,6 +162,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoRootChangesOnProjectReimportWhenNothingChanges() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -266,6 +268,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingFiresRootChangesOnlyOnce() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

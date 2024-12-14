@@ -30,6 +30,11 @@ public class NameSuggestionProviderTestGenerated extends AbstractNameSuggestionP
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("byReturnType.kt")
+    public void testByReturnType() throws Exception {
+        runTest("testData/refactoring/nameSuggestionProvider/byReturnType.kt");
+    }
+
     @TestMetadata("localVarAsCallArgument.kt")
     public void testLocalVarAsCallArgument() throws Exception {
         runTest("testData/refactoring/nameSuggestionProvider/localVarAsCallArgument.kt");

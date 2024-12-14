@@ -396,6 +396,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/complexHierarchyTail.kt");
         }
 
+        @TestMetadata("disabledAddParameterForEnum.kt")
+        public void testDisabledAddParameterForEnum() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/disabledAddParameterForEnum.kt");
+        }
+
+        @TestMetadata("disabledAddParameterForReadOnlyClass.kt")
+        public void testDisabledAddParameterForReadOnlyClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/disabledAddParameterForReadOnlyClass.kt");
+        }
+
         @TestMetadata("fixExtensionLambdaSignature.kt")
         public void testFixExtensionLambdaSignature() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/fixExtensionLambdaSignature.kt");
@@ -2331,6 +2341,150 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("toSet.kt")
         public void testToSet() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/wrapWithCollectionLiteral/toSet.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary")
+    public static class ConvertSecondaryConstructorToPrimary extends AbstractK2QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignmentToGlobalVariable.kt")
+        public void testAssignmentToGlobalVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/assignmentToGlobalVariable.kt");
+        }
+
+        @TestMetadata("defaultValueChain.kt")
+        public void testDefaultValueChain() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/defaultValueChain.kt");
+        }
+
+        @TestMetadata("init.kt")
+        public void testInit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/init.kt");
+        }
+
+        @TestMetadata("initAndParams.kt")
+        public void testInitAndParams() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/initAndParams.kt");
+        }
+
+        @TestMetadata("nonReachable.kt")
+        public void testNonReachable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/nonReachable.kt");
+        }
+
+        @TestMetadata("nonReachableLoop.kt")
+        public void testNonReachableLoop() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/nonReachableLoop.kt");
+        }
+
+        @TestMetadata("propertyWithGetter.kt")
+        public void testPropertyWithGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/propertyWithGetter.kt");
+        }
+
+        @TestMetadata("propertyWithSetter.kt")
+        public void testPropertyWithSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/propertyWithSetter.kt");
+        }
+
+        @TestMetadata("protectedConstructor.kt")
+        public void testProtectedConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/protectedConstructor.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/simple.kt");
+        }
+
+        @TestMetadata("useParam.kt")
+        public void testUseParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/useParam.kt");
+        }
+
+        @TestMetadata("varArg.kt")
+        public void testVarArg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/varArg.kt");
+        }
+
+        @TestMetadata("varargVal.kt")
+        public void testVarargVal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/varargVal.kt");
+        }
+
+        @TestMetadata("withBaseAliasImplicit.kt")
+        public void testWithBaseAliasImplicit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseAliasImplicit.kt");
+        }
+
+        @TestMetadata("withBaseClass.kt")
+        public void testWithBaseClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClass.kt");
+        }
+
+        @TestMetadata("withBaseClassImplicit.kt")
+        public void testWithBaseClassImplicit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClassImplicit.kt");
+        }
+
+        @TestMetadata("withBaseClassNoArgs.kt")
+        public void testWithBaseClassNoArgs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withBaseClassNoArgs.kt");
+        }
+
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withComments.kt");
+        }
+
+        @TestMetadata("withComposedModifiers.kt")
+        public void testWithComposedModifiers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withComposedModifiers.kt");
+        }
+
+        @TestMetadata("withDelegation.kt")
+        public void testWithDelegation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withDelegation.kt");
+        }
+
+        @TestMetadata("withDifferentTypeProperty.kt")
+        public void testWithDifferentTypeProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withDifferentTypeProperty.kt");
+        }
+
+        @TestMetadata("withInterfaceAlias.kt")
+        public void testWithInterfaceAlias() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withInterfaceAlias.kt");
+        }
+
+        @TestMetadata("withModifiers.kt")
+        public void testWithModifiers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withModifiers.kt");
+        }
+
+        @TestMetadata("withParameters.kt")
+        public void testWithParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withParameters.kt");
+        }
+
+        @TestMetadata("withPrimary.kt")
+        public void testWithPrimary() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withPrimary.kt");
+        }
+
+        @TestMetadata("withProperties.kt")
+        public void testWithProperties() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSecondaryConstructorToPrimary/withProperties.kt");
         }
     }
 }

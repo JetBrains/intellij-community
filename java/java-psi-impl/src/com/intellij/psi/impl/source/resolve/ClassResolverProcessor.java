@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
@@ -14,9 +15,11 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -171,7 +174,23 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
       return Domination.DOMINATES;
     }
 
+    // on-demand wins over module import
+    if (PsiUtil.isAvailable(JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS, myPlace)) {
+      boolean myIsModule = isImportedByModule(myCurrentFileContext);
+      boolean otherIsModule = isImportedByModule(info.getCurrentFileResolveScope());
+      if (myIsModule && otherOnDemand && !otherIsModule) {
+        return Domination.DOMINATED_BY;
+      }
+      if (myOnDemand && !myIsModule && otherIsModule) {
+        return Domination.DOMINATES;
+      }
+    }
+
     return Domination.EQUAL;
+  }
+
+  private static boolean isImportedByModule(@Nullable PsiElement context) {
+    return context instanceof PsiImportModuleStatement;
   }
 
   private boolean isAccessible(PsiClass otherClass) {

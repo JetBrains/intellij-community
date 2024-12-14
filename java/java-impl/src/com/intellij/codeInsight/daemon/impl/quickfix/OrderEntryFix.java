@@ -101,7 +101,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return Collections.emptyList();
-    VirtualFile refVFile = containingFile.getVirtualFile();
+    VirtualFile refVFile = containingFile.getOriginalFile().getVirtualFile();
     if (refVFile == null) return Collections.emptyList();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();

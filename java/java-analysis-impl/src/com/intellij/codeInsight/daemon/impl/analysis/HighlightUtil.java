@@ -409,6 +409,10 @@ public final class HighlightUtil {
     PsiType rType = rExpression.getType();
     HighlightInfo.Builder errorResult = null;
     if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true)) {
+      if (lType instanceof PsiLambdaParameterType || rType instanceof PsiLambdaParameterType) {
+        // Unresolved lambda parameter type is used: an error for parameter should be more descriptive, so let's avoid reporting type error
+        return null;
+      }
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
       String message = JavaErrorBundle.message("binary.operator.not.applicable", operatorText,
                                                JavaHighlightUtil.formatType(lType),
@@ -437,7 +441,8 @@ public final class HighlightUtil {
       // 15.26.2. Compound Assignment Operators
       IElementType opSign = TypeConversionUtil.convertEQtoOperation(sign);
       PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opSign, true);
-      if (type == null || lType == null || TypeConversionUtil.areTypesConvertible(type, lType)) {
+      if (type == null || lType == null || lType instanceof PsiLambdaParameterType || type instanceof PsiLambdaParameterType ||
+          TypeConversionUtil.areTypesConvertible(type, lType)) {
         return null;
       }
       if (IncompleteModelUtil.isIncompleteModel(assignment) && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) {
@@ -1867,7 +1872,10 @@ public final class HighlightUtil {
       List<IntentionAction> registrar = new ArrayList<>();
       HighlightFixUtil.registerFixesForExpressionStatement(statement, registrar);
       QuickFixAction.registerQuickFixActions(error, null, registrar);
-      if (expressionStatement.getParent() instanceof PsiCodeBlock) {
+      PsiElement parent = expressionStatement.getParent();
+      if (parent instanceof PsiCodeBlock ||
+          parent instanceof PsiIfStatement ||
+          parent instanceof PsiLoopStatement loop && loop.getBody() == expressionStatement) {
         IntentionAction action = PriorityIntentionActionWrapper
           .lowPriority(getFixFactory().createDeleteSideEffectAwareFix(expressionStatement));
         error.registerFix(action, null, null, null, null);
@@ -2023,6 +2031,9 @@ public final class HighlightUtil {
     for (int i = 1; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       PsiType rType = operand.getType();
+      if (lType instanceof PsiLambdaParameterType || rType instanceof PsiLambdaParameterType) {
+        return null;
+      }
       if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false) &&
           !(IncompleteModelUtil.isIncompleteModel(expression) &&
             IncompleteModelUtil.isPotentiallyConvertible(lType, rType, expression))) {
@@ -2043,7 +2054,7 @@ public final class HighlightUtil {
   static HighlightInfo.Builder checkUnaryOperatorApplicable(@NotNull PsiJavaToken token, @Nullable PsiExpression expression) {
     if (expression != null && !TypeConversionUtil.isUnaryOperatorApplicable(token, expression)) {
       PsiType type = expression.getType();
-      if (type == null) return null;
+      if (type == null || type instanceof PsiLambdaParameterType) return null;
       String message = JavaErrorBundle.message("unary.operator.not.applicable", token.getText(), JavaHighlightUtil.formatType(type));
 
       PsiElement parentExpr = token.getParent();

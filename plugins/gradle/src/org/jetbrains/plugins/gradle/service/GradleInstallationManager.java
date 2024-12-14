@@ -51,6 +51,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo;
 import static org.jetbrains.plugins.gradle.util.GradleJvmResolutionUtil.getGradleJvmLookupProvider;
@@ -446,9 +447,8 @@ public class GradleInstallationManager implements Disposable {
     if (!Files.isDirectory(libs)) {
       return null;
     }
-    try {
-      return Files.list(libs)
-        .map(path -> {
+    try (Stream<Path> children = Files.list(libs)) {
+      return children.map(path -> {
           Path fileName = path.getFileName();
           if (fileName != null) {
             Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(fileName.toString());

@@ -3,9 +3,13 @@
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.Location
+import com.intellij.execution.RunManager.Companion.getInstance
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
@@ -47,9 +51,33 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
     override fun isConfigurationFromContext(configuration: KotlinRunConfiguration, context: ConfigurationContext): Boolean {
         val entryPointContainer = getEntryPointContainer(context.location) ?: return false
         val startClassFQName = getMainClassJvmName(entryPointContainer) ?: return false
+        val jvmModule = context.module?.takeIf { it.platform.isJvm() }
 
-        return configuration.runClass == startClassFQName &&
-                context.module?.takeIf { it.platform.isJvm() } == configuration.configurationModule?.module
+        return isConfigurationFromContext(configuration, startClassFQName, jvmModule)
+    }
+
+    private fun isConfigurationFromContext(
+        configuration: KotlinRunConfiguration,
+        contextStartClassFQName: String,
+        contextJvmModule: Module?
+    ): Boolean {
+        return configuration.runClass == contextStartClassFQName &&
+                configuration.configurationModule?.module == contextJvmModule
+    }
+
+    override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? {
+        val entryPointContainer = getEntryPointContainer(context.location) ?: return null
+        val startClassFQName = getMainClassJvmName(entryPointContainer) ?: return null
+        val jvmModule = context.module?.takeIf { it.platform.isJvm() }
+
+        ProgressManager.checkCanceled()
+        return getConfigurationSettingsList(getInstance(context.project)).find { configurationSettings ->
+            isConfigurationFromContext(
+                configurationSettings.getConfiguration() as KotlinRunConfiguration,
+                startClassFQName,
+                jvmModule
+            )
+        }
     }
 
     companion object {

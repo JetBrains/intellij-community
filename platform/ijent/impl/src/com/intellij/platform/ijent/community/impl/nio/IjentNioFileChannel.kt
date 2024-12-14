@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelOpenedFile
@@ -26,7 +27,7 @@ internal class IjentNioFileChannel private constructor(
 ) : FileChannel() {
   companion object {
     @JvmStatic
-    internal suspend fun createReading(nioFs: IjentNioFileSystem, path: EelPath.Absolute): IjentNioFileChannel =
+    internal suspend fun createReading(nioFs: IjentNioFileSystem, path: EelPath): IjentNioFileChannel =
       IjentNioFileChannel(nioFs.ijentFs.openForReading(path).getOrThrowFileSystemException())
 
     @JvmStatic
@@ -61,9 +62,10 @@ internal class IjentNioFileChannel private constructor(
     var totalRead = 0L
     fsBlocking {
       handleThatSmartMultiBufferApi(dsts, offset, length) { buf ->
-        val read = when (val res = ijentOpenedFile.read(buf).getOrThrowFileSystemException()) {
-          is EelOpenedFile.Reader.ReadResult.Bytes -> res.bytesRead
-          is EelOpenedFile.Reader.ReadResult.EOF -> return@fsBlocking
+        val before = buf.position()
+        val read = when (ijentOpenedFile.read(buf).getOrThrowFileSystemException()) {
+          ReadResult.NOT_EOF -> buf.position() - before
+          ReadResult.EOF -> return@fsBlocking
         }
         totalRead += read
       }
@@ -233,6 +235,7 @@ internal class IjentNioFileChannel private constructor(
       is EelOpenedFile.Reader -> Unit
       is EelOpenedFile.Writer -> throw NonReadableChannelException()
     }
+    val before = dst.position()
     val readResult = fsBlocking {
       if (position == null) {
         ijentOpenedFile.read(dst)
@@ -242,8 +245,8 @@ internal class IjentNioFileChannel private constructor(
       }
     }.getOrThrowFileSystemException()
     return when (readResult) {
-      is EelOpenedFile.Reader.ReadResult.Bytes -> readResult.bytesRead
-      is EelOpenedFile.Reader.ReadResult.EOF -> -1
+      ReadResult.NOT_EOF -> dst.position() - before
+      ReadResult.EOF -> -1
     }
   }
 
@@ -335,14 +338,14 @@ internal class IjentNioFileChannel private constructor(
         // There are classes like `jdk.internal.jimage.BasicImageReader` that create a memory map and keep reading the file
         // with usual methods.
         // The current position in the file should remain the same after the copying.
-        when (val r = ijentOpenedFile.read(buffer, position).getOrThrowFileSystemException()) {
-          is EelOpenedFile.Reader.ReadResult.Bytes -> {
-            position += r.bytesRead
+        when (ijentOpenedFile.read(buffer, position).getOrThrowFileSystemException()) {
+          ReadResult.NOT_EOF -> {
+            position += buffer.position()
             buffer.flip()
             outputChannel.write(buffer)
             buffer.clear()
           }
-          is EelOpenedFile.Reader.ReadResult.EOF -> break
+          ReadResult.EOF -> break
         }
       }
     }

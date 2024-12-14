@@ -8,14 +8,11 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
     override fun collectFromElement(
@@ -26,8 +23,13 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
         collectFromLambdaImplicitParameterReceiver(element, sink)
     }
 
-    private fun isLambdaReturnExpression(e: PsiElement): Boolean =
-        e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable()
+    @OptIn(ExperimentalContracts::class)
+    private fun isLambdaReturnExpression(e: PsiElement): Boolean {
+        contract {
+            returns(true) implies (e is KtExpression)
+        }
+        return e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable()
+    }
 
     fun collectFromLambdaReturnExpression(
         element: PsiElement,
@@ -35,26 +37,25 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         if (!isLambdaReturnExpression(element)) return
 
-        val expression = element as? KtExpression ?: return
-        val functionLiteral = expression.getStrictParentOfType<KtFunctionLiteral>() ?: return
+        val functionLiteral = element.getStrictParentOfType<KtFunctionLiteral>() ?: return
         val lambdaExpression = functionLiteral.getStrictParentOfType<KtLambdaExpression>() ?: return
         val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"
 
         sink.whenOptionEnabled(SHOW_RETURN_EXPRESSIONS.name) {
             val isUsedAsExpression = analyze(lambdaExpression) {
-                expression.isUsedAsExpression
+                // TODO: KTIJ-16537 depends on KT-73473 : isUsedAsResultOfLambda should be used
+                element.isUsedAsExpression
             }
             if (!isUsedAsExpression) return@whenOptionEnabled
 
-            sink.addPresentation(InlineInlayPosition(expression.endOffset, true), hintFormat = HintFormat.default) {
+            sink.addPresentation(InlineInlayPosition(element.endOffset, true), hintFormat = HintFormat.default) {
                 text("^")
                 text(lambdaName,
-                     lambdaExpression.createSmartPointer().let {
-                         InlayActionData(
-                             PsiPointerInlayActionPayload(it),
-                             PsiPointerInlayActionNavigationHandler.HANDLER_ID
-                         )
-                     })
+                     InlayActionData(
+                         PsiPointerInlayActionPayload(lambdaExpression.createSmartPointer()),
+                         PsiPointerInlayActionNavigationHandler.HANDLER_ID
+                     )
+                )
             }
         }
     }

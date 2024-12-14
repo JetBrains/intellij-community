@@ -8,12 +8,12 @@ import com.intellij.openapi.project.Project
 val RANKING_EP_NAME = ExtensionPointName.create<SearchEverywhereMlService>("com.intellij.searchEverywhereMl.rankingService")
 
 private val RANKING_SERVICE: SearchEverywhereMlService
-  get() = RANKING_EP_NAME.extensions.first()
+  get() = RANKING_EP_NAME.extensionList.first()
 
 val ITEM_SELECTED_LISTENERS_EP_NAME = ExtensionPointName.create<SearchEverywhereItemSelectedListener>("com.intellij.searchEverywhereMl.itemSelectedListener")
 
 private val ITEM_SELECTED_LISTENERS
-  get() = ITEM_SELECTED_LISTENERS_EP_NAME.extensions
+  get() = ITEM_SELECTED_LISTENERS_EP_NAME.extensionList
 
 class SearchEverywhereMlServiceImpl : SearchEverywhereMlService by RANKING_SERVICE {
   override fun onItemSelected(project: Project?,

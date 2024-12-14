@@ -22,7 +22,7 @@ class EditorConfigConstantDescriptorParseHandler : EditorConfigDescriptorParseHa
       throw EditorConfigJsonSchemaException(jsonObject)
     }
 
-    val text = value.asString.toLowerCase(Locale.ROOT)
+    val text = value.asString.lowercase(Locale.ROOT)
     val documentation = tryGetString(jsonObject, DOCUMENTATION)
     val deprecation = tryGetString(jsonObject, DEPRECATION)
     return EditorConfigConstantDescriptor(text, documentation, deprecation)

@@ -1703,6 +1703,7 @@ f:com.intellij.openapi.actionSystem.Separator
 - <init>(java.util.function.Supplier):V
 - s:create():com.intellij.openapi.actionSystem.Separator
 - s:create(java.lang.String):com.intellij.openapi.actionSystem.Separator
+- equals(java.lang.Object):Z
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:getInstance():com.intellij.openapi.actionSystem.Separator
 - getText():java.lang.String
@@ -2212,10 +2213,9 @@ com.intellij.openapi.fileChooser.FileChooserPanel
 - a:toggleProjectDetection():Z
 c:com.intellij.openapi.fileChooser.FileSaverDescriptor
 - com.intellij.openapi.fileChooser.FileChooserDescriptor
-- java.lang.Cloneable
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String[]):V
-- getFileExtensions():java.lang.String[]
-- isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
 com.intellij.openapi.fileChooser.FileSaverDialog
 - a:save(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper
 - save(java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper
@@ -7617,12 +7617,15 @@ c:com.intellij.ui.components.Interpolator
 - <init>(java.util.function.Supplier,java.util.function.Consumer):V
 - getTarget():I
 - setTarget(I,I):V
-f:com.intellij.ui.components.JBBox
+c:com.intellij.ui.components.JBBox
 - javax.swing.Box
 - <init>(I):V
 - s:createHorizontalBox():com.intellij.ui.components.JBBox
 - s:createVerticalBox():com.intellij.ui.components.JBBox
 - getAccessibleContext():javax.accessibility.AccessibleContext
+pf:com.intellij.ui.components.JBBox$AccessibleJBBox
+- javax.swing.Box$AccessibleBox
+- getAccessibleRole():javax.accessibility.AccessibleRole
 c:com.intellij.ui.components.JBCheckBox
 - javax.swing.JCheckBox
 - com.intellij.ui.AnchorableComponent
@@ -7889,6 +7892,7 @@ c:com.intellij.ui.components.JBScrollBar
 - <init>(I,I,I,I,I):V
 - p:addImpl(java.awt.Component,java.lang.Object,I):V
 - canBePreprocessed(java.awt.event.MouseEvent):Z
+- s:createDefaultUI():javax.swing.plaf.ScrollBarUI
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ScrollBarUI
 - s:createUI(javax.swing.JComponent,Z):javax.swing.plaf.ScrollBarUI
 - getBlockIncrement(I):I
@@ -8527,7 +8531,7 @@ a:com.intellij.ui.components.panels.ValidatingComponent
 - setErrorText(java.lang.String):V
 - setLabel(javax.swing.JLabel):V
 c:com.intellij.ui.components.panels.VerticalBox
-- javax.swing.Box
+- com.intellij.ui.components.JBBox
 - <init>():V
 - add(java.awt.Component):java.awt.Component
 f:com.intellij.ui.components.panels.VerticalLayout
@@ -8970,50 +8974,6 @@ f:com.intellij.ui.layout.ComponentPredicateKt
 - sf:or(com.intellij.ui.layout.ComponentPredicate,com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueIs(javax.swing.JComboBox,java.lang.Object):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueMatches(javax.swing.JComboBox,kotlin.jvm.functions.Function1):com.intellij.ui.layout.ComponentPredicate
-c:com.intellij.ui.mac.screenmenu.Menu
-- com.intellij.ui.mac.screenmenu.MenuItem
-- <init>(java.lang.String):V
-- add(com.intellij.ui.mac.screenmenu.MenuItem):com.intellij.ui.mac.screenmenu.MenuItem
-- add(com.intellij.ui.mac.screenmenu.MenuItem,I,Z):V
-- beginFill():V
-- dispose():V
-- endFill():V
-- endFill(Z):V
-- findIndexByTitle(java.lang.String):I
-- findItemByTitle(java.lang.String):com.intellij.ui.mac.screenmenu.MenuItem
-- s:getAppMenu():com.intellij.ui.mac.screenmenu.Menu
-- getOpenTimeMs():J
-- invokeMenuClosing():V
-- f:isAnyChildOpened():Z
-- s:isJbScreenMenuEnabled():Z
-- isOpened():Z
-- menuNeedsUpdate():V
-- menuWillOpen():V
-- propertyChange(java.beans.PropertyChangeEvent):V
-- s:renameAppMenuItems():V
-- setOnClose(java.awt.Component,java.lang.Runnable):V
-- setOnOpen(java.awt.Component,java.lang.Runnable):V
-- setTitle(java.lang.String):V
-f:com.intellij.ui.mac.screenmenu.MenuBar
-- com.intellij.ui.mac.screenmenu.Menu
-- <init>(java.lang.String,javax.swing.JFrame):V
-- dispose():V
-- setFrame(java.awt.Window):V
-c:com.intellij.ui.mac.screenmenu.MenuItem
-- com.intellij.openapi.Disposable
-- java.beans.PropertyChangeListener
-- <init>():V
-- dispose():V
-- listenPresentationChanges(com.intellij.openapi.actionSystem.Presentation):V
-- propertyChange(java.beans.PropertyChangeEvent):V
-- setAcceleratorText(java.lang.String):V
-- setActionDelegate(java.lang.Runnable):V
-- setEnabled(Z):V
-- setIcon(javax.swing.Icon):V
-- setLabel(java.lang.String):V
-- setLabel(java.lang.String,javax.swing.KeyStroke):V
-- setState(Z):V
-- setSubmenu(com.intellij.ui.mac.screenmenu.Menu,Z):V
 f:com.intellij.ui.mac.touchbar.Touchbar
 - <init>():V
 - s:addActions(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup):V

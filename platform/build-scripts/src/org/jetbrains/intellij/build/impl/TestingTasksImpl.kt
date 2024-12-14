@@ -648,7 +648,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     if (context is ArchivedCompilationContext) {
       context.archivesLocation.absolutePathString().let {
-        systemProperties.compute("vfs.additional-allowed-roots") { _, old -> if (old == null) it else "$it:$old" }
+        systemProperties.compute("vfs.additional-allowed-roots") { _, old -> if (old == null) it else "$it${File.pathSeparatorChar}$old" }
         systemProperties.put("intellij.test.jars.location", it)
       }
       context.paths.tempDir.resolve("tests.jar.mapping").let { file ->

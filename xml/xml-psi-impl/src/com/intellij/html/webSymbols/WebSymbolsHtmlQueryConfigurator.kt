@@ -6,6 +6,7 @@ import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.createSmartPointer
@@ -17,6 +18,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTE_VALUES
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.WebSymbolsContext
@@ -259,17 +261,26 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
         val isBooleanAttribute = HtmlUtil.isBooleanAttribute(descriptor, null)
         return WebSymbolHtmlAttributeValue.create(
           null,
-          if (isBooleanAttribute) {
-            WebSymbolHtmlAttributeValue.Type.BOOLEAN
-          }
-          else {
-            WebSymbolHtmlAttributeValue.Type.STRING
+          when {
+            isBooleanAttribute -> WebSymbolHtmlAttributeValue.Type.BOOLEAN
+            descriptor.isEnumerated -> WebSymbolHtmlAttributeValue.Type.ENUM
+            else -> WebSymbolHtmlAttributeValue.Type.STRING
           },
           !isBooleanAttribute,
           descriptor.defaultValue,
-          null
+          null,
         )
       }
+
+    override fun getSymbols(
+      qualifiedKind: WebSymbolQualifiedKind,
+      params: WebSymbolsListSymbolsQueryParams,
+      scope: Stack<WebSymbolsScope>,
+    ): List<WebSymbolsScope> =
+      if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)
+        descriptor.enumeratedValues?.map { HtmlAttributeValueSymbol(it) } ?: emptyList()
+      else
+        emptyList()
 
     override fun createPointer(): Pointer<HtmlAttributeDescriptorBasedSymbol> {
       val descriptor = this.descriptor
@@ -313,6 +324,21 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       get() = WebSymbol.NAMESPACE_JS
 
     override fun createPointer(): Pointer<HtmlEventDescriptorBasedSymbol> =
+      Pointer.hardPointer(this)
+
+  }
+
+  private class HtmlAttributeValueSymbol(override val name: @NlsSafe String) : WebSymbol {
+    override val origin: WebSymbolOrigin
+      get() = WebSymbolOrigin.empty()
+
+    override val namespace: @NlsSafe SymbolNamespace
+      get() = WebSymbol.NAMESPACE_HTML
+
+    override val kind: @NlsSafe SymbolKind
+      get() = WebSymbol.KIND_HTML_ATTRIBUTE_VALUES
+
+    override fun createPointer(): Pointer<HtmlAttributeValueSymbol> =
       Pointer.hardPointer(this)
 
   }

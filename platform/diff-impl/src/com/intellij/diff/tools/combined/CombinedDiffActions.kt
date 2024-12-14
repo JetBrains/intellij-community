@@ -147,6 +147,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    val diffModesSettingsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_MODES)
     val editorSettingsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_SETTINGS)
     val ignorePolicyGroup = CombinedIgnorePolicySettingAction(settings).actions.apply {
       add(Separator.create(message("option.ignore.policy.group.name")), Constraints.FIRST)
@@ -156,6 +157,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
     }
 
     val actions = mutableListOf<AnAction>()
+    actions.add(diffModesSettingsGroup)
     actions.add(editorSettingsGroup)
     actions.add(CombinedToggleExpandByDefaultAction(settings, foldingModels))
     actions.addAll(myActions)

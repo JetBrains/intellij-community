@@ -1,17 +1,18 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import com.intellij.openapi.diagnostic.LoggerRt;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
-  private static final LoggerRt LOG = LoggerRt.getInstance(SyntaxNodeDescriptor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SyntaxNodeDescriptorImpl.class);
 
   private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
@@ -128,7 +129,7 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
       return myParentNode.findInRepository(ruleId);
     }
     if (syntaxNodeDescriptor == null) {
-      LOG.warn("Can't find repository " + ruleId);
+      LOG.warn("Can't find repository {}", ruleId);
       return EMPTY_NODE;
     }
     return syntaxNodeDescriptor;

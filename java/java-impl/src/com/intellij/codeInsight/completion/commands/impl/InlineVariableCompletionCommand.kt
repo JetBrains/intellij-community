@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
+import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
 import com.intellij.lang.refactoring.InlineActionHandler
@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class InlineVariableCompletionCommand : OldCompletionCommand() {
+class InlineVariableCompletionCommand : ApplicableCompletionCommand() {
   override val name: String
     get() = "inline"
 

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vfs.impl.GenericZipFile.GenericZipEntry;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
@@ -14,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     if (USE_NIO_HANDLER) {
       wrapper = new JavaNioZipFileWrapper(file);
     }
-    else if (isFileLikelyLocal(file)) {
+    else if (isFileLocal(file)) {
       wrapper = new JavaZipFileWrapper(file.toFile());
     }
     else {
@@ -46,14 +47,26 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     return wrapper;
   }
 
-  private static boolean isFileLikelyLocal(Path file) {
-    if (SystemInfo.isWindows) {
-      // WSL is locally reachable from Windows, hence we want to detect if the file resides completely at Windows side
-      return OSAgnosticPathUtil.startsWithWindowsDrive(file.toString());
+  /**
+   * Here, a file is considered local if it is accessible by the OS of the IDE.
+   * JVM internals assume that all files are local to it.
+   */
+  private static boolean isFileLocal(Path file) {
+    FileSystem pathFileSystem = file.getFileSystem();
+
+    if (pathFileSystem.equals(FileSystems.getDefault())) {
+      try {
+        // This file is located in the module `platform.core.impl`, which is included in kotlinc.
+        // We do not want to have references to MultiRoutingFileSystem in kotlinc,
+        // hence we are using reflection to access the needed methods
+        return !(boolean)pathFileSystem.getClass().getMethod("isRoutable", Path.class).invoke(pathFileSystem, file);
+      }
+      catch (Throwable e) {
+        return true;
+      }
     }
     else {
-      // we intentionally use java.io here, as we need to ask the local file system if it recognizes the path
-      return file.toFile().exists();
+      return true;
     }
   }
 

@@ -82,7 +82,7 @@ object DirectiveBasedActionUtils {
 
         UsefulTestCase.assertOrderedEquals(
             "All actual $name should be mentioned in test data with '$directive' directive. " +
-                    "But no unnecessary $name should be me mentioned, file:\n${file.text}",
+                    "But no unnecessary $name should be mentioned, file:\n${file.text}",
             actual,
             expected,
         )
@@ -129,7 +129,7 @@ object DirectiveBasedActionUtils {
 
         KotlinLightCodeInsightFixtureTestCaseBase.assertOrderedEquals(
             "All actual $name should be mentioned in test data with '$directive' directive. " +
-                    "But no unnecessary $name should be me mentioned, file:\n${file.text}",
+                    "But no unnecessary $name should be mentioned, file:\n${file.text}",
             actual,
             expected,
         )

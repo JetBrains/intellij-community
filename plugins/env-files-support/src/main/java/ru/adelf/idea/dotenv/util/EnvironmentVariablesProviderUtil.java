@@ -1,26 +1,21 @@
 package ru.adelf.idea.dotenv.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider;
 
 public class EnvironmentVariablesProviderUtil {
-    public static final EnvironmentVariablesProvider[] PROVIDERS = getEnvVariablesProviders();
+    private static final ExtensionPointName<EnvironmentVariablesProvider> providersEP
+            = new ExtensionPointName<>("ru.adelf.idea.dotenv.environmentVariablesProvider");
 
-    public static final EnvironmentVariablesUsagesProvider[] USAGES_PROVIDERS = getEnvVariablesUsagesProviders();
+    private static final ExtensionPointName<EnvironmentVariablesUsagesProvider> usageProvidersEP
+            = new ExtensionPointName<>("ru.adelf.idea.dotenv.environmentVariablesUsagesProvider");
 
-    private static EnvironmentVariablesProvider[] getEnvVariablesProviders() {
-        return getExtensions("ru.adelf.idea.dotenv.environmentVariablesProvider");
+    public static EnvironmentVariablesProvider[] getEnvVariablesProviders() {
+        return providersEP.getExtensions();
     }
 
-    private static EnvironmentVariablesUsagesProvider[] getEnvVariablesUsagesProviders() {
-        return getExtensions("ru.adelf.idea.dotenv.environmentVariablesUsagesProvider");
-    }
-
-    private static <T> T[] getExtensions(@NotNull String name) {
-        ExtensionPointName<T> pointName = new ExtensionPointName<>(name);
-
-        return pointName.getExtensions();
+    public static EnvironmentVariablesUsagesProvider[] getEnvVariablesUsagesProviders() {
+        return usageProvidersEP.getExtensions();
     }
 }

@@ -50,6 +50,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
 
   @NotNull
   @Override
+  @Unmodifiable
   public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
       return getSupportedLanguages(getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project));

@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -60,6 +61,7 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
                                                                                @NotNull List<? extends AnAction> visibleChildren) {
     return myDelegate.postProcessVisibleChildren(e, visibleChildren);

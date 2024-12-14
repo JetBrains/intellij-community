@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.imports.ImportMapper
 import org.jetbrains.kotlin.idea.imports.KotlinIdeDefaultImportProvider
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -71,11 +73,11 @@ internal class OptimizedImportsBuilder(
         val importsToGenerate = hashSetOf<ImportPath>()
         importsToGenerate += importRules.filterIsInstance<ImportRule.Add>().map { it.importPath }
 
-        val importableSymbols = usedReferencesData.usedSymbols.mapNotNull { it.run { restore() } }
+        val importableSymbols = usedReferencesData.usedSymbols
 
         val symbolsByParentFqName = HashMap<FqName, MutableSet<SymbolInfo>>()
         for (importableSymbol in importableSymbols) {
-            val fqName = importableSymbol.run { computeImportableName() } ?: continue
+            val fqName = importableSymbol.importableName ?: continue
             for (name in usedReferencesData.usedDeclarations.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
@@ -136,7 +138,7 @@ internal class OptimizedImportsBuilder(
                 val parentFqName = fqName.parent()
 
                 val siblingsToImport = symbolsByParentFqName.getValue(parentFqName)
-                for (descriptor in siblingsToImport.filter { it.run { computeImportableName() } == fqName }) {
+                for (descriptor in siblingsToImport.filter { it.importableName == fqName }) {
                     siblingsToImport.remove(descriptor)
                 }
 
@@ -168,11 +170,19 @@ internal class OptimizedImportsBuilder(
                 for (originalReference in references) {
                     val alternativeReference = referencesMap.findReferenceInCopy(originalReference)
 
-                    val originalUsedReference = UsedReference.run { createFrom(originalReference) }
-                    val alternativeUsedReference = UsedReference.run { createFrom(alternativeReference) }
-
-                    val originalSymbols = originalUsedReference?.run { resolveToReferencedSymbols() }.orEmpty()
-                    val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }.orEmpty()
+                    val originalSymbols = analyze(file) {
+                        // We use the original file to analyze the original reference, because if it is a dangling file,
+                        // it cannot depend on the fileWithReplacedImports.file which is also dangling by its nature.
+                        // 
+                        // This can happen during J2K conversion, for example. 
+                        // 
+                        // See KT-73836 for the details.
+                        
+                        resolveToSymbolInfo(originalReference) 
+                    }
+                    
+                    val alternativeSymbols = 
+                        resolveToSymbolInfo(alternativeReference)
 
                     if (!areTargetsEqual(originalSymbols, alternativeSymbols)) {
                         val isTypePosition = originalReference.element.parent is KtUserType
@@ -185,7 +195,7 @@ internal class OptimizedImportsBuilder(
                         }
 
                         for (conflictingSymbol in symbolsToLock) {
-                            lockImportForSymbol(conflictingSymbol.run { toSymbolInfo() }, names)
+                            lockImportForSymbol(conflictingSymbol, names)
                         }
                     }
                 }
@@ -193,28 +203,31 @@ internal class OptimizedImportsBuilder(
         }
     }
 
-    private fun KaSession.areTargetsEqual(
-        originalSymbols: Collection<ReferencedSymbol>,
-        alternativeSymbols: Collection<ReferencedSymbol>
+    private fun KaSession.resolveToSymbolInfo(originalReference: KtReference): List<SymbolInfo> {
+        val usedReference = UsedReference.run { createFrom(originalReference) } ?: return emptyList()
+        val referencedSymbols = usedReference.run { resolveToReferencedSymbols() }
+        return referencedSymbols.map { it.run { toSymbolInfo() } }
+    }
+
+    private fun areTargetsEqual(
+        originalSymbols: Collection<SymbolInfo>,
+        alternativeSymbols: Collection<SymbolInfo>
     ): Boolean {
         if (originalSymbols.size != alternativeSymbols.size) return false
 
         return originalSymbols.zip(alternativeSymbols).all { (originalSymbol, newSymbol) -> areTargetsEqual(originalSymbol, newSymbol) }
     }
 
-    private fun KaSession.areTargetsEqual(
-        originalSymbol: ReferencedSymbol,
-        alternativeSymbol: ReferencedSymbol,
+    private fun areTargetsEqual(
+        originalSymbol: SymbolInfo,
+        alternativeSymbol: SymbolInfo,
     ): Boolean {
-        val originalSymbolInfo = originalSymbol.run { toSymbolInfo() }
-        val alternativeSymbolInfo = alternativeSymbol.run { toSymbolInfo() }
-
-        return originalSymbolInfo == alternativeSymbolInfo ||
-                importSymbolWithMapping(originalSymbolInfo) == importSymbolWithMapping(alternativeSymbolInfo)
+        return originalSymbol == alternativeSymbol || 
+                importSymbolWithMapping(originalSymbol) == importSymbolWithMapping(alternativeSymbol)
     }
 
-    private fun KaSession.lockImportForSymbol(symbol: SymbolInfo, existingNames: Collection<Name>) {
-        val name = symbol.run { computeImportableName() }?.shortName() ?: return
+    private fun lockImportForSymbol(symbol: SymbolInfo, existingNames: Collection<Name>) {
+        val name = symbol.importableName?.shortName() ?: return
         val fqName = importSymbolWithMapping(symbol) ?: return
         val names = usedReferencesData.usedDeclarations.getOrElse(fqName) { listOf(name) }.intersect(existingNames.toSet())
 
@@ -242,8 +255,8 @@ internal class OptimizedImportsBuilder(
         return ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion)
     }
 
-    private fun KaSession.importSymbolWithMapping(symbol: SymbolInfo): FqName? {
-        val importableName = symbol.run { computeImportableName() } ?: return null
+    private fun importSymbolWithMapping(symbol: SymbolInfo): FqName? {
+        val importableName = symbol.importableName ?: return null
 
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }
@@ -251,12 +264,12 @@ internal class OptimizedImportsBuilder(
     private fun KaSession.canUseStarImport(importableSymbol: SymbolInfo, fqName: FqName): Boolean = when {
         fqName.parent().isRoot -> false
         // star import from objects is not allowed
-        (importableSymbol.run { containingClassSymbol() } as? KaClassSymbol)?.classKind?.isObject == true -> false
+        (containingClassSymbol(importableSymbol) as? KaClassSymbol)?.classKind?.isObject == true -> false
         else -> true
     }
 
     private fun KaSession.nameCountToUseStar(symbol: SymbolInfo): Int {
-        if (symbol.run { containingClassSymbol() } == null) {
+        if (containingClassSymbol(symbol) == null) {
             return codeStyleSettings.NAME_COUNT_TO_USE_STAR_IMPORT
         } else {
             return codeStyleSettings.NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS

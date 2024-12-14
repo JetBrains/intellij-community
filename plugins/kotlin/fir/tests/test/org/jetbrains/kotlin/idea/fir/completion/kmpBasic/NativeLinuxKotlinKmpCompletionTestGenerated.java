@@ -1738,11 +1738,6 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         public void testParameterType5() throws Exception {
             runTest("../../completion/testData/basic/common/lambdaSignature/ParameterType5.kt");
         }
-
-        @TestMetadata("TrailingLambdaParameterName1.kt")
-        public void testTrailingLambdaParameterName1() throws Exception {
-            runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName1.kt");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -2365,6 +2360,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         @TestMetadata("KTIJ-26747.kt")
         public void testKTIJ_26747() throws Exception {
             runTest("../../completion/testData/basic/common/primaryConstructor/KTIJ-26747.kt");
+        }
+
+        @TestMetadata("KTIJ-30490.kt")
+        public void testKTIJ_30490() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/KTIJ-30490.kt");
         }
 
         @TestMetadata("parameterDefaultValue.kt")

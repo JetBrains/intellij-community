@@ -2,6 +2,7 @@ package org.jetbrains.yaml.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -10,6 +11,7 @@ import java.util.Collection;
  */
 public interface YAMLMapping extends YAMLCompoundValue {
   @NotNull
+  @Unmodifiable
   Collection<YAMLKeyValue> getKeyValues();
 
   @Nullable

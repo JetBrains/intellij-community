@@ -161,6 +161,11 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
 
+    <group id="ToolbarPopupActions.XDebugger.ToolWindow.TopToolbar3">
+      <group id="DebugToolbarQuickActions" class="com.intellij.xdebugger.impl.actions.DebuggerToolbarQuickActionsGroup" searchable="false"
+             popup="true"/>
+    </group>
+
     <group>
       <separator text="Debug"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>

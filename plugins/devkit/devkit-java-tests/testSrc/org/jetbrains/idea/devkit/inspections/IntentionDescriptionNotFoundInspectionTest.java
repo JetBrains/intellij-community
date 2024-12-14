@@ -86,4 +86,10 @@ public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightF
     assertNotNull(path);
     assertTrue(path.exists());
   }
+
+  public void testDescriptionDirectoryNameCompletion() {
+    myFixture.copyDirectoryToProject("descriptionDirectoryNameCompletion", "");
+    myFixture.testCompletionVariants("plugin.xml",
+                                     "IntentionDescriptionDirectory_1", "IntentionDescriptionDirectory_2");
+  }
 }

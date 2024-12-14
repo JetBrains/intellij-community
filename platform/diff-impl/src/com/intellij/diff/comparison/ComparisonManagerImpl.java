@@ -159,6 +159,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
+  @Unmodifiable
   public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
                                               @NotNull CharSequence text2,
                                               @NotNull LineOffsets lineOffsets1,
@@ -194,6 +195,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
+  @Unmodifiable
   public List<LineFragment> compareLinesInner(@NotNull Range boundaryRange,
                                               @NotNull CharSequence text1,
                                               @NotNull CharSequence text2,
@@ -630,6 +632,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
 
   @NotNull
+  @Unmodifiable
   public List<LineFragment> compareLinesWithIgnoredRanges(@NotNull CharSequence text1,
                                                           @NotNull CharSequence text2,
                                                           @NotNull LineOffsets lineOffsets1,

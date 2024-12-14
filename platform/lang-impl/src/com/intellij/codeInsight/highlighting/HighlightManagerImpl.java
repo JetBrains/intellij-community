@@ -26,20 +26,20 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class HighlightManagerImpl extends HighlightManager {
   public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
@@ -70,11 +70,8 @@ public final class HighlightManagerImpl extends HighlightManager {
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
-    Set<RangeHighlighter> highlighters = editor.getUserData(HIGHLIGHTER_SET_KEY);
-    if (highlighters == null && toCreate) {
-      highlighters = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHTER_SET_KEY, new HashSet<>());
-    }
-    return highlighters;
+    return toCreate ? ConcurrencyUtil.computeIfAbsent(editor, HIGHLIGHTER_SET_KEY, () -> new HashSet<>())
+                    : editor.getUserData(HIGHLIGHTER_SET_KEY);
   }
 
   public @NotNull RangeHighlighter @NotNull [] getHighlighters(@NotNull Editor editor) {

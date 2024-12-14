@@ -26,17 +26,17 @@ class GradleServerDebugAware : GradleTargetEnvironmentAware {
                                                progressIndicator: TargetProgressIndicator) {
     val targetServerDebugPort = Registry.intValue("gradle.execution.target.server.debug.port", -1)
     if (targetServerDebugPort == -1) return
-    val java9plus: Boolean = environmentSetup.environmentConfiguration.runtimes
+    val java9plus: Boolean = environmentSetup.getEnvironmentConfiguration().runtimes
                                .findByType<JavaLanguageRuntimeConfiguration>()
                                ?.run { javaVersionString.nullize() }
                                ?.run { JavaSdkVersion.fromVersionString(this)?.isAtLeast(JavaSdkVersion.JDK_1_9) } ?: false
     val remoteAddressForVmParams = if (java9plus) "*:$targetServerDebugPort" else targetServerDebugPort.toString()
     val javaParamsDelegate = object : JavaParameters() {
-      override fun getClassPath() = environmentSetup.javaParameters.classPath
-      override fun getVMParametersList(): ParametersList = environmentSetup.javaParameters.vmParametersList
-      override fun getProgramParametersList(): ParametersList = environmentSetup.javaParameters.programParametersList
+      override fun getClassPath() = environmentSetup.getJavaParameters().classPath
+      override fun getVMParametersList(): ParametersList = environmentSetup.getJavaParameters().vmParametersList
+      override fun getProgramParametersList(): ParametersList = environmentSetup.getJavaParameters().programParametersList
     }
-    javaParamsDelegate.jdk = environmentSetup.javaParameters.jdk
+    javaParamsDelegate.jdk = environmentSetup.getJavaParameters().jdk
     val remoteConnection: RemoteConnection = RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remoteAddressForVmParams)
       .suspend(true)
       .create(javaParamsDelegate)

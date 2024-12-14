@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -50,6 +51,15 @@ public final class Separator extends DecorativeElement implements DumbAware, Lig
 
   public @NlsContexts.Separator String getText() {
     return myDynamicText.get();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null || getClass() != obj.getClass()) return false;
+
+    Separator other = (Separator) obj;
+    return Objects.equals(myDynamicText, other.myDynamicText);
   }
 
   @Override

@@ -54,10 +54,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -113,7 +110,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   }
 
   @Override
-  public String getActionName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @Nullable String getCustomActionName() {
     return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 

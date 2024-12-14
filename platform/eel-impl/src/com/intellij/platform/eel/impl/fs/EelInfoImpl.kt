@@ -8,7 +8,7 @@ import com.intellij.platform.eel.path.EelPath
 data class EelUserPosixInfoImpl(
   override val uid: Int,
   override val gid: Int,
-  override val home: EelPath.Absolute,
+  override val home: EelPath,
 ) : EelUserPosixInfo
 
-data class EelUserWindowsInfoImpl(override val home: EelPath.Absolute) : EelUserWindowsInfo
+data class EelUserWindowsInfoImpl(override val home: EelPath) : EelUserWindowsInfo

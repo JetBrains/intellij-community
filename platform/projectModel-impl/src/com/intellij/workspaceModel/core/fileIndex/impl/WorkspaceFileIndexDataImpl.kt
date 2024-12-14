@@ -154,7 +154,7 @@ internal class WorkspaceFileIndexDataImpl(
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertReadAccess()
     nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix, nonExistingFilesRegistry)
   }
 
@@ -265,14 +265,14 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   override fun resetCustomContributors() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     nonIncrementalContributors.resetCache()
     resetFileCache()
   }
 
   override fun markDirty(entityPointers: Collection<EntityPointer<WorkspaceEntity>>,
                          filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexDataMetrics.markDirtyTimeNanosec.addMeasuredTime {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     dirtyEntities.addAll(entityPointers)
     dirtyFiles.addAll(filesToInvalidate)
     hasDirtyEntities = dirtyEntities.isNotEmpty()
@@ -280,7 +280,7 @@ internal class WorkspaceFileIndexDataImpl(
 
   override fun onEntitiesChanged(event: VersionedStorageChange,
                                  storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTime {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, storageKind, event)
     }
@@ -290,7 +290,7 @@ internal class WorkspaceFileIndexDataImpl(
   override fun updateDirtyEntities() {
     val start = Nanoseconds.now()
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     for (file in dirtyFiles) {
       val collection = fileSets.remove(file)
       collection?.forEach { 

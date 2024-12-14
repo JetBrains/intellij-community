@@ -4,10 +4,11 @@ package org.jetbrains.idea.maven.utils.library;
 import com.intellij.jarRepository.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +31,6 @@ public class RepositoryUtilsTest extends LibraryTest {
     });
   }
 
-  @Test
   public void testLibraryReloadFixesCorruptedJar() throws IOException {
     var group = "test";
     var artifact = "test";
@@ -61,14 +61,12 @@ public class RepositoryUtilsTest extends LibraryTest {
     assertEquals(corruptedJar, fileContent(jarPath));
 
     // reload library
-    var result = getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
-    assertSize(1, result);
+    getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
 
     // verify jar became valid
     assertEquals(validJar, fileContent(jarPath));
   }
 
-  @Test
   public void testLibraryReloadDoesNotDeleteUnrelatedFiles() throws IOException {
     var group = "test";
     var artifact = "test";
@@ -100,11 +98,44 @@ public class RepositoryUtilsTest extends LibraryTest {
     WriteCommandAction.runWriteCommandAction(myProject, () -> modifiableModel.commit());
 
     // reload library
-    var result = getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
-    assertSize(1, result);
+    getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
 
     // verify file still exists
     assertTrue(Files.exists(anotherPath));
+  }
+
+  public void testGetStorageRoot() {
+    // zero urls returns null common root
+    assertNull(RepositoryUtils.getStorageRoot(ArrayUtil.EMPTY_STRING_ARRAY));
+
+    // one url, returns non-filename part
+    assertEquals(FileUtil.toSystemDependentName("C:/path/to"),
+                 RepositoryUtils.getStorageRoot(new String[]{"jar://C:/path/to/jar!/"}));
+    assertEquals(FileUtil.toSystemDependentName("/Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2"),
+                 RepositoryUtils.getStorageRoot(new String[]{"jar:///Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar!/"}));
+    assertEquals(FileUtil.toSystemDependentName("/Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2"),
+                 RepositoryUtils.getStorageRoot(new String[]{"file:///Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar"}));
+
+    // two urls, different root
+    assertNull(
+      RepositoryUtils.getStorageRoot(
+        new String[]{
+          "file:///Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar",
+          "file:///Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.1/jackson-jr-objects-2.17.1.jar",
+        }
+      )
+    );
+
+    // two urls, same root
+    assertEquals(
+      FileUtil.toSystemDependentName("/Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2"),
+      RepositoryUtils.getStorageRoot(
+        new String[]{
+          "file:///Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar",
+          "jar:///Users/x/.m2.custom/repository/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.3.jar!/",
+        }
+      )
+    );
   }
 
   private static String fileContent(Path path) {

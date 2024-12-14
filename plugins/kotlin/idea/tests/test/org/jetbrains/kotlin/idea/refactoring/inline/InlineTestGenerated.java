@@ -2310,6 +2310,21 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/InStringTemplates.kt");
             }
 
+            @TestMetadata("inferredOutProjection.kt")
+            public void testInferredOutProjection() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/inferredOutProjection.kt");
+            }
+
+            @TestMetadata("inferredProjection.kt")
+            public void testInferredProjection() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/inferredProjection.kt");
+            }
+
+            @TestMetadata("inferredStarProjection.kt")
+            public void testInferredStarProjection() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/inferredStarProjection.kt");
+            }
+
             @TestMetadata("InvokeFunction.kt")
             public void testInvokeFunction() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/InvokeFunction.kt");
@@ -2500,6 +2515,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/NullableUnitReturnType3.kt");
             }
 
+            @TestMetadata("objectFunction.kt")
+            public void testObjectFunction() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/objectFunction.kt");
+            }
+
             @TestMetadata("OuterClassReceiver.kt")
             public void testOuterClassReceiver() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/OuterClassReceiver.kt");
@@ -2518,6 +2538,16 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("RecursiveFunctionOnDeclaration.kt")
             public void testRecursiveFunctionOnDeclaration() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/RecursiveFunctionOnDeclaration.kt");
+            }
+
+            @TestMetadata("redundantEnumImport.kt")
+            public void testRedundantEnumImport() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/redundantEnumImport.kt");
+            }
+
+            @TestMetadata("redundantImport.kt")
+            public void testRedundantImport() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/redundantImport.kt");
             }
 
             @TestMetadata("Reference.kt")
@@ -2693,6 +2723,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("withImportAlias3.kt")
             public void testWithImportAlias3() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/withImportAlias3.kt");
+            }
+
+            @TestMetadata("withIntersectionTypes.kt")
+            public void testWithIntersectionTypes() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/withIntersectionTypes.kt");
             }
 
             @TestMetadata("withoutUsage.kt")

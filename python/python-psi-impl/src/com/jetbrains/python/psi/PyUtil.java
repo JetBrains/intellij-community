@@ -466,9 +466,8 @@ public final class PyUtil {
    */
   @NotNull
   public static List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
-    if (element instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference ref = ((PyReferenceOwner)element).getReference(resolveContext);
-      return filterTopPriorityResults(ref.multiResolve(false));
+    if (element instanceof PyReferenceOwner referenceOwner) {
+      return multiResolveTopPriority(referenceOwner.getReference(resolveContext));
     }
     else {
       final PsiReference reference = element.getReference();
@@ -478,9 +477,13 @@ public final class PyUtil {
 
   @NotNull
   public static List<PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
-    return filterTopPriorityResults(reference.multiResolve(false));
+    return filterTopPriorityElements(Arrays.asList(reference.multiResolve(false)));
   }
 
+  /**
+   * @deprecated Use {@link #filterTopPriorityElements(List)}
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
   public static List<PsiElement> filterTopPriorityResults(ResolveResult @NotNull [] resolveResults) {
     if (resolveResults.length == 0) return Collections.emptyList();

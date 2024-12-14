@@ -12,9 +12,9 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.UnmodifiableHashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +145,8 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     if(type2.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type2 instanceof PsiClassReferenceType)) {
       return type1.getAnnotationProvider();
     }
-    return () -> ArrayUtil.mergeArrays(type1.getAnnotations(), type2.getAnnotations());
+    return () -> StreamEx.of(type1.getAnnotations()).append(type2.getAnnotations()).distinct(PsiAnnotation::getText)
+      .toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   private class SubstitutionVisitor extends PsiTypeMapper {

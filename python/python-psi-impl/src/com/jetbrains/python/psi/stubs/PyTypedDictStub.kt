@@ -24,4 +24,4 @@ interface PyTypedDictStub : CustomTargetExpressionStub {
 }
 
 
-data class PyTypedDictFieldStub(val name: String, val type: Optional<String>, val isReadOnly: Boolean)
+data class PyTypedDictFieldStub(val name: String, val type: String?, val isReadOnly: Boolean)

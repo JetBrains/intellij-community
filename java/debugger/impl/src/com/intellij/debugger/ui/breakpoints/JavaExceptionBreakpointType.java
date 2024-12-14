@@ -68,7 +68,13 @@ public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<Ja
   @Nls
   @Override
   public String getGeneralDescription(XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
-    return JavaDebuggerBundle.message("exception.breakpoint.description");
+    String name = breakpoint.getProperties().myQualifiedName;
+    if (name != null) {
+      return JavaDebuggerBundle.message("exception.breakpoint.description.with.type", name);
+    }
+    else {
+      return JavaDebuggerBundle.message("exception.breakpoint.description.any");
+    }
   }
 
   @Override

@@ -9,6 +9,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -98,7 +99,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
 
   /**
    * Override to report problems at file level.
-   *
+   * Please use {@link #buildVisitor} instead, and do the analysis from there in a more fine-grained and latency-friendly way,
+   * as opposed to this {@code checkFile}, which should finish the analysis of the whole file before displaying result.
    * @param file       to check.
    * @param manager    InspectionManager to ask for ProblemDescriptor's from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
@@ -214,6 +216,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
+  @Unmodifiable
   public @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     return manager.defaultProcessFile(this, file);
   }

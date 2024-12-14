@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.SuggestedNameInfo
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
@@ -68,6 +70,8 @@ abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
                     )
                 }
             }
+        } else if (element is KtNamedDeclaration ) {
+            result.addIfNotNull(element.name)
         }
 
         return null

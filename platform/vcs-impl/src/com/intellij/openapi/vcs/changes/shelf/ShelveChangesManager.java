@@ -211,6 +211,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       new Task.Modal(myProject, VcsBundle.message("shelve.copying.shelves.to.progress"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          LOG.info(String.format("Migrating existing shelves. Old location: %s, new location: %s",
+                                 schemeManager.getAllSchemes().size(), newSchemeManager.getAllSchemes().size()));
+
           for (ShelvedChangeList list : schemeManager.getAllSchemes()) {
             if (!list.isValid()) continue;
             try {
@@ -223,7 +226,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
               LOG.error("Can't copy patch file: " + list.getPath());
             }
           }
+
+          LOG.info(String.format("Migrating existing shelves finished. Old location: %s, new location: %s",
+                                 schemeManager.getAllSchemes().size(), newSchemeManager.getAllSchemes().size()));
+
           clearShelvedLists(schemeManager.getAllSchemes(), false);
+          LOG.info("Cleaned old shelve location");
         }
 
         @Override

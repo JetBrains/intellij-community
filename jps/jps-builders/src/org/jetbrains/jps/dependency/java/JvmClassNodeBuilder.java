@@ -624,14 +624,22 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0 || (access & Opcodes.ACC_PRIVATE) == 0) {
           if (isInlined) {
             // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
-            ContentHashBuilder hashBuilder = ContentHashBuilder.create();
-            for (Object o : printer.getText()) {
-              hashBuilder.update(o);
-            }
-            defaultValue.set(hashBuilder.getResult());
+            defaultValue.set(buildContentHash(ContentHashBuilder.create(), printer.getText()).getResult());
           }
           myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));
         }
+      }
+
+      private ContentHashBuilder buildContentHash(ContentHashBuilder builder, Iterable<?> dataSequence) {
+        for (Object o : dataSequence) {
+          if (o instanceof Iterable) {
+            buildContentHash(builder, (Iterable<?>)o);
+          }
+          else {
+            builder.update(o);
+          }
+        }
+        return builder;
       }
 
       @Override
@@ -936,7 +944,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         return wrap(new ContentHashBuilder() {
           @Override
           public void update(Object data) {
-            digest.update(String.valueOf(data).getBytes(StandardCharsets.UTF_8));
+            digest.update(String.valueOf(data).trim().getBytes(StandardCharsets.UTF_8));
           }
 
           @Override
@@ -960,7 +968,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         int hash = 0;
         @Override
         public void update(Object data) {
-          hash = 31 * hash + (data == null? "null" : data).hashCode();
+          hash = 31 * hash + String.valueOf(data).trim().hashCode();
         }
 
         @Override

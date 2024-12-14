@@ -65,18 +65,21 @@ internal object ActualWithoutExpectFactory {
         for (otherDeclaration in originalFile.declarations) {
             if (otherDeclaration === originalDeclaration) continue
             if (!otherDeclaration.hasActualModifier()) continue
-            val expectedDeclaration = ExpectActualUtils.liftToExpected(otherDeclaration) ?: continue
-            if (expectedDeclaration.module != module) continue
-            return expectedDeclaration.containingKtFile
+            val expectDeclaration = ExpectActualUtils.liftToExpect(otherDeclaration) ?: continue
+            if (expectDeclaration.module != module) continue
+            return expectDeclaration.containingKtFile
         }
         return null
     }
 
-    private tailrec fun findFirstActualWithExpectedClass(declaration: KtNamedDeclaration): Pair<KtNamedDeclaration, KtClassOrObject?> {
-        val containingClass = declaration.containingClassOrObject ?: return declaration to null
-        val expectedContainingClass = ExpectActualUtils.liftToExpected(containingClass) as? KtClassOrObject
+    /**
+     * For an [actualDeclaration] returns expectClass where corresponding expect declaration should be placed
+     */
+    private tailrec fun findFirstActualWithExpectedClass(actualDeclaration: KtNamedDeclaration): Pair<KtNamedDeclaration, KtClassOrObject?> {
+        val containingClass = actualDeclaration.containingClassOrObject ?: return actualDeclaration to null
+        val expectedContainingClass = ExpectActualUtils.liftToExpect(containingClass) as? KtClassOrObject
         return if (expectedContainingClass == null) findFirstActualWithExpectedClass(containingClass)
-        else declaration to expectedContainingClass
+        else actualDeclaration to expectedContainingClass
     }
 }
 
@@ -150,7 +153,8 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
             )
             return false
         }
-        //
+
+        //todo check accessibility of types in the common module
         //if (!showErrorHint) return checkAccessibility(declaration)
         //
         //val types = incorrectTypes(declaration).ifEmpty { return true }
@@ -185,8 +189,6 @@ class CreateExpectedCallableMemberFix(
         declaration: KtNamedDeclaration,
     ): KtNamedDeclaration? {
         if (!isCorrectAndHaveAccessibleModifiers(declaration, true)) return null
-
-        //todo check accessibility of types in the common module
 
         return analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
             val callableSymbol = declaration.symbol as? KaCallableSymbol ?: return@analyzeInModalWindow null

@@ -1,148 +1,94 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.withClassId
 
 internal sealed interface SymbolInfo {
-    fun KaSession.computeImportableName(): FqName?
-    fun KaSession.containingClassSymbol(): KaClassLikeSymbol?
-
-    fun KaSession.createPointer(): SymbolInfoPointer
+    val importableName: FqName?
 
     companion object {
-        @OptIn(KaExperimentalApi::class)
         fun KaSession.create(symbol: KaClassLikeSymbol): SymbolInfo {
-            val classImportableName = computeImportableName(symbol, containingClass = null)
+            val classImportableName = symbol.classId ?: return UnsupportedSymbolInfo
 
-            return ClassLikeSymbolInfo(symbol, classImportableName)
+            return ClassLikeSymbolInfo(classImportableName)
         }
 
-        @OptIn(KaExperimentalApi::class)
         fun KaSession.create(symbol: KaCallableSymbol, containingClassSymbol: KaClassLikeSymbol?): SymbolInfo {
-            val symbolImportableName = computeImportableName(symbol, containingClassSymbol)
+            val symbolImportableName = computeImportableName(symbol, containingClassSymbol) 
+                ?: return UnsupportedSymbolInfo
 
-            return CallableSymbolInfo(symbol, containingClassSymbol, symbolImportableName)
+            return CallableSymbolInfo(symbolImportableName)
         }
 
-        @OptIn(KaExperimentalApi::class)
         fun KaSession.create(symbol: KaSymbol): SymbolInfo {
             require(symbol !is KaClassLikeSymbol && symbol !is KaCallableSymbol)
 
-            return UnsupportedSymbolInfo(symbol)
+            return UnsupportedSymbolInfo
         }
     }
-}
-
-internal sealed interface SymbolInfoPointer {
-    fun KaSession.restore(): SymbolInfo?
 }
 
 internal data class ClassLikeSymbolInfo(
-    private val symbol: KaClassLikeSymbol,
-    private val importableFqName: FqName?,
-): SymbolInfo {
-    override fun KaSession.computeImportableName(): FqName? = importableFqName
-
-    override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? {
-        return containingDeclarationPatched(symbol) as? KaClassLikeSymbol
-    }
-
-    override fun KaSession.createPointer(): SymbolInfoPointer {
-        return Pointer(symbol.createPointer(), importableFqName)
-    }
-
-    private class Pointer(private val symbolPointer: KaSymbolPointer<KaClassLikeSymbol>, private val importableFqName: FqName?) : SymbolInfoPointer {
-        override fun KaSession.restore(): ClassLikeSymbolInfo? {
-            val symbol = symbolPointer.restoreSymbol() ?: return null
-            return ClassLikeSymbolInfo(symbol, importableFqName)
-        }
-    }
+    val importableClassId: ClassId,
+) : SymbolInfo {
+    override val importableName: FqName 
+        get() = importableClassId.asSingleFqName()
 }
 
 
 internal data class CallableSymbolInfo(
-    private val symbol: KaCallableSymbol,
-    private val containingClassSymbol: KaClassLikeSymbol?,
-    private val importableFqName: FqName?,
+    val importableCallableId: CallableId,
 ) : SymbolInfo {
-    override fun KaSession.computeImportableName(): FqName? = importableFqName
-
-    override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? {
-        return containingClassSymbol ?: (containingDeclarationPatched(symbol) as? KaClassLikeSymbol)
-    }
-
-    override fun KaSession.createPointer(): SymbolInfoPointer {
-        return Pointer(symbol.createPointer(), containingClassSymbol?.createPointer(), importableFqName)
-    }
-
-    private class Pointer(
-        private val symbolPointer: KaSymbolPointer<KaCallableSymbol>,
-        private val containingClassPointer: KaSymbolPointer<KaClassLikeSymbol>?,
-        private val importableFqName: FqName?,
-    ) : SymbolInfoPointer {
-        override fun KaSession.restore(): CallableSymbolInfo? {
-            val symbol = symbolPointer.restoreSymbol() ?: return null
-
-            val containingClass = if (containingClassPointer != null) {
-                containingClassPointer.restoreSymbol() ?: return null
-            } else {
-                null
-            }
-
-            return CallableSymbolInfo(symbol, containingClass, importableFqName)
-        }
-    }
+    override val importableName: FqName 
+        get() = importableCallableId.asSingleFqName()
 }
 
 /**
  * Default implementation of [SymbolInfo] for any [KaSymbol] which was not handled
  * by more specialized implementations of [SymbolInfo].
  */
-internal data class UnsupportedSymbolInfo(private val symbol: KaSymbol) : SymbolInfo {
-    override fun KaSession.computeImportableName(): FqName? = null
-
-    override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? = null
-
-    override fun KaSession.createPointer(): SymbolInfoPointer {
-        return Pointer(symbol.createPointer())
-    }
-
-    private class Pointer(private val symbolPointer: KaSymbolPointer<KaSymbol>) : SymbolInfoPointer {
-        override fun KaSession.restore(): UnsupportedSymbolInfo? {
-            val symbol = symbolPointer.restoreSymbol() ?: return null
-            return UnsupportedSymbolInfo(symbol)
-        }
-    }
+internal data object UnsupportedSymbolInfo : SymbolInfo {
+    override val importableName: FqName? get() = null
 }
 
+internal fun KaSession.containingClassSymbol(symbolInfo: SymbolInfo): KaClassLikeSymbol? =
+    when (symbolInfo) {
+        is CallableSymbolInfo -> symbolInfo.importableCallableId.classId?.let(::findClassLike)
+        is ClassLikeSymbolInfo -> symbolInfo.importableClassId.outerClassId?.let(::findClassLike)
+        UnsupportedSymbolInfo -> null
+    }
+
+/**
+ * A copy of [KaSession.importableFqName] adapted for [CallableId].
+ * 
+ * [substitutedContainingClass] is used to create [CallableId]s for
+ * [KaCallableSymbol]s declared in classes/interfaces, 
+ * but dispatched through objects, because [KaCallableSymbol]s
+ * cannot represent that on their own (see KT-60775).
+ * 
+ * Does not handle [org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol]s (yet).
+ */
 private fun KaSession.computeImportableName(
-    target: KaSymbol,
-    containingClass: KaClassLikeSymbol?
-): FqName? {
-    if (target is KaReceiverParameterSymbol) {
-        return null
-    }
+    target: KaCallableSymbol,
+    substitutedContainingClass: KaClassLikeSymbol?
+): CallableId? {
+    if (target.isLocal) return null
+    
+    val containingClass = substitutedContainingClass 
+        ?: target.containingDeclaration as? KaClassLikeSymbol
+        ?: return target.callableId
+    
+    val canBeImported = containingClass.origin.isJavaSourceOrLibrary() && target.isJavaStaticDeclaration() ||
+            (containingClass as? KaClassSymbol)?.classKind == KaClassKind.ENUM_CLASS && isEnumStaticMember(target) ||
+            (containingClass as? KaClassSymbol)?.classKind?.isObject == true
 
-    if (containingClass == null) {
-        return target.importableFqName
-    }
-
-    if (target !is KaCallableSymbol) return null
-
-    val callableId = target.callableId ?: return null
-    if (callableId.classId == null) return null
-
-    val receiverClassId = containingClass.classId ?: return null
-
-    val substitutedCallableId = callableId.withClassId(receiverClassId)
-
-    return substitutedCallableId.asSingleFqName()
+    val containingClassId = containingClass.classId ?: return null
+    
+    return if (canBeImported) target.callableId?.withClassId(containingClassId) else null
 }

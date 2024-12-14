@@ -35,8 +35,10 @@ public abstract class TaskManager {
    * @return up-to-date issues retrieved from repositories
    * @see #getCachedIssues()
    */
+  @Unmodifiable
   public abstract List<Task> getIssues(@Nullable String query);
 
+  @Unmodifiable
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
   /**
@@ -65,11 +67,13 @@ public abstract class TaskManager {
    *
    * @return cached issues.
    */
+  @Unmodifiable
   public abstract List<Task> getCachedIssues();
 
   @Unmodifiable
   public abstract List<Task> getCachedIssues(final boolean withClosed);
 
+  @Unmodifiable
   public abstract List<LocalTask> getLocalTasks();
 
   @Unmodifiable

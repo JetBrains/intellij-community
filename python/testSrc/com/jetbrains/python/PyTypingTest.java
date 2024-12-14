@@ -4490,7 +4490,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-36444
   public void testTextIOInferredWithContextManagerDecorator() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              from contextlib import contextmanager
                              
@@ -4503,6 +4503,25 @@ public class PyTypingTest extends PyTestCase {
              cm = open_file(__file__)
              with cm as file:
                  expr = file
+             """);
+  }
+
+  // PY-71674
+  public void testContextManagerDecoratorOnMethod() {
+    doTest("str",
+           """
+             from contextlib import contextmanager
+             from typing import Iterator
+             
+             
+             class MyClass:
+                 @contextmanager
+                 def as_context(self) -> Iterator[str]:
+                     yield "foo"
+             
+             
+             with MyClass().as_context() as value:
+                 expr = value
              """);
   }
 
@@ -4523,7 +4542,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-70484
   public void testUnboundParamSpecThatCannotBeBoundThroughParametersLeftIntact() {
-    doTest("((ParamSpec(\"P\")) -> Any) -> (ParamSpec(\"P\")) -> int",
+    doTest("((**P) -> Any) -> (**P) -> int",
            """
              from typing import Callable, Any, ParamSpec
                           
@@ -4556,7 +4575,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testParamSpecInConcatenateMappedToAnotherParamSpec() {
-    doTest("(int, ParamSpec(\"P1\")) -> Any",
+    doTest("(int, **P1) -> Any",
            """
              from typing import Callable, Any, ParamSpec, Concatenate
                                 
@@ -6165,7 +6184,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-77541
   public void testParamSpecBoundToAnotherParamSpecInCustomGeneric() {
-      doTest("MyCallable[ParamSpec(\"P2\"), R2]", """
+    doTest("MyCallable[**P2, R2]", """
                    class MyCallable[**P, R]:
                        def __call__(self, *args: P.args, **kwargs: P.kwargs):
                            ...
@@ -6180,7 +6199,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-77541
   public void testParamSpecBoundToConcatenateInCustomGeneric() {
-    doTest("MyCallable[Concatenate(int, ParamSpec(\"P2\")), R2]", """
+    doTest("MyCallable[Concatenate(int, **P2), R2]", """
                    from typing import Concatenate
                    
                    class MyCallable[**P, R]:

@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.profiling.ResolveProfiler;
 import org.jetbrains.annotations.NotNull;
@@ -99,9 +100,8 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   @NotNull
   public GroovyControlFlow getGroovyControlFlow() {
     PsiUtilCore.ensureValid(this);
-    CachedValue<GroovyControlFlow> controlFlow = getUserData(CONTROL_FLOW);
-    if (controlFlow == null) {
-      controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
+    CachedValue<GroovyControlFlow> controlFlow = ConcurrencyUtil.computeIfAbsent(this, CONTROL_FLOW, ()->
+    CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
         try {
           ResolveProfiler.start();
           final GroovyControlFlow flow = ControlFlowBuilder.buildControlFlow(this);
@@ -111,9 +111,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
           final long time = ResolveProfiler.finish();
           ResolveProfiler.write("flow", this, time);
         }
-      }, false);
-      controlFlow = putUserDataIfAbsent(CONTROL_FLOW, controlFlow);
-    }
+      }, false));
     return controlFlow.getValue();
   }
 

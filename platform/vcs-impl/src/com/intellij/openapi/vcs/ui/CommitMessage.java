@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -326,16 +327,14 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
   }
 
   private static final class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
-    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
-      super(project, document);
+    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Editor editor) {
+      super(project, editor);
     }
 
     @Override
-    public void refresh(@Nullable EditorMarkupModel editorMarkupModel) {
+    public void refresh(@NotNull EditorMarkupModel editorMarkupModel) {
       super.refresh(editorMarkupModel);
-      if (editorMarkupModel != null) {
-        editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCounts()));
-      }
+      editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCounts()));
     }
 
     @Override
@@ -346,8 +345,9 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     private boolean hasHighSeverities(int @NotNull [] errorCounts) {
       HighlightSeverity minSeverity = notNull(HighlightDisplayLevel.find("TYPO"), HighlightDisplayLevel.DO_NOT_SHOW).getSeverity();
 
+      SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
       for (int i = 0; i < errorCounts.length; i++) {
-        if (errorCounts[i] > 0 && getSeverityRegistrar().compare(getSeverityRegistrar().getSeverityByIndex(i), minSeverity) > 0) {
+        if (errorCounts[i] > 0 && registrar.compare(registrar.getSeverityByIndex(i), minSeverity) > 0) {
           return true;
         }
       }
@@ -360,7 +360,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     public @Nullable TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
       Project project = editor.getProject();
       if (project == null || !isCommitMessage(editor.getDocument())) return null;
-      return new ConditionalTrafficLightRenderer(project, editor.getDocument());
+      return new ConditionalTrafficLightRenderer(project, editor);
     }
   }
 }

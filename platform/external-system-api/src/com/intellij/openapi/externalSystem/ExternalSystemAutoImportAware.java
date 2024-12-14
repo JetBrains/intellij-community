@@ -42,6 +42,7 @@ public interface ExternalSystemAutoImportAware {
   @Nullable
   String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project);
 
+  @NotNull
   default List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
     return Collections.emptyList();
   }

@@ -264,6 +264,7 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
+  @Unmodifiable
   private List<PreContract> visitPolyadic(List<ValueConstraint[]> states, @NotNull LighterASTNode expr) {
     if (firstChildOfType(myTree, expr, JavaTokenType.PLUS) != null) {
       return asPreContracts(ContainerUtil.map(states, s -> new StandardMethodContract(s, returnNotNull())));

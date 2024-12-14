@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/CompletionExtensionPoints.xml"/>
   <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
@@ -14,6 +15,9 @@
     </extensionPoint>
     <extensionPoint name="codeFoldingOptionsProvider" beanClass="com.intellij.application.options.editor.CodeFoldingOptionsProviderEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
+    </extensionPoint>
+    <extensionPoint name="consoleConfigurableProvider" beanClass="com.intellij.execution.console.ConsoleConfigurableEP" dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
     <extensionPoint name="codeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider" dynamic="true"/>
     <extensionPoint name="generalCodeStyleOptionsProvider" beanClass="com.intellij.application.options.GeneralCodeStyleOptionsProviderEP" dynamic="true">
@@ -720,8 +724,5 @@
 
     <extensionPoint qualifiedName="com.intellij.inlinePrompt" dynamic="true"
                     interface="com.intellij.inlinePrompt.InlinePromptExtension"/>
-
-    <extensionPoint qualifiedName="com.intellij.show.intention.cached.intentions.handler" dynamic="true"
-                    interface="com.intellij.codeInsight.daemon.impl.CollectedCachedIntentionHandler"/>
   </extensionPoints>
 </idea-plugin>

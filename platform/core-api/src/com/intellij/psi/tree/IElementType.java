@@ -195,11 +195,14 @@ public class IElementType {
    * @return the element type at the specified index.
    * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
-  public static IElementType find(short idx) {
+  public static @NotNull IElementType find(short idx) {
     // volatile read; array always grows, never shrinks, never overwritten
     IElementType type = ourRegistry[idx];
     if (type instanceof TombstoneElementType) {
       throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type);
+    }
+    if (type == null) {
+      throw new IndexOutOfBoundsException("Element type index " + idx + " is out of range (0.." + (size - 1) + ")");
     }
     return type;
   }

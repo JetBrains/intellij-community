@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vfs.VirtualFile
 
-private class DefaultFileStatusManager : FileStatusManager() {
+internal class DefaultFileStatusManager : FileStatusManager() {
   override fun getStatus(file: VirtualFile): FileStatus = FileStatus.NOT_CHANGED
   override fun getRecursiveStatus(file: VirtualFile): FileStatus = FileStatus.NOT_CHANGED
 

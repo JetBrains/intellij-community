@@ -75,6 +75,7 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.PlatformUtils.isDataSpell
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -457,9 +458,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return
     }
 
-    val listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY)
-                    ?: (project as UserDataHolderEx).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY,
-                                                                         ContainerUtil.createLockFreeCopyOnWriteList())
+    val listeners = ConcurrencyUtil.computeIfAbsent(project, LISTENERS_IN_PROJECT_KEY) { ContainerUtil.createLockFreeCopyOnWriteList() }
     listeners.add(listener)
   }
 
@@ -532,6 +531,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = runUnderModalProgressIfIsEdt {
       val file = toCanonicalName(path)
       removeProjectConfigurationAndCaches(file)
+      TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
       val project = instantiateProject(projectStoreBaseDir = file, options = options)
       initProject(
         file = file,
@@ -797,6 +797,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   override fun newProject(file: Path, options: OpenProjectTask): Project? {
     removeProjectConfigurationAndCaches(file)
+    TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
 
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
@@ -825,6 +826,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
     withContext(Dispatchers.IO) {
       removeProjectConfigurationAndCaches(file)
+      TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(file, project = null), true)
     }
 
     val project = instantiateProject(file, options)

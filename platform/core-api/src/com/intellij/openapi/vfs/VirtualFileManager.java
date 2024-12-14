@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -49,34 +49,31 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract VirtualFileSystem getFileSystem(@Nullable String protocol);
 
   /**
-   * <p>Refreshes the cached file systems information from the physical file systems synchronously.<p/>
-   *
-   * <p><strong>Note</strong>: this method should be only called within a write-action
-   * (see {@linkplain com.intellij.openapi.application.Application#runWriteAction})</p>
-   *
-   * @return refresh session ID.
+   * The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead.
+   * <p>
+   * Besides, the method is blocking and requires a write lock.
    */
+  @ApiStatus.Obsolete
   public abstract long syncRefresh();
 
-  /**
-   * Refreshes the cached file systems information from the physical file systems asynchronously.
-   * Launches specified action when refresh is finished.
-   * <p>
-   * @param postAction - action which will be executed in write-action after the refresh session finished.
-   * @return refresh session ID.
-   */
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead. */
+  @ApiStatus.Obsolete
   public abstract long asyncRefresh(@Nullable Runnable postAction);
 
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead. */
+  @ApiStatus.Obsolete
   public final long asyncRefresh() {
     return asyncRefresh(null);
   }
 
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VfsUtil#markDirtyAndRefresh} instead. */
+  @ApiStatus.Obsolete
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
    * Searches for a file specified by the given {@link VirtualFile#getUrl() URL}.
    *
-   * @param url the URL to find file by
+   * @param url the URL to find a file by
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
@@ -99,11 +96,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
-   * by the given URL.</p>
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds a file by the given URL.</p>
    *
-   * <p>This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
-   * corresponding to it.</p>
+   * <p>This method is useful when the file was created externally, and you need to find a {@link VirtualFile} corresponding to it.</p>
    *
    * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
    *
@@ -117,11 +112,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
-   * by the given URL.</p>
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds a file by the given URL.</p>
    *
-   * <p>This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
-   * corresponding to it.</p>
+   * <p>This method is useful when the file was created externally, and you need to find a {@link VirtualFile} corresponding to it.</p>
    *
    * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
    *
@@ -191,19 +184,19 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
-  /**
-   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
-   */
+  /** @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)} */
   @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
-  public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile,
-                                             @VirtualFile.PropName @NotNull String property,
-                                             Object oldValue,
-                                             Object newValue);
+  public abstract void notifyPropertyChanged(
+    @NotNull VirtualFile virtualFile,
+    @VirtualFile.PropName @NotNull String property,
+    Object oldValue,
+    Object newValue
+  );
 
   /**
-   * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
+   * @return a number that's incremented every time something changes in the VFS, i.e., file hierarchy, names, flags, attributes, contents.
    * This only counts modifications done in the current IDE session.
    * @see #getStructureModificationCount()
    */
@@ -211,7 +204,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract long getModificationCount();
 
   /**
-   * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
+   * @return a number that's incremented every time something changes in the VFS structure, i.e., file hierarchy or names.
    * This only counts modifications done in the current IDE session.
    * @see #getModificationCount()
    */

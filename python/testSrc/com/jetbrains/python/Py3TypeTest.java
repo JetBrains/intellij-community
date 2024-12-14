@@ -17,6 +17,66 @@ import java.util.Map;
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
+  // PY-20710
+  public void testLambdaGenerator() {
+    doTest("Generator[int, Any, Any]", """
+              expr = (lambda: (yield 1))()
+             """);
+  }
+
+  // PY-20710
+  public void testGeneratorDelegatingToLambdaGenerator() {
+    doTest("Generator[int, Any, str]", """
+              def g():
+                  yield from (lambda: (yield 1))()
+                  return "foo"
+              expr = g()
+             """);
+  }
+
+  // PY-20710
+  public void testYieldExpressionTypeFromGeneratorSendTypeHint() {
+    doTest("int", """
+      from typing import Generator
+      
+      def g() -> Generator[str, int, None]:
+          expr = yield "foo"
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromExpressionTypeFromGeneratorReturnTypeHint() {
+    doTest("int", """
+      from typing import Generator, Any
+      
+      def delegate() -> Generator[None, Any, int]:
+          yield
+          return 42
+
+      def g():
+          expr = yield from delegate()
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromLambda() {
+    doTest("Generator[int | str, str | Any, bool]",
+           """
+           from typing import Generator
+           
+           def gen1() -> Generator[int, str, bool]:
+               yield 42
+               return True
+           
+           def gen2():
+               yield "str"
+               return True
+     
+           l = lambda: (yield from gen1()) or (yield from gen2())
+           expr = l()
+           """);
+  }
+
   // PY-6702
   public void testYieldFromType() {
     doTest("str | int | float",
@@ -241,22 +301,22 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            "expr = open('foo', 'rb')\n");
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo')
@@ -264,7 +324,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo', 'r')
@@ -272,7 +332,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            """
              import io
              expr = io.open('foo', 'rb')
@@ -568,7 +628,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              class AIter(object):
-                 def __anext__(self):
+                 async def __anext__(self):
                      return 5
              class A(object):
                  def __aiter__(self):
@@ -576,6 +636,21 @@ public class Py3TypeTest extends PyTestCase {
              a = A()
              async for expr in a:
                  print(expr)""");
+  }
+  
+  // PY-60714
+  public void testAsyncIteratorUnwrapsCoroutineFromAnext() {
+    doTest("bytes", """
+             class AIterator:
+                 def __aiter__(self):
+                     return self
+
+                 async def __anext__(self) -> bytes:
+                     return b"a"
+             
+             async for expr in AIterator():
+                 print(expt)
+             """);
   }
 
   // PY-21655
@@ -954,6 +1029,52 @@ public class Py3TypeTest extends PyTestCase {
                      expr = d""");
   }
 
+  // PY-78006
+  public void testDataclassPostInitParameters() {
+    doTest("tuple[A1, A4, A2, A3, A5, A6]",
+           """
+             from dataclasses import dataclass, InitVar
+             
+             class A1:
+                 pass
+             class A2:
+                 pass
+             class A3:
+                 pass
+             class A4:
+                 pass
+             class A5:
+                 pass
+             class A6:
+                 pass
+             
+             @dataclass
+             class BaseDC:
+                 b1: str
+                 a1: InitVar[A1]
+             
+             @dataclass
+             class DC1(BaseDC):
+                 a2: InitVar[A2]
+                 b2: int
+                 a3: InitVar[A3]
+             
+             @dataclass
+             class DC2(BaseDC):
+                 a4: InitVar[A4]
+                 b3 = 2
+             
+             @dataclass
+             class DC(DC1, DC2):
+                 b4: bool
+                 a5: InitVar[A5]
+                 a6: InitVar[A6]
+             
+                 def __post_init__(self, p1, p2, p3, p4, p5, p6):
+                     expr = (p1, p2, p3, p4, p5, p6)
+             """);
+  }
+
   // PY-27398
   public void testDataclassPostInitParameterNoInit() {
     doTest("Any",
@@ -1046,7 +1167,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testMixedDataclassPostInitInheritedParameter() {
-    doTest("Any",
+    doTest("str",
            """
              from dataclasses import dataclass, InitVar
 
@@ -1201,7 +1322,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInAnnotations() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1214,7 +1335,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInTypeComments() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1231,7 +1352,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInFunctionTypeComment() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1245,7 +1366,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInImportedFile() {
-    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doMultiFileTest("(c: (**P) -> int, **P, **P) -> None", """
       from mod import func
             
       expr = func
@@ -1908,6 +2029,34 @@ public class Py3TypeTest extends PyTestCase {
     assertEquals("key", assertOneElement(barFieldTypedDict.getFields().keySet()));
 
     assertProjectFilesNotParsed(expr.getContainingFile());
+  }
+
+  // PY-77796
+  public void testTypedDictReadOnlyItemType() {
+    doTest("str",
+           """
+             from typing import TypedDict, ReadOnly
+             class A(TypedDict):
+                 x: ReadOnly[str]
+             def f(a: A):
+                 expr = a['x']
+             """);
+    doTest("int",
+           """
+             from typing import TypedDict, Required, ReadOnly
+             class A(TypedDict):
+                 x: Required[ReadOnly[int]]
+             def f(a: A):
+                 expr = a['x']
+             """);
+    doTest("str",
+           """
+             from typing import TypedDict, Required, Annotated, ReadOnly
+             class A(TypedDict):
+                 x: Required[Annotated[ReadOnly[str], 1]]
+             def f(a: A):
+                 expr = a['x']
+             """);
   }
 
   // PY-53612

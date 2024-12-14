@@ -1408,7 +1408,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new PopInstruction());
       }
     }
-    addInstruction(new MethodCallInstruction(expression, null, List.of()));
+    addInstruction(new MethodCallInstruction(expression, List.of()));
     if (myTrapTracker.shouldHandleException()) {
       addThrows(ExceptionUtil.getOwnUnhandledExceptions(expression));
     }
@@ -2180,7 +2180,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         // Do not track contracts if return value is not used
         contracts = Collections.emptyList();
       }
-      addInstruction(new MethodCallInstruction(expression, JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), contracts));
+      addInstruction(new MethodCallInstruction(expression, contracts));
       anchor = expression;
     }
     processFailResult(method, contracts, anchor);
@@ -2210,7 +2210,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     pushUnknown();
     pushConstructorArguments(enumConstant);
-    addInstruction(new MethodCallInstruction(enumConstant, null, Collections.emptyList()));
+    addInstruction(new MethodCallInstruction(enumConstant, Collections.emptyList()));
     addInstruction(new PopInstruction());
   }
 
@@ -2272,28 +2272,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       addConditionalErrorThrow();
-      DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
                                                  JavaMethodContractUtil.getMethodCallContracts(constructor, null);
       contracts = DfaUtil.addRangeContracts(constructor, contracts);
-      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
+      addInstruction(new MethodCallInstruction(expression, contracts));
       processFailResult(constructor, contracts, expression);
 
       addMethodThrows(constructorOrClass);
     }
 
     finishElement(expression);
-  }
-
-  private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
-    PsiType type = expression.getType();
-    if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      DfType dfType = SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
-        .meet(TypeConstraints.exact(type).asDfType())
-        .meet(DfTypes.LOCAL_OBJECT);
-      return myFactory.fromDfType(dfType);
-    }
-    return null;
   }
 
   private void initializeSmallArray(PsiArrayType type, PsiExpression[] dimensions) {

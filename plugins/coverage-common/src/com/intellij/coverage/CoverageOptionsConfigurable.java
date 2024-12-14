@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBBox;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +85,7 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     c.fill = GridBagConstraints.BOTH;
     c.weightx = 1;
     c.weighty = 1;
-    panel.add(Box.createVerticalBox(), c);
+    panel.add(JBBox.createVerticalBox(), c);
     return panel;
   }
 

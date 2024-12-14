@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -30,6 +31,7 @@ public final class LibraryJavaSourceRootDetector extends RootDetector {
 
   @NotNull
   @Override
+  @Unmodifiable
   public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate,
                                              @NotNull ProgressIndicator progressIndicator) {
     return JavaVfsSourceRootDetectionUtil.suggestRoots(rootCandidate, progressIndicator);

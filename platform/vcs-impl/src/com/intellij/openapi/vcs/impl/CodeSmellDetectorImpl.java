@@ -32,10 +32,12 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,12 +56,12 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   @Override
-  public void showCodeSmellErrors(@NotNull final List<CodeSmellInfo> smellList) {
-    smellList.sort(Comparator.comparingInt(o -> o.getTextRange().getStartOffset()));
+  public void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smellList) {
+    List<? extends CodeSmellInfo> sorted = ContainerUtil.sorted(smellList, Comparator.comparingInt(o -> o.getTextRange().getStartOffset()));
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
-      if (smellList.isEmpty()) {
+      if (sorted.isEmpty()) {
         return;
       }
 
@@ -67,7 +69,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
       FileDocumentManager fileManager = FileDocumentManager.getInstance();
 
-      for (CodeSmellInfo smellInfo : smellList) {
+      for (CodeSmellInfo smellInfo : sorted) {
         final VirtualFile file = fileManager.getFile(smellInfo.getDocument());
         if (file == null) continue;
         String presentableUrl = file.getPresentableUrl();

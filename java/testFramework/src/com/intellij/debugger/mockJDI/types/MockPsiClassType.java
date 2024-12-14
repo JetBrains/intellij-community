@@ -31,6 +31,7 @@ public class MockPsiClassType extends MockPsiReferenceType implements ClassType 
   }
 
   @Override
+  @Unmodifiable
   public List<InterfaceType> allInterfaces() {
     return interfaces();
   }

@@ -14,6 +14,7 @@ import com.intellij.util.MathUtil
 import com.siyeh.ig.psiutils.FinalUtils
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.MINUSMINUS
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.PLUSPLUS
@@ -274,7 +275,7 @@ private fun JKFieldAccessExpression.asQualifiedAssignmentFromTarget(): JKQualifi
     }
 
 context(KaSession)
-private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> =
+private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> =
     findUsages(scope, context).filter {
         it.asAssignmentFromTarget() != null
                 || it.isInDecrementOrIncrement() || it.asQualifiedAssignmentFromTarget() != null
@@ -282,7 +283,7 @@ private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: NewJ2kC
     }.distinct()
 
 context(KaSession)
-fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
+fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
     findWritableUsages(scope, context).isNotEmpty()
 
 

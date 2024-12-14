@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
@@ -27,6 +28,7 @@ import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.name
 
@@ -67,7 +69,7 @@ class IjentWslNioFileSystemProvider(
     when (this) {
       is IjentNioPath -> this
       is IjentWslNioPath -> delegate.toIjentPath()
-      else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, IjentNioPath::resolve)
+      else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart -> nioPath.resolve(newPart.toString()) })
     }
 
   internal fun toOriginalPath(path: Path): Path = path.toOriginalPath()
@@ -108,8 +110,8 @@ class IjentWslNioFileSystemProvider(
   private fun wslIdFromPath(path: Path): String {
     val root = path.toAbsolutePath().root.toString()
     require(root.startsWith("""\\wsl""")) { "`$path` doesn't look like a file on WSL" }
-    val wslId = root.removePrefix("""\\wsl""").substringAfter('\\').trimEnd('\\')
-    return wslId
+    val wslIdWithProbablyWrongCase = root.removePrefix("""\\wsl""").substringAfter('\\').trimEnd('\\')
+    return allWslDistributionIds.get().single { wslId -> wslId.equals(wslIdWithProbablyWrongCase, true) }
   }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
@@ -176,7 +178,7 @@ class IjentWslNioFileSystemProvider(
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next().toIjentPath()
 
-            val originalPath = ijentPath.asSequence().map(Path::name).map(::sanitizeFileName).fold(wslLocalRoot, Path::resolve)
+            val originalPath = dir.resolve(sanitizeFileName(ijentPath.fileName.toString()))
 
             val cachedAttrs = ijentPath.get() as IjentNioPosixFileAttributes?
             val dosAttributes =
@@ -184,7 +186,7 @@ class IjentWslNioFileSystemProvider(
                 IjentNioPosixFileAttributesWithDosAdapter(
                   ijentPath.fileSystem.ijentFs.user as EelUserPosixInfo,
                   cachedAttrs,
-                  nameStartsWithDot = ijentPath.eelPath.fileName.startsWith("."),
+                  nameStartsWithDot = ijentPath.fileName.startsWith("."),
                 )
               else null
 
@@ -322,6 +324,21 @@ class IjentWslNioFileSystemProvider(
   }
 
   companion object {
+    private val allWslDistributionIds: AtomicReference<Set<String>> by lazy {
+      val ref = AtomicReference(emptySet<String>())
+      val wslDistributionManager = WslDistributionManager.getInstance()
+      wslDistributionManager.addWslDistributionsChangeListener { old, new ->
+        ref.updateAndGet { oldFromRef ->
+          val result = HashSet(oldFromRef)
+          result.removeAll(old.map { it.id })
+          result.addAll(new.map { it.id })
+          result
+        }
+      }
+      ref.set(wslDistributionManager.installedDistributions.map { it.id }.toHashSet())
+      ref
+    }
+
     private val LOG = logger<IjentWslNioFileSystemProvider>()
   }
 }

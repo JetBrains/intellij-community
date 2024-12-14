@@ -3,48 +3,15 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters2
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection
-import org.jetbrains.kotlin.idea.intentions.SimplifyBooleanWithConstantsIntention
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyComparisonFix
+import org.jetbrains.kotlin.psi.KtExpression
 
-class SimplifyComparisonFix(element: KtExpression, val value: Boolean) : KotlinQuickFixAction<KtExpression>(element) {
-    override fun getFamilyName(): String =
-        KotlinBundle.message("simplify.comparison")
-
-    override fun getText(): String =
-        KotlinBundle.message("simplify.comparison")
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        val replacement = KtPsiFactory(project).createExpression("$value")
-        val result = element.replaced(replacement)
-
-        val booleanExpression = result.getNonStrictParentOfType<KtBinaryExpression>()
-        val simplifyIntention = SimplifyBooleanWithConstantsIntention()
-        if (booleanExpression != null && simplifyIntention.isApplicableTo(booleanExpression)) {
-            simplifyIntention.applyTo(booleanExpression, editor)
-        } else {
-            simplifyIntention.removeRedundantAssertion(result)
-        }
-
-        val ifExpression = result.getStrictParentOfType<KtIfExpression>()?.takeIf { it.condition == result }
-        if (ifExpression != null) ConstantConditionIfInspection.Util.applyFixIfSingle(ifExpression)
-    }
-
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val expression = diagnostic.psiElement as? KtExpression ?: return null
-            val value = (diagnostic as? DiagnosticWithParameters2<*, *, *>)?.b as? Boolean ?: return null
-            return SimplifyComparisonFix(expression, value)
-        }
+internal object SimplifyComparisonFixFactory : KotlinSingleIntentionActionFactory() {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        val expression = diagnostic.psiElement as? KtExpression ?: return null
+        val value = (diagnostic as? DiagnosticWithParameters2<*, *, *>)?.b as? Boolean ?: return null
+        return SimplifyComparisonFix(expression, compareResult = value).asIntention()
     }
 }

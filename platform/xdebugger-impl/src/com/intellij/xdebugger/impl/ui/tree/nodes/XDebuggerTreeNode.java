@@ -83,6 +83,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   @NotNull
+  @Unmodifiable
   public abstract List<? extends TreeNode> getChildren();
 
   protected void setIcon(final Icon icon) {

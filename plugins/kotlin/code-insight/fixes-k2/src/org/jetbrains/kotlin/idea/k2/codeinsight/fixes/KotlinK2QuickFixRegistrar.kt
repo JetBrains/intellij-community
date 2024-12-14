@@ -176,6 +176,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(UnresolvedReferenceFixFactories.makeConstructorParameterPropertyFix)
         registerFactory(PositionedValueArgumentForJavaAnnotationFixFactories.replaceWithNamedArgumentsFixFactory)
         registerFactory(RestrictedRetentionForExpressionAnnotationFactories.quickFixFactory)
+        registerFactory(ModifierRequiredFixFactories.addInfixModifierFixFactory)
+        registerFactory(ModifierRequiredFixFactories.addOperatorModifierFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -310,7 +312,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KaFirDiagnostic.UselessElvis::class, RemoveUselessElvisFix)
         registerPsiQuickFixes(KaFirDiagnostic.UselessElvisRightIsNull::class, RemoveUselessElvisFix)
         registerPsiQuickFixes(KaFirDiagnostic.UselessCast::class, RemoveUselessCastFix)
-        registerPsiQuickFixes(KaFirDiagnostic.UselessIsCheck::class, RemoveUselessIsCheckFix, RemoveUselessIsCheckFixForWhen)
+        registerFactory(UselessIsCheckFactories.uselessIsCheckFactory)
+        registerFactory(UselessIsCheckFactories.uselessWhenCheckFactory)
         registerFactory(ReplaceCallFixFactories.unsafeCallFactory)
         registerFactory(ReplaceCallFixFactories.unsafeInfixCallFactory)
         registerFactory(ReplaceCallFixFactories.unsafeOperatorCallFactory)
@@ -505,11 +508,15 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(DeprecationFixFactory.deprecatedAliasError)
         registerFactory(DeprecationFixFactory.deprecatedAliasWarning)
 
+        registerFactory(UnsupportedFeatureFixFactory.unsupportedFeature)
+
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
 
         registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
 
         registerFactory(ConvertExtensionToFunctionTypeFixFactory.superTypeIsExtensionFunctionType)
+
+        registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {

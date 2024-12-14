@@ -59,7 +59,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer) {
     assertNotCreated();
-    assert this.gutterIconRenderer == null : "gutterIconRenderer already set";
+    assertNotSet(this.gutterIconRenderer, "gutterIconRenderer");
     this.gutterIconRenderer = gutterIconRenderer;
     return this;
   }
@@ -67,7 +67,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder problemGroup(@NotNull ProblemGroup problemGroup) {
     assertNotCreated();
-    assert this.problemGroup == null : "problemGroup already set";
+    assertNotSet(this.problemGroup, "problemGroup");
     this.problemGroup = problemGroup;
     return this;
   }
@@ -75,18 +75,24 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   private void assertNotCreated() {
     assert !created : "Must not call this method after Builder.create() was called";
   }
+  private void assertNotSet(Object field, @NotNull String fieldName) {
+    if (field != null) {
+      throw new IllegalArgumentException(fieldName +" already set");
+    }
+  }
+
 
   @Override
   public @NotNull HighlightInfo.Builder inspectionToolId(@NotNull String inspectionToolId) {
     assertNotCreated();
-    assert this.toolId == null : "inspectionToolId already set";
+    assertNotSet(this.toolId, "inspectionToolId");
     return this;
   }
 
   @Override
   public @NotNull HighlightInfo.Builder description(@NotNull String description) {
     assertNotCreated();
-    assert escapedDescription == null : "description already set";
+    assertNotSet(this.escapedDescription, "description");
     escapedDescription = description;
     return this;
   }
@@ -99,7 +105,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder textAttributes(@NotNull TextAttributes attributes) {
     assertNotCreated();
-    assert forcedTextAttributes == null : "textAttributes already set";
+    assertNotSet(this.forcedTextAttributes, "textAttributes");
     forcedTextAttributes = attributes;
     return this;
   }
@@ -107,7 +113,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder textAttributes(@NotNull TextAttributesKey attributesKey) {
     assertNotCreated();
-    assert forcedTextAttributesKey == null : "textAttributesKey already set";
+    assertNotSet(this.forcedTextAttributesKey, "textAttributes");
     forcedTextAttributesKey = attributesKey;
     return this;
   }
@@ -115,7 +121,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder unescapedToolTip(@NotNull String unescapedToolTip) {
     assertNotCreated();
-    assert escapedToolTip == null : "Tooltip was already set";
+    assertNotSet(this.escapedToolTip, "tooltip");
     escapedToolTip = htmlEscapeToolTip(unescapedToolTip);
     return this;
   }
@@ -123,7 +129,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder escapedToolTip(@NotNull String escapedToolTip) {
     assertNotCreated();
-    assert this.escapedToolTip == null : "Tooltip was already set";
+    assertNotSet(this.escapedToolTip, "tooltip");
     this.escapedToolTip = escapedToolTip;
     return this;
   }
@@ -155,7 +161,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder range(@NotNull PsiElement element) {
     assertNotCreated();
-    assert psiElement == null : " psiElement already set";
+    assertNotSet(this.psiElement, "psiElement");
     psiElement = element;
     return range(element.getTextRange());
   }
@@ -169,7 +175,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder range(@NotNull PsiElement element, int start, int end) {
     assertNotCreated();
-    assert psiElement == null : " psiElement already set";
+    assertNotSet(this.psiElement, "psiElement");
     psiElement = element;
     return range(start, end);
   }
@@ -184,7 +190,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder needsUpdateOnTyping(boolean update) {
     assertNotCreated();
-    assert myNeedsUpdateOnTyping == null : " needsUpdateOnTyping already set";
+    assertNotSet(this.myNeedsUpdateOnTyping, "needsUpdateOnTyping");
     myNeedsUpdateOnTyping = update;
     return this;
   }
@@ -192,7 +198,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder severity(@NotNull HighlightSeverity severity) {
     assertNotCreated();
-    assert this.severity == null : " severity already set";
+    assertNotSet(this.severity, "severity");
     this.severity = severity;
     return this;
   }
@@ -252,6 +258,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     if (severity == null) {
       severity = type.getSeverity(psiElement);
     }
+    //noinspection deprecation
     HighlightInfo info = new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                            escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation,
                                            navigationShift,

@@ -17,16 +17,19 @@
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
 public class MemberInfoChange<T extends PsiElement, U extends MemberInfoBase<T>> {
+  @Unmodifiable
   private final Collection<U> myChangedMembers;
 
-  public MemberInfoChange(Collection<U> changedMembers) {
+  public MemberInfoChange(@Unmodifiable Collection<U> changedMembers) {
     myChangedMembers = changedMembers;
   }
 
+  @Unmodifiable
   public Collection<U> getChangedMembers() {
     return myChangedMembers;
   }

@@ -6,12 +6,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.pathOs
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.pathOs
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -42,14 +43,14 @@ private class EelEphemeralRootAwareMapper(
   private val ephemeralRoot: Path,
   private val eelApi: EelApiBase,
 ) : EelPathMapper {
-  override fun getOriginalPath(path: Path): EelPath.Absolute? {
+  override fun getOriginalPath(path: Path): EelPath? {
     if (path.startsWith(ephemeralRoot)) {
-      return EelPath.Absolute.build(ephemeralRoot.relativize(path).map(Path::toString), eelApi.fs.pathOs)
+      return EelPath.build(ephemeralRoot.relativize(path).map(Path::toString), eelApi.platform.pathOs)
     }
     return null
   }
 
-  override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryDirectoryOptions): EelPath.Absolute {
+  override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryDirectoryOptions): EelPath {
     val originalPath = getOriginalPath(path)
 
     if (originalPath != null) {
@@ -57,24 +58,30 @@ private class EelEphemeralRootAwareMapper(
     }
 
     val tmpDir = eelApi.fs.createTemporaryDirectory(options).getOrThrow()
-    val referencedPath = tmpDir.resolve(EelPath.Relative.parse(path.name))
+    val referencedPath = tmpDir.resolve(path.name)
 
     withContext(Dispatchers.IO) {
       EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), removeSource = false, copyAttributes = true)
     }
 
     scope.awaitCancellationAndInvoke {
-      when (val result = eelApi.fs.delete(tmpDir, true)) {
-        is EelResult.Ok -> Unit
-        is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
+      withContext(Job()) {
+        when (val result = eelApi.fs.delete(tmpDir, true)) {
+          is EelResult.Ok -> Unit
+          is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
+        }
       }
     }
 
     return referencedPath
   }
 
-  override fun toNioPath(path: EelPath.Absolute): Path {
+  override fun toNioPath(path: EelPath): Path {
     return ephemeralRoot.resolve(path.toString())
+  }
+
+  override fun pathPrefix(): String {
+    return ephemeralRoot.pathString.trimEnd('/', '\\')
   }
 }
 

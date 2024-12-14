@@ -31,85 +31,24 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isBlockTerminalSupported;
 
 @ApiStatus.Internal
-public class LocalShellIntegrationInjector {
+public final class LocalShellIntegrationInjector {
 
-  public static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
+  @VisibleForTesting
+  static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final Logger LOG = Logger.getInstance(LocalShellIntegrationInjector.class);
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String IJ_COMMAND_END_MARKER = "JETBRAINS_INTELLIJ_COMMAND_END_MARKER";
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
-  private final Supplier<Boolean> myBlockTerminalEnabled;
-
-  public LocalShellIntegrationInjector(Supplier<Boolean> isBlockTerminalEnabled) {
-    myBlockTerminalEnabled = isBlockTerminalEnabled;
-  }
-
-  public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
-    return injectShellIntegration(baseOptions, myBlockTerminalEnabled.get());
-  }
-
-  @Nullable
-  private static String findRCFile(@NotNull String shellName) {
-    String rcfile = switch (shellName) {
-      case ShellNameUtil.BASH_NAME, ShellNameUtil.SH_NAME -> "shell-integrations/bash/bash-integration.bash";
-      case ShellNameUtil.ZSH_NAME -> "shell-integrations/zsh/.zshenv";
-      case ShellNameUtil.FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
-      default -> null;
-    };
-    if (rcfile == null && ShellNameUtil.isPowerShell(shellName)) {
-      rcfile = "shell-integrations/powershell/powershell-integration.ps1";
-    }
-    if (rcfile != null) {
-      try {
-        return findAbsolutePath(rcfile);
-      }
-      catch (Exception e) {
-        LOG.warn("Unable to find " + rcfile + " configuration file", e);
-      }
-    }
-    return null;
-  }
-
-  @VisibleForTesting
-  static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
-    String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
-    final File result;
-    if (jarPath.endsWith(".jar")) {
-      File jarFile = new File(jarPath);
-      if (!jarFile.isFile()) {
-        throw new IOException("Broken installation: " + jarPath + " is not a file");
-      }
-      File pluginBaseDir = jarFile.getParentFile().getParentFile();
-      result = new File(pluginBaseDir, relativePath);
-    }
-    else {
-      Application application = ApplicationManager.getApplication();
-      if (application != null && application.isInternal()) {
-        jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
-        String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
-                                        "/community/plugins/terminal/resources/");
-        if (new File(srcDir).isDirectory()) {
-          jarPath = srcDir;
-        }
-      }
-      result = new File(jarPath, relativePath);
-    }
-    if (!result.isFile()) {
-      throw new IOException("Cannot find " + relativePath + ": " + result.getAbsolutePath() + " is not a file");
-    }
-    return result.getAbsolutePath();
-  }
 
   // todo: it would be great to extract block terminal configuration from here
-  private static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options, boolean blockTerminalEnabled) {
+  public static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options, boolean blockTerminalEnabled) {
     List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellCommand == null || shellExe == null) return options;
@@ -183,6 +122,58 @@ public class LocalShellIntegrationInjector {
       .envVariables(envs)
       .shellIntegration(integration)
       .build();
+  }
+
+  @Nullable
+  private static String findRCFile(@NotNull String shellName) {
+    String rcfile = switch (shellName) {
+      case ShellNameUtil.BASH_NAME, ShellNameUtil.SH_NAME -> "shell-integrations/bash/bash-integration.bash";
+      case ShellNameUtil.ZSH_NAME -> "shell-integrations/zsh/.zshenv";
+      case ShellNameUtil.FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
+      default -> null;
+    };
+    if (rcfile == null && ShellNameUtil.isPowerShell(shellName)) {
+      rcfile = "shell-integrations/powershell/powershell-integration.ps1";
+    }
+    if (rcfile != null) {
+      try {
+        return findAbsolutePath(rcfile);
+      }
+      catch (Exception e) {
+        LOG.warn("Unable to find " + rcfile + " configuration file", e);
+      }
+    }
+    return null;
+  }
+
+  @VisibleForTesting
+  static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
+    String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
+    final File result;
+    if (jarPath.endsWith(".jar")) {
+      File jarFile = new File(jarPath);
+      if (!jarFile.isFile()) {
+        throw new IOException("Broken installation: " + jarPath + " is not a file");
+      }
+      File pluginBaseDir = jarFile.getParentFile().getParentFile();
+      result = new File(pluginBaseDir, relativePath);
+    }
+    else {
+      Application application = ApplicationManager.getApplication();
+      if (application != null && application.isInternal()) {
+        jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
+        String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
+                                        "/community/plugins/terminal/resources/");
+        if (new File(srcDir).isDirectory()) {
+          jarPath = srcDir;
+        }
+      }
+      result = new File(jarPath, relativePath);
+    }
+    if (!result.isFile()) {
+      throw new IOException("Cannot find " + relativePath + ": " + result.getAbsolutePath() + " is not a file");
+    }
+    return result.getAbsolutePath();
   }
 
   private static void setLoginShellEnv(@NotNull Map<String, String> envs, boolean loginShell) {

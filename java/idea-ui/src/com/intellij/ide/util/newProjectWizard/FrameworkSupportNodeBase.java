@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return (T)super.getUserObject();
   }
 
+  @Contract(mutates = "param1")
   public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase<?>> nodes, @Nullable final Comparator<? super FrameworkSupportNodeBase<?>> comparator) {
     if (nodes == null) return;
 

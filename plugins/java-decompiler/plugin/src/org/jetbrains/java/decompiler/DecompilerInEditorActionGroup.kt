@@ -40,6 +40,7 @@ internal class DecompilerInEditorActionGroup(private val settings: IdeaDecompile
       val newState = IdeaDecompilerSettings.State.fromPreset(preset)
       settings.loadState(newState)
       val virtualFile = e.dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+      DecompilerPresetChangedCollector.decompilerPresetChanged(preset)
       VfsImplUtil.forceSyncRefresh(virtualFile)
     }
   }

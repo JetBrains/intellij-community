@@ -29,7 +29,8 @@ object InlineStackTraceCalculator {
     fun calculateVisibleVariables(frameProxy: StackFrameProxyImpl): List<LocalVariableProxyImpl> {
         // This is called from CoroutineStackFrame even for Java frames. We only need to compute for Kotlin frames.
         return if (frameProxy.location().isInKotlinSources()) {
-            frameProxy.stackFrame.computeKotlinStackFrameInfos().last().visibleVariableProxies(frameProxy)
+            frameProxy.stackFrame.computeKotlinStackFrameInfos()
+                .lastOrNull()?.visibleVariableProxies(frameProxy) ?: emptyList()
         } else {
             frameProxy.safeVisibleVariables()
         }

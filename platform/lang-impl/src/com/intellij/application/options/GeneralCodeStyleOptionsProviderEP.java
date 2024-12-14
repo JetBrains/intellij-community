@@ -4,6 +4,8 @@ package com.intellij.application.options;
 import com.intellij.openapi.options.ConfigurableEP;
 import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
 public final class GeneralCodeStyleOptionsProviderEP extends ConfigurableEP<GeneralCodeStyleOptionsProvider> {
+  @ApiStatus.Internal
+  public GeneralCodeStyleOptionsProviderEP() {
+  }
 }

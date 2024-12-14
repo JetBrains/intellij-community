@@ -170,6 +170,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
   }
 
+  @Contract(mutates = "this,param2")
   private void addFiles(@NotNull AbstractTreeNode parentNode,
                         @NotNull List<? extends File> roots,
                         @NotNull final Collection<? extends File> files,
@@ -190,7 +191,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
                                       : new DirectoryTreeNode(root.getAbsolutePath(), myProject, parentPath);
       Disposer.register((Disposable)parentNode, child);
       parentNode.add(child);
-      addFiles(child, groupByPackages.getChildren(root), files, groupByPackages, child.getFilePath());
+      addFiles(child, new ArrayList<>(groupByPackages.getChildren(root)), files, groupByPackages, child.getFilePath());
     }
   }
 

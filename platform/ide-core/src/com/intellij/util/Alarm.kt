@@ -388,25 +388,22 @@ open class Alarm @Internal constructor(
           taskContext += modalityState.asContextElement()
         }
 
-        withContext(taskContext) {
+        // To emulate before-coroutine implementation, we run the task in a separate coroutine.
+        // Cancellation of `Request.job` does not cancel the running task as before.
+        owner.coroutineScope.launch(taskContext) {
           val task = synchronized(owner.LOCK) {
             task?.also { task = null }
-          } ?: return@withContext
+          } ?: return@launch
 
           ensureActive()
 
-          //todo fix clients and remove NonCancellable
           try {
             if (owner.threadToUse == ThreadToUse.SWING_THREAD) {
-              Cancellation.withNonCancelableSection().use {
-                //todo fix clients and remove WriteIntentReadAction
-                WriteIntentReadAction.run(task)
-              }
+              //todo fix clients and remove WriteIntentReadAction
+              WriteIntentReadAction.run(task)
             }
             else {
-              Cancellation.withNonCancelableSection().use {
-                task.run()
-              }
+              task.run()
             }
           }
           catch (e: CancellationException) {
@@ -415,7 +412,7 @@ open class Alarm @Internal constructor(
           catch (e: Throwable) {
             LOG.error(e)
           }
-        }
+        }.join() // this makes waitForAllExecuted actually wait
       }.also {
         it.invokeOnCompletion {
           synchronized(owner.LOCK) {

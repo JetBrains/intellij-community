@@ -12,10 +12,9 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor;
 
 import java.util.concurrent.TimeUnit;
-
-import static org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor.toGradleDependency;
 
 public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
 
@@ -25,6 +24,14 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     directTransformationTest("testImplementation 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "test", null));
     directTransformationTest("runtime 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "runtime", null));
     directTransformationTest("compileOnly 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "provided", null));
+  }
+
+  public void testDependencyWithoutVersion() {
+    directTransformationTest("implementation 'group:artifact'", getDependency("group", "artifact", null, null, null));
+  }
+
+  public void testKotlinDslDependency() {
+    directTransformationTestKotlinDsl("implementation(\"group:artifact:1.0\")", getDependency("group", "artifact", "1.0", null, null));
   }
 
   public void testTrimLeadingComment() {
@@ -38,6 +45,10 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     copyPasteTest("runtime 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "runtime", null));
   }
 
+  public void testPastedKotlinDslGradleDependency() {
+    copyPasteTestKotlinDsl("runtime(\"group:artifact:1.0\")", getDependency("group", "artifact", "1.0", "runtime", null));
+  }
+
   public void testDependencyWithClassifier() {
     copyPasteTest("runtime 'group:artifact:1.0:jdk14'", getDependency("group", "artifact", "1.0", "runtime", "jdk14"));
   }
@@ -47,7 +58,7 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("pom.xml", noArtifact);
     selectWholeFile();
     performCut();
-    configureGradleFile();
+    configureGradleFile(false);
     int old = CodeInsightSettings.getInstance().REFORMAT_ON_PASTE;
     try {
       CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
@@ -74,8 +85,8 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     copyPasteTest("compileOnly 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "provided", null));
   }
 
-  private void configureGradleFile() {
-    configureFromFileText("build.gradle",
+  private void configureGradleFile(boolean isKotlinDsl) {
+    configureFromFileText("build.gradle" + (isKotlinDsl ? ".kts" : ""),
                           """
                             dependencies {
                                 <caret>
@@ -138,11 +149,19 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
   }
 
   private void copyPasteTest(@NotNull String gradleDependency, @NotNull String mavenDependency) {
+    copyPasteTest(gradleDependency, mavenDependency, false);
+  }
+
+  private void copyPasteTestKotlinDsl(@NotNull String gradleDependency, @NotNull String mavenDependency) {
+    copyPasteTest(gradleDependency, mavenDependency, true);
+  }
+
+  private void copyPasteTest(@NotNull String gradleDependency, @NotNull String mavenDependency, boolean isKotlinDsl) {
     configureFromFileText("pom.xml", mavenDependency);
     selectWholeFile();
     performCut();
 
-    configureGradleFile();
+    configureGradleFile(isKotlinDsl);
     performPaste();
     checkResultByText("dependencies {\n" +
                       "    " + gradleDependency + "\n" +
@@ -150,6 +169,10 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
   }
 
   private static void directTransformationTest(@NotNull String gradleDependency, @NotNull String mavenDependency) {
-    assertEquals(gradleDependency, toGradleDependency(mavenDependency));
+    assertEquals(gradleDependency, new PasteMvnDependencyPreProcessor().toGradleDependency(mavenDependency, false));
+  }
+
+  private static void directTransformationTestKotlinDsl(@NotNull String gradleDependency, @NotNull String mavenDependency) {
+    assertEquals(gradleDependency, new PasteMvnDependencyPreProcessor().toGradleDependency(mavenDependency, true));
   }
 }

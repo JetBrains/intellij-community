@@ -132,6 +132,7 @@ public final class CertificateTreeBuilder implements Disposable {
     return certificates.isEmpty() ? null : certificates.iterator().next();
   }
 
+  @Unmodifiable
   public @NotNull List<X509Certificate> getCertificatesByOrganization(@NotNull String organizationName) {
     Collection<CertificateWrapper> wrappers = myCertificates.get(organizationName);
     return extract(wrappers);

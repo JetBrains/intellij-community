@@ -101,11 +101,11 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   }
 
   @Override
-  public List<File> getAffectedExternalProjectFiles(@NotNull String externalProjectPath, @NotNull Project project) {
+  public @NotNull List<File> getAffectedExternalProjectFiles(@NotNull String externalProjectPath, @NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
     GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
     if (projectSettings == null) {
-      return null;
+      return Collections.emptyList();
     }
     return GradleAutoReloadSettingsCollector.EP_NAME.getExtensionList().stream()
       .flatMap(it -> it.collectSettingsFiles(project, projectSettings).stream())

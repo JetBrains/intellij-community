@@ -95,6 +95,7 @@ a:com.intellij.execution.process.BaseProcessHandler
 - pf:myProcess:java.lang.Process
 - pf:myWaitFor:com.intellij.execution.process.ProcessWaitFor
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
+- p:createWaitFor():com.intellij.execution.process.ProcessWaitFor
 - p:destroyProcessImpl():V
 - detachIsDefault():Z
 - p:detachProcessImpl():V
@@ -2118,6 +2119,7 @@ f:com.intellij.util.ConcurrencyUtil
 - s:awaitQuiescence(java.util.concurrent.ThreadPoolExecutor,J,java.util.concurrent.TimeUnit):V
 - s:cacheOrGet(java.util.concurrent.ConcurrentMap,java.lang.Object,java.lang.Object):java.lang.Object
 - s:cacheOrGet(java.util.concurrent.atomic.AtomicReference,java.lang.Object):java.lang.Object
+- s:computeIfAbsent(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,java.util.function.Supplier):java.lang.Object
 - s:getAll(J,java.util.concurrent.TimeUnit,java.util.Collection):V
 - s:getAll(java.util.Collection):V
 - s:invokeAll(java.util.Collection,java.util.concurrent.ExecutorService):java.util.List
@@ -3896,7 +3898,6 @@ f:com.intellij.util.containers.UnmodifiableHashMap
 - without(java.lang.Object):com.intellij.util.containers.UnmodifiableHashMap
 c:com.intellij.util.containers.UnsafeWeakList
 - java.util.AbstractCollection
-- pf:myList:java.util.List
 - <init>():V
 - <init>(I):V
 - add(java.lang.Object):Z

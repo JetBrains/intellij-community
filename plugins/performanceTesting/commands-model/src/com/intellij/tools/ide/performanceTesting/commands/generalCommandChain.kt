@@ -1221,12 +1221,22 @@ fun <T : CommandChain> T.massCreateFiles(extension: String, numberOfFiles: Int):
  * Only works if massCreateFiles() was called before it
  */
 @Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.massModifyFiles(): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate MODIFY")
+}
+
+/**
+ * @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand
+ * Only works if massCreateFiles() was called before it
+ */
+@Suppress("KDocUnresolvedReference")
 fun <T : CommandChain> T.massDeleteFiles(): T = apply {
   addCommand("${CMD_PREFIX}measureVfsMassUpdate DELETE")
 }
 
 enum class MassVfsRefreshSpan(val spanName: String) {
   CREATE("vfsRefreshAfterMassCreate"),
+  MODIFY("vfsRefreshAfterMassModify"),
   DELETE("vfsRefreshAfterMassDelete")
 }
 

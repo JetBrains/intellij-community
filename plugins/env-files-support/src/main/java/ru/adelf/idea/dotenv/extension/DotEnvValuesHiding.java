@@ -14,9 +14,7 @@ import ru.adelf.idea.dotenv.psi.DotEnvValue;
 
 public class DotEnvValuesHiding extends FoldingBuilderEx implements DumbAware {
     @Override
-    public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root,
-                                                          @NotNull Document document,
-                                                          boolean quick) {
+    public FoldingDescriptor [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
         if (!DotEnvSettings.getInstance().hideValuesInTheFile) return emptyResult;
 
         return PsiTreeUtil.collectElementsOfType(root, DotEnvValue.class).stream().map(
@@ -39,5 +37,5 @@ public class DotEnvValuesHiding extends FoldingBuilderEx implements DumbAware {
         return true;
     }
 
-    private static final FoldingDescriptor[] emptyResult = new FoldingDescriptor[0];
+    private static final FoldingDescriptor[] emptyResult = FoldingDescriptor.EMPTY_ARRAY;
 }

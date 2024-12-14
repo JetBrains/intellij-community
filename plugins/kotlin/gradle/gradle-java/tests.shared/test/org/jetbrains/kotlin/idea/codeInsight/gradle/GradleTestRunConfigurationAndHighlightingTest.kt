@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.awt.Point
 import java.io.File
+import java.util.Locale
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
     @Test
@@ -153,7 +154,7 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
                 RunConfigurationsTags.SETTINGS -> settings.toString()
             }
 
-            result += tag.name.toLowerCase() to renderedTagValue
+            result += tag.name.lowercase(Locale.getDefault()) to renderedTagValue
         }
 
         return result.joinToString { (tagName, tagValue) -> tagName + "=\"" + tagValue.replace("\"", "\\\"") + "\"" }

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -103,7 +104,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return true
   }
 
-  @Throws(Exception::class)
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
     myProjectsManager = MavenProjectsManager.getInstance(project)
@@ -382,7 +382,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
@@ -402,7 +402,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
       }
     }
   }
@@ -684,5 +684,9 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       Messages.NO
     }
     return counter
+  }
+
+  protected fun runWithoutStaticSync() {
+    Registry.get("maven.preimport.project").setValue(false, testRootDisposable)
   }
 }

@@ -2069,6 +2069,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
                 runTest("testData/evaluation/singleBreakpoint/localFunctionsWithReceivers.kt");
             }
 
+            @TestMetadata("localInsideLambda.kt")
+            public void testLocalInsideLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localInsideLambda.kt");
+            }
+
             @TestMetadata("localVariables.kt")
             public void testLocalVariables() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/localVariables.kt");
@@ -2132,6 +2137,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
             @TestMetadata("parametersOfInlineFunSeveralOnLine.kt")
             public void testParametersOfInlineFunSeveralOnLine() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFunSeveralOnLine.kt");
+            }
+
+            @TestMetadata("privateAssignmentOperators.kt")
+            public void testPrivateAssignmentOperators() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateAssignmentOperators.kt");
             }
 
             @TestMetadata("privateClass.kt")

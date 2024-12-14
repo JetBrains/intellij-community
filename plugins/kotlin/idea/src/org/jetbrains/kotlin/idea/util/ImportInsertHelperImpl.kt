@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -306,7 +307,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             }
 
             val futureCheckMap = HashMap<KtSimpleNameExpression, Pair<FqName, Class<out Any>>>()
-            file.accept(object : KtVisitorVoid() {
+            file.accept(object : KtVisitorVoid(), PsiRecursiveVisitor {
                 override fun visitElement(element: PsiElement): Unit = element.acceptChildren(this)
                 override fun visitImportList(importList: KtImportList) {}
                 override fun visitPackageDirective(directive: KtPackageDirective) {}
@@ -408,7 +409,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
             val classesToCheck = importedClasses.associateByTo(mutableMapOf()) { it.name }
             val result = LinkedHashSet<ClassifierDescriptor>()
-            file.accept(object : KtVisitorVoid() {
+            file.accept(object : KtVisitorVoid(), PsiRecursiveVisitor {
                 override fun visitElement(element: PsiElement) {
                     if (classesToCheck.isEmpty()) return
                     element.acceptChildren(this)

@@ -37,10 +37,8 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.IconManager
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.docking.DockManager
@@ -48,7 +46,6 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
 import com.intellij.util.application
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.KeyboardFocusManager
@@ -109,10 +106,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     fun getExecutorByContent(content: Content): Executor? = content.getUserData(EXECUTOR_KEY)
 
     @JvmStatic
-    fun getLiveIndicator(icon: Icon?): Icon = when (ExperimentalUI.isNewUI()) {
-      true -> IconManager.getInstance().withIconBadge(icon ?: EmptyIcon.ICON_13, JBUI.CurrentTheme.IconBadge.SUCCESS)
-      else -> ExecutionUtil.getLiveIndicator(icon)
-    }
+    fun getLiveIndicator(icon: Icon?): Icon = ExecutionUtil.getLiveIndicator(icon)
   }
 
   // must be called on EDT
@@ -324,8 +318,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
 
-    addRunnerContentListener(descriptor)
-
     if (oldDescriptor == null) {
       contentManager.addContent(content)
       content.putUserData(CLOSE_LISTENER_KEY, CloseListener(content, executor))
@@ -365,26 +357,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
     return getToolWindowManager().getToolWindow(toolWindowId)?.contentManagerIfCreated
-  }
-
-  private fun addRunnerContentListener(descriptor: RunContentDescriptor) {
-    val runContentManager = descriptor.runnerLayoutUi?.contentManager
-    val mainContent = descriptor.attachedContent
-    if (runContentManager != null && mainContent != null) {
-      runContentManager.addContentManagerListener(object : ContentManagerListener {
-        // remove the toolwindow tab that is moved outside via drag and drop
-        // if corresponding run/debug tab was hidden in debugger layout settings
-        override fun contentRemoved(event: ContentManagerEvent) {
-          val toolWindowContentManager = InternalDecoratorImpl.findTopLevelDecorator(mainContent.component)?.contentManager ?: return
-          val allContents = toolWindowContentManager.contentsRecursively
-          val removedContent = event.content
-          val movedContent = allContents.find { it.displayName == removedContent.displayName }
-          if (movedContent != null) {
-            movedContent.manager?.removeContent(movedContent, false)
-          }
-        }
-      })
-    }
   }
 
   override fun getReuseContent(executionEnvironment: ExecutionEnvironment): RunContentDescriptor? {

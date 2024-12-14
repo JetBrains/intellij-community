@@ -2630,7 +2630,7 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilePathsNode
 - p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
 c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilesNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
-- p:<init>(java.lang.Object,java.util.Collection,I,java.lang.Runnable):V
+- p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
 a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - pf:myDialogShower:java.lang.Runnable
@@ -2665,6 +2665,11 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:createGroupingPolicy(com.intellij.openapi.project.Project,javax.swing.tree.DefaultTreeModel):com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicy
+f:com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- implementationClass:java.lang.String
+- key:java.lang.String
+- weight:I
 c:com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport$Companion
 - sf:DIRECTORY_GROUPING:java.lang.String
@@ -2834,6 +2839,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 - <init>():V
 - f:collectDiffProducers(com.intellij.openapi.vcs.changes.ui.ChangesTree,Z):com.intellij.openapi.ListSelection
 - f:hasContent(com.intellij.openapi.vcs.changes.ui.ChangesTree):Z
+- isShowAllChangesForEmptySelection():Z
 - a:iterateAllChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):java.lang.Iterable
 - a:iterateSelectedChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):java.lang.Iterable
 - a:selectChange(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
@@ -2877,6 +2883,14 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl$VirtualFiles
 - <init>(com.intellij.openapi.project.Project,Z,Z):V
 - <init>(com.intellij.openapi.project.Project,Z,Z,java.util.List):V
 - p:buildTreeModel(java.util.List):javax.swing.tree.DefaultTreeModel
+f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
+- com.intellij.openapi.extensions.PluginAware
+- className:java.lang.String
+- displayNameSupplierClassName:java.lang.String
+- isInCommitToolWindow:Z
+- predicateClassName:java.lang.String
+- preloaderClassName:java.lang.String
+- tabName:java.lang.String
 com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
 - a:addContent(com.intellij.ui.content.Content):V
 - a:attachToolWindow(com.intellij.openapi.wm.ToolWindow):V
@@ -3295,6 +3309,7 @@ c:com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 - f:iterateAllChanges():java.lang.Iterable
 - f:iterateSelectedChanges():java.lang.Iterable
 - pf:selectChange(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
+- p:showAllChangesForEmptySelection():Z
 a:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 - com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview$Companion
@@ -3824,6 +3839,7 @@ a:com.intellij.openapi.vcs.impl.GenericNotifierImpl
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.notification.NotificationType):V
 - pa:ask(java.lang.Object,java.lang.String):Z
 - f:clear():V
+- p:configureNotification(com.intellij.notification.Notification,java.lang.Object):V
 - ensureNotify(java.lang.Object):Z
 - pf:getAllCurrentKeys():java.util.List
 - pa:getKey(java.lang.Object):java.lang.Object
@@ -4037,6 +4053,13 @@ f:com.intellij.openapi.vcs.impl.VcsCacheManager
 - getContentRevisionCache():com.intellij.openapi.vcs.impl.ContentRevisionCache
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsCacheManager
 - getVcsHistoryCache():com.intellij.openapi.vcs.history.VcsHistoryCache
+f:com.intellij.openapi.vcs.impl.VcsEP
+- com.intellij.openapi.extensions.PluginAware
+- administrativeAreaName:java.lang.String
+- areChildrenValidMappings:Z
+- displayName:java.lang.String
+- name:java.lang.String
+- vcsClass:java.lang.String
 f:com.intellij.openapi.vcs.impl.VcsFileStatusProvider
 - getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsFileStatusProvider
@@ -5247,11 +5270,13 @@ a:com.intellij.vcs.commit.VcsCommitter
 - pf:vcsCommit(com.intellij.openapi.vcs.AbstractVcs,java.util.List):V
 a:com.intellij.vcs.commit.message.BaseCommitMessageInspection
 - com.intellij.codeInspection.LocalInspectionTool
+- sf:Companion:com.intellij.vcs.commit.message.BaseCommitMessageInspection$Companion
 - <init>():V
 - canReformat(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):Z
 - checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,Z):com.intellij.codeInspection.ProblemDescriptor[]
 - p:checkFile(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInspection.InspectionManager,Z):com.intellij.codeInspection.ProblemDescriptor[]
-- ps:checkRightMargin(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInspection.InspectionManager,Z,I,I,java.lang.String,com.intellij.codeInspection.LocalQuickFix[]):com.intellij.codeInspection.ProblemDescriptor
+- psf:checkRightMargin(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInspection.InspectionManager,Z,I,I,java.lang.String,com.intellij.codeInspection.LocalQuickFix[]):com.intellij.codeInspection.ProblemDescriptor
+- createOptions(com.intellij.ui.dsl.builder.Panel,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):Z
 - createOptionsConfigurable():com.intellij.openapi.options.ConfigurableUi
 - getGroupDisplayName():java.lang.String
 - getStaticDescription():java.lang.String
@@ -5260,10 +5285,11 @@ a:com.intellij.vcs.commit.message.BaseCommitMessageInspection
 - reformat(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):V
 pa:com.intellij.vcs.commit.message.BaseCommitMessageInspection$BaseCommitMessageQuickFix
 - com.intellij.codeInspection.LocalQuickFix
-- p:<init>():V
+- <init>():V
 - applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):V
 - a:doApplyFix(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.codeInspection.ProblemDescriptor):V
-c:com.intellij.vcs.commit.message.BaseCommitMessageInspection$EmptyIntentionActionFilter
+f:com.intellij.vcs.commit.message.BaseCommitMessageInspection$Companion
+f:com.intellij.vcs.commit.message.BaseCommitMessageInspection$EmptyIntentionActionFilter
 - com.intellij.codeInsight.daemon.impl.IntentionActionFilter
 - <init>():V
 - accept(com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile):Z
@@ -5272,7 +5298,7 @@ pc:com.intellij.vcs.commit.message.BaseCommitMessageInspection$ReformatCommitMes
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.LowPriorityAction
 - com.intellij.openapi.actionSystem.ShortcutProvider
-- p:<init>():V
+- <init>():V
 - doApplyFix(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.codeInspection.ProblemDescriptor):V
 - getFamilyName():java.lang.String
 - getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
@@ -5280,24 +5306,17 @@ pc:com.intellij.vcs.commit.message.BaseCommitMessageInspection$ReformatCommitMes
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
-c:com.intellij.vcs.commit.message.BodyLimitInspection
+f:com.intellij.vcs.commit.message.BodyLimitInspection
 - com.intellij.vcs.commit.message.BaseCommitMessageInspection
 - RIGHT_MARGIN:I
 - <init>():V
 - canReformat(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):Z
-- p:checkFile(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInspection.InspectionManager,Z):com.intellij.codeInspection.ProblemDescriptor[]
-- createOptionsConfigurable():com.intellij.openapi.options.ConfigurableUi
+- createOptions(com.intellij.ui.dsl.builder.Panel,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):Z
 - getDisplayName():java.lang.String
 - reformat(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):V
-pc:com.intellij.vcs.commit.message.BodyLimitInspection$WrapLineQuickFix
-- com.intellij.vcs.commit.message.BaseCommitMessageInspection$BaseCommitMessageQuickFix
-- p:<init>(com.intellij.vcs.commit.message.BodyLimitInspection):V
-- doApplyFix(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.codeInspection.ProblemDescriptor):V
-- getFamilyName():java.lang.String
 c:com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 - com.intellij.codeInspection.ex.InspectionProfileImpl
 - com.intellij.openapi.components.PersistentStateComponent
-- sf:DEFAULT:com.intellij.codeInspection.ex.InspectionProfileImpl
 - sf:TOPIC:com.intellij.util.messages.Topic
 - <init>(com.intellij.openapi.project.Project):V
 - p:forceInitInspectionTools():Z

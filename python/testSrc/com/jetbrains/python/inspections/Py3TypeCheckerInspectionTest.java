@@ -102,6 +102,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionReturnTypePy3() {
     doTest();
   }
+  
+  public void testFunctionYieldTypePy3() {
+    doTest();
+  }
 
   // PY-20770
   public void testAsyncForOverAsyncGenerator() {
@@ -617,8 +621,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-
-  // test is broken, type variable in TypeIs is invariant, so TypeIs[B] and TypeIs[D] are not consistent
   public void testCallableWithTypeGuards4() {
     doTestByText("""
                    from typing import Any, Callable
@@ -635,8 +637,30 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    def is_str(x: Any) -> TypeIs[D]:
                       ...
-                   # should be error here! 
-                   foo(is_str)
+                   foo(<warning descr="Expected type '(Any) -> TypeIs[B]', got '(x: Any) -> TypeIs[D]' instead">is_str</warning>)
+                   """);
+  }
+
+  public void testTypeIsAndTypeGuardAreNotAssignableToEachOther() {
+    doTestByText("""
+                   from typing import Callable, TypeGuard, TypeIs
+                   
+                   def takes_typeguard(f: Callable[[object], TypeGuard[int]]) -> None:
+                       pass
+                   
+                   def takes_typeis(f: Callable[[object], TypeIs[int]]) -> None:
+                       pass
+                   
+                   def is_int_typeis(val: object) -> TypeIs[int]:
+                       return isinstance(val, int)
+                   
+                   def is_int_typeguard(val: object) -> TypeGuard[int]:
+                       return isinstance(val, int)
+                   
+                   takes_typeguard(is_int_typeguard)
+                   takes_typeguard(<warning descr="Expected type '(object) -> TypeGuard[int]', got '(val: object) -> TypeIs[int]' instead">is_int_typeis</warning>)
+                   takes_typeis(<warning descr="Expected type '(object) -> TypeIs[int]', got '(val: object) -> TypeGuard[int]' instead">is_int_typeguard</warning>)
+                   takes_typeis(is_int_typeis)
                    """);
   }
 
@@ -1204,7 +1228,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testRequiredWithReadOnly() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTestByText(
       """
-        from typing_extensions import TypedDict, Required, NotRequired
+        from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
         
         class Movie(TypedDict):
             name: ReadOnly[Required[str]]
@@ -1213,6 +1237,53 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
         m: Movie = <warning descr="TypedDict 'Movie' has missing key: 'name'">{"year": 2024}</warning>
         """
     ));
+  }
+
+  public void testTypedDictConsistencyWithDict() {
+    doTestByText(
+      """
+        from typing import TypedDict
+
+        class A(TypedDict):
+            x: int
+
+        def f(a: A, d: dict[str, int]):
+            val1: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'A' instead">a</warning>
+            val2: A = d
+        """
+    );
+  }
+
+  public void testTypedDictsReadonlyConsistency() {
+    doTestByText("""
+                   from typing import TypedDict, Required, NotRequired, ReadOnly
+                   
+                   class A1(TypedDict):
+                       x: NotRequired[str]
+                   
+                   class B1(TypedDict):
+                       x: NotRequired[ReadOnly[str]]
+                   
+                   class B2(TypedDict):
+                       x: ReadOnly[NotRequired[str]]
+                   
+                   class C(TypedDict):
+                       x: Required[str]
+                   
+                   def func1(b1: B1, b2: B2, c: C):
+                       v1: A1 = <warning descr="Expected type 'A1', got 'B1' instead">b1</warning>
+                       v2: A1 = <warning descr="Expected type 'A1', got 'B2' instead">b2</warning>
+                       v3: B1 = c
+                   
+                   class A2(TypedDict):
+                       x: ReadOnly[NotRequired[object]]
+                   
+                   class B3(TypedDict):
+                       pass
+                   
+                   def func2(b: B3):
+                       a: A2 = b
+                   """);
   }
 
   // PY-53611
@@ -1865,58 +1936,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                     """);
   }
 
-  //// PY-53611
-  //public void testTypedDictRequiredNotRequiredKeys() {
-  //  runWithLanguageLevel(LanguageLevel.getLatest(),
-  //                       () -> doTestByText("""
-  //                                            from typing import TypedDict
-  //                                            from typing_extensions import Required, NotRequired
-  //                                            class WithTotalFalse(TypedDict, total=False):
-  //                                                x: Required[int]
-  //                                            class WithTotalTrue(TypedDict, total=True):
-  //                                                x: NotRequired[int]
-  //                                            class WithoutTotal(TypedDict):
-  //                                                x: NotRequired[int]
-  //                                            class WithoutTotalWithExplicitRequired(TypedDict):
-  //                                                x: Required[int]
-  //                                                y: NotRequired[int]
-  //                                            AlternativeSyntax = TypedDict("AlternativeSyntax", {'x': NotRequired[int]})
-  //                                            with_total_false: WithTotalFalse = <warning descr="TypedDict 'WithTotalFalse' has missing key: 'x'">{}</warning>
-  //                                            with_total_true: WithTotalTrue = {}
-  //                                            without_total: WithoutTotal = {}
-  //                                            without_total_with_explicit_required: WithoutTotalWithExplicitRequired = <warning descr="TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'">{}</warning>
-  //                                            alternative_syntax: AlternativeSyntax = {}
-  //                                            """));
-  //}
-
-  //// PY-53611
-  //public void testTypedDictRequiredNotRequiredEquivalence() {
-  //  runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
-  //}
-  //
-  //// PY-53611
-  //public void testTypedDictRequiredNotRequiredMixedWithAnnotated() {
-  //  runWithLanguageLevel(LanguageLevel.getLatest(),
-  //                       () -> doTestByText("""
-  //                                            from typing_extensions import TypedDict, Required, NotRequired, Annotated
-  //                                            class A(TypedDict):
-  //                                                x: Annotated[NotRequired[int], 'Some constraint']
-  //                                            def f(a: A):
-  //                                                pass
-  //                                            f({})
-  //                                            class B(TypedDict, total=False):
-  //                                                x: Annotated[Required[int], 'Some constraint']
-  //                                            def g(b: B):
-  //                                                pass
-  //                                            g(<warning descr="TypedDict 'B' has missing key: 'x'">{}</warning>)
-  //                                            """));
-  //}
-  //
-  //// PY-53611
-  //public void testTypingRequiredTypeSpecificationsMultiFile() {
-  //  doMultiFileTest();
-  //}
-
   // PY-56785
   public void testTypingSelfNoInspectionReturnSelfMethod() {
     doTestByText("""
@@ -2404,5 +2423,19 @@ def foo(param: str | int) -> TypeGuard[str]:
   // PY-23067
   public void testFunctoolsWrapsMultiFile() {
     doMultiFileTest();
+  }
+
+  // PY-76059
+  public void testDataclassInstanceProtocol() {
+    doTestByText("""
+                   from dataclasses import dataclass, asdict
+                   
+                   @dataclass
+                   class MyDataClass:
+                       name:str
+                   
+                   asdict(MyDataClass(name="Bob"))
+                   asdict(<warning descr="Expected type 'DataclassInstance', got 'str' instead">"Bob"</warning>)
+                   """);
   }
 }

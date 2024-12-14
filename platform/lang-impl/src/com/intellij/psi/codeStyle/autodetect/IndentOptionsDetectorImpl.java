@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -66,6 +67,7 @@ public final class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     return indentOptions;
   }
 
+  @Unmodifiable
   private @Nullable List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
     if (myDocument.getLineCount() < 3 || isFileBigToDetect()) {
       return null;

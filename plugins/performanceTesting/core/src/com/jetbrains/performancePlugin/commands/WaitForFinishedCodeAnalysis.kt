@@ -50,7 +50,12 @@ private fun Collection<FileEditor>.getWorthy(): List<TextEditor> {
   }
 }
 
-private fun isTrafficLightExists(editor: Editor): Boolean = (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null
+private fun isTrafficLightExists(editor: Editor): Boolean {
+  //MD file in preview mode doesn't have traffic light.
+  //TODO Learn how to determine MD file view mode
+  val isMdFile = editor.virtualFile.extension?.contains("md", ignoreCase = true) ?: false
+  return (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null || isMdFile
+}
 
 private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.traffic.light")
 
@@ -288,8 +293,9 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         val (editor, exceptionWithTime) = iterator.next()
         val highlightedEditor = highlightedEditors[editor]
 
-        if (checkTrafficLightRenderer()) {
-          assert(isTrafficLightExists(editor.editor)) { "Highlighting traffic light should be shown in the top right corner of the editor, in case of $status" }
+        if (checkTrafficLightRenderer() && !isTrafficLightExists(editor.editor)) {
+          LOG.error("Highlighting traffic light should be shown in the top right corner of the editor, in case of $status")
+          takeFullScreenshot("traffic-light-screenshot")
         }
 
         if (highlightedEditor == null) {
@@ -345,7 +351,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     if (EDT.isCurrentThreadEdt()) return
     try {
       ReadAction.run<Throwable> {
-        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).use { it.daemonCodeAnalyzerStatus }}")
+        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor).use { it.daemonCodeAnalyzerStatus }}")
       }
     }
     catch (ex: Throwable) {

@@ -19,10 +19,12 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.EvaluatedXmlName;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public interface AbstractCollectionChildDescription extends AbstractDomChildrenDescription {
+  @Unmodifiable
   List<XmlTag> getSubTags(DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file);
   EvaluatedXmlName createEvaluatedXmlName(DomInvocationHandler parent, XmlTag childTag);
 }

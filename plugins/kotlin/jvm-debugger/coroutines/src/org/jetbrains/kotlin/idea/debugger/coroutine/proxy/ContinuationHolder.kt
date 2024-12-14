@@ -80,7 +80,8 @@ private fun collectCoroutineAndCreationStack(
     continuation: ObjectReference,
     context: DefaultExecutionContext
 ): Pair<List<MirrorOfStackFrame>, List<StackTraceElement>?>? {
-    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation))
+    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation),
+                                     "com.intellij.rt.debugger.coroutines.JsonUtils")
         ?: return fallbackToOldFetchContinuationStack(continuation, context)
     return parseResultFromHelper(array)
 }

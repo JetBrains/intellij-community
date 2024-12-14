@@ -671,6 +671,53 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        assert issubclass(A, <error descr="Type variables cannot be used with instance and class checks">p3</error>)""");
   }
 
+  public void testTypedDictWithInstanceAndClassChecks() {
+    doTestByText(
+      """
+        from typing import TypedDict
+
+        class Movie(TypedDict):
+            name: str
+            year: int
+        
+        Movie2 = TypedDict('Movie2', {'name': str, 'year': int})
+
+        class A:
+            pass
+
+        def foo(d):
+          if isinstance(d, <error descr="TypedDict type cannot be used with instance and class checks">Movie</error>):
+              pass
+
+          if isinstance(d, <error descr="TypedDict type cannot be used with instance and class checks">Movie2</error>):
+              pass
+
+        M = Movie
+        if issubclass(A, <error descr="TypedDict type cannot be used with instance and class checks">M</error>):
+            pass
+
+        M2 = Movie2
+        if issubclass(A, <error descr="TypedDict type cannot be used with instance and class checks">M2</error>):
+            pass
+        """
+    );
+  }
+
+  public void testTypedDictAsTypeVarBound() {
+    doTestByText(
+      """
+        from typing import TypedDict, TypeVar
+        
+        class Movie(TypedDict):
+            name: str
+            year: int
+
+        T = TypeVar("T", bound=<warning descr="TypedDict is not allowed as a bound for a TypeVar">TypedDict</warning>)
+        U = TypeVar("U", bound=Movie)
+        """
+    );
+  }
+
   // PY-16853
   public void testParenthesesAndTyping() {
     doTestByText("""
@@ -1423,6 +1470,32 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                     
                     def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">foo</warning>(x: int) -> TypeIs[float]:
                       ...
+                    
+                    def bar(x: float) -> TypeIs[float]:
+                      ...
+                    
+                    class A:
+                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f1</warning>(self, x: int) -> TypeIs[float]:
+                        ...
+                    
+                      def f2(self, x: float) -> TypeIs[float]:
+                        ...
+                    
+                      @classmethod
+                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f3</warning>(cls, x: int) -> TypeIs[float]:
+                        ...
+                    
+                      @classmethod
+                      def f4(cls, x: float) -> TypeIs[float]:
+                        ...
+
+                      @staticmethod
+                      def <warning descr="Return type of TypeIs 'float' is not consistent with the type of the first parameter 'int'">f5</warning>(x: int) -> TypeIs[float]:
+                        ...
+                    
+                      @staticmethod
+                      def f6(x: float) -> TypeIs[float]:
+                        ...
                     """);
   }
 
@@ -1462,6 +1535,53 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                     
                     def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">foo</warning>() -> TypeIs[float]:
                       ...
+                    
+                    class A:
+                      def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">foo</warning>(self) -> TypeIs[float]:
+                        ...
+                    
+                      @classmethod
+                      def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">bar</warning>(cls) -> TypeIs[float]:
+                        ...
+                    
+                      @staticmethod
+                      def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">buz</warning>() -> TypeIs[float]:
+                        ...
+                    """);
+  }
+
+  public void testTypeGuardMissedParameter() {
+    doTestByText("""
+                    from typing import TypeGuard
+                    
+                    def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f1</warning>() -> TypeGuard[str]:
+                        ...
+                    
+                    def f2(x: bool) -> TypeGuard[str]:
+                        ...
+                    
+                    class A:
+                        def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f1</warning>(self) -> TypeGuard[str]:
+                            ...
+                    
+                        def f2(self, x: int) -> TypeGuard[str]:
+                            ...
+                    
+                        @classmethod
+                        def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f3</warning>(cls) -> TypeGuard[str]:
+                            ...
+                    
+                        @classmethod
+                        def f4(cls, x: float) -> TypeGuard[str]:
+                            ...
+                    
+                        @staticmethod
+                        def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">f5</warning>() -> TypeGuard[str]:
+                            ...
+                    
+                        @staticmethod
+                        def f6(x: bool) -> TypeGuard[str]:
+                            ...
                     """);
   }
 
@@ -1483,6 +1603,30 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        ...
                    class ClazzC(Generic[NoDefaultT2, NoDefaultT3]):
                        ...
+                   """);
+  }
+
+  public void testCastCall() {
+    doTestByText("""
+                   from typing import cast
+                   
+                   def f(val: object):
+                       v0 = cast(int, 10) # ok
+                       v1 = cast(list[int], val) # ok
+                       v2 = cast('list[float]', val) # ok
+                       v3 = cast(<warning descr="Expected a type">1</warning>, val)
+                   """);
+  }
+
+  public void testIsInstanceAndClassChecksOnNewType() {
+    doTestByText("""
+                   from typing import NewType
+                   
+                   UserId = NewType("UserId", int)
+
+                   def f(val):
+                       isinstance(val, <error descr="NewType type cannot be used with instance and class checks">UserId</error>)
+                       issubclass(int, <error descr="NewType type cannot be used with instance and class checks">UserId</error>)
                    """);
   }
 

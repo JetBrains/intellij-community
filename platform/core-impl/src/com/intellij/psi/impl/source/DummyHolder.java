@@ -19,7 +19,7 @@ public class DummyHolder extends PsiFileImpl {
   protected final PsiElement myContext;
   private final CharTable myTable;
   private final Boolean myExplicitlyValid;
-  private final Language myLanguage;
+  private final @NotNull Language myLanguage;
   @SuppressWarnings("EmptyClass") private static class DummyHolderTreeLock {}
   private final DummyHolderTreeLock myTreeElementLock = new DummyHolderTreeLock();
 
@@ -39,7 +39,8 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, contentElement, context, table, null, language(context, PlainTextLanguage.INSTANCE));
   }
 
-  protected static Language language(PsiElement context, Language defaultLanguage) {
+  @NotNull
+  protected static Language language(PsiElement context, @NotNull Language defaultLanguage) {
     if (context == null) return defaultLanguage;
     PsiFile file = context.getContainingFile();
     if (file == null) return defaultLanguage;
@@ -49,7 +50,7 @@ public class DummyHolder extends PsiFileImpl {
     return contextLanguage;
   }
 
-  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, @Nullable PsiElement context, @Nullable CharTable table, @Nullable Boolean validity, Language language) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, @Nullable PsiElement context, @Nullable CharTable table, @Nullable Boolean validity, @NotNull Language language) {
     super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     myLanguage = language;
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
@@ -71,11 +72,11 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, null, context, table);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, CharTable table, Language language) {
+  public DummyHolder(@NotNull PsiManager manager, CharTable table, @NotNull Language language) {
     this(manager, null, null, table, null, language);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, @NotNull Language language, PsiElement context) {
     this(manager, null, context, null, null, language);
   }
 

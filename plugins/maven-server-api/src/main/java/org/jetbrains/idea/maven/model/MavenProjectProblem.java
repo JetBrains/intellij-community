@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Objects;
 
 public class MavenProjectProblem implements Serializable {
@@ -31,7 +28,7 @@ public class MavenProjectProblem implements Serializable {
     SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES, REPOSITORY
   }
 
-  private final boolean myRecoverable;
+  private final boolean myIsError;
   private final String myPath;
   private final String myDescription;
   private final ProblemType myType;
@@ -39,48 +36,48 @@ public class MavenProjectProblem implements Serializable {
   @Nullable
   private final MavenArtifact myMavenArtifact;
 
-  public static MavenProjectProblem createStructureProblem(String path, String description, boolean recoverable) {
-    return createProblem(path, description, ProblemType.STRUCTURE, recoverable);
+  public static MavenProjectProblem createStructureProblem(String path, String description, boolean isError) {
+    return createProblem(path, description, ProblemType.STRUCTURE, isError);
   }
 
   public static MavenProjectProblem createStructureProblem(String path, String description) {
-    return createProblem(path, description, ProblemType.STRUCTURE, false);
+    return createProblem(path, description, ProblemType.STRUCTURE, true);
   }
 
   public static MavenProjectProblem createSyntaxProblem(String path, ProblemType type) {
-    return createProblem(path, MessageFormat.format("''{0}'' has syntax errors", new File(path).getName()), type, false);
+    return createProblem(path, MessageFormat.format("''{0}'' has syntax errors", new File(path).getName()), type, true);
   }
 
   public static MavenProjectProblem createProblem(String path,
                                                   String description,
                                                   ProblemType type,
-                                                  boolean recoverable) {
-    return new MavenProjectProblem(path, description, type, recoverable);
+                                                  boolean isError) {
+    return new MavenProjectProblem(path, description, type, isError);
   }
 
   public static MavenProjectProblem createRepositoryProblem(String path,
                                                             String description,
-                                                            boolean recoverable,
+                                                            boolean isError,
                                                             MavenArtifact mavenArtifact) {
-    return new MavenProjectProblem(path, description, ProblemType.REPOSITORY, recoverable, mavenArtifact);
+    return new MavenProjectProblem(path, description, ProblemType.REPOSITORY, isError, mavenArtifact);
   }
 
   public static MavenProjectProblem createUnresolvedArtifactProblem(String path,
                                                                     String description,
-                                                                    boolean recoverable,
+                                                                    boolean isError,
                                                                     MavenArtifact mavenArtifact) {
-    return new MavenProjectProblem(path, description, ProblemType.DEPENDENCY, recoverable, mavenArtifact);
+    return new MavenProjectProblem(path, description, ProblemType.DEPENDENCY, isError, mavenArtifact);
   }
 
-  public MavenProjectProblem(String path, String description, ProblemType type, boolean recoverable) {
-    this(path, description, type, recoverable, null);
+  public MavenProjectProblem(String path, String description, ProblemType type, boolean isError) {
+    this(path, description, type, isError, null);
   }
 
-  public MavenProjectProblem(String path, String description, ProblemType type, boolean recoverable, MavenArtifact mavenArtifact) {
+  public MavenProjectProblem(String path, String description, ProblemType type, boolean isError, MavenArtifact mavenArtifact) {
     myPath = path;
     myDescription = description;
     myType = type;
-    myRecoverable = recoverable;
+    myIsError = isError;
     myMavenArtifact = mavenArtifact;
     st = new Exception();
   }
@@ -89,8 +86,8 @@ public class MavenProjectProblem implements Serializable {
     return myPath;
   }
 
-  public boolean isRecoverable() {
-    return myRecoverable;
+  public boolean isError() {
+    return myIsError;
   }
 
   public @Nullable String getDescription() {

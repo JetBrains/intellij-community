@@ -49,7 +49,6 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.junit.AssumptionViolatedException
 import java.awt.HeadlessException
 import java.io.File
 import java.io.IOException
@@ -114,7 +113,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     myAllPoms.add(pom)
   }
 
-  @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
@@ -181,7 +179,6 @@ abstract class MavenTestCase : UsefulTestCase() {
       { MavenUtil.noUncompletedRunnables() }, 15)
   }
 
-  @Throws(Throwable::class)
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
       override fun processError(category: String,
@@ -207,8 +204,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return newSdk
   }
 
-
-  @Throws(Exception::class)
   override fun tearDown() {
     val basePath = myProject!!.basePath
     RunAll(
@@ -261,7 +256,6 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
 
-  @Throws(IOException::class)
   private fun ensureTempDirCreated() {
     if (ourTempDir != null) return
 
@@ -276,7 +270,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     FileUtil.ensureExists(ourTempDir!!)
   }
 
-  @Throws(Exception::class)
   protected open fun setUpFixtures() {
     val wslMsId = System.getProperty("wsl.distribution.name")
 
@@ -298,14 +291,12 @@ abstract class MavenTestCase : UsefulTestCase() {
     return false
   }
 
-  @Throws(Exception::class)
   protected open fun setUpInWriteAction() {
     val projectDir = File(myDir, "project")
     projectDir.mkdirs()
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)
   }
 
-  @Throws(Exception::class)
   protected open fun tearDownFixtures() {
     try {
       myTestFixture!!.tearDown()
@@ -315,7 +306,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  @Throws(Throwable::class)
   override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
     try {
       super.runTestRunnable(testRunnable)
@@ -356,7 +346,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return pathFromBasedir(myProjectRoot, relPath)
   }
 
-  @Throws(IOException::class)
   protected fun createSettingsXml(innerContent: String): VirtualFile {
     val content = createSettingsXmlContent(innerContent)
     val path = Path.of(myDir!!.path, "settings.xml")
@@ -365,12 +354,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
 
-  @Throws(IOException::class)
   protected fun updateSettingsXml(content: String): VirtualFile {
     return updateSettingsXmlFully(createSettingsXmlContent(content))
   }
 
-  @Throws(IOException::class)
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
     val ioFile = File(myDir, "settings.xml")
     ioFile.createNewFile()
@@ -381,9 +368,16 @@ abstract class MavenTestCase : UsefulTestCase() {
     return f
   }
 
-  @Throws(IOException::class)
   protected fun restoreSettingsFile() {
-    updateSettingsXml("")
+    updateSettingsXml("""
+      <mirrors>
+        <mirror>
+          <id>central-mirror</id>
+          <url>https://cache-redirector.jetbrains.com/repo1.maven.org/maven2</url>
+          <mirrorOf>central</mirrorOf>
+        </mirror>
+      </mirrors>
+    """.trimIndent())
   }
 
   protected fun createModule(name: String, type: ModuleType<*>): Module {
@@ -465,7 +459,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createProfilesFile(createProjectSubDir(relativePath), content)
   }
 
-  @Throws(IOException::class)
   protected fun deleteProfilesXml() {
     WriteCommandAction.writeCommandAction(myProject).run<IOException> {
       val f = myProjectRoot!!.findChild("profiles.xml")
@@ -485,7 +478,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)!!
   }
 
-  @Throws(IOException::class)
   protected fun createProjectSubFile(relativePath: String): VirtualFile {
     val f = File(projectPath, relativePath)
     f.parentFile.mkdirs()
@@ -493,7 +485,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)!!
   }
 
-  @Throws(IOException::class)
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
     setFileContent(file, content)

@@ -13,6 +13,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
@@ -21,23 +23,32 @@ import kotlin.io.path.*
 import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.minutes
 
-abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase() {
-    override fun testDataDirName() = "fixes"
+abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase(), ExpectedPluginModeProvider {
+    override fun testDataDirName(): String = "fixes"
     final override fun testDataDirectory(): File = super.testDataDirectory().resolve("before")
 
-    open val afterTestDataDirectory get() = testDataDirectory().parentFile.resolve("after")
+    open val afterTestDataDirectory: File
+        get() = testDataDirectory().parentFile.resolve("after")
+
+    /*
+    * Check unexpected diagnostics in the file.
+    * Called from a read action.
+    */
+    protected abstract fun checkUnexpectedErrors(ktFile: KtFile)
 
     private lateinit var afterDirectory: Path
 
     @OptIn(ExperimentalPathApi::class)
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin {
+            super.setUp()
 
-        /* Setup 'after' directory: Ensure that we process it similar to the 'before', by also replacing test properties */
-        afterDirectory = TemporaryDirectory.generateTemporaryPath("${testDataDirName()}.after")
+            /* Setup 'after' directory: Ensure that we process it similar to the 'before', by also replacing test properties */
+            afterDirectory = TemporaryDirectory.generateTemporaryPath("${testDataDirName()}.after")
 
-        /* Some quick fix (e.g. AddKotlinLibraryQuickFix) will modify build scripts *and* re-sync the project */
-        AutoImportProjectTracker.enableAutoReloadInTests(testRootDisposable)
+            /* Some quick fix (e.g. AddKotlinLibraryQuickFix) will modify build scripts *and* re-sync the project */
+            AutoImportProjectTracker.enableAutoReloadInTests(testRootDisposable)
+        }
     }
 
     @OptIn(ExperimentalPathApi::class)
@@ -116,7 +127,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
 
             readActionBlocking {
                 DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)
-                DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+                checkUnexpectedErrors(ktFile)
             }
         }
     }

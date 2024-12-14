@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenAsyncUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
@@ -93,8 +94,8 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
           FileDocumentManager.getInstance().saveAllDocuments()
-          MavenUtil.setupProjectSdk(project)
         }
+        MavenAsyncUtil.setupProjectSdk(project, context.projectPath)
       }
 
       // GradleWarmupConfigurator sets "external.system.auto.import.disabled" to true, but we have to import the project nevertheless
@@ -106,7 +107,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     Disposer.dispose(disposable)
 
     for (mavenProject in mavenProjectsManager.projects) {
-      val hasReadingProblems = mavenProject.hasUnrecoverableReadingProblems()
+      val hasReadingProblems = mavenProject.hasReadingErrors()
       if (hasReadingProblems) {
         throw IllegalStateException("Maven project ${mavenProject} has import problems:" + mavenProject.problems)
       }

@@ -176,8 +176,15 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("Atlassian Commonmark", libraryName = "atlassian.commonmark", url = "https://github.com/commonmark/commonmark-java")
       .simplifiedBsd("https://github.com/commonmark/commonmark-java/blob/main/LICENSE.txt")
+      .additionalLibraryNames(
+        "commonmark.ext.autolink",
+        "org.commonmark.commonmark"
+      )
       .copyrightText("Copyright (c) 2015, Atlassian Pty Ltd")
       .suppliedByOrganizations("Atlassian Pty Ltd"),
+
+    LibraryLicense("Autolink Java", libraryName = "org.nibor.autolink.autolink", url = "https://github.com/robinst/autolink-java")
+      .mit("https://github.com/robinst/autolink-java/blob/main/LICENSE"),
 
     LibraryLicense("Automaton", libraryName = "automaton", url = "https://www.brics.dk/automaton/")
       .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING")
@@ -240,9 +247,23 @@ object CommunityLibraryLicenses {
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
+    LibraryLicense("Compose Multiplatform", libraryName = "org.jetbrains.compose.foundation.foundation.desktop", url = "https://github.com/JetBrains/compose-multiplatform")
+      .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
+      .additionalLibraryNames(
+        "org.jetbrains.compose.components.components.resources.desktop",
+        "org.jetbrains.compose.components.components.resources"
+      )
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense("Compose Multiplatform Compiler", libraryName = "jetbrains.compose.compiler.hosted", url = "https://github.com/JetBrains/compose-multiplatform")
       .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense("Compose Multiplatform File Picker", libraryName = "com.darkrockstudios.mpfilepicker", url = "https://github.com/Wavesonics/compose-multiplatform-file-picker")
+      .mit("https://github.com/Wavesonics/compose-multiplatform-file-picker/blob/master/LICENSE")
+      .additionalLibraryNames(
+        "com.darkrockstudios.mpfilepicker.jvm"
+      ),
 
     // For ADB wireless QR Code generation
     LibraryLicense("Core barcode encoding/decoding library", url = "https://github.com/zxing/zxing/tree/master/core", libraryName = "zxing-core")
@@ -255,7 +276,7 @@ object CommunityLibraryLicenses {
     LibraryLicense("coverage.py", version = "4.2.0", attachedTo = "intellij.python", url = "https://coverage.readthedocs.io/")
       .apache("https://github.com/nedbat/coveragepy/blob/master/LICENSE.txt"),
 
-    LibraryLicense("Cucumber-Core", libraryName = "cucumber-core-1.2", url = "https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
+    LibraryLicense("cucumber-core", libraryName = "cucumber-core-1", url = "https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .suppliedByOrganizations("SmartBear Software"),
 
@@ -604,16 +625,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("JetBrains Annotations for Java 5", libraryName = "jetbrains-annotations-java5", url = "https://github.com/JetBrains/java-annotations")
       .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
 
-    LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-ide-laf-bridge")
-      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-
     LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jetbrains.jewel.ide.laf.bridge.243")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-
-    LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", libraryName = "jetbrains-jewel-markdown-laf-bridge-styling", url = "https://github.com/JetBrains/jewel")
-      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
+      .additionalLibraryNames("jewel-ide-laf-bridge")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-markdown-ide-laf-bridge-styling-242")
@@ -766,6 +780,9 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("Kotlin POKO Compiler", libraryName = "kotlinc.poko-compiler-plugin", url = "https://github.com/drewhamilton/Poko")
+      .apache("https://github.com/drewhamilton/Poko/blob/main/LICENSE"),
+
     LibraryLicense("Kotlin reflection library", libraryName = "kotlin-reflect", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -860,6 +877,12 @@ object CommunityLibraryLicenses {
     LibraryLicense("Log4j", libraryName = "Log4J", url = "https://www.slf4j.org/legacy.html#log4j-over-slf4j")
       .apache("https://github.com/qos-ch/slf4j/blob/master/log4j-over-slf4j/LICENSE.txt")
       .suppliedByOrganizations("QOS.ch Sarl"),
+
+    LibraryLicense("LWJGL", libraryName="org.lwjgl.lwjgl", url = "https://github.com/LWJGL/lwjgl3")
+      .newBsd("https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md")
+      .additionalLibraryNames(
+        "org.lwjgl.lwjgl.tinyfd"
+      ),
 
     LibraryLicense("lz4-java", libraryName = "lz4-java", url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
@@ -999,7 +1022,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/package-search-api-models/blob/master/LICENSE")
       .suppliedByOrganizations("JetBrains Team"),
 
-    LibraryLicense("pip", version = "20.3.4", attachedTo = "intellij.python", url = "https://pip.pypa.io/")
+    LibraryLicense("pip", version = "24.3.1", attachedTo = "intellij.python", url = "https://pip.pypa.io/")
       .mit("https://github.com/pypa/pip/blob/main/LICENSE.txt"),
 
     LibraryLicense("plexus-archiver", libraryName = "plexus-archiver", url = "https://github.com/codehaus-plexus/plexus-archiver")

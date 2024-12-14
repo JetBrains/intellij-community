@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.lang.manifest.psi.*;
 
 import java.util.List;
@@ -72,6 +73,7 @@ public class HeaderImpl extends ASTWrapperPsiElement implements Header {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<HeaderValue> getHeaderValues() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HeaderValue.class);
   }

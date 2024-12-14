@@ -190,7 +190,11 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
         //specify companion name to avoid clashes with enum entries
         (symbol.containingSymbol as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
-    } else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
+    }
+    else if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT) {
+        symbol.name!!.asString()
+    }
+    else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
         (symbol.psi as? PsiClass)?.name ?: ("this@" + symbol.name!!.asString())
     } else if (symbol is KaReceiverParameterSymbol && symbol.owningCallableSymbol is KaNamedSymbol) {
         // refer to this@contextReceiverType but use this@funName for everything else, because another syntax is prohibited

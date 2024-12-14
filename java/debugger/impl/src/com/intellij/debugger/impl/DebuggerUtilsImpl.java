@@ -481,30 +481,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     }
   }
 
-  // do not catch VMDisconnectedException
-  public static <T, R> R computeSafeIfAny(ExtensionPointName<T> ep, @NotNull Function<? super T, ? extends R> processor) {
-    for (T t : ep.getIterable()) {
-      if (t == null) {
-        return null;
-      }
-
-      try {
-        R result = processor.apply(t);
-        if (result != null) {
-          return result;
-        }
-      }
-      catch (VMDisconnectedException | ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    return null;
-  }
-
   public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,
                                                   @NotNull ClassType type,
                                                   @NotNull String methodName,
@@ -537,8 +513,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                          Class<?> cls,
                                          String methodName,
                                          List<Value> arguments,
-                                         boolean keepResult) throws EvaluateException {
-    ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext);
+                                         boolean keepResult,
+                                         String... additionalClassesToLoad) throws EvaluateException {
+    ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
     if (helperClass != null) {
       Method method = findMethod(helperClass, methodName, null);
       if (method != null) {
@@ -566,5 +543,19 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                      "getThrowableText",
                                      Collections.singletonList(exceptionObject));
     return value != null ? ((StringReference)value).value() : null;
+  }
+
+  @Nullable
+  public static Value invokeThrowableGetStackTrace(@NotNull ObjectReference exceptionObj,
+                                                   @NotNull EvaluationContextImpl evaluationContext,
+                                                   boolean keepResult) throws EvaluateException {
+    if (instanceOf(exceptionObj.type(), "java.lang.Throwable")) {
+      Method method = findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
+      DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+      ThrowableComputable<Value, EvaluateException> invoker = () -> debugProcess.invokeInstanceMethod(
+        evaluationContext, exceptionObj, Objects.requireNonNull(method), Collections.emptyList(), 0, true);
+      return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
+    }
+    return null;
   }
 }

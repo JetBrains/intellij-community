@@ -4,9 +4,7 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
-import com.intellij.util.io.bytesToHex
 import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
@@ -184,30 +182,6 @@ class SoftwareBillOfMaterialsImpl(
     }
     withContext(Dispatchers.IO) {
       checkNtiaConformance(documents, context)
-    }
-  }
-
-  class Checksums(@JvmField val path: Path) {
-    val sha1sum: String
-    val sha256sum: String
-
-    init {
-      val buffer = ByteArray(512 * 1024)
-      val digests = Files.newInputStream(path).use {
-        val sha1 = DigestUtil.sha1()
-        val sha256 = DigestUtil.sha256()
-        while (true) {
-          val sz = it.read(buffer)
-          if (sz <= 0) {
-            break
-          }
-          sha1.update(buffer, 0, sz)
-          sha256.update(buffer, 0, sz)
-        }
-        bytesToHex(sha1.digest()) to bytesToHex(sha256.digest())
-      }
-      sha1sum = digests.first
-      sha256sum = digests.second
     }
   }
 
@@ -525,14 +499,14 @@ class SoftwareBillOfMaterialsImpl(
       ?: error("Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}")
     }
     else null
-    val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging, classifier = "")
+    val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging)
     val checksums = mavenDescriptor.artifactsVerification.filter {
       Path.of(JpsPathUtil.urlToOsPath(it.url)).name == libraryName
     }
     check(checksums.count() == 1) {
       "Missing checksum for $coordinates: ${checksums.map { it.url }}"
     }
-    val pomName = coordinates.getFileName(packaging = "pom", classifier = "")
+    val pomName = coordinates.getFileName(packaging = "pom")
     return MavenLibrary(
       path = libraryFile,
       coordinates = coordinates,
@@ -821,7 +795,7 @@ class SoftwareBillOfMaterialsImpl(
       val repositoryUrl = checkNotNull(upstream.mavenRepositoryUrl) {
         "Missing Maven repository url for ${upstream.groupId}:${upstream.artifactId}"
       }.removeSuffix("/")
-      val jarName = coordinates.getFileName(packaging = "jar", classifier = "")
+      val jarName = coordinates.getFileName(packaging = "jar")
       setDownloadLocation("$repositoryUrl/${coordinates.directoryPath}/$jarName")
       addExternalRef(coordinates.externalRef(this@spdxPackageUpstream, repositoryUrl))
     }

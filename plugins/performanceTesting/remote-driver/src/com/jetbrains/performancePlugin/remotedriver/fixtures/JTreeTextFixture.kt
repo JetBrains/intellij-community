@@ -8,14 +8,20 @@ import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRender
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
 import org.assertj.swing.core.Robot
 import org.assertj.swing.driver.BasicJTreeCellReader
+import org.assertj.swing.driver.CellRendererReader
 import org.assertj.swing.fixture.JTreeFixture
 import java.awt.Point
 import javax.swing.JTree
 
 open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixture(robot, component) {
-  private val cellReader = BasicJTreeCellReader(TextCellRendererReader())
+  private var cellReader = BasicJTreeCellReader(TextCellRendererReader())
 
   init {
+    replaceCellReader(cellReader)
+  }
+
+  fun replaceCellRendererReader(reader: CellRendererReader) {
+    cellReader = BasicJTreeCellReader(reader)
     replaceCellReader(cellReader)
   }
 

@@ -1777,6 +1777,9 @@ com.intellij.execution.services.ServiceViewContributor
 - a:getServiceDescriptor(com.intellij.openapi.project.Project,java.lang.Object):com.intellij.execution.services.ServiceViewDescriptor
 - a:getServices(com.intellij.openapi.project.Project):java.util.List
 - a:getViewDescriptor(com.intellij.openapi.project.Project):com.intellij.execution.services.ServiceViewDescriptor
+com.intellij.execution.services.ServiceViewDefaultDeleteProvider
+- com.intellij.ide.DeleteProvider
+- s:getInstance():com.intellij.execution.services.ServiceViewDefaultDeleteProvider
 com.intellij.execution.services.ServiceViewDescriptor
 - sf:ACTION_HOLDER_KEY:com.intellij.openapi.util.Key
 - getContentComponent():javax.swing.JComponent

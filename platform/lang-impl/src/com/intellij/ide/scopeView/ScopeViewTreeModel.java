@@ -73,6 +73,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -1179,6 +1180,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     return manager != null && manager.hasModuleGroups();
   }
 
+  @Unmodifiable
   private static @NotNull List<String> getModuleNameAsList(@NotNull Module module, boolean split) {
     String name = module.getName();
     Project project = module.isDisposed() ? null : module.getProject();

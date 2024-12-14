@@ -1006,7 +1006,8 @@ elements:
                         sdkDocsFixedPath: [idea-plugin, actions, action, override-text]
                         since: "2020.1"
                         #language=Markdown
-                        description: Defines an alternate version of the text for the menu action or group.
+                        description: |
+                          Defines an alternate menu action or group text depending on context: menu location, toolbar, and other.
                         #language=Markdown
                         sdkDocsSupportDetails: |
                           2020.1+ for actions<br/>
@@ -1043,9 +1044,22 @@ elements:
                           - |
                             Explicitly overridden text:
                                 ```xml
-                                <override-text
-                                    place="MainMenu"
-                                    text="Collect _Garbage"/>
+                                <!--
+                                Default action text:
+                                "Garbage Collector: Collect _Garbage"
+                                -->
+                                <action
+                                    class="com.example.CollectGarbage"
+                                    text="Garbage Collector: Collect _Garbage"
+                                    ...>
+                                  <!--
+                                  Alternate text displayed anywhere in the main menu:
+                                  "Collect _Garbage"
+                                  -->
+                                  <override-text
+                                      place="MainMenu"
+                                      text="Collect _Garbage"/>
+                                </action>
                                 ```
                           - |
                             Overridden text reused from the `MainMenu` place:
@@ -1074,7 +1088,7 @@ elements:
                                   - |
                                     `key` or [`text`](#attribute:idea-plugin__actions__action__synonym__text) is **required**
                               #language=Markdown
-                              description: The key of the synonym text provided in a message bundle.
+                              description: The key of the synonym text provided in a [message bundle](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups).
                           - attribute:
                               name: text
                               requirement:
@@ -1321,7 +1335,7 @@ elements:
                                 required: no
                               #language=Markdown
                               description: |
-                                The message key for the separator text.
+                                The [message key]([message key](https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#localizing-actions-and-groups)) for the separator text.
                                 The message bundle for use should be registered via the [`resource-bundle`](#attribute:idea-plugin__actions__resource-bundle) attribute of
                                 the [`<actions>`](#element:idea-plugin__actions) element.
                                 The attribute is ignored if the [`text`](#attribute:idea-plugin__group__separator) attribute is specified.

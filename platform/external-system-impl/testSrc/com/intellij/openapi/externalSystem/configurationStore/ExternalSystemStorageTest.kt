@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -573,20 +574,26 @@ class ExternalSystemStorageTest {
     }
   }
 
+  fun writeTextToProjectFile(project: Project, newText: String) {
+    val miscXmlPath = project.projectFilePath!!
+    val miscFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(miscXmlPath) ?: error("Cannot find $miscXmlPath")
+    VfsUtil.saveText(miscFile, newText)
+  }
+
   @Test
   fun `check project model saved correctly at internal storage after misc manual modification`() {
     loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
-      val miscFile = File(project.projectFilePath!!)
-      miscFile.writeText("""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <project version="4">
-          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
-        </project>
-      """.trimIndent())
-      WriteAction.runAndWait<RuntimeException> {
-        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+      runBlocking {
+        writeAction {
+          writeTextToProjectFile(project, """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project version="4">
+              <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+            </project>
+          """.trimIndent())
+        }
+        StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
       }
-      runBlocking { StoreReloadManager.getInstance(project).reloadChangedStorageFiles() }
       ApplicationManager.getApplication().invokeAndWait {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
@@ -596,18 +603,18 @@ class ExternalSystemStorageTest {
   @Test
   fun `check project model saved correctly at external storage after misc manual modification`() {
     loadModifySaveAndCheck("twoModulesWithLibrariesAndFacets", "twoModulesInExtAndLibsAndFacetsInInternalStorage") { project ->
-      val miscFile = File(project.projectFilePath!!)
-      miscFile.writeText("""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <project version="4">
-          <component name="ExternalStorageConfigurationManager" enabled="true" />
-          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
-        </project>
-      """.trimIndent())
-      WriteAction.runAndWait<RuntimeException> {
-        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+      runBlocking {
+        writeAction {
+          writeTextToProjectFile(project, """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project version="4">
+              <component name="ExternalStorageConfigurationManager" enabled="true" />
+              <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+            </project>
+            """.trimIndent())
+        }
+        StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
       }
-      runBlocking { StoreReloadManager.getInstance(project).reloadChangedStorageFiles() }
       ApplicationManager.getApplication().invokeAndWait {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }

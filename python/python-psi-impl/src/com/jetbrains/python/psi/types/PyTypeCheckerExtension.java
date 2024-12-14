@@ -2,11 +2,11 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,9 +23,12 @@ public interface PyTypeCheckerExtension {
                                   @Nullable PyType actual,
                                   @NotNull TypeEvalContext context,
                                   @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
-    Map<PyGenericType, PyType> legacyTypeVarSubs = EntryStream.of(substitutions.getTypeVars())
-      .selectKeys(PyGenericType.class)
-      .toMap();
+    Map<PyGenericType, PyType> legacyTypeVarSubs = new HashMap<>();
+    for (Map.Entry<PyTypeVarType, PyType> entry : substitutions.getTypeVars().entrySet()) {
+      if (entry.getKey() instanceof PyGenericType legacyTypeVar) {
+        legacyTypeVarSubs.put(legacyTypeVar, entry.getValue());
+      }
+    }
     return match(expected, actual, context, legacyTypeVarSubs);
   }
 
@@ -36,9 +39,10 @@ public interface PyTypeCheckerExtension {
    */
   @Deprecated(forRemoval = true)
   @NotNull
-  Optional<Boolean> match(@Nullable PyType expected,
-                          @Nullable PyType actual,
-                          @NotNull TypeEvalContext context,
-                          @NotNull Map<PyGenericType, PyType> substitutions);
-  
+  default Optional<Boolean> match(@Nullable PyType expected,
+                                  @Nullable PyType actual,
+                                  @NotNull TypeEvalContext context,
+                                  @NotNull Map<PyGenericType, PyType> substitutions) {
+    throw new UnsupportedOperationException();
+  }
 }

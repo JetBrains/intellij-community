@@ -34,7 +34,7 @@ object FleetFromSourcesPaths {
   }
 
   val dockAppDevIconFile: Path by lazy {
-    projectRoot.resolve("resources/artwork/fleet/fleet-appicon-dev.png")
+    buildDirectory.resolve("localDistribution/icons/os-appicon.png")
   }
 
   val nemmetPath: Path by lazy {

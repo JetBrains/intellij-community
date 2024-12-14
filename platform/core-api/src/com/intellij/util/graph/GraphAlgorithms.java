@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,6 +18,7 @@ public abstract class GraphAlgorithms {
     return ApplicationManager.getApplication().getService(GraphAlgorithms.class);
   }
 
+  @Unmodifiable
   public abstract <Node> @NotNull Collection<Node> findNodesWhichBelongToAnyPathBetweenTwoNodes(
     @NotNull Graph<Node> graph,
     @NotNull Node start,

@@ -2,14 +2,47 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase() {
 
+  private val httpServerFixture = MavenHttpRepositoryServerFixture()
+  private lateinit var myUrl: String
+
+  public override fun setUp() {
+    super.setUp()
+    httpServerFixture.setUp()
+    myUrl = httpServerFixture.url()
+
+    updateSettingsXml("""
+      <mirrors>
+        <mirror>
+          <id>disable-central</id>
+          <mirrorOf>central</mirrorOf>
+          <url>file:///non-existent-repo</url>
+        </mirror>
+      </mirrors>
+    """.trimIndent())
+  }
+
+  public override fun tearDown() {
+    try {
+      httpServerFixture.tearDown()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
 
   @Test
   fun `should import dependency with custom plugin type`() = runBlocking {
+    httpServerFixture.startProxyRepositoryForUrl("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+
     importProjectAsync("""
       <groupId>test</groupId>
     <artifactId>project</artifactId>
@@ -41,12 +74,24 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
             </plugin>
         </plugins>
     </build>
+    
+    <repositories>
+      <repository>
+        <id>my-http-repository</id>
+        <name>my-http-repository</name>
+        <url>${myUrl}</url>
+      </repository>
+    </repositories>
+    <pluginRepositories> 
+      <pluginRepository>
+        <id>artifacts</id>
+        <url>$myUrl</url>
+      </pluginRepository>
+    </pluginRepositories>
 """)
-
     assertModules("project")
     val project = projectsManager.findProject(projectPom)
     assertNotNull(project)
     assertEmpty(project!!.problems)
-
   }
 }

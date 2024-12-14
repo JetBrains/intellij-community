@@ -2,7 +2,6 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
@@ -13,19 +12,19 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.rd.util.adviseSuspendPreserveClientId
-import com.intellij.openapi.rd.util.setSuspendPreserveClientId
+import com.intellij.openapi.rd.util.adviseSuspend
+import com.intellij.openapi.rd.util.setSuspend
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.util.coroutines.limitedParallelism
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
@@ -41,9 +40,6 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
-import com.jetbrains.rd.util.threading.asRdScheduler
-import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
-import com.jetbrains.rd.util.threading.coroutines.launch
 import com.jetbrains.rd.util.threading.coroutines.waitFor
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -140,6 +136,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       val isNotRdHost = !(session.agentInfo.productType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
 
       try {
+        @OptIn(ExperimentalCoroutinesApi::class)
+        val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Test session dispatcher: ${session.testClassName}::${session.testMethodName}")
+
         setUpTestLoggingFactory(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
         if (session.testMethodName == null || session.testClassName == null) {
@@ -168,7 +167,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Tell test we are running it inside an agent
           val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val (actionsMap, dimensionRequests) = testClassObject.initAgent(agentInfo)
+          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(agentInfo)
 
           // Play test method
           val testMethod = testClass.getMethod(session.testMethodName)
@@ -196,7 +195,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               val providedContext = contextGetter.invoke()
               val clientId = providedContext.clientId() ?: ClientId.current
 
-              return withContext(providedContext + clientId.asContextElement()) {
+              return withContext(providedContext) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(silent = false)
@@ -221,48 +220,40 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
           // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId { _, parameters ->
+          session.runNextAction.setSuspend(sessionBgtDispatcher) { _, parameters ->
             val actionTitle = parameters.title
             val queue = actionsMap[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
 
-            return@setSuspendPreserveClientId runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
+            return@setSuspend runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
               action.action(agentContext, parameters.parameters)
             }
           }
 
 
-          session.runNextActionGetComponentData.setSuspendPreserveClientId { _, parameters ->
+          session.runNextActionGetComponentData.setSuspend(sessionBgtDispatcher) { _, parameters ->
             val actionTitle = parameters.title
-            val queue = dimensionRequests[actionTitle]
-                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val queue = getComponentDataRequests[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
-            val timeout = action.timeout
 
-            return@setSuspendPreserveClientId runNext(actionTitle, timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
+            return@setSuspend runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
               action.action(agentContext, parameters.parameters)
             }
           }
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
-        session.isResponding.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.isResponding.setSuspend(sessionBgtDispatcher) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
-        session.visibleFrameNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.visibleFrameNames.setSuspend(sessionBgtDispatcher) { _, _ ->
           Window.getWindows().filter { it.isShowing }.filterIsInstance<Frame>().map { it.title }.also {
             LOG.info("Visible frame names: ${it.joinToString(", ", "[", "]")}")
           }
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
-        session.projectsNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.projectsNames.setSuspend(sessionBgtDispatcher) { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.name }.also {
             LOG.info("Projects: ${it.joinToString(", ", "[", "]")}")
           }
@@ -298,52 +289,52 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.forceLeaveAllModals.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, throwErrorIfModal ->
+        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, throwErrorIfModal ->
+          // TODO: Katsman maybe run the whole method on EDT
           leaveAllModals(throwErrorIfModal)
         }
 
-        session.closeProjectIfOpened.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
-          leaveAllModals(throwErrorIfModal = true)
-          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
-          withContext(Dispatchers.EDT + NonCancellable) {
-            writeIntentReadAction {
-              ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+        session.closeProjectIfOpened.setSuspend(sessionBgtDispatcher) { _, _ ->
+          // TODO: Katsman maybe run the whole method on EDT
+          try {
+            leaveAllModals(throwErrorIfModal = true)
+
+            ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
+            withContext(Dispatchers.EDT + NonCancellable) {
+              writeIntentReadAction {
+                ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+              }
             }
           }
+          catch (ce: CancellationException) {
+            LOG.info("closeProjectIfOpened was cancelled", ce)
+            throw ce
+          }
+
         }
         /**
          * Includes closing the project
          */
-        session.exitApp.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
-          lifetime.launch(Dispatchers.EDT + NonCancellable) {
-            writeIntentReadAction {
-              LOG.info("Exiting the application...")
-              app.exit(/* force = */ false, /* exitConfirmed = */ true, /* restart = */ false)
-            }
+        session.exitApp.adviseSuspend(lifetime, Dispatchers.EDT + NonCancellable) {
+          writeIntentReadAction {
+            LOG.info("Exiting the application...")
+            app.exit(/* force = */ false, /* exitConfirmed = */ true, /* restart = */ false)
           }
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
-        session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, silent ->
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            requestFocus(silent)
-          }
+        session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, silent ->
+          requestFocus(silent)
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
-        session.makeScreenshot.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
+        session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
           makeScreenshot(fileName)
         }
 
-        // actually doesn't really preserve clientId, not really important here
-        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
-        session.projectsAreInitialised.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.projectsAreInitialised.setSuspend(sessionBgtDispatcher) { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }
 
-        session.showNotification.adviseSuspendPreserveClientId(lifetime, Dispatchers.Default.asRdScheduler.asCoroutineDispatcher) { notificationText ->
+        session.showNotification.adviseSuspend(lifetime, Dispatchers.EDT) { notificationText ->
           showNotification(notificationText)
         }
 
@@ -512,15 +503,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 }
 
 @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-private fun showNotification(text: String?): Notification? {
+private fun showNotification(text: String?) {
   if (ApplicationManager.getApplication().isHeadlessEnvironment || text.isNullOrBlank()) {
-    return null
+    return
   }
 
-  val notification = Notification("TestFramework",
-                                  "Test Framework",
-                                  text,
-                                  NotificationType.INFORMATION)
-  Notifications.Bus.notify(notification)
-  return notification
+  Notification("TestFramework", "Test Framework", text, NotificationType.INFORMATION).notify(null)
 }

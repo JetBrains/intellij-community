@@ -12,6 +12,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.python.community" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="Guava" level="project" />
@@ -147,7 +148,6 @@
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.huggingFace" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
@@ -158,5 +158,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="ap-validation" level="project" />
   </component>
 </module>

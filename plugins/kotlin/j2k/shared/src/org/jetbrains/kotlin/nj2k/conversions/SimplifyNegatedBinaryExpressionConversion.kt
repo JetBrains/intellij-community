@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.parenthesize
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
  *
  * This is a J2K equivalent of `SimplifyNegatedBinaryExpressionInspection`.
  */
-class SimplifyNegatedBinaryExpressionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class SimplifyNegatedBinaryExpressionConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun isEnabledInBasicMode(): Boolean = false
 
     context(KaSession)

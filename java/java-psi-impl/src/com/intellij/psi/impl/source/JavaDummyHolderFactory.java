@@ -31,7 +31,7 @@ public class JavaDummyHolderFactory implements HolderFactory {
   }
 
   @Override
-  public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
+  public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, @NotNull Language language, PsiElement context) {
     return language == JavaLanguage.INSTANCE ? new JavaDummyHolder(manager, context) : new DummyHolder(manager, language, context);
   }
 
@@ -41,7 +41,7 @@ public class JavaDummyHolderFactory implements HolderFactory {
   }
 
   @Override
-  public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, Language language) {
+  public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, @NotNull Language language) {
     return new JavaDummyHolder(manager, table);
   }
 

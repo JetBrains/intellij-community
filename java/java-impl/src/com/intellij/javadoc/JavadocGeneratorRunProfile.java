@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.*;
@@ -329,6 +330,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return argsFile;
     }
 
+    @Unmodifiable
     private @NotNull List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
       OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
       if (!myConfiguration.OPTION_INCLUDE_LIBS) {
@@ -340,6 +342,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return sourcePathEnumerator.getSourcePathsList().getRootDirs();
     }
 
+    @Unmodifiable
     private @NotNull List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
       OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
       if (jdk.getSdkType() instanceof JavaSdk) {

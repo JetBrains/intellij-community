@@ -162,6 +162,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     return aClass;
   }
 
+  @Unmodifiable
   static List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {
     PsiClass psiClass = classItem.getObject();
     return wrap(classItem, psiClass, position, () -> JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY));

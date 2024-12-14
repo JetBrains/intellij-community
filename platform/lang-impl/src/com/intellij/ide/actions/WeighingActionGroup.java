@@ -22,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -52,6 +53,7 @@ abstract class WeighingActionGroup extends ActionGroup implements ActionWithDele
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
                                                                      @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     LinkedHashSet<AnAction> heaviest = null;

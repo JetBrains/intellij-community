@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.settingsSync.communicator.SettingsSyncUserData
 import com.intellij.testFramework.ApplicationRule
@@ -567,6 +568,34 @@ internal class GitSettingsLogTest {
   @Test
   @TestFor(issues = ["IJPL-13080"])
   fun `drop and reinit settings sync if cannot init`() {
+    val size = 16384
+    drop_and_reinit_base( {
+      val indexFile = getRepository().indexFile
+      val zeroBytesArray = ByteArray(size)
+      indexFile.writeBytes(zeroBytesArray)
+      assertEquals(size.toLong(), indexFile.length())
+    }, {
+      val indexFile = getRepository().indexFile
+      assertNotEquals(size, indexFile.length())
+    })
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-173307"])
+  fun `drop and reinit settings sync if cannot init 2`() {
+    drop_and_reinit_base( {
+      val dir = getRepository().directory
+      val refs = dir.resolve("refs")
+      FileUtil.deleteRecursively(refs.toPath())
+      assertFalse(refs.exists())
+    }, {
+      val dir = getRepository().directory
+      val refs = dir.resolve("refs")
+      assertTrue(refs.exists())
+    })
+  }
+
+  private fun drop_and_reinit_base(damageAction: ()->Unit, verifyAction: ()->Unit) {
     val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     val editorContent = "editorContent"
     val state1 = "State 1"
@@ -577,15 +606,16 @@ internal class GitSettingsLogTest {
     settingsLog.applyIdeState(settingsSnapshot {
       fileState("options/editor.xml", state1)
     }, "Local changes")
-    val indexFile = getRepository().indexFile
-
-    val size = 16384
-    val zeroBytesArray = ByteArray(size)
-    indexFile.writeBytes(zeroBytesArray)
-    assertEquals(size.toLong(), indexFile.length())
-
     val editorXmlSync = settingsSyncStorage / "options" / "editor.xml"
     assertEquals(state1, editorXmlSync.readText())
+
+
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState("options/editor.xml", state1)
+    }, "Local changes")
+
+    damageAction()
+
     try {
       DirCache.read(getRepository())
     }
@@ -594,8 +624,9 @@ internal class GitSettingsLogTest {
 
     initializeGitSettingsLog(editorXml)
     getRepository().indexFile.length()
-    assertNotEquals(size, indexFile.length())
     assertTrue(editorXmlSync.exists() && editorXmlSync.readText() == editorContent)
+
+    verifyAction()
 
     try {
       DirCache.read(getRepository())
@@ -603,6 +634,7 @@ internal class GitSettingsLogTest {
     catch (ex: Exception) {
       fail("Shouldn't fail: ${ex.message}")
     }
+
   }
 
   @Test

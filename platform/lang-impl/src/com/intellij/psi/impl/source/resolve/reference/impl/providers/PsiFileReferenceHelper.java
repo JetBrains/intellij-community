@@ -62,6 +62,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project, @NotNull VirtualFile file, boolean isAbsoluteReference) {
     List<PsiFileSystemItem> contexts;
     if (isAbsoluteReference) {

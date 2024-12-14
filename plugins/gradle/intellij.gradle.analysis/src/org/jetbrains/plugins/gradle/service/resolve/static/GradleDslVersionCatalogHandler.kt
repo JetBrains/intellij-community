@@ -12,11 +12,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler
 
 class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
+  @Deprecated("Doesn't work for included builds of a composite build", replaceWith = ReplaceWith("getVersionCatalogFiles(module)"))
   override fun getExternallyHandledExtension(project: Project): Set<String> {
     // todo
     return getVersionCatalogFiles(project).takeIf { it.isNotEmpty() }?.let { setOf("libs") } ?: emptySet()
   }
 
+  @Deprecated("Doesn't work for included builds of a composite build", replaceWith = ReplaceWith("getVersionCatalogFiles(module)"))
   override fun getVersionCatalogFiles(project: Project): Map<String, VirtualFile> {
     return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file } ?: emptyMap()
   }
@@ -32,7 +34,20 @@ class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
     val buildModel = getBuildModel(module) ?: return null
     val versionCatalogModel = buildModel.versionCatalogsModel
+    if (versionCatalogModel.getVersionCatalogModel(catalogName) == null) return null
     return SyntheticVersionCatalogAccessor(project, scope, versionCatalogModel, catalogName)
+  }
+
+  override fun getAccessorsForAllCatalogs(context: PsiElement): Map<String, PsiClass> {
+    val project = context.project
+    val scope = context.resolveScope
+    val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return emptyMap()
+    val catalogsModel = getBuildModel(module)?.versionCatalogsModel ?: return emptyMap()
+    val result = mutableMapOf<String, PsiClass>()
+    catalogsModel.catalogNames().forEach { catalogName ->
+      result.putIfAbsent(catalogName, SyntheticVersionCatalogAccessor(project, scope, catalogsModel, catalogName))
+    }
+    return result
   }
 
   private fun getBuildModel(module: Module): ProjectBuildModel? {

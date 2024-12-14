@@ -88,7 +88,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
         new ArrayList<>(Arrays.asList(myFilteredTargets ? model.getFilteredTargets() : model.getTargets()));
       targets.sort(ourTargetComparator);
 
-      final List<AntBuildTarget> metaTargets = Arrays.asList(configuration.getMetaTargets(buildFile));
+      final List<AntBuildTarget> metaTargets = new ArrayList<>(Arrays.asList(configuration.getMetaTargets(buildFile)));
       metaTargets.sort(ourTargetComparator);
       targets.addAll(metaTargets);
 

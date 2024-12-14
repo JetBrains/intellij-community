@@ -89,6 +89,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @NotNull
+  @Unmodifiable
   public List<String> getList() {
     if (myGroups.isEmpty()) {
       return getLocalParameters();
@@ -196,6 +197,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @NotNull
+  @Unmodifiable
   public List<String> getParameters() {
     return getLocalParameters();
   }

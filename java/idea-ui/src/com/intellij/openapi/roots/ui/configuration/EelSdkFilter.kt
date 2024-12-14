@@ -6,19 +6,19 @@ package com.intellij.openapi.roots.ui.configuration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.platform.eel.impl.utils.getEelApiKey
+import com.intellij.platform.eel.impl.utils.getEelDescriptor
 import java.util.function.Predicate
 
 internal fun filterSdkByEel(project: Project): Predicate<Sdk> {
-  val eelApiKey = project.getEelApiKey()
+  val eelDescriptor = project.getEelDescriptor()
   return Predicate { sdk ->
-    ProjectSdksModel.sdkMatchesEel(eelApiKey, sdk)
+    ProjectSdksModel.sdkMatchesEel(eelDescriptor, sdk)
   }
 }
 
 internal fun filterSdkSuggestionByEel(project: Project): Predicate<SdkListItem.SuggestedItem> {
-  val eelApiKey = project.getEelApiKey()
+  val eelDescriptor = project.getEelDescriptor()
   return Predicate { item ->
-    ProjectSdksModel.sdkMatchesEel(eelApiKey, item.homePath)
+    ProjectSdksModel.sdkMatchesEel(eelDescriptor, item.homePath)
   }
 }

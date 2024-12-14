@@ -7,7 +7,7 @@ import com.intellij.ide.lightEdit.menuBar.getLightEditMainMenuActionGroup
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -32,6 +32,7 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JFrame
 
 @RequiresEdt
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
@@ -60,8 +62,8 @@ internal class LightEditFrameWrapper(
   private var editPanel: LightEditPanel? = null
   private var frameTitleUpdateEnabled = true
 
-  override val isLightEdit: Boolean = true
-  override val mainMenuActionGroup: ActionGroup? = getLightEditMainMenuActionGroup()
+  override fun CoroutineScope.createFrameHeaderHelper(frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: IdeRootPane): ProjectFrameCustomHeaderHelper =
+    ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), this, frame, frameDecorator, rootPane, true, getLightEditMainMenuActionGroup())
 
   override fun getProject(): Project = project
 

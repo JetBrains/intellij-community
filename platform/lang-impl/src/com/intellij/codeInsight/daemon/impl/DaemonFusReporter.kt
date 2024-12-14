@@ -20,8 +20,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -31,13 +31,15 @@ import kotlin.math.pow
 private val docPreviousAnalysisStatus: Key<AnalysisStatus> = Key.create("docPreviousAnalysisStatus")
 private val sessionSegmentsTotalDurationMs: Key<AtomicLong> = Key.create("sessionSegmentsTotalDurationMs")
 
-private data class AnalysisStatus(val stamp: Long, val isDumbMode: Boolean)
+private data class AnalysisStatus(@JvmField val stamp: Long, @JvmField val isDumbMode: Boolean)
+
+private data class SessionData(
+  @JvmField val daemonStartTime: Long = -1L,
+  @JvmField val documentStartedHash: Int = 0,
+  @JvmField val isDumbMode: Boolean = false,
+)
 
 internal open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
-  private data class SessionData(val daemonStartTime: Long = -1L,
-                                 val documentStartedHash: Int = 0,
-                                 val isDumbMode: Boolean = false)
-
   @Volatile
   private var initialEntireFileHighlightingActivity: Activity? = null
   @Volatile
@@ -64,7 +66,7 @@ internal open class DaemonFusReporter(private val project: Project) : DaemonCode
       initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity("initial entire file highlighting")
     }
 
-    (editor as UserDataHolderEx).putUserDataIfAbsent(sessionSegmentsTotalDurationMs, AtomicLong())
+    ConcurrencyUtil.computeIfAbsent(editor, sessionSegmentsTotalDurationMs) { AtomicLong() }
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
@@ -150,7 +152,7 @@ private fun Int.roundToOneSignificantDigit(): Int {
   return (this - this % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
 }
 
-private object DaemonFusCollector : CounterUsagesCollector() {
+internal object DaemonFusCollector : CounterUsagesCollector() {
   @JvmField
   val GROUP: EventLogGroup = EventLogGroup("daemon", 10)
   @JvmField
@@ -190,16 +192,18 @@ private object DaemonFusCollector : CounterUsagesCollector() {
   }
 
   @JvmField
-  val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
-                                                          SEGMENT_DURATION,
-                                                          FULL_DURATION,
-                                                          ERRORS,
-                                                          WARNINGS,
-                                                          LINES,
-                                                          EventFields.FileType,
-                                                          HIGHLIGHTING_COMPLETED,
-                                                          DUMB_MODE,
-                                                          FILE_ID)
+  val FINISHED: VarargEventId = GROUP.registerVarargEvent(
+    "finished",
+    SEGMENT_DURATION,
+    FULL_DURATION,
+    ERRORS,
+    WARNINGS,
+    LINES,
+    EventFields.FileType,
+    HIGHLIGHTING_COMPLETED,
+    DUMB_MODE,
+    FILE_ID,
+  )
 
   override fun getGroup(): EventLogGroup = GROUP
 }

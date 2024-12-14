@@ -47,7 +47,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
       if (isTypingNewType(expression)) {
         val newTypeName = PyResolveUtil.resolveStrArgument(expression, 0, "name")
         if (newTypeName != null) {
-          val secondArgument = PyPsiUtils.flattenParens(expression.getArgument(1, PyExpression::class.java))
+          val secondArgument = PyPsiUtils.flattenParens(expression.getArgument(1, "tp", PyExpression::class.java))
           if (secondArgument != null) {
             return PyTypingNewTypeStubImpl(newTypeName, secondArgument.text)
           }

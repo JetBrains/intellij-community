@@ -49,7 +49,6 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
             context.message("Import of the project has been started", line)
             val mavenManager = MavenProjectsManager.getInstance(project)
             runBlockingMaybeCancellable {
-              MavenProjectStaticImporter.setPreimport(false)
               if (!mavenManager.isMavenizedProject) {
                 val files = mavenManager.collectAllAvailablePomFiles()
                 mavenManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)

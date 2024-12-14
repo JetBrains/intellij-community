@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 
 class ExpandedDiffIterable extends ChangeDiffIterableBase {
-  @NotNull private final DiffIterable myIterable;
+  private final @NotNull DiffIterable myIterable;
   private final int myOffset1;
   private final int myOffset2;
 
@@ -18,9 +18,8 @@ class ExpandedDiffIterable extends ChangeDiffIterableBase {
     myOffset2 = offset2;
   }
 
-  @NotNull
   @Override
-  protected ChangeIterable createChangeIterable() {
+  protected @NotNull ChangeIterable createChangeIterable() {
     return new ShiftedChangeIterable(myIterable, myOffset1, myOffset2);
   }
 

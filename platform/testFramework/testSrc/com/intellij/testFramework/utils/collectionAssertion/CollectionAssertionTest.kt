@@ -4,10 +4,44 @@ package com.intellij.testFramework.utils.collectionAssertion
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertContainsUnordered
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEquals
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class CollectionAssertionTest {
+
+  @Test
+  fun `test CollectionAssertions#assertEquals`() {
+    assertEquals(listOf(1, 2, 3), listOf(1, 2, 3))
+    assertEquals(setOf(1, 2, 3), setOf(1, 2, 3))
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(listOf(1, 2, 3), listOf(3, 2, 1))
+    }
+    assertEquals(setOf(1, 2, 3), setOf(3, 2, 1))
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(listOf(1, 2, 2, 3), listOf(1, 2, 3))
+    }
+    assertEquals(setOf(1, 2, 2, 3), setOf(1, 2, 3))
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(listOf(1, 2, 3), listOf(1, 2))
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(setOf(1, 2, 3), setOf(1, 2))
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(listOf(1, 2), listOf(1, 2, 3))
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(setOf(1, 2), setOf(1, 2, 3))
+    }
+    assertEquals<Nothing?>(null, null)
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(listOf(1, 2, 3), null)
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEquals(null, listOf(1, 2, 3))
+    }
+  }
 
   @Test
   fun `test CollectionAssertions#assertEqualsUnordered`() {
@@ -26,6 +60,13 @@ class CollectionAssertionTest {
     }
     Assertions.assertThrows(AssertionError::class.java) {
       assertEqualsUnordered(setOf(1, 2), setOf(1, 2, 3))
+    }
+    assertEqualsUnordered<Nothing?>(null, null)
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEqualsUnordered(listOf(1, 2, 3), null)
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEqualsUnordered(null, listOf(1, 2, 3))
     }
   }
 

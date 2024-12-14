@@ -63,6 +63,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -598,6 +599,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @NotNull
+  @Unmodifiable
   public Collection<ResourceBundleEditorViewElement> getSelectedElements() {
     return getSelectedNodes()
       .filter(AbstractTreeNode.class)
@@ -607,6 +609,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @NotNull
+  @Unmodifiable
   public Collection<Object> getSelectedObjects() {
     return getSelectedNodes()
       .filter(AbstractTreeNode.class)

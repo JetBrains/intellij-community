@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
@@ -126,6 +127,21 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
     override fun getNotUnderContentRootModule(project: Project): KaNotUnderContentRootModule {
         val moduleInfo = NotUnderContentRootModuleInfo(project, file = null)
         return NotUnderContentRootModuleByModuleInfo(moduleInfo)
+    }
+
+    override fun getImplementingModules(module: KaModule): List<KaModule> {
+        if (module is KaSourceModule) {
+            val implementingIdeaModules = module.openapiModule.implementingModules
+
+            val moduleKind = module.sourceModuleKind
+            if (moduleKind != null) {
+                return implementingIdeaModules.mapNotNull { it.toKaSourceModule(moduleKind) }
+            } else {
+                return implementingIdeaModules.mapNotNull { it.toKaSourceModuleForProductionOrTest() }
+            }
+        }
+
+        return emptyList()
     }
 
     private fun isInSpecialSrcDir(psiElement: PsiElement): Boolean =
@@ -228,11 +244,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
     override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
         require(module is KtSourceModuleByModuleInfo)
         val moduleInfo = module.moduleInfo as ModuleSourceInfo
-        return when (moduleInfo) {
-            is ModuleProductionSourceInfo -> KaSourceModuleKind.PRODUCTION
-            is ModuleTestSourceInfo -> KaSourceModuleKind.TEST
-            else -> error("Unexpected platform: ${moduleInfo.platform}")
-        }
+        return moduleInfo.sourceModuleKind
     }
 
     override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {

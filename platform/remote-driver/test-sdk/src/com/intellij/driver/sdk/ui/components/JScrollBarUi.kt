@@ -5,12 +5,18 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.xQuery
 import javax.swing.JScrollBar
 
-fun Finder.scrollBars(): List<JScrollBarUi> = xx(xQuery { byType (JScrollBar::class.java) }, JScrollBarUi::class.java).list()
+fun Finder.tryToScrollDown() {
+  runCatching {
+    scrollBars().single { it.getOrientation() == JScrollBar.VERTICAL }.scrollToMaximum()
+  }
+}
+
+fun Finder.scrollBars(): List<JScrollBarUi> = xx(xQuery { byType(JScrollBar::class.java) }, JScrollBarUi::class.java).list()
 
 fun Finder.verticalScrollBar(f: JScrollBarUi.() -> Unit = {}) =
   scrollBars().single { it.getOrientation() == JScrollBar.VERTICAL }.apply(f)
 
-class JScrollBarUi(data: ComponentData): UiComponent(data) {
+class JScrollBarUi(data: ComponentData) : UiComponent(data) {
   private val scrollBar get() = driver.cast(component, JScrollBarComponent::class)
   private val fixture by lazy { driver.new(JScrollBarFixture::class, robot, component) }
 

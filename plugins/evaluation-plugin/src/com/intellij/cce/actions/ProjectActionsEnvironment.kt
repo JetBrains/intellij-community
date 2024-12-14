@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.warmup.util.importOrOpenProjectAsync
 import java.nio.file.FileSystems
+import java.util.Locale
 import kotlin.random.Random
 
 open class ProjectActionsEnvironment(
@@ -189,7 +190,7 @@ open class ProjectActionsEnvironment(
         group("actions") {
           for (action in fileActions.actions) {
             inc("total")
-            inc(action.type.toString().toLowerCase())
+            inc(action.type.toString().lowercase(Locale.getDefault()))
           }
         }
         group("sessions") {
@@ -197,7 +198,7 @@ open class ProjectActionsEnvironment(
             inc("total")
             val properties = action.nodeProperties
             group("common (frequent expected text by token type)") {
-              countingGroup(properties.tokenType.name.toLowerCase(), 100) {
+              countingGroup(properties.tokenType.name.lowercase(Locale.getDefault()), 100) {
                 inc(action.expectedText)
               }
             }
@@ -205,8 +206,8 @@ open class ProjectActionsEnvironment(
             if (javaProperties != null) {
               group("java (frequent tokens by kind)") {
                 inc("total")
-                inc(javaProperties.tokenType.toString().toLowerCase())
-                group(action.kind().toString().toLowerCase()) {
+                inc(javaProperties.tokenType.toString().lowercase(Locale.getDefault()))
+                group(action.kind().toString().lowercase(Locale.getDefault())) {
                   inc("total")
                   if (javaProperties.isStatic) inc("static")
                   else inc("nonstatic")

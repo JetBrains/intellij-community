@@ -10,6 +10,7 @@ from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_comm.pydev_rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
 from _pydevd_bundle.pydevd_constants import IS_PY2
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from pydev_console.pydev_protocol import PythonConsoleFrontendService, PythonConsoleBackendService
 from pydevconsole import enable_thrift_logging, create_server_handler_factory
 
@@ -91,6 +92,7 @@ class TestPyDevFrontEnd(TestBase):
         unused_text, matches = self.front_end.complete('%')
         assert len(matches) > 1, 'at least one magic should appear in completions'
 
+    @pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-780')
     def test_complete_does_not_do_python_matches(self):
         # Test that IPython's completions do not do the things that
         # PyDev's completions will handle

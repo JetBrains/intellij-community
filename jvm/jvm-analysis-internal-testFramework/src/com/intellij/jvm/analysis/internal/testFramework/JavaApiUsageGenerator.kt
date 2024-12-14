@@ -257,11 +257,11 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     /**
      * The language level to check for.
      */
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_20
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_24
 
     /**
      * The @since tag value used should match [LANGUAGE_LEVEL].
      */
-    private const val SINCE_VERSION = "20"
+    private const val SINCE_VERSION = "24"
   }
 }

@@ -298,7 +298,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   public void stepOut(int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd =
-      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+      DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepOutCommand(suspendContext, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepOutCommand(suspendContext, stepSize);
@@ -314,7 +314,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   public void stepOver(boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd =
-      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+      DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepOverCommand(suspendContext, ignoreBreakpoints, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize);
@@ -334,7 +334,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd =
-      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+      DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
@@ -365,7 +365,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     try {
       SuspendContextImpl suspendContext = getSuspendContext();
       DebugProcessImpl.ResumeCommand runToCursorCommand =
-        DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+        DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                            handler -> handler.getRunToCursorCommand(suspendContext, position, ignoreBreakpoints));
       if (runToCursorCommand == null) {
         runToCursorCommand = myDebugProcess.createRunToCursorCommand(suspendContext, position, ignoreBreakpoints);

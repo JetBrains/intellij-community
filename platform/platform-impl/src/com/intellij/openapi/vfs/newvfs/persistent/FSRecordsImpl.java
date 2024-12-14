@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -117,11 +116,6 @@ public final class FSRecordsImpl implements Closeable {
    */
   public static final boolean REUSE_DELETED_FILE_IDS = getBooleanProperty("vfs.reuse-deleted-file-ids", false);
 
-  /**
-   * Wrap {@link AlreadyDisposedException} in {@link ProcessCanceledException} if under progress indicator or Job.
-   * See containerUtil.isUnderIndicatorOrJob()
-   */
-  private static final boolean WRAP_ADE_IN_PCE = getBooleanProperty("vfs.wrap-ade-in-pce", true);
   //@formatter:on
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
@@ -460,11 +454,7 @@ public final class FSRecordsImpl implements Closeable {
       alreadyDisposed.addSuppressed(closedStackTrace);
     }
 
-    if (!WRAP_ADE_IN_PCE) {
-      return alreadyDisposed;
-    }
-
-    return ContainerUtilKt.wrapAlreadyDisposedError(alreadyDisposed);
+    return alreadyDisposed;
   }
 
 

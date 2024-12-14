@@ -80,8 +80,6 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
       return
     }
 
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
-
     for (conjunct in info.conjuncts) {
       doIncUseCount(conjunct)
     }

@@ -104,6 +104,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private final Ref<Couple<String>> deprecationError = Ref.create();
   private final StringBuilder deprecationTextBuilder = new StringBuilder();
   private int deprecationTextLineCount = 0;
+  private @NotNull Path originalGradleUserHome;
 
   private @Nullable Disposable myTestDisposable = null;
 
@@ -125,6 +126,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     cleanScriptsCacheIfNeeded();
 
     installGradleJvmConfigurator();
+    originalGradleUserHome = getGradleUserHome();
   }
 
   protected void installGradleJvmConfigurator() {
@@ -333,6 +335,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       },
       () -> deprecationError.set(null),
       () -> tearDownGradleVmOptions(),
+      () -> resetGradleUserHomeIfNeeded(),
       () -> Disposer.dispose(getTestDisposable()),
       () -> super.tearDown()
     );
@@ -443,6 +446,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     var builder = new GroovyDslGradleSettingScriptBuilder();
     configure.accept(builder);
     return builder.generate();
+  }
+
+  public @Nullable String getGradleJdkHome() {
+    return myJdkHome;
   }
 
   @Override
@@ -580,6 +587,14 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     GradleSettings.getInstance(myProject).setServiceDirectoryPath(gradleUserHome);
   }
 
+  protected void resetGradleUserHomeIfNeeded() {
+    if (!originalGradleUserHome.equals(getGradleUserHome())) {
+      String normalizedOldGradleUserHome = originalGradleUserHome.normalize().toString();
+      String canonicalOldGradleUserHome = FileUtil.toCanonicalPath(normalizedOldGradleUserHome);
+      GradleSettings.getInstance(myProject).setServiceDirectoryPath(canonicalOldGradleUserHome);
+    }
+  }
+
   @Nullable
   private static File findGradleDistributionInCache(String gradleCachedFolderName) {
     Path pathToGradleWrapper = StartParameter.DEFAULT_GRADLE_USER_HOME.toPath().resolve("wrapper/dists/" + gradleCachedFolderName);
@@ -588,5 +603,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       return gradleWrapperFile;
     }
     return null;
+  }
+
+  protected String convertToLibraryName(VirtualFile fsRoot) {
+    return "Gradle: " + fsRoot.getName();
   }
 }

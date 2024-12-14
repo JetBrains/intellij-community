@@ -22,7 +22,7 @@ import kotlin.math.min
 internal class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
   var suggesters: MutableMap<String, Boolean> = run {
     val enabled = isSuggestersEnabledByDefault
-    FeatureSuggester.suggesters.associate { internalId(it.id) to enabled }.toMutableMap()
+    FeatureSuggester.suggesters.associate { internalId(it.id) to (it.enabledByDefault ?: enabled) }.toMutableMap()
   }
 
   // SuggesterId to the last time this suggestion was shown

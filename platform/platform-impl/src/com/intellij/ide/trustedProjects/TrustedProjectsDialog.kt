@@ -12,7 +12,6 @@ import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -58,9 +57,7 @@ object TrustedProjectsDialog {
       val dialog = TrustedProjectStartupDialog(
         project, projectRoot, pathsToExclude, title, message, trustButtonText, distrustButtonText, cancelButtonText
       )
-      writeIntentReadAction {
-        dialog.show()
-      }
+      dialog.show()
       dialog
     }
     val openChoice = dialog.getOpenChoice()
@@ -82,19 +79,17 @@ object TrustedProjectsDialog {
     if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
       dialog.getDefenderTrustFolder()?.let { defenderTrustDir ->
         WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
-        val checker = serviceAsync<WindowsDefenderChecker>()
-        if (project == null) {
-          checker.markProjectPath(projectRoot)
-        }
         if (defenderTrustDir != projectRoot) {
           (pathsToExclude as MutableList<Path>).apply {
             remove(projectRoot)
             add(0, defenderTrustDir)
           }
         }
+        val checker = serviceAsync<WindowsDefenderChecker>()
         if (project == null) {
-          checker.setPathsToExclude(pathsToExclude)
-        } else {
+          checker.schedule(projectRoot, pathsToExclude)
+        }
+        else {
           WindowsDefenderCheckerActivity.runAndNotify(project) {
             checker.excludeProjectPaths(project, pathsToExclude)
           }
@@ -114,8 +109,8 @@ object TrustedProjectsDialog {
         checker.isRealTimeProtectionEnabled == true
       ) {
         val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project, projectPath)).toMutableList()
-        if (paths.isEmpty()) {
-          logger<TrustedProjectsDialog>().info("all paths are on a DevDrive")
+        if (paths.isEmpty() || projectPath !in paths) {
+          logger<TrustedProjectsDialog>().info("project is on a DevDrive")
         }
         return paths
       }

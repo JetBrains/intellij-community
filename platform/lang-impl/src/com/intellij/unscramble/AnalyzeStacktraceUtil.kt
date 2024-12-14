@@ -145,7 +145,7 @@ class AnalyzeStacktraceUtil private constructor(){
     fun createConsoleComponent(consoleView: ConsoleView?, toolbarActions: DefaultActionGroup?): JComponent?
   }
 
-  private class MyConsolePanel(consoleView: ExecutionConsole, toolbarActions: ActionGroup) : JPanel(BorderLayout()) {
+  private class MyConsolePanel(consoleView: ExecutionConsole, toolbarActions: ActionGroup) : JPanel(BorderLayout()), NoStackTraceFoldingPanel {
     init {
       val toolbarPanel = JPanel(BorderLayout())
       val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false)

@@ -228,11 +228,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<Task> getIssues(@Nullable final String query) {
     return getIssues(query, true);
   }
 
   @Override
+  @Unmodifiable
   public List<Task> getIssues(@Nullable final String query, final boolean forceRequest) {
     return getIssues(query, 0, 50, true, new EmptyProgressIndicator(), forceRequest);
   }
@@ -254,6 +256,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<Task> getCachedIssues() {
     return getCachedIssues(true);
   }
@@ -288,6 +291,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<LocalTask> getLocalTasks() {
     return getLocalTasks(true);
   }

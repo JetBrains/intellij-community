@@ -2,16 +2,21 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.toKotlinVersion
+import org.jetbrains.kotlin.diagnostics.rendering.buildRuntimeFeatureToFlagMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 
 object CliArgumentStringBuilder {
-    const val LANGUAGE_FEATURE_FLAG_PREFIX = "-XXLanguage:"
-    private const val LANGUAGE_FEATURE_DEDICATED_FLAG_PREFIX = "-X"
+    const val LANGUAGE_FEATURE_FLAG_PREFIX: String = "-XXLanguage:"
 
-    private val LanguageFeature.dedicatedFlagInfo
-        get() = when (this) {
-            LanguageFeature.InlineClasses -> Pair("inline-classes", KotlinVersion(1, 3, 50))
-            else -> null
+    private val dedicatedFeatureFlags: Map<LanguageFeature, String> by lazy {
+        buildRuntimeFeatureToFlagMap(this::class.java.classLoader)
+    }
+
+    private val LanguageFeature.dedicatedFlagInfo: Pair<String, KotlinVersion?>?
+        get()  {
+            val flag = dedicatedFeatureFlags[this] ?: return null
+            return flag to this.sinceVersion?.toKotlinVersion()
         }
 
     private val LanguageFeature.State.sign: String
@@ -23,8 +28,7 @@ object CliArgumentStringBuilder {
 
     private fun LanguageFeature.getFeatureMentionInCompilerArgsRegex(): Regex {
         val basePattern = "$LANGUAGE_FEATURE_FLAG_PREFIX(?:-|\\+)$name"
-        val fullPattern =
-            if (dedicatedFlagInfo != null) "(?:$basePattern)|$LANGUAGE_FEATURE_DEDICATED_FLAG_PREFIX${dedicatedFlagInfo!!.first}" else basePattern
+        val fullPattern = dedicatedFlagInfo?.let { (dedicatedFlag, _) -> "(?:$basePattern)|$dedicatedFlag" } ?: basePattern
 
         return Regex(fullPattern)
     }
@@ -33,11 +37,11 @@ object CliArgumentStringBuilder {
         val shouldBeFeatureEnabled = state == LanguageFeature.State.ENABLED || state == LanguageFeature.State.ENABLED_WITH_WARNING
         val dedicatedFlag = dedicatedFlagInfo?.run {
             val (xFlag, xFlagSinceVersion) = this
-            if (kotlinVersion == null || kotlinVersion.kotlinVersion >= xFlagSinceVersion) xFlag else null
+            if (kotlinVersion == null || xFlagSinceVersion == null || kotlinVersion.kotlinVersion >= xFlagSinceVersion) xFlag else null
         }
 
         return if (shouldBeFeatureEnabled && dedicatedFlag != null) {
-            LANGUAGE_FEATURE_DEDICATED_FLAG_PREFIX + dedicatedFlag
+            dedicatedFlag
         } else {
             "$LANGUAGE_FEATURE_FLAG_PREFIX${state.sign}$name"
         }
@@ -48,13 +52,13 @@ object CliArgumentStringBuilder {
      *  postfix is used to correctly split arguments if we replace/add value to the existing collection
      */
     fun String.replaceLanguageFeature(
-      feature: LanguageFeature,
-      state: LanguageFeature.State,
-      kotlinVersion: IdeKotlinVersion?,
-      prefix: String = "",
-      postfix: String = "",
-      separator: String = ", ",
-      quoted: Boolean = true
+        feature: LanguageFeature,
+        state: LanguageFeature.State,
+        kotlinVersion: IdeKotlinVersion?,
+        prefix: String = "",
+        postfix: String = "",
+        separator: String = ", ",
+        quoted: Boolean = true
     ): String {
         val quote = if (quoted) "\"" else ""
         val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)

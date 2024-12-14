@@ -328,6 +328,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testGuavaFunction() {
     setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     doTest();
   }
   public void testMethodReferenceNullableToNotNull() {

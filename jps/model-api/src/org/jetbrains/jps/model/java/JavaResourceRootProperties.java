@@ -8,7 +8,7 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import java.util.Objects;
 
 public class JavaResourceRootProperties extends JpsElementBase<JavaResourceRootProperties> {
-  private String myRelativeOutputPath = "";
+  private String myRelativeOutputPath;
   private boolean myForGeneratedSources;
 
   public JavaResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedSources) {

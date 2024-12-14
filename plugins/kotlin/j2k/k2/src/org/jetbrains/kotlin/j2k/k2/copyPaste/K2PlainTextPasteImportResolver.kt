@@ -9,6 +9,7 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -22,9 +23,8 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -33,9 +33,9 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 /**
  * Tests: [org.jetbrains.kotlin.j2k.k2.K2TextJavaToKotlinCopyPasteConversionTestGenerated].
  */
-internal class K2PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
+internal class K2PlainTextPasteImportResolver(private val conversionData: ConversionData, private val targetKotlinFile: KtFile) :
     PlainTextPasteImportResolver {
-    private val sourceJavaFile: PsiJavaFile = dataForConversion.sourceJavaFile
+    private val sourceJavaFile: PsiJavaFile = conversionData.sourceJavaFile
     private val javaFileImportList: PsiImportList = sourceJavaFile.importList!!
     private val project = targetKotlinFile.project
     private val scope: GlobalSearchScope = targetKotlinFile.resolveScope
@@ -47,7 +47,12 @@ internal class K2PlainTextPasteImportResolver(private val dataForConversion: Dat
     private val importsToAddToKotlinFile: MutableList<PsiImportStatementBase> = mutableListOf()
 
     override fun generateRequiredImports(): List<PsiImportStatementBase> {
-        addImportsToJavaFileFromKotlinFile()
+        ThreadingAssertions.assertBackgroundThread()
+
+        if (javaFileImportList !in conversionData.elementsAndTexts.toList()) {
+            addImportsToJavaFileFromKotlinFile()
+            ProgressManager.checkCanceled()
+        }
         tryToResolveShortReferencesByAddingImports()
         return importsToAddToKotlinFile
     }
@@ -55,21 +60,6 @@ internal class K2PlainTextPasteImportResolver(private val dataForConversion: Dat
     // TODO removing this function doesn't affect existing tests
     //  investigate is this needed or not
     private fun addImportsToJavaFileFromKotlinFile() {
-        if (javaFileImportList in dataForConversion.elementsAndTexts.toList()) return
-
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            addImportsTask, KotlinNJ2KBundle.message("copy.text.adding.imports"), /* canBeCanceled = */ true, project
-        )
-    }
-
-    private fun tryToResolveShortReferencesByAddingImports() {
-        ProgressManager.checkCanceled()
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            resolveReferencesTask, KotlinNJ2KBundle.message("copy.text.resolving.references"), /* canBeCanceled = */ true, project
-        )
-    }
-
-    private val addImportsTask: () -> Unit = {
         val collectedJavaImports = mutableListOf<PsiImportStatementBase>()
 
         runReadAction {
@@ -134,7 +124,7 @@ internal class K2PlainTextPasteImportResolver(private val dataForConversion: Dat
         if (shouldAddToKotlinFile) importsToAddToKotlinFile.add(javaImport)
     }
 
-    private val resolveReferencesTask: () -> Unit = {
+    private fun tryToResolveShortReferencesByAddingImports() {
         val progressIndicator = ProgressManager.getInstance().progressIndicator
         progressIndicator?.isIndeterminate = false
         val elementPointersWithUnresolvedReferences = findUnresolvedReferencesInFile()

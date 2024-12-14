@@ -42,10 +42,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -67,7 +63,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.IsFileChangedResult;
@@ -528,7 +523,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    //noinspection GroovyUnusedAssignment
+    //Let's help GC, even in interpreter mode
+    //noinspection UnusedAssignment
     psiFile = null;
     GCWatcher.tracking(getPsiManager().getFileManager().getCachedPsiFile(vFile))
       .ensureCollected(() -> UIUtil.dispatchAllInvocationEvents());
@@ -953,39 +949,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     finally {
       index.dispose();
     }
-  }
-
-  public void test_Vfs_Event_Processing_Performance() {
-    final String filename = "A.java";
-    myFixture.addFileToProject("foo/bar/" + filename, "class A {}");
-
-    Benchmark.newBenchmark("Vfs Event Processing By Index", () -> {
-      PsiFile[] files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
-      assertEquals(1, files.length);
-
-      VirtualFile file = files[0].getVirtualFile();
-
-      String filename2 = "B.java";
-      int max = 100000;
-      List<VFileEvent> eventList = new ArrayList<>(max);
-      int len = max / 2;
-
-      for (int i = 0; i < len; ++i) {
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2));
-        eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename));
-        eventList.add(new VFileDeleteEvent(null, file));
-        eventList.add(new VFileCreateEvent(null, file.getParent(), filename, false, null, null, null));
-      }
-
-
-      AsyncFileListener.ChangeApplier applier =
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().prepareChange(eventList);
-      applier.beforeVfsChange();
-      applier.afterVfsChange();
-
-      files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
-      assertEquals(1, files.length);
-    }).start();
   }
 
   public void test_class_file_in_src_content_isn_t_returned_from_index() throws IOException {

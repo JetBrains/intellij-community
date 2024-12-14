@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -225,14 +224,6 @@ public abstract class AbstractVcsTestCase {
     String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
     final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
     Assert.assertTrue(beforeFullPath + "!=" + beforeRevPath,  beforeFullPath.equalsIgnoreCase(beforeRevPath));
-  }
-
-  public static void sortChanges(final List<? extends Change> changes) {
-    changes.sort((o1, o2) -> {
-      final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
-      final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
-      return p1.compareTo(p2);
-    });
   }
 
   public FileAnnotation createTestAnnotation(@NotNull AnnotationProvider provider, VirtualFile file) throws VcsException {

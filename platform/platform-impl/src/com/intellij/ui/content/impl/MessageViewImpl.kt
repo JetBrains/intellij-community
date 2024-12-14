@@ -5,6 +5,7 @@ import com.intellij.concurrency.captureThreadContext
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
@@ -35,17 +36,27 @@ internal class MessageViewImpl(private val project: Project, private val scope: 
         toolWindow.await()
 
         withContext(Dispatchers.EDT) {
+          var err : Throwable? = null
           for (postponedRunnable in postponedRunnables) {
             try {
               postponedRunnable.run()
             }
             catch (e: Throwable) {
-              thisLogger().error(e) // unexpected
+              if (e !is ControlFlowException) {
+                thisLogger().error(e)
+              }
+              if (err == null) {
+                err = e
+              }
             }
           }
 
           postponedRunnables.clear()
           postponedRunnables.trimToSize()
+
+          if (err != null) {
+            throw err
+          }
         }
       }
     }

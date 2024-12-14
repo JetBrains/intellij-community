@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.IOException;
@@ -79,6 +80,7 @@ public class InspectionValidatorWrapper implements Validator {
     return ourCompilationThreads.get().booleanValue();
   }
 
+  @Unmodifiable
   private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file, @NotNull LocalInspectionTool inspectionTool) {
     InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
     GlobalInspectionContext context = inspectionManager.createNewGlobalContext();

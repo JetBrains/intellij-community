@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -129,6 +130,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> children = super.getLoadedChildren();
     if(inlinesRootNodeIsShown()) {
@@ -140,6 +142,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
     if(myInlinesRootNode != null && inlinesRootNodeIsShown()) {

@@ -36,7 +36,6 @@ get_file_type = DONT_TRACE.get
 global_cache_skips = {}
 global_cache_frame_skips = {}
 
-
 try:
     monitoring = sys.monitoring
 except AttributeError:
@@ -90,8 +89,7 @@ def _should_enable_line_events_for_code(frame, code, filename, info):
 
         if can_skip:
             if plugin_manager is not None and py_db.has_plugin_line_breaks:
-                can_skip = not plugin_manager.can_not_skip(
-                    py_db, frame, info)
+                can_skip = not plugin_manager.can_not_skip(py_db, frame, info)
 
             # CMD_STEP_OVER = 108
             if (can_skip and py_db.show_return_values
@@ -104,42 +102,48 @@ def _should_enable_line_events_for_code(frame, code, filename, info):
     line_cache_key = (frame_cache_key, line_number)
 
     if breakpoints_for_file:
+        # When cached, 0 means we don't have a breakpoint
+        # and 1 means we have.
         if can_skip:
-            # When cached, 0 means we don't have a breakpoint
-            # and 1 means we have.
-            breakpoints_in_line_cache = global_cache_frame_skips.get(
-                line_cache_key, -1)
+            breakpoints_in_line_cache = global_cache_frame_skips.get(line_cache_key, -1)
             if breakpoints_in_line_cache == 0:
                 return False
 
-            breakpoints_in_frame_cache = global_cache_frame_skips.get(
-                frame_cache_key, -1)
-            if breakpoints_in_frame_cache != -1:
-                has_breakpoint_in_frame = breakpoints_in_frame_cache == 1
-            else:
-                has_breakpoint_in_frame = False
-                # Checks the breakpoint to see if there is a context
-                # match in some function.
-                curr_func_name = frame.f_code.co_name
+        breakpoints_in_frame_cache = global_cache_frame_skips.get(frame_cache_key, -1)
+        if breakpoints_in_frame_cache != -1:
+            # Gotten from cache.
+            has_breakpoint_in_frame = breakpoints_in_frame_cache == 1
+        else:
+            has_breakpoint_in_frame = False
+            # Checks the breakpoint to see if there is a context
+            # match in some function.
+            curr_func_name = frame.f_code.co_name
 
-                # global context is set with an empty name
-                if curr_func_name in ('?', '<module>', '<lambda>'):
-                    curr_func_name = ''
+            # global context is set with an empty name
+            if curr_func_name in ('?', '<module>', '<lambda>'):
+                curr_func_name = ''
 
-                for breakpoint in breakpoints_for_file.values():
-                    # will match either global or some function
-                    if breakpoint.func_name in ('None', curr_func_name):
-                        has_breakpoint_in_frame = True
+            for breakpoint in breakpoints_for_file.values():
+                # will match either global or some function
+                if breakpoint.func_name in ('None', curr_func_name):
+                    has_breakpoint_in_frame = True
+                    break
+
+                # Check is f_back has a breakpoint => need register return event
+                if hasattr(frame, "f_back"):
+                    f_code = getattr(frame.f_back, "f_code", None)
+                    if f_code is not None and breakpoint.func_name == f_code.co_name:
+                        can_skip = False
                         break
 
-                # Cache the value (1 or 0 or -1 for default because of cython).
-                if has_breakpoint_in_frame:
-                    global_cache_frame_skips[frame_cache_key] = 1
-                else:
-                    global_cache_frame_skips[frame_cache_key] = 0
+            # Cache the value (1 or 0 or -1 for default because of cython).
+            if has_breakpoint_in_frame:
+                global_cache_frame_skips[frame_cache_key] = 1
+            else:
+                global_cache_frame_skips[frame_cache_key] = 0
 
-            if can_skip and not has_breakpoint_in_frame:
-                return False
+        if can_skip and not has_breakpoint_in_frame:
+            return False
 
     return True
 
@@ -258,7 +262,7 @@ def py_start_callback(code, instruction_offset):
 
         if not is_stepping and frame_cache_key in global_cache_skips:
             # print('skipped: PY_START (cache hit)', frame_cache_key, frame.f_lineno, code.co_name)
-            return monitoring.DISABLE
+            return
 
         abs_path_real_path_and_base = _get_abs_path_real_path_and_base_from_frame(frame)
         filename = abs_path_real_path_and_base[1]
@@ -278,7 +282,7 @@ def py_start_callback(code, instruction_offset):
         breakpoints_for_file = (py_db.breakpoints.get(filename)
                                 or py_db.has_plugin_line_breaks)
         if not breakpoints_for_file and not is_stepping:
-            return monitoring.DISABLE
+            return
 
         if py_db.plugin and py_db.has_plugin_line_breaks:
             args = (py_db, filename, info, thread)
@@ -349,7 +353,7 @@ def py_start_callback(code, instruction_offset):
             _enable_return_tracing(code)
         else:
             global_cache_skips[frame_cache_key] = 1
-            return monitoring.DISABLE
+            return
 
     except SystemExit:
         return monitoring.DISABLE
@@ -409,9 +413,9 @@ def py_line_callback(code, line_number):
                 if step_cmd == CMD_STEP_OVER:
                     if stop_frame is frame:
                         stop = False
-                    elif step_cmd == CMD_SMART_STEP_INTO and (
-                            frame.f_back is smart_stop_frame and is_within_context):
-                        stop = False
+                elif step_cmd == CMD_SMART_STEP_INTO and (
+                        frame.f_back is smart_stop_frame and is_within_context):
+                    stop = False
             elif py_db.plugin is not None and py_db.has_plugin_line_breaks:
                 result = py_db.plugin.get_breakpoint(py_db, frame, 'line', args)
                 if result:
@@ -478,11 +482,11 @@ def py_line_callback(code, line_number):
 
             if step_cmd == CMD_SMART_STEP_INTO:
                 if smart_stop_frame is frame and not is_within_context:
-                        # We don't stop on jumps in multiline statements, which
-                        # the Python interpreter does in some cases, if we they
-                        # happen in smart step into context.
-                        info.pydev_func_name = '.invalid.'  # Must match the type in cython
-                        stop = True  # act as if we did a step into
+                    # We don't stop on jumps in multiline statements, which
+                    # the Python interpreter does in some cases, if we they
+                    # happen in smart step into context.
+                    info.pydev_func_name = '.invalid.'  # Must match the type in cython
+                    stop = True  # act as if we did a step into
 
                 curr_func_name = frame.f_code.co_name
 
@@ -490,20 +494,22 @@ def py_line_callback(code, line_number):
                     curr_func_name = ''
 
                 if smart_stop_frame and smart_stop_frame is frame.f_back:
-                    try:
-                        if curr_func_name != info.pydev_func_name and frame.f_back:
-                            # try to find function call name using bytecode analysis
-                            curr_func_name = find_last_call_name(frame.f_back)
-                        if curr_func_name == info.pydev_func_name:
-                            stop = (find_last_func_call_order(
-                                frame.f_back, context_start_line)
-                                    == info.pydev_smart_step_context.call_order)
-                    except:
-                        pydev_log.debug("Exception while handling smart step into "
-                                        "in frame tracer, step into will be "
-                                        "performed instead.")
-                        info.pydev_smart_step_context.reset()
-                        stop = True  # act as if we did a step into
+                    if curr_func_name == info.pydev_func_name:
+                        stop = True
+                    else:
+                        try:
+                            if curr_func_name != info.pydev_func_name and frame.f_back:
+                                # try to find function call name using bytecode analysis
+                                curr_func_name = find_last_call_name(frame.f_back)
+                            if curr_func_name == info.pydev_func_name:
+                                stop = find_last_func_call_order(frame.f_back, context_start_line) \
+                                       == info.pydev_smart_step_context.call_order
+                        except:
+                            pydev_log.debug("Exception while handling smart step into "
+                                            "in frame tracer, step into will be "
+                                            "performed instead.")
+                            info.pydev_smart_step_context.reset()
+                            stop = True  # act as if we did a step into
 
             elif step_cmd == CMD_STEP_INTO:
                 stop = True
@@ -606,6 +612,7 @@ def py_return_callback(code, instruction_offset, retval):
     args = (py_db, filename, info, thread)
     stop_info = {}
     stop = False
+    smart_stop_frame = info.pydev_smart_step_context.smart_step_stop
 
     try:
         if py_db.show_return_values or py_db.remove_return_values_flag:
@@ -613,12 +620,17 @@ def py_return_callback(code, instruction_offset, retval):
 
         step_cmd = info.pydev_step_cmd
 
-        if step_cmd == CMD_STEP_INTO and py_db.plugin is not None:
-            result = py_db.plugin.cmd_step_into(py_db, frame, 'return', args, stop_info, True)
-            if result:
-                stop, plugin_stop = result
+        if step_cmd == CMD_SMART_STEP_INTO and smart_stop_frame is frame:
+            stop = True
 
-        elif step_cmd in (CMD_STEP_OVER, CMD_STEP_RETURN):
+        elif step_cmd == CMD_STEP_INTO:
+            stop = True
+            if py_db.plugin is not None:
+                result = py_db.plugin.cmd_step_into(py_db, frame, 'return', args, stop_info, True)
+                if result:
+                    stop, plugin_stop = result
+
+        elif step_cmd in (CMD_STEP_OVER, CMD_STEP_INTO_COROUTINE):
             stop = stop_frame is frame
             if stop:
                 stop = frame.f_back and py_db.in_project_scope(frame.f_back.f_code.co_filename)
@@ -640,20 +652,39 @@ def py_return_callback(code, instruction_offset, retval):
                 if result:
                     stop, plugin_stop = result
 
-        if stop and step_cmd != -1 and hasattr(frame, "f_back"):
-            f_code = getattr(frame.f_back, 'f_code', None)
+        elif step_cmd == CMD_STEP_RETURN:
+            stop = stop_frame is frame
+
+        if hasattr(frame, "f_back"):
+            f_back = frame.f_back
+            f_code = getattr(f_back, 'f_code', None)
             if f_code is not None:
-                back_filename = os.path.basename(f_code.co_filename)
-                file_type = get_file_type(back_filename)
-                if file_type == PYDEV_FILE:
-                    stop = False
+                if stop != (step_cmd == -1):
+                    back_filename = f_code.co_filename
+                    base_back_filename = os.path.basename(back_filename)
+                    file_type = get_file_type(base_back_filename)
+                    if file_type == PYDEV_FILE:
+                        stop = False
+                    elif not stop and step_cmd == -1:
+                        # Check does f_back have breakpoint and should enable line events for f_back
+                        breakpoints_for_back_file = py_db.breakpoints.get(back_filename)
+                        if breakpoints_for_back_file is not None:
+                            for breakpoint in breakpoints_for_back_file.values():
+                                if breakpoint.func_name == f_code.co_name:
+                                    if _should_enable_line_events_for_code(f_back,
+                                                                           f_code,
+                                                                           back_filename,
+                                                                           info):
+                                        _enable_line_tracing(f_code)
+                                        _enable_return_tracing(f_code)
+                                    break
 
         if plugin_stop:
             py_db.plugin.stop(py_db, frame, 'return', args, stop_info, None, step_cmd)
         elif stop:
             back = frame.f_back
             if back is not None:
-                _, back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
+                _, base_back_filename, base = get_abs_path_real_path_and_base_from_frame(back)
                 if (base, back.f_code.co_name) in (DEBUG_START, DEBUG_START_PY3K):
                     back = None
 
@@ -664,5 +695,3 @@ def py_return_callback(code, instruction_offset, retval):
     except KeyboardInterrupt:
         _clear_run_state(info)
         raise
-    finally:
-        return monitoring.DISABLE

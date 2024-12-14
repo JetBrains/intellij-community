@@ -100,9 +100,19 @@ public interface JBAccountInfoService {
   }
 
   /**
-   * Starts the auth flow by opening the browser and waiting for the user to proceed with logging in.
+   * See startLoginSession(@NotNull LoginMode, @Nullable String, Map<@NotNull String, @NotNull String>)
    */
-  @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode, @NotNull Map<@NotNull String, @NotNull String> clientMetadata);
+  default @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode, @NotNull Map<@NotNull String, @NotNull String> clientMetadata) {
+    return startLoginSession(loginMode, null, clientMetadata);
+  }
+
+  /**
+   * Starts the auth flow based on the provided login mode, optional authProviderId, and client metadata
+   * by opening the browser and waiting for the user to proceed with logging in.
+   */
+  @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode,
+                                          @Nullable String authProviderId,
+                                          @NotNull Map<@NotNull String, @NotNull String> clientMetadata);
 
   /**
    * Returns the list of licenses available in the current user's account matching the specified productCode.
@@ -142,7 +152,15 @@ public interface JBAccountInfoService {
   record JbaServiceConfiguration(
     @NotNull String accountUrl,
     @NotNull String signupUrl,
-    @Nullable String paymentMethodsUrl // TODO nullable during the transition period
+    @Nullable String paymentMethodsUrl, // TODO nullable during the transition period
+    @NotNull List<@NotNull JbaOAuthProvider> authProviders
+  ) { }
+
+  record JbaOAuthProvider(
+    @NotNull String id,
+    @NotNull String name,
+    @NotNull String logoUrl,
+    @NotNull String logoDarkUrl
   ) { }
 
   enum LoginMode {

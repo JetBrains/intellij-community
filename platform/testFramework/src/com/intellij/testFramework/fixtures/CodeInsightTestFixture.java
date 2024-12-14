@@ -366,6 +366,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<IntentionAction> getAllQuickFixes(@TestDataFile String @NotNull ... filePaths);
 
   @NotNull
+  @Unmodifiable
   List<IntentionAction> getAvailableIntentions();
 
   /**
@@ -615,6 +616,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Document getDocument(@NotNull PsiFile file);
 
   @NotNull
+  @Unmodifiable
   List<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
 
   @Unmodifiable
@@ -827,6 +829,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return a list of the breadcrumbs in the order from the topmost element crumb to the deepest.
    */
   @NotNull
+  @Unmodifiable
   List<Crumb> getBreadcrumbsAtCaret();
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);

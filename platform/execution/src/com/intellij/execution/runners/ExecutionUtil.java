@@ -25,9 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -277,6 +280,12 @@ public final class ExecutionUtil {
       handleExecutionError(project, toolWindowId, configuration.getName(), e);
       return null;
     }
+  }
+
+  public static @NotNull Icon withLiveIndicator(final @NotNull Icon base) {
+    return ExperimentalUI.isNewUI() ?
+           IconManager.getInstance().withIconBadge(base, JBUI.CurrentTheme.IconBadge.SUCCESS) :
+           getLiveIndicator(base);
   }
 
   public static @NotNull Icon getLiveIndicator(final @Nullable Icon base) {

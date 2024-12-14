@@ -15,6 +15,9 @@ interface ApplicableRangesProvider<E : KtElement> {
      * Determines whether the tool is available in a range *after* [isApplicableByPsi] has been checked.
      *
      * Configuration of the applicability range might be as simple as choosing an existing one from `ApplicabilityRanges`.
+     *
+     * Important! Must return text ranges relative to passed [element],
+     * i.e., if a range covers the whole element then it should return `[0, element.length)`.
      */
     fun getApplicableRanges(element: E): List<TextRange> = ApplicabilityRange.self(element)
 

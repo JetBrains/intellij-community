@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
+import com.intellij.util.application
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.ObjectInputStream
@@ -48,6 +49,11 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
+    @Suppress("KotlinConstantConditions")
+    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer())) {
+      throw ExtensionNotApplicableException.create()
+    }
+
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
@@ -58,10 +64,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
       if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer())) {
         reportUnfinishedFreezes()
       }
-    }
-
-    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) || !isEnabled(app)) {
-      throw ExtensionNotApplicableException.create()
     }
   }
 
@@ -134,7 +136,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val edtStack = dump.edtStackTrace
     if (edtStack != null) {
       stacktraceCommonPart = if (stacktraceCommonPart == null) {
-        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RemoveRedundantQualifierName")
         java.util.List.of(*edtStack)
       }
       else {
@@ -176,7 +178,10 @@ internal class IdeaFreezeReporter : PerformanceListener {
           }
 
           val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
-          report(loggingEvent)
+          if (application.isEAP || application.isInternal) {
+            // plugins freezes reported separately via com.intellij.diagnostic.FreezeNotifier
+            report(loggingEvent)
+          }
 
           if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
             for (notifier in FREEZE_NOTIFIER_EP.extensionList) {

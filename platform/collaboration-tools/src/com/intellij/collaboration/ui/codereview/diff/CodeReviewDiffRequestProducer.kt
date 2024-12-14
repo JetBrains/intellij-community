@@ -19,7 +19,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Obsolete
 class CodeReviewDiffRequestProducer(
   private val project: Project,
   val change: RefComparisonChange,

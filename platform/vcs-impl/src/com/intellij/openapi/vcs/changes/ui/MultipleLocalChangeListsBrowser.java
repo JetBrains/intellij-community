@@ -41,6 +41,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -246,7 +247,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   public void updateDisplayedChangeLists() {
     List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
-    myChangeListChooser.setAvailableLists(changeLists);
+    myChangeListChooser.setAvailableLists(new ArrayList<>(changeLists));
   }
 
   public void updateDisplayedChanges() {
@@ -397,6 +398,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       add(myChooser, BorderLayout.CENTER);
     }
 
+    @Contract(mutates = "this,param1")
     public void setAvailableLists(@NotNull List<LocalChangeList> lists) {
       LocalChangeList currentList = ContainerUtil.find(lists, getSelectedChangeList());
       if (currentList == null) currentList = lists.get(0);

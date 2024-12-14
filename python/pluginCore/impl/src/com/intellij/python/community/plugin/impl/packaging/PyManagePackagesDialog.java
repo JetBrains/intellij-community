@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -33,7 +34,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     super(project, true);
     setTitle(PyBundle.message("manage.python.packages"));
 
-    List<Sdk> sdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), new PreferredSdkComparator());
+    List<Sdk> sdks = new ArrayList<>(ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), new PreferredSdkComparator()));
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 

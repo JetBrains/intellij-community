@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debugger
 
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.JavaStackFrame
+import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -35,24 +38,29 @@ private const val ACTIONS_KT_FQN = "com.intellij.openapi.application.ActionsKt"
 
 internal data class IdeState(val readAllowed: Boolean?, val writeAllowed: Boolean?)
 
-internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? = try {
-  val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
-  val state = evaluationContext.computeAndKeep {
-    DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) as? ObjectReference
-  } ?: return null
+internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? {
+  try {
+    val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
+    val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return null
+    val suspendContext = evaluationContext.suspendContext as? SuspendContextImpl ?: return null
+    if (!debugProcess.isEvaluationPossible(suspendContext)) return null
+    val state = evaluationContext.computeAndKeep {
+      DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) as? ObjectReference
+    } ?: return null
 
-  val stateClass = state.referenceType()
-  val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
+    val stateClass = state.referenceType()
+    val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
 
-  val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-  val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-  IdeState(readAllowed = readField, writeAllowed = writeField)
-}
-catch (e: Exception) {
-  if (!logIncorrectSuspendState(e)) {
-    DebuggerUtilsImpl.logError(e)
+    val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+    val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+    return IdeState(readAllowed = readField, writeAllowed = writeField)
   }
-  null
+  catch (e: Exception) {
+    if (!logIncorrectSuspendState(e)) {
+      DebuggerUtilsImpl.logError(e)
+    }
+    return null
+  }
 }
 
 

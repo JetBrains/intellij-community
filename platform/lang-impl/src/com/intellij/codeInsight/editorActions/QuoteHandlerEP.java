@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Registers {@link QuoteHandler} for given file type.
  */
-@ApiStatus.Internal
 public final class QuoteHandlerEP extends BaseKeyedLazyInstance<QuoteHandler> implements KeyedLazyInstance<QuoteHandler> {
+  @ApiStatus.Internal
   public static final ExtensionPointName<KeyedLazyInstance<QuoteHandler>> EP_NAME = new ExtensionPointName<>("com.intellij.quoteHandler");
 
   // these must be public for scrambling compatibility
@@ -26,11 +26,17 @@ public final class QuoteHandlerEP extends BaseKeyedLazyInstance<QuoteHandler> im
   @RequiredElement
   public String className;
 
+  @ApiStatus.Internal
+  public QuoteHandlerEP() {
+  }
+
+  @ApiStatus.Internal
   @Override
   public @NotNull String getKey() {
     return fileType;
   }
 
+  @ApiStatus.Internal
   @Override
   protected @Nullable String getImplementationClassName() {
     return className;

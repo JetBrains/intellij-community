@@ -67,8 +67,7 @@ class HProfDatabase(tmpDirectory: Path) {
   }
 
   fun createHprofTemporaryFilePath(): Path {
-    val name = ApplicationNamesInfo.getInstance().productName.replace(' ', '-').toLowerCase(
-      Locale.US)
+    val name = ApplicationNamesInfo.getInstance().productName.replace(' ', '-').lowercase(Locale.US)
     hprofTempDirectory.createDirectories()
     return hprofTempDirectory.resolve("heapDump-$name-${System.currentTimeMillis()}.hprof")
   }

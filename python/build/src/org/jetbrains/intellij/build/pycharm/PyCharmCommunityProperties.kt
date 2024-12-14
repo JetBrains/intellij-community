@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
@@ -11,7 +10,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase(enlargeWelcomeScreen = true) {
+open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCharmPropertiesBase(enlargeWelcomeScreen = true) {
   override val customProductCode: String
     get() = "PC"
 
@@ -33,10 +32,11 @@ open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharm
       sequenceOf(
         "intellij.python.community.plugin", // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
-        "intellij.vcs.github.community") +
+        "intellij.pycharm.community.customization.shared",
+        "intellij.vcs.github.community",
+        "intellij.vcs.gitlab.community") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 
-    productLayout.pluginModulesToPublish = persistentSetOf("intellij.python.community.plugin")
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
@@ -73,10 +73,10 @@ open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharm
   }
 
   override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
-    return PyCharmCommunityMacDistributionCustomizer(communityHome)
+    return PyCharmMacDistributionCustomizer(communityHome)
   }
 
-  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = "pycharm-ce"
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "pycharm-ce"
 }
 
 private class PyCharmCommunityWindowsDistributionCustomizer(projectHome: Path) : PyCharmWindowsDistributionCustomizer() {
@@ -101,16 +101,3 @@ private open class PyCharmCommunityLinuxDistributionCustomizer(projectHome: Path
   }
 }
 
-private class PyCharmCommunityMacDistributionCustomizer(projectHome: Path) : PyCharmMacDistributionCustomizer() {
-  init {
-    icnsPath = "$projectHome/python/build/resources/PyCharmCore.icns"
-    icnsPathForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP.icns"
-    bundleIdentifier = "com.jetbrains.pycharm.ce"
-    dmgImagePath = "$projectHome/python/build/resources/dmg_background.tiff"
-  }
-
-  override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-    val suffix = if (appInfo.isEAP) " ${appInfo.majorVersion}.${appInfo.minorVersion} EAP" else ""
-    return "PyCharm CE${suffix}.app"
-  }
-}

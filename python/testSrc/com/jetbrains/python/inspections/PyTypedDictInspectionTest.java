@@ -35,11 +35,11 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    from typing import TypedDict
                    class Movie(TypedDict):
                        name: str
-                       def <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">my_method</weak_warning>(self):
-                           pass
-                       class <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">Horror</weak_warning>:
+                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">def my_method(self):
+                           pass</warning>
+                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">class Horror:
                            def __init__(self):
-                               ...""");
+                               ...</warning>""");
   }
 
   public void testInitializer() {
@@ -54,7 +54,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import TypedDict
                    class Movie(TypedDict):
-                       <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">...</weak_warning>
+                       ...
                    class HorrorMovie(TypedDict):
                        pass""");
   }
@@ -242,6 +242,18 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                  "X = TypedDict('X', {'x': int}, total=<warning descr=\"Value of 'total' must be True or False\">1</warning>)");
   }
 
+  public void testUnexpectedInitClassArgument() {
+    doTestByText("""
+                   from typing import TypedDict
+                   class A(TypedDict, <warning descr="Unexpected argument 'ab' for __init_subclass__ of TypedDict">ab=False</warning>):
+                       i: int""");
+  }
+
+  public void testUnexpectedArgumentAlternativeSyntax() {
+    doTestByText("from typing import TypedDict\n" +
+                 "X = TypedDict('X', {'x': int}, abb=False)");
+  }
+
   public void testGetWithIncorrectKeyType() {
     doTestByText("""
                    from typing import TypedDict
@@ -344,22 +356,24 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-53611
-  public void testRequiredNotRequiredAtTheSameTime() {
-    doTestByText("""
-                   from typing_extensions import TypedDict, Required, NotRequired
-                   class A(TypedDict):
-                       x: <warning descr="Key cannot be required and not required at the same time">Required[NotRequired[int]]</warning>
-                       y: Required[int]
-                       z: NotRequired[int]
-                   A = TypedDict('A', {'x': <warning descr="Key cannot be required and not required at the same time">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})""");
-  }
-
-  public void testRequiredNotRequiredWithReadOnly() {
+  public void testNestedQualifiers() {
     doTestByText("""
                    from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
+                   
                    class A(TypedDict):
-                       x: <warning descr="Key cannot be required and not required at the same time">Required[ReadOnly[NotRequired[int]]]</warning>
-                   """);
+                       x: <warning descr="Required[] and NotRequired[] cannot be nested">Required[NotRequired[int]]</warning>
+                       y: Required[int]
+                       z: NotRequired[int]
+                       a: <warning descr="Required[] and NotRequired[] cannot be nested">Required[ReadOnly[NotRequired[int]]]</warning>
+                       b: <warning descr="Required[] and NotRequired[] cannot be nested">Required[Required[int]]</warning>
+                       c: <warning descr="Required[] and NotRequired[] cannot be nested">Required[ReadOnly[Required[int]]]</warning>
+                   
+                   A = TypedDict('A', {'x': <warning descr="Required[] and NotRequired[] cannot be nested">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})
+                   
+                   class B(TypedDict):
+                       x: <warning descr="ReadOnly[] cannot be nested">ReadOnly[ReadOnly[int]]</warning>
+                       y: <warning descr="ReadOnly[] cannot be nested">ReadOnly[Required[ReadOnly[int]]]</warning>
+                       z: ReadOnly[int]""");
   }
 
   // PY-53611

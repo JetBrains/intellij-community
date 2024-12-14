@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -15,6 +13,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,24 +31,6 @@ public final class FilenameIndex {
   private FilenameIndex() {
   }
 
-  private static class CancellationChecker{
-
-    private int iterationNo;
-
-    public void checkCancelled() throws ProcessCanceledException{
-      checkCancelled(iterationNo++);
-    }
-
-    private static final int CHECK_CANCELLED_EACH = 16;
-
-    private static void checkCancelled(int iterationNo) throws ProcessCanceledException {
-      //don't check cancellation on each iteration, since it may affect performance too much -- check each 16th iteration
-      if (iterationNo % CHECK_CANCELLED_EACH == CHECK_CANCELLED_EACH - 1) {
-        ProgressManager.checkCanceled();
-      }
-    }
-  }
-
   public static @NotNull String @NotNull [] getAllFilenames(@NotNull Project project) {
     Set<String> names = CollectionFactory.createSmallMemoryFootprintSet();
     processAllFileNames((String s) -> {
@@ -62,11 +43,10 @@ public final class FilenameIndex {
   public static void processAllFileNames(@NotNull Processor<? super String> processor,
                                          @NotNull GlobalSearchScope scope,
                                          @Nullable IdFilter filter) {
-    CancellationChecker cancellationChecker = new CancellationChecker();
-    processAllFileNameCharSequences((CharSequence s) -> {
-      cancellationChecker.checkCancelled();
-      return processor.process(s.toString());
-    }, scope, filter);
+    var withThrottledCancellationCheck = new ProcessorWithThrottledCancellationCheck<>(
+      (CharSequence s) -> processor.process(s.toString())
+    );
+    processAllFileNameCharSequences(withThrottledCancellationCheck, scope, filter);
   }
 
   private static void processAllFileNameCharSequences(@NotNull Processor<? super CharSequence> processor,
@@ -217,7 +197,7 @@ public final class FilenameIndex {
     int len = ext.length() + 1;
 
     Set<String> names = new HashSet<>();
-    processAllFileNames(name ->{
+    processAllFileNames(name -> {
       int length = name.length();
       if (length > len && name.regionMatches(true, length - len, dotExt, 0, len)) {
         names.add(name);
@@ -231,11 +211,13 @@ public final class FilenameIndex {
                                                                   @NotNull GlobalSearchScope scope,
                                                                   @Nullable IdFilter filter) {
     Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
-    FileBasedIndex.getInstance().processFilesContainingAnyKey(NAME, names, scope, filter, null, file -> {
-      files.add(file);
-      CancellationChecker.checkCancelled(files.size());
-      return true;
-    });
+    FileBasedIndex.getInstance().processFilesContainingAnyKey(
+      NAME, names, scope, filter, null,
+      new ProcessorWithThrottledCancellationCheck<>(file -> {
+        files.add(file);
+        return true;
+      })
+    );
     return files;
   }
 }

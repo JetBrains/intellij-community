@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 
 private const val DEFAULT_FILE_NAME = "Main.kt"
@@ -84,15 +85,15 @@ fun AssetsNewProjectWizardStep.withKotlinSampleCode(
 }
 
 fun AssetsNewProjectWizardStep.prepareKotlinSampleOnboardingTips(project: Project) {
-    prepareKotlinSampleOnboardingTips(project, DEFAULT_TEMPLATE_NAME, DEFAULT_FILE_NAME)
+    prepareKotlinSampleOnboardingTips(project, DEFAULT_FILE_NAME)
 }
 
+@ApiStatus.Internal
 fun AssetsNewProjectWizardStep.prepareKotlinSampleOnboardingTips(
     project: Project,
-    templateWithoutTips: String,
     fileName: String
 ) {
-    prepareOnboardingTips(project, templateWithoutTips, fileName) { charsSequence ->
+    prepareOnboardingTips(project, fileName) { charsSequence ->
         charsSequence.indexOf("println(\"i").takeIf { it >= 0 }
     }
 }

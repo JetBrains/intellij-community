@@ -65,7 +65,7 @@ class BuildContextImpl internal constructor(
 
   override fun reportDistributionBuildNumber() {
     val suppliedBuildNumber = options.buildNumber
-    val baseBuildNumber = SnapshotBuildNumber.VALUE.removeSuffix(".SNAPSHOT")
+    val baseBuildNumber = SnapshotBuildNumber.BASE
     check(suppliedBuildNumber == null || suppliedBuildNumber.startsWith(baseBuildNumber)) {
       "Supplied build number '$suppliedBuildNumber' is expected to start with '$baseBuildNumber' base build number " +
       "defined in ${SnapshotBuildNumber.PATH}"
@@ -99,6 +99,10 @@ class BuildContextImpl internal constructor(
 
   override val nonBundledPluginsToBePublished: Path by lazy { nonBundledPlugins.resolve("auto-uploading") }
 
+  override val bundledRuntime: BundledRuntime = BundledRuntimeImpl(this)
+
+  override val isNightlyBuild: Boolean = options.isNightlyBuild || buildNumber.count { it == '.' } <= 1
+
   init {
     @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {
@@ -118,6 +122,9 @@ class BuildContextImpl internal constructor(
     if (!options.compatiblePluginsToIgnore.isEmpty()) {
       productProperties.productLayout.compatiblePluginsToIgnore =
         productProperties.productLayout.compatiblePluginsToIgnore.addAll(options.compatiblePluginsToIgnore)
+    }
+    check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix) {
+      "The runtime type doesn't match the one specified in the product properties: ${bundledRuntime.prefix} != ${productProperties.runtimeDistribution.artifactPrefix}"
     }
   }
 

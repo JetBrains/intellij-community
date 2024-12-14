@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.management.PythonPackagesInstallerAsync;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -266,6 +267,7 @@ public final class PyPackageManagerUI {
 
       PythonPackagesInstallerAsync.Companion.installPackages(
         myProject,
+        mySdk,
         myRequirements,
         myExtraArgs,
         indicator

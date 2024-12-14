@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.SequentialTaskExecutor
 
 @Service(Service.Level.PROJECT)
-class FilePredictionHandler(private val project: Project) : Disposable {
+internal class FilePredictionHandler(private val project: Project) : Disposable {
   companion object {
     private val LOG: Logger = Logger.getInstance(FilePredictionHandler::class.java)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.LanguageParserDefinitions;
@@ -11,8 +11,8 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -287,7 +287,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     //noinspection SynchronizeOnThis
     synchronized (this) {
       IStubElementType.dropRegisteredTypes();
-      IStubFileElementType.dropTemplateStubBaseVersion();
+      TemplateLanguageStubBaseVersion.dropVersion();
       StubSerializerEnumerator enumerator = mySerializerEnumerator;
       if (enumerator != null) {
         enumerator.dropRegisteredSerializers();

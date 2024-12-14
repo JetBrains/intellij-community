@@ -349,7 +349,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           // for the condition `existing.equalsByActualOffset(info)` above work correctly,
           // create a fake whole-file highlighter which will track the document size changes
           // and which will make possible to calculate correct `info.getActualEndOffset()`
-          info.setHighlighter((RangeHighlighterEx)highlighter);
+          if (toReuse == null) {
+            // assign only newly created highlighter here; otherwise the reused highlighter was already set, no need (and can't) to overwrite
+            info.setHighlighter((RangeHighlighterEx)highlighter);
+          }
           info.setGroup(group);
           fileLevelInfos.add(info);
           FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
@@ -517,6 +520,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                         @Nullable Runnable callbackWhileWaiting) throws Exception {
     ThreadingAssertions.assertEventDispatchThread();
     assert !myDisposed;
+    PsiUtilCore.ensureValid(file);
     assertMyFile(file.getProject(), file);
     assert textEditor.getEditor().getDocument() == document : "Expected document "+document+" but one of the passed TextEditors points to a different document: "+textEditor.getEditor().getDocument();
     Document associatedDocument = PsiDocumentManager.getInstance(myProject).getDocument(file);
@@ -919,7 +923,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private synchronized void scheduleUpdateRunnable(long delayNanos) {
     Future<?> oldFuture = myUpdateRunnableFuture;
     if (oldFuture.isDone()) {
-      ConcurrencyUtil.manifestExceptionsIn(oldFuture);
+      // schedule `manifest` into a separate call to avoid breaking the current stack with an exception from the previous execution
+      ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(oldFuture));
     }
     myUpdateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
   }

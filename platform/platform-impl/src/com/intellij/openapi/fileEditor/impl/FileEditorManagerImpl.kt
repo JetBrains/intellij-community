@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -1090,7 +1090,7 @@ open class FileEditorManagerImpl(
   private val clientFileEditorManager: ClientFileEditorManager?
     get() {
       // todo RDCT-78
-      val session = ClientSessionsManager.getProjectSession(project) ?: return null
+      val session = project.currentSessionOrNull ?: return null
       LOG.assertTrue(!session.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
       return session.serviceOrNull<ClientFileEditorManager>()
     }
@@ -2385,7 +2385,8 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val isSingletonEditor = isSingletonDockWindow(window) && window.isFileOpen(oldFile)
   if (isSingletonEditor) {
     window.closeFile(oldFile)
-    editorManager.openFile(newFile, window, newOptions.copy(openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW))
+    editorManager.openFile(newFile, window, newOptions.copy(openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW,
+                                                            isSingletonEditorInWindow = true))
   }
   else if (oldFile == newFile) {
     val index = window.files().indexOf(oldFile)

@@ -9,9 +9,12 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@Deprecated("This declaration is K1 specific, please use the frontend-independent KotlinDeclarationMover instead.")
 interface KotlinMover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
+    @Deprecated("This declaration is K1 specific, please use the frontend-independent KotlinDeclarationMover instead.")
     object Default : KotlinMover {
         override fun invoke(originalElement: KtNamedDeclaration, targetContainer: KtElement): KtNamedDeclaration {
+            @Suppress("DuplicatedCode")
             return when (targetContainer) {
                 is KtFile -> {
                     val declarationContainer: KtElement =

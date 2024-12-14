@@ -147,6 +147,7 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
   }
 
   @Override
+  @Unmodifiable
   public List<DomElementProblemDescriptor> getAllProblems() {
     return getProblems(myElement, false, true);
   }

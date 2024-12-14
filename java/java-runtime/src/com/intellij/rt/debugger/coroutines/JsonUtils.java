@@ -3,7 +3,7 @@ package com.intellij.rt.debugger.coroutines;
 
 import java.util.List;
 
-final class JsonUtils {
+public final class JsonUtils {
   private JsonUtils() { }
 
   static String dumpCoroutineStackTraceDumpToJson(

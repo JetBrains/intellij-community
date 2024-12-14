@@ -357,6 +357,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     return "IntelliLang.Configuration";
   }
 
+  @Contract(mutates = "param1")
   private static void sortInjections(final List<? extends BaseInjection> injections) {
     injections.sort((o1, o2) -> {
       final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());

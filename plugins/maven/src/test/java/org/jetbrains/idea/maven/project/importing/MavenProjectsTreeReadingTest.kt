@@ -608,7 +608,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
       embeddersManager.releaseInTests()
     }
     assertEquals(log().add("resolved", "project"), listener.log)
-    assertTrue(mavenProject.hasUnrecoverableReadingProblems())
+    assertFalse(mavenProject.problems.isEmpty())
   }
 
   @Test

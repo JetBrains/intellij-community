@@ -764,6 +764,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @Override
   @NotNull
+  @Unmodifiable
   public List<LocalChangeList> getChangeLists() {
     synchronized (myDataLock) {
       return myWorker.getChangeLists();

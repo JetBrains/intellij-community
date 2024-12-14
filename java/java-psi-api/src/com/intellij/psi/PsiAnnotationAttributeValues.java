@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.JvmEnumField;
 import com.intellij.lang.jvm.annotation.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -99,6 +100,7 @@ class PsiAnnotationArrayValue extends PsiAnnotationAttributeValue<PsiArrayInitia
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<JvmAnnotationAttributeValue> getValues() {
     return map(myElement.getInitializers(), PsiJvmConversionHelper::getAnnotationAttributeValue);
   }

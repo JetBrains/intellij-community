@@ -589,9 +589,12 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getClassesWithInlinedCode(candidatesWithInline: List<String>, line: Int): List<ReferenceType> {
         val candidatesWithInlineInternalNames = candidatesWithInline.map { it.fqnToInternalName() }
         val futures = debugProcess.virtualMachineProxy.allClasses().map { type ->
-            hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames).thenApply { hasInlinedLines ->
-                type.takeIf { hasInlinedLines }
-            }
+            hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames)
+                .thenApply { hasInlinedLines -> type.takeIf { hasInlinedLines } }
+                .exceptionally { e ->
+                    val exception = DebuggerUtilsAsync.unwrap(e)
+                    if (exception is ObjectCollectedException) null else throw e
+                }
         }.toTypedArray()
         CompletableFuture.allOf(*futures).join()
         return futures.mapNotNull { it.get() }

@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <actions>
     <action id="QuickActionPopup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
@@ -296,7 +297,7 @@
       <action id="EditorTranspose" class="com.intellij.openapi.editor.actions.TransposeAction"/>
 
       <!-- generic delete actions should go last to allow redefining shortcuts by more specific actions in the editor -->
-      <!-- e.g. Cmd + Backspace on OS X should work as Delete in lists, and as 'Delete to Line Start' in the editor -->
+      <!-- e.g., Cmd + Backspace on OS X should work as Delete in lists, and as 'Delete to Line Start' in the editor -->
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" use-shortcut-of="$Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
 
@@ -413,6 +414,8 @@
     <group id="Diff.ViewerPopupMenu"/>
     <group id="Diff.ViewerToolbar"/>
     <group id="Diff.EditorGutterPopupMenu">
+      <group id="Diff.EditorGutterPopupMenu.DiffModes"/>
+      <separator/>
       <group id="Diff.EditorGutterPopupMenu.EditorSettings"/>
     </group>
     <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain" searchable="false"/>
@@ -445,7 +448,6 @@
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
-          <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" internal="true"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.MenuOpen">
             <add-to-group group-id="ProjectWidget.Actions"/>
           </action>
@@ -463,6 +465,7 @@
         <separator/>
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
+          <action id="CloseSettings" class="com.intellij.openapi.options.newEditor.settings.CloseSettingsAction" use-shortcut-of="CloseDiffEditor"/>
         </group>
         <group id="FilePropertiesGroup" popup="true">
           <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
@@ -1527,6 +1530,7 @@
     <action id="ClearAllNotifications" class="com.intellij.notification.impl.ClearAllNotificationsAction" icon="AllIcons.Actions.GC"/>
 
     <group id="ProjectViewToolbar">
+      <separator/>
       <reference ref="SelectInProjectView"/>
       <reference ref="ExpandRecursively"/>
       <reference ref="ExpandAll"/>

@@ -70,7 +70,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
   @Override
   @Unmodifiable
-  public @NotNull List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  public @NotNull List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     return ContainerUtil.findAll(actions, o -> o != this);
   }
 

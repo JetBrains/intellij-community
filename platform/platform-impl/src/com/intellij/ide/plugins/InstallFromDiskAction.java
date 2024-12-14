@@ -9,11 +9,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.Set;
 
 class InstallFromDiskAction extends DumbAwareAction {
   private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
@@ -70,15 +70,15 @@ class InstallFromDiskAction extends DumbAwareAction {
       return;
     }
 
-    var contextFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    var toSelect = contextFile != null && contextFile.isInLocalFileSystem() && isPluginArchive(contextFile.getPath())
-                   ? contextFile
-                   : getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
+    var toSelect = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (toSelect == null || !toSelect.isInLocalFileSystem() || !Set.of("zip", "jar").contains(toSelect.getExtension())) {
+      toSelect = getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
+    }
 
-    var descriptor = new FileChooserDescriptor(false, false, true, true, false, false)
-      .withTitle(IdeBundle.message("chooser.title.plugin.file"))
-      .withDescription(IdeBundle.message("chooser.description.jar.and.zip.archives.are.accepted"))
-      .withExtensionFilter("", "zip", "jar");
+    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(IdeBundle.message("install.plugin.chooser.title"))
+      .withDescription(IdeBundle.message("install.plugin.chooser.description"))
+      .withExtensionFilter(IdeBundle.message("install.plugin.chooser.label"), "zip", "jar");
 
     var chosenFile = FileChooser.chooseFile(descriptor, myParentComponent, project, toSelect);
     if (chosenFile != null) {
@@ -97,10 +97,6 @@ class InstallFromDiskAction extends DumbAwareAction {
   @RequiresEdt
   protected void onPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData, @Nullable Project project) {
     PluginInstaller.installPluginFromCallbackData(callbackData);
-  }
-
-  public static boolean isPluginArchive(String filePath) {
-    return FileUtilRt.extensionEquals(filePath, "jar") || FileUtilRt.extensionEquals(filePath, "zip");
   }
 
   private static @Nullable VirtualFile getFileToSelect(@Nullable String path) {

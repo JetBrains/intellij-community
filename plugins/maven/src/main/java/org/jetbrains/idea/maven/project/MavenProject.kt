@@ -208,8 +208,8 @@ class MavenProject(val file: VirtualFile) {
   val profilesXmlNioFile: Path?
     get() = MavenUtil.getProfilesXmlNioFile(file)
 
-  fun hasUnrecoverableReadingProblems(): Boolean {
-    return myState.readingProblems.any { !it.isRecoverable }
+  fun hasReadingErrors(): Boolean {
+    return myState.readingProblems.any { it.isError }
   }
 
   val name: @NlsSafe String?
@@ -574,7 +574,7 @@ class MavenProject(val file: VirtualFile) {
   }
 
   private fun createDependencyProblem(file: VirtualFile, description: String): MavenProjectProblem {
-    return MavenProjectProblem(file.path, description, MavenProjectProblem.ProblemType.DEPENDENCY, false)
+    return MavenProjectProblem(file.path, description, MavenProjectProblem.ProblemType.DEPENDENCY, true)
   }
 
   private fun validateParent(file: VirtualFile, result: MutableList<MavenProjectProblem>) {

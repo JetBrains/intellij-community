@@ -26,11 +26,6 @@ private val LOG = logger<SettingsSynchronizer>()
 private val MIGRATION_EP = ExtensionPointName<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
 
 private class SettingsSynchronizerApplicationInitializedListener : ApplicationActivity {
-  init {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment || !isSettingsSyncEnabledByKey()) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
 
   override suspend fun execute() {
     val settingsSyncEventListener = object : SettingsSyncEventListener {
@@ -110,7 +105,7 @@ private class SettingsSynchronizer : ApplicationActivationListener {
     get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   override fun applicationActivated(ideFrame: IdeFrame) {
-    if (!isSettingsSyncEnabledByKey() || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
+    if (!true || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
 

@@ -1,12 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagementPolicy;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -19,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -31,14 +33,15 @@ public final class InstallAndEnableTask extends Task.Modal {
   private final Runnable myOnSuccess;
 
   private final Set<PluginDownloader> myPlugins = new HashSet<>();
-  private @Nullable List<PluginNode> myCustomPlugins;
 
-  InstallAndEnableTask(@Nullable Project project,
-                       @NotNull Set<PluginId> pluginIds,
-                       boolean showDialog,
-                       boolean selectAllInDialog,
-                       @Nullable ModalityState modalityState,
-                       @NotNull Runnable onSuccess) {
+  InstallAndEnableTask(
+    @Nullable Project project,
+    @NotNull Set<PluginId> pluginIds,
+    boolean showDialog,
+    boolean selectAllInDialog,
+    @Nullable ModalityState modalityState,
+    @NotNull Runnable onSuccess
+  ) {
     super(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true);
     myPluginIds = pluginIds;
     myShowDialog = showDialog;
@@ -50,25 +53,21 @@ public final class InstallAndEnableTask extends Task.Modal {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     try {
-      List<PluginNode> marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myPluginIds);
-      myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
-
-      List<IdeaPluginDescriptor> descriptors =
-        new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, false));
+      var descriptors = new ArrayList<IdeaPluginDescriptor>(MarketplaceRequests.loadLastCompatiblePluginDescriptors(myPluginIds));
 
       if (myShowDialog) {
-        MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
-        Set<PluginId> pluginIds = ContainerUtil.map2Set(descriptors, descriptor -> descriptor.getPluginId());
-        for (IdeCompatibleUpdate update : MarketplaceRequests.getLastCompatiblePluginUpdate(pluginIds)) {
-          int index = ContainerUtil.indexOf(descriptors, d -> d.getPluginId().getIdString().equals(update.getPluginId()));
+        var marketplace = MarketplaceRequests.getInstance();
+        var pluginIds = ContainerUtil.map2Set(descriptors, descriptor -> descriptor.getPluginId());
+        for (var update : MarketplaceRequests.getLastCompatiblePluginUpdate(pluginIds)) {
+          var index = ContainerUtil.indexOf(descriptors, d -> d.getPluginId().getIdString().equals(update.getPluginId()));
           if (index != -1) {
-            IdeaPluginDescriptor descriptor = descriptors.get(index);
+            var descriptor = descriptors.get(index);
             if (descriptor instanceof PluginNode node) {
               node.setExternalPluginId(update.getExternalPluginId());
               node.setExternalUpdateId(update.getExternalUpdateId());
               node.setDescription(null);
 
-              PluginNode pluginNode = marketplace.loadPluginDetails(node);
+              var pluginNode = marketplace.loadPluginDetails(node);
               if (pluginNode != null) {
                 PluginDetailsPageComponent.loadAllPluginDetails(marketplace, node, pluginNode);
                 descriptors.set(index, pluginNode);
@@ -78,7 +77,7 @@ public final class InstallAndEnableTask extends Task.Modal {
         }
       }
 
-      for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+      for (var descriptor : PluginManagerCore.getPlugins()) {
         if (!descriptor.isEnabled() &&
             PluginManagerCore.isCompatible(descriptor) &&
             PluginManagementPolicy.getInstance().canInstallPlugin(descriptor)) {
@@ -86,28 +85,20 @@ public final class InstallAndEnableTask extends Task.Modal {
         }
       }
 
-      for (IdeaPluginDescriptor descriptor : descriptors) {
+      for (var descriptor : descriptors) {
         if (myPluginIds.contains(descriptor.getPluginId())) {
           myPlugins.add(PluginDownloader.createDownloader(descriptor));
         }
       }
     }
     catch (Exception e) {
-      PluginsAdvertiser.getLog().info(e);
+      Logger.getInstance(InstallAndEnableTask.class).info(e);
     }
   }
 
   @Override
   public void onSuccess() {
-    if (myCustomPlugins == null) {
-      return;
-    }
-
-    new PluginsAdvertiserDialog(myProject,
-                                myPlugins,
-                                myCustomPlugins,
-                                mySelectAllInDialog,
-                                this::runOnSuccess)
+    new PluginsAdvertiserDialog(myProject, myPlugins, mySelectAllInDialog, this::runOnSuccess)
       .doInstallPlugins(myShowDialog, myModalityState);
   }
 
@@ -117,6 +108,5 @@ public final class InstallAndEnableTask extends Task.Modal {
     }
   }
 
-  public Set<PluginDownloader> getPlugins() { return myPlugins; }
-  public @Nullable List<PluginNode> getCustomPlugins() { return myCustomPlugins; }
+  public @NotNull Set<PluginDownloader> getPlugins() { return myPlugins; }
 }

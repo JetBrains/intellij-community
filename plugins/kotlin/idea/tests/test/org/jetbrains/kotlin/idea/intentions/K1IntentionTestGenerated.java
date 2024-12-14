@@ -3436,89 +3436,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("testData/intentions/branched/unfolding")
         public abstract static class Unfolding extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/intentions/branched/unfolding/assignmentToIf")
-            public static class AssignmentToIf extends AbstractK1IntentionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
-                }
-
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("innerIfTransformed.kt")
-                public void testInnerIfTransformed() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToIf/innerIfTransformed.kt");
-                }
-
-                @TestMetadata("nestedIfs.kt")
-                public void testNestedIfs() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToIf/nestedIfs.kt");
-                }
-
-                @TestMetadata("simpleIf.kt")
-                public void testSimpleIf() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToIf/simpleIf.kt");
-                }
-
-                @TestMetadata("simpleIfWithAugmentedAssignment.kt")
-                public void testSimpleIfWithAugmentedAssignment() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToIf/simpleIfWithAugmentedAssignment.kt");
-                }
-
-                @TestMetadata("simpleIfWithBlocks.kt")
-                public void testSimpleIfWithBlocks() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToIf/simpleIfWithBlocks.kt");
-                }
-
-                @TestMetadata("simpleIfWithComplexAssignmentLHS.kt")
-                public void testSimpleIfWithComplexAssignmentLHS() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToIf/simpleIfWithComplexAssignmentLHS.kt");
-                }
-
-                @TestMetadata("simpleIfWithoutAssignment.kt")
-                public void testSimpleIfWithoutAssignment() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToIf/simpleIfWithoutAssignment.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/intentions/branched/unfolding/assignmentToWhen")
-            public static class AssignmentToWhen extends AbstractK1IntentionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
-                }
-
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("innerWhenTransformed.kt")
-                public void testInnerWhenTransformed() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/innerWhenTransformed.kt");
-                }
-
-                @TestMetadata("simpleWhen.kt")
-                public void testSimpleWhen() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/simpleWhen.kt");
-                }
-
-                @TestMetadata("simpleWhenWithBlocks.kt")
-                public void testSimpleWhenWithBlocks() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/simpleWhenWithBlocks.kt");
-                }
-
-                @TestMetadata("simpleWhenWithComplexAssignmentLHS.kt")
-                public void testSimpleWhenWithComplexAssignmentLHS() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/simpleWhenWithComplexAssignmentLHS.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/propertyToIf")
             public static class PropertyToIf extends AbstractK1IntentionTest {
                 @java.lang.Override
@@ -3627,65 +3544,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/intentions/branched/unfolding/returnToIf")
-            public static class ReturnToIf extends AbstractK1IntentionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
-                }
-
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("ifWithBreak.kt")
-                public void testIfWithBreak() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithBreak.kt");
-                }
-
-                @TestMetadata("ifWithContinue.kt")
-                public void testIfWithContinue() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithContinue.kt");
-                }
-
-                @TestMetadata("ifWithInnerReturn.kt")
-                public void testIfWithInnerReturn() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithInnerReturn.kt");
-                }
-
-                @TestMetadata("ifWithNothing.kt")
-                public void testIfWithNothing() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithNothing.kt");
-                }
-
-                @TestMetadata("ifWithThrow.kt")
-                public void testIfWithThrow() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithThrow.kt");
-                }
-
-                @TestMetadata("innerIfTransformed.kt")
-                public void testInnerIfTransformed() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/innerIfTransformed.kt");
-                }
-
-                @TestMetadata("labeledReturn.kt")
-                public void testLabeledReturn() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/labeledReturn.kt");
-                }
-
-                @TestMetadata("simpleIf.kt")
-                public void testSimpleIf() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/simpleIf.kt");
-                }
-
-                @TestMetadata("simpleIfWithBlocks.kt")
-                public void testSimpleIfWithBlocks() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/returnToIf/simpleIfWithBlocks.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/returnToWhen")
             public static class ReturnToWhen extends AbstractK1IntentionTest {
                 @java.lang.Override
@@ -3696,6 +3554,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
 
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("applicabilityRange.kt")
+                public void testApplicabilityRange() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToWhen/applicabilityRange.kt");
                 }
 
                 @TestMetadata("innerWhenTransformed.kt")
@@ -5658,6 +5521,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     @TestMetadata("array.kt")
                     public void testArray() throws Exception {
                         runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/array.kt");
+                    }
+
+                    @TestMetadata("floatComparison.kt")
+                    public void testFloatComparison() throws Exception {
+                        runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/floatComparison.kt");
                     }
 
                     @TestMetadata("lambdaInParentheses.kt")
@@ -16596,6 +16464,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
         }
 
+        @TestMetadata("recursiveFunNoBody.kt")
+        public void testRecursiveFunNoBody() throws Exception {
+            runTest("testData/intentions/removeExplicitType/recursiveFunNoBody.kt");
+        }
+
         @TestMetadata("referenceExpressionInitializer.kt")
         public void testReferenceExpressionInitializer() throws Exception {
             runTest("testData/intentions/removeExplicitType/referenceExpressionInitializer.kt");
@@ -18302,215 +18175,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("usedSameFunction.kt")
         public void testUsedSameFunction() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/usedSameFunction.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/simplifyBooleanWithConstants")
-    public static class SimplifyBooleanWithConstants extends AbstractK1IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("assert.kt")
-        public void testAssert() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/assert.kt");
-        }
-
-        @TestMetadata("deeplyParenthesized.kt")
-        public void testDeeplyParenthesized() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/deeplyParenthesized.kt");
-        }
-
-        @TestMetadata("equalsConjunction.kt")
-        public void testEqualsConjunction() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/equalsConjunction.kt");
-        }
-
-        @TestMetadata("equalsDisjunction.kt")
-        public void testEqualsDisjunction() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/equalsDisjunction.kt");
-        }
-
-        @TestMetadata("equalsFalse.kt")
-        public void testEqualsFalse() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/equalsFalse.kt");
-        }
-
-        @TestMetadata("equalsTrue.kt")
-        public void testEqualsTrue() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/equalsTrue.kt");
-        }
-
-        @TestMetadata("equalsTrueOrFalse.kt")
-        public void testEqualsTrueOrFalse() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/equalsTrueOrFalse.kt");
-        }
-
-        @TestMetadata("flexibleBoolean.kt")
-        public void testFlexibleBoolean() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/flexibleBoolean.kt");
-        }
-
-        @TestMetadata("inapplicableNoConstants.kt")
-        public void testInapplicableNoConstants() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/inapplicableNoConstants.kt");
-        }
-
-        @TestMetadata("inapplicableNotBinary.kt")
-        public void testInapplicableNotBinary() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/inapplicableNotBinary.kt");
-        }
-
-        @TestMetadata("inapplicableUsesVals.kt")
-        public void testInapplicableUsesVals() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/inapplicableUsesVals.kt");
-        }
-
-        @TestMetadata("inapplicableUsesVals2.kt")
-        public void testInapplicableUsesVals2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/inapplicableUsesVals2.kt");
-        }
-
-        @TestMetadata("inapplicableUsesVals3.kt")
-        public void testInapplicableUsesVals3() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/inapplicableUsesVals3.kt");
-        }
-
-        @TestMetadata("notEqualsFalse.kt")
-        public void testNotEqualsFalse() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/notEqualsFalse.kt");
-        }
-
-        @TestMetadata("notEqualsTrue.kt")
-        public void testNotEqualsTrue() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/notEqualsTrue.kt");
-        }
-
-        @TestMetadata("notReduceableBinary.kt")
-        public void testNotReduceableBinary() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/notReduceableBinary.kt");
-        }
-
-        @TestMetadata("notReduceableBinary2.kt")
-        public void testNotReduceableBinary2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/notReduceableBinary2.kt");
-        }
-
-        @TestMetadata("nullableBoolean.kt")
-        public void testNullableBoolean() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/nullableBoolean.kt");
-        }
-
-        @TestMetadata("nullableComplex.kt")
-        public void testNullableComplex() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/nullableComplex.kt");
-        }
-
-        @TestMetadata("nullableComplex2.kt")
-        public void testNullableComplex2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/nullableComplex2.kt");
-        }
-
-        @TestMetadata("positiveZeroNegativeZero1.kt")
-        public void testPositiveZeroNegativeZero1() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/positiveZeroNegativeZero1.kt");
-        }
-
-        @TestMetadata("positiveZeroNegativeZero2.kt")
-        public void testPositiveZeroNegativeZero2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/positiveZeroNegativeZero2.kt");
-        }
-
-        @TestMetadata("positiveZeroNegativeZero3.kt")
-        public void testPositiveZeroNegativeZero3() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/positiveZeroNegativeZero3.kt");
-        }
-
-        @TestMetadata("positiveZeroNegativeZero4.kt")
-        public void testPositiveZeroNegativeZero4() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/positiveZeroNegativeZero4.kt");
-        }
-
-        @TestMetadata("reduceableBinary.kt")
-        public void testReduceableBinary() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/reduceableBinary.kt");
-        }
-
-        @TestMetadata("reduceableBinary2.kt")
-        public void testReduceableBinary2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/reduceableBinary2.kt");
-        }
-
-        @TestMetadata("reduceableBinary3.kt")
-        public void testReduceableBinary3() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/reduceableBinary3.kt");
-        }
-
-        @TestMetadata("reduceableBinaryWithParenthese.kt")
-        public void testReduceableBinaryWithParenthese() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/reduceableBinaryWithParenthese.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simple.kt");
-        }
-
-        @TestMetadata("simpleWithMoreBinaries.kt")
-        public void testSimpleWithMoreBinaries() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithMoreBinaries.kt");
-        }
-
-        @TestMetadata("simpleWithMoreBinaries2.kt")
-        public void testSimpleWithMoreBinaries2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithMoreBinaries2.kt");
-        }
-
-        @TestMetadata("simpleWithMoreBinaries3.kt")
-        public void testSimpleWithMoreBinaries3() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithMoreBinaries3.kt");
-        }
-
-        @TestMetadata("simpleWithMoreBinariesAndParentheses.kt")
-        public void testSimpleWithMoreBinariesAndParentheses() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithMoreBinariesAndParentheses.kt");
-        }
-
-        @TestMetadata("simpleWithMoreBinariesAndParentheses2.kt")
-        public void testSimpleWithMoreBinariesAndParentheses2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithMoreBinariesAndParentheses2.kt");
-        }
-
-        @TestMetadata("simpleWithMoreBinariesAndParentheses3.kt")
-        public void testSimpleWithMoreBinariesAndParentheses3() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithMoreBinariesAndParentheses3.kt");
-        }
-
-        @TestMetadata("simpleWithNonsensical2.kt")
-        public void testSimpleWithNonsensical2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithNonsensical2.kt");
-        }
-
-        @TestMetadata("simpleWithParentheses.kt")
-        public void testSimpleWithParentheses() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithParentheses.kt");
-        }
-
-        @TestMetadata("simpleWithParentheses2.kt")
-        public void testSimpleWithParentheses2() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/simpleWithParentheses2.kt");
-        }
-
-        @TestMetadata("withAnnotation.kt")
-        public void testWithAnnotation() throws Exception {
-            runTest("testData/intentions/simplifyBooleanWithConstants/withAnnotation.kt");
         }
     }
 

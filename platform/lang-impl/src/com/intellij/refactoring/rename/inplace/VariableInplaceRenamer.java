@@ -366,11 +366,13 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               highlighter.dispose();
             }
             startDumbIfPossible();
+            int offsetBefore = myEditor.getCaretModel().getOffset();
             try {
               tryRollback();
               PsiNamedElement var = getVariable();
               if (var != null) {
                 createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
+                myEditor.getCaretModel().moveToOffset(offsetBefore);
               }
             }
             finally {
@@ -394,6 +396,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   private @Nullable RangeHighlighter highlightConflictingElement(PsiElement conflictingElement) {
     if (conflictingElement != null) {
+      try {
+        conflictingElement = PsiTreeUtil.findSameElementInCopy(conflictingElement, myScope.getContainingFile());
+      }
+      catch (IllegalStateException ignored) {
+      }
       TextRange range = conflictingElement.getTextRange();
       if (conflictingElement instanceof PsiNameIdentifierOwner owner) {
         PsiElement identifier = owner.getNameIdentifier();

@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -92,8 +93,8 @@ public class ProjectTemplateList extends JPanel {
     myDescriptionPane.setText(descriptionHtml.toString());
   }
 
-  public void setTemplates(List<? extends ProjectTemplate> list, boolean preserveSelection) {
-    list.sort((o1, o2) -> Boolean.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
+  public void setTemplates(@Unmodifiable List<? extends ProjectTemplate> list, boolean preserveSelection) {
+    list = ContainerUtil.sorted(list, (o1, o2) -> Boolean.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
 
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
     myList.setModel(new CollectionListModel<>(list));

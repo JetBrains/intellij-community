@@ -71,7 +71,7 @@ class GitLabMergeRequestStatusViewModelImpl(
   }
 
   override val resolveConflictsVm: GitLabResolveConflictsLocallyViewModel =
-    GitLabResolveConflictsLocallyViewModelImpl(cs, project, serverPath, gitRepository, mergeRequest)
+    GitLabResolveConflictsLocallyViewModel(cs, project, serverPath, gitRepository, mergeRequest)
 
   private fun GitLabCiJobDTO.convert(): CodeReviewCIJob? {
     val jobUrl: String? = detailedStatus?.detailsPath?.let { url ->

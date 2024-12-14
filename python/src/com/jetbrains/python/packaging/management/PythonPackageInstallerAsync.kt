@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging
+package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
 import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
@@ -16,6 +18,7 @@ class PythonPackagesInstallerAsync {
   companion object {
     fun installPackages(
       project: Project,
+      sdk: Sdk,
       requirements: List<PyRequirement>?,
       extraArgs: List<String>,
       indicator: ProgressIndicator,
@@ -23,6 +26,8 @@ class PythonPackagesInstallerAsync {
       val packageService = PyPackagingToolWindowService.getInstance(project)
 
       packageService.serviceScope.launch(Dispatchers.IO) {
+        packageService.initForSdk(sdk)
+
         if (requirements.isNullOrEmpty()) {
           installWithoutRequirements(packageService, extraArgs, indicator)
         }

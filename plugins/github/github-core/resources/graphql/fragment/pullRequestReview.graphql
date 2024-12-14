@@ -1,0 +1,12 @@
+fragment pullRequestReview on PullRequestReview {
+  __typename
+  ...nodeInfo
+  url
+  author {
+    ...actor
+  }
+  body
+  state
+  createdAt
+  viewerCanUpdate
+}

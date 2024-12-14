@@ -47,11 +47,8 @@ internal fun EelFsError.throwFileSystemException(): Nothing {
 
 internal fun Path.toEelPath(): EelPath =
   when {
-    this is IjentNioPath -> eelPath
-
-    isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
-
-    else -> EelPath.Relative.parse(toString())
+    this is AbsoluteIjentNioPath -> eelPath
+    else -> throw IllegalArgumentException("$this is not absolute IjentNioPath")
   }
 
 /**

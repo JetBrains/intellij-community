@@ -66,7 +66,6 @@ class SettingsHistoryToolWindowFactory(private val corotineScope: CoroutineScope
   private fun isApplicable(): Boolean {
     return Registry.`is`("settingsSync.ui.new.toolwindow.show")
            && SettingsSyncMain.isAvailable()
-           && isSettingsSyncEnabledByKey()
            && isSettingsSyncEnabledInSettings()
   }
 

@@ -73,14 +73,34 @@ public final class DfaPsiUtil {
     return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
+  /**
+   * Returns nullability of variable or method. This method takes into account various sources of nullability information,
+   * like method annotations, type annotations, container annotations, inferred annotations, or external annotations.
+   * 
+   * @param resultType concrete type of particular variable access or method call (an instantiation of generic method return type, 
+   *                   or variable type), if known.
+   * @param owner method or variable to get its nullability
+   * @return nullability of the owner; {@link Nullability#UNKNOWN} is both parameters are null.
+   */
   @NotNull
   public static Nullability getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
     return getElementNullability(resultType, owner, false);
   }
 
+  /**
+   * Returns nullability of variable or method. This method takes into account various sources of nullability information,
+   * like method annotations, type annotations, container annotations, inferred annotations, or external annotations.
+   * Automatic inference of method parameter nullability is ignored, which is useful when analyzing the method body (as it's
+   * inferred from method body as well, so both analyses may produce conflicting results).
+   *
+   * @param resultType concrete type of particular variable access or method call (an instantiation of generic method return type, 
+   *                   or variable type), if known.
+   * @param owner method or variable to get its nullability
+   * @return nullability of the owner; {@link Nullability#UNKNOWN} is both parameters are null.
+   */
   @NotNull
   public static Nullability getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
-                                                                         @Nullable PsiModifierListOwner owner) {
+                                                                            @Nullable PsiModifierListOwner owner) {
     return getElementNullability(resultType, owner, true);
   }
 
@@ -287,12 +307,12 @@ public final class DfaPsiUtil {
     if (sam != null) {
       PsiParameter parameter = sam.getParameterList().getParameter(index);
       if (parameter != null) {
-        Nullability nullability = getElementNullability(null, parameter);
-        if (nullability != Nullability.UNKNOWN) {
-          return nullability;
-        }
         PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
-        return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
+        NullabilityAnnotationInfo info = getTypeNullabilityInfo(GenericsUtil.eliminateWildcards(parameterType, false, true));
+        if (info != null) {
+          return info.getNullability();
+        }
+        return getElementNullability(null, parameter);
       }
     }
     return Nullability.UNKNOWN;

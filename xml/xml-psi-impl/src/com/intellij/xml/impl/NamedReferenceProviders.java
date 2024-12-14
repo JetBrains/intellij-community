@@ -39,6 +39,7 @@ final class NamedReferenceProviders {
   }
 
   @NotNull
+  @Unmodifiable
   Collection<XmlNamedReferenceProviderBean> getNamedReferenceProviderBeans(@NotNull XmlNamedReferenceHost element) {
     final String hostName = element.getHostName();
     if (hostName == null) {

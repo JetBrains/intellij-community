@@ -39,11 +39,11 @@ public final class ActionHint {
   private final boolean myExactMatch;
   private final boolean myCheckPreview;
 
-  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch,
+  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType highlightType, boolean exactMatch,
                      boolean preview) {
     myExpectedText = expectedText;
     myShouldPresent = shouldPresent;
-    myHighlightType = severity;
+    myHighlightType = highlightType;
     myExactMatch = exactMatch;
     myCheckPreview = preview;
   }

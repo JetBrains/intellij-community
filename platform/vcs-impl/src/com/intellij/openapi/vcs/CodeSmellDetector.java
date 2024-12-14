@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -30,6 +31,6 @@ public abstract class CodeSmellDetector {
    *
    * @param smells the problems to show.
    */
-  public abstract void showCodeSmellErrors(@NotNull List<CodeSmellInfo> smells);
+  public abstract void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smells);
 
 }

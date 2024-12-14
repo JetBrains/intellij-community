@@ -343,7 +343,7 @@ public class JBZipEntry {
     long start = calcDataOffset();
     long size = getCompressedSize();
     myFile.ensureFlushed(start + size);
-    if (myFile.myArchive.size() < start + size) {
+    if (myFile.getSize() < start + size) {
       throw new EOFException();
     }
     BoundedInputStream bis = new BoundedInputStream(start, size);

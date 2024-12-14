@@ -64,9 +64,12 @@ internal object FunctionLookupElementFactory {
     context(KaSession)
     internal fun getTrailingFunctionSignature(
         signature: KaFunctionSignature<*>,
+        checkDefaultValues: Boolean = true,
     ): KaVariableSignature<KaValueParameterSymbol>? {
         val valueParameters = signature.valueParameters
-        if (!valueParameters.dropLast(1).all { it.symbol.hasDefaultValue }) return null
+        if (checkDefaultValues &&
+            !valueParameters.dropLast(1).all { it.symbol.hasDefaultValue }
+        ) return null
 
         return valueParameters.lastOrNull()
             ?.takeUnless { it.symbol.isVararg }
@@ -77,7 +80,7 @@ internal object FunctionLookupElementFactory {
         trailingFunctionSignature: KaVariableSignature<KaValueParameterSymbol>,
     ): TrailingFunctionDescriptor? {
         return when (val type = trailingFunctionSignature.returnType.lowerBoundIfFlexible()) {
-            is KaFunctionType -> TrailingFunctionDescriptor(type)
+            is KaFunctionType -> TrailingFunctionDescriptor.Function(type)
             is KaUsualClassType -> {
                 val functionClassSymbol = type.symbol as? KaNamedClassSymbol
                     ?: return null
@@ -91,14 +94,9 @@ internal object FunctionLookupElementFactory {
                     ?.let { it as? KaFunctionType }
                     ?: return null
 
-                // TODO this is a workaround
-                // FIX pass KaCallableMemberCall.typeArgumentsMapping from the resolve result
-                val mappings = type.typeArguments
-                    .mapNotNull { it.type }
-                    .zip(samConstructor.typeParameters)
-                    .associate { (parameterSymbol, typeProjection) ->
-                        typeProjection to parameterSymbol
-                    }
+                val mappings = samConstructor.typeParameters
+                        .zip(type.typeArguments.mapNotNull { it.type })
+                        .toMap()
 
                 val functionType = (@OptIn(KaExperimentalApi::class) createSubstitutor(mappings)
                     .substitute(samConstructorType)) as? KaFunctionType
@@ -107,10 +105,7 @@ internal object FunctionLookupElementFactory {
                 val samSymbol = functionClassSymbol.samSymbol
                     ?: return null
 
-                TrailingFunctionDescriptor(
-                    functionType = functionType,
-                    suggestedParameterNames = samSymbol.valueParameters.map { it.name },
-                )
+                TrailingFunctionDescriptor.SamConstructor(functionType, samSymbol)
             }
 
             else -> null
@@ -127,7 +122,8 @@ internal object FunctionLookupElementFactory {
         val trailingFunctionSignature = getTrailingFunctionSignature(signature)
             ?: return null
 
-        val (trailingFunctionType, _) = createTrailingFunctionDescriptor(trailingFunctionSignature)
+        val trailingFunctionType = createTrailingFunctionDescriptor(trailingFunctionSignature)
+            ?.functionType
             ?: return null
 
         val lookupObject = FunctionCallLookupObject(
@@ -409,10 +405,33 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
     }
 }
 
-internal data class TrailingFunctionDescriptor(
-    val functionType: KaFunctionType,
-    val suggestedParameterNames: List<Name?> = functionType.parameterTypes.map { it.extractParameterName() },
-)
+internal sealed interface TrailingFunctionDescriptor {
+
+    val functionType: KaFunctionType
+
+    fun suggestParameterNameAt(index: Int): Name?
+
+    data class Function(
+        override val functionType: KaFunctionType,
+    ) : TrailingFunctionDescriptor {
+
+        override fun suggestParameterNameAt(index: Int): Name? =
+            functionType.parameterTypes
+                .getOrNull(index)
+                ?.extractParameterName()
+    }
+
+    data class SamConstructor(
+        override val functionType: KaFunctionType,
+        val samSymbol: KaNamedFunctionSymbol,
+    ) : TrailingFunctionDescriptor {
+
+        override fun suggestParameterNameAt(index: Int): Name? =
+            samSymbol.valueParameters
+                .getOrNull(index)
+                ?.name
+    }
+}
 
 context(KaSession)
 private val KaNamedClassSymbol.samSymbol: KaNamedFunctionSymbol?
@@ -422,7 +441,7 @@ private val KaNamedClassSymbol.samSymbol: KaNamedFunctionSymbol?
         .singleOrNull()
 
 /**
- * @see org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature.getValueFromParameterNameAnnotation
+ * @see KaVariableSignature.getValueFromParameterNameAnnotation
  */
 private fun KaType.extractParameterName(): Name? =
     annotations.find { it.classId?.asSingleFqName() == StandardNames.FqNames.parameterName }

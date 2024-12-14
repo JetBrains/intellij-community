@@ -4,12 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.doNotClearBindingContext
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -72,9 +70,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
-            // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
-            put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
-            fragmentCompilerBackend.configureCompiler(this)
+            doNotClearBindingContext = true
         }
 
         val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext)
@@ -84,26 +80,17 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             parameterInfo, returnType, moduleDescriptorWrapper.packageFragmentForEvaluator
         )
 
-        val generationState = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper,
-            bindingContext, filesToCompile, compilerConfiguration
-        ).apply {
-            fragmentCompilerBackend.configureGenerationState(
-                this,
-                bindingContext,
-                compilerConfiguration,
-                classDescriptor,
-                methodDescriptor,
-                parameterInfo
-            )
-            generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
-        }.build()
+        val codegenFactory = fragmentCompilerBackend.codegenFactory(
+            bindingContext, compilerConfiguration, classDescriptor, methodDescriptor, parameterInfo,
+        )
+        val generationState = GenerationState(
+            project, moduleDescriptorWrapper, compilerConfiguration,
+            generateDeclaredClassFilter = GeneratedClassFilterForCodeFragment(codeFragment),
+        )
 
         try {
-            KotlinCodegenFacade.compileCorrectFiles(generationState)
-            return fragmentCompilerBackend.extractResult(methodDescriptor, parameterInfo, generationState).also {
-                generationState.destroy()
-            }
+            KotlinCodegenFacade.compileCorrectFiles(filesToCompile, generationState, bindingContext, codegenFactory)
+            return fragmentCompilerBackend.extractResult(parameterInfo, generationState)
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: Exception) {
@@ -112,11 +99,11 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
     }
 
     private class GeneratedClassFilterForCodeFragment(private val codeFragment: KtCodeFragment) : GenerationState.GenerateClassFilter() {
-        override fun shouldGeneratePackagePart(@Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") file: KtFile) = file == codeFragment
-        override fun shouldAnnotateClass(processingClassOrObject: KtClassOrObject) = true
-        override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject) = processingClassOrObject.containingFile == codeFragment
-        override fun shouldGenerateCodeFragment(script: KtCodeFragment) = script == this.codeFragment
-        override fun shouldGenerateScript(script: KtScript) = false
+        override fun shouldGeneratePackagePart(ktFile: KtFile): Boolean =
+            ktFile == codeFragment
+
+        override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject): Boolean =
+            processingClassOrObject.containingFile == codeFragment
     }
 
     private fun getReturnType(

@@ -104,8 +104,11 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
     PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    if (targetElement instanceof PsiClass) {
-      targetElement = JavaPsiRecordUtil.findCanonicalConstructor((PsiClass)targetElement);
+    if (targetElement instanceof PsiClass aClass) {
+      targetElement = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+    }
+    if (targetElement instanceof PsiRecordComponent component) {
+      targetElement = JavaPsiRecordUtil.findCanonicalConstructor(component.getContainingClass());
     }
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;

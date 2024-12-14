@@ -13,7 +13,6 @@ import com.intellij.codeInsight.template.TemplateEditingListener
 import com.intellij.codeInsight.template.TemplateManagerListener
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.isCurrent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -35,7 +34,7 @@ import java.awt.event.KeyEvent
 
 internal class InlineCompletionDocumentListener(private val editor: Editor) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
-    if (!(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
+    if ((ClientEditorManager.getClientId(editor) ?: ClientId.localId) != ClientId.current) {
       hideInlineCompletion(editor, FinishType.DOCUMENT_CHANGED)
       return
     }

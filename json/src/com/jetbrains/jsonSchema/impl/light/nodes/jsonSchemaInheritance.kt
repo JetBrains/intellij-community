@@ -12,7 +12,7 @@ internal fun inheritBaseSchemaIfNeeded(parent: JsonSchemaObject, child: JsonSche
     ?.rootSchemaObject
     ?.schemaInterpretationStrategy
     ?.inheritBaseSchema(parent, child)
-  if (inheritedSchema == null) {
+  if (inheritedSchema != null) {
     JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.SchemaInherited)
   }
   return inheritedSchema ?: child

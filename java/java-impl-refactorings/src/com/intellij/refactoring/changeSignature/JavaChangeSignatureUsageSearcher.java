@@ -105,12 +105,6 @@ class JavaChangeSignatureUsageSearcher {
     if (components.length != parameters.length) {
       return false;
     }
-    for (int i = 0; i < components.length; i++) {
-      PsiType type = JavaPsiPatternUtil.getPatternType(components[i]);
-      if (!parameters[i].getType().equals(type)) {
-        return false;
-      }
-    }
     return true;
   }
 

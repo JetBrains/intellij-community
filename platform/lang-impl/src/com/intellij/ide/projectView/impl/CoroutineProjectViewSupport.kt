@@ -29,6 +29,7 @@ import com.intellij.ui.treeStructure.TreeSwingModel
 import com.intellij.ui.treeStructure.TreeViewModel
 import com.intellij.ui.treeStructure.TreeViewModelVisitor
 import com.intellij.util.SmartList
+import com.intellij.util.ui.tree.LegacyCompatibilityTreeNode
 import kotlinx.coroutines.*
 import org.jetbrains.concurrency.await
 import javax.swing.JTree
@@ -237,7 +238,9 @@ internal class CoroutineProjectViewSupport(
     val nodesToSelect = SmartList<TreeNodeViewModel>()
 
     override suspend fun visit(node: TreeNodeViewModel): TreeVisitor.Action {
-      val userObject = node.getUserObject()
+      val domainNode = node.domainModel
+      if (domainNode !is LegacyCompatibilityTreeNode) return TreeVisitor.Action.SKIP_CHILDREN // all "real" nodes are legacy nodes at the moment
+      val userObject = domainNode.getUserObject()
       if (userObject is AbstractTreeNode<*>) {
         return readAction {
           val matcher = createMatcher()

@@ -45,6 +45,7 @@ import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
@@ -71,6 +72,7 @@ import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 import static com.intellij.util.concurrency.Propagation.isContextAwareComputation;
+import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
 
 @ApiStatus.Internal
 public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx, ReadActionListener, WriteActionListener {
@@ -255,7 +257,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
-    invokeLater(runnable, getDefaultModalityState(), expired);
+    ModalityState state = getDefaultModalityState();
+    if (getReportInvokeLaterWithoutModality() && state == ModalityState.any()) {
+      getLogger().error("Application.invokeLater() was called without modality state and default modality state is ANY\n" +
+                        "Current thread context is: " + ThreadContext.currentThreadContext());
+    }
+    invokeLater(runnable, state, expired);
   }
 
   @Override
@@ -1184,6 +1191,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         reported.set(false);
       }
     }, app);
+    if (app.isInternal() || app.isUnitTestMode()) {
+      ContainerUtil.Options.RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE = true;
+    }
   }
 
   @Override

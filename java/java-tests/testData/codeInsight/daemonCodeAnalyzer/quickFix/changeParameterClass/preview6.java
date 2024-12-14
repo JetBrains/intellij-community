@@ -4,6 +4,7 @@ class a implements b<String> {
         r.g(this);
     }
 
+    @Override
     public void g(b<String> t) {
 
     }

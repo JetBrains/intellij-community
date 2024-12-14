@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -14,6 +15,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
+import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -24,6 +26,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.LocalDate
+import java.util.UUID
 import java.util.zip.Deflater
 import kotlin.io.path.*
 
@@ -212,7 +215,9 @@ class MacDistributionBuilder(
 
     val executable = context.productProperties.baseFileName
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
-    copyFile(execPath, macDistDir.resolve("MacOS/${executable}"))
+    val copy = macDistDir.resolve("MacOS/$executable")
+    copyFile(execPath, copy)
+    MachOUuid(copy, customizer.getDistributionUUID(context), context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 
     val icnsPath = Path.of((if (context.applicationInfo.isEAP) customizer.icnsPathForEAP else null) ?: customizer.icnsPath)
@@ -350,13 +355,12 @@ class MacDistributionBuilder(
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
-    return ProductInfoLaunchData(
+    return ProductInfoLaunchData.create(
       OsFamily.MACOS.osName,
       arch.dirName,
       launcherPath = "../MacOS/${context.productProperties.baseFileName}",
       javaExecutablePath = if (withRuntime) "../jbr/Contents/Home/bin/java" else null,
       vmOptionsFilePath = "../bin/${context.productProperties.baseFileName}.vmoptions",
-      startupWmClass = null,
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
       mainClass = context.ideMainClassName,

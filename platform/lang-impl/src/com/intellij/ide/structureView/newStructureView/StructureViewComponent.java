@@ -46,7 +46,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -63,10 +62,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
@@ -81,8 +77,8 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1155,6 +1151,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return new MyNodeWrapper(project, value, treeModel);
   }
 
+  @Contract(mutates = "param1")
   private static @NotNull List<AnAction> sortActionsByName(@NotNull List<AnAction> actions) {
     actions.sort(Comparator.comparing(action -> action.getTemplateText()));
     return actions;
@@ -1195,7 +1192,17 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     void expandLater(@NotNull TreePath parentPath, @NotNull Object o) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!tree.isVisible(parentPath) || !tree.isExpanded(parentPath)) return;
-        tree.expandPath(parentPath.pathByAddingChild(o));
+        try {
+          if (tree instanceof Tree jbTree) {
+            jbTree.suspendExpandCollapseAccessibilityAnnouncements();
+          }
+          tree.expandPath(parentPath.pathByAddingChild(o));
+        }
+        finally {
+          if (tree instanceof Tree jbTree) {
+            jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+          }
+        }
       });
     }
 

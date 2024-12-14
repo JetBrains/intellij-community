@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,8 +156,9 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return myComponents.get(myComponents.size()-1);
   }
 
+  @Contract(pure = true)
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return join(".");
   }
 

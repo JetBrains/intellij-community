@@ -16,14 +16,14 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 
-class RemoveUselessIsCheckFix(element: KtIsExpression) : KotlinPsiOnlyQuickFixAction<KtIsExpression>(element) {
+class RemoveUselessIsCheckFix(element: KtIsExpression, val result: Boolean? = null) : KotlinPsiOnlyQuickFixAction<KtIsExpression>(element) {
     override fun getFamilyName(): String = KotlinBundle.message("remove.useless.is.check")
 
     override fun getText(): String = familyName
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         element?.run {
-            val expressionsText = if (leftHandSide.isNull()) isNegated.toString() else isNegated.not().toString()
+            val expressionsText = result?.toString() ?: if (leftHandSide.isNull()) isNegated.toString() else isNegated.not().toString()
             val newExpression = KtPsiFactory(project).createExpression(expressionsText)
             replace(newExpression)
         }

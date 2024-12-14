@@ -7,12 +7,11 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import org.jetbrains.annotations.ApiStatus
 
 internal object JsonFeatureUsageCollector : CounterUsagesCollector() {
   private val jsonSchemaGroup = EventLogGroup(
     id = "json.schema.features",
-    version = 4,
+    version = 5,
   )
 
   internal val jsonSchemaHighlightingSessionData =
@@ -24,8 +23,7 @@ internal object JsonFeatureUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = jsonSchemaGroup
 }
 
-@ApiStatus.Internal
-sealed interface JsonSchemaFusFeature {
+internal sealed interface JsonSchemaFusFeature {
   val event: EventField<*>
 
   companion object {
@@ -40,16 +38,15 @@ sealed interface JsonSchemaFusFeature {
   }
 }
 
-enum class JsonSchemaFusAllowedListFeature(override val event: StringEventField) : JsonSchemaFusFeature {
+internal enum class JsonSchemaFusAllowedListFeature(override val event: StringEventField) : JsonSchemaFusFeature {
   JsonFusSchemaId(EventFields.StringValidatedByCustomRule("schema_id", JsonSchemaIdValidationRule::class.java, "JSON schema ID"))
 }
 
-enum class JsonSchemaFusCountedUniqueFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
+internal enum class JsonSchemaFusCountedUniqueFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
   UniqueRemoteUrlDownloadRequest(EventFields.RoundedInt("unique_remote_url_download_request", "Number of unique remote (URL) references collected during highlighting session")),
 }
 
-@ApiStatus.Internal
-enum class JsonSchemaFusCountedFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
+internal enum class JsonSchemaFusCountedFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
   ExecutedHttpVirtualFileDownloadRequest(EventFields.RoundedInt("executed_http_virtual_file_download_request", "Remote (URL) reference download was called)")),
   RemoteUrlResolveRequest(EventFields.RoundedInt("remote_url_resolve_request", "Remote (URL) reference resolve was called")),
   LocalReferenceResolveRequest(EventFields.RoundedInt("local_file_resolve_request", "Local reference resolve was called")),

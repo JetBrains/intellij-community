@@ -36,6 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -418,8 +419,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {
     List<Library> addedLibraries = new ArrayList<>();
-    List<FrameworkSupportNode> selectedFrameworks = getSelectedNodes();
-    sortFrameworks(selectedFrameworks);
+    List<? extends FrameworkSupportNode> selectedFrameworks = sortFrameworks(getSelectedNodes());
     List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<>();
     final IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
     for (FrameworkSupportNode node : selectedFrameworks) {
@@ -451,9 +451,10 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  private void sortFrameworks(final List<? extends FrameworkSupportNode> nodes) {
+  @Unmodifiable
+  private List<? extends FrameworkSupportNode> sortFrameworks(@Unmodifiable List<? extends FrameworkSupportNode> nodes) {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
-    nodes.sort((o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
+    return ContainerUtil.sorted(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }
 
 }

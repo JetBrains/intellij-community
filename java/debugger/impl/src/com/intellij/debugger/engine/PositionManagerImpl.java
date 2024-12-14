@@ -40,6 +40,7 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
@@ -429,6 +430,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   @Override
   @NotNull
+  @Unmodifiable
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     Set<PsiClass> lineClasses = ReadAction.compute(() -> getLineClasses(position.getFile(), position.getLine()));
     return ContainerUtil.flatMap(lineClasses, aClass -> getClassReferences(aClass, position));

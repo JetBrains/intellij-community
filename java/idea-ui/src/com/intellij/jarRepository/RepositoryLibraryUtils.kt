@@ -13,10 +13,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.util.JDOMUtil
@@ -29,20 +30,22 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.collectResults
-import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.ArtifactVerification
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -139,9 +142,9 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   fun resolveAllBackground(): Deferred<Boolean> {
     return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.resolving.all.libraries")) {
       reportRawProgress { reporter ->
-        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+        val snapshot = project.serviceAsync<WorkspaceModel>().currentSnapshot
         val libraries = snapshot.entities(LibraryEntity::class.java).toList()
-        val failedToResolve = resolve(reporter, libraries.asSequence())
+        val failedToResolve = resolve(snapshot, reporter, libraries.asSequence())
         if (failedToResolve.isEmpty()) {
           showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.success", libraries.size),
                            NotificationType.INFORMATION)
@@ -202,7 +205,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   /**
    * @return A list of library entities failed to resolve or an empty list if resolution is successful.
    */
-  private suspend fun resolve(reporter: RawProgressReporter, libraries: Sequence<LibraryEntity>): List<LibraryEntity> = coroutineScope {
+  private suspend fun resolve(snapshot: ImmutableEntityStorage, reporter: RawProgressReporter, libraries: Sequence<LibraryEntity>): List<LibraryEntity> = coroutineScope {
     val librariesAsList = libraries.toList()
     if (librariesAsList.isEmpty()) return@coroutineScope emptyList<LibraryEntity>()
 
@@ -212,19 +215,14 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
     val failedList: MutableList<LibraryEntity> = CopyOnWriteArrayList()
     librariesAsList.map { lib ->
-      val entity = lib.libraryProperties ?: return@map resolvedPromise()
-      val properties = entity.toRepositoryLibraryProperties() ?: return@map resolvedPromise()
+      lib.libraryProperties ?: return@map resolvedPromise<Unit>()
 
-      val downloadSources = lib.roots.any { it.type == LibraryRootTypeId.SOURCES }
-      val downloadJavadoc = lib.roots.any { it.type.name == JavadocOrderRootType.getInstance().name() }
-
-      val promise =
-        JarRepositoryManager.loadDependenciesAsync(project, properties, downloadSources, downloadJavadoc, null, null).thenAsync {
-          if (it == null || it.isEmpty()) rejectedPromise() else resolvedPromise(it)
-        }
+      // the correct way is to move RepositoryUtils from LibraryEx to LibraryEntity
+      val libEx = lib.findLibraryBridge(snapshot) as LibraryEx
+      val promise = RepositoryUtils.reloadDependencies(project, libEx)
       promise.onError { failedList.add(lib) }
       promise.onProcessed { reporter.updateProgressDetailsFraction(completeCounter, total) }
-      promise
+      promise.then {  }
     }.collectResults(ignoreErrors = true).await() // We're collecting errors manually, fail silently
 
     reporter.resetProgressDetailsFraction()
@@ -360,7 +358,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         }
         .map { (entity, _) -> entity }
 
-      val unresolvedBeforeUpdate = resolve(reporter, preResolveEntities.map { it.library })
+      val unresolvedBeforeUpdate = resolve(snapshot, reporter, preResolveEntities.map { it.library })
       if (unresolvedBeforeUpdate.isNotEmpty()) {
         logger.info("Building libraries properties progressed: resolving before update failed, cancelling operation")
         showFailedToResolveNotification(unresolvedBeforeUpdate, snapshot) { shown, notShownSize ->
@@ -427,7 +425,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         snapshotAfterUpdate.resolve(entity.library.symbolicId)?.libraryProperties
       }.asSequence()
 
-      val unresolvedAfterUpdate = resolve(reporter, entitiesAfterUpdate.map { it.library })
+      val unresolvedAfterUpdate = resolve(snapshot, reporter, entitiesAfterUpdate.map { it.library })
       showUpdateCompleteNotification(disableInfoNotifications,
                                      updatedEntitiesAndProperties.size,
                                      snapshotAfterUpdate,

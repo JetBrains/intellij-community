@@ -6,7 +6,10 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -90,12 +93,11 @@ class EelLocalExecApiTest {
           }
         }
 
+        val text = ByteBuffer.allocate(8192)
         withContext(Dispatchers.Default) {
-          val text = ByteBuffer.allocate(1024)
           withTimeoutOrNull(10.seconds) {
-            for (chunk in process.stderr) {
-              text.put(chunk)
-              if (HELLO in chunk.decodeToString()) break
+            while (process.stderr.receive(text).getOrThrow() != ReadResult.EOF) {
+              if (HELLO in text.slice(0, text.position()).decodeString()) break
             }
           }
           text.limit(text.position()).rewind()
@@ -104,16 +106,21 @@ class EelLocalExecApiTest {
 
 
         // Test tty api
-        // tty might insert "\r\n", we need to remove them. Hence, NEW_LINES.
-        val outputStr = process.stdout.receive().decodeToString().replace(NEW_LINES, "")
-        val pyOutputObj = TTYState.deserialize(outputStr)
+        var ttyState: TTYState? = null
+        text.clear()
+        while (ttyState == null) {
+          process.stdout.receive(text).getOrThrow()
+          // tty might insert "\r\n", we need to remove them, hence, NEW_LINES.
+          // Schlemiel the Painter's Algorithm is OK in tests: do not use in production
+          ttyState = TTYState.deserializeIfValid(text.slice(0, text.position()).decodeString().replace(NEW_LINES, ""))
+        }
         when (ptyManagement) {
           PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
-            Assertions.assertNotNull(pyOutputObj.size)
-            Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), pyOutputObj.size, "size must be set for tty")
+            Assertions.assertNotNull(ttyState.size)
+            Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), ttyState.size, "size must be set for tty")
           }
           PTYManagement.NO_PTY -> {
-            Assertions.assertNull(pyOutputObj.size, "size must not be set if no tty")
+            Assertions.assertNull(ttyState.size, "size must not be set if no tty")
           }
         }
 
@@ -132,6 +139,7 @@ class EelLocalExecApiTest {
             process.sendCommand(Command.EXIT)
           }
         }
+
         val exitCode = process.exitCode.await()
         when (exitType) {
           ExitType.KILL -> {
@@ -169,7 +177,6 @@ class EelLocalExecApiTest {
    * Sends [command] to the helper and flush
    */
   private suspend fun EelProcess.sendCommand(command: Command) {
-    val text = command.name + "\n"
-    stdin.send(text.encodeToByteArray())
+    stdin.sendWholeText(command.name + "\n").getOrThrow()
   }
 }

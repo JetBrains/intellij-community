@@ -129,16 +129,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     final PsiElement parent = PsiTreeUtil.skipParentsOfType(this, PyParenthesizedExpression.class);
     if (parent instanceof PyAssignmentStatement assignmentStatement) {
-      PyExpression assignedValue = assignmentStatement.getAssignedValue();
-      if (assignedValue instanceof PyParenthesizedExpression) {
-        assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
-      }
-      if (assignedValue != null) {
-        if (assignedValue instanceof PyYieldExpression assignedYield) {
-          return assignedYield.isDelegating() ? context.getType(assignedValue) : null;
-        }
-        return context.getType(assignedValue);
-      }
+      final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+      return assignedValue != null ? context.getType(assignedValue) : null;
     }
     if (parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression) {
       PsiElement nextParent =
@@ -383,10 +375,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                             boolean async) {
     final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
     if (nextMethodCallType != null && !nextMethodCallType.isNull()) {
-      if (nextMethodCallType.get() instanceof PyCollectionType collectionType) {
-        if (async && "typing.Awaitable".equals(collectionType.getClassQName())) {
-          return collectionType.getIteratedItemType();
-        }
+      if (async) {
+        return Ref.deref(PyTypingTypeProvider.unwrapCoroutineReturnType(nextMethodCallType.get()));
       }
       return nextMethodCallType.get();
     }

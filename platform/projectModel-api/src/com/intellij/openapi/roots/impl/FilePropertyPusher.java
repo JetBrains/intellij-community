@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
@@ -16,35 +16,36 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * Represents a non-linear operation which is executed before indexing process
- * is started {@link PushedFilePropertiesUpdater#pushAllPropertiesNow()}.
- * <br />
- * During this process any pusher is allowed to set some properties to any of files being indexed.
- * <br />
- * Most frequently property represents some kind of "language level"
+ * <p>
+ * Represents a non-linear operation which is executed before an indexing process
+ * is started.
+ * During this process any pusher is allowed to set some properties to any of the files being indexed.
+ * <p>
+ * Most frequently, property represents some kind of "language level",
  * which is in most cases required to determine the algorithm of stub and other indexes building.
- * <br />
- * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFilePropertyKey()}.
- * <br/>
+ * <p>
+ * After property is pushed it can be retrieved any time using {@link FilePropertyPusher#getFilePropertyKey()}.
+ * <p>
  * The computation of the value (simplified) for a given {@link VirtualFile} works as follows:
  * <ul>
  * <li> the {@link #getImmediateValue(Project, VirtualFile)} is executed,
  *      a non-null result is returned</li>
  * <li> the {@link #getImmediateValue(Module)} is executed for the module of a file,
- *      a non-null result is retuned</li>
- * <li> iterate all parent file that is in content root of the file
- *      and try to return first non-null
+ *      a non-null result is returned</li>
+ * <li> iterate all parent files that are in content root of the file
+ *      and try to return the first non-null
  *      result of the {@link #getImmediateValue(Project, VirtualFile)} call
  * </li>
  * <li> try calling the {@link #getImmediateValue(Project, VirtualFile)} with {@code null} as {@link VirtualFile}
  *      and return a non-null value</li>
- * <li> fallback to {@link #getDefaultValue()} and return it</li>
+ * <li> fall back to {@link #getDefaultValue()} and return it</li>
  * </ul>
  * Once the value is computed, it calls the {@link #persistAttribute(Project, VirtualFile, Object)}
- * to test if the value is changed, if so, the implementation is responsible to notify back
- * <br/>
- * This API is intended to be used to prepare state for indexing, please do not use it for other purposes
- * <br/><br/>
+ * to test if the value is changed.
+ * If so, the implementation is responsible to notify back.
+ * <p>
+ * This API is intended to be used to prepare the state for indexing, please do not use it for other purposes.
+ * <p>
  * <b>Note:</b> Don't use plugin-specific classes as pushed properties, consider using <code>String</code> instead.
  * Otherwise, the plugin becomes not dynamic because its classes will be hard-referenced as <code>VirtualFile</code>'s user data.
  * For example, instead of pushing <code>SomeLanguageDialect</code> instances, push <code>someLanguageDialect.getName()</code> and
@@ -68,10 +69,10 @@ public interface FilePropertyPusher<T> {
    */
   @Deprecated(forRemoval = true)
   default @NotNull Key<T> getFileDataKey() {
-    // Existing plugins always override this method, so default body is never executed in the existing plugins.
-    // Default implementation of `getFileDataKey` is only invoked from default implementation of `getFilePropertyKey`.
-    // If new plugin observe this exception, this means that it did not override getFilePropertyKey nor getFileDataKey.
-    // (or invoked getFileDataKey explicitly, either way this should be found at development phase, not in runtime in the fields)
+    // Existing plugins always override this method, so the default body is never executed in the existing plugins.
+    // The default implementation of `getFileDataKey` is only invoked from the default implementation of `getFilePropertyKey`.
+    // If a new plugin observes this exception, this means that it did not override getFilePropertyKey nor getFileDataKey.
+    // (or invoked getFileDataKey explicitly, either way this should be found at development phase, not at runtime in the fields)
     throw new IllegalStateException("Please override getFilePropertyKey().");
   }
 

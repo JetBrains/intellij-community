@@ -6,6 +6,9 @@ class Comments {
       return "fourteen";//case 2
     else if(par == 15)
       return "fifteen"; //case 3
+    else if(par == 16)
+      //case 4
+      return "sixteen";
 
 
     return "default";

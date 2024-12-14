@@ -25,6 +25,8 @@ const val PLATFORM_MODULE_SCRAMBLED_WITH_FRONTEND: String = "intellij.platform.c
 val PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND: Set<String> = setOf(
   "LicenseServerAPI",
   "LicenseDecoder",
+  "jetbrains.codeWithMe.lobby.server.api",
+  "jetbrains.codeWithMe.lobby.server.common",
 )
 
 /**

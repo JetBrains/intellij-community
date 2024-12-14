@@ -129,7 +129,7 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
         getScriptConfigurationResult(file.alwaysVirtualFile)
 
     fun getScriptConfigurationResult(virtualFile: VirtualFile): ScriptCompilationConfigurationResult? =
-        getConfigurationsSource(virtualFile)?.getScriptConfigurations(virtualFile)
+        getConfigurationsSource(virtualFile)?.getConfiguration(virtualFile)
 
     fun getConfigurationsSource(virtualFile: VirtualFile): ScriptConfigurationsSource<*>? {
         val definition = virtualFile.findScriptDefinition(project)

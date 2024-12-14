@@ -1504,6 +1504,17 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
+      <option name="BEAN.ACTIVE">
+        <value>
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="BEAN.INACTIVE">
+        <value>
+          <option name="EFFECT_TYPE" value="6"/>
+          <option name="EFFECT_COLOR" value="616161"/>
+        </value>
+      </option>
     </attributes>
 
   </scheme>
@@ -2945,6 +2956,17 @@
       <option name="INLINE_PROMPT_PROGRESS_LIGHT">
         <value>
           <option name="FOREGROUND" value="D4B8F9"/>
+        </value>
+      </option>
+      <option name="BEAN.ACTIVE">
+        <value>
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="BEAN.INACTIVE">
+        <value>
+          <option name="EFFECT_TYPE" value="6"/>
+          <option name="EFFECT_COLOR" value="6c6c6c"/>
         </value>
       </option>
     </attributes>

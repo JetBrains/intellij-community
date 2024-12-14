@@ -22,7 +22,6 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 import java.io.File
-import java.util.*
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
     
@@ -130,7 +129,6 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
   @Test
   fun ReturningNotFoundArtifacts() = runBlocking {
-    needFixForMaven4()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

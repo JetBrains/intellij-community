@@ -59,7 +59,7 @@ public final class PyParamSpecType implements PyTypeParameterType, PyCallablePar
   @NotNull
   @Override
   public String getName() {
-    return "ParamSpec(\"" + myName + "\")";
+    return "**" + myName;
   }
 
   @Override

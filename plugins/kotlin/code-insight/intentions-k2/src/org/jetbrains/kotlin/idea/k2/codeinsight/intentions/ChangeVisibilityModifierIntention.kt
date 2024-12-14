@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModif
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.Private
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.Protected
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.Public
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -146,7 +146,7 @@ sealed class ChangeVisibilityModifierIntention(
         elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
-        (element.actualsForExpected() + element.expectedDeclarationIfAny() + element).filterNotNull().forEach { declaration ->
+        (element.actualsForExpect() + element.expectDeclarationIfAny() + element).filterNotNull().forEach { declaration ->
             val psiFactory = KtPsiFactory(declaration.project)
             declaration.setVisibility(modifier)
             if (declaration is KtPropertyAccessor) {

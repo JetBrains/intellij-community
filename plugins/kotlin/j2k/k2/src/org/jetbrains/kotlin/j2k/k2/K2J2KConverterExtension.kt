@@ -2,22 +2,21 @@
 
 package org.jetbrains.kotlin.j2k.k2
 
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
-import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
+import org.jetbrains.kotlin.j2k.copyPaste.TargetData
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.Conversion
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
@@ -46,25 +45,23 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         // TODO: rename/refactor
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
 
-    override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+    override fun getConversions(context: ConverterContext): List<Conversion> =
         getK2J2KConversions(context)
 
     override fun createPlainTextPasteImportResolver(
-        dataForConversion: DataForConversion,
+        conversionData: ConversionData,
         targetKotlinFile: KtFile
     ): PlainTextPasteImportResolver {
-        return K2PlainTextPasteImportResolver(dataForConversion, targetKotlinFile)
+        ThreadingAssertions.assertBackgroundThread()
+        return K2PlainTextPasteImportResolver(conversionData, targetKotlinFile)
     }
 
     override fun createCopyPasteConverter(
         project: Project,
         editor: Editor,
-        dataForConversion: DataForConversion,
-        j2kKind: Kind,
-        targetFile: KtFile,
-        targetBounds: RangeMarker,
-        targetDocument: Document
+        conversionData: ConversionData,
+        targetData: TargetData
     ): J2KCopyPasteConverter {
-        return K2J2KCopyPasteConverter(project, editor, dataForConversion, j2kKind, targetFile, targetBounds, targetDocument)
+        return K2J2KCopyPasteConverter(project, editor, conversionData.elementsAndTexts, targetData)
     }
 }

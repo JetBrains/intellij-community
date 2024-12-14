@@ -419,9 +419,22 @@ class ModuleInfoProvider(private val project: Project) {
 
     private fun LibraryInfo.isApplicable(contextualModuleInfo: ModuleSourceInfo?): Boolean {
         if (contextualModuleInfo == null) return true
+        return contextualModuleInfo.module.hasLibraryInTransitiveDependencies(library)
+    }
 
-        val service = project.service<LibraryUsageIndex>()
-        return service.hasDependentModule(this, contextualModuleInfo.module)
+    private fun Module.hasLibraryInTransitiveDependencies(library: Library): Boolean {
+        var result = false
+        ModuleRootManager.getInstance(this).orderEntries()
+            .librariesOnly()
+            .recursively().exportedOnly()
+            .forEachLibrary {
+                if (it == library) {
+                    result = true
+                    return@forEachLibrary false
+                }
+                true
+            }
+        return result
     }
 
     private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByUserData(container: UserDataModuleContainer) {

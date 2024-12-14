@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.util.ConcurrencyUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.project.MavenProject
@@ -43,8 +44,7 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
   }
 
   private fun isFacetDetectionDisabled(context: Context<*>): Boolean {
-    context.putUserDataIfAbsent(FACET_DETECTION_DISABLED_KEY, ConcurrentHashMap())
-    return FACET_DETECTION_DISABLED_KEY[context].computeIfAbsent(this) { isFacetDetectionDisabled(context.project) }
+    return ConcurrencyUtil.computeIfAbsent(context, FACET_DETECTION_DISABLED_KEY, { ConcurrentHashMap()}).computeIfAbsent(this) { isFacetDetectionDisabled(context.project) }
   }
 
   override fun configureMavenProject(context: MutableMavenProjectContext) {

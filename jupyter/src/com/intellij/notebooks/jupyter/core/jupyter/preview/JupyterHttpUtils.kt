@@ -13,6 +13,10 @@ fun getJupyterBaseUrl(scheme: String): URIBuilder =
 
 fun URIBuilder.addPathSegment(string: String): URIBuilder = setPath("${path ?: ""}/${string.trimStart('/')}")
 fun URIBuilder.addParameter(name: String, value: Boolean): URIBuilder = addParameter(name, value.toString())
+fun URIBuilder.dropLastPathSegment(): URIBuilder {
+  val newPath = path.removeSuffix("/").dropLastWhile { it != '/' }.removeSuffix("/")
+  return setPath(newPath)
+}
 
 /**
  * In contrast with [URI.resolve], this method resolves paths like it happens in filesystems.
@@ -25,3 +29,6 @@ fun URIBuilder.addParameter(name: String, value: Boolean): URIBuilder = addParam
  * ```
  */
 fun URI.addPathSegment(string: String): URI = URIBuilder(this).addPathSegment(string).build()
+fun URI.getPathSegments(): List<String> = (path ?: "").split("/")
+fun URI.dropLastPathSegment(): URI = URIBuilder(this).dropLastPathSegment().build()
+fun URI.addQuery(name: String, value: String): URI = URIBuilder(this).addParameter(name, value).build()

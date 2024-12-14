@@ -340,6 +340,7 @@ class RootIndex {
       myCache = new SynchronizedSLRUCache<>(cacheSize, cacheSize) {
         @NotNull
         @Override
+        @Unmodifiable
         public List<OrderEntry> createValue(@NotNull VirtualFile key) {
           return collectOrderEntries(key);
         }

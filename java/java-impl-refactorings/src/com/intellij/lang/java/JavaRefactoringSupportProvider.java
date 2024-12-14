@@ -61,7 +61,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
     if (context != null && context.getLanguage() != elementToRename.getLanguage() &&
         elementToRename instanceof PsiNamedElement namedElement) {
       String name = namedElement.getName();
-      if (name != null && !LanguageNamesValidation.isIdentifier(context.getLanguage(), name)) {
+      if (name != null && !LanguageNamesValidation.isIdentifier(context.getLanguage(), name, elementToRename.getProject())) {
         return false;
       }
     }

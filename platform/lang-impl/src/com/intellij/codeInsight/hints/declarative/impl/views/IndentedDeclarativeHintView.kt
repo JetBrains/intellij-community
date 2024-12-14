@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.declarative.impl.views
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -128,7 +129,8 @@ private fun calcViewIndentMargin(offset: Int, editor: Editor): Int {
     measureIndentSafely(text, lineStartOffset, textStartOffset, editor)
   }
   else {
-    editor.offsetToXY(textStartOffset, true, false).x
+    val vfmtRightShift = VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, textStartOffset, textStartOffset)
+    editor.offsetToXY(textStartOffset, false, false).x + vfmtRightShift
   }
   return indentMargin
 }

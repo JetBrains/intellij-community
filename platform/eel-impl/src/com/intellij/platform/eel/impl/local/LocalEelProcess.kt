@@ -6,16 +6,20 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelApiBase
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.ErrorString
 import com.intellij.platform.eel.KillableProcess
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
+import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.impl.local.processKiller.PosixProcessKiller
 import com.intellij.platform.eel.impl.local.processKiller.WinProcessKiller
 import com.intellij.util.io.awaitExit
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 
 internal class LocalEelProcess private constructor(
   private val process: Process,
@@ -29,31 +33,11 @@ internal class LocalEelProcess private constructor(
   private val scope: CoroutineScope = ApplicationManager.getApplication().service<EelLocalApiService>().scope(LocalEelProcess::class)
 
   override val pid: EelApiBase.Pid = LocalPid(process.pid())
-  override val stdin: SendChannel<ByteArray> = StreamWrapper.OutputStreamWrapper(scope, process.outputStream).connectChannel()
-  override val stdout: ReceiveChannel<ByteArray> = StreamWrapper.InputStreamWrapper(scope, process.inputStream).connectChannel()
-  override val stderr: ReceiveChannel<ByteArray> = StreamWrapper.InputStreamWrapper(scope, process.errorStream).connectChannel()
+  override val stdin: EelSendChannel<ErrorString> = process.outputStream.asEelChannel()
+  override val stdout: EelReceiveChannel<ErrorString> = process.inputStream.consumeAsEelChannel()
+  override val stderr: EelReceiveChannel<ErrorString> = process.errorStream.consumeAsEelChannel()
   override val exitCode: Deferred<Int> = scope.async {
     process.awaitExit()
-  }
-
-  override suspend fun sendStdinWithConfirmation(data: ByteArray) {
-    withContext(Dispatchers.IO) {
-      try {
-        with(process.outputStream) {
-          write(data)
-          flush()
-        }
-      }
-      catch (_: IOException) {
-        // TODO: Check that stream is indeed closed.
-        if (process.isAlive) {
-          throw EelProcess.SendStdinError.StdinClosed()
-        }
-        else {
-          throw EelProcess.SendStdinError.ProcessExited()
-        }
-      }
-    }
   }
 
   override fun convertToJavaProcess(): Process = process

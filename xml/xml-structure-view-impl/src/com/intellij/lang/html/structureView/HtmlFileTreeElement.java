@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +45,7 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
 
   @Override
   @NotNull
+  @Unmodifiable
   public Collection<StructureViewTreeElement> getChildrenBase() {
     if (isHtml5SectionsMode()) {
       return Collections.emptyList(); // Html5SectionsNodeProvider will return its structure

@@ -372,10 +372,12 @@ public final class HtmlUtil {
 
   public static @Nullable String getEntitiesString(@Nullable PsiElement context, @NotNull String inspectionName) {
     if (context == null) return null;
-    PsiFile containingFile = context.getContainingFile().getOriginalFile();
+    var containingFile = context.getContainingFile();
+    if (containingFile == null) return null;
+    PsiFile originalFile = containingFile.getOriginalFile();
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
-    XmlEntitiesInspection inspection = (XmlEntitiesInspection)profile.getUnwrappedTool(inspectionName, containingFile);
+    XmlEntitiesInspection inspection = (XmlEntitiesInspection)profile.getUnwrappedTool(inspectionName, originalFile);
     if (inspection != null) {
       return inspection.getAdditionalEntries();
     }

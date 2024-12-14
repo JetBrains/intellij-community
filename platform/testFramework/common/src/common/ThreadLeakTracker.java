@@ -66,6 +66,8 @@ public final class ThreadLeakTracker {
       "AWT-EventQueue-",
       "AWT-Shutdown",
       "AWT-Windows",
+      "BaseDataReader: error stream of embeddings-server",
+      "BaseDataReader: output stream of embeddings-server",
       "BatchSpanProcessor_WorkerThread", // io.opentelemetry.sdk.trace.export.BatchSpanProcessor.WORKER_THREAD_NAME
       "Batik CleanerThread",
       "BC Entropy Daemon",
@@ -75,12 +77,14 @@ public final class ThreadLeakTracker {
       "CompilerThread0",
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
+      "embeddings-server",
       "EventQueueMonitor-ComponentEvtDispatch", // com.sun.java.accessibility.util.ComponentEvtDispatchThread
       "External compiler",
       FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
       "grpc-default-worker-",  // grpc_netty_shaded
+      "grpc-nio-worker-",
       "HttpClient-",  // JRE's HttpClient thread pool is not supposed to be disposed - to reuse connections
       ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
@@ -235,7 +239,13 @@ public final class ThreadLeakTracker {
            || isKotlinCIOSelector(stackTrace)
            || isStarterTestFramework(stackTrace)
            || isJMXRemoteCall(stackTrace)
-           || isBuildLogCall(stackTrace);
+           || isBuildLogCall(stackTrace)
+           || isSwingAccessibilityThread(stackTrace);
+  }
+
+  private static boolean isSwingAccessibilityThread(StackTraceElement[] trace) {
+    return trace.length > 0 && trace[0].getClassName().equals("com.sun.java.accessibility.internal.AccessBridge") &&
+           trace[0].getMethodName().equals("runDLL");
   }
 
   private static boolean isWellKnownOffender(String threadName) {

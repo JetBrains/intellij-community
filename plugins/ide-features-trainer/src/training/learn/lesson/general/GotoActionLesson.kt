@@ -17,6 +17,7 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains
 import java.awt.event.KeyEvent
+import java.util.Locale
 import javax.swing.JDialog
 
 class GotoActionLesson(private val sample: LessonSample,
@@ -49,7 +50,7 @@ class GotoActionLesson(private val sample: LessonSample,
       task("About") {
         showWarningIfSearchPopupClosed()
         text(LessonsBundle.message("goto.action.invoke.about.action",
-                                   LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
+                                   LessonUtil.actionName(it).lowercase(Locale.getDefault()), LessonUtil.rawEnter()))
         triggerUI().component { dialog: JDialog ->
           dialog.title.isToStringContains(IdeBundle.message("about.popup.about.app", ApplicationNamesInfo.getInstance().fullProductName))
         }

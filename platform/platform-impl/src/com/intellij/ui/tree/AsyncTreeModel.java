@@ -253,6 +253,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     if (visitor.visitThread() == TreeVisitor.VisitThread.BGT) {
       return new BgtTreeWalker<>(visitor, background, foreground, node -> node.object) {
         @Override
+        @Unmodifiable
         protected @Nullable Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
           return getChildrenForWalker(node, this, allowLoading);
         }
@@ -261,6 +262,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     else {
       return new AbstractTreeWalker<>(visitor, node -> node.object) {
         @Override
+        @Unmodifiable
         protected @Nullable Collection<Node> getChildren(@NotNull Node node) {
           return getChildrenForWalker(node, this, allowLoading);
         }

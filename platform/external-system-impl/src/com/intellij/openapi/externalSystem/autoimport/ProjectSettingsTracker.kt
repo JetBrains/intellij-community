@@ -59,7 +59,11 @@ class ProjectSettingsTracker(
     val localFileSystem = LocalFileSystem.getInstance()
     return settingsFiles
       .mapNotNull { localFileSystem.findFileByPath(it) }
-      .associate { it.path to calculateCrc(it) }
+      .mapNotNull {
+        val crc = calculateCrc(it)
+        if (crc != 0L) it.path to crc else null
+      }
+      .toMap()
   }
 
   private fun calculateCrc(file: VirtualFile): Long {
@@ -116,15 +120,13 @@ class ProjectSettingsTracker(
     }
     for (path in created) {
       val context = SettingsFilesModificationContext(Event.CREATE, modificationType, reloadStatus)
-      val newCRCValue = newCRC[path]!!
-      if (projectAware.isIgnoredSettingsFileEvent(path, context) || newCRCValue == 0L) {
-        oldCRC[path] = newCRCValue
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+        oldCRC[path] = newCRC[path]!!
       }
     }
     for (path in deleted) {
       val context = SettingsFilesModificationContext(Event.DELETE, modificationType, reloadStatus)
-      val deletedPathCRCValue = oldCRC[path]!!
-      if (projectAware.isIgnoredSettingsFileEvent(path, context) || deletedPathCRCValue == 0L) {
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
         oldCRC.remove(path)
       }
     }

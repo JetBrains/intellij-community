@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.CommonClassNames
 import com.intellij.rt.debugger.MethodInvoker
 import com.intellij.util.BitUtil.isSet
@@ -23,22 +22,22 @@ import com.sun.jdi.ObjectReference.INVOKE_NONVIRTUAL
 
 object MethodInvokeUtils {
   fun getHelperExceptionStackTrace(evaluationContext: EvaluationContextImpl, e: Exception): String? {
-    e as? EvaluateException ?: return null
+    if (e !is EvaluateException) return null
     val exceptionFromTargetVM = e.exceptionFromTargetVM ?: return null
-    var exceptionStack = DebuggerUtilsImpl.getExceptionText(evaluationContext, exceptionFromTargetVM)
-    if (!exceptionStack.isNullOrEmpty()) {
-      // drop user frames
-      val currentStackDepth = DebugProcessImpl.getEvaluationThread(evaluationContext).frameCount()
-      val lines = StringUtil.splitByLines(exceptionStack) // exclude empty lines
-      if (lines.size > currentStackDepth) {
-        return lines.asSequence().take(lines.size - currentStackDepth).joinToString(separator = "\n")
-      }
-      else {
-        logger<MethodInvokeUtils>().error("Invalid helper stack (expected currentStackDepth = ${currentStackDepth}) : ${exceptionStack}")
-        return exceptionStack
-      }
+    val stackTraceArray = DebuggerUtilsImpl.invokeThrowableGetStackTrace(exceptionFromTargetVM, evaluationContext, true)
+    if (stackTraceArray !is ArrayReference) return null
+    val values = stackTraceArray.values
+    if (values.isEmpty()) return null
+    // drop user frames
+    val currentStackDepth = DebugProcessImpl.getEvaluationThread(evaluationContext).frameCount()
+    val keepLines = if (values.size <= currentStackDepth) values.size else values.size - currentStackDepth
+    val stackTraceString =
+      DebuggerUtils.getValueAsString(evaluationContext, exceptionFromTargetVM) + "\n" +
+      values.asSequence().take(keepLines).map { DebuggerUtils.getValueAsString(evaluationContext, it) }.joinToString(prefix = "\tat ", separator = "\n")
+    if (values.size <= currentStackDepth) {
+      logger<MethodInvokeUtils>().error("Invalid helper stack (expected currentStackDepth = ${currentStackDepth}) : ${stackTraceString}")
     }
-    return null
+    return stackTraceString
   }
 }
 
@@ -61,6 +60,12 @@ internal fun tryInvokeWithHelper(
     return InvocationResult(false, null)
   }
 
+  val methodDeclaringType = method.declaringType()
+  require(DebuggerUtilsImpl.instanceOf(type, methodDeclaringType)) { "Invalid method" }
+  if (objRef != null) {
+    require(DebuggerUtilsImpl.instanceOf(objRef.referenceType(), methodDeclaringType)) { "Invalid method" }
+  }
+
   val debugProcess = evaluationContext.debugProcess
   val invokerArgs = mutableListOf<Value?>()
 
@@ -72,7 +77,7 @@ internal fun tryInvokeWithHelper(
   invokerArgs.add(type.classObject()) // class
   invokerArgs.add(objRef) // object
   invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name() + ";" + method.signature(), evaluationContext)) // method name and descriptor
-  invokerArgs.add(method.declaringType().classLoader()) // method's declaring type class loader to be able to resolve parameter types
+  invokerArgs.add(methodDeclaringType.classLoader()) // method's declaring type class loader to be able to resolve parameter types
 
   // argument values
   val boxedArgs = originalArgs.map { BoxingEvaluator.box(it, evaluationContext) as Value? }
@@ -105,7 +110,7 @@ internal fun tryInvokeWithHelper(
     }
     if (ApplicationManager.getApplication().isInternal) {
       val attachments = listOfNotNull(helperExceptionStackTrace?.let { Attachment("helper_stack.txt", it).apply { isIncluded = true } }).toTypedArray()
-      DebuggerUtilsImpl.logError("Exception from helper (while evaluating ${method.declaringType().name() + "." + method.name()}): ${e.message}",
+      DebuggerUtilsImpl.logError("Exception from helper (while evaluating ${methodDeclaringType.name() + "." + method.name()}): ${e.message}",
                                  RuntimeExceptionWithAttachments(e, *attachments)) // log helper exception if available
     }
     return InvocationResult(false, null)

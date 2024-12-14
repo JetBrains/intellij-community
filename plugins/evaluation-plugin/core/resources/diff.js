@@ -352,3 +352,28 @@ function buildValues(diff, lastComponent, newString, oldString, useLongestToken)
 
   return components;
 }
+
+class HighlightResistantDiff extends Diff {
+  highlighters;
+
+  constructor(highlighters) {
+    super();
+    this.highlighters = highlighters;
+  }
+
+  equals(left, right, options) {
+    let indexOf = -1;
+    for (const highlighter of this.highlighters) {
+      indexOf = right.indexOf(highlighter);
+      if (indexOf >= 0) {
+        break;
+      }
+    }
+
+    if (indexOf >= 0) {
+      const endsWithNewline = right.endsWith("\n");
+      right = right.substring(0, indexOf) + (endsWithNewline ? "\n" : "");
+    }
+    return super.equals(left, right, options);
+  }
+}

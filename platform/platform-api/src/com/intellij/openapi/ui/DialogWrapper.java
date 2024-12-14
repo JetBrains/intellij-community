@@ -583,6 +583,7 @@ public abstract class DialogWrapper {
     return result;
   }
 
+  @Contract(mutates = "param1")
   protected void sortActionsOnMac(@NotNull List<Action> actions) {
     actions.sort(Comparator.comparing(action -> Objects.<Integer>requireNonNullElse(
       (Integer)action.getValue(MAC_ACTION_ORDER), action.getValue(DEFAULT_ACTION) == null ? 0 : DEFAULT_ACTION_ORDER)));
@@ -605,7 +606,7 @@ public abstract class DialogWrapper {
       }
     });
     helpButton.getAccessibleContext().setAccessibleName(UIBundle.message("dialog.options.help.button.accessible.name"));
-    helpButton.getAccessibleContext().setAccessibleDescription(ActionsBundle.message("action.HelpTopics.description"));
+    helpButton.getAccessibleContext().setAccessibleDescription(ActionsBundle.actionDescription("HelpTopics"));
     return helpButton;
   }
 

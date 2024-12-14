@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl.productInfo
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream

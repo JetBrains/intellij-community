@@ -118,7 +118,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
+    UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module, holder.getFile());
 
     final Set<PsiElement> propertiesBeingCommitted = getBeingCommittedProperties(file);
 
@@ -147,6 +147,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
    * Extract the properties that are being committed. If no commit is in progress, return null.
    * The {@link com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler#getBeforeCheckinConfigurationPanel} method puts
    * into the {@link PsiFile}'s user data a closure that accepts a class and returns all the {@link PsiElement}s being committed.
+   *
    * @param file the properties file that is supposed to contain the closure to extract properties that are being committed
    * @return a {@link Set} of properties that are being committed or null if no commit is in progress.
    */
@@ -159,7 +160,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
   }
 
   private static boolean isImplicitlyUsed(@NotNull Property property) {
-    for (ImplicitPropertyUsageProvider provider : EP_NAME.getIterable()) {
+    for (ImplicitPropertyUsageProvider provider : EP_NAME.getExtensionList()) {
       if (provider.isUsed(property)) {
         return true;
       }
@@ -217,15 +218,33 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     };
   }
 
+  private static final ExtensionPointName<ExtendedUseScopeProvider> SCOPE_EP_NAME
+    = ExtensionPointName.create("com.intellij.properties.extendedUseScopeProvider");
+
   public static class UnusedPropertiesSearchHelper {
     private final GlobalSearchScope myOwnUseScope;
     private final Module myModule;
     private final PsiSearchHelper mySearchHelper;
 
-    public UnusedPropertiesSearchHelper(Module module) {
-      myOwnUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
+    public UnusedPropertiesSearchHelper(Module module, @Nullable PsiFile psiFile) {
+      myOwnUseScope = expandedDependentsScope(module, psiFile);
       myModule = module;
       mySearchHelper = PsiSearchHelper.getInstance(module.getProject());
+    }
+
+    private static @NotNull GlobalSearchScope expandedDependentsScope(Module module, @Nullable PsiFile psiFile) {
+      // include the entire network of modules to the modules that also depend on the correspondingly named bundle class
+      if (psiFile == null) return module.getModuleWithDependentsScope();
+
+      GlobalSearchScope scope = module.getModuleWithDependentsScope();
+      for (ExtendedUseScopeProvider provider : SCOPE_EP_NAME.getExtensionList()) {
+        GlobalSearchScope extendedUseScope = provider.getExtendedUseScope(psiFile);
+        if (extendedUseScope != null) {
+          scope = scope.union(extendedUseScope);
+        }
+      }
+
+      return scope;
     }
 
     public Module getModule() {

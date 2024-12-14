@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.plist;
 
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.xml.dom.XmlDomReader;
 import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,7 @@ public final class XmlPlistReader implements PlistReader {
     String content = valueElement.content;
 
     if ("string".equals(type) && content != null) {
-      return value(Strings.unescapeXmlEntities(content), PlistValueType.STRING);
+      return value(content, PlistValueType.STRING);
     }
     else if ("true".equals(type)) {
       return value(Boolean.TRUE, PlistValueType.BOOLEAN);

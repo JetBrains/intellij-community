@@ -43,6 +43,14 @@ class SortedSet<V>(val m: SortedMap<V, Unit?>) : Set<V> {
     return m.mapValues { k: V, _: Unit? -> f(k) }
   }
 
+  fun clear(): SortedSet<V> {
+    val mPrime = m.clear()
+    return when {
+      m === mPrime -> this
+      else -> SortedSet(mPrime)
+    }
+  }
+
   override fun contains(value: V): Boolean {
     return m.contains(value)
   }

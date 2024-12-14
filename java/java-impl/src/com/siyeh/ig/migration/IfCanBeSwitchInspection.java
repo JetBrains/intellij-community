@@ -35,6 +35,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -242,6 +243,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
+  @Unmodifiable
   private static @NotNull List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
     return SyntaxTraverser.psiTraverser(expression)
       .filter(PsiTypeCastExpression.class)
@@ -384,11 +386,11 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     EquivalenceChecker equivalenceChecker = EquivalenceChecker.getCanonicalPsiEquivalence();
     var visitor = new JavaRecursiveElementVisitor() {
 
-      private boolean isNotNull = false;
+      private boolean isNull = true;
 
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (isNotNull) {
+        if (!isNull) {
           return;
         }
         super.visitElement(element);
@@ -403,13 +405,13 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
             codeBlock.getParent() == branch.getStatement() &&
             equivalenceChecker.expressionsAreEquivalent(switchExpression, expression) &&
             getNullability(expression) == Nullability.NOT_NULL) {
-          isNotNull = true;
+          isNull = false;
         }
         super.visitExpression(expression);
       }
     };
     visitor.visitElement(branch.getStatement());
-    return !visitor.isNotNull;
+    return visitor.isNull;
   }
 
 

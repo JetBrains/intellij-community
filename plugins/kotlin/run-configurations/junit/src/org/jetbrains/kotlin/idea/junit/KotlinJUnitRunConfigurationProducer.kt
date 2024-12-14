@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
-class KotlinJUnitRunConfigurationProducer() : LazyRunConfigurationProducer<JUnitConfiguration>() {
+class KotlinJUnitRunConfigurationProducer private constructor(): LazyRunConfigurationProducer<JUnitConfiguration>() {
     override fun getConfigurationFactory(): ConfigurationFactory {
         return JUnitConfigurationType.getInstance().configurationFactories[0]
     }
@@ -85,7 +85,7 @@ class KotlinJUnitRunConfigurationProducer() : LazyRunConfigurationProducer<JUnit
         return configurationModule == context.location?.module?.takeIf { it.platform.isJvm() } || configurationModule == predefinedModule
     }
 
-    override fun setupConfigurationFromContext(
+    public override fun setupConfigurationFromContext(
         configuration: JUnitConfiguration,
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>

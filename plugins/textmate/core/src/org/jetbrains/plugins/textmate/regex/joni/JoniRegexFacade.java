@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.regex.joni;
 
-import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.regex.MatchData;
@@ -10,11 +9,13 @@ import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Regex;
 import org.joni.exception.JOniException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 
 public final class JoniRegexFacade implements RegexFacade {
-  private static final LoggerRt LOGGER = LoggerRt.getInstance(JoniRegexFacade.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(JoniRegexFacade.class);
 
   @NotNull
   private final Regex myRegex;
@@ -49,7 +50,7 @@ public final class JoniRegexFacade implements RegexFacade {
     MatchData lastMatch = lastResult != null ? lastResult.lastMatch : MatchData.NOT_MATCHED;
 
     if (lastId == string.id && lastOffset <= byteOffset && lastOptions == options && (!hasGMatch || lastGosOffset == gosOffset)) {
-      if (!lastMatch.matched() || lastMatch.byteOffset().start >= byteOffset) {
+      if (!lastMatch.matched || lastMatch.byteOffset().start >= byteOffset) {
         checkMatched(lastMatch, string);
         return lastMatch;
       }
@@ -70,13 +71,13 @@ public final class JoniRegexFacade implements RegexFacade {
            // We catch AIOOBE here because of a bug in joni,
            // apparently the lengths of code units are not calculated correctly in UnicodeEncoding.mbcCaseFold
            | ArrayIndexOutOfBoundsException e) {
-      LOGGER.info(String.format("Failed to parse textmate regex '%s' with %s: %s", string, e.getClass().getName(), e.getMessage()));
+      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", string, e.getClass().getName(), e.getMessage());
       return MatchData.NOT_MATCHED;
     }
   }
 
   private static void checkMatched(MatchData match, TextMateString string) {
-    if (match.matched() && match.byteOffset().end > string.bytes.length) {
+    if (match.matched && match.byteOffset().end > string.bytes.length) {
       throw new IllegalStateException(
         "Match data out of bounds: " + match.byteOffset().start + " > " + string.bytes.length + "\n" +
         new String(string.bytes, StandardCharsets.UTF_8));

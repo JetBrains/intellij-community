@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor.DeclarationsMoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -35,6 +36,12 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDescriptor>(
     protected val operationDescriptor: T
 ) : BaseRefactoringProcessor(operationDescriptor.project) {
+    companion object {
+        const val REFACTORING_ID: String = "move.kotlin.declarations"
+    }
+
+    override fun getRefactoringId(): String = REFACTORING_ID
+
     override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = operationDescriptor.usageViewDescriptor()
@@ -45,11 +52,11 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
             .flatMap { elem ->
                 // We filter out constructors because calling bindTo on these references will break for light classes.
                 if (elem is KtPrimaryConstructor || elem is KtSecondaryConstructor) return@flatMap emptyList()
-                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
+                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target)
             }
     }
 
-    protected open fun collectConflicts(moveDescriptor: K2MoveDescriptor,allUsages: MutableSet<UsageInfo>) {}
+    protected open fun collectConflicts(moveDescriptor: K2MoveDescriptor, allUsages: MutableSet<UsageInfo>) {}
 
     override fun findUsages(): Array<UsageInfo> {
         if (!operationDescriptor.searchReferences) return emptyArray()
@@ -173,5 +180,13 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
 
     override fun getBeforeData(): RefactoringEventData = RefactoringEventData().apply {
         addElements(operationDescriptor.sourceElements)
+    }
+
+    override fun doRun() {
+        try {
+            super.doRun()
+        } finally {
+            KotlinRefactoringListener.broadcastRefactoringExit(myProject, refactoringId)
+        }
     }
 }

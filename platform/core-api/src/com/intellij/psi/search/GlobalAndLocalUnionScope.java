@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -41,6 +42,7 @@ class GlobalAndLocalUnionScope extends GlobalSearchScope {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return myMyGlobalScope.getUnloadedModulesBelongingToScope();
   }

@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
@@ -39,7 +37,7 @@ import kotlin.io.path.pathString
  */
 private const val POETRY_PATH_SETTING: String = "PyCharm.Poetry.Path"
 private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("pyproject.toml", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
-private val poetryNotFoundException: PyExecutionException = PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"), "poetry", emptyList(), ProcessOutput())
+private val poetryNotFoundException: Throwable = Throwable(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
 
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {

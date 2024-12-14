@@ -48,7 +48,7 @@ internal fun <T, U> SubscriptionScope.flatMap(producer: Producer<T>, f: (Match<T
           //            "first invocation: $us, second: $us2"
           //          }
           if (!funIsPure) {
-            FlatMap.logger.warn {
+            FlatMap.logger.warn(Throwable()) {
               "Function ${f::class} produces different results on the same input, this will lead to bugs in production\n" +
               "first invocation: $us, second: $us2"
             }

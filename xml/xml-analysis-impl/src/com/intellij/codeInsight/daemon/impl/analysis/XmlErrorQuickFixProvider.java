@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.parsing.XmlParserBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
@@ -17,7 +17,7 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
       return;
     }
     final String text = element.getErrorDescription();
-    if (text.equals(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))) {
+    if (text.equals(XmlParserBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))) {
       highlightInfo.registerFix(
         new EscapeCharacterIntentionFix(element, new TextRange(0, 1), "&", "&amp;"),
         null, null, null, null);

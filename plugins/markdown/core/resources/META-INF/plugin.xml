@@ -62,6 +62,9 @@
     <extensionPoint qualifiedName="org.intellij.markdown.additionalFenceLanguageSuggester"
                     interface="org.intellij.plugins.markdown.injection.aliases.AdditionalFenceLanguageSuggester"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownCompatibilityChecker"
+                    interface="org.intellij.plugins.markdown.lang.MarkdownCompatibilityChecker"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -340,7 +343,7 @@
                  defaultValue="true"
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
                               Any opened Markdown editors should be manually reopened.
-                              Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
+                              Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multiplier."/>
 
     <registryKey key="markdown.experimental.header.level.inference.enable"
                  defaultValue="false"
@@ -403,6 +406,7 @@
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownPdfExportProvider"/>
     <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportProvider"/>
+    <markdownCompatibilityChecker implementation="org.intellij.plugins.markdown.lang.DefaultMarkdownCompatibilityChecker"/>
   </extensions>
 
   <actions>
@@ -542,7 +546,7 @@
             icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up"/>
 
     <!--
-      This group is supposed to override default generate popup.
+      This group is supposed to override the default generate popup.
       Please, make sure to adjust action text for MarkdownActionPlaces.INSERT_POPUP.
     -->
     <group id="Markdown.InsertGroup">

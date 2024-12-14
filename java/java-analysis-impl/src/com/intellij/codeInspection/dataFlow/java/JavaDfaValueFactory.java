@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
-import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
@@ -19,10 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiFieldImpl;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -198,17 +193,36 @@ public final class JavaDfaValueFactory {
   @Contract("null -> null")
   @Nullable
   public static VariableDescriptor getAccessedVariableOrGetter(final PsiElement target) {
+    return getAccessedVariableOrGetter(target, false);
+  }
+
+  /**
+   * @param target target element (variable or method)
+   * @param stable if true, it's known externally that the access to the element is stable, 
+   *               i.e., if the target element is a virtual method, we are definitely accessing the specified one,
+   *               and not overridden one.
+   * @return the variable descriptor, describing the specified access; null if given element cannot be described as a dataflow variable
+   */
+  @Contract("null, _ -> null")
+  @Nullable
+  public static VariableDescriptor getAccessedVariableOrGetter(@Nullable PsiElement target, boolean stable) {
     SpecialField sf = SpecialField.findSpecialField(target);
     if (sf != null) {
       return sf;
     }
-    if (target instanceof PsiVariable) {
-      return new PlainDescriptor((PsiVariable)target);
+    if (target instanceof PsiVariable variable) {
+      return new PlainDescriptor(variable);
     }
     if (target instanceof PsiMethod method) {
       // Assume that methods returning stream always return a new one
       if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
-      if (method.getParameterList().isEmpty() &&
+
+      PsiField targetField = getFieldForGetter(method, stable);
+      if (targetField != null) {
+        return new PlainDescriptor(targetField);
+      }
+
+      if (!method.isConstructor() && method.getParameterList().isEmpty() &&
           (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
           isContractAllowedForGetter(method) &&
           !UNSTABLE_METHODS.methodMatches(method)) {
@@ -216,6 +230,20 @@ public final class JavaDfaValueFactory {
       }
     }
     return null;
+  }
+  
+  private static @Nullable PsiField getFieldForGetter(@NotNull PsiMethod method, boolean stable) {
+    if (!stable && PsiUtil.canBeOverridden(method)) return null;
+    if (GetterDescriptor.isKnownStableMethod(method)) return null;
+    PsiField field = PropertyUtil.getFieldOfGetter(method);
+    if (field == null) return null;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
+    if (manager.isNullable(method, true) && !manager.isNullable(field, true)) {
+      // Avoid inlining if getter is marked as nullable, while the field is not.
+      // In this rare case, we cannot preserve the nullability warning on the callsite.
+      return null;
+    }
+    return field;
   }
 
   private static boolean isClassAnnotatedImmutable(PsiMethod method) {

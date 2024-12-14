@@ -77,7 +77,7 @@ object K2UnusedSymbolUtil {
                   if (containingClass.isValue() && declaration.hasValOrVar()) return false
                   // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
                   if (containingClass.isInline() && declaration.hasValOrVar()) return false
-                  if (isExpectedOrActual(containingClass)) return false;
+                  if (isExpectedOrActual(containingClass)) return false
               }
           }
           else if (ownerFunction is KtFunctionLiteral) {

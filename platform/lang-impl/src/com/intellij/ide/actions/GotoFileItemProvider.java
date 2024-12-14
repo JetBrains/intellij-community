@@ -239,6 +239,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }).append(dirs);
   }
 
+  @Unmodifiable
   private @NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
                                                                                      @NotNull List<? extends MatchResult> matchResults,
                                                                                      @NotNull Function<? super String, Object[]> indexResult) {

@@ -4,10 +4,9 @@ package com.intellij.execution.filters
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.NoStackTraceFoldingPanel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getParentOfType
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.unscramble.ThreadDumpPanel
 
 private const val STACK_TRACE_ELEMENT_PREFIX = "\tat "
 private const val ASYNC_STACK_TRACE_PREFIX = "\tat --- Async.Stack.Trace --- "
@@ -16,8 +15,13 @@ private val ENCLOSED_MORE_REGEX = Regex("""\t\.\.\. \d+ more""")
 
 class StackTraceFolding : ConsoleFolding() {
 
-  private val MIN_FRAME_DISPLAY_COUNT
-    get() = Registry.intValue("console.fold.java.stack.trace.greater.than", 8)
+  private val enabled: Boolean
+    get() =
+      StackTraceFoldingSettings.getInstance().foldJavaStackTrace
+
+  private val countToFold: Int
+    get() =
+      StackTraceFoldingSettings.getInstance().foldJavaStackTraceGreaterThan
 
   private var frameCount = 0
 
@@ -25,7 +29,7 @@ class StackTraceFolding : ConsoleFolding() {
     if (line.startsWith(STACK_TRACE_ELEMENT_PREFIX) || ENCLOSED_MORE_REGEX.matches(line)) {
       // In case of "... 10 more" we still count it as
       frameCount++
-      return frameCount > MIN_FRAME_DISPLAY_COUNT
+      return frameCount > countToFold
     }
 
     frameCount = 0
@@ -46,6 +50,6 @@ class StackTraceFolding : ConsoleFolding() {
 
   override fun isEnabledForConsole(consoleView: ConsoleView): Boolean =
     super.isEnabledForConsole(consoleView) &&
-      // We want unfolded stack traces inside ThreadDumpPanel.
-      consoleView.component.getParentOfType<ThreadDumpPanel>() == null
+      enabled &&
+      consoleView.component.getParentOfType<NoStackTraceFoldingPanel>() == null
 }

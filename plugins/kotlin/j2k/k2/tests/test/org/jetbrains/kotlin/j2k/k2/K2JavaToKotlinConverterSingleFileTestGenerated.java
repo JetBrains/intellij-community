@@ -1382,6 +1382,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/comments/identicalComments.java");
         }
 
+        @TestMetadata("paramTagInJavaDoc.java")
+        public void testParamTagInJavaDoc() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/comments/paramTagInJavaDoc.java");
+        }
+
         @TestMetadata("removeNoInspectionComment.java")
         public void testRemoveNoInspectionComment() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/comments/removeNoInspectionComment.java");
@@ -5449,6 +5454,16 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("PrivateFieldNullabilityFromContext.java")
         public void testPrivateFieldNullabilityFromContext() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/PrivateFieldNullabilityFromContext.java");
+        }
+
+        @TestMetadata("returnNonNullableArray.java")
+        public void testReturnNonNullableArray() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/returnNonNullableArray.java");
+        }
+
+        @TestMetadata("returnNonNullableArrayElements.java")
+        public void testReturnNonNullableArrayElements() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/returnNonNullableArrayElements.java");
         }
 
         @TestMetadata("synchronized.java")

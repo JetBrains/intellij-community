@@ -48,7 +48,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean isUseQualifiedModuleNames();
 
-  default boolean isDelegatedBuild() { return true; }
+  boolean isDelegatedBuild();
 
   @Nullable
   BuildEnvironment getBuildEnvironment();

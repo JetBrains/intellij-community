@@ -54,10 +54,11 @@ public final class CreateSwitchBranchesUtil {
    *                      thus some kind of normalization could be necessary.
    * @return a list of created branches
    */
+  @Unmodifiable
   public static List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
                                                                         @NotNull List<String> allNames,
                                                                         @NotNull @Unmodifiable Collection<String> missingNames,
-                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends List<String>> caseExtractor) {
+                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends @Unmodifiable List<String>> caseExtractor) {
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(switchBlock.getProject());
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
     final PsiCodeBlock body = switchBlock.getBody();

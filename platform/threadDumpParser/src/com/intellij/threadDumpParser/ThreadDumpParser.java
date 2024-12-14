@@ -5,10 +5,7 @@ import com.intellij.diagnostic.EventCountDumper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -131,6 +128,7 @@ public final class ThreadDumpParser {
     return null;
   }
 
+  @Contract(mutates = "param1")
   public static void sortThreads(List<? extends ThreadState> result) {
     result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }

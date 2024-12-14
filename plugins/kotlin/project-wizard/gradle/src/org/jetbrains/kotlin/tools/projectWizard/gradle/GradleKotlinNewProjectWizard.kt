@@ -433,7 +433,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
             if (parent.addSampleCode) {
                 if (parent.generateOnboardingTips) {
-                    prepareKotlinSampleOnboardingTips(project, "KotlinSampleApp", "App.kt")
+                    prepareKotlinSampleOnboardingTips(project, "App.kt")
                 }
                 val templateName = when {
                     !parent.generateOnboardingTips -> "KotlinSampleApp"

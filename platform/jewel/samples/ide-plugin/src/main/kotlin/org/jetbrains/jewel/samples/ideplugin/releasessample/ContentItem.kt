@@ -3,7 +3,7 @@ package org.jetbrains.jewel.samples.ideplugin.releasessample
 import kotlinx.datetime.LocalDate
 import org.jetbrains.annotations.Nls
 
-sealed class ContentItem {
+internal sealed class ContentItem {
     @get:Nls abstract val displayText: String
     abstract val imagePath: String?
     abstract val versionName: String
@@ -33,7 +33,7 @@ sealed class ContentItem {
     ) : ContentItem()
 }
 
-fun ContentItem.matches(text: String): Boolean {
+internal fun ContentItem.matches(text: String): Boolean {
     if (displayText.contains(text, ignoreCase = true)) return true
     if (versionName.contains(text, ignoreCase = true)) return true
 

@@ -49,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1385,6 +1386,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     public static void checkParametersToDelete(PsiMethod method,
                                                boolean[] toRemove,
                                                MultiMap<PsiElement, @DialogMessage String> conflictDescriptions) {
+      checkRecordComponentsToDelete(method, toRemove, conflictDescriptions);
       if (method instanceof SyntheticElement) return;
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiCodeBlock body = method.getBody();
@@ -1401,6 +1403,96 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
               }
             }
           }
+        }
+      }
+    }
+
+    private static void checkRecordComponentsToDelete(@NotNull PsiMethod method,
+                                                      boolean[] toRemove,
+                                                      @NotNull MultiMap<PsiElement, @DialogMessage String> conflictDescriptions) {
+      PsiClass aClass = method.getContainingClass();
+      if (aClass == null || !aClass.isRecord()) return;
+      if (!JavaPsiRecordUtil.isCanonicalConstructor(method)) return;
+      PsiRecordComponent @NotNull [] components = aClass.getRecordComponents();
+      for (int i = 0; i < toRemove.length; i++) {
+        if (!toRemove[i]) continue;
+        if (components.length <= i) {
+          break;
+        }
+        PsiRecordComponent component = components[i];
+        //field
+        PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
+        if (field != null) {
+          for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(field, aClass.getContainingFile())) {
+            conflictDescriptions.putValue(reference, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", component.getName()));
+          }
+        }
+        //getter
+        PsiMethod explicitGetter = JavaPsiRecordUtil.getAccessorForRecordComponent(component);
+        if (explicitGetter != null) {
+          for (PsiReference psiReference : ReferencesSearch.search(explicitGetter, explicitGetter.getUseScope(), false)) {
+            PsiElement paramRef = psiReference.getElement();
+            conflictDescriptions.putValue(paramRef, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", component.getName()));
+          }
+        }
+      }
+      //deconstruction. can be slow, because it is necessary to check a type of psiReference
+      for (PsiReference classReference : ReferencesSearch.search(aClass, aClass.getUseScope())) {
+        PsiElement element = classReference.getElement();
+        PsiElement parent = element.getParent();
+        if (!(parent instanceof PsiTypeElement)) {
+          continue;
+        }
+        PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiDeconstructionPattern deconstructionPattern) {
+          PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
+          if (deconstructionComponents.length != components.length) {
+            continue;
+          }
+          for (int i = 0; i < toRemove.length; i++) {
+            if (!toRemove[i]) continue;
+            if (components.length <= i) {
+              break;
+            }
+            PsiPattern deconstructionComponent = deconstructionComponents[i];
+            PsiRecordComponent recordComponent = components[i];
+            collectDeconstructionRecordToDeleteUsagesConflict(deconstructionComponent, aClass, conflictDescriptions, recordComponent);
+          }
+        }
+      }
+    }
+
+    private static void collectDeconstructionRecordToDeleteUsagesConflict(@Nullable PsiPattern pattern,
+                                                                          @NotNull PsiClass context,
+                                                                          @NotNull MultiMap<PsiElement, String> conflictDescriptions,
+                                                                          @NotNull PsiRecordComponent recordComponent) {
+      if (pattern == null) return;
+      if (!JavaPsiPatternUtil.isUnconditionalForType(pattern, recordComponent.getType(), true)) {
+        conflictDescriptions.putValue(pattern, JavaRefactoringBundle.message("record.component.used.in.method.body.warning",
+                                                                    recordComponent.getName()));
+        return;
+      }
+      if (pattern instanceof PsiTypeTestPattern typeTestPattern) {
+        PsiPatternVariable variable = typeTestPattern.getPatternVariable();
+        if (variable == null || variable.isUnnamed()) return;
+        if(VariableAccessUtils.variableIsUsed(variable, context.getContainingFile())) {
+          conflictDescriptions.putValue(typeTestPattern, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", recordComponent.getName()));
+          return;
+        }
+      }
+      if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
+        PsiType psiType = deconstructionPattern.getTypeElement().getType();
+        PsiClass nestedRecord = PsiUtil.resolveClassInClassTypeOnly(psiType);
+        if (nestedRecord == null || !nestedRecord.isRecord()) return;
+        PsiDeconstructionList deconstructionList = deconstructionPattern.getDeconstructionList();
+        PsiPattern[] components = deconstructionList.getDeconstructionComponents();
+        if(components.length != nestedRecord.getRecordComponents().length) {
+          return;
+        }
+        for (int i = 0; i < components.length; i++) {
+          PsiPattern nestedDeconstructionPattern = components[i];
+          PsiRecordComponent nestedComponent = nestedRecord.getRecordComponents()[i];
+          collectDeconstructionRecordToDeleteUsagesConflict(nestedDeconstructionPattern, context, conflictDescriptions, nestedComponent);
         }
       }
     }

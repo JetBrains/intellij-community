@@ -51,7 +51,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.starter",
       "intellij.idea.community.customization",
     )
-    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf("intellij.javaFX.community", "intellij.vcs.github.community")
+    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf("intellij.javaFX.community",
+                                                                           "intellij.vcs.github.community",
+                                                                           "intellij.vcs.gitlab.community")
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false

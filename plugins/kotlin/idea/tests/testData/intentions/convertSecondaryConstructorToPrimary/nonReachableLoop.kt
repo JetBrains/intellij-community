@@ -1,3 +1,4 @@
+// "Convert to primary constructor" "false"
 // IS_APPLICABLE: false
 // ERROR: There's a cycle in the delegation calls chain
 // ERROR: There's a cycle in the delegation calls chain

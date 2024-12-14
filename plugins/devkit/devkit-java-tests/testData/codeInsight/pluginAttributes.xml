@@ -1,5 +1,5 @@
 <idea-plugin package="com.intellij"
-             implementation-detail="false"
+             <error descr="Implementation plugins are no longer supported: use either a regular plugin or implement a product module">implementation-detail="false"</error>
              allow-bundled-update="false"
              require-restart="false"
              url="https://www.jetbrains.com">

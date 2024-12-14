@@ -17,7 +17,6 @@
     For more details, refer to the <a href="https://www.jetbrains.com/help/idea/terminal-emulator.html" target="_blank">documentation</a>.
     ]]></description>
 
-  <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
     2024.3
     <ul>

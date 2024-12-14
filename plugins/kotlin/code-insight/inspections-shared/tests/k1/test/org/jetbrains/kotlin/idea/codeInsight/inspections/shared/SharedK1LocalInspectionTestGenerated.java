@@ -469,6 +469,105 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/constantConditionIf")
+    public static class ConstantConditionIf extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constant.kt")
+        public void testConstant() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/constant.kt");
+        }
+
+        @TestMetadata("delete.kt")
+        public void testDelete() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/delete.kt");
+        }
+
+        @TestMetadata("delete_caretInsideCondition.kt")
+        public void testDelete_caretInsideCondition() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/delete_caretInsideCondition.kt");
+        }
+
+        @TestMetadata("delete_caretOnIf.kt")
+        public void testDelete_caretOnIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/delete_caretOnIf.kt");
+        }
+
+        @TestMetadata("endWithElseIf.kt")
+        public void testEndWithElseIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/endWithElseIf.kt");
+        }
+
+        @TestMetadata("endWithElseIf2.kt")
+        public void testEndWithElseIf2() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/endWithElseIf2.kt");
+        }
+
+        @TestMetadata("endWithElseIfNoBraces.kt")
+        public void testEndWithElseIfNoBraces() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/endWithElseIfNoBraces.kt");
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/expression.kt");
+        }
+
+        @TestMetadata("expressionElseIfBlock.kt")
+        public void testExpressionElseIfBlock() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/expressionElseIfBlock.kt");
+        }
+
+        @TestMetadata("expressionElseIfBlock2.kt")
+        public void testExpressionElseIfBlock2() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/expressionElseIfBlock2.kt");
+        }
+
+        @TestMetadata("noStatements.kt")
+        public void testNoStatements() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/noStatements.kt");
+        }
+
+        @TestMetadata("noStatementsElseIf.kt")
+        public void testNoStatementsElseIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/noStatementsElseIf.kt");
+        }
+
+        @TestMetadata("simpleBlock.kt")
+        public void testSimpleBlock() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/simpleBlock.kt");
+        }
+
+        @TestMetadata("simpleFalse.kt")
+        public void testSimpleFalse() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/simpleFalse.kt");
+        }
+
+        @TestMetadata("simpleTrue.kt")
+        public void testSimpleTrue() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/simpleTrue.kt");
+        }
+
+        @TestMetadata("statement.kt")
+        public void testStatement() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/statement.kt");
+        }
+
+        @TestMetadata("statementElseIf.kt")
+        public void testStatementElseIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/statementElseIf.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody")
     public abstract static class ControlFlowWithEmptyBody extends AbstractSharedK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -2381,6 +2480,215 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/simplifyBooleanWithConstants")
+    public static class SimplifyBooleanWithConstants extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assert.kt")
+        public void testAssert() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/assert.kt");
+        }
+
+        @TestMetadata("deeplyParenthesized.kt")
+        public void testDeeplyParenthesized() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/deeplyParenthesized.kt");
+        }
+
+        @TestMetadata("equalsConjunction.kt")
+        public void testEqualsConjunction() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/equalsConjunction.kt");
+        }
+
+        @TestMetadata("equalsDisjunction.kt")
+        public void testEqualsDisjunction() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/equalsDisjunction.kt");
+        }
+
+        @TestMetadata("equalsFalse.kt")
+        public void testEqualsFalse() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/equalsFalse.kt");
+        }
+
+        @TestMetadata("equalsTrue.kt")
+        public void testEqualsTrue() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/equalsTrue.kt");
+        }
+
+        @TestMetadata("equalsTrueOrFalse.kt")
+        public void testEqualsTrueOrFalse() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/equalsTrueOrFalse.kt");
+        }
+
+        @TestMetadata("flexibleBoolean.kt")
+        public void testFlexibleBoolean() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/flexibleBoolean.kt");
+        }
+
+        @TestMetadata("inapplicableNoConstants.kt")
+        public void testInapplicableNoConstants() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/inapplicableNoConstants.kt");
+        }
+
+        @TestMetadata("inapplicableNotBinary.kt")
+        public void testInapplicableNotBinary() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/inapplicableNotBinary.kt");
+        }
+
+        @TestMetadata("inapplicableUsesVals.kt")
+        public void testInapplicableUsesVals() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/inapplicableUsesVals.kt");
+        }
+
+        @TestMetadata("inapplicableUsesVals2.kt")
+        public void testInapplicableUsesVals2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/inapplicableUsesVals2.kt");
+        }
+
+        @TestMetadata("inapplicableUsesVals3.kt")
+        public void testInapplicableUsesVals3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/inapplicableUsesVals3.kt");
+        }
+
+        @TestMetadata("notEqualsFalse.kt")
+        public void testNotEqualsFalse() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/notEqualsFalse.kt");
+        }
+
+        @TestMetadata("notEqualsTrue.kt")
+        public void testNotEqualsTrue() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/notEqualsTrue.kt");
+        }
+
+        @TestMetadata("notReduceableBinary.kt")
+        public void testNotReduceableBinary() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/notReduceableBinary.kt");
+        }
+
+        @TestMetadata("notReduceableBinary2.kt")
+        public void testNotReduceableBinary2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/notReduceableBinary2.kt");
+        }
+
+        @TestMetadata("nullableBoolean.kt")
+        public void testNullableBoolean() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/nullableBoolean.kt");
+        }
+
+        @TestMetadata("nullableComplex.kt")
+        public void testNullableComplex() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/nullableComplex.kt");
+        }
+
+        @TestMetadata("nullableComplex2.kt")
+        public void testNullableComplex2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/nullableComplex2.kt");
+        }
+
+        @TestMetadata("positiveZeroNegativeZero1.kt")
+        public void testPositiveZeroNegativeZero1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/positiveZeroNegativeZero1.kt");
+        }
+
+        @TestMetadata("positiveZeroNegativeZero2.kt")
+        public void testPositiveZeroNegativeZero2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/positiveZeroNegativeZero2.kt");
+        }
+
+        @TestMetadata("positiveZeroNegativeZero3.kt")
+        public void testPositiveZeroNegativeZero3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/positiveZeroNegativeZero3.kt");
+        }
+
+        @TestMetadata("positiveZeroNegativeZero4.kt")
+        public void testPositiveZeroNegativeZero4() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/positiveZeroNegativeZero4.kt");
+        }
+
+        @TestMetadata("reduceableBinary.kt")
+        public void testReduceableBinary() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/reduceableBinary.kt");
+        }
+
+        @TestMetadata("reduceableBinary2.kt")
+        public void testReduceableBinary2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/reduceableBinary2.kt");
+        }
+
+        @TestMetadata("reduceableBinary3.kt")
+        public void testReduceableBinary3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/reduceableBinary3.kt");
+        }
+
+        @TestMetadata("reduceableBinaryWithParenthese.kt")
+        public void testReduceableBinaryWithParenthese() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/reduceableBinaryWithParenthese.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simple.kt");
+        }
+
+        @TestMetadata("simpleWithMoreBinaries.kt")
+        public void testSimpleWithMoreBinaries() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithMoreBinaries.kt");
+        }
+
+        @TestMetadata("simpleWithMoreBinaries2.kt")
+        public void testSimpleWithMoreBinaries2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithMoreBinaries2.kt");
+        }
+
+        @TestMetadata("simpleWithMoreBinaries3.kt")
+        public void testSimpleWithMoreBinaries3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithMoreBinaries3.kt");
+        }
+
+        @TestMetadata("simpleWithMoreBinariesAndParentheses.kt")
+        public void testSimpleWithMoreBinariesAndParentheses() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithMoreBinariesAndParentheses.kt");
+        }
+
+        @TestMetadata("simpleWithMoreBinariesAndParentheses2.kt")
+        public void testSimpleWithMoreBinariesAndParentheses2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithMoreBinariesAndParentheses2.kt");
+        }
+
+        @TestMetadata("simpleWithMoreBinariesAndParentheses3.kt")
+        public void testSimpleWithMoreBinariesAndParentheses3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithMoreBinariesAndParentheses3.kt");
+        }
+
+        @TestMetadata("simpleWithNonsensical2.kt")
+        public void testSimpleWithNonsensical2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithNonsensical2.kt");
+        }
+
+        @TestMetadata("simpleWithParentheses.kt")
+        public void testSimpleWithParentheses() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithParentheses.kt");
+        }
+
+        @TestMetadata("simpleWithParentheses2.kt")
+        public void testSimpleWithParentheses2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/simpleWithParentheses2.kt");
+        }
+
+        @TestMetadata("withAnnotation.kt")
+        public void testWithAnnotation() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyBooleanWithConstants/withAnnotation.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression")
     public static class SimplifyNegatedBinaryExpression extends AbstractSharedK1LocalInspectionTest {
         @java.lang.Override
@@ -2456,6 +2764,95 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("simpleInvert.kt")
         public void testSimpleInvert() throws Exception {
             runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/simpleInvert.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition")
+    public static class SimplifyWhenWithBooleanConstantCondition extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("falseAndElse1.kt")
+        public void testFalseAndElse1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseAndElse1.kt");
+        }
+
+        @TestMetadata("falseAndElse2.kt")
+        public void testFalseAndElse2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseAndElse2.kt");
+        }
+
+        @TestMetadata("falseAndElse3.kt")
+        public void testFalseAndElse3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseAndElse3.kt");
+        }
+
+        @TestMetadata("falseOnly1.kt")
+        public void testFalseOnly1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseOnly1.kt");
+        }
+
+        @TestMetadata("falseOnly2.kt")
+        public void testFalseOnly2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseOnly2.kt");
+        }
+
+        @TestMetadata("falseOnly3.kt")
+        public void testFalseOnly3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/falseOnly3.kt");
+        }
+
+        @TestMetadata("hasSubject.kt")
+        public void testHasSubject() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/hasSubject.kt");
+        }
+
+        @TestMetadata("noBoolean.kt")
+        public void testNoBoolean() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/noBoolean.kt");
+        }
+
+        @TestMetadata("notApplicableRange.kt")
+        public void testNotApplicableRange() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/notApplicableRange.kt");
+        }
+
+        @TestMetadata("trueIsNotTop1.kt")
+        public void testTrueIsNotTop1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsNotTop1.kt");
+        }
+
+        @TestMetadata("trueIsNotTop2.kt")
+        public void testTrueIsNotTop2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsNotTop2.kt");
+        }
+
+        @TestMetadata("trueIsNotTop3.kt")
+        public void testTrueIsNotTop3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsNotTop3.kt");
+        }
+
+        @TestMetadata("trueIsTop1.kt")
+        public void testTrueIsTop1() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsTop1.kt");
+        }
+
+        @TestMetadata("trueIsTop2.kt")
+        public void testTrueIsTop2() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsTop2.kt");
+        }
+
+        @TestMetadata("trueIsTop3.kt")
+        public void testTrueIsTop3() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyWhenWithBooleanConstantCondition/trueIsTop3.kt");
         }
     }
 

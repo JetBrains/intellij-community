@@ -40,6 +40,11 @@ public final class SuppressIntentionActionFromFix extends SuppressIntentionActio
   @Override
   public int compareTo(@NotNull IntentionAction o) {
     if (o instanceof SuppressIntentionActionFromFix otherSuppressFix) {
+      var injectionFix1 = isShouldBeAppliedToInjectionHost();
+      var injectionFix2 = otherSuppressFix.isShouldBeAppliedToInjectionHost();
+      if (injectionFix1 == ThreeState.NO && injectionFix2 != ThreeState.NO) return -1;
+      if (injectionFix2 == ThreeState.NO && injectionFix1 != ThreeState.NO) return 1;
+
       final int i = getFixPriority() - otherSuppressFix.getFixPriority();
       if (i != 0) return i;
     }

@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -120,11 +121,13 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
   }
 
   @NotNull
+  @Unmodifiable
   protected List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
   @NotNull
+  @Unmodifiable
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -150,6 +153,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
+  @Unmodifiable
   protected List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
     return DaemonAnalyzerTestCase.filter(doHighlighting(), minSeverity);
   }

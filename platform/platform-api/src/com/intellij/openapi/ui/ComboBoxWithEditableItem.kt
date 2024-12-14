@@ -12,6 +12,7 @@ import javax.swing.ListCellRenderer
  *
  * @see EditableItem
  * @see SelectEditableItem
+ * @see javax.swing.plaf.basic.BasicComboBoxEditor
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -52,7 +53,10 @@ class ComboBoxWithEditableItem<T> : ComboBox<T> {
   }
 
   /**
-   * Defines contract for the editable [ComboBox] item.\
+   * Defines contract for the editable [ComboBox] item.
+   *
+   * Note: The value of this item can be edited.
+   * The editing result will be preserved inside [ComboBox] if this item is added to the [ComboBox] model.
    *
    * @see javax.swing.plaf.basic.BasicComboBoxEditor.getItem
    * @see javax.swing.plaf.basic.BasicComboBoxEditor.setItem
@@ -61,22 +65,47 @@ class ComboBoxWithEditableItem<T> : ComboBox<T> {
 
     /**
      * Creates item based on text presentation of the [javax.swing.plaf.basic.BasicComboBoxEditor].
+     * By contract of [javax.swing.plaf.basic.BasicComboBoxEditor],
+     * this function is used for converting the [ComboBox] editor text to the [ComboBox] item.
      *
+     * Note: This function is accessed by reflection inside [javax.swing.plaf.basic.BasicComboBoxEditor.getItem].
+     *
+     * @see ComboBox.getModel
+     * @see ComboBox.getEditor
      * @see javax.swing.plaf.basic.BasicComboBoxEditor.getItem
+     * @see javax.swing.plaf.basic.BasicComboBoxEditor.setItem
      */
     fun valueOf(value: String): EditableItem
 
     /**
      * Converts current item to text presentation for the [javax.swing.plaf.basic.BasicComboBoxEditor].
+     * By contract of [javax.swing.plaf.basic.BasicComboBoxEditor],
+     * this function is used for converting the [ComboBox] item to the [ComboBox] editor text.
      *
+     * Note: This function is accessed inside [javax.swing.plaf.basic.BasicComboBoxEditor.setItem].
+     *
+     * @see ComboBox.getModel
+     * @see ComboBox.getEditor
+     * @see javax.swing.plaf.basic.BasicComboBoxEditor.setItem
      * @see javax.swing.plaf.basic.BasicComboBoxEditor.setItem
      */
     override fun toString(): String
   }
 
   /**
-   * Defines contract for the [ComboBox] item that selects [EditableItem].
-   * This action doesn't add [EditableItem] to the [ComboBox] model.
+   * Defines contract for the [ComboBox] item that creates and selects [EditableItem],
+   * when [SelectEditableItem] is chosen in the [ComboBox] popup.
+   *
+   * Note: This action doesn't add [EditableItem] to the [ComboBox] model.
+   *
+   * Note: The value of this item cannot be edited.
+   * It is a prompt for creating the new [EditableItem] and selecting it.
+   *
+   * @see ComboBox.getModel
+   * @see ComboBox.getPopup
+   * @see ComboBox.getEditor
+   * @see javax.swing.plaf.basic.BasicComboBoxEditor.getItem
+   * @see javax.swing.plaf.basic.BasicComboBoxEditor.setItem
    */
   interface SelectEditableItem {
     fun createItem(): EditableItem

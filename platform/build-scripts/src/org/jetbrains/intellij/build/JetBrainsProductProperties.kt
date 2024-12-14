@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
@@ -40,33 +41,57 @@ abstract class JetBrainsProductProperties : ProductProperties() {
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
   }
 
+  private class InvalidPluginDescriptorError(message: String) : InvalidDescriptorProblem(
+    detailedMessage = message, descriptorPath = "",
+  ) {
+    override val level = Level.ERROR
+  }
+
   final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
-    val problems = super.validatePlugin(pluginId, result, context).filterNot {
-      (
-        // FIXME IDEA-356970
-        pluginId == "com.intellij.plugins.projectFragments" ||
-        // FIXME IJPL-159498
-        pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
-        // it's an internal plugin that should be compatible with older IDEA versions as well,
-        // so it's ok to have preloading there
-        pluginId == "com.intellij.monorepo.devkit"
-      ) && it.message.contains("Service preloading is deprecated") ||
-      (
-        // FIXME PY-74322
-        pluginId == "com.intellij.python.frontend" ||
-        // FIXME AE-121
-        pluginId == "com.jetbrains.personalization"
-      ) && it.message.contains("Plugin has no dependencies")
-    }
-    if (result is PluginCreationSuccess && result.plugin.vendor?.contains("JetBrains") != true) {
-      return problems + object : InvalidDescriptorProblem(
-        descriptorPath = "",
-        detailedMessage = "${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"
-      ) {
-        override val level = Level.ERROR
+    return buildList {
+      addAll(super.validatePlugin(pluginId, result, context).filterNot {
+        (
+          // FIXME IDEA-356970
+          pluginId == "com.intellij.plugins.projectFragments" ||
+          // FIXME IJPL-159498
+          pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
+          // it's an internal plugin that should be compatible with older IDEA versions as well,
+          // so it's ok to have preloading there
+          pluginId == "com.intellij.monorepo.devkit"
+        ) && it.message.contains("Service preloading is deprecated") ||
+        (
+          // FIXME PY-74322
+          pluginId == "com.intellij.python.frontend" ||
+          // FIXME AE-121
+          pluginId == "com.jetbrains.personalization"
+        ) && it.message.contains("Plugin has no dependencies")
+      })
+      if (result is PluginCreationSuccess) {
+        if (result.plugin.vendor?.contains("JetBrains") != true) {
+          add(InvalidPluginDescriptorError("${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"))
+        }
+        val version = result.plugin.pluginVersion
+        if (version == null) {
+          add(InvalidPluginDescriptorError("${result.plugin.pluginId} has no version specified"))
+        }
+        else try {
+          /**
+           * Plugin versions are parsed as [IdeVersion] upon uploading to plugins.jetbrains.com to be able to compare them
+           *
+           * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.withCustomVersion
+           */
+          IdeVersion.createIdeVersion(version)
+        }
+        catch (e: IllegalArgumentException) {
+          /**
+           * [org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder.kotlinPlugin] is the only exception left
+           */
+          if (pluginId != "org.jetbrains.kotlin") {
+            add(InvalidPluginDescriptorError("${result.plugin.pluginId} version '$version' cannot be parsed: ${e.message}"))
+          }
+        }
       }
     }
-    return problems
   }
 
   /**

@@ -1,7 +1,7 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="ru.adelf.idea.dotenv">
     <id>ru.adelf.idea.dotenv</id>
     <name>.env files support</name>
-    <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel F</vendor>
+    <vendor>JetBrains</vendor>
 
     <description><![CDATA[
     <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
@@ -26,27 +26,29 @@
 
     <extensionPoints>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"
-                        name="environmentVariablesProvider"/>
+                        name="environmentVariablesProvider"
+                        dynamic="true"/>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider"
-                        name="environmentVariablesUsagesProvider"/>
+                        name="environmentVariablesUsagesProvider"
+                        dynamic="true"/>
     </extensionPoints>
 
-    <depends>com.intellij.modules.platform</depends>
+    <dependencies>
+      <plugin id="org.jetbrains.plugins.yaml"/>
+    </dependencies>
 
-    <depends optional="true" config-file="java.xml">com.intellij.java</depends>
-    <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
-    <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
-    <depends optional="true" config-file="ruby.xml">com.intellij.modules.ruby</depends>
-    <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
-    <!--<depends optional="true" config-file="js.xml">JavaScript</depends>-->
-    <depends optional="true" config-file="go.xml">org.jetbrains.plugins.go</depends>
+    <content>
+      <module name="intellij.dotenv.kotlin"/>
+      <module name="intellij.dotenv.python"/>
+      <module name="intellij.dotenv.java"/>
+    </content>
 
-    <depends optional="true" config-file="docker.xml">Docker</depends>
-    <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
+    <xi:include href="/META-INF/dotenv-ultimate.xml">
+        <xi:fallback/>
+    </xi:include>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>
-        <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
         <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
 
@@ -56,6 +58,11 @@
         <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
 
         <lang.foldingBuilder language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvValuesHiding"/>
+
+        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvKey"
+                                     hostLanguage="DotEnv"
+                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvSymbolReferenceProvider"
+                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyUsageSymbol"/>
 
         <localInspection language="DotEnv"
                          groupName="DotEnv"

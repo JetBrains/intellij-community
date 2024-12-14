@@ -42,6 +42,7 @@ import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
 import java.lang.Math.PI
 import java.text.NumberFormat
+import java.util.Locale
 import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.border.CompoundBorder
@@ -487,7 +488,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
         row {
           comboBox(JBAnimator.Type.entries, SimpleListCellRenderer.create { label, value, _ ->
             label.text = value.toString().split("_").joinToString(" ") {
-              it.toLowerCase().capitalize()
+              it.lowercase(Locale.getDefault()).capitalize()
             }
           }).bindItem(options::type.toNullableProperty())
         }

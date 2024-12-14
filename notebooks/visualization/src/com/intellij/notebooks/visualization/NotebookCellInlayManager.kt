@@ -2,7 +2,6 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notebooks.ui.isFoldingEnabledKey
-import com.intellij.notebooks.ui.visualization.NotebookBelowLastCellPanel
 import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
@@ -37,7 +36,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
   private val shouldCheckInlayOffsets: Boolean,
-  private val notebook: EditorNotebook
+  private val notebook: EditorNotebook,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
 
   private val notebookCellLines = NotebookCellLines.get(editor)
@@ -229,7 +228,7 @@ class NotebookCellInlayManager private constructor(
   }
 
   fun removeBelowLastCellInlay() {
-    belowLastCellInlay?.let{ Disposer.dispose(it) }
+    belowLastCellInlay?.let { Disposer.dispose(it) }
     belowLastCellInlay = null
   }
 
@@ -341,37 +340,50 @@ class NotebookCellInlayManager private constructor(
     private val CELL_INLAY_MANAGER_KEY = Key.create<NotebookCellInlayManager>(NotebookCellInlayManager::class.java.name)
   }
 
-  override fun onUpdated(event: NotebookIntervalPointersEvent) = update { ctx ->
-    for (change in event.changes) {
-      when (change) {
-        is NotebookIntervalPointersEvent.OnEdited -> {
-          val cell = notebook.cells[change.intervalAfter.ordinal]
-          cell.updateInput()
-        }
-        is NotebookIntervalPointersEvent.OnInserted -> {
-          change.subsequentPointers.forEach {
-            addCell(it.pointer)
+  private val currentEventsQueue = mutableListOf<NotebookIntervalPointersEvent>()
+
+  override fun onUpdated(event: NotebookIntervalPointersEvent) {
+    currentEventsQueue.add(event)
+    if (!event.isInBulkUpdate) {
+      bulkUpdateFinished()
+    }
+  }
+
+  override fun bulkUpdateFinished() = update { ctx ->
+    val events = currentEventsQueue.toList()
+    currentEventsQueue.clear()
+    for (event in events) {
+      for (change in event.changes) {
+        when (change) {
+          is NotebookIntervalPointersEvent.OnEdited -> {
+            val cell = notebook.cells[change.intervalAfter.ordinal]
+            cell.updateInput()
           }
-        }
-        is NotebookIntervalPointersEvent.OnRemoved -> {
-          change.subsequentPointers.reversed().forEach {
-            val index = it.interval.ordinal
-            removeCell(index)
+          is NotebookIntervalPointersEvent.OnInserted -> {
+            change.subsequentPointers.forEach {
+              addCell(it.pointer)
+            }
           }
-        }
-        is NotebookIntervalPointersEvent.OnSwapped -> {
-          val firstCell = notebook.cells[change.firstOrdinal]
-          val first = firstCell.intervalPointer
-          val secondCell = notebook.cells[change.secondOrdinal]
-          firstCell.intervalPointer = secondCell.intervalPointer
-          secondCell.intervalPointer = first
-          firstCell.update(ctx)
-          secondCell.update(ctx)
+          is NotebookIntervalPointersEvent.OnRemoved -> {
+            change.subsequentPointers.reversed().forEach {
+              val index = it.interval.ordinal
+              removeCell(index)
+            }
+          }
+          is NotebookIntervalPointersEvent.OnSwapped -> {
+            val firstCell = notebook.cells[change.firstOrdinal]
+            val first = firstCell.intervalPointer
+            val secondCell = notebook.cells[change.secondOrdinal]
+            firstCell.intervalPointer = secondCell.intervalPointer
+            secondCell.intervalPointer = first
+            firstCell.update(ctx)
+            secondCell.update(ctx)
+          }
         }
       }
-    }
-    event.changes.filterIsInstance<NotebookIntervalPointersEvent.OnInserted>().forEach { change ->
-      fixInlaysOffsetsAfterNewCellInsert(change, ctx)
+      event.changes.filterIsInstance<NotebookIntervalPointersEvent.OnInserted>().forEach { change ->
+        fixInlaysOffsetsAfterNewCellInsert(change, ctx)
+      }
     }
 
     checkInlayOffsets()
@@ -491,7 +503,7 @@ class UpdateContext(val force: Boolean = false) {
    * [FoldingModelEx] implementation tracking fold region removal and clearing offsets cache before custom folding creation.
    * Else there will be an exception because of an invalid folding region.
    */
-  class RemovalTrackingFoldingModel(private val model: FoldingModelImpl): FoldingModelEx by model {
+  class RemovalTrackingFoldingModel(private val model: FoldingModelImpl) : FoldingModelEx by model {
 
     private var resetCache = false
 

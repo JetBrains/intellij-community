@@ -28,6 +28,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
     myDefaultName =
       LibrariesContainerFactory.createContainer(project).suggestUniqueLibraryName(LibraryTypeServiceImpl.suggestLibraryName(roots));
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, Arrays.asList(LibrariesContainer.LibraryLevel.values()),
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, new ArrayList<>(Arrays.asList(LibrariesContainer.LibraryLevel.values())),
                                                        LibrariesContainer.LibraryLevel.PROJECT);
     myNameAndLevelPanel.setDefaultName(myDefaultName);
     myModulesComboBox = new ModulesComboBox();

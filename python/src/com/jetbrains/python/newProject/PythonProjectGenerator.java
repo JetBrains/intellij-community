@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
@@ -22,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo;
+import com.jetbrains.python.newProjectWizard.collector.PyProjectTypeGenerator;
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -48,8 +50,9 @@ import java.util.function.Consumer;
 /**
  * @deprecated Use {@link com.jetbrains.python.newProjectWizard}
  */
-@Deprecated
-public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
+@Deprecated(forRemoval = true)
+public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> implements
+                                                                                                                      PyProjectTypeGenerator {
   public static final PyNewProjectSettings NO_SETTINGS = new PyNewProjectSettings();
   private static final Logger LOGGER = Logger.getInstance(PythonProjectGenerator.class);
 
@@ -70,6 +73,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   protected PythonProjectGenerator() {
     this(false, null);
+  }
+
+  @Override
+  public final @NlsSafe @NotNull String getProjectTypeForStatistics() {
+    return getClass().getName();
   }
 
   /**
@@ -179,7 +187,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo && settings.getSdk() != null) {
       PythonNewProjectWizardCollector.logPythonNewProjectGenerated(interpreterStatisticsInfo,
                                                                    PyStatisticToolsKt.getVersion(settings.getSdk()),
-                                                                   this.getClass(),
+                                                                   this,
                                                                    Collections.emptyList());
     }
   }
