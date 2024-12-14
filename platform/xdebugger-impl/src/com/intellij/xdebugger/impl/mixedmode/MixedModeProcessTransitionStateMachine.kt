@@ -22,6 +22,7 @@ class MixedModeProcessTransitionStateMachine(
 ) {
   interface State
 
+  object OnlyLowStarted : State
   object BothRunning : State
   class ResumeStarted(val low: XSuspendContext, val high: XSuspendContext) : State
   object WaitingForHighProcessPositionReached : State
@@ -39,6 +40,7 @@ class MixedModeProcessTransitionStateMachine(
   class LowLevelStepStarted(val high: XSuspendContext) : State
 
   interface Event
+  object HighStarted : Event
   object StopRequested : Event
   object ResumeRequested : Event
   class HighLevelPositionReached(val suspendContext: XSuspendContext) : Event
@@ -63,7 +65,8 @@ class MixedModeProcessTransitionStateMachine(
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
   private val stateMachineHelperScope = coroutineScope.childScope("Helper coroutine scope", Dispatchers.Default)
 
-  private var state: State = BothRunning
+  // we assume that low debugger started before we created this class
+  private var state: State = OnlyLowStarted
 
   private fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean {
     return suspendContext.javaClass.name.contains("Cidr")
@@ -118,6 +121,12 @@ class MixedModeProcessTransitionStateMachine(
     logger.info("setInternal: state = ${state::class.simpleName}, event = ${event::class.simpleName}")
     val currentState = state
     when (event) {
+      is HighStarted -> {
+        when (currentState) {
+          is OnlyLowStarted -> changeState(BothRunning)
+          else -> throwTransitionIsNotImplemented(event)
+        }
+      }
       is StopRequested -> {
         when (currentState) {
           is BothRunning -> {
@@ -358,4 +367,6 @@ class MixedModeProcessTransitionStateMachine(
   fun throwTransitionIsNotImplemented(event: Event) {
     TODO("Transition from ${get()::class.simpleName} by event ${event::class.simpleName} is not implemented")
   }
+
+  fun isMixedModeHighProcessReady(): Boolean = state !is OnlyLowStarted
 }

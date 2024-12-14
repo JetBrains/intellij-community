@@ -540,7 +540,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   private void processAllHandlers(final XBreakpoint<?> breakpoint, final boolean register) {
     var handlers = new ArrayList<>(Arrays.asList(myDebugProcess.getBreakpointHandlers()));
-    if (myMixedModeExtension != null) {
+    if (isMixedMode()) {
       handlers.addAll(Arrays.asList(myMixedModeLowLevelDebugProcess.getBreakpointHandlers()));
     }
 
@@ -608,16 +608,17 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     var currentStackFrame = getCurrentStackFrame();
     var suspendContext = doResume();
-    if (myMixedModeExtension != null) {
-      var mixedModeSuspendContext = Objects.requireNonNull((XMixedModeSuspendContext)suspendContext);
-      var suspendContextForStep = myMixedModeExtension.isLowStackFrame(Objects.requireNonNull(currentStackFrame))
-                                  ? mixedModeSuspendContext.getLowLevelDebugSuspendContext()
-                                  : mixedModeSuspendContext.getHighLevelDebugSuspendContext();
-      myMixedModeExtension.stepOver(suspendContextForStep);
-      return;
+    var debugProcess = myDebugProcess;
+    if (isMixedMode()) {
+      if (isMixedModeHighProcessReady()) {
+        assert suspendContext != null && currentStackFrame != null;
+        myMixedModeExtension.stepOver((XMixedModeSuspendContext)suspendContext, currentStackFrame);
+        return;
+      }
+      debugProcess = getDebugProcess(true);
     }
 
-    myDebugProcess.startStepOver(suspendContext);
+    debugProcess.startStepOver(suspendContext);
   }
 
   @Override
@@ -627,15 +628,16 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     var currentStackFrame = getCurrentStackFrame();
     var suspendContext = doResume();
-    if (myMixedModeExtension != null) {
-      var mixedModeSuspendContext = Objects.requireNonNull((XMixedModeSuspendContext)suspendContext);
-      var suspendContextForStep = myMixedModeExtension.isLowStackFrame(Objects.requireNonNull(currentStackFrame))
-                                  ? mixedModeSuspendContext.getLowLevelDebugSuspendContext()
-                                  : mixedModeSuspendContext.getHighLevelDebugSuspendContext();
-      myMixedModeExtension.stepInto(suspendContextForStep);
-      return;
+    var debugProcess = myDebugProcess;
+    if (isMixedMode()) {
+      if(isMixedModeHighProcessReady()) {
+        assert suspendContext != null && currentStackFrame != null;
+        myMixedModeExtension.stepInto((XMixedModeSuspendContext)suspendContext, currentStackFrame);
+        return;
+      }
+      debugProcess = getDebugProcess(true);
     }
-    myDebugProcess.startStepInto(suspendContext);
+    debugProcess.startStepInto(suspendContext);
   }
 
   @Override
@@ -645,16 +647,16 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     var currentStackFrame = getCurrentStackFrame();
     var suspendContext = doResume();
-    if (myMixedModeExtension != null) {
-      var mixedModeSuspendContext = Objects.requireNonNull((XMixedModeSuspendContext)suspendContext);
-      var suspendContextForStep = myMixedModeExtension.isLowStackFrame(Objects.requireNonNull(currentStackFrame))
-                                  ? mixedModeSuspendContext.getLowLevelDebugSuspendContext()
-                                  : mixedModeSuspendContext.getHighLevelDebugSuspendContext();
-      myMixedModeExtension.stepOut(suspendContextForStep);
-      return;
+    var debugProcess = myDebugProcess;
+    if (isMixedMode()) {
+      if(isMixedModeHighProcessReady()) {
+        assert suspendContext != null && currentStackFrame != null;
+        myMixedModeExtension.stepOut((XMixedModeSuspendContext)suspendContext, currentStackFrame);
+        return;
+      }
+      debugProcess = getDebugProcess(true);
     }
-
-    myDebugProcess.startStepOut(suspendContext);
+    debugProcess.startStepOut(suspendContext);
   }
 
   @Override
@@ -690,7 +692,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     rememberUserActionStart(XDebuggerActions.PAUSE);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    if (myMixedModeExtension != null) {
+    if (isMixedMode() && isMixedModeHighProcessReady()) {
       myMixedModeExtension.pause();
       return;
     }
@@ -724,12 +726,16 @@ public final class XDebugSessionImpl implements XDebugSession {
   public void resume() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
     var suspendContext = doResume();
-    if (myMixedModeExtension != null) {
-      myMixedModeExtension.resume();
-      return;
+    var debugProcess = myDebugProcess;
+    if (isMixedMode()) {
+      if (isMixedModeHighProcessReady()) {
+        myMixedModeExtension.resume();
+        return;
+      }
+      debugProcess = getDebugProcess(true);
     }
 
-    myDebugProcess.resume(suspendContext);
+    debugProcess.resume(suspendContext);
   }
 
   private @Nullable XSuspendContext doResume() {
@@ -1017,7 +1023,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void positionReachedMixedModeAware(@NotNull XSuspendContext suspendContext, boolean attract) {
-    if (myMixedModeExtension != null) {
+    if (isMixedMode() && isMixedModeHighProcessReady()) {
       myMixedModeExtension.positionReached(suspendContext, attract)
         .thenAccept(pair -> {
                      if (pair != null) {
@@ -1111,6 +1117,16 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public boolean isMixedMode() {
     return myMixedModeExtension != null;
+  }
+
+  @Override
+  public void signalMixedModeHighProcessReady() {
+    Objects.requireNonNull(myMixedModeExtension).signalMixedModeHighProcessReady();
+  }
+
+  @Override
+  public boolean isMixedModeHighProcessReady() {
+    return Objects.requireNonNull(myMixedModeExtension).isMixedModeHighProcessReady();
   }
 
   @Override

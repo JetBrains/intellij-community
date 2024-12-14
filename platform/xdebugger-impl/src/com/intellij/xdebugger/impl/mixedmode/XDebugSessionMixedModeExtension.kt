@@ -53,35 +53,41 @@ abstract class XDebugSessionMixedModeExtension(
     }
   }
 
-  fun stepInto(suspendContext: XSuspendContext) {
-    if (isLowSuspendContext(suspendContext)) {
-      stateMachine.set(LowLevelStepRequested(suspendContext, StepType.Into))
+  fun stepInto(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
+    val stepSuspendContext = getSuspendContextFromStackFrame(suspendContext, stepStackFrame)
+
+    if (isLowSuspendContext(stepSuspendContext)) {
+      stateMachine.set(LowLevelStepRequested(stepSuspendContext, StepType.Into))
     }
     else {
       coroutineScope.launch {
         val newState =
-          if (high.isStepWillBringIntoNativeCode(suspendContext))
-            MixedStepRequested(suspendContext, MixedStepType.IntoLowFromHigh)
+          if (high.isStepWillBringIntoNativeCode(stepSuspendContext))
+            MixedStepRequested(stepSuspendContext, MixedStepType.IntoLowFromHigh)
           else
-            HighLevelDebuggerStepRequested(suspendContext, StepType.Into)
+            HighLevelDebuggerStepRequested(stepSuspendContext, StepType.Into)
 
         this@XDebugSessionMixedModeExtension.stateMachine.set(newState)
       }
     }
   }
 
-  fun stepOver(suspendContext: XSuspendContext) {
+  fun stepOver(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
+    val stepSuspendContext = getSuspendContextFromStackFrame(suspendContext, stepStackFrame)
+
     val stepType = StepType.Over
-    val newState = if (isLowSuspendContext(suspendContext)) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext, stepType)
+    val newState = if (isLowSuspendContext(stepSuspendContext)) LowLevelStepRequested(stepSuspendContext, stepType) else HighLevelDebuggerStepRequested(stepSuspendContext, stepType)
     this.stateMachine.set(newState)
   }
 
-  fun stepOut(suspendContext: XSuspendContext) {
+  fun stepOut(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
     // TODO: in unity the stepping out from native code to managed doesn't work
     //  (we got in suspend_current method when step from native call wrapper, as I understand this happens because the wrappers' nop instructions
     //  are replaced by a trampin going to suspend_current method
+    val stepSuspendContext = getSuspendContextFromStackFrame(suspendContext, stepStackFrame)
+
     val stepType = StepType.Out
-    val newState = if (isLowSuspendContext(suspendContext)) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext, stepType)
+    val newState = if (isLowSuspendContext(stepSuspendContext)) LowLevelStepRequested(stepSuspendContext, stepType) else HighLevelDebuggerStepRequested(stepSuspendContext, stepType)
     this.stateMachine.set(newState)
   }
 
@@ -91,6 +97,21 @@ abstract class XDebugSessionMixedModeExtension(
       if (!handled) {
         session.sessionResumed()
       }
+    }
+  }
+
+  fun signalMixedModeHighProcessReady() {
+    stateMachine.set(HighStarted)
+  }
+
+  fun isMixedModeHighProcessReady(): Boolean = stateMachine.isMixedModeHighProcessReady()
+
+  private fun getSuspendContextFromStackFrame(suspendContext: XMixedModeSuspendContext, stackFrame: XStackFrame): XSuspendContext {
+    if (isLowStackFrame(stackFrame)) {
+      return suspendContext.lowLevelDebugSuspendContext
+    }
+    else {
+      return suspendContext.highLevelDebugSuspendContext
     }
   }
 }
