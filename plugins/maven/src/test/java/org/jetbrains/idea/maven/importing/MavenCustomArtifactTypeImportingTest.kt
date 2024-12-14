@@ -2,13 +2,13 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.junit.Test
 
 class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase() {
 
-  private val httpServerFixture = MavenHttpRepositoryServerFixture()
+/*  private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
 
   public override fun setUp() {
@@ -37,11 +37,12 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
     finally {
       super.tearDown()
     }
-  }
+  }*/
 
   @Test
   fun `should import dependency with custom plugin type`() = runBlocking {
-    httpServerFixture.startProxyRepositoryForUrl("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+    projectsManager.generalSettings.outputLevel = MavenExecutionOptions.LoggingLevel.DEBUG
+    //httpServerFixture.startProxyRepositoryForUrl("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
 
     importProjectAsync("""
       <groupId>test</groupId>
@@ -74,7 +75,8 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
             </plugin>
         </plugins>
     </build>
-    
+""")
+    /*
     <repositories>
       <repository>
         <id>my-http-repository</id>
@@ -82,13 +84,13 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
         <url>${myUrl}</url>
       </repository>
     </repositories>
-    <pluginRepositories> 
+    <pluginRepositories>
       <pluginRepository>
         <id>artifacts</id>
         <url>$myUrl</url>
       </pluginRepository>
     </pluginRepositories>
-""")
+     */
     assertModules("project")
     val project = projectsManager.findProject(projectPom)
     assertNotNull(project)
