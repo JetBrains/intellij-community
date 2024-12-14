@@ -10,7 +10,6 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
-import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -33,8 +32,6 @@ class XMixedModeExecutionStack(
     assert((highLevelExecutionStack == null || lowLevelExecutionStack.nativeThreadId == highLevelExecutionStack.nativeThreadId))
   }
 
-  val computationCompleted: CompletableDeferred<Unit> = CompletableDeferred()
-  val computedMixedFrames: CompletableDeferred<List<XStackFrame>> = CompletableDeferred()
   val computedFramesMap: CompletableDeferred<Map</*low level frame*/XStackFrame, /*high level frame*/XStackFrame?>> = CompletableDeferred()
   override fun getTopFrame(): XStackFrame? {
     // when we are stopped the top frame is always from a low-level debugger, so no need to look for a corresponding high level frame
@@ -43,6 +40,18 @@ class XMixedModeExecutionStack(
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     coroutineScope.launch(Dispatchers.Default) {
+      try {
+        computeStackFramesInternal(firstFrameIndex, container)
+      }
+      catch (t: Throwable) {
+        if (!computedFramesMap.isCompleted)
+          computedFramesMap.completeExceptionally(Exception("Failed to compute stack frames", t))
+
+        throw t
+      }
+    }
+  }
+  suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
       prepareThreadBeforeFrameComputation()
       logger.info("Preparation for frame computation completed")
 
@@ -55,7 +64,6 @@ class XMixedModeExecutionStack(
       if (highLevelExecutionStack == null) {
         logger.trace("No high level stack, adding low level frames")
         container.addStackFrames(lowLevelFrames, true)
-        computedMixedFrames.complete(lowLevelFrames)
         computedFramesMap.complete(lowLevelFrames.associateWith { null })
       }
       else {
@@ -72,7 +80,6 @@ class XMixedModeExecutionStack(
         if (mixFramesResult.isFailure) {
           logger.error("Failed to build mixed stack. Will use low level frames only", mixFramesResult.exceptionOrNull())
           container.addStackFrames(lowLevelFrames, true)
-          computedMixedFrames.complete(lowLevelFrames)
           computedFramesMap.complete(lowLevelFrames.associateWith { null })
         }
         else {
@@ -81,17 +88,10 @@ class XMixedModeExecutionStack(
 
           val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
           container.addStackFrames(combinedFrames, builtResult.frameToSelect, true)
-          computedMixedFrames.complete(combinedFrames)
           computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
         }
       }
-    }.invokeOnCompletion {
-      computationCompleted.complete(Unit)
-      if (!computedMixedFrames.isCompleted) {
-        computedMixedFrames.completeExceptionally(Exception("computedFrames hasn't been set, possibly due to an exception"))
-      }
     }
-  }
 
   private suspend fun prepareThreadBeforeFrameComputation() {
     val threadId = lowLevelExecutionStack.nativeThreadId
@@ -113,7 +113,7 @@ class XMixedModeExecutionStack(
     }
 
     override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-      TODO("Not yet implemented")
+      frames.completeExceptionally(Exception(errorMessage))
     }
   }
 }

@@ -54,26 +54,38 @@ class XMixedModeSuspendContext(
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
     coroutineScope.launch(Dispatchers.Default) {
-      activeExecutionStackBasedOnDebugProcesses?.computationCompleted?.await()
+      try {
+        computeExecutionStacksInternal(container)
+      }
+      catch (t: Throwable) {
+        if (!isStacksComputed.isCompleted)
+          isStacksComputed.completeExceptionally(t)
 
-      val acc = MyAccumulatingContainer()
-
-      highLevelDebugSuspendContext.computeExecutionStacks(acc)
-
-      val highLevelStacks = measureTimedValue { acc.frames.await() }.also { logger.info("High level stacks loaded in ${it.duration}") }.value
-      val threadIdToHighLevelStackMap = highLevelStacks.associateBy { stack -> stack.nativeThreadId }
-
-      val combinedContainer = MyMixedModeCombinedContainer(
-        activeExecutionStackBasedOnDebugProcesses,
-        session,
-        threadIdToHighLevelStackMap,
-        container,
-        highLevelDebugProcess.getFramesMatcher(),
-        coroutineScope,
-        this@XMixedModeSuspendContext)
-
-      lowLevelDebugSuspendContext.computeExecutionStacks(combinedContainer)
+        throw t
+      }
     }
+  }
+
+  private suspend fun computeExecutionStacksInternal(container: XExecutionStackContainer) {
+    activeExecutionStackBasedOnDebugProcesses?.computedFramesMap?.await()
+
+    val acc = MyAccumulatingContainer()
+
+    highLevelDebugSuspendContext.computeExecutionStacks(acc)
+
+    val highLevelStacks = measureTimedValue { acc.frames.await() }.also { logger.info("High level stacks loaded in ${it.duration}") }.value
+    val threadIdToHighLevelStackMap = highLevelStacks.associateBy { stack -> stack.nativeThreadId }
+
+    val combinedContainer = MyMixedModeCombinedContainer(
+      activeExecutionStackBasedOnDebugProcesses,
+      session,
+      threadIdToHighLevelStackMap,
+      container,
+      highLevelDebugProcess.getFramesMatcher(),
+      coroutineScope,
+      this@XMixedModeSuspendContext)
+
+    lowLevelDebugSuspendContext.computeExecutionStacks(combinedContainer)
   }
 
   private fun createActiveExecutionStack(): XMixedModeExecutionStack? {
@@ -119,7 +131,7 @@ class XMixedModeSuspendContext(
     }
 
     override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-      TODO("Not yet implemented")
+      frames.completeExceptionally(Exception(errorMessage))
     }
   }
 
@@ -153,7 +165,7 @@ class XMixedModeSuspendContext(
     }
 
     override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-      TODO("Not yet implemented")
+      suspendContext.isStacksComputed.completeExceptionally(Exception(errorMessage))
     }
   }
 }
