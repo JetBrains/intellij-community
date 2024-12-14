@@ -3,6 +3,7 @@ package org.jetbrains.ide.mcp
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.APP
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import io.ktor.client.HttpClient
@@ -97,8 +98,20 @@ class MCPService : RestService() {
         }
 
         service<MCPUsageCollector>().sendUsage(tool.name)
-        val args = parseArgs(request, tool.argKlass)
-        val result = toolHandle(tool, project, args)
+        val args = try {
+            parseArgs(request, tool.argKlass)
+        } catch (e: Exception) {
+            logger<MCPService>().error("Failed to parse arguments for tool $path", e)
+            sendJson(Response(error = e.message), request, context)
+            return
+        }
+        val result = try {
+            toolHandle(tool, project, args)
+        } catch (e: Exception) {
+            logger<MCPService>().error("Failed to execute tool $path", e)
+            sendJson(Response(error = e.message), request, context)
+            return
+        }
         sendJson(result, request, context)
     }
 
