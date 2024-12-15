@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -236,8 +238,11 @@ public abstract class PyEnvTestCase {
    * @return list of pythons to run tests against
    */
   @NotNull
-  protected List<String> getPythonRoots() {
-    return getDefaultPythonRoots();
+  protected List<@NotNull String> getPythonRoots() {
+    var roots = getDefaultPythonRoots();
+    // It is ok to access these pythons
+    VfsRootAccess.allowRootAccess(myDisposable, ArrayUtil.toStringArray(roots));
+    return roots;
   }
 
   private final Disposable myDisposable = Disposer.newDisposable();
