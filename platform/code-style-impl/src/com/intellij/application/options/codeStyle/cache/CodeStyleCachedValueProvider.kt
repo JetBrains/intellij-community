@@ -32,8 +32,7 @@ import java.util.function.Supplier
 private val LOG = logger<CodeStyleCachedValueProvider>()
 
 @Service(Service.Level.PROJECT)
-private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope) {
-}
+private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope)
 
 internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<VirtualFile>,
                                             private val project: Project,
@@ -106,8 +105,8 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
   }
 
   /**
-   * Always contains some result which can be obtained by `getCurrResult()` method. Listeners are notified after
-   * the computation is finished and `getCurrResult()` contains a stable computed value.
+   * Always contains some result that can be obtained by `getCurrResult()` method.
+   * Listeners are notified after the computation is finished and `getCurrResult()` contains a stable computed value.
    */
   private inner class AsyncComputation(private val project: Project) {
     private val isActive = AtomicBoolean()
@@ -136,8 +135,8 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
             computeSettings()
           }
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            //need to fix clients and remove global lock from there
-            //maybe readaction
+            // need to fix clients and remove global lock from there
+            // maybe readAction
             writeIntentReadAction {
               notifyCachedValueComputed()
             }
@@ -270,6 +269,10 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
       val that = other as AsyncComputation
       return project == that.project
     }
+
+    override fun hashCode(): Int {
+      return project.hashCode()
+    }
   }
 
   private val psiFile: PsiFile?
@@ -280,5 +283,8 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
   override fun equals(other: Any?): Boolean {
     return other is CodeStyleCachedValueProvider && file == other.file
   }
-}
 
+  override fun hashCode(): Int {
+    return file.hashCode()
+  }
+}
