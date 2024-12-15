@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyEnvTestSettings
 import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
@@ -17,6 +16,7 @@ import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.tools.loadEnvTags
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
@@ -125,7 +125,7 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
 
   @RequiresBackgroundThread
   private fun typeMatchesEnv(env: Path, vararg additionalTags: @NonNls String): Boolean {
-    val envTags = PyEnvTestCase.loadEnvTags(env.toString())
+    val envTags = loadEnvTags(env)
 
     for (badTag in PythonType::class.sealedSubclasses.filterNot { it.isInstance(this) }.map { it.objectInstance!!.tag }) {
       if (badTag in envTags) return false

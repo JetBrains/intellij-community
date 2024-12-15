@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.VirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
@@ -24,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+
+import static com.jetbrains.python.tools.EnvTagsKt.loadEnvTags;
 
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
@@ -177,7 +178,7 @@ public class PyEnvTaskRunner {
 
     EnvInfo(@NotNull String root) {
       this.root = root;
-      tags = PyEnvTestCase.loadEnvTags(root);
+      tags = loadEnvTags(Path.of(root)).stream().toList();
       pythonVersion = ContainerUtil.find(tags, tag -> tag.matches("^python\\d\\.\\d+$"));
     }
 

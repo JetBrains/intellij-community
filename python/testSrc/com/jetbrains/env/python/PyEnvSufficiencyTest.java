@@ -8,9 +8,11 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
 import org.junit.Test;
 
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.jetbrains.python.tools.EnvTagsKt.loadEnvTags;
 
 public class PyEnvSufficiencyTest extends PyEnvTestCase {
   private static final List<String> BASE_TAGS =
@@ -26,7 +28,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
         return;         // not on env agent
       }
       for (String root : roots) {
-        tags.addAll(loadEnvTags(root));
+        tags.addAll(loadEnvTags(Path.of(root)));
       }
 
       List<String> missing = new ArrayList<>();

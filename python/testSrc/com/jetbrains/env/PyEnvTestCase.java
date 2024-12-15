@@ -18,24 +18,24 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.jetbrains.python.tools.EnvTagsKt.loadEnvTags;
 
 /**
  * <p>
  * All inheritors must be in {@link com.jetbrains.env}.*
  * <p>
  * See "community/python/setup-test-environment/build.gradle"
+ * {@link com.jetbrains.env.python.api.EnvTagsKt#loadEnvTags(Path)}
  *
  * @author traff
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
-
-  private static final String TAGS_FILE = "tags.txt";
 
   @NotNull
   protected static final PyEnvTestSettings SETTINGS = PyEnvTestSettings.Companion.fromEnvVariables();
@@ -66,7 +66,8 @@ public abstract class PyEnvTestCase {
 
   @Rule public TestName myTestName = new TestName();
 
-  @Rule public final TestWatcher myWatcher = new TestWatcher(){};
+  @Rule public final TestWatcher myWatcher = new TestWatcher() {
+  };
 
   static {
     LOG.info("Using following config\n" + SETTINGS.reportConfiguration());
@@ -120,7 +121,7 @@ public abstract class PyEnvTestCase {
   @BeforeClass
   public static void collectTagsForEnvs() {
     for (final String pythonRoot : getDefaultPythonRoots()) {
-      envTags.put(pythonRoot, loadEnvTags(pythonRoot));
+      envTags.put(pythonRoot, loadEnvTags(Path.of(pythonRoot)).stream().toList());
     }
   }
 
@@ -237,23 +238,6 @@ public abstract class PyEnvTestCase {
   @NotNull
   protected List<String> getPythonRoots() {
     return getDefaultPythonRoots();
-  }
-
-
-  public static List<String> loadEnvTags(String env) {
-    List<String> envTags;
-
-    try {
-      File parent = new File(env);
-      if (parent.isFile()) {
-        parent = parent.getParentFile();
-      }
-      envTags = com.intellij.openapi.util.io.FileUtil.loadLines(new File(parent, TAGS_FILE));
-    }
-    catch (IOException e) {
-      envTags = new ArrayList<>();
-    }
-    return envTags;
   }
 
   private final Disposable myDisposable = Disposer.newDisposable();
