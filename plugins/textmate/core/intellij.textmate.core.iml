@@ -44,5 +44,6 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
   </component>
 </module>

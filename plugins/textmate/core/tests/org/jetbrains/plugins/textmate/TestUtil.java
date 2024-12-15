@@ -1,16 +1,14 @@
 package org.jetbrains.plugins.textmate;
 
+import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.textmate.bundles.BundleType;
 import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readSublimeBundle;
 import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readTextMateBundle;
@@ -52,11 +50,11 @@ public final class TestUtil {
   @NonNls public static final String RESTRUCTURED_TEXT = "restructuredtext";
 
   public static Path getBundleDirectory(String bundleName) {
-    Path bundleDirectory = getCommunityHomePath().resolve("plugins/textmate/testData/bundles").resolve(bundleName);
+    Path bundleDirectory = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/testData/bundles").resolve(bundleName);
     if (Files.exists(bundleDirectory)) {
       return bundleDirectory;
     }
-    return getCommunityHomePath().resolve("plugins/textmate/lib/bundles").resolve(bundleName);
+    return Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/lib/bundles").resolve(bundleName);
   }
 
   public static TextMateBundleReader readBundle(String bundleName) {
@@ -83,30 +81,5 @@ public final class TestUtil {
       scope = scope.add(scopeName);
     }
     return scope;
-  }
-
-  private static Path getCommunityHomePath() {
-    URL url = TestUtil.class.getResource("/" + TestUtil.class.getName().replace('.', '/') + ".class");
-    if (url != null && url.getProtocol().equals("file")) {
-      try {
-        Path file = Path.of(url.toURI().getPath()).getParent();
-        while (file != null) {
-          Set<String> children = Files.list(file).map(path -> path.getFileName().toString()).collect(Collectors.toSet());
-          if (children.contains(".idea")) {
-            if (children.contains("community")) {
-              return file.resolve("community");
-            }
-            else {
-              return file;
-            }
-          }
-          file = file.getParent();
-        }
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    throw new IllegalStateException("Failed to find community home path");
   }
 }
