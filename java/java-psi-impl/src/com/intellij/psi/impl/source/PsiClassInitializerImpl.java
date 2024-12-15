@@ -40,7 +40,7 @@ public final class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassIn
 
   @Override
   public PsiModifierList getModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return (PsiModifierList)getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
   @Override

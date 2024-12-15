@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,11 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement<?>> extends 
   @Override
   public IStubElementType getElementType() {
     return myStub.getStubType();
+  }
+
+  @Override
+  public IElementType getIElementType() {
+    return myStub.getElementType();
   }
 
   @Override

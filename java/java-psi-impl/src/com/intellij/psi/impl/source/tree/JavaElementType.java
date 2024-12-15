@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 public interface JavaElementType {
-  final class JavaCompositeElementType extends BasicJavaElementType.JavaCompositeElementType {
+  class JavaCompositeElementType extends BasicJavaElementType.JavaCompositeElementType {
     public JavaCompositeElementType(@NotNull String debugName,
                                     @NotNull Supplier<? extends ASTNode> constructor,
                                     @NotNull IElementType parentElementType) {

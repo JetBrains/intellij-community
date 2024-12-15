@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   public PsiTypeParameterImpl(final PsiTypeParameterStub stub) {
@@ -206,7 +207,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public @NotNull PsiReferenceList getExtendsList() {
-    return getRequiredStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST);
+    return (PsiReferenceList)Objects.requireNonNull(getStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST));
   }
 
   @Override

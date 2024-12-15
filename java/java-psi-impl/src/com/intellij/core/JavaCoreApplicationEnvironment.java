@@ -28,12 +28,14 @@ import com.intellij.psi.impl.PsiSubstitutorFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsDecompilerImpl;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
+import com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension;
 import com.intellij.psi.impl.search.MethodSuperSearcher;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
 import com.intellij.psi.impl.source.tree.PlainTextASTFactory;
 import com.intellij.psi.presentation.java.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.psi.stubs.StubElementRegistryServiceImplKt;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +55,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextASTFactory());
     registerParserDefinition(new PlainTextParserDefinition());
+    addExtension(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, new JavaStubRegistryExtension());
 
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());

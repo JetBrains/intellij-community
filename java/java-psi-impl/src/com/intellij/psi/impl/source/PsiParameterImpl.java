@@ -15,12 +15,13 @@ import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     this(stub, JavaStubElementTypes.PARAMETER);
   }
 
-  protected PsiParameterImpl(@NotNull PsiParameterStub stub, @NotNull IStubElementType<?,?> type) {
+  protected PsiParameterImpl(@NotNull PsiParameterStub stub, @NotNull IElementType type) {
     super(stub, type);
   }
 
@@ -164,7 +165,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    PsiModifierList modifierList = getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    PsiModifierList modifierList = ObjectUtils.tryCast(getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST), PsiModifierList.class);
     assert modifierList != null : this;
     return modifierList;
   }

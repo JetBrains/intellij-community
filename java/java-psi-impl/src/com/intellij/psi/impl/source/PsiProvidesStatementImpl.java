@@ -33,7 +33,7 @@ public class PsiProvidesStatementImpl extends JavaStubPsiElement<PsiProvidesStat
 
   @Override
   public @Nullable PsiReferenceList getImplementationList() {
-    return getStubOrPsiChild(JavaStubElementTypes.PROVIDES_WITH_LIST);
+    return (PsiReferenceList)getStubOrPsiChild(JavaStubElementTypes.PROVIDES_WITH_LIST);
   }
 
   @Override

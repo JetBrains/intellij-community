@@ -232,7 +232,7 @@ public final class PsiTypesUtil {
       }
       else {
         PsiElement parent = call.getContext();
-        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parent).getElementType()
+        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parent).getIElementType()
                                                                                        : parent.getNode().getElementType())) {
           parent = parent.getContext();
         }

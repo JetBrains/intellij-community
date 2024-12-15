@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> implements PsiAnnotation {
   private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR =
     (project, text) -> JavaPsiFacade.getElementFactory(project).createAnnotationFromText(text, null);
@@ -61,7 +63,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
   @Override
   public @NotNull PsiAnnotationParameterList getParameterList() {
-    return getRequiredStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST);
+    return (PsiAnnotationParameterList)Objects.requireNonNull(getStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST));
   }
 
   @Override

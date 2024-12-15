@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
@@ -63,7 +64,7 @@ public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStat
 
   @Override
   public PsiModifierList getModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return ObjectUtils.tryCast(getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST), PsiModifierList.class);
   }
 
   @Override

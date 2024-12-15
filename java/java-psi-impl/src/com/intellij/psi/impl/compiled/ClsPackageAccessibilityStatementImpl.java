@@ -42,7 +42,7 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
 
   @Override
   public @NotNull Role getRole() {
-    return JavaPackageAccessibilityStatementElementType.typeToRole(getStub().getStubType());
+    return JavaPackageAccessibilityStatementElementType.typeToRole(getStub().getElementType());
   }
 
   @Override
@@ -82,7 +82,7 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
 
   @Override
   protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
-    setMirrorCheckingType(element, getStub().getStubType());
+    setMirrorCheckingType(element, getStub().getElementType());
   }
 
   @Override

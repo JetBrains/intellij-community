@@ -5,14 +5,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.*;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.util.JavaImplicitClassUtil;
+import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,14 +48,6 @@ public interface JavaStubElementTypes {
     @Override
     public @NotNull ASTNode createCompositeNode() {
       return new ImplicitClassElement();
-    }
-
-    @Override
-    public void indexStub(@NotNull PsiClassStub stub, @NotNull IndexSink sink) {
-      StubElement parent = stub.getParentStub();
-      if (parent instanceof PsiJavaFileStub) {
-        sink.occurrence(JavaStubIndexKeys.IMPLICIT_CLASSES, JavaImplicitClassUtil.getJvmName(((PsiJavaFileStub)parent).getPsi().getName()));
-      }
     }
   };
 
@@ -110,11 +97,6 @@ public interface JavaStubElementTypes {
       public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, PsiKeyword.EXTENDS);
       }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
-      }
     };
 
   JavaClassReferenceListElementType PERMITS_LIST =
@@ -123,22 +105,12 @@ public interface JavaStubElementTypes {
       public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.PERMITS_KEYWORD, PsiKeyword.PERMITS);
       }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
-      }
     };
   JavaClassReferenceListElementType IMPLEMENTS_LIST =
     new JavaClassReferenceListElementType("IMPLEMENTS_LIST", BasicJavaElementType.BASIC_IMPLEMENTS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, PsiKeyword.IMPLEMENTS);
-      }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
       }
     };
   JavaClassReferenceListElementType THROWS_LIST =
@@ -147,22 +119,12 @@ public interface JavaStubElementTypes {
       public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, PsiKeyword.THROWS);
       }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
-      }
     };
   JavaClassReferenceListElementType EXTENDS_BOUND_LIST =
     new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST", BasicJavaElementType.BASIC_EXTENDS_BOUND_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
         return new TypeParameterExtendsBoundsListElement();
-      }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
       }
     };
   JavaClassReferenceListElementType PROVIDES_WITH_LIST =
@@ -199,5 +161,5 @@ public interface JavaStubElementTypes {
    * @deprecated use {@link JavaParserDefinition#JAVA_FILE}
    */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  IStubFileElementType<?> JAVA_FILE = JavaParserDefinition.JAVA_FILE;
+  IFileElementType JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

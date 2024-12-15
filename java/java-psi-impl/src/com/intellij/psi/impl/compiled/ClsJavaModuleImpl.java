@@ -15,6 +15,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -137,9 +138,10 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     throw cannotModifyException(this);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public PsiModifierList getModifierList() {
-    StubElement<PsiModifierList> childStub = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    StubElement<PsiModifierList> childStub = ObjectUtils.tryCast(getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST), StubElement.class);
     return childStub != null ? childStub.getPsi() : null;
   }
 

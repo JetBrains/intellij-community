@@ -61,7 +61,8 @@ public final class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiR
 
   @Override
   public PsiModifierList getModifierList() {
-    StubElement<PsiModifierList> childStub = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    StubElement<PsiModifierList> childStub =
+      (StubElement<PsiModifierList>)getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
     return childStub != null ? childStub.getPsi() : null;
   }
 

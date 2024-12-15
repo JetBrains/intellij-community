@@ -1311,7 +1311,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   private static void assertStubLanguage(@NotNull com.intellij.lang.Language expectedLanguage, @NotNull ObjectStubTree<?> stub) {
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(expectedLanguage);
     PsiFileStub fileStub = assertInstanceOf(stub.getPlainList().get(0), PsiFileStub.class);
-    assertEquals(parserDefinition.getFileNodeType(), fileStub.getType());
+    assertEquals(parserDefinition.getFileNodeType(), fileStub.getFileElementType());
   }
 
   @NotNull

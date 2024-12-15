@@ -81,7 +81,7 @@ public final class RecordUtil {
   }
 
   public static boolean isStaticNonPrivateMember(@NotNull StubElement<?> stub) {
-    PsiModifierListStub type = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    PsiModifierListStub type = (PsiModifierListStub)stub.findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
     if (type == null) {
       return false;
     }
@@ -96,7 +96,7 @@ public final class RecordUtil {
     }
 
     return stub instanceof PsiFieldStub &&
-           stub.getStubType() == JavaElementType.ENUM_CONSTANT ||
+           stub.getElementType() == JavaElementType.ENUM_CONSTANT ||
            stub.getParentStub() instanceof PsiClassStub && ((PsiClassStub<?>)stub.getParentStub()).isInterface();
   }
 }

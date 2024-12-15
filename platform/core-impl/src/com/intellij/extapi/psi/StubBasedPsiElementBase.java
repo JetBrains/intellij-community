@@ -436,9 +436,19 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
+   * @deprecated use {@link #getStubOrPsiChildren(IElementType, ArrayFactory)} instead
+   *
    * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
+  @Deprecated
   public <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, @NotNull ArrayFactory<? extends Psi> f) {
+    return getStubOrPsiChildren((IElementType)elementType, f);
+  }
+
+  /**
+   * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   */
+  public <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IElementType elementType, @NotNull ArrayFactory<? extends Psi> f) {
     T stub = getGreenStub();
     if (stub != null) {
       //noinspection unchecked

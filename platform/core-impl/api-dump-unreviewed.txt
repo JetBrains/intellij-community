@@ -285,6 +285,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - getStubOrPsiChild(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.PsiElement
 - getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
+- getStubOrPsiChildren(com.intellij.psi.tree.IElementType,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.tree.TokenSet,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.tree.TokenSet,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
 - p:getStubOrPsiParentOfType(java.lang.Class):com.intellij.psi.PsiElement

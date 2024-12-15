@@ -57,7 +57,7 @@ public final class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordCo
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    PsiModifierList modifierList = getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    PsiModifierList modifierList = (PsiModifierList)getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
     assert modifierList != null : this;
     return modifierList;
   }

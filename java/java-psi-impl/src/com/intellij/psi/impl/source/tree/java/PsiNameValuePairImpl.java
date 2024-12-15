@@ -76,7 +76,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
 
   @Override
   public PsiAnnotationMemberValue getValue() {
-    PsiLiteralExpression child = getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION);
+    PsiLiteralExpression child = (PsiLiteralExpression)getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION);
     if (child != null) return child;
 
     ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_VALUE);
