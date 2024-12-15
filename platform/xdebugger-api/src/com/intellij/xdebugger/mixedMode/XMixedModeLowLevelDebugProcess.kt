@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.mixedMode
 
+import com.intellij.xdebugger.frame.XSuspendContext
+
 interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
   suspend fun continueAllThreads(exceptEventThread: Boolean)
   suspend fun continueHighDebuggerServiceThreads()
@@ -15,7 +17,7 @@ interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
   suspend fun pauseMixedModeSessionUnBlockStopEventThread(stopEventThreadId: Long)
 
   fun pauseMixedModeSession(stopEventThreadId: Long)
-  suspend fun findAndSetBreakpointInNativeFunction(steppingThreadId: Long, trigger: suspend (() -> Unit)): Int
+  suspend fun startMixedStepInto(steppingThreadId: Long, ctx: XSuspendContext): Int
   suspend fun removeTempBreakpoint(brId: Int)
   suspend fun prepareThreadBeforeFramesComputation(threadId: Long)
 }

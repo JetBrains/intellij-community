@@ -630,7 +630,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     var suspendContext = doResume();
     var debugProcess = myDebugProcess;
     if (isMixedMode()) {
-      if(isMixedModeHighProcessReady()) {
+      if (isMixedModeHighProcessReady()) {
         assert suspendContext != null && currentStackFrame != null;
         myMixedModeExtension.stepInto((XMixedModeSuspendContext)suspendContext, currentStackFrame);
         return;

@@ -7,7 +7,4 @@ interface XMixedModeHighLevelDebugProcess : XMixedModeDebugProcess {
   fun getFramesMatcher(): MixedModeFramesBuilder
   fun pauseMixedModeSession()
   suspend fun isStepWillBringIntoNativeCode(suspendContext: XSuspendContext): Boolean
-
-  // Should be moved to mono specific class
-  suspend fun triggerMonoMethodCommandsInternalMethodCallForExternMethodWeStepIn(suspendContext: XSuspendContext)
 }
