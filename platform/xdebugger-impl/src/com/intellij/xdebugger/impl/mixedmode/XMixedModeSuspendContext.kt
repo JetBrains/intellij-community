@@ -17,6 +17,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
 
@@ -61,7 +62,8 @@ class XMixedModeSuspendContext(
         if (!isStacksComputed.isCompleted)
           isStacksComputed.completeExceptionally(t)
 
-        throw t
+        if (t !is CancellationException)
+          throw t
       }
     }
   }

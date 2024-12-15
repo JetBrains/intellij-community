@@ -15,6 +15,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.CancellationException
 import kotlin.time.measureTimedValue
 
 private val logger = logger<XMixedModeExecutionStack>()
@@ -47,7 +48,8 @@ class XMixedModeExecutionStack(
         if (!computedFramesMap.isCompleted)
           computedFramesMap.completeExceptionally(Exception("Failed to compute stack frames", t))
 
-        throw t
+        if (t !is CancellationException)
+          throw t
       }
     }
   }
