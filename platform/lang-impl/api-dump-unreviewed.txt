@@ -9443,7 +9443,6 @@ f:com.intellij.ide.bookmark.providers.LineBookmarkImpl
 f:com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - com.intellij.ide.bookmark.BookmarkProvider
 - com.intellij.openapi.editor.event.BulkAwareDocumentListener$Simple
-- com.intellij.openapi.editor.event.EditorMouseListener
 - com.intellij.openapi.vfs.AsyncFileListener
 - sf:Companion:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
@@ -9458,7 +9457,6 @@ f:com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - sf:find(com.intellij.openapi.project.Project):com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - getProject():com.intellij.openapi.project.Project
 - getWeight():I
-- mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - prepareChange(java.util.List):com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
 - prepareGroup(java.util.List):java.util.List
 f:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Companion

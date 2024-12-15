@@ -602,6 +602,9 @@
       <module fileurl="file://$PROJECT_DIR$/platform/backend/observation/intellij.platform.backend.observation.iml" filepath="$PROJECT_DIR$/platform/backend/observation/intellij.platform.backend.observation.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/backend/workspace/intellij.platform.backend.workspace.iml" filepath="$PROJECT_DIR$/platform/backend/workspace/intellij.platform.backend.workspace.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/benchmarks/intellij.platform.benchmarks.iml" filepath="$PROJECT_DIR$/platform/platform-tests/benchmarks/intellij.platform.benchmarks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/bookmarks/intellij.platform.bookmarks.iml" filepath="$PROJECT_DIR$/platform/bookmarks/intellij.platform.bookmarks.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/bookmarks/backend/intellij.platform.bookmarks.backend.iml" filepath="$PROJECT_DIR$/platform/bookmarks/backend/intellij.platform.bookmarks.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/bookmarks/frontend/intellij.platform.bookmarks.frontend.iml" filepath="$PROJECT_DIR$/platform/bookmarks/frontend/intellij.platform.bookmarks.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/boot/intellij.platform.boot.iml" filepath="$PROJECT_DIR$/platform/boot/intellij.platform.boot.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/intellij.platform.bootstrap.iml" filepath="$PROJECT_DIR$/platform/bootstrap/intellij.platform.bootstrap.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/coroutine/intellij.platform.bootstrap.coroutine.iml" filepath="$PROJECT_DIR$/platform/bootstrap/coroutine/intellij.platform.bootstrap.coroutine.iml" />
