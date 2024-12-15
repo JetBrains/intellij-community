@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.env.python.api
+package com.jetbrains.python.tools
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -9,8 +9,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.remote.RemoteSdkException
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
-import com.jetbrains.env.python.api.PythonType.Conda
-import com.jetbrains.env.python.api.PythonType.VanillaPython3
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -25,7 +23,7 @@ import org.junit.Assume
  * To be used with [createSdk]
  */
 sealed class SdkCreationRequest {
-  data class LocalPython(val pythonType: PythonType<*> = VanillaPython3) : SdkCreationRequest()
+  data class LocalPython(val pythonType: PythonType<*> = PythonType.VanillaPython3) : SdkCreationRequest()
   data class RemotePython(val targetConfig: TargetEnvironmentConfiguration) : SdkCreationRequest()
 }
 
@@ -36,11 +34,11 @@ suspend fun createSdk(request: SdkCreationRequest): Pair<Sdk, AutoCloseable> = w
   when (request) {
     is SdkCreationRequest.LocalPython -> {
       when (val pythonType = request.pythonType) {
-        is Conda -> {
+        is PythonType.Conda -> {
           val (env, closable) = pythonType.getTestEnvironment().getOrThrow()
           Pair(env.createSdkFromThisEnv(null, emptyList()), closable)
         }
-        is VanillaPython3 -> {
+        is PythonType.VanillaPython3 -> {
           val (python, closable) = pythonType.getTestEnvironment().getOrThrow()
           Pair(SdkConfigurationUtil.setupSdk(emptyArray(), python.refreshAndGetVirtualFile(),
                                              PythonSdkType.getInstance(), null, null), closable)

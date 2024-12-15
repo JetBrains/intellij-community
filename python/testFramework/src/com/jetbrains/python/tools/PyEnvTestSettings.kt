@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.tools
 
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
-import com.jetbrains.env.PyEnvTestSettings.Companion.PATH_TO_TEST_ENV_PYTHON_INTERPRETERS
+import com.jetbrains.python.tools.PyEnvTestSettings.Companion.PATH_TO_TEST_ENV_PYTHON_INTERPRETERS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -15,7 +15,9 @@ import java.io.File
  * Configures env test environment using env vars and properties.
  * Environment variables are also used in gradle script (setup-test-environment)
  */
-internal data class PyEnvTestSettings(
+@TestOnly
+@ApiStatus.Internal
+data class PyEnvTestSettings(
   private val folderWithCPythons: String?,
   private val folderWithCondas: String?,
   private val additionalInterpreters: List<File>,

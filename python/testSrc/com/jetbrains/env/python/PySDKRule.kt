@@ -3,16 +3,16 @@ package com.jetbrains.env.python
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.env.PyEnvTestSettings
-import com.jetbrains.env.python.api.SdkCreationRequest.*
-import com.jetbrains.env.python.api.createSdk
+import com.jetbrains.python.tools.PyEnvTestSettings
+import com.jetbrains.python.tools.SdkCreationRequest.*
+import com.jetbrains.python.tools.createSdk
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.ExternalResource
 
 
 /**
  * Creates python SDK either local (if [targetConfigProducer] is null) or target.
- * In case of target, it should have [PYTHON_PATH_ON_TARGET]
+ * In case of target, it should have [com.jetbrains.python.tools.PYTHON_PATH_ON_TARGET]
  * Locals are search automatically like in [PyEnvTestSettings] or using [com.jetbrains.python.sdk.flavors.PythonSdkFlavor.suggestLocalHomePaths]
  */
 class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfiguration)?) : ExternalResource() {

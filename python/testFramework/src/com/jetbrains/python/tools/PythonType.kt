@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.env.python.api
+package com.jetbrains.python.tools
 
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.env.PyEnvTestSettings
 import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.PythonBinary
@@ -16,7 +15,6 @@ import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.tools.loadEnvTags
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
