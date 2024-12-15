@@ -929,6 +929,9 @@ private class CachingKtCompletionExtensionCandidateChecker(
     @OptIn(KaExperimentalApi::class)
     private val cache: MutableMap<KaCallableSymbol, KaExtensionApplicabilityResult> = mutableMapOf()
 
+    override val token: KaLifetimeToken
+        get() = delegate.token
+
     @KaExperimentalApi
     override fun computeApplicability(candidate: KaCallableSymbol): KaExtensionApplicabilityResult {
         return cache.computeIfAbsent(candidate) {
