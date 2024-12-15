@@ -105,12 +105,9 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCreatingFromArchetype() = runBlocking {
-    needFixForMaven4()
     setArchetype(MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null))
     val id = MavenId("org.foo", "module", "1.0")
     createNewModule(id)
-
-
 
     waitForArchetypeGenerated("org.foo")
     val projects = MavenProjectsManager.getInstance(project).projects
@@ -126,8 +123,11 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
   private fun waitForArchetypeGenerated(groupId: String) {
     object : WaitFor(10000) {
-      override fun condition() =
-        projectRoot.toNioPath().resolve("src/main/java/${groupId.split('.').joinToString("/")}/App.java").exists()
+      override fun condition(): Boolean {
+        val p = groupId.split('.').joinToString("/")
+        return projectRoot.toNioPath().resolve("src/main/java/$p/App.java").exists()
+               && projectRoot.toNioPath().resolve("src/test/java/$p/AppTest.java").exists()
+      }
     }
   }
 

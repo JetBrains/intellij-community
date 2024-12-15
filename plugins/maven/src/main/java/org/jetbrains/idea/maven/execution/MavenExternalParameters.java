@@ -108,17 +108,16 @@ public final class MavenExternalParameters {
     }
 
     params.getProgramParametersList().addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess());
+
+    String mavenMultimoduleDir;
+    if (!StringUtil.isEmptyOrSpaces(parameters.getMultimoduleDir())) {
+      mavenMultimoduleDir = expandPathAndMacros(parameters.getMultimoduleDir(), null, project);
+    }
+    else {
+      mavenMultimoduleDir = MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath();
+    }
+
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
-      String mavenMultimoduleDir;
-
-      if (!StringUtil.isEmptyOrSpaces(parameters.getMultimoduleDir())) {
-        mavenMultimoduleDir = expandPathAndMacros(parameters.getMultimoduleDir(), null, project);
-      }
-      else {
-        mavenMultimoduleDir = MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath();
-      }
-
-
       params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory", mavenMultimoduleDir);
     }
 
@@ -127,7 +126,9 @@ public final class MavenExternalParameters {
     }
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "4") >= 0) {
-      params.getVMParametersList().addProperty("maven.mainClass", "org.apache.maven.cli.MavenCli");
+      String currentWorkingDirectory = mavenMultimoduleDir;
+      params.getVMParametersList().addProperty("user.dir", currentWorkingDirectory);
+      params.getVMParametersList().addProperty("maven.mainClass", "org.apache.maven.cling.MavenCling");
     }
 
     String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
