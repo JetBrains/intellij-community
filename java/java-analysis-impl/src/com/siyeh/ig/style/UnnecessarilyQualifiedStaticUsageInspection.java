@@ -138,6 +138,10 @@ public final class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspe
     if (referenceName == null) {
       return false;
     }
+    if (referenceName.equals(PsiKeyword.YIELD) && parent instanceof PsiMethodCallExpression) {
+      // Qualifier required since Java 14 (JLS 3.8)
+      return false;
+    }
     final PsiElement target = referenceElement.resolve();
     if ((!(target instanceof PsiField) || ignoreStaticFieldAccesses) && (!(target instanceof PsiMethod) || ignoreStaticMethodCalls)) {
       return false;
