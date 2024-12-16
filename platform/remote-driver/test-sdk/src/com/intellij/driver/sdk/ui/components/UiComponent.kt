@@ -454,6 +454,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun getColor(point: Point?): Color {
+    moveMouse(point)
     return withComponent {
       Color(robot.getColor(it, point).getRGB())
     }

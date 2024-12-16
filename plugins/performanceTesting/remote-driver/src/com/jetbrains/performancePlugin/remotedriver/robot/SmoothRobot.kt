@@ -44,6 +44,16 @@ internal class SmoothRobot @JvmOverloads constructor(
     }
   }
 
+  fun getColor(component: Component, point: Point? = null): Color {
+    var where = point
+    if (where == null) {
+      where = visibleCenterOf(component)
+    }
+    val translatedPoint = performOnEdt { translate(component, where!!.x, where!!.y) }
+    checkNotNull(translatedPoint) { "Translated point should be not null" }
+    return awtRobot.getPixelColor(translatedPoint.x, translatedPoint.y)
+  }
+
   override fun moveMouse(component: Component) {
     if (component is JComponent) {
       scrollToVisible(this, component)

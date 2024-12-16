@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui.remote
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RemoteMouseButton
+import java.awt.Color
 import java.awt.Point
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot", plugin = REMOTE_ROBOT_MODULE_ID)
@@ -45,4 +46,6 @@ interface Robot {
   fun pressAndReleaseKeys(vararg keyCodes: Int)
   fun waitForIdle()
   fun selectAndDrag(component: Component, to: Point, from: Point, delayMs: Int)
+
+  fun getColor(component: Component, point: Point?): ColorRef
 }
