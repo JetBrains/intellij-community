@@ -11,7 +11,7 @@ import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.EelDescriptor
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApi

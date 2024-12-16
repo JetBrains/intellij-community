@@ -40,6 +40,7 @@ import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*

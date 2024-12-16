@@ -8,7 +8,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.platform.eel.provider.EelDescriptor;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import org.jetbrains.annotations.NotNull;

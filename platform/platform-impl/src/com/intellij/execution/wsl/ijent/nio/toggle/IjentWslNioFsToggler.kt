@@ -8,6 +8,7 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.WslPath
+import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler.WslEelProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -19,7 +20,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.EelDescriptor
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +109,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
     override fun getEelDescriptor(path: Path): EelDescriptor? =
       service<IjentWslNioFsToggler>().strategy?.enabledInDistros
         ?.find { distro -> path.root != null && distro.getUNCRootPath().isSameFileAs(path.root) }
-        ?.let { WslEelDescriptor(it, this@WslEelProvider) }
+        ?.let { WslEelDescriptor(it) }
 
     /**
      * Starts the IJent if a project on WSL is opened.
@@ -117,20 +119,6 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
      * It was not necessary for running the IDE.
      */
     override suspend fun tryInitialize(project: Project) = tryInitializeEelOnWsl(project)
-
-    private data class WslEelDescriptor(val distribution: WSLDistribution, val provider: WslEelProvider) : EelDescriptor {
-      override suspend fun upgrade(): EelApi {
-        return provider.getApiByDistribution(distribution)
-      }
-
-      override fun equals(other: Any?): Boolean {
-        return other is WslEelDescriptor && other.distribution.id == distribution.id
-      }
-
-      override fun hashCode(): Int {
-        return distribution.id.hashCode()
-      }
-    }
   }
 
   private val strategy = run {
@@ -213,5 +201,23 @@ private suspend fun tryInitializeEelOnWsl(project: Project) = coroutineScope {
         serviceAsync<WslIjentManager>().getIjentApi(distro, project, false)
       }
     }
+  }
+}
+
+
+internal data class WslEelDescriptor(val distribution: WSLDistribution) : EelDescriptor {
+  override val operatingSystem: EelPath.OS = EelPath.OS.UNIX
+
+
+  override suspend fun upgrade(): EelApi {
+    return WslEelProvider().getApiByDistribution(distribution)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return other is WslEelDescriptor && other.distribution.id == distribution.id
+  }
+
+  override fun hashCode(): Int {
+    return distribution.id.hashCode()
   }
 }
