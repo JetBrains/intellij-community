@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +34,8 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.execution.util.ExecUtil.startProcessBlockingUsingEel;
-import static com.intellij.platform.eel.provider.EelProviderUtil.*;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -386,7 +386,17 @@ public class GeneralCommandLine implements UserDataHolder {
       var commands = myProcessCreator != null || tryGetEel() != null
                      ? ContainerUtil.concat(List.of(myExePath), myProgramParams.getList())
                      : validateAndPrepareCommandLineForLocalRun();
-      return startProcess(commands);
+      var process = startProcess(commands);
+      String pidString = null;
+      if (LOG.isDebugEnabled()) {
+        try {
+          pidString = Long.toString(process.pid());
+        }
+        catch (UnsupportedOperationException ignored) {
+        }
+        LOG.debug(String.format("Process %s started with pid %s", getCommandLineString(), pidString));
+      }
+      return process;
     }
     catch (IOException e) {
       if (SystemInfo.isWindows) {
@@ -479,8 +489,12 @@ public class GeneralCommandLine implements UserDataHolder {
 
     for (var entry : myEnvParams.entrySet()) {
       String name = entry.getKey(), value = entry.getValue();
-      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
-      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
+      if (!EnvironmentUtil.isValidName(name)) {
+        throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
+      }
+      if (!EnvironmentUtil.isValidValue(value)) {
+        throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
+      }
     }
 
     String exePath = myExePath;
