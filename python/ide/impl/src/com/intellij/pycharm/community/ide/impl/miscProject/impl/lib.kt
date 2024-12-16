@@ -382,8 +382,10 @@ private suspend fun validatePythonAndGetVersion(pythonBinary: PythonBinary, flav
     }
   }
   process.destroyForcibly()
-  withTimeoutOrNull(300.milliseconds) {
-    process.awaitExit()
+  if (withTimeoutOrNull(500.milliseconds) {
+      process.awaitExit()
+    } == null) {
+    fileLogger.warn("Process $process still running, might be leaked")
   }
   return@withContext null
 }
