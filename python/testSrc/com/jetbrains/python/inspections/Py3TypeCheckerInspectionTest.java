@@ -491,6 +491,29 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-77937
+  public void testListOfEnumMembers() {
+    doTestByText(
+      """
+        from enum import Enum
+        
+        class Direction(Enum):
+            NORTH = "N"
+            SOUTH = "S"
+            EAST = "E"
+            WEST = "W"
+            LEFT = "L"
+            RIGHT = "R"
+            FORWARD = "F"
+        
+        CARTESIAN = [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]
+        
+        def index(d: Direction) -> None:
+            print(CARTESIAN.index(d))
+        """
+    );
+  }
+
   // PY-42418
   public void testParametrizedBuiltinCollectionsAndTheirTypingAliasesAreEquivalent() {
     doTest();

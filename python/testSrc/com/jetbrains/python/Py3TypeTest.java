@@ -3079,6 +3079,160 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-77937
+  public void testListOfLiterals() {
+    doTest("list[int]", """
+      from typing import Literal
+      
+      num1: Literal[1] = 1
+      num2: Literal[2] = 2
+      expr = [num1, num2]
+      """);
+
+    doTest("list[int | str]", """
+      from typing import Literal
+      
+      e1: Literal[1] = 1
+      e2: Literal["abc"] = "abc"
+      expr = [e1, e2]
+      """);
+
+    doTest("list[int | str]", """
+      from typing import Literal, LiteralString
+      
+      e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      expr = [e]
+      """);
+
+    doTest("list[Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = [Direction.NORTH, Direction.WEST]
+      """);
+  }
+
+  // PY-77937
+  public void testSetOfLiterals() {
+    doTest("set[int]", """
+      from typing import Literal
+      
+      num1: Literal[1] = 1
+      num2: Literal[2] = 2
+      expr = {num1, num2}
+      """);
+
+    doTest("set[int | str]", """
+      from typing import Literal
+      
+      e1: Literal[1] = 1
+      e2: Literal["abc"] = "abc"
+      expr = {e1, e2}
+      """);
+
+    doTest("set[int | str]", """
+      from typing import Literal, LiteralString
+      
+      e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      expr = {e}
+      """);
+
+    doTest("set[Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = {Direction.NORTH, Direction.WEST}
+      """);
+  }
+
+  // PY-77937
+  public void testDictOfLiterals() {
+    doTest("dict[int, str]", """
+      from typing import Literal
+      
+      k1: Literal[1] = 1
+      v1: Literal["2"] = "1"
+      k2: Literal[2] = 2
+      v2: Literal["2"] = "2"
+      expr = {k1: v1, k2: v2}
+      """);
+
+    doTest("dict[int | str, str | bool]", """
+      from typing import Literal, LiteralString
+      
+      k1: Literal[1] = 1
+      v1: Literal["ab"] = "ab"
+      k2: LiteralString = "k2"
+      v2: Literal[True] = True
+      expr = { k1: v1, k2: v2 }
+      """);
+
+    doTest("dict[int | str, int | str]", """
+      from typing import Literal, LiteralString
+      
+      k: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      v: Literal[1, "ab"] | LiteralString | Literal["x"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[Direction, Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = {Direction.NORTH: Direction.SOUTH, Direction.WEST: Direction.EAST}
+      """);
+  }
+
+  // PY-77937
+  // Special case: `TypedDict` type is inferred for a dict literal with string-only keys
+  public void testDictOfLiteralsWithStringOnlyKeys() {
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      v: Literal[1, "ab"] = 1
+      expr = {"abb": v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      k = "abb"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      k: Literal["abb"] = "abb"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal, LiteralString
+
+      k: LiteralString = "k"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
