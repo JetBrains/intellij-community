@@ -15,7 +15,6 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
-import com.intellij.ide.actions.searcheverywhere.GroupTitleRenderer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
@@ -878,6 +877,38 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     @Unmodifiable
     private @NotNull List<RunAnythingGroup> getVisibleGroups() {
       return ContainerUtil.filter(myTemplateGroups, group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group));
+    }
+  }
+
+  private static class GroupTitleRenderer extends CellRendererPanel {
+
+    final SimpleColoredComponent titleLabel = new SimpleColoredComponent();
+
+    GroupTitleRenderer() {
+      setLayout(new BorderLayout());
+      SeparatorComponent separatorComponent = new SeparatorComponent(
+        titleLabel.getPreferredSize().height / 2, JBUI.CurrentTheme.BigPopup.listSeparatorColor(), null);
+
+      JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
+        .addToCenter(separatorComponent)
+        .addToLeft(titleLabel)
+        .withBorder(JBUI.Borders.empty(1, 7))
+        .withBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.BACKGROUND : UIUtil.getListBackground());
+      add(topPanel, BorderLayout.NORTH);
+    }
+
+    public GroupTitleRenderer withDisplayedData(@Nls String title, Component itemContent) {
+      titleLabel.clear();
+      titleLabel.append(title, new SimpleTextAttributes(
+        SimpleTextAttributes.STYLE_SMALLER, JBUI.CurrentTheme.BigPopup.listTitleLabelForeground()));
+      Component prevContent = ((BorderLayout)getLayout()).getLayoutComponent(BorderLayout.CENTER);
+      if (prevContent != null) {
+        remove(prevContent);
+      }
+      add(itemContent, BorderLayout.CENTER);
+      accessibleContext = itemContent.getAccessibleContext();
+
+      return this;
     }
   }
 }
