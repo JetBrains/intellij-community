@@ -83,7 +83,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     val phaser = Phaser(2)
     val task = object : Task.Backgroundable(project, "Test task", true) {
       override fun run(indicator: ProgressIndicator) {
-        TestCase.assertFalse(indicator.isCanceled)
+        assertFalse(indicator.isCanceled)
         val sink = queue.getSink(provider, DEFAULT_SCANNING_ID)
         try {
           phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) // p1
@@ -95,19 +95,19 @@ class PerProviderSinkTest : LightPlatformTestCase() {
         finally {
           sinkRunning.set(false)
           sink.close()
-          TestCase.assertTrue(indicator.isCanceled) // sink.addFile should cancel the progress
+          assertTrue(indicator.isCanceled) // sink.addFile should cancel the progress
         }
       }
     }
 
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, EmptyProgressIndicator())
 
-    TestCase.assertFalse(sinkRunning.get())
+    assertFalse(sinkRunning.get())
     phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) // p1
     phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) // p2
-    TestCase.assertTrue(sinkRunning.get())
+    assertTrue(sinkRunning.get())
     queue.cancelAllTasksAndWait()
-    TestCase.assertFalse(sinkRunning.get())
+    assertFalse(sinkRunning.get())
   }
 
   fun testNonCancelableSection() {
@@ -116,18 +116,18 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     val task = object : Task.Backgroundable(project, "Test task", true) {
       override fun run(indicator: ProgressIndicator) {
         try {
-          TestCase.assertNotNull(ProgressManager.getGlobalProgressIndicator())
+          assertNotNull(ProgressManager.getGlobalProgressIndicator())
 
           // There should be no PCE in non-cancelable sections
           ProgressManager.getInstance().executeNonCancelableSection {
             try {
-              TestCase.assertFalse(indicator.isCanceled)
+              assertFalse(indicator.isCanceled)
               queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
                 sink.addFile(createFile("f1"))
               }
             }
-            catch (pce: ProcessCanceledException) {
-              TestCase.fail("Should not throw PCE in non-cancellable section")
+            catch (_: ProcessCanceledException) {
+              fail("Should not throw PCE in non-cancellable section")
             }
             catch (t: Throwable) {
               assertEquals("Could not cancel sink creation", t.message)
@@ -147,7 +147,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, EmptyProgressIndicator())
 
     phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) // p1
-    TestCase.assertTrue(nonCancelableSectionCompeteNormally.get())
+    assertTrue(nonCancelableSectionCompeteNormally.get())
   }
 
   fun testManySinksManyProvidersStress() {
