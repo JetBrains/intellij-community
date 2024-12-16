@@ -199,7 +199,9 @@ public final class GradleExecutionHelper {
     }
   }
 
-  private static void setupJvmArguments(
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static void setupJvmArguments(
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings,
     @Nullable BuildEnvironment buildEnvironment
