@@ -433,7 +433,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       ErrorLog errorLog = TestLoggerKt.getErrorLog();
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW) && errorLog != null) {
-        errorLog.recordLoggedError(message, details, t);
+        errorLog.recordLoggedError(message, t);
         return;
       }
       if (actions.contains(LoggedErrorProcessor.Action.LOG)) {
