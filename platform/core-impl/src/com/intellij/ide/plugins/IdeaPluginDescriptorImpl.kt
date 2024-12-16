@@ -295,6 +295,11 @@ class IdeaPluginDescriptorImpl(
       // Modules, which depend on it, will not be loaded in split frontend.
       add(PluginId.getId("com.intellij.platform.experimental.backend"))
     }
+    if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient()) {
+      // This alias is available in monolith only.
+      // Modules, which depend on it, will not be loaded in split mode.
+      add(PluginId.getId("com.intellij.platform.experimental.monolith"))
+    }
   }
 
   private fun processOldDependencies(descriptor: IdeaPluginDescriptorImpl,
