@@ -86,7 +86,7 @@ public final class RegionUrlMapper {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String tryMapUrlBlocking(@NotNull String url) {
-    return tryMapUrl(url).join();
+    return tryMapUrlBlocking(url, RegionSettings.getRegion());
   }
 
   /**
@@ -103,7 +103,14 @@ public final class RegionUrlMapper {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String tryMapUrlBlocking(@NotNull String url, @NotNull Region region) {
-    return tryMapUrl(url, region).join();
+    try {
+      return tryMapUrl(url, region).join();
+    }
+    catch (Throwable e) {
+      // tryMapUrl() should have already swallowed any failures, so this shouldn't ever happen
+      LOG.warn("Unexpected exception when mapping region-specific url", e);
+      return url;
+    }
   }
 
   /**
