@@ -18,13 +18,19 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
+/**
+ * Handles Java implicit initialization of fields.
+ *
+ * Identifies fields that are uninitialized in constructors or initializer blocks
+ * and generates explicit initializers with default values (e.g., `null`, `0`, or `false`).
+ */
 class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.initializer !is JKStubExpression) return recurse(element)
 
-        val state = element.initializationState()
+        val state = element.computeInitializationState()
         if (state == INITIALIZED_IN_ALL_CONSTRUCTORS) return recurse(element)
         if (state == INITIALIZED_IN_SOME_CONSTRUCTORS && element.modality == FINAL) return recurse(element)
 
@@ -33,7 +39,7 @@ class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConver
     }
 
     context(KaSession)
-    private fun JKField.initializationState(): InitializationState {
+    private fun JKField.computeInitializationState(): InitializationState {
         val containingClass = parentOfType<JKClass>() ?: return NON_INITIALIZED
         val constructors = containingClass.declarationList.filterIsInstance<JKConstructor>()
         val initBlocks = containingClass.declarationList.filterIsInstance<JKInitDeclaration>()
