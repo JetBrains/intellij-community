@@ -42,7 +42,8 @@ class CompilationChartsViewModel(val project: Project, val lifetime: Lifetime, v
 
     if (value.cpu > 0) {
       statistics.cpu.add(StatisticData(value.time, value.cpu))
-    } else {
+    }
+    else {
       val lastElement = statistics.cpu.lastOrNull()?.data ?: 0L
       statistics.cpu.add(StatisticData(value.time, calculateNewLastCpuValue(lastElement)))
     }
@@ -79,25 +80,35 @@ class CompilationChartsViewModel(val project: Project, val lifetime: Lifetime, v
     override fun compareTo(other: StatisticData): Int = time.compareTo(other.time)
   }
 
-  data class Statistics(val memoryUsed: RdList<StatisticData> = RdList(),
-                        val memoryMax: RdList<StatisticData> = RdList(),
-                        val cpu: RdList<StatisticData> = RdList(),
-                        var maxMemory: Long = 0,
-                        var start: Long = Long.MAX_VALUE,
-                        var end: Long = 0)
+  data class Statistics(
+    val memoryUsed: RdList<StatisticData> = RdList(),
+    val memoryMax: RdList<StatisticData> = RdList(),
+    val cpu: RdList<StatisticData> = RdList(),
+    var maxMemory: Long = 0,
+    var start: Long = Long.MAX_VALUE,
+    var end: Long = 0,
+  )
 
-  data class ViewModules(var filter: Predicate<EventKey> = Filter(),
-                         val data: MutableMap<EventKey, List<Modules.Event>> = ConcurrentHashMap()) {
+  data class ViewModules(
+    var filter: Predicate<EventKey> = Filter(),
+    val data: MutableMap<EventKey, List<Modules.Event>> = ConcurrentHashMap(),
+  ) {
     fun data(): Map<EventKey, List<Modules.Event>> = data(filter)
     fun data(filter: Predicate<EventKey>): Map<EventKey, List<Modules.Event>> = data.filter { filter.test(it.key) }
   }
 
-  data class Filter(val text: List<String> = listOf(), val production: Boolean = true, val test: Boolean = true) : Predicate<EventKey> {
-    fun setText(text: List<String>): Filter = Filter(text, production, test)
-    fun setProduction(production: Boolean): Filter = Filter(text, production, test)
-    fun setTest(test: Boolean): Filter = Filter(text, production, test)
+  data class Filter(
+    val text: List<String> = listOf(), val production: Boolean = true,
+    val test: Boolean = true, val dependenciesFor: FilterDependenciesFor? = null,
+  ) : Predicate<EventKey> {
+    fun setText(text: List<String>): Filter = Filter(text, production, test, null)
+    fun setProduction(production: Boolean): Filter = Filter(text, production, test, null)
+    fun setTest(test: Boolean): Filter = Filter(text, production, test, null)
+    fun setDependenciesFor(dependenciesFor: FilterDependenciesFor?): Filter = Filter(text, production, test, dependenciesFor)
 
     override fun test(key: EventKey): Boolean {
+      if (dependenciesFor != null && !dependenciesFor.predicate.invoke(key)) return false
+
       if (text.isNotEmpty()) {
         if (!text.all { key.name.contains(it) }) return false
       }
@@ -111,6 +122,8 @@ class CompilationChartsViewModel(val project: Project, val lifetime: Lifetime, v
       return true
     }
   }
+
+  data class FilterDependenciesFor(val name: String, val predicate: ((EventKey) -> Boolean))
 
   enum class CpuMemoryStatisticsType {
     CPU {

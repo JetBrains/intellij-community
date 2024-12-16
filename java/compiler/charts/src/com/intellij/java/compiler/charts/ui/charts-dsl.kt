@@ -2,8 +2,11 @@
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.FilterDependenciesFor
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.StatisticData
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil.FontSize
 import java.awt.Color
@@ -133,6 +136,18 @@ class CompilationChartsModuleInfo(
   private val hint = CompilationChartsHint(vm.project, component)
 
   override fun mouseClicked(e: MouseEvent) {
+    val name = search(e.point)?.key?.name ?: return
+    val dependenciesFor = vm.filter.value.dependenciesFor
+    if (dependenciesFor != null && dependenciesFor.name == name) {
+      vm.filter.set(vm.filter.value.setDependenciesFor(null))
+      return
+    }
+    val module = ModuleManager.getInstance(vm.project).findModuleByName(name) ?: return
+
+    val dependencies: MutableList<String> = ArrayList()
+    dependencies.add(name)
+    ModuleRootManager.getInstance(module).orderEntries().forEach { entry -> dependencies.add(entry.presentableName) }
+    vm.filter.set(vm.filter.value.setDependenciesFor(FilterDependenciesFor(name) { key -> dependencies.contains(key.name) }))
   }
 
   override fun mouseMoved(e: MouseEvent) {
