@@ -4,12 +4,12 @@ package com.intellij.platform.searchEverywhere.mocks
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProviderFactory
 
-class SearchEverywhereItemsProviderFactoryMockLocal: SearchEverywhereItemsProviderFactory {
+class SearchEverywhereItemsProviderFactoryMockBetaLocal: SearchEverywhereItemsProviderFactory {
   override fun getItemsProvider(): SearchEverywhereItemsProvider =
-    SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 1000, delayStep = 3)
+    SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 1300, delayStep = 5)
 
   companion object {
-    const val PREFIX: String = "MockLocal"
+    const val PREFIX: String = "BetaLocal"
     const val ID: String = "SearchEverywhereItemsProviderMock_$PREFIX"
   }
 }

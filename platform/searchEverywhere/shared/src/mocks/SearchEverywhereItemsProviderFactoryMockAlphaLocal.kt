@@ -1,0 +1,15 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.searchEverywhere.mocks
+
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProviderFactory
+
+class SearchEverywhereItemsProviderFactoryMockAlphaLocal: SearchEverywhereItemsProviderFactory {
+  override fun getItemsProvider(): SearchEverywhereItemsProvider =
+    SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 1000, delayStep = 3)
+
+  companion object {
+    const val PREFIX: String = "AlphaLocal"
+    const val ID: String = "SearchEverywhereItemsProviderMock_$PREFIX"
+  }
+}

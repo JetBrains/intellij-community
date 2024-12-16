@@ -15,6 +15,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderFactoryMockLocal"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderFactoryMockAlphaLocal"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderFactoryMockBetaLocal"/>
   </extensions>
 </idea-plugin>

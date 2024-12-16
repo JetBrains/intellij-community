@@ -9,18 +9,22 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.tabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.bindSelectedTabIn
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
-class SearchEverywhereTabsPane(tabNames: @Nls List<String>, toolbar: JComponent? = null): NonOpaquePanel() {
-  lateinit var tabbedPane: JBTabbedPane
-
-  @JvmField
-  val panel: DialogPanel
+class SearchEverywhereTabsPane(tabNames: @Nls List<String>,
+                               selectedTabState: MutableStateFlow<Int>,
+                               coroutineScope: CoroutineScope,
+                               toolbar: JComponent? = null): NonOpaquePanel() {
+  private lateinit var tabbedPane: JBTabbedPane
+  private val panel: DialogPanel
 
   init {
     panel = panel {
@@ -56,5 +60,7 @@ class SearchEverywhereTabsPane(tabNames: @Nls List<String>, toolbar: JComponent?
     }
 
     add(panel)
+
+    tabbedPane.bindSelectedTabIn(selectedTabState, coroutineScope)
   }
 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
+import javax.swing.JTabbedPane
 import javax.swing.text.JTextComponent
 
 @Suppress("DuplicatedCode")
@@ -29,6 +30,30 @@ fun JTextComponent.bindTextIn(textState: MutableStateFlow<String>, coroutineScop
         document.removeDocumentListener(listener)
         text = textValue
         document.addDocumentListener(listener)
+      }
+    }
+  }
+}
+
+@Experimental
+fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, coroutineScope: CoroutineScope) {
+  val changeListener = javax.swing.event.ChangeListener {
+    val selectedIndex = selectedIndex
+    if (selectedTabState.value != selectedIndex) {
+      selectedTabState.update { selectedIndex }
+    }
+  }
+
+  addChangeListener(changeListener)
+
+  coroutineScope.launch {
+    selectedTabState.collectLatest { tabIndex ->
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        if (selectedIndex != tabIndex) {
+          removeChangeListener(changeListener)
+          selectedIndex = tabIndex
+          addChangeListener(changeListener)
+        }
       }
     }
   }

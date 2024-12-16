@@ -10,6 +10,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMock1"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockAlphaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockBetaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockCharlieRemote"/>
   </extensions>
 </idea-plugin>

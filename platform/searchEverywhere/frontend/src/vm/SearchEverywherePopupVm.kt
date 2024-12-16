@@ -18,7 +18,9 @@ class SearchEverywherePopupVm(val coroutineScope: CoroutineScope,
                               private val sessionId: EID,
                               private val onClose: suspend () -> Unit) {
 
-  val currentTab: StateFlow<SearchEverywhereTabVm>
+  val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(0)
+
+  val currentTab: Flow<SearchEverywhereTabVm>
   val searchResults: Flow<Flow<SearchEverywhereItemData>>
 
   val searchPattern = MutableStateFlow("")
@@ -28,27 +30,34 @@ class SearchEverywherePopupVm(val coroutineScope: CoroutineScope,
     SearchEverywhereTabVm(coroutineScope, tab, searchPattern)
   }
 
-  private val _currentTab: MutableStateFlow<SearchEverywhereTabVm>
-
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
 
     val activeTab = tabVms.first()
-    _currentTab = MutableStateFlow(activeTab)
-    currentTab = _currentTab.asStateFlow()
+    currentTab = currentTabIndex.map {
+      println("ayay currentTabIndex $it")
+      tabVms[it.coerceIn(tabVms.indices)]
+    }.withPrevious().map { (prev, next) ->
+      println("ayay prev-next ${prev?.name} -> ${next.name}")
+      prev?.setActive(false)
+      next.setActive(true)
+      next
+    }
     searchResults = currentTab.flatMapLatest { it.searchResults }
     activeTab.setActive(true)
-  }
-
-  fun selectTab(index: Int) {
-    _currentTab.value.setActive(false)
-    _currentTab.value = tabVms[index.coerceIn(0..<tabVms.size)]
-    _currentTab.value.setActive(true)
   }
 
   fun dispose() {
     coroutineScope.launch {
       onClose()
     }
+  }
+}
+
+private fun <T> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
+  var previous: T? = null
+  collect { current ->
+    emit(Pair(previous, current))
+    previous = current
   }
 }

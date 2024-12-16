@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
 import com.intellij.platform.searchEverywhere.frontend.vm.SearchEverywherePopupVm
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -12,6 +13,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.bindTextIn
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -19,17 +21,19 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.ScrollPaneConstants
 
 @Internal
 class SearchEverywherePopupContentPane(private val vm: SearchEverywherePopupVm): JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
 
-  private val tabsPane: SearchEverywhereTabsPane = SearchEverywhereTabsPane(vm.tabVms.map { it.name })
+  private val tabsPane: SearchEverywhereTabsPane = SearchEverywhereTabsPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
   private val textField: SearchEverywhereTextField = SearchEverywhereTextField()
 
   private val resultListModel = JBList.createDefaultListModel<SearchEverywhereItemData>()
   private val resultList: JBList<SearchEverywhereItemData> = JBList(resultListModel)
-  private val resultsScrollPane = JBScrollPane(resultList)
+  private val resultsScrollPane = createListPane(resultList)
 
   init {
     layout = GridLayout()
@@ -45,10 +49,6 @@ class SearchEverywherePopupContentPane(private val vm: SearchEverywherePopupVm):
 
     textField.bindTextIn(vm.searchPattern, vm.coroutineScope)
 
-    //tabsPane.tabbedPane.addChangeListener { change ->
-    //  change.source
-    //}
-
     vm.coroutineScope.launch {
       vm.searchResults.collectLatest {
         withContext(Dispatchers.EDT) {
@@ -62,6 +62,22 @@ class SearchEverywherePopupContentPane(private val vm: SearchEverywherePopupVm):
         }
       }
     }
+  }
+
+  private fun createListPane(resultList: JBList<*>): JScrollPane {
+    val resultsScroll: JScrollPane = object : JBScrollPane(resultList) {
+      override fun updateUI() {
+        val isBorderNull = border == null
+        super.updateUI()
+        if (isBorderNull) border = null
+      }
+    }
+    resultsScroll.border = null
+    resultsScroll.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    ComponentUtil.putClientProperty(resultsScroll.verticalScrollBar, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
+
+    resultsScroll.preferredSize = JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight())
+    return resultsScroll
   }
 
   override fun dispose() {
