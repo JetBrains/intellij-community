@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.TextMateInterner;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.Set;
-
 public class TextMateSyntaxTable extends TextMateSyntaxTableCore {
   /**
    * @deprecated use {@link #addSyntax(Plist, TextMateInterner)}
@@ -21,8 +19,8 @@ public class TextMateSyntaxTable extends TextMateSyntaxTableCore {
   public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
     return addSyntax(plist, new TextMateInterner() {
       @Override
-      public @NotNull CharSequence intern(@NotNull CharSequence name) {
-        return interner.intern(name);
+      public @NotNull String intern(@NotNull String name) {
+        return interner.intern(name).toString();
       }
 
       @Override

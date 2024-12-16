@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.textmate
 
 import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher
-import org.jetbrains.plugins.textmate.language.TextMateHashSetInterner
+import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 
 fun TextMateSyntaxTableCore.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
   val matchers = HashMap<TextMateFileNameMatcher, CharSequence>()
-  val myInterner = TextMateHashSetInterner()
+  val myInterner = TextMateConcurrentMapInterner()
   val grammars = TestUtil.readBundle(bundleName).readGrammars().iterator()
   while (grammars.hasNext()) {
     val grammar = grammars.next()

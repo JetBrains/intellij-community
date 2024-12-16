@@ -25,7 +25,7 @@ import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleT
 import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings
 import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings
 import org.jetbrains.plugins.textmate.editor.fileNameExtensions
-import org.jetbrains.plugins.textmate.language.TextMateHashSetInterner
+import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.preferences.*
@@ -52,7 +52,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   private val snippetRegistry = SnippetsRegistryImpl()
   private val preferenceRegistry = PreferencesRegistryImpl()
   private val shellVariablesRegistry = ShellVariablesRegistryImpl()
-  private val interner: TextMateInterner = TextMateHashSetInterner()
+  private val interner: TextMateInterner = TextMateConcurrentMapInterner()
 
   init {
     val app = ApplicationManager.getApplication()
@@ -209,7 +209,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           try {
             return@readVSCBundle Files.newInputStream(directory.resolve(relativePath))
           }
-          catch (e: NoSuchFileException) {
+          catch (_: NoSuchFileException) {
             LOG.warn("Cannot find referenced file `$relativePath` in bundle `$directory`")
             return@readVSCBundle null
           }
@@ -278,7 +278,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           emptySet()
         }
         else {
-          pairs.mapTo(HashSet(pairs.size)) { TextMateAutoClosingPair(interner.intern(it.left), interner.intern(it.right), it.notIn) }
+          pairs.mapTo(HashSet(pairs.size)) { TextMateAutoClosingPair(interner.intern(it.left.toString()), interner.intern(it.right.toString()), it.notIn) }
         }
       }
       val internedSurroundingPairs = preferences.surroundingPairs?.let { pairs ->

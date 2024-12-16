@@ -157,7 +157,7 @@ public class TextMateSyntaxTableCore {
       return new SyntaxRootProxyDescriptor(result);
     }
     int i = include.indexOf('#');
-    CharSequence scope = i >= 0 ? include.subSequence(0, i) : include;
+    String scope = i >= 0 ? include.substring(0, i) : include;
     String ruleId = i >= 0 ? include.substring(i + 1) : "";
     return new SyntaxScopeProxyDescriptor(interner.intern(scope), ruleId.isEmpty() ? -1 : getRuleId(ruleId), this, result);
   }
