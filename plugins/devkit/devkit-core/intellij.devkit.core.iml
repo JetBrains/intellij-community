@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />

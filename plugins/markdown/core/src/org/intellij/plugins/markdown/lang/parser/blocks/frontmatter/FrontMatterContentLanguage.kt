@@ -7,6 +7,6 @@ data class FrontMatterContentLanguage(val id: String)
 
 @ApiStatus.Experimental
 object FrontMatterLanguages {
-  val YAML = FrontMatterContentLanguage("yaml")
-  val TOML = FrontMatterContentLanguage("TOML")
+  val YAML: FrontMatterContentLanguage = FrontMatterContentLanguage("yaml")
+  val TOML: FrontMatterContentLanguage = FrontMatterContentLanguage("TOML")
 }

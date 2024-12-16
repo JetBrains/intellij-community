@@ -10,8 +10,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />

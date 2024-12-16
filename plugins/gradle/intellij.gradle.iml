@@ -12,6 +12,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />

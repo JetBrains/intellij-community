@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
@@ -31,13 +32,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
+import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
-import static com.intellij.openapi.util.Predicates.nonNull;
-import static org.junit.Assert.assertNotNull;
 
 @TestOnly
 public class XDebuggerTestUtil {
@@ -91,9 +90,9 @@ public class XDebuggerTestUtil {
     WriteAction.runAndWait(() -> {
       XLineBreakpoint<?> breakpoint = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
         .map(t -> breakpointManager.findBreakpointAtLine(t, file, line))
-        .filter(nonNull())
+        .filter(Predicates.nonNull())
         .findFirst().orElse(null);
-      assertNotNull(breakpoint);
+      Assert.assertNotNull(breakpoint);
       breakpointManager.removeBreakpoint(breakpoint);
     });
   }
@@ -191,9 +190,9 @@ public class XDebuggerTestUtil {
 
   private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout) {
     XStackFrame frame = session.getCurrentStackFrame();
-    assertNotNull(frame);
+    Assert.assertNotNull(frame);
     XDebuggerEvaluator evaluator = frame.getEvaluator();
-    assertNotNull(evaluator);
+    Assert.assertNotNull(evaluator);
     XTestEvaluationCallback callback = new XTestEvaluationCallback();
     evaluator.evaluate(expression, callback, session.getCurrentPosition());
     return callback.waitFor(timeout);

@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />

@@ -34,7 +34,7 @@ import org.jetbrains.jewel.markdown.Markdown
 import javax.swing.JComponent
 
 @ExperimentalJewelApi
-class MarkdownComposePanel(
+internal class MarkdownComposePanel(
   private val project: Project?,
   private val virtualFile: VirtualFile?,
   private val updateHandler: MarkdownUpdateHandler = MarkdownUpdateHandler.Debounced()

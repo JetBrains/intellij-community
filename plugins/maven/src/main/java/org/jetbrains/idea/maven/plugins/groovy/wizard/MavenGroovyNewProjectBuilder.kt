@@ -29,8 +29,7 @@ import kotlin.io.path.createDirectories
 /**
  * Currently used only for new project wizard, thus the functionality is rather limited
  */
-class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
-
+internal class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
   var createSampleCode = false
   var groovySdkVersion = GROOVY_SDK_FALLBACK_VERSION
 

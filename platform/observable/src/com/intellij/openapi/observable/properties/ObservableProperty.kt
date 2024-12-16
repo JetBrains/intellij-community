@@ -7,10 +7,9 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 /**
- * Read only interface for observable property.
+ * Read-only interface for observable property.
  */
 interface ObservableProperty<T> : ReadOnlyProperty<Any?, T> {
-
   /**
    * @return value of property
    */

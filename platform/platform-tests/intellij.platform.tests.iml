@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="library" scope="TEST" name="jmock.junit4" level="project" />
     <orderEntry type="library" scope="TEST" name="jmock.legacy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />

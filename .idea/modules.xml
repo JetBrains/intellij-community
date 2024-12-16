@@ -698,6 +698,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" filepath="$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-users-onboarding/intellij.platform.ide.newUsersOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-users-onboarding/intellij.platform.ide.newUsersOnboarding.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/observable/intellij.platform.ide.observable.iml" filepath="$PROJECT_DIR$/platform/observable/intellij.platform.ide.observable.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/progress/shared/intellij.platform.ide.progress.iml" filepath="$PROJECT_DIR$/platform/progress/shared/intellij.platform.ide.progress.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/remote/intellij.platform.ide.remote.iml" filepath="$PROJECT_DIR$/platform/platform-impl/remote/intellij.platform.ide.remote.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/rpc/intellij.platform.ide.rpc.iml" filepath="$PROJECT_DIR$/platform/platform-impl/rpc/intellij.platform.ide.rpc.iml" />
@@ -949,12 +950,12 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-sync/jba/intellij.settingsSync.jba.iml" filepath="$PROJECT_DIR$/plugins/settings-sync/jba/intellij.settingsSync.jba.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/intellij.sh.iml" filepath="$PROJECT_DIR$/plugins/sh/intellij.sh.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/copyright/intellij.sh.copyright.iml" filepath="$PROJECT_DIR$/plugins/sh/copyright/intellij.sh.copyright.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/sh/copyright/tests/intellij.sh.copyright.tests.iml" filepath="$PROJECT_DIR$/plugins/sh/copyright/tests/intellij.sh.copyright.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/sh/copyright/intellij.sh.copyright.tests.iml" filepath="$PROJECT_DIR$/plugins/sh/copyright/intellij.sh.copyright.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/core/intellij.sh.core.iml" filepath="$PROJECT_DIR$/plugins/sh/core/intellij.sh.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/markdown/intellij.sh.markdown.iml" filepath="$PROJECT_DIR$/plugins/sh/markdown/intellij.sh.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/python/intellij.sh.python.iml" filepath="$PROJECT_DIR$/plugins/sh/python/intellij.sh.python.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/terminal/intellij.sh.terminal.iml" filepath="$PROJECT_DIR$/plugins/sh/terminal/intellij.sh.terminal.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/sh/core/tests/intellij.sh.tests.iml" filepath="$PROJECT_DIR$/plugins/sh/core/tests/intellij.sh.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/sh/core/intellij.sh.tests.iml" filepath="$PROJECT_DIR$/plugins/sh/core/intellij.sh.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smart-update/intellij.smart.update.iml" filepath="$PROJECT_DIR$/platform/smart-update/intellij.smart.update.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/space/jps-plugin/intellij.space.java.jps.iml" filepath="$PROJECT_DIR$/plugins/space/jps-plugin/intellij.space.java.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" />

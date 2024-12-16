@@ -28,7 +28,6 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import java.io.File
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMutableProperty0

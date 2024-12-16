@@ -32,6 +32,9 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.platform.compose" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
   </component>
 </module>

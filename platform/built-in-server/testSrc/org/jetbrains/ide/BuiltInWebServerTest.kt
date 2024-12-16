@@ -167,7 +167,7 @@ internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
 
     val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
     val builder = HttpRequest.newBuilder(URI("$host/script.js"))
-    builder.header(TOKEN_HEADER_NAME, acquireToken())
+    builder.header(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
     builder.header(HttpHeaderNames.REFERER.toString(), "${host}/${project.name}/index.html")
 
     val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()

@@ -4,7 +4,7 @@ package com.intellij.openapi.observable.operation.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operation.OperationExecutionContext
 import com.intellij.openapi.observable.operation.OperationExecutionContext.ContextKey
-import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.util.Disposer.register
 import org.jetbrains.annotations.ApiStatus
 import java.util.Optional
 
@@ -26,8 +26,8 @@ class OperationExecutionContextBuilder : OperationExecutionContext.Builder {
 
   override fun <T> putData(key: ContextKey<T>, data: T, parentDisposable: Disposable?) {
     this.data[key] = Optional.ofNullable(data)
-    parentDisposable?.whenDisposed {
-      this.data.remove(key)
+    if (parentDisposable != null) {
+      register(parentDisposable, Disposable { this.data.remove(key) })
     }
   }
 

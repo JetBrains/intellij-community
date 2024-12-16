@@ -1,6 +1,16 @@
 package com.intellij.execution.multilaunch.design.columns.impl
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.multilaunch.design.ExecutableRow
+import com.intellij.execution.multilaunch.design.MultiLaunchConfigurationViewModel
+import com.intellij.execution.multilaunch.design.columns.ExecutableTableColumn
+import com.intellij.execution.multilaunch.design.components.DropDownDecorator
+import com.intellij.execution.multilaunch.design.components.UnknownItemLabel
+import com.intellij.execution.multilaunch.design.popups.SelectorPopupProvider
+import com.intellij.execution.multilaunch.design.popups.SelectorPopupsContainer
+import com.intellij.execution.multilaunch.execution.conditions.Condition
+import com.intellij.execution.multilaunch.execution.conditions.ConditionFactory
+import com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.ui.DialogPanel
@@ -15,16 +25,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.AbstractTableCellEditor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.execution.multilaunch.design.ExecutableRow
-import com.intellij.execution.multilaunch.design.MultiLaunchConfigurationViewModel
-import com.intellij.execution.multilaunch.design.columns.ExecutableTableColumn
-import com.intellij.execution.multilaunch.design.components.DropDownDecorator
-import com.intellij.execution.multilaunch.design.components.UnknownItemLabel
-import com.intellij.execution.multilaunch.design.popups.SelectorPopupProvider
-import com.intellij.execution.multilaunch.design.popups.SelectorPopupsContainer
-import com.intellij.execution.multilaunch.execution.conditions.Condition
-import com.intellij.execution.multilaunch.execution.conditions.ConditionFactory
-import com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -32,7 +32,7 @@ import javax.swing.JLabel
 import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
 
-class ConditionColumn(
+internal class ConditionColumn(
   private val viewModel: MultiLaunchConfigurationViewModel
 ) : ExecutableTableColumn<Condition>(
   ExecutionBundle.message("run.configurations.multilaunch.table.column.condition")) {

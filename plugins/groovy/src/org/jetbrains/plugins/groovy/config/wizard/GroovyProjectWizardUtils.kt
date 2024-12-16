@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
 import javax.swing.SwingUtilities
 
-const val GROOVY_SDK_FALLBACK_VERSION = "3.0.9"
+const val GROOVY_SDK_FALLBACK_VERSION: String = "3.0.9"
 
 private const val MAIN_FILE = "Main.groovy"
 private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
