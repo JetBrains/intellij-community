@@ -5878,9 +5878,11 @@ c:com.intellij.openapi.actionSystem.impl.ActionButton
 - updateIcon():V
 - p:updateToolTipText():V
 - updateUI():V
-pf:com.intellij.openapi.actionSystem.impl.ActionButton$AccessibleActionButton
+pc:com.intellij.openapi.actionSystem.impl.ActionButton$AccessibleActionButton
 - javax.swing.JComponent$AccessibleJComponent
 - javax.accessibility.AccessibleAction
+- javax.accessibility.AccessibleValue
+- p:<init>(com.intellij.openapi.actionSystem.impl.ActionButton):V
 - doAccessibleAction(I):Z
 - getAccessibleAction():javax.accessibility.AccessibleAction
 - getAccessibleActionCount():I
@@ -5890,6 +5892,11 @@ pf:com.intellij.openapi.actionSystem.impl.ActionButton$AccessibleActionButton
 - getAccessibleName():java.lang.String
 - getAccessibleRole():javax.accessibility.AccessibleRole
 - getAccessibleStateSet():javax.accessibility.AccessibleStateSet
+- getAccessibleValue():javax.accessibility.AccessibleValue
+- getCurrentAccessibleValue():java.lang.Number
+- getMaximumAccessibleValue():java.lang.Number
+- getMinimumAccessibleValue():java.lang.Number
+- setCurrentAccessibleValue(java.lang.Number):Z
 f:com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 - sf:INSTANCE:com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 - sf:findActionButton(javax.swing.JComponent,kotlin.jvm.functions.Function1):com.intellij.openapi.actionSystem.impl.ActionButton

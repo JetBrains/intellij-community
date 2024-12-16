@@ -101,6 +101,22 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myAction = action;
     myPresentation = presentation != null && !isTemplatePresentation ?
                      presentation : action.getTemplatePresentation().clone();
+    myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        Boolean newValue = evt.getNewValue() instanceof Boolean ? (Boolean)evt.getNewValue() : null;
+        if (Objects.equals(evt.getPropertyName(), "selected") && newValue != null) {
+          if (newValue) {
+            ActionButton.this.getAccessibleContext()
+              .firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, null, AccessibleState.CHECKED);
+          }
+          else {
+            ActionButton.this.getAccessibleContext()
+              .firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, AccessibleState.CHECKED, null);
+          }
+        }
+      }
+    });
     myPlace = place;
     // Button should be focusable if screen reader is active
     setFocusable(ScreenReader.isActive());
@@ -610,8 +626,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return context;
   }
 
-  protected final class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
-    private AccessibleActionButton() {
+  protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction, AccessibleValue {
+    protected AccessibleActionButton() {
     }
 
     @Override
@@ -674,7 +690,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (state == ActionButtonComponent.PUSHED) {
         accessibleStateSet.add(AccessibleState.PRESSED);
       }
-      if (state == ActionButtonComponent.SELECTED) {
+      if (isSelected()) {
         accessibleStateSet.add(AccessibleState.CHECKED);
       }
 
@@ -707,6 +723,48 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         return true;
       }
       return false;
+    }
+
+    // Implements AccessibleValue
+
+    @Override
+    public AccessibleValue getAccessibleValue() {
+      return this;
+    }
+
+    @Override
+    public Number getCurrentAccessibleValue() {
+      if (isSelected()) {
+        return Integer.valueOf(1);
+      }
+      else {
+        return Integer.valueOf(0);
+      }
+    }
+
+    @Override
+    public boolean setCurrentAccessibleValue(Number n) {
+      if (n == null) {
+        return false;
+      }
+      int i = n.intValue();
+      if (i == 0) {
+        Toggleable.setSelected(ActionButton.this, false);
+      }
+      else {
+        Toggleable.setSelected(ActionButton.this, true);
+      }
+      return true;
+    }
+
+    @Override
+    public Number getMinimumAccessibleValue() {
+      return Integer.valueOf(0);
+    }
+
+    @Override
+    public Number getMaximumAccessibleValue() {
+      return Integer.valueOf(1);
     }
   }
 }
