@@ -10,13 +10,14 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
 import org.junit.Test
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import kotlin.io.path.exists
 
@@ -1079,8 +1080,15 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
 
   @Test
   fun testDependencyWithEnvironmentProperty() = runBlocking {
-    needFixForMaven4()
     val javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"))
+
+    val javaHomePath = Paths.get(javaHome)
+    val firstJar = Files.walk(javaHomePath)
+      .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith("jar") }
+      .findFirst()
+      .orElse(null)!!
+      .toCanonicalPath()
+      .substring(javaHome.length + 1)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1092,7 +1100,7 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
                            <artifactId>direct-system-dependency</artifactId>
                            <version>1.0</version>
                            <scope>system</scope>
-                           <systemPath>${'$'}{java.home}/lib/tools.jar</systemPath>
+                           <systemPath>${'$'}{java.home}/$firstJar</systemPath>
                          </dependency>
                        </dependencies>
                        """.trimIndent())
@@ -1101,7 +1109,7 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
     assertModules("project")
     assertModuleLibDep("project",
                        "Maven: direct-system-dependency:direct-system-dependency:1.0",
-                       "jar://$javaHome/lib/tools.jar!/")
+                       "jar://$javaHome/$firstJar!/")
   }
 
   @Test
