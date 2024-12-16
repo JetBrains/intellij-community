@@ -498,7 +498,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
       files: ArrayDeque<VirtualFile>,
     ) {
       project.getService(PerProjectIndexingQueue::class.java)
-        .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
+        .getSink(scanningHistory.scanningSessionId).use { perProviderSink ->
           scanningStatistics.startFileChecking()
           try {
             readAction {

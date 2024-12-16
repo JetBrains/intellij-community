@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.events.FileIndexingRequest
-import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.longs.LongSets
@@ -218,7 +217,7 @@ class PerProjectIndexingQueue(private val project: Project) {
    * Creates new instance of **thread-unsafe** [PerProviderSink]
    * Will throw [ProcessCanceledException] if the queue is suspended via [cancelAllTasksAndWait]
    */
-  fun getSink(provider: IndexableFilesIterator, scanningId: Long): PerProviderSink {
+  fun getSink(scanningId: Long): PerProviderSink {
     return sinkFactory.newSink { vFile ->
       // readLock here is to make sure that queuedFiles does not change during the operation
       queuedFilesLock.readLock().withLock {
