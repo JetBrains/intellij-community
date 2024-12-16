@@ -91,11 +91,12 @@ internal class TerminalCursorPainter private constructor(
       return
     }
 
-    val renderer = CursorRendererBase(editor)
     if (state.isFocused) {
+      val renderer = BlockCursorRenderer(editor)
       paintBlinkingCursor(renderer, state.offset)
     }
     else {
+      val renderer = EmptyBlockCursorRenderer(editor)
       paintStaticCursor(renderer, state.offset)
     }
   }
@@ -147,12 +148,15 @@ internal class TerminalCursorPainter private constructor(
     fun installCursorHighlighter(offset: Int): RangeHighlighter
   }
 
-  private open class CursorRendererBase(private val editor: EditorEx) : CursorRenderer {
-    private val cursorColor: Color
+  private sealed class CursorRendererBase(private val editor: EditorEx) : CursorRenderer {
+    val editorCursorColor: Color
       get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CURSOR_DARK, CURSOR_LIGHT)
 
-    override fun installCursorHighlighter(offset: Int): RangeHighlighter {
-      val cursorForeground = if (ColorUtil.isDark(cursorColor)) CURSOR_LIGHT else CURSOR_DARK
+    abstract val cursorForeground: Color?
+
+    abstract fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double)
+
+    final override fun installCursorHighlighter(offset: Int): RangeHighlighter {
       val attributes = TextAttributes(cursorForeground, null, null, null, Font.PLAIN)
       val endOffset = if (offset + 1 < editor.document.textLength) offset + 1 else offset
       val highlighter = editor.markupModel.addRangeHighlighter(offset, endOffset, HighlighterLayer.LAST,
@@ -165,14 +169,7 @@ internal class TerminalCursorPainter private constructor(
         val rect = Rectangle2D.Double(point.x, point.y + cursorInset,
                                       (editor as EditorImpl).charHeight.toDouble(), cursorHeight.toDouble())
         g as Graphics2D
-        val oldColor = g.color
-        try {
-          g.color = cursorColor
-          g.fill(rect)
-        }
-        finally {
-          g.color = oldColor
-        }
+        paintCursor(g, rect)
       }
 
       return highlighter
@@ -194,14 +191,43 @@ internal class TerminalCursorPainter private constructor(
       else ceil(rawCursorInset).toInt()
       return editor.lineHeight - cursorInsets
     }
+  }
 
-    companion object {
-      private val CURSOR_LIGHT: Color = Gray._255
-      private val CURSOR_DARK: Color = Gray._0
+  private class BlockCursorRenderer(editor: EditorEx) : CursorRendererBase(editor) {
+    override val cursorForeground: Color
+      get() = if (ColorUtil.isDark(editorCursorColor)) CURSOR_LIGHT else CURSOR_DARK
+
+    override fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double) {
+      val oldColor = g.color
+      try {
+        g.color = editorCursorColor
+        g.fill(rect)
+      }
+      finally {
+        g.color = oldColor
+      }
+    }
+  }
+
+  private class EmptyBlockCursorRenderer(editor: EditorEx) : CursorRendererBase(editor) {
+    override val cursorForeground: Color? = null
+
+    override fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double) {
+      val oldColor = g.color
+      try {
+        g.color = editorCursorColor
+        g.draw(rect)
+      }
+      finally {
+        g.color = oldColor
+      }
     }
   }
 
   companion object {
+    private val CURSOR_LIGHT: Color = Gray._255
+    private val CURSOR_DARK: Color = Gray._0
+
     @RequiresEdt
     fun install(outputModel: TerminalOutputModel, sessionModel: TerminalSessionModel, coroutineScope: CoroutineScope) {
       TerminalCursorPainter(outputModel, sessionModel, coroutineScope)
