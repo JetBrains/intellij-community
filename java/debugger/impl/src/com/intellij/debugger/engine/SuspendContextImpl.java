@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.Location;
@@ -27,6 +28,8 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -75,6 +78,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<>();
   private EvaluationContextImpl myEvaluationContext = null;
   private int myFrameCount = -1;
+  private final CoroutineScope myCoroutineScope;
 
   private JavaExecutionStack myActiveExecutionStack;
 
@@ -107,6 +111,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myVotesToVote = eventVotes;
     myEventSet = set;
     myDebugId = debugId;
+
+    CoroutineScope dmtScope = myDebuggerManagerThread.getCoroutineScope();
+    myCoroutineScope = CoroutineScopeKt.childScope(dmtScope, "Suspend context " + this, EmptyCoroutineContext.INSTANCE, true);
     CheckedDisposable disposable = debugProcess.disposable;
     if (disposable.isDisposed()) {
       // could be due to VM death
@@ -120,6 +127,16 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @NotNull
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     return myVirtualMachine;
+  }
+
+  /**
+   * Returns coroutine scope tied to the lifetime of this suspend context.
+   * <p>
+   * The scope is canceled when this suspend context is resumed.
+   */
+  @NotNull
+  public CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
   }
 
   protected void setEventSet(EventSet eventSet) {
@@ -159,6 +176,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Override
   public void dispose() {
+    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, null);
   }
 
   int getCachedThreadFrameCount() {
