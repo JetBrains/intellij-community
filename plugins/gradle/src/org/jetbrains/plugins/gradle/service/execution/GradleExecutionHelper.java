@@ -308,8 +308,12 @@ public final class GradleExecutionHelper {
     }
   }
 
-  private static void setupLogging(@NotNull GradleExecutionSettings settings,
-                                   @Nullable BuildEnvironment buildEnvironment) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static void setupLogging(
+    @NotNull GradleExecutionSettings settings,
+    @Nullable BuildEnvironment buildEnvironment
+  ) {
     var arguments = settings.getArguments();
     var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
     var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
