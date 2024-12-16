@@ -42,6 +42,7 @@ public interface PsiFileEx extends PsiFile{
    * @param file the {@link PsiFile} to check
    * @return {@code true} if batch reference processing is enabled, {@code false} otherwise
    */
+  @ApiStatus.Experimental
   static boolean isBatchReferenceProcessingEnabled(@NotNull PsiFile file) {
     if (file.getUserData(BATCH_REFERENCE_PROCESSING) != Boolean.TRUE) return false;
 

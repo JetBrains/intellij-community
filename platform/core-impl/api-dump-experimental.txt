@@ -37,6 +37,9 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
+com.intellij.psi.impl.PsiFileEx
+- com.intellij.psi.PsiFile
+- *s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z
 *:com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:isSuppressed(com.intellij.psi.PsiFile):Z
