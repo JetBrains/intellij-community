@@ -335,7 +335,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myListener.onStatusChange(new ExternalSystemBuildEvent(myExternalSystemTaskId, buildIssueEvent));
   }
 
-  void setBuildEnvironment(@Nullable BuildEnvironment buildEnvironment) {
+  void setBuildEnvironment(@NotNull BuildEnvironment buildEnvironment) {
     myBuildEnvironment = buildEnvironment;
   }
 
