@@ -160,16 +160,12 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testResolvingPropertiesForLocalProjectsInCompletion() = runBlocking {
-    needFixForMaven4()
     runWithoutStaticSync()
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       <properties>
-                         <module1Name>module1</module1Name>
-                       </properties>
                        <modules>
                         <module>m1</module>
                         <module>m2</module>
@@ -178,8 +174,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     createModulePom("m1",
                     """
-                      <groupId>${'$'}{pom.parent.groupId}</groupId>
-                      <artifactId>${'$'}{module1Name}</artifactId>
+                      <artifactId>module1</artifactId>
                       <parent>
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
