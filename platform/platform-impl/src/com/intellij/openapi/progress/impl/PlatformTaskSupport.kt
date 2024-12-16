@@ -35,6 +35,7 @@ import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElementKey
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
@@ -42,6 +43,7 @@ import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
 import fleet.kernel.rete.collect
 import fleet.kernel.tryWithEntities
+import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -165,10 +167,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val pipe = cs.createProgressPipe()
     val indicator = coroutineCancellingIndicator(taskJob)
 
-    val taskSuspender = retrieveSuspender(providedSuspender)
+    val suspenderScope = childScope("TaskSuspenderScope")
+    val taskSuspender = retrieveSuspender(suspenderScope, providedSuspender)
 
     // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
-    val suspenderSynchronizer = indicator.markSuspendableIfNeeded(taskSuspender)
+    val suspenderSynchronizer = indicator.markSuspendableIfNeeded(suspenderScope, taskSuspender)
 
     val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
 
@@ -181,10 +184,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     finally {
       showIndicatorJob.cancel()
       suspenderSynchronizer?.stop()
+      suspenderScope.cancel()
     }
   }
 
-  private suspend fun retrieveSuspender(providedSuspender: TaskSuspender?): TaskSuspender? {
+  private fun CoroutineScope.retrieveSuspender(suspenderScope: CoroutineScope, providedSuspender: TaskSuspender?): TaskSuspender? {
     val coroutineSuspender = coroutineContext[CoroutineSuspenderElementKey]?.coroutineSuspender as? CoroutineSuspenderImpl
     val taskSuspender = coroutineContext[TaskSuspenderElementKey]?.taskSuspender
     return when {
@@ -192,18 +196,18 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       // If taskSuspender is not provided, but there is one in context - use it
       taskSuspender != null -> taskSuspender
       // If taskSuspender is not provided and not in context - retrieve coroutineSuspender
-      coroutineSuspender != null -> TaskSuspenderImpl(IdeBundle.message("progress.text.paused"), coroutineSuspender)
+      coroutineSuspender != null -> TaskSuspenderImpl(suspenderScope, IdeBundle.message("progress.text.paused"), coroutineSuspender)
       else -> null
     }
   }
 
-  private fun ProgressIndicatorEx.markSuspendableIfNeeded(taskSuspender: TaskSuspender?): TaskToProgressSuspenderSynchronizer? {
+  private fun ProgressIndicatorEx.markSuspendableIfNeeded(suspenderScope: CoroutineScope, taskSuspender: TaskSuspender?): TaskToProgressSuspenderSynchronizer? {
     if (taskSuspender !is TaskSuspenderImpl) return null
 
     @Suppress("UsagesOfObsoleteApi")
     val progressSuspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
-      { ProgressSuspender.markSuspendable(this, taskSuspender.defaultSuspendedText) }, this)
-    return TaskToProgressSuspenderSynchronizer(cs, taskSuspender, progressSuspender)
+      { ProgressSuspender.markSuspendable(this, taskSuspender.defaultSuspendedReason) }, this)
+    return TaskToProgressSuspenderSynchronizer(suspenderScope, taskSuspender, progressSuspender)
   }
 
   override suspend fun <T> withModalProgressInternal(

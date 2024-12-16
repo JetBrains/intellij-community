@@ -3,7 +3,6 @@ package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.application
 
 @Service
@@ -23,12 +22,7 @@ internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
   }
 
   override fun suspendedStatusChanged(suspender: ProgressSuspender) {
-    val listener = suspenderTrackers[suspender] ?: return
-    if (suspender.isSuspended) {
-      listener.onPause(suspender.suspendedText)
-    } else {
-      listener.onResume()
-    }
+    suspenderTrackers[suspender]?.onStateChanged()
   }
 
   companion object {
@@ -36,8 +30,6 @@ internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
   }
 
   interface SuspenderListener {
-    fun onPause(@NlsContexts.ProgressText suspendedText: String)
-
-    fun onResume()
+    fun onStateChanged()
   }
 }

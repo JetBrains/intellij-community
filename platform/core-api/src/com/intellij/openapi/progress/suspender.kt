@@ -3,9 +3,10 @@
 
 package com.intellij.openapi.progress
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -41,8 +42,7 @@ fun CoroutineSuspender.asContextElement(): CoroutineContext.Element = CoroutineS
 /**
  * Implementation of this interface is thread-safe.
  */
-@ApiStatus.NonExtendable
-interface CoroutineSuspender {
+sealed interface CoroutineSuspender {
 
   fun isPaused(): Boolean
 
@@ -53,9 +53,9 @@ interface CoroutineSuspender {
 
 private val EMPTY_PAUSED_STATE: CoroutineSuspenderState = CoroutineSuspenderState.Paused(emptyArray())
 
-sealed class CoroutineSuspenderState {
+private sealed class CoroutineSuspenderState {
   object Active : CoroutineSuspenderState()
-  class Paused(internal val continuations: Array<Continuation<Unit>>) : CoroutineSuspenderState()
+  class Paused(val continuations: Array<Continuation<Unit>>) : CoroutineSuspenderState()
 }
 
 /**
@@ -68,15 +68,14 @@ sealed class CoroutineSuspenderState {
 object CoroutineSuspenderElementKey : CoroutineContext.Key<CoroutineSuspenderElement>
 
 @ApiStatus.Internal
-class CoroutineSuspenderElement(val coroutineSuspender: CoroutineSuspender): AbstractCoroutineContextElement(CoroutineSuspenderElementKey)
+class CoroutineSuspenderElement(val coroutineSuspender: CoroutineSuspender) : AbstractCoroutineContextElement(CoroutineSuspenderElementKey)
 
 @ApiStatus.Internal
 class CoroutineSuspenderImpl(active: Boolean) : CoroutineSuspender {
 
-  private val myState: MutableStateFlow<CoroutineSuspenderState> = MutableStateFlow(
-    if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE
-  )
-  val state: StateFlow<CoroutineSuspenderState> = myState
+  private val myState = MutableStateFlow(if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE)
+
+  val isPaused: Flow<Boolean> = myState.map { it is CoroutineSuspenderState.Paused }
 
   override fun isPaused(): Boolean {
     return myState.value is CoroutineSuspenderState.Paused

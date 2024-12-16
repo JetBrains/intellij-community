@@ -127,7 +127,7 @@ internal class TestCoroutineProgressAction : AnAction() {
   }
 
   private fun CoroutineScope.suspendableBGProgress(project: Project) {
-    val suspender = TaskSuspender.suspendable("Task suspended")
+    val suspender = TaskSuspender.suspendable(this, "Task suspended")
     // Check that both tasks are paused simultaneously as they use the same suspender
     launch {
       withBackgroundProgress(project, "Suspendable task title 1", suspender) {
