@@ -24,9 +24,8 @@ object PyCollectionTypeUtil {
 
   private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
     val elements = sequence.elements
-    val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
-    val analyzedElementsType = PyUnionType.union(elements.take(maxAnalyzedElements).map { context.getType(it) })
-    return if (elements.size > maxAnalyzedElements) {
+    val analyzedElementsType = PyUnionType.union(elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { context.getType(it) })
+    return if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
       PyUnionType.createWeakType(analyzedElementsType)
     }
     else {
@@ -47,15 +46,14 @@ object PyCollectionTypeUtil {
 
   private fun getTypedDictTypeFromDictLiteral(sequence: PyDictLiteralExpression, context: TypeEvalContext): PyTypedDictType? {
     val elements = sequence.elements
-    val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
-    if (elements.size > maxAnalyzedElements) {
+    if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
       return null
     }
 
     val strKeysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
 
     elements
-      .take(maxAnalyzedElements)
+      .take(MAX_ANALYZED_ELEMENTS_OF_LITERALS)
       .forEach { element ->
         val elementType = context.getType(element)
         val (keyType, valueType) = getKeyValueType(elementType) ?: return null
@@ -76,12 +74,11 @@ object PyCollectionTypeUtil {
 
   private fun getDictLiteralElementTypes(sequence: PyDictLiteralExpression, context: TypeEvalContext): Pair<PyType?, PyType?> {
     val elements = sequence.elements
-    val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
     val keyTypes = mutableListOf<PyType?>()
     val valueTypes = mutableListOf<PyType?>()
 
     elements
-      .take(maxAnalyzedElements)
+      .take(MAX_ANALYZED_ELEMENTS_OF_LITERALS)
       .forEach {
         val type = context.getType(it)
         val (keyType, valueType) = getKeyValueType(type) ?: Pair(null, null)
@@ -89,7 +86,7 @@ object PyCollectionTypeUtil {
         valueTypes.add(valueType)
       }
 
-    if (elements.size > maxAnalyzedElements) {
+    if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
       keyTypes.add(null)
       valueTypes.add(null)
     }
