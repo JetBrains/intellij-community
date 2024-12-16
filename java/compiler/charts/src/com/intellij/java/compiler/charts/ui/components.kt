@@ -152,8 +152,13 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
   private fun isSmall(event: ProgressEvent, state: ChartModel): Boolean {
     val filter = state.filter
     if (filter is Filter && filter.text.isEmpty()) {
-      val finish = event.finish ?: return false
-      return zoom.toPixels(finish.target.time) - zoom.toPixels(event.start.target.time) < MIN_SIZE
+      val finish = event.finish?.target?.time
+                   ?: if ((state.currentTime - event.start.target.time) < 2_000) {
+                     return true
+                   } else {
+                     state.currentTime
+                   }
+      return zoom.toPixels(finish) - zoom.toPixels(event.start.target.time) < MIN_SIZE
     }
     else {
       return false
