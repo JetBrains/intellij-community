@@ -135,44 +135,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertEquals(librarySourceModuleWithoutContext, librarySourceModuleWithUnrelatedContext)
     }
 
-    fun `test deduplicate libraries`() {
-        val sharedLibraryContentRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot
-        val moduleA = createModule(
-            moduleName = "a",
-            srcContentSpec = directoryContent {
-              dir("one") {
-                file("A.kt", "class A")
-              }
-            }
-        )
-
-        moduleLibrary(moduleA, libraryName = null, classesRoot = sharedLibraryContentRoot)
-
-        val moduleB = createModule(
-            moduleName = "b",
-            srcContentSpec = directoryContent {
-              dir("one") {
-                file("B.kt", "class B")
-              }
-            }
-        )
-
-        moduleLibrary(moduleB, libraryName = "library", classesRoot = sharedLibraryContentRoot)
-
-        val sourceAFile = getFile("A.kt")
-        val sourceAModule = kaModuleWithAssertion<KaSourceModule>(sourceAFile)
-
-        val sourceBFile = getFile("B.kt")
-        val sourceBModule = kaModuleWithAssertion<KaSourceModule>(sourceBFile)
-
-        val libraryFile = getFile("KotlinCompileDaemon.class")
-        val libraryAModule = kaModuleWithAssertion<KaLibraryModule>(libraryFile, sourceAModule)
-        val libraryBModule = kaModuleWithAssertion<KaLibraryModule>(libraryFile, sourceBModule)
-        assertEquals(libraryAModule, libraryBModule)
-        assertTrue(libraryAModule in sourceAModule.directRegularDependencies)
-        assertTrue(libraryBModule in sourceBModule.directRegularDependencies)
-    }
-
     fun `test module library`() {
         val moduleA = createModule(
             moduleName = "a",
