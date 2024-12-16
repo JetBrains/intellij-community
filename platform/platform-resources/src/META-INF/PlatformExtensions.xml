@@ -1295,10 +1295,6 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.GCTroubleInfoCollector"/>
 
     <!-- experiments -->
-    <experimentalFeature id="linux.native.menu" percentOfUsers="100" requireRestart="true">
-      <description>Integration with global menu in Linux</description>
-    </experimentalFeature>
-
     <experimentalFeature id="recent.and.edited.files.together" percentOfUsers="100">
       <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
     </experimentalFeature>
