@@ -9,14 +9,20 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
 import org.junit.Test
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import kotlin.io.path.exists
@@ -1112,11 +1118,21 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
                        "jar://$javaHome/$firstJar!/")
   }
 
+  private fun createFile(dir: Path, relativePath: String): VirtualFile {
+    val f = dir.resolve(relativePath)
+    f.parent.createDirectories()
+    f.findOrCreateFile()
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+  }
+
   @Test
   fun testDependencyWithEnvironmentENVProperty() = runBlocking {
-    needFixForMaven4()
     var envDir = FileUtil.toSystemIndependentName(System.getenv(envVar))
     envDir = StringUtil.trimEnd(envDir, "/")
+
+    val envPath = Paths.get(envDir)
+    val relativePath = "testDependencyWithEnvironmentENVProperty/foo.jar"
+    createFile(envPath, relativePath)
 
     createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -1127,7 +1143,7 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
     <artifactId>direct-system-dependency</artifactId>
     <version>1.0</version>
     <scope>system</scope>
-    <systemPath>${"$"}{env.${envVar}}/lib/tools.jar</systemPath>
+    <systemPath>${"$"}{env.${envVar}}/$relativePath</systemPath>
   </dependency>
 </dependencies>
 """)
@@ -1136,7 +1152,7 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
     assertModules("project")
     assertModuleLibDep("project",
                        "Maven: direct-system-dependency:direct-system-dependency:1.0",
-                       "jar://$envDir/lib/tools.jar!/")
+                       "jar://$envDir/$relativePath!/")
   }
 
   @Test

@@ -595,7 +595,6 @@ abstract class MavenTestCase : UsefulTestCase() {
       if (SystemInfo.isWindows) {
         return "TEMP"
       }
-      else if (SystemInfo.isLinux) return "HOME"
       return "TMPDIR"
     }
 
