@@ -19,7 +19,8 @@ import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.Ac
  * data. To compress data even further, we also use the fact that total record size is always a multiple 8
  * (see OFFSET_BUCKET) -- thus we could store capacity in 3 bits less.
  * <p>
- * <b>BEWARE</b>: header[a..b] notation below means _bits_ 'a' to 'b' -- not bytes as it is usually written!
+ * <b>BEWARE</b>: header[a..b] notation below means _bits_ 'a' to 'b' (inclusive) -- not bytes as it is usually
+ * written!
  * <pre>
  * Record format:
  *
@@ -34,13 +35,13 @@ import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.Ac
  *                       length   = header[8..15]               =[0..256]
  *                 LARGE(header: 5 bytes):
  *                       capacity = header[3..7]+[8..19] * 8 + 3 [3..1048_579]
- *                       length   = [20..40]                     [0..1048_576]
+ *                       length   = header[20..40]               [0..1048_576]
  *     MOVED: data is absent, length is absent (=0)
- *            header: 7bytes
+ *            header: 7 bytes
  *            capacity = header[2..7][8..23] * 8 + 1             [1.. 2^24+1]
  *            redirectToId = header[24..55]                      [32 bits]
  *     PADDING: data is absent, length is absent (=capacity), redirectTo is absent
- *            header: 3 byte
+ *            header: 3 bytes
  *            capacity = header[2..23]*8 + 5                     =[5..33_554_437]
  *     PARTIAL: data is absent, length is absent (=capacity)
  *            header: 7 bytes
