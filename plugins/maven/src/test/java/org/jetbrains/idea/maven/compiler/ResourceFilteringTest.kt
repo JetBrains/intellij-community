@@ -4,7 +4,7 @@
 package org.jetbrains.idea.maven.compiler
 
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.maven.testFramework.MavenCompilingTestCase
+import com.intellij.maven.testFramework.MavenCompilingNioTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeIntentReadAction
@@ -24,7 +24,7 @@ import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration
 import org.junit.Test
 import java.io.IOException
 
-class ResourceFilteringTest : MavenCompilingTestCase() {
+class ResourceFilteringTest : MavenCompilingNioTestCase() {
   @Test
   fun testBasic() = runBlocking {
     createProjectSubFile("resources/file.properties", """

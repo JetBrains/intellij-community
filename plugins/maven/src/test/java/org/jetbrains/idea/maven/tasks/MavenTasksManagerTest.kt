@@ -6,13 +6,13 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.maven.testFramework.MavenCompilingTestCase
+import com.intellij.maven.testFramework.MavenCompilingNioTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.junit.Test
 
-class MavenTasksManagerTest : MavenCompilingTestCase() {
+class MavenTasksManagerTest : MavenCompilingNioTestCase() {
   @Test
   fun `test run execute before build tasks`() = runBlocking {
     createProjectSubDirs(".mvn") // for Maven to detect root project
