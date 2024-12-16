@@ -46,7 +46,8 @@ class XMixedModeSuspendContext(
 
   override fun getActiveExecutionStack(): XExecutionStack? {
     val currentThreadId = activeThreadId
-    return if (currentThreadId == null) /*thread wasn't changed*/ activeExecutionStackBasedOnDebugProcesses else stacksMap[currentThreadId]
+    return (if (currentThreadId == null) /*thread wasn't changed*/ activeExecutionStackBasedOnDebugProcesses else stacksMap[currentThreadId])
+      ?.also { logger.info("Active execution stack ${it.topFrame}") }
   }
 
   override fun getExecutionStacks(): Array<out XExecutionStack?> {

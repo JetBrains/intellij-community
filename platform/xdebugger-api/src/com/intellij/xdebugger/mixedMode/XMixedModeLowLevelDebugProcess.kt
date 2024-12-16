@@ -4,7 +4,7 @@ package com.intellij.xdebugger.mixedMode
 import com.intellij.xdebugger.frame.XSuspendContext
 
 interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
-  suspend fun continueAllThreads(exceptEventThread: Boolean)
+  suspend fun continueAllThreads(exceptEventThread: Boolean, silent : Boolean)
   suspend fun continueHighDebuggerServiceThreads()
 
   /**

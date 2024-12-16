@@ -5,7 +5,6 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.frame.XSuspendContext
 
 interface XMixedModeDebugProcess {
-  suspend fun resumeAndWait(): Boolean
   fun getStoppedThreadId(context : XSuspendContext) : Long
 }
 

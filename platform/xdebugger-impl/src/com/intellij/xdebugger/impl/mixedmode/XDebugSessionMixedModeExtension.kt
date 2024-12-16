@@ -31,7 +31,7 @@ abstract class XDebugSessionMixedModeExtension(
     coroutineScope.launch {
       assert(stateMachine.get() is BothRunning)
 
-      stateMachine.set(StopRequested)
+      stateMachine.set(PauseRequested)
       stateMachine.waitFor(BothStopped::class)
     }
   }
