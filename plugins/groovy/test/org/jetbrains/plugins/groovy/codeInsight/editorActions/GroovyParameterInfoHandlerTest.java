@@ -49,6 +49,16 @@ public class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements 
     testParameterHint();
   }
 
+  @Test
+  public void closureWithTypedParams() {
+    testParameterHint();
+  }
+
+  @Test
+  public void closureWithUntypedParams() {
+    testParameterHint();
+  }
+
   private void testParameterHint() {
     String name = uncapitalize(Arrays.stream(getTestName().split("_"))
                                  .map(GroovyParameterInfoHandlerTest::capitalize)
