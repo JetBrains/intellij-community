@@ -5,6 +5,7 @@ import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiFile
@@ -25,7 +26,7 @@ class FormatCodeCompletionCommand : ApplicableCompletionCommand() {
     get() = AllIcons.Actions.ReformatCode // Use the reformat icon
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    // Always applicable
+    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return false
     return true
   }
 

@@ -13,7 +13,7 @@ import javax.swing.Icon
 @ApiStatus.Experimental
 class CommandCompletionLookupElement(
   lookupElement: LookupElement,
-  val startOffset: Int,
+  val hostStartOffset: Int,
   val suffix: String,
   val icon: Icon?,
   val highlighting: HighlightInfoLookup?,

@@ -31,9 +31,7 @@ abstract class AbstractActionCompletionCommand(
     val dataContext = dataContext(psiFile, editor, context)
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ActionUiKind.NONE, null)
-
-    action.update(event)
-
+    ActionUtil.performDumbAwareUpdate(action, event, true)
     return event.presentation.isEnabled && event.presentation.isVisible
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
+import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.icons.AllIcons
 import com.intellij.lang.ContextAwareActionHandler
@@ -10,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory
 import com.intellij.refactoring.RefactoringBundle
@@ -40,7 +42,9 @@ class IntroduceVariableCommand : ApplicableCompletionCommand() {
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val action = IntroduceVariableAction()
     if (editor == null) return
-    val context = getTargetContext(offset, editor)
+    val context = runWithModalProgressBlocking(psiFile.project, message("scanning.scope.progress.title")){
+      getTargetContext(offset, editor)
+    }
     val dataContext = dataContext(psiFile, editor, context)
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ActionUiKind.NONE, null)

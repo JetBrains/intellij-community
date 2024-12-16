@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.idea.ActionsBundle
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -12,7 +13,8 @@ class ShowUsagesActionCompletionCommand : AbstractActionCompletionCommand(ShowUs
                                                                           ActionsBundle.message("action.ShowUsages.text"),
                                                                           null) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    return super.isApplicable(offset, psiFile, editor) && hasToShow(getContext(offset, psiFile))
+    return super.isApplicable(offset, psiFile, editor) && hasToShow(getContext(offset, psiFile)) &&
+           !InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)
   }
 
   private fun hasToShow(element: PsiElement?): Boolean {

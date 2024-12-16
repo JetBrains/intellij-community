@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.idea.ActionsBundle
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
@@ -9,9 +10,10 @@ class OptimizeImportCompletionCommand : AbstractActionCompletionCommand("Optimiz
                                                                         "Optimize imports",
                                                                         ActionsBundle.message("action.OptimizeImports.text"),
                                                                         null,
-                                                                        -100){
+                                                                        -100) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    if(!super.isApplicable(offset, psiFile, editor)) return false
+    if (!super.isApplicable(offset, psiFile, editor)) return false
+    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return false
     return isApplicableToProject(offset, psiFile)
   }
 }

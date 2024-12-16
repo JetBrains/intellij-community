@@ -10,7 +10,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.icons.AllIcons.Actions.Lightning
+import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
@@ -26,6 +29,7 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
@@ -44,15 +48,22 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     resultSet: CompletionResultSet,
   ) {
     if (!Registry.`is`("java.completion.command.enabled")) return
+    if (ApplicationManager.getApplication().isHeadlessEnvironment && !ApplicationManager.getApplication().isUnitTestMode) return
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
-
-    //not support injected fragment, it is not so obvious how to do it right now
-    if (parameters.editor is EditorWindow) return
-    if (parameters.originalFile.virtualFile is LightVirtualFile) return
-    if (parameters.completionType != CompletionType.BASIC) return
     val project = parameters.editor.project ?: return
+    if (parameters.originalFile.virtualFile is LightVirtualFile) {
+      val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(parameters.originalFile)
+      if (topLevelFile?.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
+        return
+      }
+      val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(parameters.editor)
+      if (topLevelEditor is EditorWindow) {
+        return
+      }
+    }
+    if (parameters.completionType != CompletionType.BASIC) return
     val commandCompletionService = project.getService(CommandCompletionService::class.java)
     if (commandCompletionService == null) return
     val dumbService = DumbService.getInstance(project)
@@ -68,7 +79,13 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     }
 
     val commandCompletionType = findCommandCompletionType(commandCompletionFactory, parameters) ?: return
-    val adjustedParameters = adjustParameters(parameters, commandCompletionType) ?: return
+    val adjustedParameters = try {
+      adjustParameters(parameters, commandCompletionType) ?: return
+    }
+    catch (_: Exception) {
+      return
+    }
+
     if (!commandCompletionFactory.isApplicable(adjustedParameters.copyFile, adjustedParameters.offset)) return
 
     val copyEditor = MyEditor(adjustedParameters.copyFile, parameters.editor.settings)
@@ -101,7 +118,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                                                                       .withIcon(command.icon ?: Lightning)
                                                                       .withInsertHandler(CommandInsertHandler(command))
                                                                       .withBoldness(true),
-                                                                    adjustedParameters.offset,
+                                                                    adjustedParameters.hostAdjustedOffset,
                                                                     commandCompletionFactory.suffix().toString() +
                                                                     (commandCompletionFactory.filterSuffix() ?: ""),
                                                                     command.icon ?: Lightning,
@@ -181,24 +198,32 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     }
   }
 
-  private data class AdjustedCompletionParameters(val copyFile: PsiFile, val offset: Int)
+  private data class AdjustedCompletionParameters(val copyFile: PsiFile, val offset: Int, val hostAdjustedOffset: Int)
 
   private fun adjustParameters(parameters: CompletionParameters, commandCompletionType: InvocationCommandType): AdjustedCompletionParameters? {
-    val originalFile = parameters.originalFile
-    val originalDocument = parameters.editor.document
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(parameters.originalFile.project)
+    val originalFile = injectedLanguageManager.getTopLevelFile(parameters.originalFile)
+    val editor = InjectedLanguageEditorUtil.getTopLevelEditor(parameters.editor)
+    val originalDocument = editor.document
 
     // Get the document text up to the start of the command (before dots and command text)
-    val offset = parameters.offset
-    val adjustedOffset = offset - commandCompletionType.suffix.length - commandCompletionType.pattern.length
+    val offset = injectedLanguageManager.injectedToHost(parameters.originalFile, parameters.offset)
+    var adjustedOffset = offset - commandCompletionType.suffix.length - commandCompletionType.pattern.length
     if (adjustedOffset <= 0) return null
+    val hostAdjustedOffset = adjustedOffset
     val adjustedText = originalDocument.getText(TextRange(0, adjustedOffset)) + originalDocument.getText(TextRange(offset, originalDocument.textLength))
 
-    val file = PsiFileFactory.getInstance(parameters.editor.project)
-      .createFileFromText(originalFile.getName(), originalFile.getLanguage(), adjustedText, true, true, false, parameters.originalFile.virtualFile)
+    var file = PsiFileFactory.getInstance(editor.project)
+      .createFileFromText(originalFile.getName(), originalFile.getLanguage(), adjustedText, true, true, false, originalFile.virtualFile)
     if (file is PsiFileImpl) {
       file.setOriginalFile(originalFile)
     }
-    return AdjustedCompletionParameters(file, adjustedOffset)
+    val injectedElement = injectedLanguageManager.findInjectedElementAt(file, adjustedOffset)
+    if (injectedElement != null) {
+      file = injectedElement.containingFile
+      adjustedOffset = (file.fileDocument as? DocumentWindow)?.hostToInjected(adjustedOffset) ?: 0
+    }
+    return AdjustedCompletionParameters(file, adjustedOffset, hostAdjustedOffset)
   }
 }
 

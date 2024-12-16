@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion.commands.impl
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -26,6 +27,7 @@ class GenerateCommandProvider : CommandProvider, DumbAware {
     originalOffset: Int,
     originalFile: PsiFile,
   ): List<CompletionCommand> {
+    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = psiFile.findElementAt(offset)
     val dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)

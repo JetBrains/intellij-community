@@ -24,7 +24,8 @@ interface CommandProvider {
   /**
    * Retrieves a list of completion commands based on the specified context.
    * Completion commands are used to provide suggestions and actions during the code completion process.
-   * Should be applicable to this context
+   * It should be applicable to this context
+   * It should process injected elements
    *
    * @param project the project in which the code completion is invoked
    * @param editor the editor instance where the code completion is triggered

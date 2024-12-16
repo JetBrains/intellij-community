@@ -28,6 +28,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -45,6 +46,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -126,15 +129,32 @@ class DirectIntentionCommandProvider : CommandProvider {
     offset: Int,
   ): Deferred<List<CompletionCommand>> = async {
     return@async readAction {
+
+      val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
+      val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
+      val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+      val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
+      val isInjected = topLevelFile != psiFile
+
       val profileToUse = getInstance(psiFile.project).getCurrentProfile()
       val inspectionWrapper = InspectionProfileWrapper(profileToUse)
       val inspectionTools = getInspectionTools(inspectionWrapper, psiFile)
-      val lineRange = getLineRange(psiFile, offset)
+      var lineRange = getLineRange(topLevelFile, topLevelOffset)
       val indicator = EmptyProgressIndicator()
+
       val inspectionResult = jobToIndicator(coroutineContext.job, indicator) {
-        InspectionEngine.inspectEx(inspectionTools, psiFile, lineRange, lineRange, true, false, true, indicator, fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
-          return true
-        })
+        if (!isInjected) {
+          InspectionEngine.inspectEx(inspectionTools, topLevelFile, lineRange, lineRange, true, false, true, indicator, fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+            return true
+          })
+        }
+        else {
+          val textRange = getLineRange(psiFile, offset)
+          InspectionEngine.inspectElements(inspectionTools, psiFile, textRange, true, true, indicator,
+                                           PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+            return true
+          })
+        }
       }
       val result: MutableList<CompletionCommand> = mutableListOf()
       for (entry: MutableMap.MutableEntry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
@@ -145,16 +165,19 @@ class DirectIntentionCommandProvider : CommandProvider {
           if (descriptor == null) continue
           val fixes = descriptor.fixes ?: continue
           if (descriptor !is ProblemDescriptorBase) continue
-          val textRange = descriptor.textRange
-          if (textRange == null) continue
+          var textRange = descriptor.textRange ?: continue
+          if (isInjected) {
+            textRange = injectedLanguageManager.injectedToHost(psiFile, textRange)
+          }
           val displayKey: HighlightDisplayKey = inspectionToolWrapper.getDisplayKey() ?: continue
-          val severity: HighlightSeverity = inspectionWrapper.getErrorLevel(displayKey, psiFile).severity
+          val severity: HighlightSeverity = inspectionWrapper.getErrorLevel(displayKey, topLevelFile).severity
           val severityRegistrar: SeverityRegistrar = inspectionWrapper.profileManager.severityRegistrar
           val level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, severityRegistrar)
           for (i in 0..fixes.size - 1) {
             val action = QuickFixWrapper.wrap(descriptor, i)
             if (action is EmptyIntentionAction || action is ExpensivePsiIntentionAction) continue
-            if (!ShowIntentionActionsHandler.availableFor(psiFile, editor, offset, action)) continue
+            if (!isInjected && !ShowIntentionActionsHandler.availableFor(topLevelFile, topLevelEditor, topLevelOffset, action)) continue
+            if (isInjected && !ShowIntentionActionsHandler.availableFor(psiFile, editor, offset, action)) continue
             val priority = if (level.getSeverity(null) == INFORMATION) 70 else 80
             val icon = if (level.getSeverity(null) == INFORMATION) AllIcons.Actions.IntentionBulbGrey else AllIcons.Actions.IntentionBulb
 
@@ -163,8 +186,7 @@ class DirectIntentionCommandProvider : CommandProvider {
               name = action.text,
               priority = priority,
               icon = icon,
-              highlightInfo = HighlightInfoLookup(TextRange(textRange.startOffset, textRange.endOffset),
-                                                  level.attributesKey, priority)))
+              highlightInfo = HighlightInfoLookup(textRange, level.attributesKey, priority)))
           }
         }
       }
@@ -176,22 +198,33 @@ class DirectIntentionCommandProvider : CommandProvider {
     return async {
       val result: MutableList<CompletionCommand> = mutableListOf()
       readAction {
+        val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
+        val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
+        val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+        val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
+        val isInjected = topLevelFile != psiFile
         val indicator = DaemonProgressIndicator()
         var errorHighlightings: List<HighlightInfo?>? = jobToIndicator(coroutineContext.job, indicator) {
-          HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(psiFile, true, true, true)
+          HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(topLevelFile, true, true, true)
         }
         if (errorHighlightings == null) return@readAction
-        val insideRange = getLineRange(psiFile, offset)
+        var insideRange = getLineRange(topLevelFile, topLevelOffset)
+        if (isInjected) {
+          insideRange = insideRange.intersection(
+            TextRange(injectedLanguageManager.injectedToHost(psiFile, 0),
+                      injectedLanguageManager.injectedToHost(psiFile, psiFile.fileDocument.textLength)))
+        }
         for (info: HighlightInfo? in errorHighlightings) {
           if (info == null) continue
-          if (!insideRange.intersects(info.startOffset, info.endOffset)) continue
+          if (!insideRange.intersects(info.startOffset, info.endOffset) ||
+              (isInjected && !insideRange.contains(TextRange(info.startOffset, info.endOffset)))) continue
           val fixes: MutableList<IntentionActionDescriptor> = ArrayList<IntentionActionDescriptor>()
           val unresolvedReference = info.unresolvedReference
           if (unresolvedReference != null) {
             editor.caretModel.moveToOffset(unresolvedReference.element.textRange.endOffset)
             UnresolvedReferenceQuickFixProvider.registerReferenceFixes<PsiReference>(unresolvedReference, QuickFixActionRegistrarImpl(info))
           }
-          ShowIntentionsPass.addAvailableFixesForGroups(info, editor, psiFile, fixes, -1, offset, false)
+          ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)
           if (unresolvedReference != null) {
             editor.caretModel.moveToOffset(offset)
           }
@@ -202,7 +235,7 @@ class DirectIntentionCommandProvider : CommandProvider {
                                                           icon = AllIcons.Actions.QuickfixBulb,
                                                           highlightInfo = HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
                                                                                               CodeInsightColors.ERRORS_ATTRIBUTES, 100),
-                                                          myOffset =  unresolvedReference?.element?.textRange?.endOffset)
+                                                          myOffset = unresolvedReference?.element?.textRange?.endOffset)
             result.add(command)
           }
         }
