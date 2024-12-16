@@ -184,9 +184,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val reflectionLibSourceFile = getFile("FunctionWithAllInvokes.kt")
         val reflectionLibSourceModule = kaModuleWithAssertion<KaLibrarySourceModule>(reflectionLibSourceFile)
         assertEquals(kotlinReflectLibraryName, reflectionLibSourceModule.libraryName)
-
-        val libSourceModuleForBinaryFile = kaModuleWithAssertion<KaLibrarySourceModule>(libraryFile, contextualModule = libSourceModule)
-        assertEquals(libraryModuleWithoutContext.librarySources, libSourceModuleForBinaryFile)
+        
+        val libModuleForBinaryFile = kaModuleWithAssertion<KaLibraryModule>(libraryFile, contextualModule = libSourceModule)
+        assertEquals(libraryModuleWithoutContext, libModuleForBinaryFile)
 
         val libraryModule = kaModuleWithAssertion<KaLibraryModule>(libraryFile, contextualModule = reflectionLibSourceModule)
         assertEquals(libraryName, libraryModule.libraryName)
