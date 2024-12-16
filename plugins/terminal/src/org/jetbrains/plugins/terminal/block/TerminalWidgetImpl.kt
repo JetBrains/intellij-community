@@ -64,15 +64,13 @@ internal class TerminalWidgetImpl(
   @RequiresEdt(generateAssertion = false)
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
-    view = if (options.shellIntegration?.commandBlockIntegration != null) {
-      if (isReworked) {
-        ReworkedTerminalView(project, settings)
-      }
-      else createBlockTerminalView(options)
+
+    view = when {
+      isReworked -> ReworkedTerminalView(project, settings)
+      options.shellIntegration?.commandBlockIntegration != null -> createBlockTerminalView(options)
+      else -> OldPlainTerminalView(project, settings, terminalTitle)
     }
-    else {
-      OldPlainTerminalView(project, settings, terminalTitle)
-    }
+
     if (oldView is TerminalPlaceholder) {
       oldView.moveTerminationCallbacksTo(view)
       oldView.executePostponedShellCommands(view)
