@@ -1204,4 +1204,10 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertTrue(panel.isActionEnabled());
     Disposer.dispose(panel);
   }
+
+  public void testWindows1252MustBeDetectedEvenIfItLooksLikeInvalidUtf8() {
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetName(WINDOWS_1252.name());
+    VirtualFile v = find("StartWin1252");
+    assertEquals(WINDOWS_1252, v.getCharset());
+  }
 }
