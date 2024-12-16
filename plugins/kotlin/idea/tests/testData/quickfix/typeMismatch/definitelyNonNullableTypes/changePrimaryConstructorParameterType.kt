@@ -1,5 +1,4 @@
 // "Change parameter 'x' type of primary constructor of class 'Foo' to 'T & Any'" "true"
-// K2_ACTION: "Change type of 'Foo.x' to 'T & Any'" "true"
 // LANGUAGE_VERSION: 1.8
 package a
 
@@ -12,4 +11,4 @@ fun <T> Foo<T>.bar(z: T) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

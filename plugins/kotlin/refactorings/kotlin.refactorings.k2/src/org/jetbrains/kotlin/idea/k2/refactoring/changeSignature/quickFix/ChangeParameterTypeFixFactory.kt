@@ -13,6 +13,10 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -21,6 +25,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
@@ -28,8 +33,12 @@ object ChangeParameterTypeFixFactory {
 
     val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         val psi = diagnostic.psi
-        val targetType = diagnostic.actualType
-        createTypeMismatchFixes(psi, targetType)
+        val targetType = diagnostic.expectedType
+        if (targetType is KaDefinitelyNotNullType) {
+            createTypeMismatchFixes(psi, targetType)
+        } else {
+            createTypeMismatchFixes(psi, diagnostic.actualType)
+        }
     }
 
     val nullForNotNullTypeFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
@@ -41,27 +50,59 @@ object ChangeParameterTypeFixFactory {
     private fun createTypeMismatchFixes(psi: PsiElement, targetType: KaType): List<KotlinQuickFixAction<*>> {
         val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
 
-        val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
-        val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
-        val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
+        val parameter: KtParameter
+        val isPrimaryConstructorParameter: Boolean
+        val functionName: String
 
-        val paramSymbol = memberCall.argumentMapping[valueArgument.getArgumentExpression()]
-        val parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
+        if (targetType is KaDefinitelyNotNullType) {
+            val referencedSymbol = valueArgument.argumentExpression?.mainReference?.resolveToSymbol()
+            parameter = referencedSymbol?.psi as? KtParameter ?: return emptyList()
 
-        val functionName = getDeclarationName(functionLikeSymbol) ?: return emptyList()
+            when (referencedSymbol) {
+              is KaPropertySymbol -> { // Might be a constructor parameter
+                  val probableConstructorParameterPsi = referencedSymbol.psi as? KtParameter
+                  val matchingValueParameterSymbol = probableConstructorParameterPsi?.symbol
+                  val probableConstructor = matchingValueParameterSymbol?.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
+                  isPrimaryConstructorParameter = probableConstructor is KaConstructorSymbol && probableConstructor.isPrimary
+                  functionName = getDeclarationName(probableConstructor) ?: return emptyList()
+              }
+
+                is KaValueParameterSymbol -> {
+                    isPrimaryConstructorParameter = false
+                    val functionSymbol = referencedSymbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
+                    functionName = getDeclarationName(functionSymbol) ?: return emptyList()
+                }
+
+                else -> {
+                    return emptyList()
+                }
+            }
+        } else {
+            val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
+            val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
+            val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
+
+            val paramSymbol = memberCall.argumentMapping[valueArgument.getArgumentExpression()]
+            parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
+
+            functionName = getDeclarationName(functionLikeSymbol) ?: return emptyList()
+
+            isPrimaryConstructorParameter = functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary
+        }
 
         val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
-
         val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
         val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
 
-        return listOf(ChangeParameterTypeFix(
-            parameter,
-            typePresentation,
-            typeFQNPresentation,
-            functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary,
-            functionName
-        ))
+        return listOf(
+            ChangeParameterTypeFix(
+                parameter,
+                typePresentation,
+                typeFQNPresentation,
+                isPrimaryConstructorParameter,
+                functionName
+            )
+        )
     }
 }
 
