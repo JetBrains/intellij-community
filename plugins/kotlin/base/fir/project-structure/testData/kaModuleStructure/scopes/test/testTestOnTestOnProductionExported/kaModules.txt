@@ -14,40 +14,12 @@ KaSourceModule:
   description: Sources of A
   targetPlatform: JVM (1.8)
   name: A
-  sourceModuleKind: PRODUCTION
-  stableModuleName: <A>
-  regularDependencies:
-    <empty>
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of A
-  targetPlatform: JVM (1.8)
-  name: A
   sourceModuleKind: TEST
   stableModuleName: <A>
   regularDependencies:
-    KaSourceModule(A, production)
-    KaSourceModule(B, production)
     KaSourceModule(B, test)
     KaSourceModule(C, production)
   friendDependencies:
-    KaSourceModule(A, production)
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of B
-  targetPlatform: JVM (1.8)
-  name: B
-  sourceModuleKind: PRODUCTION
-  stableModuleName: <B>
-  regularDependencies:
-    <empty>
-  friendDependencies:
     <empty>
   dependsOnDependencies:
     <empty>
@@ -59,10 +31,9 @@ KaSourceModule:
   sourceModuleKind: TEST
   stableModuleName: <B>
   regularDependencies:
-    KaSourceModule(B, production)
     KaSourceModule(C, production)
   friendDependencies:
-    KaSourceModule(B, production)
+    <empty>
   dependsOnDependencies:
     <empty>
 

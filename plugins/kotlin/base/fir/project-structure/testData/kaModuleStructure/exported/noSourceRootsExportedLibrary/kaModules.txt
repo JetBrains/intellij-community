@@ -30,20 +30,6 @@ KaSourceModule:
   stableModuleName: <A>
   regularDependencies:
     KaLibraryModule(library)
-    KaSourceModule(B, production)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of B
-  targetPlatform: JVM (1.8)
-  name: B
-  sourceModuleKind: PRODUCTION
-  stableModuleName: <B>
-  regularDependencies:
-    KaLibraryModule(library)
   friendDependencies:
     <empty>
   dependsOnDependencies:

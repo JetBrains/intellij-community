@@ -4,14 +4,7 @@ KaLibraryModule:
   libraryName: NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305)
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -47,7 +40,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -59,15 +52,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1
   isSdk: false
   regularDependencies:
-    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305))
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -79,10 +64,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -94,13 +76,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -112,15 +88,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0
   isSdk: false
   regularDependencies:
-    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305))
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -132,10 +100,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -147,10 +112,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -162,13 +124,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -180,13 +136,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
-    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -198,7 +148,7 @@ KaLibraryModule:
   libraryName: org.jetbrains:annotations-java5:24.0.0
   isSdk: false
   regularDependencies:
-    KaLibraryModule(SDK)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:

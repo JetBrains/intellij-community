@@ -17,20 +17,6 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <A>
   regularDependencies:
-    KaSourceModule(B, production)
-    KaSourceModule(C, production)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
-KaSourceModule:
-  description: Sources of B
-  targetPlatform: JVM (1.8)
-  name: B
-  sourceModuleKind: PRODUCTION
-  stableModuleName: <B>
-  regularDependencies:
     KaSourceModule(C, production)
   friendDependencies:
     <empty>
