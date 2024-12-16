@@ -91,7 +91,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     suspender: TaskSuspender?,
-    action: suspend CoroutineScope.() -> T
+    action: suspend CoroutineScope.() -> T,
   ): T = coroutineScope {
     if (!isRhizomeProgressEnabled) {
       return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, suspender, action)
@@ -161,7 +161,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     providedSuspender: TaskSuspender?,
-    action: suspend CoroutineScope.() -> T
+    action: suspend CoroutineScope.() -> T,
   ): T = coroutineScope {
     val taskJob = coroutineContext.job
     val pipe = cs.createProgressPipe()
@@ -189,16 +189,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   }
 
   private fun CoroutineScope.retrieveSuspender(suspenderScope: CoroutineScope, providedSuspender: TaskSuspender?): TaskSuspender? {
-    val coroutineSuspender = coroutineContext[CoroutineSuspenderElementKey]?.coroutineSuspender as? CoroutineSuspenderImpl
-    val taskSuspender = coroutineContext[TaskSuspenderElementKey]?.taskSuspender
-    return when {
-      providedSuspender != null -> providedSuspender
-      // If taskSuspender is not provided, but there is one in context - use it
-      taskSuspender != null -> taskSuspender
-      // If taskSuspender is not provided and not in context - retrieve coroutineSuspender
-      coroutineSuspender != null -> TaskSuspenderImpl(suspenderScope, IdeBundle.message("progress.text.paused"), coroutineSuspender)
-      else -> null
-    }
+    return providedSuspender
+           ?: coroutineContext[TaskSuspenderElementKey]?.taskSuspender
+           ?: coroutineContext[CoroutineSuspenderElementKey]?.coroutineSuspender?.let {
+             TaskSuspenderImpl(suspenderScope, IdeBundle.message("progress.text.paused"), it as CoroutineSuspenderImpl)
+           }
   }
 
   private fun ProgressIndicatorEx.markSuspendableIfNeeded(suspenderScope: CoroutineScope, taskSuspender: TaskSuspender?): TaskToProgressSuspenderSynchronizer? {
@@ -260,12 +255,12 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val pipe = cs.createProgressPipe()
       val permitCtx = getLockPermitContext(true)
       val taskJob = async(dispatcherCtx + modalityContext + permitCtx) {
-          progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
-          // an unhandled exception in `async` can kill the entire computation tree
-          // we need to propagate the exception to the caller, since they may have some way to handle it.
-          runCatching {
-            pipe.collectProgressUpdates(action)
-          }
+        progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
+        // an unhandled exception in `async` can kill the entire computation tree
+        // we need to propagate the exception to the caller, since they may have some way to handle it.
+        runCatching {
+          pipe.collectProgressUpdates(action)
+        }
       }
       val modalJob = cs.launch(modalityContext) {
         val showIndicatorJob = showModalIndicator(taskJob, descriptor, pipe.progressUpdates(), deferredDialog)

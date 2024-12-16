@@ -319,7 +319,7 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
  * the coroutines spawned on the service scope are not controlled by the code that spawned them.
  */
 @RequiresBlockingContext
-fun currentThreadCoroutineScope() : CoroutineScope {
+fun currentThreadCoroutineScope(): CoroutineScope {
   val threadContext = prepareCurrentThreadContext()
   if (threadContext[Job] == null) {
     LOG.error(IllegalStateException(
@@ -403,7 +403,7 @@ fun <T> blockingContextToIndicator(action: () -> T): T {
   return try {
     contextToIndicator(ctx, action)
   }
-  catch (pce : ProcessCanceledException) {
+  catch (pce: ProcessCanceledException) {
     throw pce
   }
   catch (ce: CancellationException) {
@@ -504,7 +504,7 @@ fun getLockPermitContext(forSharing: Boolean = false): CoroutineContext {
 
 @IntellijInternalApi
 @Internal
-fun closeLockPermitContext(ctx: CoroutineContext){
+fun closeLockPermitContext(ctx: CoroutineContext) {
   if (!isLockStoredInContext) {
     return
   }

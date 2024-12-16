@@ -15,7 +15,7 @@ interface TaskSupport {
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
     suspender: TaskSuspender?,
-    action: suspend CoroutineScope.() -> T
+    action: suspend CoroutineScope.() -> T,
   ): T
 
   suspend fun <T> withModalProgressInternal(

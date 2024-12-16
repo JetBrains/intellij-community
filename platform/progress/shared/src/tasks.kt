@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
-  action: suspend CoroutineScope.() -> T
+  action: suspend CoroutineScope.() -> T,
 ): T {
   return withBackgroundProgress(project, title, TaskCancellation.cancellable(), suspender = null, action)
 }
@@ -26,7 +26,7 @@ suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   cancellable: Boolean,
-  action: suspend CoroutineScope.() -> T
+  action: suspend CoroutineScope.() -> T,
 ): T {
   val cancellation = if (cancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
   return withBackgroundProgress(project, title, cancellation, suspender = null, action)
@@ -36,7 +36,7 @@ suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   cancellation: TaskCancellation,
-  action: suspend CoroutineScope.() -> T
+  action: suspend CoroutineScope.() -> T,
 ): T {
   return withBackgroundProgress(project, title, cancellation, suspender = null, action)
 }
@@ -45,7 +45,7 @@ suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   suspender: TaskSuspender,
-  action: suspend CoroutineScope.() -> T
+  action: suspend CoroutineScope.() -> T,
 ): T {
   return withBackgroundProgress(project, title, TaskCancellation.nonCancellable(), suspender, action)
 }
@@ -74,7 +74,7 @@ suspend fun <T> withBackgroundProgress(
   title: @ProgressTitle String,
   cancellation: TaskCancellation,
   suspender: TaskSuspender?,
-  action: suspend CoroutineScope.() -> T
+  action: suspend CoroutineScope.() -> T,
 ): T {
   return taskSupport().withBackgroundProgressInternal(project, title, cancellation, suspender, action)
 }

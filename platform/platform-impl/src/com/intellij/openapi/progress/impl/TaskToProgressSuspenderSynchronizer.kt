@@ -31,7 +31,8 @@ internal class TaskToProgressSuspenderSynchronizer(
           else {
             progressSuspender.resumeProcess()
           }
-        } finally {
+        }
+        finally {
           isStateChangeInProgress.set(false)
         }
       }
