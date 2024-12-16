@@ -1218,7 +1218,7 @@ public abstract class DiffRequestProcessor
   }
 
   public static void notifyMessage(@NotNull AnActionEvent e, @NotNull JComponent contentPanel, boolean next) {
-    if (!contentPanel.isShowing()) return;
+    if (!UIUtil.isShowing(contentPanel)) return;
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc
