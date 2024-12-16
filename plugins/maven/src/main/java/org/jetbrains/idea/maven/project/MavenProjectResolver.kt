@@ -359,7 +359,7 @@ class MavenProjectResolver(private val myProject: Project) {
         val projectData = result.projectData
         if (projectData == null) {
           val file = detectPomFile(filesMap, result)
-          MavenLog.LOG.debug("Project resolution: projectData is null, file $file")
+          MavenLog.LOG.warn("Project resolution: projectData is null, file $file")
           readingProblems.addAll(result.problems)
         }
         else {
