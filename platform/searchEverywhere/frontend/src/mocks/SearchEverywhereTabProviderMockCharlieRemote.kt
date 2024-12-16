@@ -3,14 +3,15 @@ package com.intellij.platform.searchEverywhere.frontend.mocks
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
+import com.intellij.platform.searchEverywhere.SearchEverywhereSessionEntity
 import com.intellij.platform.searchEverywhere.SearchEverywhereTab
 import com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider
-import com.jetbrains.rhizomedb.EID
+import fleet.kernel.DurableRef
 
 class SearchEverywhereTabProviderMockCharlieRemote : SearchEverywhereTabProvider {
-  override fun getTab(project: Project, sessionId: EID): SearchEverywhereTab =
+  override fun getTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab =
     SearchEverywhereTabMock(project,
-                            sessionId,
+                            sessionRef,
                             "Charlie-Remote",
                             listOf(SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_MockBackend")))
 }

@@ -2,11 +2,13 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.searchEverywhere.SearchEverywhereSessionEntity
 import com.intellij.platform.searchEverywhere.SearchEverywhereTab
 import com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider
+import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SearchEverywhereActionsTabProvider: SearchEverywhereTabProvider {
-  override fun getTab(project: Project, sessionId: Int): SearchEverywhereTab = SearchEverywhereActionsTab(project, sessionId)
+class SearchEverywhereActionsTabProvider : SearchEverywhereTabProvider {
+  override fun getTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab = SearchEverywhereActionsTab(project, sessionRef)
 }

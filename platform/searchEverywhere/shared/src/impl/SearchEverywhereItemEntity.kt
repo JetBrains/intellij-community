@@ -5,10 +5,11 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.SearchEverywhereItem
 import com.intellij.platform.searchEverywhere.SearchEverywhereSessionEntity
 import com.jetbrains.rhizomedb.*
+import fleet.kernel.DurableRef
 import fleet.kernel.change
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class SearchEverywhereItemEntity(override val eid: EID) : Entity {
   val item: SearchEverywhereItem?
     get() = this[Item] as? SearchEverywhereItem
@@ -19,9 +20,9 @@ class SearchEverywhereItemEntity(override val eid: EID) : Entity {
     private val Item = requiredTransient<Any>("item")
     private val Session = requiredRef<SearchEverywhereSessionEntity>("session", RefFlags.CASCADE_DELETE_BY)
 
-    suspend fun createWith(sessionId: EID, item: SearchEverywhereItem): SearchEverywhereItemEntity? {
+    suspend fun createWith(sessionRef: DurableRef<SearchEverywhereSessionEntity>, item: SearchEverywhereItem): SearchEverywhereItemEntity? {
       return withKernel {
-        val session = entity(sessionId) as? SearchEverywhereSessionEntity ?: return@withKernel null
+        val session = sessionRef.derefOrNull() ?: return@withKernel null
 
         change {
           SearchEverywhereItemEntity.new {

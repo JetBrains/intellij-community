@@ -5,12 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.dispatcher.SearchEverywhereDispatcher
-import com.jetbrains.rhizomedb.EID
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SearchEverywhereTabHelper(val project: Project, private val sessionId: EID, providerIds: List<SearchEverywhereProviderId>) {
+class SearchEverywhereTabHelper(val project: Project, private val sessionRef: DurableRef<SearchEverywhereSessionEntity>, providerIds: List<SearchEverywhereProviderId>) {
   private val providers: Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider>
   private val searchDispatcher: SearchEverywhereDispatcher
 
@@ -39,7 +39,7 @@ class SearchEverywhereTabHelper(val project: Project, private val sessionId: EID
   }
 
   fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> =
-    searchDispatcher.getItems(sessionId, params, emptyList())
+    searchDispatcher.getItems(sessionRef, params, emptyList())
 
   companion object {
     private const val SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT: Int = 30

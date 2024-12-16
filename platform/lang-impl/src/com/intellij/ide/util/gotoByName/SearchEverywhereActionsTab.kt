@@ -3,18 +3,16 @@ package com.intellij.ide.util.gotoByName
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
-import com.intellij.platform.searchEverywhere.SearchEverywhereParams
-import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
-import com.intellij.platform.searchEverywhere.SearchEverywhereTab
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereTabHelper
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SearchEverywhereActionsTab(project: Project, sessionId: Int): SearchEverywhereTab {
+class SearchEverywhereActionsTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab {
   private val helper = SearchEverywhereTabHelper(project,
-                                                 sessionId,
+                                                 sessionRef,
                                                  listOf(SearchEverywhereProviderId("com.intellij.ActionsItemsProvider")))
 
   override val name: String

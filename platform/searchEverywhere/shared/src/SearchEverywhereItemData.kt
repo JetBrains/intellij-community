@@ -3,8 +3,8 @@ package com.intellij.platform.searchEverywhere
 
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereItemEntity
-import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.entity
+import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,13 +19,13 @@ data class SearchEverywhereItemData(
 
 @ApiStatus.Experimental
 suspend fun SearchEverywhereItemData.Companion.createItemData(
-  sessionId: EID,
+  sessionRef: DurableRef<SearchEverywhereSessionEntity>,
   item: SearchEverywhereItem,
   providerId: SearchEverywhereProviderId,
   weight: Int,
   presentation: SearchEverywhereItemPresentation,
 ): SearchEverywhereItemData? {
-  val entity = SearchEverywhereItemEntity.createWith(sessionId, item) ?: return null
+  val entity = SearchEverywhereItemEntity.createWith(sessionRef, item) ?: return null
   return SearchEverywhereItemData(SearchEverywhereItemId(entity.eid), providerId, weight, presentation)
 }
 

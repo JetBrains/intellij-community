@@ -2,15 +2,16 @@
 package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.platform.searchEverywhere.*
-import com.jetbrains.rhizomedb.EID
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 
 class SearchEverywhereItemDataBackendProvider(override val id: SearchEverywhereProviderId,
                                               private val provider: SearchEverywhereItemsProvider): SearchEverywhereItemDataProvider {
-  override fun getItems(sessionId: EID, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+  override fun getItems(sessionRef: DurableRef<SearchEverywhereSessionEntity>, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
     return provider.getItems(params).mapNotNull { item ->
-      SearchEverywhereItemData.createItemData(sessionId, item, id, item.weight(), item.presentation())
+      println("ayay remote item BE")
+      SearchEverywhereItemData.createItemData(sessionRef, item, id, item.weight(), item.presentation())
     }
   }
 }

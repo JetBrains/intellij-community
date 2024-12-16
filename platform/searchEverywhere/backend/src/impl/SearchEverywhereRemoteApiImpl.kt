@@ -6,9 +6,12 @@ import com.intellij.platform.project.findProject
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
 import com.intellij.platform.searchEverywhere.SearchEverywhereParams
 import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
+import com.intellij.platform.searchEverywhere.SearchEverywhereSessionEntity
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereRemoteApi
 import com.jetbrains.rhizomedb.EID
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -18,9 +21,12 @@ class SearchEverywhereRemoteApiImpl: SearchEverywhereRemoteApi {
   }
 
   override suspend fun getItems(projectId: ProjectId,
-                                sessionId: EID,
+                                sessionRef: DurableRef<SearchEverywhereSessionEntity>,
                                 providerId: SearchEverywhereProviderId,
                                 params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
-    return SearchEverywhereBackendService.getInstance(projectId.findProject()).getItems(sessionId, providerId, params)
+    return SearchEverywhereBackendService.getInstance(projectId.findProject()).getItems(sessionRef, providerId, params).map {
+      println("ayay remote item RPCImpl")
+      it
+    }
   }
 }

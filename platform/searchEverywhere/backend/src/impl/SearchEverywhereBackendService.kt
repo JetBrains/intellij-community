@@ -9,7 +9,9 @@ import com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBacke
 import com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBackendItemDataProvidersHolderEntity.Companion.Session
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereItemEntity
 import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.entity
+import fleet.kernel.DurableRef
 import fleet.kernel.change
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -19,20 +21,22 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.PROJECT)
 class SearchEverywhereBackendService(val project: Project) {
 
-  suspend fun getItems(sessionId: EID, providerId: SearchEverywhereProviderId, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
-    return getProviders(sessionId)[providerId]?.getItems(sessionId, params) ?: emptyFlow()
+  suspend fun getItems(sessionRef: DurableRef<SearchEverywhereSessionEntity>, providerId: SearchEverywhereProviderId, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+    val provider = getProviders(sessionRef)[providerId]
+
+    return provider?.getItems(sessionRef, params) ?: emptyFlow()
   }
 
-  private suspend fun getProviders(sessionId: EID): Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider> {
-    val providersHolder = withKernel {
-      val session = entity(sessionId) as? SearchEverywhereSessionEntity ?: return@withKernel null
-      var existingHolderEntity = entity(Session, session)
+  private suspend fun getProviders(sessionRef: DurableRef<SearchEverywhereSessionEntity>): Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider> =
+    withKernel {
+      val session = sessionRef.derefOrNull() ?: return@withKernel null
+      var existingHolderEntities = entities(Session, session)
 
-      if (existingHolderEntity == null) {
-        existingHolderEntity = change {
-          val holderEntity = entity(Session, session)
+      if (existingHolderEntities.isEmpty()) {
+        existingHolderEntities = change {
+          val holderEntities = entities(Session, session)
 
-          if (holderEntity == null) {
+          holderEntities.ifEmpty {
             val providers = SearchEverywhereItemsProviderFactory.EP_NAME.extensionList.associate { factory ->
               val provider = factory.getItemsProvider()
               val id = SearchEverywhereProviderId(provider.id)
@@ -44,17 +48,14 @@ class SearchEverywhereBackendService(val project: Project) {
               it[Holder] = holder
               it[Session] = session
             }
-          }
 
-          holderEntity
+            entities(Session, session)
+          }
         }
       }
 
-      existingHolderEntity
-    }
-
-    return providersHolder?.holder?.providers ?: emptyMap()
-  }
+      existingHolderEntities.first().holder
+    }?.providers ?: emptyMap()
 
   suspend fun itemSelected(itemId: EID) {
     val item = withKernel {

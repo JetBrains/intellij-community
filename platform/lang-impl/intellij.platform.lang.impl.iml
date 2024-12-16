@@ -117,5 +117,6 @@
     <orderEntry type="module" module-name="intellij.platform.foldings" exported="" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.frontend" />
+    <orderEntry type="module" module-name="fleet.kernel" />
   </component>
 </module>

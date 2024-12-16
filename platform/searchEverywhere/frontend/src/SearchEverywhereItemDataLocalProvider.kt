@@ -2,7 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.platform.searchEverywhere.*
-import com.jetbrains.rhizomedb.EID
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -12,9 +12,9 @@ class SearchEverywhereItemDataLocalProvider(private val itemsProvider: SearchEve
   override val id: SearchEverywhereProviderId
     get() = SearchEverywhereProviderId(itemsProvider.id)
 
-  override fun getItems(sessionId: EID, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+  override fun getItems(sessionRef: DurableRef<SearchEverywhereSessionEntity>, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
     return itemsProvider.getItems(params).mapNotNull {
-      SearchEverywhereItemData.createItemData(sessionId, it, id, it.weight(), it.presentation())
+      SearchEverywhereItemData.createItemData(sessionRef, it, id, it.weight(), it.presentation())
     }
   }
 }

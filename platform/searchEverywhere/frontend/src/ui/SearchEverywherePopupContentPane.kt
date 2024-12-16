@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
 import com.intellij.platform.searchEverywhere.frontend.vm.SearchEverywherePopupVm
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -74,7 +73,7 @@ class SearchEverywherePopupContentPane(private val vm: SearchEverywherePopupVm):
     }
     resultsScroll.border = null
     resultsScroll.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-    ComponentUtil.putClientProperty(resultsScroll.verticalScrollBar, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
+    resultsScroll.verticalScrollBar.putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
 
     resultsScroll.preferredSize = JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight())
     return resultsScroll

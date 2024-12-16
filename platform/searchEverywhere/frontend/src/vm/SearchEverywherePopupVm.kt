@@ -3,8 +3,9 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
+import com.intellij.platform.searchEverywhere.SearchEverywhereSessionEntity
 import com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider
-import com.jetbrains.rhizomedb.EID
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchEverywherePopupVm(val coroutineScope: CoroutineScope,
                               private val project: Project,
-                              private val sessionId: EID,
+                              private val sessionRef: DurableRef<SearchEverywhereSessionEntity>,
                               private val onClose: suspend () -> Unit) {
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(0)
@@ -26,7 +27,7 @@ class SearchEverywherePopupVm(val coroutineScope: CoroutineScope,
   val searchPattern = MutableStateFlow("")
 
   val tabVms: List<SearchEverywhereTabVm> = SearchEverywhereTabProvider.EP_NAME.extensionList.map {
-    val tab = it.getTab(project, sessionId)
+    val tab = it.getTab(project, sessionRef)
     SearchEverywhereTabVm(coroutineScope, tab, searchPattern)
   }
 

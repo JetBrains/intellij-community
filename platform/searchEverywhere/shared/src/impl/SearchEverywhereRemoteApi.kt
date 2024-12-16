@@ -6,7 +6,9 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
 import com.intellij.platform.searchEverywhere.SearchEverywhereParams
 import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
+import com.intellij.platform.searchEverywhere.SearchEverywhereSessionEntity
 import com.jetbrains.rhizomedb.EID
+import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface SearchEverywhereRemoteApi: RemoteApi<Unit> {
   suspend fun getItems(projectId: ProjectId,
-                       sessionId: EID,
+                       sessionRef: DurableRef<SearchEverywhereSessionEntity>,
                        providerId: SearchEverywhereProviderId,
                        params: SearchEverywhereParams): Flow<SearchEverywhereItemData>
 
