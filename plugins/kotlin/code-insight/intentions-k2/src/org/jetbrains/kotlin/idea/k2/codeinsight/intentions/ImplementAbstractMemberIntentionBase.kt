@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -39,8 +38,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ClassListCell
 import org.jetbrains.kotlin.idea.core.overrideImplement.*
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -173,10 +171,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                 .filterIsInstance<KtEnumEntry>()
                 .mapNotNull(::createImplementableMember)
         } else {
-            HierarchySearchRequest(baseClass, baseClass.useScope, searchDeeply = false)
-                .searchInheritors()
-                .asSequence()
-                .mapNotNull(::createImplementableMember)
+            DirectKotlinClassInheritorsSearch.search(baseClass).asSequence().mapNotNull(::createImplementableMember)
         }
     }
 
@@ -207,13 +202,12 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
             companion object {
 
                 fun from(
-                    targetClass: KtLightClass,
+                    targetClass: KtClass,
                     abstractMember: KtNamedDeclaration,
                     preferConstructorParameters: Boolean,
                 ): KtImplementableMember? {
-                    val origin = targetClass.kotlinOrigin ?: return null
-                    val ktClassMember = analyze(origin) {
-                        val subClass = origin.symbol as? KaClassSymbol ?: return null
+                    val ktClassMember = analyze(targetClass) {
+                        val subClass = targetClass.symbol as? KaClassSymbol ?: return null
                         if (subClass.classKind == KaClassKind.INTERFACE) return null
                         val existingImplementation = findExistingImplementation(subClass, abstractMember)
                         if (existingImplementation != null) return null
@@ -223,7 +217,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
                     return KtImplementableMember(
                         targetClass = targetClass,
                         member = ktClassMember,
-                        origin = origin,
+                        origin = targetClass,
                     )
                 }
 

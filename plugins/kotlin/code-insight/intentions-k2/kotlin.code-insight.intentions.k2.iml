@@ -59,5 +59,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k2" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" />
+    <orderEntry type="module" module-name="kotlin.searching.k2" />
   </component>
 </module>

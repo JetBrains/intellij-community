@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.intentions">
   <dependencies>
     <module name="kotlin.refactorings.k2"/>
+    <module name="kotlin.searching.k2"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
