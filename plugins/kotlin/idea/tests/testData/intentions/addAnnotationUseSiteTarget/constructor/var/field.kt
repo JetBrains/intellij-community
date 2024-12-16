@@ -1,6 +1,4 @@
-// CHOSEN_OPTION: FIELD
-// IGNORE_K2
-// Issue: KTIJ-32504
+// CHOSEN_OPTION: FIELD|Add use-site target 'field'
 
 annotation class A
 

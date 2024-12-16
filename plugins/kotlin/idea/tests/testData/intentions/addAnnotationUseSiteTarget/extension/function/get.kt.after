@@ -1,5 +1,5 @@
-// NO_OPTION: PROPERTY_GETTER
-
+// NO_OPTION: PROPERTY_GETTER|Add use-site target 'get'
+// CHOSEN_OPTION: RECEIVER|Add use-site target 'receiver'
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

@@ -1,6 +1,4 @@
-// CHOSEN_OPTION: PROPERTY
-// IGNORE_K2
-// Issue: KTIJ-32504
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 
 annotation class A
 

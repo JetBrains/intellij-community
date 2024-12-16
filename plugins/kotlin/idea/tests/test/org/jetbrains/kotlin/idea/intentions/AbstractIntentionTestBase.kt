@@ -9,6 +9,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -249,6 +250,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                     }
                 }
                 UIUtil.dispatchAllInvocationEvents()
+                NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {

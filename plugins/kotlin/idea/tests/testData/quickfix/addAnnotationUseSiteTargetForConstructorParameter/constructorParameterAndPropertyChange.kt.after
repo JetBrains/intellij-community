@@ -1,4 +1,3 @@
-// CHOSEN_OPTION: PROPERTY
 // "Change use-site target to 'property'" "true"
 // ACTION "Add use-site target 'param'"
 // COMPILER_ARGUMENTS: -XXLanguage:+AnnotationDefaultTargetMigrationWarning

@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: PROPERTY
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 // AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A

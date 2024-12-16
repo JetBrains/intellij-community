@@ -1,7 +1,5 @@
-// NO_OPTION: RECEIVER
-// CHOSEN_OPTION: PROPERTY
-// IGNORE_K2
-// Issue: KTIJ-32504
+// NO_OPTION: RECEIVER|Add use-site target 'receiver'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 
 annotation class A
 

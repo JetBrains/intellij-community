@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: CONSTRUCTOR_PARAMETER
+// CHOSEN_OPTION: CONSTRUCTOR_PARAMETER|Add use-site target 'param'
 
 annotation class A
 

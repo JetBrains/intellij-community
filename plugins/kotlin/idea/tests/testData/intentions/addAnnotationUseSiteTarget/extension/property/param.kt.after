@@ -1,4 +1,5 @@
-// NO_OPTION: CONSTRUCTOR_PARAMETER
+// NO_OPTION: CONSTRUCTOR_PARAMETER|Add use-site target 'param'
+// CHOSEN_OPTION: RECEIVER|Add use-site target 'receiver'
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

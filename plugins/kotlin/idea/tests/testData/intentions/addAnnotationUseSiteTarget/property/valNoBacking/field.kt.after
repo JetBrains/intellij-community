@@ -1,5 +1,5 @@
-// NO_OPTION: FIELD
-// CHOSEN_OPTION: PROPERTY
+// NO_OPTION: FIELD|Add use-site target 'field'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 
 annotation class A
 

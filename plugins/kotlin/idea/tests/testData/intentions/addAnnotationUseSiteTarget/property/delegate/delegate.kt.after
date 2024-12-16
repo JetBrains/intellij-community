@@ -1,7 +1,5 @@
-// CHOSEN_OPTION: PROPERTY_DELEGATE_FIELD
+// CHOSEN_OPTION: PROPERTY_DELEGATE_FIELD|Add use-site target 'delegate'
 // WITH_STDLIB
-// IGNORE_K2
-// Issue: KTIJ-32504
 
 annotation class A
 

@@ -1,5 +1,5 @@
-// NO_OPTION: RECEIVER
-// CHOSEN_OPTION: PROPERTY
+// NO_OPTION: RECEIVER|Add use-site target 'receiver'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 // WITH_STDLIB
 
 annotation class A

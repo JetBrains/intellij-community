@@ -1,5 +1,5 @@
-// NO_OPTION: PROPERTY_SETTER
-// CHOSEN_OPTION: PROPERTY
+// NO_OPTION: PROPERTY_SETTER|Add use-site target 'set'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 // WITH_STDLIB
 
 annotation class A

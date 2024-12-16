@@ -1,4 +1,4 @@
-// CHOSEN_OPTION: FIELD
+// CHOSEN_OPTION: FIELD|Add use-site target 'field'
 
 class Test {
     @field:p.A

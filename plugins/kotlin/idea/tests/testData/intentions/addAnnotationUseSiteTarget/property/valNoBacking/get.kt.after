@@ -1,6 +1,4 @@
-// CHOSEN_OPTION: PROPERTY_GETTER
-// IGNORE_K2
-// Issue: KTIJ-32504
+// CHOSEN_OPTION: PROPERTY_GETTER|Add use-site target 'get'
 
 annotation class A
 

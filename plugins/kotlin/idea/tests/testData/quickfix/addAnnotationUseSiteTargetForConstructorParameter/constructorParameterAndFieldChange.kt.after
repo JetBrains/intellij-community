@@ -1,4 +1,3 @@
-// CHOSEN_OPTION: FIELD
 // "Change use-site target to 'field'" "true"
 // ACTION "Add use-site target 'param'"
 // COMPILER_ARGUMENTS: -XXLanguage:+AnnotationDefaultTargetMigrationWarning

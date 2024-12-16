@@ -1,7 +1,5 @@
-// NO_OPTION: CONSTRUCTOR_PARAMETER
-// CHOSEN_OPTION: PROPERTY
-// IGNORE_K2
-// Issue: KTIJ-32504
+// NO_OPTION: CONSTRUCTOR_PARAMETER|Add use-site target 'param'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 
 annotation class A
 
