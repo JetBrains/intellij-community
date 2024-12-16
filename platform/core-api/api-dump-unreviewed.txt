@@ -2025,12 +2025,9 @@ com.intellij.openapi.options.SchemeElement
 com.intellij.openapi.options.SchemeMetaInfo
 - a:getMetaProperties():java.util.Properties
 com.intellij.openapi.progress.CoroutineSuspender
-- kotlin.coroutines.CoroutineContext
 - a:isPaused():Z
 - a:pause():V
 - a:resume():V
-Ff:com.intellij.openapi.progress.CoroutineSuspender$DefaultImpls
-- s:plus(com.intellij.openapi.progress.CoroutineSuspender,kotlin.coroutines.CoroutineContext):kotlin.coroutines.CoroutineContext
 c:com.intellij.openapi.progress.DumbProgressIndicator
 - com.intellij.openapi.progress.StandardProgressIndicator
 - sf:INSTANCE:com.intellij.openapi.progress.DumbProgressIndicator

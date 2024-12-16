@@ -18,5 +18,5 @@ sealed class TaskSuspenderState {
    * @property suspendedReason An optional human-readable message explaining the reason for the pause,
    * which can be displayed in the progress bar.
    */
-  class Paused(val suspendedReason: @ProgressText String? = null) : TaskSuspenderState()
+  class Paused(val suspendedReason: @ProgressText String?) : TaskSuspenderState()
 }

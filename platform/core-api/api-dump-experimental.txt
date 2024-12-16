@@ -257,6 +257,7 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 *f:com.intellij.openapi.progress.SuspenderKt
+- sf:asContextElement(com.intellij.openapi.progress.CoroutineSuspender):kotlin.coroutines.CoroutineContext$Element
 - sf:coroutineSuspender(Z):com.intellij.openapi.progress.CoroutineSuspender
 - bs:coroutineSuspender$default(Z,I,java.lang.Object):com.intellij.openapi.progress.CoroutineSuspender
 a:com.intellij.openapi.progress.Task
