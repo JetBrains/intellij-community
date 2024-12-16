@@ -1,9 +1,11 @@
-package com.intellij.cce.java.chat
+package com.intellij.cce.evaluable.chat
 
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
+import com.intellij.cce.java.chat.InEditorGeneratedCodeIntegrator
+import com.intellij.cce.java.chat.JavaApiCallExtractor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
@@ -54,7 +56,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
     val project: Project = project
 
     runBlocking {
-      val extractor = JavaApiCallExtractor(GeneratedCodeIntegrator { project, _ -> code })
+      val extractor = JavaApiCallExtractor { project, _ -> code }
       val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#bar"), apiCalls)
     }

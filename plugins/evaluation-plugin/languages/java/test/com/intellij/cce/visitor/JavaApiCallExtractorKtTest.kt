@@ -1,12 +1,13 @@
-package com.intellij.cce.java.chat
+package com.intellij.cce.visitor
 
+import com.intellij.cce.java.chat.extractCalledInternalApiMethods
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class JavaApiCallExtractorUtilsTest : BasePlatformTestCase() {
+class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
   fun `test extract internal API methods within project`() {
     val code = """
             public class MyClass {
