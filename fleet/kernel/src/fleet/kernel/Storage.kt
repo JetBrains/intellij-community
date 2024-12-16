@@ -41,10 +41,11 @@ suspend fun <T> withStorage(
       spannedScope("transact snapshot") {
         if (snapshot != DurableSnapshotWithPartitions.Empty) {
           Storage.logger.info { "applying non-empty snapshot $storageKey" }
+          val isFailFast = currentCoroutineContext()[FailFastMarker] != null
           hackyNonBlockingChange {
             span("apply snapshot") {
               DbContext.threadBound.ensureMutable {
-                applyDurableSnapshotWithPartitions(snapshot)
+                applyDurableSnapshotWithPartitions(snapshotWithPartitions = snapshot, isFailFast = isFailFast)
               }
             }
           }
@@ -131,7 +132,7 @@ data class DurableSnapshotWithPartitions(
   }
 }
 
-private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartitions: DurableSnapshotWithPartitions) {
+private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartitions: DurableSnapshotWithPartitions, isFailFast: Boolean) {
   span("applyDurableSnapshotWithPartitions") {
     val memoizedEIDs = HashMap<UID, EID>()
     applySnapshot(snapshotWithPartitions.snapshot) { uid ->
@@ -141,6 +142,9 @@ private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartit
 
     val attrIdents = snapshotWithPartitions.snapshot.entities.flatMapTo(HashSet()) { e -> e.attrs.keys }
     val deserializationProblems = deserializationProblems(attrIdents.mapNotNull { k -> attributeByIdent(k.ident) })
+    if (isFailFast) {
+      check(deserializationProblems.isEmpty()) { deserializationProblems.joinToString(separator = "\n") }
+    }
 
     val schemaProblems = uidAttribute().let { uidAttr ->
       snapshotWithPartitions.snapshot.entities.flatMap { durableEntity ->
@@ -154,6 +158,9 @@ private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartit
 
     reportDeserializationProblems(deserializationProblems, Storage.logger)
     reportSchemaProblems(schemaProblems, Storage.logger)
+    if (isFailFast) {
+      check(schemaProblems.isEmpty()) { schemaProblems.joinToString(separator = "\n") }
+    }
 
     val entitiesToRetract = (deserializationProblems.map { problem -> problem.datom.eid }
                              + schemaProblems.map(MissingRequiredAttribute::eid))
