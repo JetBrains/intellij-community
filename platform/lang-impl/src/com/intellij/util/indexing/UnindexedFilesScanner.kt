@@ -76,7 +76,7 @@ class ScanningIterators(
 }
 
 @ApiStatus.Internal
-class UnindexedFilesScanner @JvmOverloads constructor(
+class UnindexedFilesScanner (
   private val myProject: Project,
   private val myOnProjectOpen: Boolean,
   isIndexingFilesFilterUpToDate: Boolean,
