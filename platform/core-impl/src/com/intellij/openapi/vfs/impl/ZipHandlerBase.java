@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
   private static final Logger LOG = Logger.getInstance(ZipHandlerBase.class);
-  private static final boolean USE_NIO_HANDLER = Boolean.getBoolean("zip.handler.use.nio");
 
   @ApiStatus.Internal
   public static boolean getUseCrcInsteadOfTimestampPropertyValue() {
@@ -31,16 +30,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   @ApiStatus.Internal
   public static @NotNull GenericZipFile getZipFileWrapper(@NotNull Path file) throws IOException {
-    GenericZipFile wrapper;
-    if (USE_NIO_HANDLER) {
-      wrapper = new JavaNioZipFileWrapper(file);
-    }
-    else if (isFileLocal(file)) {
-      wrapper = new JavaZipFileWrapper(file.toFile());
-    }
-    else {
-      wrapper = new JBZipFileWrapper(file.toFile());
-    }
+    GenericZipFile wrapper = isFileLocal(file) ? new JavaZipFileWrapper(file.toFile()) : new JBZipFileWrapper(file.toFile());
     if (LOG.isTraceEnabled()) {
       LOG.trace("Using " + wrapper.getClass().getName() + " to open " + file);
     }
@@ -52,22 +42,16 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
    * JVM internals assume that all files are local to it.
    */
   private static boolean isFileLocal(Path file) {
-    FileSystem pathFileSystem = file.getFileSystem();
-
-    if (pathFileSystem.equals(FileSystems.getDefault())) {
+    FileSystem fileFs = file.getFileSystem();
+    if (fileFs.equals(FileSystems.getDefault())) {
       try {
-        // This file is located in the module `platform.core.impl`, which is included in kotlinc.
-        // We do not want to have references to MultiRoutingFileSystem in kotlinc,
-        // hence we are using reflection to access the needed methods
-        return !(boolean)pathFileSystem.getClass().getMethod("isRoutable", Path.class).invoke(pathFileSystem, file);
+        // This class is located in the module `platform.core.impl`, which is included in kotlinc.
+        // We do not want to have references to MultiRoutingFileSystem in the latter, hence reflection.
+        return !(boolean)fileFs.getClass().getMethod("isRoutable", Path.class).invoke(fileFs, file);
       }
-      catch (Throwable e) {
-        return true;
-      }
+      catch (Throwable ignored) { }
     }
-    else {
-      return true;
-    }
+    return true;
   }
 
   public ZipHandlerBase(@NotNull String path) {
