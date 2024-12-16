@@ -6,16 +6,15 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereRemoteApi
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
 
 class SearchEverywhereItemDataFrontendProvider(private val projectId: ProjectId,
                                                override val id: SearchEverywhereProviderId): SearchEverywhereItemDataProvider {
   override fun getItems(sessionRef: DurableRef<SearchEverywhereSessionEntity>, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
-    return flow {
-      SearchEverywhereRemoteApi.getInstance().getItems(projectId, sessionRef, id, params).map {
-        println("ayay remote item FE")
-        it
+    return channelFlow {
+      SearchEverywhereRemoteApi.getInstance().getItems(projectId, sessionRef, id, params).collectLatest {
+        send(it)
       }
     }
   }

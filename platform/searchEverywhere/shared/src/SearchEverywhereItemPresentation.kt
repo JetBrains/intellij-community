@@ -2,15 +2,22 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.platform.backend.presentation.TargetPresentation
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Experimental
-interface SearchEverywhereItemPresentation {
+@Serializable
+sealed interface SearchEverywhereItemPresentation {
   val text: String
 }
 
 @ApiStatus.Internal
+@Serializable
+class SearchEverywhereTextItemPresentation(override val text: String): SearchEverywhereItemPresentation
+
+@ApiStatus.Internal
+@Serializable
 data class ActionItemPresentation(
   val icon: Icon? = null,
   override val text: String,
@@ -21,7 +28,7 @@ data class ActionItemPresentation(
 ): SearchEverywhereItemPresentation
 
 @ApiStatus.Internal
+@Serializable
 class TargetItemPresentation(val targetPresentation: TargetPresentation): SearchEverywhereItemPresentation {
-  override val text: String
-    get() = targetPresentation.presentableText
+  override val text: String = targetPresentation.presentableText
 }

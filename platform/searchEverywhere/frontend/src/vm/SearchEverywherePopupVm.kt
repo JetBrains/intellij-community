@@ -36,10 +36,8 @@ class SearchEverywherePopupVm(val coroutineScope: CoroutineScope,
 
     val activeTab = tabVms.first()
     currentTab = currentTabIndex.map {
-      println("ayay currentTabIndex $it")
       tabVms[it.coerceIn(tabVms.indices)]
     }.withPrevious().map { (prev, next) ->
-      println("ayay prev-next ${prev?.name} -> ${next.name}")
       prev?.setActive(false)
       next.setActive(true)
       next

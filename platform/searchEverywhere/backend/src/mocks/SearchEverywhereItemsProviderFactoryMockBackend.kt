@@ -7,7 +7,7 @@ import com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProvide
 
 class SearchEverywhereItemsProviderFactoryMockBackend: SearchEverywhereItemsProviderFactory {
   override fun getItemsProvider(): SearchEverywhereItemsProvider =
-    SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 1500, delayStep = 5)
+    SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 300, delayStep = 5)
 
   companion object {
     const val PREFIX: String = "MockBackend"

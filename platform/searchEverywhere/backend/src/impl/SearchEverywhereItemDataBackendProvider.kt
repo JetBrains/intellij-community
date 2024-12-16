@@ -10,7 +10,6 @@ class SearchEverywhereItemDataBackendProvider(override val id: SearchEverywhereP
                                               private val provider: SearchEverywhereItemsProvider): SearchEverywhereItemDataProvider {
   override fun getItems(sessionRef: DurableRef<SearchEverywhereSessionEntity>, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
     return provider.getItems(params).mapNotNull { item ->
-      println("ayay remote item BE")
       SearchEverywhereItemData.createItemData(sessionRef, item, id, item.weight(), item.presentation())
     }
   }

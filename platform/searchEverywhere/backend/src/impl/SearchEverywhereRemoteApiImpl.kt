@@ -11,7 +11,6 @@ import com.intellij.platform.searchEverywhere.impl.SearchEverywhereRemoteApi
 import com.jetbrains.rhizomedb.EID
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -24,9 +23,6 @@ class SearchEverywhereRemoteApiImpl: SearchEverywhereRemoteApi {
                                 sessionRef: DurableRef<SearchEverywhereSessionEntity>,
                                 providerId: SearchEverywhereProviderId,
                                 params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
-    return SearchEverywhereBackendService.getInstance(projectId.findProject()).getItems(sessionRef, providerId, params).map {
-      println("ayay remote item RPCImpl")
-      it
-    }
+    return SearchEverywhereBackendService.getInstance(projectId.findProject()).getItems(sessionRef, providerId, params)
   }
 }

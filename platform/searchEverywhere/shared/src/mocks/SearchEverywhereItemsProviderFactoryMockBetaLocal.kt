@@ -6,7 +6,7 @@ import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProviderFacto
 
 class SearchEverywhereItemsProviderFactoryMockBetaLocal: SearchEverywhereItemsProviderFactory {
   override fun getItemsProvider(): SearchEverywhereItemsProvider =
-    SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 1300, delayStep = 5)
+    SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 400, delayStep = 5)
 
   companion object {
     const val PREFIX: String = "BetaLocal"

@@ -4,10 +4,7 @@ package com.intellij.ide.util.gotoByName
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.SearchEverywhereItem
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemPresentation
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
-import com.intellij.platform.searchEverywhere.SearchEverywhereParams
+import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import org.jetbrains.annotations.ApiStatus
@@ -15,10 +12,9 @@ import java.awt.Component
 
 class MockActionSearchEverywhereItem(val text: String): SearchEverywhereItem {
   override fun weight(): Int = 0
-  override fun presentation(): SearchEverywhereItemPresentation = MockActionSearchEverywhereItemPresentation(text)
+  override fun presentation(): SearchEverywhereItemPresentation = SearchEverywhereTextItemPresentation(text)
 }
 
-class MockActionSearchEverywhereItemPresentation(override val text: String): SearchEverywhereItemPresentation
 
 @ApiStatus.Internal
 class SearchEverywhereActionsProvider(project: Project? = null, contextComponent: Component? = null, editor: Editor? = null): SearchEverywhereItemsProvider {

@@ -4,9 +4,11 @@ package com.intellij.platform.searchEverywhere
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.EntityType
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
+@Serializable
 class SearchEverywhereSessionEntity(override val eid: EID) : Entity {
   companion object : EntityType<SearchEverywhereSessionEntity>(SearchEverywhereSessionEntity::class, ::SearchEverywhereSessionEntity)
 }

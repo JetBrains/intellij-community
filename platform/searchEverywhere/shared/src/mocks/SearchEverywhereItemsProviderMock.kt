@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.mocks
 import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,12 +18,18 @@ class SearchEverywhereItemsProviderMock(
 ) : SearchEverywhereItemsProvider {
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem> {
+    val searchText = (params as? SearchEverywhereTextSearchParams)?.text ?: return emptyFlow()
+
     return flow {
       delay(delayMillis)
 
       repeat(size) { index ->
         val item = SearchEverywhereItemMock("$resultPrefix $index")
-        emit(item)
+
+        if (searchText.isEmpty() || item.text.contains(searchText, ignoreCase = true)) {
+          emit(item)
+        }
+
         if (delayStep > 0 && delayMillis > 0 && (index + 1) % delayStep == 0) {
           delay(delayMillis)
         }
@@ -34,5 +41,5 @@ class SearchEverywhereItemsProviderMock(
 @ApiStatus.Internal
 class SearchEverywhereItemMock(val text: String) : SearchEverywhereItem {
   override fun weight(): Int = 0
-  override fun presentation(): SearchEverywhereItemPresentation = ActionItemPresentation(text = text)
+  override fun presentation(): SearchEverywhereItemPresentation = SearchEverywhereTextItemPresentation(text = text)
 }
