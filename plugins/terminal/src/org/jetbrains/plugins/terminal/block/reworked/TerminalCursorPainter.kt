@@ -32,8 +32,6 @@ internal class TerminalCursorPainter private constructor(
 ) {
   private val editor: EditorEx
     get() = outputModel.editor
-  private val cursorColor: Color
-    get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CURSOR_DARK, CURSOR_LIGHT)
 
   private var cursorPaintingJob: Job? = null
 
@@ -93,16 +91,17 @@ internal class TerminalCursorPainter private constructor(
       return
     }
 
+    val renderer = CursorRendererBase(editor)
     if (state.isFocused) {
-      paintBlinkingCursor(state)
+      paintBlinkingCursor(renderer, state.offset)
     }
     else {
-      paintEmptyCursor(state)
+      paintStaticCursor(renderer, state.offset)
     }
   }
 
-  private suspend fun paintBlinkingCursor(state: CursorState) {
-    var highlighter: RangeHighlighter? = installCursorHighlighter(state.offset)
+  private suspend fun paintBlinkingCursor(renderer: CursorRenderer, offset: Int) {
+    var highlighter: RangeHighlighter? = renderer.installCursorHighlighter(offset)
     try {
       val blinkingPeriod = editor.settings.caretBlinkPeriod.toLong()
       var shouldPaint = false
@@ -111,7 +110,7 @@ internal class TerminalCursorPainter private constructor(
         delay(blinkingPeriod)
 
         if (shouldPaint) {
-          highlighter = installCursorHighlighter(state.offset)
+          highlighter = renderer.installCursorHighlighter(offset)
         }
         else {
           highlighter?.dispose()
@@ -126,59 +125,14 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
-  private suspend fun paintEmptyCursor(state: CursorState) {
-    val highlighter = installCursorHighlighter(state.offset)
+  private suspend fun paintStaticCursor(renderer: CursorRenderer, offset: Int) {
+    val highlighter = renderer.installCursorHighlighter(offset)
     try {
       awaitCancellation()
     }
     finally {
       highlighter.dispose()
     }
-  }
-
-  @RequiresEdt
-  private fun installCursorHighlighter(newOffset: Int): RangeHighlighter {
-    val cursorForeground = if (ColorUtil.isDark(cursorColor)) CURSOR_LIGHT else CURSOR_DARK
-    val attributes = TextAttributes(cursorForeground, null, null, null, Font.PLAIN)
-    val endOffset = if (newOffset + 1 < editor.document.textLength) newOffset + 1 else newOffset
-    val highlighter = editor.markupModel.addRangeHighlighter(newOffset, endOffset, HighlighterLayer.LAST,
-                                                             attributes, HighlighterTargetArea.EXACT_RANGE)
-    highlighter.setCustomRenderer { _, _, g ->
-      val offset = highlighter.startOffset
-      val point = editor.offsetToPoint2D(offset)
-      val cursorHeight = calculateCursorHeight()
-      val cursorInset = (editor.lineHeight - cursorHeight) / 2
-      val rect = Rectangle2D.Double(point.x, point.y + cursorInset,
-                                    (editor as EditorImpl).charHeight.toDouble(), cursorHeight.toDouble())
-      g as Graphics2D
-      val oldColor = g.color
-      try {
-        g.color = cursorColor
-        g.fill(rect)
-      }
-      finally {
-        g.color = oldColor
-      }
-    }
-
-    return highlighter
-  }
-
-  /**
-   * It would be great to have [com.intellij.openapi.editor.impl.view.EditorView.myTopOverhang]
-   * and [com.intellij.openapi.editor.impl.view.EditorView.myBottomOverhang] values here to properly calculate the cursor height.
-   * But there is no way to access the EditorView.
-   * So, it is a custom solution, that can be not accurate in some cases.
-   */
-  private fun calculateCursorHeight(): Int {
-    // get part of the line height as an insets (top + bottom)
-    val rawCursorInset = editor.lineHeight * 0.2
-    // make sure that inset is even, because we will need to divide it by 2
-    val cursorInsets = if (floor(rawCursorInset).toInt() % 2 == 0) {
-      floor(rawCursorInset).toInt()
-    }
-    else ceil(rawCursorInset).toInt()
-    return editor.lineHeight - cursorInsets
   }
 
   private data class CursorState(
@@ -188,10 +142,66 @@ internal class TerminalCursorPainter private constructor(
     val cursorShape: CursorShape,
   )
 
-  companion object {
-    private val CURSOR_LIGHT: Color = Gray._255
-    private val CURSOR_DARK: Color = Gray._0
+  private sealed interface CursorRenderer {
+    @RequiresEdt
+    fun installCursorHighlighter(offset: Int): RangeHighlighter
+  }
 
+  private open class CursorRendererBase(private val editor: EditorEx) : CursorRenderer {
+    private val cursorColor: Color
+      get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CURSOR_DARK, CURSOR_LIGHT)
+
+    override fun installCursorHighlighter(offset: Int): RangeHighlighter {
+      val cursorForeground = if (ColorUtil.isDark(cursorColor)) CURSOR_LIGHT else CURSOR_DARK
+      val attributes = TextAttributes(cursorForeground, null, null, null, Font.PLAIN)
+      val endOffset = if (offset + 1 < editor.document.textLength) offset + 1 else offset
+      val highlighter = editor.markupModel.addRangeHighlighter(offset, endOffset, HighlighterLayer.LAST,
+                                                               attributes, HighlighterTargetArea.EXACT_RANGE)
+      highlighter.setCustomRenderer { _, _, g ->
+        val offset = highlighter.startOffset
+        val point = editor.offsetToPoint2D(offset)
+        val cursorHeight = calculateCursorHeight()
+        val cursorInset = (editor.lineHeight - cursorHeight) / 2
+        val rect = Rectangle2D.Double(point.x, point.y + cursorInset,
+                                      (editor as EditorImpl).charHeight.toDouble(), cursorHeight.toDouble())
+        g as Graphics2D
+        val oldColor = g.color
+        try {
+          g.color = cursorColor
+          g.fill(rect)
+        }
+        finally {
+          g.color = oldColor
+        }
+      }
+
+      return highlighter
+    }
+
+    /**
+     * It would be great to have [com.intellij.openapi.editor.impl.view.EditorView.myTopOverhang]
+     * and [com.intellij.openapi.editor.impl.view.EditorView.myBottomOverhang] values here to properly calculate the cursor height.
+     * But there is no way to access the EditorView.
+     * So, it is a custom solution, that can be not accurate in some cases.
+     */
+    private fun calculateCursorHeight(): Int {
+      // get part of the line height as an insets (top + bottom)
+      val rawCursorInset = editor.lineHeight * 0.2
+      // make sure that inset is even, because we will need to divide it by 2
+      val cursorInsets = if (floor(rawCursorInset).toInt() % 2 == 0) {
+        floor(rawCursorInset).toInt()
+      }
+      else ceil(rawCursorInset).toInt()
+      return editor.lineHeight - cursorInsets
+    }
+
+    companion object {
+      private val CURSOR_LIGHT: Color = Gray._255
+      private val CURSOR_DARK: Color = Gray._0
+    }
+  }
+
+  companion object {
     @RequiresEdt
     fun install(outputModel: TerminalOutputModel, sessionModel: TerminalSessionModel, coroutineScope: CoroutineScope) {
       TerminalCursorPainter(outputModel, sessionModel, coroutineScope)
