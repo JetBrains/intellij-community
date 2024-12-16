@@ -1624,7 +1624,10 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
 
   @Test
   fun testDifferentSystemDependenciesWithSameId() = runBlocking {
-    needFixForMaven4()
+    createProjectSubFile("m1/foo.jar")
+    createProjectSubFile("m2/foo.jar")
+    val pp = projectPath.toCanonicalPath()
+
     createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -1635,8 +1638,7 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
           <artifactId>yyy</artifactId>
           <version>1</version>
           <scope>system</scope>
-          <systemPath>
-      ${root}/m1/foo.jar</systemPath>
+          <systemPath>${pp}/m1/foo.jar</systemPath>
         </dependency>
       </dependencies>
       """)
@@ -1649,8 +1651,7 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
           <artifactId>yyy</artifactId>
           <version>1</version>
           <scope>system</scope>
-          <systemPath>
-      ${root}/m2/foo.jar</systemPath>
+          <systemPath>${pp}/m2/foo.jar</systemPath>
         </dependency>
       </dependencies>
       """.trimIndent())
@@ -1667,9 +1668,8 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
                        """.trimIndent())
     doImportProjectsAsync(listOf(projectPom), false)
 
-    //    assertProjectLibraries("Maven: xxx:yyy:1");
-    assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + root + "/m1/foo.jar!/")
-    assertModuleLibDep("m2", "Maven: xxx:yyy:1", "jar://" + root + "/m2/foo.jar!/")
+    assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://$pp/m1/foo.jar!/")
+    assertModuleLibDep("m2", "Maven: xxx:yyy:1", "jar://$pp/m2/foo.jar!/")
   }
 
   @Test
