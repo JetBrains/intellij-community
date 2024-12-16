@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.groovy.compiler.rt;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jps.incremental.groovy;
+
+import com.intellij.openapi.application.PathManager;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public final class GroovyRtJarPaths {
   public static List<String> getGroovyRtRoots(File jpsPluginRoot, boolean addClassLoaderJar) {
@@ -27,6 +30,22 @@ public final class GroovyRtJarPaths {
                                          List<String> to) {
     File parentDir = jpsPluginClassesRoot.getParentFile();
     if (jpsPluginClassesRoot.isFile()) {
+      String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+      if (relevantJarsRoot != null && jpsPluginClassesRoot.getAbsolutePath().startsWith(relevantJarsRoot)) {
+        // running from archived compilation output
+        Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+        if (mapping == null) {
+          throw new IllegalStateException("Mapping cannot be null at this point. 'intellij.test.jars.location' is not null");
+        }
+        for (String moduleName : moduleNames) {
+          String path = mapping.get("production/" + moduleName);
+          if (path == null) {
+            throw new IllegalStateException("Mapping for module '" + moduleName + "' not found in " + mapping);
+          }
+          to.add(path);
+        }
+        return;
+      }
       String fileName;
       if (jpsPluginClassesRoot.getName().equals("groovy-jps.jar")) {
         fileName = jarNameInDistribution;

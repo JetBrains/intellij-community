@@ -1599,6 +1599,12 @@ public final class BuildManager implements Disposable {
         cmdLine.addParameter("-D" + name + '=' + value);
       }
     }
+    for (String name : Set.of("intellij.test.jars.location", "intellij.test.jars.mapping.file")) {
+      final String value = System.getProperty(name);
+      if (value != null) {
+        cmdLine.addPathParameter("-D" + name + "=", value);
+      }
+    }
     final DynamicBundle.LanguageBundleEP languageBundle = LocalizationUtil.INSTANCE.findLanguageBundle();
     if (languageBundle != null) {
       final PluginDescriptor pluginDescriptor = languageBundle.pluginDescriptor;

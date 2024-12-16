@@ -8,10 +8,10 @@ import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.groovy.compiler.rt.GroovyRtJarPaths;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.incremental.groovy.GreclipseBuilder;
 import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
+import org.jetbrains.jps.incremental.groovy.GroovyRtJarPaths;
 
 import java.io.File;
 import java.nio.file.Path;
