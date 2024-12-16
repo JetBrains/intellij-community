@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
+import com.intellij.codeInsight.navigation.actions.NavigationRequestHandler;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -15,7 +16,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
@@ -36,9 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -190,10 +188,10 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
                                                          numberOfLettersTyped,
                                                          selectedElement.getLanguage(), false);
             }
-            UsageViewUtil.navigateTo(usageInfo, true);
+            actionHandler.getNavigationRequestHandler().navigate(usageInfo);
           }
           else if (usage instanceof Navigatable) {
-            ((Navigatable)usage).navigate(true);
+            actionHandler.getNavigationRequestHandler().navigate(usage);
           }
         }
       }

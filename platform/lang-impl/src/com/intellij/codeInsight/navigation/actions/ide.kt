@@ -9,80 +9,54 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.navigation.impl.NavigationRequestor
 import com.intellij.codeInsight.navigation.impl.gtdTargetNavigatable
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileNavigator
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
-import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
-import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
-import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
 
-internal fun navigateToLookupItem(project: Project): Boolean {
+internal fun navigateToLookupItem(project: Project, navigationHandler: NavigationRequestHandler?): Boolean {
   val activeLookup: Lookup? = LookupManager.getInstance(project).activeLookup
   if (activeLookup == null) {
     return false
   }
   val currentItem = activeLookup.currentItem
-  navigateRequestLazy(project) {
+  navigateRequestLazy(project, NavigationRequestor {
     TargetElementUtil.targetElementFromLookupElement(currentItem)
       ?.gtdTargetNavigatable()
       ?.navigationRequest()
-  }
+  }, navigationHandler)
   return true
 }
 
 /**
  * Obtains a [NavigationRequest] instance from [requestor] on a background thread, and calls [navigateRequest].
  */
-internal fun navigateRequestLazy(project: Project, requestor: NavigationRequestor) {
+internal fun navigateRequestLazy(project: Project, requestor: NavigationRequestor, navigationHandler: NavigationRequestHandler?) {
   EDT.assertIsEdt()
   @Suppress("DialogTitleCapitalization")
   val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
     requestor.navigationRequest()
   }
   if (request != null) {
-    navigateRequest(project, request)
+    navigateRequest(project, request, navigationHandler)
   }
 }
 
 @Internal
 @RequiresEdt
-fun navigateRequest(project: Project, request: NavigationRequest) {
+fun navigateRequest(project: Project, request: NavigationRequest, navigationHandler: NavigationRequestHandler?) {
   EDT.assertIsEdt()
   IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
-  when (request) {
-    is SourceNavigationRequest -> {
-      // TODO support pure source request without OpenFileDescriptor
-      val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
-      val openFileDescriptor = OpenFileDescriptor(project, request.file, offset)
-      if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
-        openFileDescriptor.isUsePreviewTab = true
-      }
-      FileNavigator.getInstance().navigate(openFileDescriptor, true)
-    }
-    is DirectoryNavigationRequest -> {
-      PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, true)
-    }
-    is RawNavigationRequest -> {
-      request.navigatable.navigate(true)
-    }
-    else -> {
-      error("unsupported request ${request.javaClass.name}")
-    }
-  }
+  navigationHandler?.navigateRequest(project, request);
 }
 
 internal fun notifyNowhereToGo(project: Project, editor: Editor, file: PsiFile, offset: Int) {

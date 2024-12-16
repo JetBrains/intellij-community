@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
+import com.intellij.codeInsight.navigation.actions.NavigationRequestHandler
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
@@ -22,7 +23,7 @@ internal fun navigateAndHint(project: Project,
                              onReady: Runnable) {
   // Code below need EDT
   (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
-    NavigationService.getInstance(project).navigate(usage, NavigationOptions.defaultOptions().requestFocus(true))
+    actionHandler.navigationRequestHandler.navigate(project, usage, NavigationOptions.defaultOptions().requestFocus(true))
     writeIntentReadAction {
       val newEditor = getEditorFor(usage)
       if (newEditor == null) {

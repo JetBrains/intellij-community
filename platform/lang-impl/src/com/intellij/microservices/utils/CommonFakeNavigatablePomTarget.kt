@@ -1,5 +1,6 @@
 package com.intellij.microservices.utils
 
+import com.intellij.codeInsight.navigation.actions.NavigationRequestHandler
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -28,7 +29,7 @@ open class CommonFakeNavigatablePomTarget(project: Project, pomTarget: PomRename
     if (DumbService.getInstance(project).isDumb) return
     val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
     val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
-    ShowUsagesAction.startFindUsages(this, popupPosition, editor)
+    ShowUsagesAction.startFindUsages(this, popupPosition, editor, NavigationRequestHandler.DEFAULT)
   }
 
   override fun canNavigate(): Boolean = true

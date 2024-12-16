@@ -4,6 +4,7 @@ package com.intellij.microservices.utils
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
+import com.intellij.codeInsight.navigation.actions.NavigationRequestHandler
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.navigation.GotoRelatedItem
@@ -104,5 +105,5 @@ private fun showUsages(event: MouseEvent?, element: PsiElement) {
   else
     RelativePoint(event)
 
-  ShowUsagesAction.startFindUsages(element, popupPosition, editor)
+  ShowUsagesAction.startFindUsages(element, popupPosition, editor, NavigationRequestHandler.DEFAULT)
 }

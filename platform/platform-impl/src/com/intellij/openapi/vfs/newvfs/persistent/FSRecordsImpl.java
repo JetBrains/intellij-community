@@ -752,7 +752,7 @@ public final class FSRecordsImpl implements Closeable {
   @NotNull
   ListResult update(@NotNull VirtualFile parent,
                     int parentId,
-                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+                    @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
     PersistentFSConnection.ensureIdIsValid(parentId);
 

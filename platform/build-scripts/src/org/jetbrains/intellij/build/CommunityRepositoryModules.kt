@@ -218,8 +218,6 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     githubPlugin("intellij.vcs.github.community", productCode = "IC"),
     gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),
-    pluginAuto("intellij.journey") { spec ->
-    },
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(

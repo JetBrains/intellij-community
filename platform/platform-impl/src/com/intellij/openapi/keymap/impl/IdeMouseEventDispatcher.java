@@ -221,17 +221,6 @@ public final class IdeMouseEventDispatcher {
       throw new IllegalStateException("component cannot be null");
     }
     c = UIUtil.getDeepestComponentAt(c, e.getX(), e.getY());
-    if (c != null && c.getParent() instanceof JComponent view && isDiagramViewComponent(view)) {
-      // FIXME rewrite comment
-      // We cannot add a new dependency on Graph2D, so there is no way to fetch Graph2DCanvas itself, so we have use heck for Autoscroll
-      for (Component graph2DComponent : view.getComponents()) {
-        if (graph2DComponent instanceof java.awt.dnd.Autoscroll) {
-          int x = e.getX() - view.getLocationOnScreen().x + e.getComponent().getLocationOnScreen().x;
-          int y = e.getY() - view.getLocationOnScreen().y + e.getComponent().getLocationOnScreen().y;
-          c = graph2DComponent.getComponentAt(x, y);
-        }
-      }
-    }
 
     if (c instanceof IdeGlassPaneImpl) {
       c = ((IdeGlassPaneImpl)c).getTargetComponentFor(e);

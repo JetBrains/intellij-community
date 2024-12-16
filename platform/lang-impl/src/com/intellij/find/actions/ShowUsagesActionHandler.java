@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
+import com.intellij.codeInsight.navigation.actions.NavigationRequestHandler;
 import com.intellij.find.FindBundle;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
@@ -57,6 +58,10 @@ public interface ShowUsagesActionHandler {
   @NotNull Class<?> getTargetClass();
 
   @NotNull List<EventPair<?>> getEventData();
+
+  default @NotNull NavigationRequestHandler getNavigationRequestHandler() {
+    return NavigationRequestHandler.DEFAULT;
+  }
 
   default void afterOpen(@NotNull AbstractPopup popup) { }
 

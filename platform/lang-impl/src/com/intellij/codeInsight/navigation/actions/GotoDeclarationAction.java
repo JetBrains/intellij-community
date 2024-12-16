@@ -48,8 +48,8 @@ import java.util.*;
 public class GotoDeclarationAction extends BaseCodeInsightAction implements DumbAware, CtrlMouseAction {
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
-  private static List<EventPair<?>> ourCurrentEventData = null; // accessed from EDT only
   private static final DataKey<GotoDeclarationReporter> GO_TO_DECLARATION_REPORTER_DATA_KEY = DataKey.create("GoToDeclarationReporterKey");
+  private static final DataKey<NavigationRequestHandler> NAVIGATION_HANDLER_DATA_KEY = DataKey.create("NavigationHandlerKey");
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
@@ -60,33 +60,29 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
       ActionsCollectorImpl.actionEventData(e),
       EventFields.CurrentFile.with(language)
     );
-    List<EventPair<?>> savedEventData = ourCurrentEventData;
-    ourCurrentEventData = currentEventData;
-    AnActionEvent patchedEvent = getEventWithReporter(e);
+    List<EventPair<?>> savedEventData = GotoDeclarationOrUsageHandler2.getCurrentEventData();
+    GotoDeclarationOrUsageHandler2.setCurrentEventData(currentEventData);
+    AnActionEvent patchedEvent = getEventWithReporterAndHandler(e);
     try {
       super.actionPerformed(patchedEvent);
     }
     finally {
-      ourCurrentEventData = savedEventData;
+      GotoDeclarationOrUsageHandler2.setCurrentEventData(savedEventData);
     }
   }
 
-  private static @NotNull AnActionEvent getEventWithReporter(@NotNull AnActionEvent e) {
+  private static @NotNull AnActionEvent getEventWithReporterAndHandler(@NotNull AnActionEvent e) {
     GotoDeclarationReporter reporter = new GotoDeclarationFUSReporter();
     DataContext context = CustomizedDataContext.withSnapshot(e.getDataContext(), sink -> {
       sink.set(GO_TO_DECLARATION_REPORTER_DATA_KEY, reporter);
+      sink.set(NAVIGATION_HANDLER_DATA_KEY, NavigationRequestHandler.DEFAULT);
     });
     return e.withDataContext(context);
   }
 
-  static @NotNull List<@NotNull EventPair<?>> getCurrentEventData() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return Objects.requireNonNull(ourCurrentEventData);
-  }
-
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
-    return new GotoDeclarationOrUsageHandler2(null);
+    return new GotoDeclarationOrUsageHandler2(null, NavigationRequestHandler.DEFAULT);
   }
 
   @Nullable
@@ -94,9 +90,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return GO_TO_DECLARATION_REPORTER_DATA_KEY.getData(dataContext);
   }
 
+  @Nullable
+  NavigationRequestHandler getNavigationHandler(@NotNull DataContext dataContext) {
+    return NAVIGATION_HANDLER_DATA_KEY.getData(dataContext);
+  }
+
   @Override
   protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
-    return new GotoDeclarationOrUsageHandler2(getReporter(dataContext));
+    return new GotoDeclarationOrUsageHandler2(getReporter(dataContext), getNavigationHandler(dataContext));
   }
 
   @Override
@@ -125,7 +126,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     }
     else {
       RelativePoint popupPosition = point != null ? point : JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      ShowUsagesAction.startFindUsages(element, popupPosition, editor);
+      ShowUsagesAction.startFindUsages(element, popupPosition, editor, NavigationRequestHandler.DEFAULT);
     }
   }
 

@@ -1,3 +1,0 @@
-- name: lib/journey.jar
-  modules:
-  - name: intellij.journey

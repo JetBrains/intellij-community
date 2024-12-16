@@ -10,6 +10,7 @@ import com.intellij.find.FindUsagesSettings
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
@@ -24,10 +25,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 
-class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
+class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: GotoDeclarationReporter?,
+                                                          private val navigationHandler: NavigationRequestHandler?) : CodeInsightActionHandler {
 
   companion object {
 
@@ -59,12 +62,26 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
       }
       return ReadAction.nonBlocking(callable).submit(AppExecutorUtil.getAppExecutorService()).get()
     }
+
+    private var ourCurrentEventData: List<EventPair<*>>? = null // accessed from EDT only
+
+    @JvmStatic
+    fun getCurrentEventData(): List<EventPair<*>>? {
+        ThreadingAssertions.assertEventDispatchThread()
+        return ourCurrentEventData
+    }
+
+    @JvmStatic
+    fun setCurrentEventData(eventData: List<EventPair<*>>?) {
+      ThreadingAssertions.assertEventDispatchThread()
+      ourCurrentEventData = eventData
+    }
   }
 
   override fun startInWriteAction(): Boolean = false
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    if (navigateToLookupItem(project)) {
+    if (navigateToLookupItem(project, navigationHandler)) {
       return
     }
     if (EditorUtil.isCaretInVirtualSpace(editor)) {
@@ -79,19 +96,20 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
       ) {
         gotoDeclarationOrUsages(project, editor, file, offset)?.result()
       }
+      val eventData: List<EventPair<*>>? = getCurrentEventData()
       when (actionResult) {
         null -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
           notifyNowhereToGo(project, editor, file, offset)
         }
         is GTDUActionResult.GTD -> {
-          GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
-          gotoDeclaration(project, editor, actionResult.navigationActionResult, reporter)
+          eventData?.let { GTDUCollector.recordPerformed(it, GTDUCollector.GTDUChoice.GTD) }
+          gotoDeclaration(project, editor, actionResult.navigationActionResult, reporter, navigationHandler)
         }
         is GTDUActionResult.SU -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
-          GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
-          showUsages(project, editor, file, actionResult.targetVariants)
+          eventData?.let { GTDUCollector.recordPerformed(it, GTDUCollector.GTDUChoice.SU) }
+          showUsages(project, editor, file, actionResult.targetVariants, navigationHandler)
         }
       }
     }
@@ -103,7 +121,8 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
     }
   }
 
-  private fun showUsages(project: Project, editor: Editor, file: PsiFile, searchTargets: List<TargetVariant>) {
+  private fun showUsages(project: Project, editor: Editor, file: PsiFile, searchTargets: List<TargetVariant>,
+                         navigationHandler: NavigationRequestHandler?) {
     require(searchTargets.isNotEmpty())
     val dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PSI_FILE, file)
@@ -115,7 +134,8 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
                  searchTargets,
                  JBPopupFactory.getInstance().guessBestPopupLocation(editor),
                  editor,
-                 FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName()))
+                 FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName()),
+                 navigationHandler)
     }
     catch (_: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(

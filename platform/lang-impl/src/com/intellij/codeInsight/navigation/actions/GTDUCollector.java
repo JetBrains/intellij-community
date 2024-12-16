@@ -35,8 +35,8 @@ final class GTDUCollector extends CounterUsagesCollector {
     return GROUP.registerVarargEvent(eventId, ArrayUtil.mergeArrays(baseFields, extraFields));
   }
 
-  static void recordPerformed(@NotNull GTDUChoice choice) {
-    PERFORMED.log(ContainerUtil.append(GotoDeclarationAction.getCurrentEventData(), CHOICE.with(choice)).toArray(new EventPair[0]));
+  static void recordPerformed(@NotNull List<@NotNull EventPair<?>> eventData, @NotNull GTDUChoice choice) {
+    PERFORMED.log(ContainerUtil.append(eventData, CHOICE.with(choice)).toArray(new EventPair[0]));
   }
 
   static void recordNavigated(@NotNull List<@NotNull EventPair<?>> eventData, @NotNull Class<?> navigationProviderClass) {
