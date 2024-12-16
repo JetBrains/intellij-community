@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
 import java.awt.geom.Rectangle2D
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -128,33 +129,31 @@ class CompilationChartsModuleInfo(
   private val vm: CompilationChartsViewModel,
   private val component: CompilationChartsDiagramsComponent,
 ) : MouseAdapter() {
-  private val components = mutableSetOf<ModuleIndex>()
-  private var hint = CompilationChartsHint(vm.project, component)
+  private val components = ConcurrentHashMap<EventKey, ModuleIndex>()
+  private val hint = CompilationChartsHint(vm.project, component)
 
   override fun mouseClicked(e: MouseEvent) {
   }
 
   override fun mouseMoved(e: MouseEvent) {
     val module = search(e.point)
-    if (module != null) {
-      if (module != hint.module() && !hint.isInside(e.getPoint())) {
-        hint.open(module, e)
-      }
+    if (hint.isInside(e.point)) return
+
+    if (module == null) {
+      hint.close()
     }
-    else {
-      if (!hint.isInside(e.getPoint())) {
-        this@CompilationChartsModuleInfo.hint.close()
-      }
+    else if (module != hint.module()) {
+      hint.open(module, e, 750)
     }
   }
 
   fun clear(): Unit = components.clear()
 
   fun module(rect: Rectangle2D, key: EventKey, info: Map<String, String>) {
-    components.add(ModuleIndex(rect, key, info))
+    components.put(key, ModuleIndex(rect, key, info))
   }
 
-  private fun search(point: Point): ModuleIndex? = components.firstOrNull { it.contains(point) }
+  private fun search(point: Point): ModuleIndex? = components.values.firstOrNull { it.contains(point) }
 }
 
 class CompilationChartsUsageInfo(val component: CompilationChartsDiagramsComponent, val charts: Charts, val zoom: Zoom) : MouseMotionListener {

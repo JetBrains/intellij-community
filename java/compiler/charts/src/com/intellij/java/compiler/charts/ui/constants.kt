@@ -17,8 +17,8 @@ object Colors {
     fun getRowColor(row: Int): JBColor = if (row % 2 == 0) EVEN else ODD
   }
 
-  const val NO_ALPHA = 1.0
-  const val FILTERED_ALPHA = 0.25
+  const val NO_ALPHA: Double = 1.0
+  const val FILTERED_ALPHA: Double = 0.25
 
   @Suppress("PropertyName")
   interface Block {
