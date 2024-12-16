@@ -22,16 +22,20 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public interface PsiFileEx extends PsiFile{
+public interface PsiFileEx extends PsiFile {
   /**
    * A key used to determine whether batch reference processing is enabled for a specific {@link PsiFile}.
+   * This mode implies that the corresponding file may be intensively analyzed, so it may be
+   * efficient to build some cache to process the sequential requests without additional work.
    * <p>
    * {@link PsiFileEx#isBatchReferenceProcessingEnabled } should be used to check that fact.
+   *
    * @see PsiFileEx#isBatchReferenceProcessingEnabled
    */
   Key<Boolean> BATCH_REFERENCE_PROCESSING = Key.create("BATCH_REFERENCE_PROCESSING");
 
   boolean isContentsLoaded();
+
   void onContentReload();
 
   void markInvalidated();
@@ -41,6 +45,7 @@ public interface PsiFileEx extends PsiFile{
    *
    * @param file the {@link PsiFile} to check
    * @return {@code true} if batch reference processing is enabled, {@code false} otherwise
+   * @see PsiFileEx#BATCH_REFERENCE_PROCESSING
    */
   @ApiStatus.Experimental
   static boolean isBatchReferenceProcessingEnabled(@NotNull PsiFile file) {
@@ -49,12 +54,13 @@ public interface PsiFileEx extends PsiFile{
     return BatchReferenceProcessingSuppressor.EP_NAME.findFirstSafe(suppressor -> suppressor.isSuppressed(file)) == null;
   }
 
-  
+
   /**
    * A suppressor interface for batch reference processing.
    * <p>
    * Implementations of this interface can suppress batch reference processing for specific {@link PsiFile} instances.
    *
+   * @see PsiFileEx#BATCH_REFERENCE_PROCESSING
    * @see BatchReferenceProcessingSuppressor#EP_NAME
    */
   @ApiStatus.Experimental
