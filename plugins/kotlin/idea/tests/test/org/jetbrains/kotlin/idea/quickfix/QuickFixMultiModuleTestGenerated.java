@@ -1367,6 +1367,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/cancelMakeAbstractFromActual/");
         }
 
+        @TestMetadata("commonImplementAbstractProperty")
+        public void testCommonImplementAbstractProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/other/commonImplementAbstractProperty/");
+        }
+
         @TestMetadata("convertActualEnumToSealedClass")
         public void testConvertActualEnumToSealedClass() throws Exception {
             runTest("testData/multiModuleQuickFix/other/convertActualEnumToSealedClass/");

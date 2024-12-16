@@ -1,0 +1,4 @@
+actual class End : IFoo {
+    override val a: Int
+        get() = <selection><caret>TODO("Not yet implemented")</selection>
+}

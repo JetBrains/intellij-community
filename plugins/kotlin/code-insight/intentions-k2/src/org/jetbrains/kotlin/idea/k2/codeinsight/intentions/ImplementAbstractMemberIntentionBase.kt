@@ -64,9 +64,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
 
     protected abstract fun computeText(element: KtNamedDeclaration): (() -> String)?
 
-    private fun isApplicable(element: KtNamedDeclaration): Boolean = analyze(element) {
-        findImplementableMembers(element).any()
-    }
+    private fun isApplicable(element: KtNamedDeclaration): Boolean = findImplementableMembers(element).any()
 
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (!element.isAbstract()) return null
@@ -88,7 +86,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         return element.nameIdentifier?.textRange
     }
 
-    protected abstract fun KaSession.createImplementableMember(
+    protected abstract fun createImplementableMember(
         targetClass: PsiElement,
         abstractMember: KtNamedDeclaration,
     ): ImplementableMember?
@@ -102,9 +100,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
             KotlinBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"),
         ) {
             runReadAction {
-                analyze(element) {
-                    findImplementableMembers(element).toList()
-                }
+                findImplementableMembers(element).toList()
             }
         }
 
@@ -161,12 +157,12 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         }
     }
 
-    private fun KaSession.findImplementableMembers(
+    private fun findImplementableMembers(
         abstractMember: KtNamedDeclaration,
     ): Sequence<ImplementableMember> {
         val baseClass = abstractMember.containingClassOrObject as? KtClass ?: return emptySequence()
 
-        fun KaSession.createImplementableMember(targetClass: PsiElement): ImplementableMember? {
+        fun createImplementableMember(targetClass: PsiElement): ImplementableMember? {
             if (!BaseIntentionAction.canModify(targetClass)) return null
             return createImplementableMember(targetClass, abstractMember)
         }
@@ -211,13 +207,12 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
             companion object {
 
                 fun from(
-                    analysisSession: KaSession,
                     targetClass: KtLightClass,
                     abstractMember: KtNamedDeclaration,
                     preferConstructorParameters: Boolean,
                 ): KtImplementableMember? {
                     val origin = targetClass.kotlinOrigin ?: return null
-                    val ktClassMember = with(analysisSession) {
+                    val ktClassMember = analyze(origin) {
                         val subClass = origin.symbol as? KaClassSymbol ?: return null
                         if (subClass.classKind == KaClassKind.INTERFACE) return null
                         val existingImplementation = findExistingImplementation(subClass, abstractMember)
@@ -249,12 +244,11 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
 
                 @OptIn(KaExperimentalApi::class)
                 fun from(
-                    analysisSession: KaSession,
                     targetClass: KtEnumEntry,
                     abstractMember: KtNamedDeclaration,
                     preferConstructorParameters: Boolean,
                 ): KtImplementableMember? {
-                    val ktClassMember = with(analysisSession) {
+                    val ktClassMember = analyze(targetClass) {
                         val symbol = targetClass.symbol
                         val enumEntryInitializer = symbol.enumEntryInitializer
                         val existingImplementation = enumEntryInitializer?.memberScope?.findCallableMemberBySignature(symbol.asSignature())

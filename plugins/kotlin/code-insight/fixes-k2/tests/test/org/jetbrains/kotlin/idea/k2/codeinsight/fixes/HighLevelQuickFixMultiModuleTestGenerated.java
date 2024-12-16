@@ -1367,6 +1367,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/cancelMakeAbstractFromActual/");
         }
 
+        @TestMetadata("commonImplementAbstractProperty")
+        public void testCommonImplementAbstractProperty() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/commonImplementAbstractProperty/");
+        }
+
         @TestMetadata("convertActualEnumToSealedClass")
         public void testConvertActualEnumToSealedClass() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/convertActualEnumToSealedClass/");
