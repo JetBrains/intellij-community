@@ -37,16 +37,6 @@ interface TaskSuspender {
    */
   fun resume()
 
-  /**
-   * Converts this instance to a CoroutineContext element.
-   *
-   * This function is useful for integrating existing types or values
-   * into coroutine-based APIs by converting them to coroutine context elements.
-   *
-   * @return a CoroutineContext element representing this instance.
-   */
-  fun asContextElement(): CoroutineContext
-
   companion object {
     /**
      * Creates a new instance of [TaskSuspender] which can be used to suspend and resume tasks.

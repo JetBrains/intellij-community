@@ -34,6 +34,7 @@ import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElementKey
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
+import com.intellij.platform.ide.progress.suspender.asContextElement
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
@@ -43,7 +44,6 @@ import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
 import fleet.kernel.rete.collect
 import fleet.kernel.tryWithEntities
-import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal

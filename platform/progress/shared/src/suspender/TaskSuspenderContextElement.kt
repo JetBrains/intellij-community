@@ -9,4 +9,19 @@ import kotlin.coroutines.CoroutineContext
 object TaskSuspenderElementKey : CoroutineContext.Key<TaskSuspenderElement>
 
 @ApiStatus.Internal
-class TaskSuspenderElement(val taskSuspender: TaskSuspender): AbstractCoroutineContextElement(TaskSuspenderElementKey)
+class TaskSuspenderElement(val taskSuspender: TaskSuspender) : AbstractCoroutineContextElement(TaskSuspenderElementKey)
+
+/**
+ * Converts this instance to a CoroutineContext element.
+ *
+ * This function is useful for integrating existing types or values
+ * into coroutine-based APIs by converting them to coroutine context elements.
+ *
+ * @return a CoroutineContext element representing this instance.
+ */
+fun TaskSuspender.asContextElement(): CoroutineContext {
+  return when (this) {
+    is TaskSuspenderImpl -> this.getCoroutineContext()
+    else -> TaskSuspenderElement(this)
+  }
+}
