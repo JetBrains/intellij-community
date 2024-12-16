@@ -702,9 +702,13 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @RequiresReadLock
   private void processAllBreakpoints(final boolean register, final boolean temporary) {
-    var breakpointHandlers = new ArrayList<>(Arrays.stream(getDebugProcess(false).getBreakpointHandlers()).toList());
+    var breakpointHandlers = new ArrayList<XBreakpointHandler<?>>();
     if (isMixedMode()) {
+      breakpointHandlers.addAll(Arrays.stream(getDebugProcess(false).getBreakpointHandlers()).toList());
       breakpointHandlers.addAll(Arrays.stream(getDebugProcess(true).getBreakpointHandlers()).toList());
+    }
+    else {
+      breakpointHandlers.addAll(Arrays.stream(getDebugProcess().getBreakpointHandlers()).toList());
     }
 
     for (XBreakpointHandler<?> handler : breakpointHandlers) {
