@@ -520,6 +520,8 @@
     </group>
 
     <reference ref="Git.Unshallow"/>
+
+    <action id="gpg.agent.configuration" class="git4idea.commit.signing.GpgAgentConfigurationAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
