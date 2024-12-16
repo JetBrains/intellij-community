@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,6 +44,13 @@ import java.util.function.Supplier;
  *
  * <p>Please see <a href="https://plugins.jetbrains.com/docs/intellij/virtual-file-system.html">Virtual File System</a>
  * for a high-level overview.</p>
+ *
+ * <p>Methods of this interface are marked with {@code @RequiresReadLockAbsence} annotation (beware that this annotation also
+ * implies 'requires _write_ lock absence').
+ * This is because the methods may involve an IO, and it should be no IO under RA/WA.
+ * This requirement should be considered 'strict' for the <b>new</b> usages, but legacy usage <b>could</b> continue use
+ * {@link VirtualFile} methods under RA/WA -- there are too many usages like that to fix all them, and some of them are quite
+ * hard to fix because e.g. RA/WA is needed for PSI access around FS access.</p>
  *
  * @see VirtualFileSystem
  * @see VirtualFileManager
@@ -123,8 +131,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @see #getNameSequence()
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract @NotNull @NlsSafe String getName();
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull @NlsSafe CharSequence getNameSequence() {
     return getName();
   }
@@ -146,6 +156,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the path
    * @see #toNioPath()
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract @NonNls @NotNull String getPath();
 
   /**
@@ -158,6 +169,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @throws UnsupportedOperationException if this VirtualFile does not have an associated {@link Path}
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull Path toNioPath() {
     Path path = getFileSystem().getNioPath(this);
     if (path == null) {
@@ -180,6 +192,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFile#getPath
    * @see VirtualFileSystem#getProtocol
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull String getUrl() {
     return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
   }
@@ -191,6 +204,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public final @NotNull @NlsSafe String getPresentableUrl() {
     return getFileSystem().extractPresentableUrl(getPath());
   }
@@ -201,6 +215,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the extension or null if file name doesn't contain '.'
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable @NlsSafe String getExtension() {
     CharSequence extension = FileUtilRt.getExtension(getNameSequence(), null);
     return extension == null ? null : extension.toString();
@@ -212,6 +227,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the name without extension
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NlsSafe @NotNull String getNameWithoutExtension() {
     return FileUtilRt.getNameWithoutExtension(getNameSequence()).toString();
   }
@@ -227,6 +243,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newName   the new file name
    * @throws IOException if file failed to be renamed
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
@@ -243,8 +260,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return {@code true} if this file is writable, {@code false} otherwise
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract boolean isWritable();
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void setWritable(boolean writable) throws IOException {
     throw new IOException("Not supported");
   }
@@ -254,6 +273,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return {@code true} if this file is a directory, {@code false} otherwise
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract boolean isDirectory();
 
   /**
@@ -275,6 +295,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * {@code getCanonicalFile().getPath()} if the link was successfully resolved;
    * {@code null} otherwise
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable String getCanonicalPath() {
     return getPath();
   }
@@ -289,6 +310,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *         instance of {@code VirtualFile} if the link was successfully resolved;
    *         {@code null} otherwise
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable VirtualFile getCanonicalFile() {
     return this;
   }
@@ -303,6 +325,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return {@code true} if this is a valid file, {@code false} otherwise
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract boolean isValid();
 
   /**
@@ -310,6 +333,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the parent file or {@code null} if this file is a root directory
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract VirtualFile getParent();
 
   /**
@@ -318,6 +342,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return array of the child files or {@code null} if this file is not a directory
    * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract VirtualFile[] getChildren();
 
   /**
@@ -327,6 +352,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the file if found any, {@code null} otherwise
    * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
     if (children == null) return null;
@@ -338,6 +364,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return null;
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull VirtualFile findOrCreateChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     final VirtualFile child = findChild(name);
     if (child != null) return child;
@@ -352,6 +379,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @see FileTypeRegistry
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull FileType getFileType() {
     return FileTypeRegistry.getInstance().getFileTypeByFile(this);
   }
@@ -362,6 +390,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param relPath the relative path with / used as separators
    * @return the file if found any, {@code null} otherwise
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable VirtualFile findFileByRelativePath(@NotNull @NonNls String relPath) {
     VirtualFile child = this;
 
@@ -401,6 +430,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code VirtualFile} representing the created directory
    * @throws IOException if directory failed to be created
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(CoreBundle.message("directory.create.wrong.parent.error"));
@@ -431,6 +461,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code VirtualFile} representing the created file
    * @throws IOException if file failed to be created
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(CoreBundle.message("file.create.wrong.parent.error"));
@@ -460,6 +491,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *                  See {@link VirtualFileEvent#getRequestor}
    * @throws IOException if file failed to be deleted
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(isValid(), "Deleting invalid file");
@@ -476,6 +508,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newParent the directory to move this file to
    * @throws IOException if file failed to be moved
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void move(final Object requestor, final @NotNull VirtualFile newParent) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -489,6 +522,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     });
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull VirtualFile copy(final Object requestor, final @NotNull VirtualFile newParent, @NotNull @NonNls String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(CoreBundle.message("file.copy.error", newParent.getPresentableUrl()));
@@ -505,6 +539,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * @return Retrieve the charset file has been loaded with (if loaded) and would be saved with (if would).
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull Charset getCharset() {
     Charset charset = getStoredCharset();
     if (charset == null) {
@@ -522,14 +557,17 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     putUserData(CHARSET_KEY, charset);
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void setCharset(final Charset charset) {
     setCharset(charset, null);
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void setCharset(final Charset charset, @Nullable Runnable whenChanged) {
     setCharset(charset, whenChanged, true);
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void setCharset(final Charset charset, @Nullable Runnable whenChanged, boolean fireEventsWhenChanged) {
     final Charset old = getStoredCharset();
     storeCharset(charset);
@@ -549,14 +587,17 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public boolean isCharsetSet() {
     return getStoredCharset() != null;
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public final void setBinaryContent(byte @NotNull [] content) throws IOException {
     setBinaryContent(content, -1, -1);
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
     setBinaryContent(content, newModificationStamp, newTimeStamp, this);
   }
@@ -565,6 +606,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Sets contents of the virtual file to {@code content}.
    * The BOM, if present, should be included in the {@code content} buffer.
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
@@ -581,6 +623,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public final @NotNull OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
@@ -602,6 +645,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #getModificationStamp()
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException;
 
   /**
@@ -613,6 +657,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see #contentsToByteArray(boolean)
    * @see #getInputStream()
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract byte @NotNull [] contentsToByteArray() throws IOException;
 
   /**
@@ -623,6 +668,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray()
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public byte @NotNull [] contentsToByteArray(boolean cacheContent) throws IOException {
     return contentsToByteArray();
   }
@@ -634,6 +680,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return modification stamp
    * @see #getTimeStamp()
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public long getModificationStamp() {
     throw new UnsupportedOperationException(getClass().getName());
   }
@@ -645,6 +692,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return timestamp
    * @see File#lastModified
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract long getTimeStamp();
 
   /**
@@ -652,6 +700,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the length of this file.
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract long getLength();
 
   /**
@@ -670,6 +719,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *                     asynchronous refreshes with a {@code postRunnable} whenever possible.
    * @param recursive    whether to refresh all the files in this directory recursively
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void refresh(boolean asynchronous, boolean recursive) {
     refresh(asynchronous, recursive, null);
   }
@@ -678,13 +728,16 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * The same as {@link #refresh(boolean, boolean)} but also runs {@code postRunnable}
    * after the operation is completed. The runnable is executed on event dispatch thread inside write action.
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @NotNull @NlsSafe String getPresentableName() {
     return getName();
   }
 
   @Override
+  @RequiresReadLockAbsence(generateAssertion = false)
   public long getModificationCount() {
     return isValid() ? getTimeStamp() : -1;
   }
@@ -705,6 +758,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
+  @RequiresReadLockAbsence(generateAssertion = false)
   public abstract @NotNull InputStream getInputStream() throws IOException;
 
   public byte @Nullable [] getBOM() {
@@ -720,6 +774,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return "VirtualFile: " + getPresentableUrl();
   }
 
+  @RequiresReadLockAbsence(generateAssertion = false)
   public boolean exists() {
     return isValid();
   }
