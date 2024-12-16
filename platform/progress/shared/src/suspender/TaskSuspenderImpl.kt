@@ -42,14 +42,12 @@ class TaskSuspenderImpl(
   init {
     coroutineScope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
       coroutineSuspender.isPaused.collectLatest { paused ->
-        synchronized(suspenderLock) {
-          if (paused) {
-            // don't erase the original reason if paused
-            _state.compareAndSet(TaskSuspenderState.Active, TaskSuspenderState.Paused(defaultSuspendedReason))
-          }
-          else {
-            _state.update { TaskSuspenderState.Active }
-          }
+        if (paused) {
+          // don't erase the original reason if paused
+          _state.compareAndSet(TaskSuspenderState.Active, TaskSuspenderState.Paused(defaultSuspendedReason))
+        }
+        else {
+          _state.update { TaskSuspenderState.Active }
         }
       }
     }
