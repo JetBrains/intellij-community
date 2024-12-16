@@ -1295,10 +1295,6 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.GCTroubleInfoCollector"/>
 
     <!-- experiments -->
-    <experimentalFeature id="recent.and.edited.files.together" percentOfUsers="100">
-      <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
-    </experimentalFeature>
-
     <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="100">
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>

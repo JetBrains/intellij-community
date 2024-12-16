@@ -22,7 +22,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
@@ -154,12 +153,7 @@ object Switcher : BaseSwitcherAction(null) {
       pinned = !onKeyRelease.isEnabled
       val onlyEdited = true == onlyEditedFiles
       speedSearch = if (recent && Registry.`is`("ide.recent.files.speed.search")) installOn(this) else null
-      cbShowOnlyEditedFiles = if (!recent || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")) {
-        null
-      }
-      else {
-        JCheckBox(IdeBundle.message("recent.files.checkbox.label"))
-      }
+      cbShowOnlyEditedFiles = if (!recent) null else JCheckBox(IdeBundle.message("recent.files.checkbox.label"))
 
       val renderer = SwitcherListRenderer(this)
       val windows = renderer.toolWindows
