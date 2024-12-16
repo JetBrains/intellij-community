@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
-import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
@@ -329,7 +329,7 @@ class BuildContextImpl internal constructor(
       OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
       OsFamily.LINUX -> "\$IDE_HOME"
     }
-    val useMultiRoutingFs = !isQodana && isIjentWslFsEnabledByDefaultForProduct(productProperties.platformPrefix)
+    val useMultiRoutingFs = !isQodana && isMultiRoutingFileSystemEnabledForProduct(productProperties.platformPrefix)
 
     val bcpJarNames = productProperties.xBootClassPathJarNames + if (useMultiRoutingFs) listOf(PLATFORM_CORE_NIO_FS) else emptyList()
     if (bcpJarNames.isNotEmpty()) {

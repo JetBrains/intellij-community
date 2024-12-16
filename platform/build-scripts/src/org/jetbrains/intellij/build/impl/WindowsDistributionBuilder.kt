@@ -436,7 +436,9 @@ internal class WindowsDistributionBuilder(
 
   private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-    val vmOptions = VmOptionsGenerator.generate(context).asSequence()
+    var vmOptions = VmOptionsGenerator.generate(context).asSequence()
+    //val isIjentWslFsEnabled = isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix)
+    //vmOptions += "-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=${isIjentWslFsEnabled}"
     VmOptionsGenerator.writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
     return vmOptionsFile
   }

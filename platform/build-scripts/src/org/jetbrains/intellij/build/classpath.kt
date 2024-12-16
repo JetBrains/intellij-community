@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
@@ -60,7 +60,7 @@ suspend fun reorderJar(relativePath: String, file: Path) {
 
 internal fun excludedLibJars(context: BuildContext): Set<String> =
   setOf(PlatformJarNames.TEST_FRAMEWORK_JAR) +
-  if (isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix)) setOf(PLATFORM_CORE_NIO_FS) else emptySet()
+  if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)) setOf(PLATFORM_CORE_NIO_FS) else emptySet()
 
 internal suspend fun generateClasspath(context: BuildContext): List<String> {
   val homeDir = context.paths.distAllDir

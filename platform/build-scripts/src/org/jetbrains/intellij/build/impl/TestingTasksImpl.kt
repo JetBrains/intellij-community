@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -11,6 +11,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.plugin.structure.base.utils.isFile
 import io.opentelemetry.api.common.AttributeKey
@@ -546,6 +548,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         bundledRuntime = context.bundledRuntime,
         customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
         additionalVmOptions = customMemoryOptions ?: emptyList(),
+        platformPrefix = options.platformPrefix,
       ),
     )
 
@@ -1123,6 +1126,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       appendJUnitStarter(mp)
       args += mp.joinToString(separator = File.pathSeparator)
       args += "--add-modules=ALL-MODULE-PATH"
+    }
+
+    if (isMultiRoutingFileSystemEnabledForProduct(null)) {
+      args += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
     }
 
     args += jvmArgs

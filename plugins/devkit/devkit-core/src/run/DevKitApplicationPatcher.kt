@@ -133,10 +133,8 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
         vmParameters.getPropertyValue("idea.platform.prefix"),
       )
       vmParameters.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=$isIjentWslFsEnabled")
-      if (isIjentWslFsEnabled) {
-        vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(configuration.workingDirectory))
-        vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
-      }
+      vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(configuration.workingDirectory))
+      vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
     }
   }
 
@@ -228,7 +226,7 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
 }
 
 /**
- * A direct call of [com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct] invokes
+ * A direct call of [com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct] invokes
  * the function which is bundled with the DevKit plugin.
  * In contrast, the result of this function corresponds to what is written in the source code at current revision.
  */
@@ -237,7 +235,12 @@ private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: 
   if (workingDirectory == null) return false
   try {
     val constantsClass = getIjentBuildScriptsConstantsClass_Reflective(workingDirectory) ?: return false
-    val method = constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
+    val method =
+      try {
+        constantsClass.getDeclaredMethod("isMultiRoutingFileSystemEnabledForProduct", String::class.java)
+      } catch (_: NoSuchMethodException) {
+        constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
+      }
     return method.invoke(null, platformPrefix) as Boolean
   }
   catch (err: Throwable) {
