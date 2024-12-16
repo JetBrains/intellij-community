@@ -22,8 +22,6 @@ import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
-import kotlin.math.ceil
-import kotlin.math.floor
 
 internal class TerminalCursorPainter private constructor(
   private val outputModel: TerminalOutputModel,
@@ -164,32 +162,14 @@ internal class TerminalCursorPainter private constructor(
       highlighter.setCustomRenderer { _, _, g ->
         val offset = highlighter.startOffset
         val point = editor.offsetToPoint2D(offset)
-        val cursorHeight = calculateCursorHeight()
-        val cursorInset = (editor.lineHeight - cursorHeight) / 2
-        val rect = Rectangle2D.Double(point.x, point.y + cursorInset,
+        val cursorHeight = editor.lineHeight
+        val rect = Rectangle2D.Double(point.x, point.y,
                                       (editor as EditorImpl).charHeight.toDouble(), cursorHeight.toDouble())
         g as Graphics2D
         paintCursor(g, rect)
       }
 
       return highlighter
-    }
-
-    /**
-     * It would be great to have [com.intellij.openapi.editor.impl.view.EditorView.myTopOverhang]
-     * and [com.intellij.openapi.editor.impl.view.EditorView.myBottomOverhang] values here to properly calculate the cursor height.
-     * But there is no way to access the EditorView.
-     * So, it is a custom solution, that can be not accurate in some cases.
-     */
-    private fun calculateCursorHeight(): Int {
-      // get part of the line height as an insets (top + bottom)
-      val rawCursorInset = editor.lineHeight * 0.2
-      // make sure that inset is even, because we will need to divide it by 2
-      val cursorInsets = if (floor(rawCursorInset).toInt() % 2 == 0) {
-        floor(rawCursorInset).toInt()
-      }
-      else ceil(rawCursorInset).toInt()
-      return editor.lineHeight - cursorInsets
     }
   }
 
