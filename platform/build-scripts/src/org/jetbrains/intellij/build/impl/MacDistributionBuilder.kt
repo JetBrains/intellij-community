@@ -26,7 +26,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.LocalDate
-import java.util.UUID
 import java.util.zip.Deflater
 import kotlin.io.path.*
 
@@ -217,7 +216,7 @@ class MacDistributionBuilder(
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
     val copy = macDistDir.resolve("MacOS/$executable")
     copyFile(execPath, copy)
-    MachOUuid(copy, customizer.getDistributionUUID(context), context).patch()
+    MachOUuid(copy, customizer, context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 
     val icnsPath = Path.of((if (context.applicationInfo.isEAP) customizer.icnsPathForEAP else null) ?: customizer.icnsPath)
