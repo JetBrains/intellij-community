@@ -4,6 +4,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
 import com.intellij.diagnostic.logs.LogCategory
@@ -105,9 +106,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     if (port != null) {
       LOG.info("Queue creating protocol on $hostAddress:$port")
       coroutineScope.launch {
+        val coroutineDumperOnTimeout = launch {
+          delay(20.seconds)
+          LOG.warn("LoadingState.COMPONENTS_LOADED has not occurred in 20 seconds: ${dumpCoroutines()}")
+        }
         while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
           delay(10.milliseconds)
         }
+        coroutineDumperOnTimeout.cancel()
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           createProtocol(hostAddress, port)
         }
