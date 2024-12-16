@@ -8,12 +8,15 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
+import com.intellij.util.containers.JBIterable.from
 
 
-class GenerateCommandProvider : CommandProvider {
+class GenerateCommandProvider : CommandProvider, DumbAware {
   override fun getCommands(
     project: Project,
     editor: Editor,
@@ -35,7 +38,12 @@ class GenerateCommandProvider : CommandProvider {
 
     val generateActions: MutableList<BaseGenerateAction> = ArrayList()
     if (element == null || element.parent !is PsiClass) return emptyList()
-    for (action in ActionGroupUtil.getActiveActions(ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE) as ActionGroup, actionEvent)) {
+    val session = actionEvent.updateSession
+    val dumbService = DumbService.getInstance(project)
+    val activeActions = from(session.expandedChildren(ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE) as ActionGroup))
+      .filter { dumbService.isUsableInCurrentContext(it) }
+      .filter { o: AnAction? -> o !is Separator && session.presentation(o!!).isEnabledAndVisible }
+    for (action in activeActions) {
       if (action is BaseGenerateAction) {
         generateActions.add(action)
       }

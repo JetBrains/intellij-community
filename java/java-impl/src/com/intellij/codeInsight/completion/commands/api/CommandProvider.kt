@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus
  * Represents a provider of completion commands used in code completion mechanisms.
  * Classes implementing this interface supply a collection of completion commands
  * based on the given context within a project and editor.
+ *
+ * Should be DumbAware to support dumb mode
  */
 @ApiStatus.Experimental
 interface CommandProvider {
@@ -33,8 +35,10 @@ interface CommandProvider {
    * @param originalFile the PSI file in the context of the original editor
    * @return a list of completion commands to be executed or displayed during the code completion process
    */
-  fun getCommands(project: Project, editor: Editor, offset: Int, psiFile: PsiFile,
-                  originalEditor: Editor, originalOffset: Int, originalFile: PsiFile): List<CompletionCommand>
+  fun getCommands(
+    project: Project, editor: Editor, offset: Int, psiFile: PsiFile,
+    originalEditor: Editor, originalOffset: Int, originalFile: PsiFile,
+  ): List<CompletionCommand>
 
   fun getId(): String
 }

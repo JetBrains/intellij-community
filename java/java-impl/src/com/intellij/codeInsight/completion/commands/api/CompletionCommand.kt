@@ -80,6 +80,7 @@ abstract class CompletionCommand {
  * applicability of the command in a given context.
  *
  * Should be stateless and can be applied either to physical and non-physical classes
+ * Should implement DumbAware to support DumbMode
  */
 @ApiStatus.Experimental
 abstract class ApplicableCompletionCommand : CompletionCommand() {

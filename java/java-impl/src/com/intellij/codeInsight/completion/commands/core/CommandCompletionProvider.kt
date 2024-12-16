@@ -52,12 +52,13 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (parameters.editor is EditorWindow) return
     if (parameters.originalFile.virtualFile is LightVirtualFile) return
     if (parameters.completionType != CompletionType.BASIC) return
-    //todo don't support dumb right now
-    if (DumbService.getInstance(parameters.editor.project ?: return).isDumb) return
-    val service = parameters.editor.project?.getService(CommandCompletionService::class.java)
-    if (service == null) return
-    val commandCompletionFactory = service.getFactory(parameters.position.language)
+    val project = parameters.editor.project ?: return
+    val commandCompletionService = project.getService(CommandCompletionService::class.java)
+    if (commandCompletionService == null) return
+    val dumbService = DumbService.getInstance(project)
+    val commandCompletionFactory = commandCompletionService.getFactory(parameters.position.language)
     if (commandCompletionFactory == null) return
+    if (!dumbService.isUsableInCurrentContext(commandCompletionFactory)) return
     val offset = parameters.offset
     if (offset == 0) return // we need some context to work with
 
@@ -83,14 +84,14 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     }))
 
     // Fetch commands applicable to the position
-    getCommandsForContext(commandCompletionFactory,
-                          parameters.originalFile.project,
-                          copyEditor,
-                          adjustedParameters.offset,
-                          adjustedParameters.copyFile,
-                          parameters.editor,
-                          parameters.offset,
-                          parameters.originalFile) { commands ->
+    processCommandsForContext(commandCompletionFactory,
+                              parameters.originalFile.project,
+                              copyEditor,
+                              adjustedParameters.offset,
+                              adjustedParameters.copyFile,
+                              parameters.editor,
+                              parameters.offset,
+                              parameters.originalFile) { commands ->
       withPrefixMatcher.addAllElements(commands.map { command ->
         val i18nName = command.i18nName.replace("_", "").replace("...", "")
         val tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " ($i18nName)"
@@ -150,7 +151,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     return null
   }
 
-  private fun getCommandsForContext(
+  private fun processCommandsForContext(
     commandCompletionFactory: CommandCompletionFactory,
     project: Project,
     copyEditor: Editor,
@@ -163,7 +164,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
   ) {
     val element = copyFile.findElementAt(offset - 1)
     if (element == null) return
-    for (provider in commandCompletionFactory.commandProviders()) {
+    for (provider in commandCompletionFactory.commandProviders(project)) {
       try {
         //todo delete parameters
         val commands = provider.getCommands(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile)

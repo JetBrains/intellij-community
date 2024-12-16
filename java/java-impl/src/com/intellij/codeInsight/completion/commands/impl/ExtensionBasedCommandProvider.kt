@@ -5,14 +5,15 @@ import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionComm
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
 
-
-class ExtensionPointCommandProvider : CommandProvider {
+class ExtensionPointCommandProvider : CommandProvider, DumbAware {
   override fun getCommands(project: Project, editor: Editor, offset: Int, psiFile: PsiFile, originalEditor: Editor, originalOffset: Int, originalFile: PsiFile): List<CompletionCommand> {
-    val completionCommands = ApplicableCompletionCommand.EP_NAME.extensionList
+    val completionCommands = DumbService.getDumbAwareExtensions(project, ApplicableCompletionCommand.EP_NAME)
     return completionCommands.filter {
       it.isApplicable(offset, psiFile, editor)
     }
