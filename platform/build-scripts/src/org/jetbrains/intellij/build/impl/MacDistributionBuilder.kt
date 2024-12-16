@@ -25,7 +25,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
-import java.util.UUID
 import java.util.zip.Deflater
 import kotlin.io.path.exists
 import kotlin.io.path.extension
@@ -221,7 +220,7 @@ class MacDistributionBuilder(override val context: BuildContext,
       val (execPath, licensePath) = NativeLauncherDownloader.downloadLauncher(context, OsFamily.MACOS, arch)
       val copy = macDistDir.resolve("MacOS/$executable")
     copyFile(execPath, copy)
-    MachOUuid(copy, customizer.getDistributionUUID(context), context).patch()
+    MachOUuid(copy, customizer, context).patch()
       copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
     }
     else {

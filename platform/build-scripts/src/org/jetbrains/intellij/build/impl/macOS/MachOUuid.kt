@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.macOS
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.MacDistributionCustomizer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.Files
@@ -10,10 +11,10 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 
 /**
- * Patches UUID value in the Mach-O [executable] with the [newUuid].
+ * Patches UUID value in the Mach-O [executable] with the [MacDistributionCustomizer.getDistributionUUID].
  * Only single-arch 64-bit files are supported.
  */
-internal class MachOUuid(private val executable: Path, private val newUuid: UUID, private val context: BuildContext) {
+internal class MachOUuid(private val executable: Path, private val customizer: MacDistributionCustomizer, private val context: BuildContext) {
   private companion object {
     const val LC_UUID = 0x1b
   }
@@ -44,8 +45,10 @@ internal class MachOUuid(private val executable: Path, private val newUuid: UUID
           buffer.flip()
           val msb = buffer.getLong()
           val lsb = buffer.getLong()
-          context.messages.info("current UUID of $executable: ${UUID(msb, lsb)}")
+          val currentUuid = UUID(msb, lsb)
+          context.messages.info("current UUID of $executable: $currentUuid")
           buffer.clear()
+          val newUuid = customizer.getDistributionUUID(context, currentUuid)
           buffer.putLong(newUuid.mostSignificantBits)
           buffer.putLong(newUuid.leastSignificantBits)
           buffer.flip()
