@@ -4,14 +4,16 @@ package com.intellij.execution.eel
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -35,14 +37,12 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
   private companion object {
     private fun getClassPathForClass(clazz: Class<*>): String {
       val mavenPath = Path(SystemProperties.getUserHome()).resolve(".m2").resolve("repository").toString()
-      val helperModuleOutputPath = getJpsModuleOutputPathForClass(clazz)
-      logger.value.info("helper module path: $helperModuleOutputPath")
-      val helperModuleName = helperModuleOutputPath.name
+      val helperModuleName = getJpsModuleNameForClass(clazz)
+      logger.value.info("helper module name: $helperModuleName")
 
       val helperModule = module(helperModuleName)
 
-
-      var dependencies = JpsJavaExtensionService
+      val dependencies = JpsJavaExtensionService
         .dependencies(helperModule)
         .recursively()
 
@@ -50,11 +50,8 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
         .libraries
         .flatMap { it.getPaths(JpsOrderRootType.COMPILED) }
         .map { Path(it.pathString.replace('$' + PathMacrosImpl.MAVEN_REPOSITORY + '$', mavenPath)) }
-      val modulesOutputPath = helperModuleOutputPath.parent
 
-      val modules = dependencies
-        .modules
-        .map { module -> modulesOutputPath.resolve(module.name) }
+      val modules: List<Path> = getJpsModulesOutput(clazz, dependencies.modules.map { it.name })
 
       return (modules + libraries)
         .filter { path ->
@@ -77,22 +74,55 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
       throw AssertionError("Couldn't find module $helperModuleName")
     }
 
+    private fun getJpsModuleNameForClass(clazz: Class<*>): String {
+      val jarPathForClass = PathUtil.getJarPathForClass(clazz)
+      val path = Path.of(jarPathForClass)
+      val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
 
-    private fun getJpsModuleOutputPathForClass(clazz: Class<*>): Path {
-      val classFile = clazz.name.replace(".", "/") + ".class"
-
-      val absoluteClassPath = clazz.classLoader.getResource(classFile)!!.path.let { path ->
-        Path(if (SystemInfoRt.isWindows) path.trimStart('/') else path)
+      if (Files.isDirectory(path)) {
+        // plain compilation output
+        return path.name
       }
-      logger.value.info("Looking for class file $absoluteClassPath")
-
-      val relativeClassPath = Path(classFile)
-      var pathToModule = absoluteClassPath
-      while (pathToModule.toList().size > 1) {
-        if (pathToModule.resolve(relativeClassPath).exists()) break
-        pathToModule = pathToModule.parent
+      else if (relevantJarsRoot != null && jarPathForClass.startsWith(relevantJarsRoot)) {
+        // archived compilation output
+        val mapping = PathManager.getArchivedCompiledClassesMapping()
+        checkNotNull(mapping) { "Mapping cannot be null at this point" }
+        val key = mapping.entries.firstOrNull { (_, value) -> value == jarPathForClass }?.key
+        if (key == null) {
+          throw IllegalStateException("Cannot find path '$jarPathForClass' in mapping values:'$mapping'")
+        }
+        return key.split('/', limit = 2).last()
       }
-      return pathToModule
+      else {
+        // production jar
+        throw IllegalStateException("Cannot deduce module name from '$path'")
+      }
+    }
+
+    private fun getJpsModulesOutput(clazz: Class<*>, moduleNames: List<@NlsSafe String>): List<Path> {
+      val jarPathForClass = PathUtil.getJarPathForClass(clazz)
+      val path = Path.of(jarPathForClass)
+      val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
+
+      if (Files.isDirectory(path)) {
+        // plain compilation output
+        return moduleNames.map { path.parent.resolve(it) }
+      }
+      else if (relevantJarsRoot != null && jarPathForClass.startsWith(relevantJarsRoot)) {
+        // archived compilation output, assume we need 'production' output
+        val mapping = PathManager.getArchivedCompiledClassesMapping()
+        checkNotNull(mapping) { "Mapping cannot be null at this point" }
+        return moduleNames.mapNotNull {
+          val key = "production/$it"
+          val value = mapping[key]
+          if (value == null) logger.value.warn("Not found jar mapping for '$key'")
+          value?.let { Path(value) }
+        }
+      }
+      else {
+        // production jar
+        throw IllegalStateException("Unexpected path '$path'")
+      }
     }
 
     private val logger = lazy { fileLogger() }
