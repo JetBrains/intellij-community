@@ -8247,8 +8247,6 @@ c:com.intellij.ide.actions.CreateFileFromTemplateDialog
 - p:<init>(com.intellij.openapi.project.Project):V
 - p:createCenterPanel():javax.swing.JComponent
 - s:createDialog(com.intellij.openapi.project.Project):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
-- p:doOKAction():V
-- p:doValidate():com.intellij.openapi.ui.ValidationInfo
 - p:getKindCombo():com.intellij.ide.actions.TemplateKindCombo
 - p:getKindLabel():javax.swing.JLabel
 - p:getNameField():javax.swing.JTextField

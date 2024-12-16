@@ -8,13 +8,11 @@ import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
@@ -86,14 +84,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       }
     }
     else {
-      if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-        createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
-      }
-      else {
-        Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
-                                 IdeBundle.message("title.new.file"), null, null, validator);
-        elementsConsumer.accept(validator.getCreatedElements());
-      }
+      createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
     }
   }
 

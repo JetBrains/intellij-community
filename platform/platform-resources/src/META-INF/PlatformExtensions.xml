@@ -1303,10 +1303,6 @@
       <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
     </experimentalFeature>
 
-    <experimentalFeature id="show.create.new.element.in.popup" percentOfUsers="100">
-      <description>Use popups (instead of dialogs) for creating new items (files, classes, etc.)</description>
-    </experimentalFeature>
-
     <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="100">
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
