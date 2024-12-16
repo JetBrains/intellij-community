@@ -137,6 +137,14 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   public void testDictModificationMethods() {
     doTestByText("""
                    from typing import TypedDict
+                   class Movie(TypedDict, total=False):
+                       name: str
+                       year: int
+                   m = Movie(name='Alien', year=1979)
+                   m.<warning descr="This operation might break TypedDict consistency">clear</warning>()
+                   m.<warning descr="This operation might break TypedDict consistency">popitem</warning>()""");
+    doTestByText("""
+                   from typing import TypedDict
                    class Movie(TypedDict):
                        name: str
                        year: int
@@ -147,7 +155,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    name = 'name'
                    m.pop('based_on_book')
                    m.<warning descr="Key 'year' of TypedDict 'Horror' cannot be deleted">pop</warning>('year')
-                   m.<weak_warning descr="This operation might break TypedDict consistency">popitem</weak_warning>()
+                   m.<warning descr="This operation might break TypedDict consistency">popitem</warning>()
                    m.setdefault('based_on_book', <warning descr="Expected type 'bool', got 'int' instead">42</warning>)""");
   }
 

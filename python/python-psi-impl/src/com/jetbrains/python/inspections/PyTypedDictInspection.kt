@@ -206,7 +206,7 @@ class PyTypedDictInspection : PyInspection() {
         if (arguments.size == 1 && arguments[0] is PyReferenceExpression) {
           (PyUtil.resolveToTheTop(arguments[0]) as? PyTargetExpression)?.let { resolvedArg ->
             resolvedArg.findAssignedValue()?.let {
-              arguments = arrayOf<PyExpression>(it)
+              arguments = arrayOf(it)
             }
           }
         }
@@ -217,10 +217,9 @@ class PyTypedDictInspection : PyInspection() {
       }
 
       if (PyNames.CLEAR == callee.name || PyNames.POPITEM == callee.name) {
-        if (nodeType.fields.any { it.value.qualifiers.isRequired == true}) {
-          registerProblem(callee.nameElement?.psi, PyPsiBundle.message("INSP.typeddict.this.operation.might.break.typeddict.consistency"),
-                          if (PyNames.CLEAR == callee.name) ProblemHighlightType.WARNING else ProblemHighlightType.WEAK_WARNING)
-        }
+        registerProblem(callee.nameElement?.psi,
+                        PyPsiBundle.message("INSP.typeddict.this.operation.might.break.typeddict.consistency"),
+                        ProblemHighlightType.WARNING)
       }
 
       if (PyNames.POP == callee.name) {
