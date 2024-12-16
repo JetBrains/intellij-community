@@ -61,14 +61,18 @@ object PyCollectionTypeUtil {
         val elementType = context.getType(element)
         val (keyType, valueType) = getKeyValueType(elementType)
 
-        if (!(keyType is PyClassType && PyNames.TYPE_STR == keyType.name)) {
+        if (!(keyType is PyClassType && PyNames.TYPE_STR == keyType.classQName)) {
           return null
         }
-        val key = element.key
-        if (key !is PyStringLiteralExpression) {
-          return null
+        val keyExpression = if (keyType is PyLiteralType) {
+          keyType.expression
         }
-        strKeysToValueTypes[key.stringValue] = Pair(element.value, valueType)
+        else {
+          element.key
+        }
+        if (keyExpression is PyStringLiteralExpression) {
+          strKeysToValueTypes[keyExpression.stringValue] = Pair(element.value, replaceLiteralWithItsClass(valueType))
+        }
       }
 
     return PyTypedDictType.createFromKeysToValueTypes(sequence, strKeysToValueTypes)
@@ -84,8 +88,8 @@ object PyCollectionTypeUtil {
       .forEach {
         val type = context.getType(it)
         val (keyType, valueType) = getKeyValueType(type)
-        keyTypes.add(keyType)
-        valueTypes.add(valueType)
+        keyTypes.add(replaceLiteralWithItsClass(keyType))
+        valueTypes.add(replaceLiteralWithItsClass(valueType))
       }
 
     if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
@@ -99,12 +103,12 @@ object PyCollectionTypeUtil {
   private fun getKeyValueType(sequenceElementType: PyType?): Pair<PyType?, PyType?> {
     if (sequenceElementType is PyTupleType) {
       if (sequenceElementType.isHomogeneous) {
-        val iteratedItemType = replaceLiteralWithItsClass(sequenceElementType.iteratedItemType)
+        val iteratedItemType = sequenceElementType.iteratedItemType
         return iteratedItemType to iteratedItemType
       }
       val tupleElementTypes = sequenceElementType.elementTypes
       if (tupleElementTypes.size == 2) {
-        return replaceLiteralWithItsClass(tupleElementTypes[0]) to replaceLiteralWithItsClass(tupleElementTypes[1])
+        return tupleElementTypes[0] to tupleElementTypes[1]
       }
     }
     return null to null

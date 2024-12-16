@@ -1225,6 +1225,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                                               """));
   }
 
+  // PY-78126
+  public void testTypedDictVariableKey() {
+    doTestByText("""
+                   from typing import TypedDict, Literal
+                   class Movie(TypedDict):
+                       name: str
+                       year: int
+                   def foo(key: str):
+                       m: Movie = <warning descr="TypedDict 'Movie' has missing key: 'name'">{key: "abb", "year": 1917}</warning>
+                   def bar(key: Literal["name"]):
+                       m: Movie = {key: "abb", "year": 1917} # OK
+                   def buz(key: Literal["wrong_key"]):
+                       m: Movie = <warning descr="TypedDict 'Movie' has missing key: 'name'">{<warning descr="Extra key 'wrong_key' for TypedDict 'Movie'">key: "abb"</warning>, "year": 1917}</warning>
+                   """);
+  }
+
   // PY-53611
   public void testTypedDictRequiredNotRequiredEquivalence() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);

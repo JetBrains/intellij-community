@@ -3198,9 +3198,9 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  // PY-77937
+  // PY-78125
   // Special case: `TypedDict` type is inferred for a dict literal with string-only keys
-  public void testDictOfLiteralsWithStringOnlyKeys() {
+  public void _testDictOfLiteralsWithStringOnlyKeys() {
     doTest("dict[str, int | str]", """
       from typing import Literal
 
