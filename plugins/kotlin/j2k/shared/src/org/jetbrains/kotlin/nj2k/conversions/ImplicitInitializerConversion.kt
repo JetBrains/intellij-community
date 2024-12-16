@@ -100,7 +100,16 @@ class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConver
                 else -> null
             } ?: continue
 
-            val containingDeclaration = (assignmentStatement.parent as? JKBlock)?.parent as? JKDeclaration ?: continue
+            // If the field is final (i.e., a val) as determined by Java control-flow analysis on the JK tree building stage,
+            // then it should be considered initialized from arbitrarily nested assignments within the constructor.
+            // However, if the field is mutable, we only account for top-level assignment statements
+            // because in this case it is not guaranteed that the field is definitely assigned from nested blocks.
+            val containingDeclaration = if (field.modality == FINAL) {
+                assignmentStatement.parentOfType<JKDeclaration>()
+            } else {
+                (assignmentStatement.parent as? JKBlock)?.parent as? JKDeclaration
+            } ?: continue
+
             val isInitializer = when (parent) {
                 is JKKtAssignmentStatement -> (parent.field as? JKFieldAccessExpression)?.identifier == fieldSymbol
                 is JKQualifiedExpression -> (parent.selector as? JKFieldAccessExpression)?.identifier == fieldSymbol
