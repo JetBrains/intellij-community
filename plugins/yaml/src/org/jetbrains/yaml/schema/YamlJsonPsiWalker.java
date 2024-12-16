@@ -441,9 +441,9 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         sequence.add(generator.createEol());
       }
       List<YAMLSequenceItem> items = sequence.getItems();
-      YAMLSequenceItem lastItem = items.get(items.size() - 1);
+      YAMLSequenceItem lastItem = items.isEmpty() ? null : items.get(items.size() - 1);
 
-      int indent = lastChild != null ? YAMLUtil.getIndentToThisElement(lastItem) : YAMLUtil.getIndentToThisElement(sequence) + 2;
+      int indent = lastChild != null && lastItem != null ? YAMLUtil.getIndentToThisElement(lastItem) : YAMLUtil.getIndentToThisElement(sequence) + 2;
       sequence.add(generator.createIndent(indent));
       return sequence.add(sequenceItem);
     }
