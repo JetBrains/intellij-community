@@ -232,6 +232,9 @@ c:com.intellij.ui.jcef.JBCefJSQuery$Response
 - hasResponse():Z
 - isSuccess():Z
 - response():java.lang.String
+f:com.intellij.ui.jcef.JBCefNotifications
+- <init>():V
+- s:createEditorNotificationPanel(com.intellij.openapi.editor.Editor,com.intellij.ui.jcef.JBCefHealthMonitor$Status):com.intellij.ui.EditorNotificationPanel
 com.intellij.ui.jcef.JBCefOSRHandlerFactory
 - sf:DEFAULT:com.intellij.ui.jcef.JBCefOSRHandlerFactory
 - createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler

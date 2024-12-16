@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Experimental
-final class JBCefHealthMonitor {
-  enum Status {
+public final class JBCefHealthMonitor {
+  public enum Status {
     UNKNOWN,
     OK,
     UNPRIVILEGED_USER_NS_DISABLED,
@@ -27,7 +27,7 @@ final class JBCefHealthMonitor {
 
   private static final Logger LOG = Logger.getInstance(JBCefHealthMonitor.class);
 
-  interface JBCefHealthCheckTopic {
+  public interface JBCefHealthCheckTopic {
     Topic<JBCefHealthCheckTopic> TOPIC = Topic.create("JBCefHealthCheckTopic", JBCefHealthCheckTopic.class);
     void onHealthHealthStatusChanged(@NotNull Status status);
   }
@@ -36,11 +36,11 @@ final class JBCefHealthMonitor {
 
   private final @NotNull AtomicReference<Status> myStatus = new AtomicReference<>(Status.UNKNOWN);
 
-  static JBCefHealthMonitor getInstance() {
+  public static JBCefHealthMonitor getInstance() {
     return ourInstance;
   }
 
-  @NotNull Status getStatus() {
+  public @NotNull Status getStatus() {
     return myStatus.get();
   }
 

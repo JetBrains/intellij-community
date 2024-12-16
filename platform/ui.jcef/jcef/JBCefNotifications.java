@@ -9,14 +9,36 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-final class JBCefNotifications {
+public final class JBCefNotifications {
+  public static @Nullable EditorNotificationPanel createEditorNotificationPanel(Editor editor, JBCefHealthMonitor.Status status) {
+    return switch (status) {
+      case UNKNOWN, OK -> null;
+      case UNPRIVILEGED_USER_NS_DISABLED -> {
+        EditorNotificationPanel panel =
+          createEditorNotificationPanel(editor, IdeBundle.message("notification.content.jcef.browser.suspended.text"));
+        //noinspection DialogTitleCapitalization
+        panel.createActionLabel(IdeBundle.message("notification.content.jcef.enable.browser.button"),
+                                () -> JBCefAppArmorUtils.showUnprivilegedUserNamespacesRestrictedDialog(panel));
+        yield panel;
+      }
+      case RUN_UNDER_SUPER_USER ->
+        createEditorNotificationPanel(editor, IdeBundle.message("notification.content.jcef.super.user.error.message"));
+
+      case GPU_PROCESS_FAILED ->
+        createEditorNotificationPanel(editor, IdeBundle.message("notification.content.jcef.gpu.process.failed.error.message"));
+    };
+  }
+
   static @Nullable Component createStubPanel(JBCefHealthMonitor.Status status) {
     return switch (status) {
       case UNKNOWN, OK -> null;
@@ -64,6 +86,12 @@ final class JBCefNotifications {
 
   private static JComponent createUnprivilegedUserNSStubPanel() {
     return JBCefAppArmorUtils.getUnprivilegedUserNamespacesRestrictedStubPanel();
+  }
+
+  private static EditorNotificationPanel createEditorNotificationPanel(Editor editor, @Nls String text) {
+    EditorNotificationPanel panel = new EditorNotificationPanel(editor, LightColors.YELLOW, null, EditorNotificationPanel.Status.Warning);
+    panel.setText(text);
+    return panel;
   }
 
   private static JComponent createTextComponent(@Nls String text) {
