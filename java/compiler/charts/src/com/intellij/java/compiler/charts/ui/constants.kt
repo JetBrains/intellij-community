@@ -6,6 +6,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil.FontSize
 import java.util.concurrent.TimeUnit
+import javax.swing.Icon
 
 object Colors {
   object Background {
@@ -71,8 +72,8 @@ object Settings {
   object Block {
     const val PADDING: Double = 1.0
     const val BORDER: Double = 2.0
-    val HEIGHT = JBTable().rowHeight * 1.5
-    const val MIN_SIZE = 7
+    val HEIGHT: Double = JBTable().rowHeight * 1.5
+    const val MIN_SIZE: Int = 7
   }
 
   object Axis {
@@ -116,11 +117,11 @@ object Settings {
   }
 
   object Toolbar {
-    const val ID = "CompilationChartsToolbar"
+    const val ID: String = "CompilationChartsToolbar"
   }
 
   object Popup {
-    val MODULE_IMAGE = AllIcons.Actions.ModuleDirectory
-    val EDIT_IMAGE = AllIcons.Actions.EditSource
+    fun rootIcon(test: Boolean): Icon = if(test)  AllIcons.Modules.TestRoot else  AllIcons.Modules.SourceRoot
+    val EDIT_ICON: Icon = AllIcons.Actions.EditSource
   }
 }

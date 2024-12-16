@@ -36,7 +36,7 @@ class OpenDirectoryAction(private val project: Project, private val key: EventKe
   override fun draw(row: Row) {
     val text = CompilationChartsBundle.message("charts.action.open.module.directory.text")
     val description = CompilationChartsBundle.message("charts.action.open.module.directory.description")
-    val action = object : DumbAwareAction(text, description, Settings.Popup.MODULE_IMAGE) {
+    val action = object : DumbAwareAction(text, description, Settings.Popup.rootIcon(key.test)) {
       override fun actionPerformed(e: AnActionEvent) {
         val module = ModuleManager.getInstance(project).findModuleByName(key.name) ?: return
         val path = findModuleDirectory(module.moduleFilePath) ?: return
