@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ExceptionUtil;
@@ -32,7 +31,6 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.FileIndexingRequest;
 import io.opentelemetry.api.trace.SpanBuilder;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -40,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 
@@ -60,19 +57,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   UnindexedFilesIndexer(@NotNull Project project,
                         @NonNls @NotNull String indexingReason) {
     this(project, new QueuedFiles(), indexingReason);
-  }
-
-  /**
-   * For backward compatibility
-   *
-   * @deprecated Indexing should always start with scanning. You don't need this class - do scanning instead
-   */
-  @Deprecated
-  public UnindexedFilesIndexer(@NotNull Project project,
-                               @NotNull Set<VirtualFile> files,
-                               @NonNls @NotNull String indexingReason,
-                               @NotNull LongSet scanningIds) {
-    this(project, QueuedFiles.fromFilesCollection(files, scanningIds), indexingReason);
   }
 
   /**
