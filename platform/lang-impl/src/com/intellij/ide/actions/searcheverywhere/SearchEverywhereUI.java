@@ -29,7 +29,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -198,9 +201,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     myMlService = SearchEverywhereMlService.getInstance();
 
-    myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                    ? new MixedListFactory()
-                    : new GroupedListFactory();
+    myListFactory = new MixedListFactory();
 
     if (myMlService != null) {
       myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));
@@ -229,11 +230,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
 
     myExternalSearchListeners.add(topicPublisher);
-    mySearcher = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
-                 ? new MixedResultsSearcher(wrapperListener, run -> ApplicationManager.getApplication().invokeLater(run),
-                                            equalityProviders)
-                 : new GroupedResultsSearcher(wrapperListener, run -> ApplicationManager.getApplication().invokeLater(run),
-                                              equalityProviders);
+    mySearcher = new MixedResultsSearcher(
+      wrapperListener,
+      run -> ApplicationManager.getApplication().invokeLater(run),
+      equalityProviders);
     addSearchListener(new SearchProcessLogger());
 
     initSearchActions();
