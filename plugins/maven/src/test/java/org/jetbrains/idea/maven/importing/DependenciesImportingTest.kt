@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -1695,9 +1696,9 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
 
   @Test
   fun testDoNotPopulateSameRootEntriesOnEveryImportForSystemLibraries() = runBlocking {
-    needFixForMaven4()
-    val root = root
-    val path = "jar://$root/foo/bar.jar!/"
+    createProjectSubFile("foo/bar.jar")
+    val pp = projectPath.toCanonicalPath()
+    val path = "jar://$pp/foo/bar.jar!/"
     runBlocking {
       createProjectPom("""
         <groupId>test</groupId>
@@ -1709,7 +1710,7 @@ class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
             <artifactId>yyy</artifactId>
             <version>1</version>
             <scope>system</scope>
-            <systemPath>$root/foo/bar.jar</systemPath>
+            <systemPath>$pp/foo/bar.jar</systemPath>
           </dependency>
         </dependencies>
         """.trimIndent())
