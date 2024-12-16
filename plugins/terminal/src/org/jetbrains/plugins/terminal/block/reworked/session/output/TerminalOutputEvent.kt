@@ -17,3 +17,5 @@ internal data class TerminalCursorPositionChangedEvent(
 ) : TerminalOutputEvent
 
 internal data class TerminalStateChangedEvent(val state: TerminalStateDto) : TerminalOutputEvent
+
+internal object TerminalBeepEvent : TerminalOutputEvent

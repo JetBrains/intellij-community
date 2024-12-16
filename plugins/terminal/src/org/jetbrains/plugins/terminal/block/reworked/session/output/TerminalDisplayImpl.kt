@@ -86,11 +86,11 @@ internal class TerminalDisplayImpl : TerminalDisplay {
     }
   }
 
-  override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
-
+  override fun beep() {
+    dispatcher.multicaster.beep()
   }
 
-  override fun beep() {
+  override fun useAlternateScreenBuffer(useAlternateScreenBuffer: Boolean) {
 
   }
 

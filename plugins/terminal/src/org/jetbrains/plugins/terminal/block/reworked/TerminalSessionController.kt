@@ -10,10 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalCursorPositionChangedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.output.*
+import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class TerminalSessionController(
@@ -52,6 +50,11 @@ internal class TerminalSessionController(
       is TerminalStateChangedEvent -> {
         val state = event.state.toTerminalState(settings.cursorShape)
         sessionModel.updateTerminalState(state)
+      }
+      is TerminalBeepEvent -> {
+        if (settings.audibleBell()) {
+          Toolkit.getDefaultToolkit().beep()
+        }
       }
     }
   }

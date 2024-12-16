@@ -20,4 +20,6 @@ internal interface TerminalDisplayListener : EventListener {
   fun bracketedPasteModeChanged(isEnabled: Boolean) {}
 
   fun windowTitleChanged(title: String) {}
+
+  fun beep() {}
 }

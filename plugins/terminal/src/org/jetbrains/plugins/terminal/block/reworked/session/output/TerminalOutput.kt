@@ -155,6 +155,12 @@ internal fun createTerminalOutputChannel(
         collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
       }
     }
+
+    override fun beep() {
+      textBuffer.withLock {
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalBeepEvent)
+      }
+    }
   })
 
   return outputChannel
