@@ -12,6 +12,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
 import java.awt.geom.Rectangle2D
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -128,21 +129,26 @@ class CompilationChartsModuleInfo(
   private val component: CompilationChartsDiagramsComponent,
 ) : MouseAdapter() {
   private val components = mutableSetOf<ModuleIndex>()
-  private var currentPopup = CompilationChartsPopup(vm.project, component)
+  private var hint = CompilationChartsHint(vm.project, component)
 
   override fun mouseClicked(e: MouseEvent) {
-    component.setFocus()
-    val index = search(e.point) ?: return
-    currentPopup.open(index, e.locationOnScreen)
   }
 
   override fun mouseMoved(e: MouseEvent) {
-    if (!currentPopup.contains(e)) {
-      currentPopup.close()
+    val module = search(e.point)
+    if (module != null) {
+      if (module != hint.module() && !hint.isInside(e.getPoint())) {
+        hint.open(module, e)
+      }
+    }
+    else {
+      if (!hint.isInside(e.getPoint())) {
+        this@CompilationChartsModuleInfo.hint.close()
+      }
     }
   }
 
-  fun clear() = components.clear()
+  fun clear(): Unit = components.clear()
 
   fun module(rect: Rectangle2D, key: EventKey, info: Map<String, String>) {
     components.add(ModuleIndex(rect, key, info))
@@ -211,8 +217,24 @@ data class ModuleIndex(
     key, info
   )
 
-  fun contains(point: Point): Boolean = x0 <= point.x &&
-                                        x1 >= point.x &&
-                                        y0 <= point.y &&
-                                        y1 >= point.y
+  fun contains(point: Point, border: Int = 0): Boolean =
+    x0 - border <= point.x &&
+    x1 + border >= point.x &&
+    y0 - border <= point.y &&
+    y1 + border >= point.y
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ModuleIndex
+
+    if (x0 != other.x0) return false
+    if (y0 != other.y0) return false
+    if (key != other.key) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = Objects.hash(x0, y0, key)
 }

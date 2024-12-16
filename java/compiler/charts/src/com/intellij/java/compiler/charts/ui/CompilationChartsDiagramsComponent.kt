@@ -35,7 +35,7 @@ class CompilationChartsDiagramsComponent(
   var cpu: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
   var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
   val statistic: Statistic = Statistic()
-  var cpuMemory = MEMORY
+  var cpuMemory: CpuMemoryStatisticsType = MEMORY
   var offset: Int = 0
   private val usageInfo: CompilationChartsUsageInfo
   private val charts: Charts
@@ -43,7 +43,6 @@ class CompilationChartsDiagramsComponent(
   private val imageRequestCount: MutableMap<Int, Int> = HashMap()
   private val ideSettings: IDESettings = IDESettings()
   private var flush: Boolean = true
-
 
   private val focusableEmptyButton = JButton().apply {
     preferredSize = Dimension(0, 0)
@@ -118,6 +117,7 @@ class CompilationChartsDiagramsComponent(
     }
 
     addMouseListener(charts.settings.mouse)
+    addMouseMotionListener(charts.settings.mouse)
     usageInfo = CompilationChartsUsageInfo(this, charts, zoom)
     addMouseMotionListener(usageInfo)
 

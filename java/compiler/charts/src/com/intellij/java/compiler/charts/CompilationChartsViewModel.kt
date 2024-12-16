@@ -4,6 +4,7 @@ package com.intellij.java.compiler.charts
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.jetbrains.rd.framework.impl.RdList
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdProperty
@@ -69,7 +70,7 @@ class CompilationChartsViewModel(val project: Project, val lifetime: Lifetime, v
         get() = EventKey(target.name, target.type, target.isTest)
     }
 
-    data class EventKey(val name: String, val type: String, val test: Boolean)
+    data class EventKey(@NlsContexts.Label val name: String, val type: String, val test: Boolean)
     data class StartEvent(override val target: StartTarget) : Event
     data class FinishEvent(override val target: FinishTarget) : Event
   }
