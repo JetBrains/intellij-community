@@ -103,6 +103,7 @@ abstract class TraceExecutionTestHelper(
     catch (t: Throwable) {
       val s = "Exception caught: " + t + ", " + t.message
       println(s, ProcessOutputTypes.SYSTEM)
+      t.printStackTrace()
     }
     finally {
       resume()
