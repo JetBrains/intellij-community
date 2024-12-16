@@ -10,7 +10,9 @@ import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ijent.community.impl.nio.getOrThrowFileSystemException
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
@@ -29,6 +31,10 @@ internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
     return null
   }
   val root = path.root ?: return null
+  val eelDescriptor = root.getEelDescriptor()
+  if (eelDescriptor == LocalEelDescriptor) {
+    return null
+  }
   val api = map.computeIfAbsent(root) {
     runBlocking {
       root.getEelApi()
