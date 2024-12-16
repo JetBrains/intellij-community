@@ -9,11 +9,7 @@ import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.serviceAsync
@@ -30,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -252,14 +249,16 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
 
     if (newProject !== projectToClose) {
       updateLastProjectLocation(projectFile)
-      val moduleConfigurator = projectBuilder.createModuleConfigurator()
+      val moduleConfigurator = projectBuilder.createProjectConfigurator()
       val options = OpenProjectTask {
         project = newProject
         projectName = projectFile.fileName.toString()
         callback = ProjectOpenedCallback { openedProject, module ->
-          if (openedProject != newProject && module != null) { // project attached
-            ApplicationManager.getApplication().invokeLater {
-              moduleConfigurator?.accept(module)
+          if (openedProject != newProject && moduleConfigurator != null) { // project attached to workspace
+            LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)?.let { dir ->
+              ApplicationManager.getApplication().invokeLater {
+                moduleConfigurator.configureProject(newProject, dir)
+              }
             }
           }
         }

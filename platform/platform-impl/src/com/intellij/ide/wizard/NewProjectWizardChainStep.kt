@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
-import com.intellij.openapi.module.Module
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
-import java.util.function.Consumer
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -47,8 +47,9 @@ class NewProjectWizardChainStep<S : NewProjectWizardStep> : AbstractNewProjectWi
     }
   }
 
-  override fun createModuleConfigurator(): Consumer<Module>? {
-    return steps.firstNotNullOfOrNull { it.createModuleConfigurator() }
+  @ApiStatus.Internal
+  override fun createProjectConfigurator(): ProjectConfigurator? {
+    return steps.firstNotNullOfOrNull { it.createProjectConfigurator() }
   }
 
   companion object {

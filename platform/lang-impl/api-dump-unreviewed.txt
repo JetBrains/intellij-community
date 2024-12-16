@@ -12896,7 +12896,6 @@ c:com.intellij.ide.util.projectWizard.WebTemplateProjectWizardStep
 - com.intellij.ide.wizard.AbstractNewProjectWizardStep
 - com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData
 - <init>(com.intellij.ide.wizard.NewProjectWizardBaseStep,com.intellij.ide.util.projectWizard.WebProjectTemplate):V
-- createModuleConfigurator():java.util.function.Consumer
 - f:getParent():com.intellij.ide.wizard.NewProjectWizardBaseStep
 - getPeer():com.intellij.openapi.util.NotNullLazyValue
 - f:getTemplate():com.intellij.ide.util.projectWizard.WebProjectTemplate
@@ -13741,7 +13740,6 @@ c:com.intellij.openapi.module.WebModuleBuilder
 - <init>(com.intellij.ide.util.projectWizard.WebProjectTemplate):V
 - <init>(com.intellij.ide.util.projectWizard.WebProjectTemplate,com.intellij.openapi.util.NotNullLazyValue):V
 - commitModule(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.Module
-- createModuleConfigurator():java.util.function.Consumer
 - getGroupName():java.lang.String
 - getModuleType():com.intellij.openapi.module.ModuleType
 - getNodeIcon():javax.swing.Icon

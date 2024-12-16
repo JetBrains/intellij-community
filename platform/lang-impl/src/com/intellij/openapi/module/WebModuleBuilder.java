@@ -2,10 +2,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SettingsStep;
-import com.intellij.ide.util.projectWizard.WebProjectTemplate;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -16,11 +13,11 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.function.Consumer;
 
 /**
 * @author Dmitry Avdeev
@@ -87,12 +84,15 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
     return module;
   }
 
+  @ApiStatus.Internal
   @Override
-  public @Nullable Consumer<Module> createModuleConfigurator() {
-    return module -> {
+  public @Nullable ProjectConfigurator createProjectConfigurator() {
+    return (project, dir) -> {
       if (myTemplate != null) {
-        VirtualFile dir = getModuleDir(module);
-        myTemplate.configureModule(module, dir, myGeneratorPeerLazyValue.getValue().getSettings());
+        Module module = ModuleUtilCore.findModuleForFile(dir, project);
+        if (module != null) {
+          myTemplate.configureModule(module, dir, myGeneratorPeerLazyValue.getValue().getSettings());
+        }
       }
     };
   }

@@ -4,7 +4,6 @@ package com.intellij.ide.util.projectWizard
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
@@ -12,8 +11,8 @@ import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.function.Consumer
 import javax.swing.JLabel
 
 open class WebTemplateProjectWizardStep<T>(
@@ -61,8 +60,9 @@ open class WebTemplateProjectWizardStep<T>(
     }
   }
 
-  override fun createModuleConfigurator(): Consumer<Module>? {
-    return webModuleBuilder().createModuleConfigurator()
+  @ApiStatus.Internal
+  override fun createProjectConfigurator(): ProjectConfigurator? {
+    return webModuleBuilder().createProjectConfigurator()
   }
 
   init {

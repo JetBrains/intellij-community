@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -46,7 +45,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
@@ -333,10 +331,9 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   }
 
   @Override
-  public @Nullable Consumer<Module> createModuleConfigurator() {
-    return module -> {
-      VirtualFile root = ModuleRootManager.getInstance(module).getContentEntries()[0].getFile();
-      configure(module.getProject(), root);
+  public @Nullable ProjectConfigurator createProjectConfigurator() {
+    return (project, projectDir) -> {
+      configure(project, projectDir);
     };
   }
 }

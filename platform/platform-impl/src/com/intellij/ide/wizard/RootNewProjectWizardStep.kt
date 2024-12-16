@@ -2,13 +2,12 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.ProjectBuilder
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Consumer
 
 class RootNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep {
 
@@ -18,8 +17,9 @@ class RootNewProjectWizardStep(override val context: WizardContext) : NewProject
 
   override var keywords: NewProjectWizardStep.Keywords = NewProjectWizardStep.Keywords()
 
-  override fun createModuleConfigurator(): Consumer<Module>? {
-    return PROJECT_BUILDER_KEY.get(data)?.createModuleConfigurator()
+  @ApiStatus.Internal
+  override fun createProjectConfigurator(): ProjectConfigurator? {
+    return PROJECT_BUILDER_KEY.get(data)?.createProjectConfigurator()
   }
 
   companion object {

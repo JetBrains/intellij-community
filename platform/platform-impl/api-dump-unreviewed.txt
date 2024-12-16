@@ -5245,7 +5245,6 @@ a:com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 - <init>():V
 - cleanup():V
 - commitModule(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.Module
-- createModuleConfigurator():java.util.function.Consumer
 - pa:createStep(com.intellij.ide.util.projectWizard.WizardContext):com.intellij.ide.wizard.NewProjectWizardStep
 - f:getCustomOptionsStep(com.intellij.ide.util.projectWizard.WizardContext,com.intellij.openapi.Disposable):com.intellij.ide.util.projectWizard.ModuleWizardStep
 - getDescription():java.lang.String
@@ -5402,7 +5401,6 @@ f:com.intellij.ide.wizard.NewProjectWizardChainStep
 - com.intellij.ide.wizard.AbstractNewProjectWizardStep
 - sf:Companion:com.intellij.ide.wizard.NewProjectWizardChainStep$Companion
 - <init>(com.intellij.ide.wizard.NewProjectWizardStep):V
-- createModuleConfigurator():java.util.function.Consumer
 - f:nextStep(kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardChainStep
 - setupProject(com.intellij.openapi.project.Project):V
 - setupUI(com.intellij.ui.dsl.builder.Panel):V
@@ -5468,7 +5466,6 @@ f:com.intellij.ide.wizard.RootNewProjectWizardStep
 - com.intellij.ide.wizard.NewProjectWizardStep
 - sf:Companion:com.intellij.ide.wizard.RootNewProjectWizardStep$Companion
 - <init>(com.intellij.ide.util.projectWizard.WizardContext):V
-- createModuleConfigurator():java.util.function.Consumer
 - getContext():com.intellij.ide.util.projectWizard.WizardContext
 - getData():com.intellij.openapi.util.UserDataHolderBase
 - getKeywords():com.intellij.ide.wizard.NewProjectWizardStep$Keywords
