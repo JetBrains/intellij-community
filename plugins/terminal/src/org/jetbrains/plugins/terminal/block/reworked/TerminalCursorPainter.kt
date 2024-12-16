@@ -51,12 +51,19 @@ internal class TerminalCursorPainter private constructor(
     }
 
     coroutineScope.launch(Dispatchers.EDT) {
-      var cursorShape = curCursorState.cursorShape
       sessionModel.terminalState.collect { state ->
-        if (state.cursorShape != cursorShape) {
-          cursorShape = state.cursorShape
+        var stateChanged = false
 
-          curCursorState = curCursorState.copy(cursorShape = cursorShape)
+        if (state.cursorShape != curCursorState.cursorShape) {
+          curCursorState = curCursorState.copy(cursorShape = state.cursorShape)
+          stateChanged = true
+        }
+        if (state.isCursorVisible != curCursorState.isCursorVisible) {
+          curCursorState = curCursorState.copy(isCursorVisible = state.isCursorVisible)
+          stateChanged = true
+        }
+
+        if (stateChanged) {
           updateCursor(curCursorState)
         }
       }
