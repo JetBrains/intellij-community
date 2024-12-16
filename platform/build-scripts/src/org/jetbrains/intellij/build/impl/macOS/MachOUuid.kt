@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.macOS
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import java.nio.ByteBuffer
@@ -14,7 +15,8 @@ import java.util.*
  * Patches UUID value in the Mach-O [executable] with the [MacDistributionCustomizer.getDistributionUUID].
  * Only single-arch 64-bit files are supported.
  */
-internal class MachOUuid(private val executable: Path, private val customizer: MacDistributionCustomizer, private val context: BuildContext) {
+@ApiStatus.Internal
+class MachOUuid(private val executable: Path, private val customizer: MacDistributionCustomizer, private val context: BuildContext) {
   private companion object {
     const val LC_UUID = 0x1b
   }
