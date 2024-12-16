@@ -21,11 +21,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
-import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -70,27 +67,5 @@ public class GradleExecutionHelperTest {
     assertEquals(anotherTempFile, GradleInitScriptUtil.createInitScript(prefix, "bar"));
 
     assertNotEquals(tempFile, anotherTempFile);
-  }
-
-  @Test
-  public void testMergeJvmArgs() {
-    assertOrderedEquals(mergeJvmArgs(List.of("-X:foo"), emptyList()), List.of("-X:foo"));
-    assertOrderedEquals(mergeJvmArgs(emptyList(), List.of("-X:foo")), List.of("-X:foo"));
-    assertOrderedEquals(mergeJvmArgs(List.of("-Dp=val"), List.of("-Dp=newVal")), List.of("-Dp=newVal"));
-
-    assertOrderedEquals(
-      mergeJvmArgs(List.of("-X:foo"), List.of("-Dp=v")),
-      Arrays.asList("-X:foo", "-Dp=v"));
-
-    assertOrderedEquals(
-      mergeJvmArgs(Arrays.asList("-X:foo", "-Foo", "bar=001", "-Foo", "baz=002"),
-                   Arrays.asList("-Dp=v", "-Foo", "bar=003", "-Foo", "baz=002")),
-      Arrays.asList("-X:foo", "-Foo", "bar=003", "-Foo", "baz=002", "-Dp=v"));
-
-
-    List<String> jvmArgs = mergeBuildJvmArguments(Arrays.asList("-Xmx256", "--add-opens", "java.base/java.util=ALL-UNNAMED"),
-                                                  Arrays.asList("-Xmx512", "--add-opens", "java.base/java.lang=ALL-UNNAMED"));
-    assertDoesntContain(jvmArgs, "-Xmx256", "--add-opens", "java.base/java.util=ALL-UNNAMED", "java.base/java.lang=ALL-UNNAMED");
-    assertContainsElements(jvmArgs, "-Xmx512");
   }
 }

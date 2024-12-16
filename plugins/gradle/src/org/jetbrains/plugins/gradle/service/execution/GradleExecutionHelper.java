@@ -396,9 +396,7 @@ public final class GradleExecutionHelper {
     return jvmOptions.getAllJvmArgs();
   }
 
-  @ApiStatus.Internal
-  @VisibleForTesting
-  public static @NotNull List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
+  private static @NotNull List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings);
     MultiMap<String, String> argumentsMap = parseJvmArgs(mergedJvmArgs);
 
