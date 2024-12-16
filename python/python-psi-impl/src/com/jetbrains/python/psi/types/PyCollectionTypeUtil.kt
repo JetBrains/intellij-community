@@ -48,86 +48,45 @@ object PyCollectionTypeUtil {
   private fun getTypedDictTypeFromDictLiteral(sequence: PyDictLiteralExpression, context: TypeEvalContext): PyTypedDictType? {
     val elements = sequence.elements
     val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
-    var allStrKeys = true
+    if (elements.size > maxAnalyzedElements) {
+      return null
+    }
+
     val strKeysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
 
     elements
       .take(maxAnalyzedElements)
-      .map { element -> Pair(element, context.getType(element) as? PyTupleType) }
-      .forEach { (tuple, tupleType) ->
-        if (tupleType != null) {
-          val tupleElementTypes = tupleType.elementTypes
-          when {
-            tupleType.isHomogeneous -> {
-              val keyAndValueType = tupleType.iteratedItemType
-              val keysToValueTypes = assemblePotentialTypedDictFields(keyAndValueType, keyAndValueType, tuple)
-              if (keysToValueTypes != null) {
-                strKeysToValueTypes.putAll(keysToValueTypes)
-              }
-              else {
-                allStrKeys = false
-              }
-            }
-            tupleElementTypes.size == 2 -> {
-              val keysToValueTypes = assemblePotentialTypedDictFields(tupleElementTypes[0], tupleElementTypes[1], tuple)
-              if (keysToValueTypes != null) {
-                strKeysToValueTypes.putAll(keysToValueTypes)
-              }
-              else {
-                allStrKeys = false
-              }
-            }
-            else -> {
-              allStrKeys = false
-            }
+      .forEach { element ->
+        val elementType = context.getType(element)
+        val (keyType, valueType) = getKeyValueType(elementType) ?: return null
+
+        if (keyType is PyLiteralStringType || keyType is PyClassType && ("str" == keyType.name)) {
+          val key = element.key
+          if (key is PyStringLiteralExpression) {
+            strKeysToValueTypes[key.stringValue] = Pair(element.value, valueType)
           }
         }
         else {
-          allStrKeys = false
+          return null
         }
       }
 
-    if (elements.size > maxAnalyzedElements) {
-      allStrKeys = false
-    }
-
-    return if (allStrKeys) PyTypedDictType.createFromKeysToValueTypes(sequence, strKeysToValueTypes) else null
+    return PyTypedDictType.createFromKeysToValueTypes(sequence, strKeysToValueTypes)
   }
 
   private fun getDictLiteralElementTypes(sequence: PyDictLiteralExpression, context: TypeEvalContext): Pair<PyType?, PyType?> {
     val elements = sequence.elements
     val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
-    val keyTypes = ArrayList<PyType?>()
-    val valueTypes = ArrayList<PyType?>()
+    val keyTypes = mutableListOf<PyType?>()
+    val valueTypes = mutableListOf<PyType?>()
 
     elements
       .take(maxAnalyzedElements)
-      .map { element -> context.getType(element) as? PyTupleType }
-      .forEach { tupleType ->
-        if (tupleType != null) {
-          val tupleElementTypes = tupleType.elementTypes
-          when {
-            tupleType.isHomogeneous -> {
-              val keyAndValueType = tupleType.iteratedItemType
-              keyTypes.add(keyAndValueType)
-              valueTypes.add(keyAndValueType)
-            }
-            tupleElementTypes.size == 2 -> {
-              val keyType = tupleElementTypes[0]
-              val valueType = tupleElementTypes[1]
-              keyTypes.add(keyType)
-              valueTypes.add(valueType)
-            }
-            else -> {
-              keyTypes.add(null)
-              valueTypes.add(null)
-            }
-          }
-        }
-        else {
-          keyTypes.add(null)
-          valueTypes.add(null)
-        }
+      .forEach {
+        val type = context.getType(it)
+        val (keyType, valueType) = getKeyValueType(type) ?: Pair(null, null)
+        keyTypes.add(keyType)
+        valueTypes.add(valueType)
       }
 
     if (elements.size > maxAnalyzedElements) {
@@ -138,32 +97,18 @@ object PyCollectionTypeUtil {
     return Pair(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
   }
 
-  private fun assemblePotentialTypedDictFields(keyType: PyType?,
-                                               valueType: PyType?,
-                                               tuple: PyExpression): Map<String, Pair<PyExpression?, PyType?>>? {
-    val strKeysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
-    var allStrKeys = true
-
-    if (keyType is PyLiteralStringType || keyType is PyClassType && ("str" == keyType.name)) {
-      when (tuple) {
-        is PyKeyValueExpression -> {
-          if (tuple.key is PyStringLiteralExpression) {
-            strKeysToValueTypes[(tuple.key as PyStringLiteralExpression).stringValue] = Pair(tuple.value, valueType)
-          }
-        }
-        is PyTupleExpression -> {
-          val tupleElements = tuple.elements
-          if (tupleElements.size > 1 && tupleElements[0] is PyStringLiteralExpression) {
-            strKeysToValueTypes[(tupleElements[0] as PyStringLiteralExpression).stringValue] = Pair(tupleElements[1], valueType)
-          }
-        }
+  private fun getKeyValueType(sequenceElementType: PyType?): Pair<PyType?, PyType?>? {
+    if (sequenceElementType is PyTupleType) {
+      if (sequenceElementType.isHomogeneous) {
+        val iteratedItemType = sequenceElementType.iteratedItemType
+        return iteratedItemType to iteratedItemType
+      }
+      val tupleElementTypes = sequenceElementType.elementTypes
+      if (tupleElementTypes.size == 2) {
+        return tupleElementTypes[0] to tupleElementTypes[1]
       }
     }
-    else {
-      allStrKeys = false
-    }
-
-    return if (allStrKeys) strKeysToValueTypes else null
+    return null
   }
 
   private fun createCollectionType(cls: PyClass, vararg elementTypes: PyType?): PyType {
