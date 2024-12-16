@@ -385,7 +385,7 @@ public final class GradleExecutionHelper {
 
   @ApiStatus.Internal
   @VisibleForTesting
-  static List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
+  public static @NotNull List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = mergeJvmArgs(jvmArgs, jvmArgsFromIdeSettings);
     JvmOptions jvmOptions = new JvmOptions(null);
     jvmOptions.setAllJvmArgs(mergedJvmArgs);
@@ -394,7 +394,7 @@ public final class GradleExecutionHelper {
 
   @ApiStatus.Internal
   @VisibleForTesting
-  static List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
+  public static @NotNull List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings);
     MultiMap<String, String> argumentsMap = parseJvmArgs(mergedJvmArgs);
 
@@ -561,9 +561,9 @@ public final class GradleExecutionHelper {
     }
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @VisibleForTesting
-  static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
+  public static @NotNull List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
     List<String> replaced = new ArrayList<>(commandLineArguments.size());
     final String PASSWORD_PARAMETER_IDENTIFIER = ".password=";
     for (String option : commandLineArguments) {
