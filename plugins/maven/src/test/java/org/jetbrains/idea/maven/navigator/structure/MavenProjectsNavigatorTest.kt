@@ -498,7 +498,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRepositoriesListWithNewRepo() = runBlocking {
-    assumeMaven3()
+    updateSettingsXml("")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
