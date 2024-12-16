@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
   <component name="copyright">
     <Base>

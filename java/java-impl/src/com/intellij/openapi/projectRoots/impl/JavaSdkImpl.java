@@ -34,6 +34,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -221,7 +223,8 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean isValidSdkHome(@NotNull String path) {
-    return JdkUtil.checkForJdk(path);
+    Path homePath = Path.of(path);
+    return JdkUtil.checkForJdk(homePath, EelProviderUtil.getEelDescriptor(homePath).getOperatingSystem() == EelPath.OS.WINDOWS);
   }
 
   @Override
