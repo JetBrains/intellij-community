@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.debugger.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "java-debugger-impl_resources",
@@ -12,10 +11,7 @@ jvm_library(
   name = "java-debugger-impl",
   module_name = "intellij.java.debugger.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/debugger/openapi:java-debugger",
     "//java/openapi:java",
@@ -26,6 +22,7 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "//java/compiler/impl:java-compiler-impl",
     "//java/java-runtime:rt",
+    "//platform/ide-core-impl",
     "//java/jsp-openapi:jsp",
     "//java/java-impl:impl",
     "//java/java-impl-refactorings:impl-refactorings",

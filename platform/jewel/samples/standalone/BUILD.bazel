@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.platform.jewel.samples.standalone` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "jewel-samples-standalone_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "jewel-samples-standalone",
+  module_name = "intellij.platform.jewel.samples.standalone",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:platform_jewel_samples_standalone_com_darkrockstudios_mpfilepicker",
+    "@lib//:platform_jewel_samples_standalone_com_darkrockstudios_mpfilepicker_jvm",
+    "//platform/jewel/markdown/extension/autolink:jewel-markdown-extension-autolink",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/int-ui/int-ui-decorated-window:jewel-intUi-decoratedWindow",
+    "//libraries/skiko",
+    "//platform/jewel/decorated-window:decoratedWindow",
+    "//platform/jewel/markdown/int-ui-standalone-styling:jewel-markdown-intUiStandaloneStyling",
+    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/markdown/extension/gfm-alerts:jewel-markdown-extension-gfmAlerts",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+  ],
+  runtime_deps = [
+    ":jewel-samples-standalone_resources",
+    "@lib//:jna",
+    "@lib//:platform_jewel_samples_standalone_org_lwjgl_lwjgl",
+    "@lib//:platform_jewel_samples_standalone_org_lwjgl_lwjgl_tinyfd",
+    "@lib//:platform_jewel_samples_standalone_org_nibor_autolink_autolink",
+    "//libraries/skiko",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.samples.standalone` end

@@ -12,12 +12,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener.Simple
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseEventArea
-import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -35,12 +31,10 @@ import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
-import java.awt.event.MouseEvent
-import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
-@kotlin.Suppress("ExtensionClassShouldBeFinalAndNonPublic")
-class LineBookmarkProvider(private val project: Project, coroutineScope: CoroutineScope) : BookmarkProvider, EditorMouseListener, Simple, AsyncFileListener {
+@Suppress("ExtensionClassShouldBeFinalAndNonPublic")
+class LineBookmarkProvider(private val project: Project, coroutineScope: CoroutineScope) : BookmarkProvider, Simple, AsyncFileListener {
   override fun getWeight(): Int = Int.MIN_VALUE
   override fun getProject(): Project = project
 
@@ -147,21 +141,6 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
-  private val MouseEvent.isUnexpected // see MouseEvent.isUnexpected in ToggleBookmarkAction
-    get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
-
-  private val EditorMouseEvent.isUnexpected
-    get() = isConsumed || area != EditorMouseEventArea.LINE_MARKERS_AREA || mouseEvent.isUnexpected
-
-  override fun mouseClicked(event: EditorMouseEvent) {
-    if (event.isUnexpected) return
-    event.editor.project?.let { if (it != project) return }
-    val manager = BookmarksManager.getInstance(project) ?: return
-    val bookmark = createBookmark(event.editor, event.logicalPosition.line) ?: return
-    manager.getType(bookmark)?.let { manager.remove(bookmark) } ?: manager.add(bookmark, BookmarkType.DEFAULT)
-    event.consume()
-  }
-
   override fun afterDocumentChange(document: Document) {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
     if (file is LightVirtualFile) return
@@ -214,16 +193,14 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     else -> null
   }
 
-  private fun isNodeVisible(node: AbstractTreeNode<*>) = (node.value as? InvalidBookmark)?.run { line < 0 } ?: true
-
   private val VFM
     get() = VirtualFileManager.getInstance()
+  private fun isNodeVisible(node: AbstractTreeNode<*>) = (node.value as? InvalidBookmark)?.run { line < 0 } ?: true
 
   init {
     if (!project.isDefault) {
       val multicaster = EditorFactory.getInstance().eventMulticaster
       multicaster.addDocumentListener(this, project)
-      multicaster.addEditorMouseListener(this, project)
       VFM.addAsyncFileListener(this, project)
     }
   }

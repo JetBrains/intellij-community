@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.remoteServers.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "remoteServers-impl_resources",
@@ -18,9 +17,7 @@ jvm_library(
   name = "remoteServers-impl",
   module_name = "intellij.platform.remoteServers.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-api:ide",
     "//platform/remote-servers/api:remoteServers",

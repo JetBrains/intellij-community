@@ -1,16 +1,14 @@
 ### auto-generated section `build intellij.cucumber.testRunner` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "cucumber-testRunner",
   module_name = "intellij.cucumber.testRunner",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/testFramework",
-    "@lib//:cucumber-core.provided",
+    "@lib//:cucumber-core-1-provided",
     "//platform/util-class-loader:util-classLoader",
   ],
   runtime_deps = ["//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter"]

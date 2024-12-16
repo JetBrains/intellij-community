@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "jewel-markdown-ideLafBridgeStyling_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "jewel-markdown-ideLafBridgeStyling",
+  module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//platform/jewel/ide-laf-bridge:ideLafBridge",
+    "//platform/jewel/markdown/extension/gfm-alerts:jewel-markdown-extension-gfmAlerts",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+  ],
+  exports = [
+    "//platform/jewel/markdown/core:jewel-markdown-core",
+    "//platform/jewel/ui",
+    "//platform/jewel/ide-laf-bridge:ideLafBridge",
+  ],
+  runtime_deps = [":jewel-markdown-ideLafBridgeStyling_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` end

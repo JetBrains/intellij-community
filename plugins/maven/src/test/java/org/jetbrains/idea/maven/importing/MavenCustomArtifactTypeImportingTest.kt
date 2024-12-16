@@ -1,14 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.OutputBuildEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
+import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase() {
 
-  private val httpServerFixture = MavenHttpRepositoryServerFixture()
+/*  private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
 
   public override fun setUp() {
@@ -37,11 +42,23 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
     finally {
       super.tearDown()
     }
+  }*/
+
+  public override fun setUp() {
+    super.setUp()
+    val myTestSyncViewManager = object : SyncViewManager(project) {
+      override fun onEvent(buildId: Any, event: BuildEvent) {
+        if (event is OutputBuildEvent) MavenLog.LOG.warn(event.message)
+      }
+    }
+    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
   }
 
   @Test
   fun `should import dependency with custom plugin type`() = runBlocking {
-    httpServerFixture.startProxyRepositoryForUrl("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+    projectsManager.generalSettings.outputLevel = MavenExecutionOptions.LoggingLevel.DEBUG
+
+    //httpServerFixture.startProxyRepositoryForUrl("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
 
     importProjectAsync("""
       <groupId>test</groupId>
@@ -74,7 +91,8 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
             </plugin>
         </plugins>
     </build>
-    
+""")
+    /*
     <repositories>
       <repository>
         <id>my-http-repository</id>
@@ -82,13 +100,13 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
         <url>${myUrl}</url>
       </repository>
     </repositories>
-    <pluginRepositories> 
+    <pluginRepositories>
       <pluginRepository>
         <id>artifacts</id>
         <url>$myUrl</url>
       </pluginRepository>
     </pluginRepositories>
-""")
+     */
     assertModules("project")
     val project = projectsManager.findProject(projectPom)
     assertNotNull(project)

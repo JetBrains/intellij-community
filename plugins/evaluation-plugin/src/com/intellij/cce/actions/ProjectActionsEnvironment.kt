@@ -21,14 +21,16 @@ import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.storages.storage.ActionsSingleFileStorage
+import com.intellij.configurationStore.StoreUtil.saveSettings
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.warmup.util.importOrOpenProjectAsync
 import java.nio.file.FileSystems
-import java.util.Locale
+import java.util.*
 import kotlin.random.Random
 
 open class ProjectActionsEnvironment(
@@ -180,6 +182,9 @@ open class ProjectActionsEnvironment(
 
   override fun close() {
     ProjectOpeningUtils.closeProject(project)
+
+    // Guarantee saving updated registries and settings on disc
+    saveSettings(ApplicationManager.getApplication())
   }
 
   private class ActionsSummarizer {

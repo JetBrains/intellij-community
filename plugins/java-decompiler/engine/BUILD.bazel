@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.java.decompiler.engine` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "java-decompiler-engine_resources",
@@ -13,19 +11,15 @@ jvm_library(
   name = "java-decompiler-engine",
   module_name = "intellij.java.decompiler.engine",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = ["@lib//:jetbrains-annotations"],
   runtime_deps = [":java-decompiler-engine_resources"]
 )
 
-kt_jvm_test(
-  name = "java-decompiler-engine_test",
+jvm_library(
+  name = "java-decompiler-engine_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":java-decompiler-engine"],
   deps = [
     "@lib//:junit4",
@@ -33,5 +27,10 @@ kt_jvm_test(
     "@lib//:jetbrains-annotations",
   ],
   runtime_deps = [":java-decompiler-engine_resources"]
+)
+
+jvm_test(
+  name = "java-decompiler-engine_test",
+  runtime_deps = [":java-decompiler-engine_test_lib"]
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end

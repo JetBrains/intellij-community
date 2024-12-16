@@ -21,6 +21,10 @@
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
 
+    <module name="intellij.platform.bookmarks"/>
+    <module name="intellij.platform.bookmarks.backend"/>
+    <module name="intellij.platform.bookmarks.frontend"/>
+
     <module name="intellij.platform.frontend"/>
 
     <module name="intellij.platform.inline.completion"/>

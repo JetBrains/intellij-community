@@ -1,29 +1,33 @@
 ### auto-generated section `build kotlin.native.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "kotlin-native-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "kotlin-native-tests_test",
+jvm_library(
+  name = "kotlin-native-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc_kotlin-compiler-common",
     "//plugins/kotlin/native",
     "@lib//:kotlinc_kotlin-jps-common",
-    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/lang-impl",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/java-psi-api:psi",
     "//java/idea-ui:ui",
-  ]
+  ],
+  runtime_deps = ["//platform/core-api:core"]
+)
+
+jvm_test(
+  name = "kotlin-native-tests_test",
+  runtime_deps = [":kotlin-native-tests_test_lib"]
 )
 ### auto-generated section `build kotlin.native.tests` end

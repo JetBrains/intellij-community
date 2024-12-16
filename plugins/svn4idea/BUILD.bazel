@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.vcs.svn` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "vcs-svn_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "vcs-svn",
   module_name = "intellij.vcs.svn",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/util",
     "//platform/vcs-api:vcs",
@@ -50,27 +47,28 @@ jvm_library(
 
 ### auto-generated section `build intellij.vcs.svn.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "vcs-svn-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "vcs-svn-tests_test",
+jvm_library(
+  name = "vcs-svn-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit4",
     "//plugins/svn4idea:vcs-svn",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core-impl",
     "//platform/lang-api:lang",
     "//xml/dom-impl",
     "//platform/vcs-tests:vcs-testFramework",
@@ -80,5 +78,10 @@ kt_jvm_test(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
   ]
+)
+
+jvm_test(
+  name = "vcs-svn-tests_test",
+  runtime_deps = [":vcs-svn-tests_test_lib"]
 )
 ### auto-generated section `build intellij.vcs.svn.tests` end

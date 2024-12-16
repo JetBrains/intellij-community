@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.groovy.psi` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "psi_resources",
@@ -12,15 +11,14 @@ jvm_library(
   name = "psi",
   module_name = "intellij.groovy.psi",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:org_codehaus_groovy_groovy",
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
     "//java/java-psi-impl:psi-impl",
     "//java/java-impl:impl",
+    "//platform/ide-core-impl",
     "//platform/core-impl",
     "//platform/extensions",
     "//xml/xml-psi-impl:psi-impl",

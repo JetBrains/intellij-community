@@ -1,103 +1,45 @@
-load("@contrib_rules_jvm//docs:stardoc-input.bzl", "java_junit5_test")
-load("@rules_graalvm//graalvm:defs.bzl", "native_image")
-load("@rules_java//java:java_library.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_import", "kt_jvm_library")
+load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
+load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options")
 
-load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
-
-load(":compiler-options.bzl", "create_javac_options", "create_kotlinc_options")
-
-define_kt_toolchain(
-  name = "kotlin_toolchain",
-  api_version = "2.0",
-  language_version = "2.0",
-  experimental_multiplex_workers = True,
-  # https://github.com/bazelbuild/rules_kotlin/issues/1233
-  # experimental_use_abi_jars = True,
-)
-
-create_javac_options(name = "j8", release = "8")
-create_kotlinc_options(name="k8", jvm_target="1.8")
-
-create_javac_options(name = "j11", release = "11")
-create_kotlinc_options(name= "k11", jvm_target= "11")
-
-create_javac_options(name = "j17", release = "17")
-create_kotlinc_options(name = "k17", jvm_target = "17")
-
-java_proto_library(
-    name = "worker_protocol_java_proto",
-    deps = ["@bazel_worker_api//:worker_protocol_proto"],
-)
-
-kt_jvm_import(
+java_import(
     name = "protobuf-java",
-    jar = "@protobuf-java-file//file",
+    jars = ["@protobuf-java-file//file"],
+    visibility = ["//visibility:public"],
 )
 
-kt_jvm_import(
+java_import(
     name = "protobuf-java-util",
-    jar = "@protobuf-java-util-file//file",
+    jars = ["@protobuf-java-util-file//file"],
+    visibility = ["//visibility:public"],
 )
 
-kt_jvm_library(
-    name = "worker",
-    srcs = glob(["src/*.kt"]),
-    deps = [
-        "//:worker_protocol_java_proto",
-        "//zip:build-zip",
-        ":protobuf-java",
-        ":protobuf-java-util",
-    ],
-)
-
-kt_jvm_binary(
-  name = "worker-jvm",
-  runtime_deps = [":worker"],
-  main_class = "org.jetbrains.bazel.jvm.JvmWorker",
-  jvm_flags = [
-    "-Djava.awt.headless=true",
-    "-Dapple.awt.UIElement=true",
-  ]
-)
-
-native_image(
-    name = "worker-native",
-    deps = [":worker"],
-    extra_args = [
-        "-H:+UnlockExperimentalVMOptions",
-        "-H:+CompactingOldGen",
-        "-Djava.awt.headless=true",
-        "-Dapple.awt.UIElement=true",
-        "-march=native",
-        "-O3",
-    ],
-    reflection_configuration = ":reflection-config.json",
-    main_class = "org.jetbrains.bazel.jvm.JvmWorker",
-    native_image_tool = "@graalvm//:native-image",
-)
-
-kt_jvm_library(
-    name = "worker_test_lib",
-    srcs = ["testSrc/WorkRequestHandlerTest.kt"],
-    associates = [":worker"],
-    deps = [
-        "//:worker_protocol_java_proto",
-        "@junit_jupiter_api//jar",
-        "@assertj//jar",
-    ],
+jvm_import(
+    name = "kotlin-compiler",
+    jar = "@kotlin-compiler_http//file",
+    source_jar = "@kotlin-compiler-sources_http//file",
+    visibility = ["//visibility:public"],
     runtime_deps = [
-        "@junit_platform_commons//jar",
-        "@opentest4j//jar",
-        "@junit_jupiter_engine//jar",
-        "@junit_platform_engine//jar",
-        "@junit_platform_reporting//jar",
-        "@junit_platform_launcher//jar",
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlinx-coroutines-core",
+        "@lib//:platform_util_trove_trove",
     ],
 )
 
-java_junit5_test(
-    name = "worker_test",
-    test_class = "org.jetbrains.bazel.jvm.WorkRequestHandlerTest",
-    runtime_deps = [":worker_test_lib"],
+jvm_import(
+    name = "kotlin-metadata-jvm",
+    jar = "@kotlin-metadata-jvm_http//file",
+    source_jar = "@kotlin-metadata-jvm-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "default-kotlinc-opts",
+    build_setting_default = ":default-kotlinc-opts-value",
+    visibility = ["//visibility:public"],
+)
+
+kt_kotlinc_options(
+    name = "default-kotlinc-opts-value",
+    visibility = ["//visibility:public"],
 )

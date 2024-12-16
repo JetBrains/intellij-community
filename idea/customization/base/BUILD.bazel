@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.idea.customization.base` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "idea-customization-base_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "idea-customization-base",
   module_name = "intellij.idea.customization.base",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",

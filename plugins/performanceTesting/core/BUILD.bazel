@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.performanceTesting` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "performanceTesting_resources",
@@ -13,19 +11,18 @@ jvm_library(
   name = "performanceTesting",
   module_name = "intellij.performanceTesting",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
-    "@lib//:cli-parser.provided",
+    "@lib//:cli-parser-provided",
     "@lib//:jackson",
     "@lib//:jackson-module-kotlin",
     "//platform/analysis-impl",
     "@lib//:jackson-databind",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/ide-core-impl",
     "//platform/core-ui",
     "//platform/statistics",
     "//platform/execution-impl",
@@ -51,26 +48,27 @@ jvm_library(
   runtime_deps = [":performanceTesting_resources"]
 )
 
-kt_jvm_test(
-  name = "performanceTesting_test",
+jvm_library(
+  name = "performanceTesting_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":performanceTesting"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
+    "@lib//:cli-parser-provided",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:jackson",
     "@lib//:jackson-module-kotlin",
     "//platform/analysis-impl",
     "@lib//:jackson-databind",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/ide-core-impl",
     "//platform/core-ui",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//platform/execution-impl",
     "//platform/platform-impl/internal:ide-internal",
     "@lib//:performance_testing_github_oshi_core",
@@ -78,19 +76,29 @@ kt_jvm_test(
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:fastutil-min",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
     "@lib//:caffeine",
     "//platform/remote-driver/core:driver-impl",
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
     "//platform/diagnostic/startUpPerformanceReporter",
     "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
     "//platform/remote-driver/client:driver-client",
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
   ],
   runtime_deps = [":performanceTesting_resources"]
+)
+
+jvm_test(
+  name = "performanceTesting_test",
+  runtime_deps = [":performanceTesting_test_lib"]
 )
 ### auto-generated section `build intellij.performanceTesting` end

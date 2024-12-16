@@ -1,8 +1,6 @@
 ### auto-generated section `build intellij.platform.whatsNew` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
@@ -20,10 +18,8 @@ jvm_library(
   name = "whatsNew",
   module_name = "intellij.platform.whatsNew",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/core-api:core",
     "//platform/util/concurrency",
@@ -32,8 +28,9 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core-impl",
     "@lib//:miglayout-swing",
-    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin.provided",
+    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin-provided",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "//platform/ui.jcef:ui-jcef",
@@ -41,31 +38,38 @@ jvm_library(
   runtime_deps = [":whatsNew_resources"]
 )
 
-kt_jvm_test(
-  name = "whatsNew_test",
+jvm_library(
+  name = "whatsNew_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":whatsNew"],
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/core-api:core",
     "//platform/util/concurrency",
     "//platform/platform-api:ide",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core-impl",
     "@lib//:miglayout-swing",
+    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin-provided",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "//platform/ui.jcef:ui-jcef",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ],
   runtime_deps = [":whatsNew_resources"]
+)
+
+jvm_test(
+  name = "whatsNew_test",
+  runtime_deps = [":whatsNew_test_lib"]
 )
 ### auto-generated section `build intellij.platform.whatsNew` end

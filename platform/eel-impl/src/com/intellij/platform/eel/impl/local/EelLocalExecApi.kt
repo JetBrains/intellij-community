@@ -19,8 +19,13 @@ class EelLocalExecApi : EelExecApi {
     val process: LocalEelProcess =
       try {
         // Inherit env vars, because lack of `PATH` might break things
-        val environment = System.getenv() + builder.env
+        var environment = System.getenv().toMutableMap()
+        environment.putAll(builder.env)
         if (pty != null) {
+          // when emulating tty, TERM must be set either by caller or by us (for remote side it is done by ijent)
+          if ("TERM" !in environment) {
+            environment.getOrPut("TERM") { "xterm" }
+          }
           LocalEelProcess(PtyProcessBuilder()
                             .setConsole(true)
                             .setCommand(arrayOf(builder.exe) + args)

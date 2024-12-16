@@ -1,34 +1,28 @@
 ### auto-generated section `build intellij.devkit.workspaceModel.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "devkit-workspaceModel-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "devkit-workspaceModel-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit5",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
-    "//plugins/kotlin/test-framework:test-framework_test",
-    "//plugins/kotlin/idea",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
     "@lib//:kotlinc_kotlin-compiler-common",
     "@lib//:kotlinx-coroutines-core",
     "//platform/workspace/jps",
     "//platform/workspace/jps/tests:workspace-jps-tests",
+    "//platform/workspace/jps/tests:workspace-jps-tests_test_lib",
     "@lib//:workspace-model-codegen",
     "//platform/backend/workspace",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
-  ]
+    "@lib//:kotlinc_kotlin-jps-common-provided",
+  ],
+  runtime_deps = ["//plugins/devkit/intellij.devkit:devkit"]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.tests` end

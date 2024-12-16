@@ -1,18 +1,16 @@
 ### auto-generated section `build intellij.markdown.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "tests_test",
+jvm_library(
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/fenceInjection",
@@ -24,14 +22,16 @@ kt_jvm_test(
     "//plugins/markdown/spellchecker",
     "//plugins/markdown/xml",
     "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//plugins/yaml/editing",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/built-in-server-api:builtInServer",
     "//platform/core-ui",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/IntelliLang:xml-langInjection",
-    "//platform/platform-tests:tests_test",
+    "//platform/platform-tests:tests_test_lib",
     "@lib//:jsoup",
     "@lib//:jcef",
     "@lib//:assert_j",
@@ -39,8 +39,14 @@ kt_jvm_test(
     "@lib//:jetbrains_markdown",
     "//plugins/toml",
     "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ]
+)
+
+jvm_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build intellij.markdown.tests` end

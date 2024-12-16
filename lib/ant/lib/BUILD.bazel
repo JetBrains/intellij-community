@@ -33,4 +33,11 @@ java_import(
   ],
   visibility = ["//visibility:public"]
 )
+
+java_library(
+  name = "ant-antlr-provided",
+  exports = [":ant-antlr"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
 ### auto-generated section `local-libs` end

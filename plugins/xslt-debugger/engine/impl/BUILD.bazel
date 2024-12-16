@@ -1,14 +1,13 @@
 ### auto-generated section `build intellij.xslt.debugger.impl.rt` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "xslt-debugger-impl-rt",
   module_name = "intellij.xslt.debugger.impl.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/xpath/xslt-rt:rt",
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
@@ -19,12 +18,12 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "xslt-debugger-impl-rt_test",
+jvm_library(
+  name = "xslt-debugger-impl-rt_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   associates = [":xslt-debugger-impl-rt"],
   deps = [
     "//plugins/xpath/xslt-rt:rt",
@@ -33,9 +32,14 @@ kt_jvm_test(
     "//plugins/xslt-debugger/engine/impl/lib:saxon",
     "@lib//:xslt_debugger_impl_rt__xalan-2_7_3",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "@lib//:xslt_debugger_impl_rt__serializer-2_7_3",
   ]
+)
+
+jvm_test(
+  name = "xslt-debugger-impl-rt_test",
+  runtime_deps = [":xslt-debugger-impl-rt_test_lib"]
 )
 ### auto-generated section `build intellij.xslt.debugger.impl.rt` end

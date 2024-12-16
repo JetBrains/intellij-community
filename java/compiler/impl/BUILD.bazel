@@ -1,25 +1,25 @@
 ### auto-generated section `build intellij.java.compiler.impl` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "java-compiler-impl",
   module_name = "intellij.java.compiler.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/compiler/openapi:java-compiler",
     "//platform/util/jdom",
     "//platform/util",
     "//java/openapi:java",
     "//java/java-runtime:rt",
+    "//platform/ide-core/plugins:ide-core-plugins",
     "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//java/jsp-openapi:jsp",
     "//java/java-impl:impl",
     "//jps/jps-builders:build",
+    "//platform/ide-core-impl",
     "//jps/jps-launcher:build-launcher",
     "//jps/model-impl",
     "//java/java-analysis-impl:analysis-impl",
@@ -56,6 +56,8 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:netty-codec-protobuf",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   exports = ["//java/compiler/openapi:java-compiler"]
 )

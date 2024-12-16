@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.execution.process.mediator.client` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "execution-process-mediator-client_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "execution-process-mediator-client",
   module_name = "intellij.execution.process.mediator.client",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -34,12 +30,9 @@ jvm_library(
   runtime_deps = [":execution-process-mediator-client_resources"]
 )
 
-kt_jvm_test(
+jvm_test(
   name = "execution-process-mediator-client_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":execution-process-mediator-client"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -48,14 +41,16 @@ kt_jvm_test(
     "@lib//:protobuf",
     "//platform/execution-process-mediator/daemon:execution-process-mediator-daemon",
     "//platform/execution-process-mediator/common:execution-process-mediator-common",
+    "//platform/execution-process-mediator/common:execution-process-mediator-common_test_lib",
     "//platform/util",
     "//platform/util-ex",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:execution_process_mediator_client_grpc-inprocess",
     "//libraries/grpc",
     "//libraries/grpc-netty-shaded",

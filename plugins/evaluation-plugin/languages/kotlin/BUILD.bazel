@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "evaluationPlugin-languages-kotlin_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "evaluationPlugin-languages-kotlin",
   module_name = "intellij.evaluationPlugin.languages.kotlin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
@@ -22,7 +19,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
     "//plugins/evaluation-plugin/core:evaluationPlugin-core",
-    "@lib//:kotlinc_kotlin-compiler-common.provided",
+    "@lib//:kotlinc_kotlin-compiler-common-provided",
   ],
   runtime_deps = [":evaluationPlugin-languages-kotlin_resources"]
 )

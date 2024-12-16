@@ -57,6 +57,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
   private static final @NonNls String WORKTREES_DIR = "worktrees";
+  public static final @NotNull String SUBMODULES_FILE = ".gitmodules";
 
   private static final @NonNls String SEQUENCER_TODO = "sequencer/todo";
 

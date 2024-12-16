@@ -33,6 +33,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.eel.provider.EelDescriptor;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -60,6 +62,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -243,7 +246,8 @@ public final class JarRepositoryManager {
                                                             @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repositories);
     return submitModalJob(
-      project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1), newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
+      project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1),
+      newOrderRootResolveJob(project, desc, artifactKinds, effectiveRepos, copyTo)
     );
   }
 
@@ -268,7 +272,7 @@ public final class JarRepositoryManager {
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repos);
-    return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
+    return submitBackgroundJob(newOrderRootResolveJob(project, desc, artifactKinds, effectiveRepos, copyTo));
   }
 
   @Nullable
@@ -278,7 +282,7 @@ public final class JarRepositoryManager {
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repos);
-    return submitSyncJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
+    return submitSyncJob(newOrderRootResolveJob(project, desc, artifactKinds, effectiveRepos, copyTo));
   }
 
   /**
@@ -298,7 +302,7 @@ public final class JarRepositoryManager {
     if (libDescriptor.getMavenId() != null) {
       EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
       Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, libDescriptor, repositories);
-      return newOrderRootResolveJob(libDescriptor, kinds, effectiveRepos, copyTo).apply(progressIndicator);
+      return newOrderRootResolveJob(project, libDescriptor, kinds, effectiveRepos, copyTo).apply(progressIndicator);
     }
     return Collections.emptyList();
   }
@@ -620,17 +624,21 @@ public final class JarRepositoryManager {
     protected abstract T getDefaultResult();
   }
 
-  private static Function<ProgressIndicator, List<OrderRoot>> newOrderRootResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc,
+  private static Function<ProgressIndicator, List<OrderRoot>> newOrderRootResolveJob(@NotNull Project project,
+                                                                                     @NotNull JpsMavenRepositoryLibraryDescriptor desc,
                                                                                      @NotNull Set<ArtifactKind> kinds,
                                                                                      @NotNull Collection<RemoteRepositoryDescription> repositories,
                                                                                      @Nullable String copyTo) {
     return new LibraryResolveJob(desc, kinds, repositories).andThen(
-      resolved -> resolved.isEmpty() ? Collections.emptyList() : copyAndRefreshFiles(resolved, copyTo));
+      resolved -> resolved.isEmpty() ? Collections.emptyList() : copyAndRefreshFiles(project, resolved, copyTo));
   }
 
-  static List<OrderRoot> copyAndRefreshFiles(@NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
+  static List<OrderRoot> copyAndRefreshFiles(@NotNull Project project, @NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
+    String targetRepository = PathMacroManager.getInstance(project).expandPath(MAVEN_REPOSITORY_MACRO);
+    String localRepositoryPath = getLocalRepositoryPath().getPath();
+    EelDescriptor targetRepositoryDescriptor = EelProviderUtil.getEelDescriptor(Path.of(targetRepository));
     for (Artifact each : artifacts) {
       long ms = System.currentTimeMillis();
       try {
@@ -638,6 +646,15 @@ public final class JarRepositoryManager {
         File toFile = repoFile;
         if (copyTo != null) {
           toFile = new File(copyTo, repoFile.getName());
+          if (repoFile.exists()) {
+            FileUtil.copy(repoFile, toFile);
+          }
+        }
+        else if (!targetRepositoryDescriptor.equals(EelProviderUtil.getEelDescriptor(Path.of(each.getFile().getPath())))) {
+          // if .m2 is located remotely, then we need to copy the files to the remote location
+          String suffix = repoFile.getAbsolutePath().substring(localRepositoryPath.length());
+          String actualPath = targetRepository + suffix;
+          toFile = new File(actualPath);
           if (repoFile.exists()) {
             FileUtil.copy(repoFile, toFile);
           }

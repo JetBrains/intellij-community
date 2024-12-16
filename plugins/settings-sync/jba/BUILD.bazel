@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.settingsSync.jba` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "settingsSync-jba_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "settingsSync-jba",
+  module_name = "intellij.settingsSync.jba",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/settings-sync:settingsSync",
+    "//platform/core-ui",
+    "//platform/ide-core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/util/jdom",
+    "@lib//:cloud-config-client",
+    "//platform/statistics",
+  ],
+  runtime_deps = [":settingsSync-jba_resources"]
+)
+
+jvm_library(
+  name = "settingsSync-jba_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":settingsSync-jba"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/settings-sync:settingsSync",
+    "//plugins/settings-sync:settingsSync_test_lib",
+    "//platform/core-ui",
+    "//platform/ide-core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl",
+    "//platform/util/jdom",
+    "@lib//:cloud-config-client",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:mockito",
+  ],
+  runtime_deps = [":settingsSync-jba_resources"]
+)
+
+jvm_test(
+  name = "settingsSync-jba_test",
+  runtime_deps = [":settingsSync-jba_test_lib"]
+)
+### auto-generated section `build intellij.settingsSync.jba` end

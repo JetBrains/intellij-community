@@ -61,7 +61,6 @@ class MavenExecutionTest : MavenExecutionTestCase() {
 
   @Test
   fun testUpdatingExcludedFoldersAfterExecution() = runBlocking {
-    needFixForMaven4()
     writeAction {
       createStdProjectFolders()
     }
@@ -83,7 +82,7 @@ class MavenExecutionTest : MavenExecutionTestCase() {
     SwingUtilities.invokeAndWait {}
 
     assertSources("project", "src/main/java")
-    assertResources("project", "src/main/resources")
+    assertResources("project", *defaultResources())
 
     assertExcludes("project", "target")
   }

@@ -1,13 +1,11 @@
 ### auto-generated section `build kotlin.code-insight.intentions.k1` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-code-insight-intentions-k1",
   module_name = "kotlin.code-insight.intentions.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc_kotlin-compiler-common",
@@ -17,6 +15,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
     "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor",

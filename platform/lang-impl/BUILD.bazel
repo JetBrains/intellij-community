@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.lang.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
@@ -23,10 +22,8 @@ jvm_library(
   name = "lang-impl",
   module_name = "intellij.platform.lang.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   javac_opts = ":custom-javac-options",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/boot",
     "//platform/lang-api:lang",
@@ -52,6 +49,7 @@ jvm_library(
     "@lib//:org_codehaus_groovy_groovy",
     "@lib//:x_stream",
     "@lib//:miglayout-swing",
+    "//platform/ide-core/plugins:ide-core-plugins",
     "@lib//:jna",
     "@lib//:lz4-java",
     "//platform/util",
@@ -105,7 +103,8 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/platform-impl/ui:ide-ui",
     "//platform/eel",
-    "//platform/eelProvider:eel-provider",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
   ],
   exports = [
     "//platform/lang-api:lang",
@@ -116,7 +115,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
-    "//platform/ide-core-impl",
   ],
   runtime_deps = [":lang-impl_resources"]
 )
@@ -124,20 +122,17 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.lang.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "lang-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "lang-tests_test",
+jvm_library(
+  name = "lang-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [
     "//platform/boot",
     "//platform/lang-api:lang",
@@ -145,11 +140,13 @@ kt_jvm_test(
     "@lib//:oro_matcher",
     "@lib//:junit4",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/usageView",
     "@lib//:cli-parser",
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
     "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
     "@lib//:guava",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:gson",
@@ -158,7 +155,7 @@ kt_jvm_test(
     "//platform/structure-view-impl:structureView-impl",
     "@lib//:commons-logging",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:jmock",
     "@lib//:jmock_legacy",
     "@lib//:jmock_junit4",
@@ -170,7 +167,7 @@ kt_jvm_test(
     "@lib//:stream_ex",
     "@lib//:kotlinx-coroutines-core",
     "//platform/statistics",
-    "//platform/statistics:statistics_test",
+    "//platform/statistics:statistics_test_lib",
     "@lib//:fastutil-min",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
@@ -178,16 +175,22 @@ kt_jvm_test(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//platform/lang-impl/testEntities:lang-testEntities",
+    "//platform/lang-impl/testEntities:lang-testEntities_test_lib",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:hamcrest",
     "//platform/backend/workspace",
     "@lib//:objenesis",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
   ]
+)
+
+jvm_test(
+  name = "lang-tests_test",
+  runtime_deps = [":lang-tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.lang.tests` end

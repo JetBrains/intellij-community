@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.java.indexing.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "indexing-impl_resources",
-  files = glob(["src/META-INF/JavaIndexingPlugin.xml"]),
+  files = glob(["src/META-INF/**/*"]),
   strip_prefix = "src"
 )
 
@@ -12,9 +11,7 @@ jvm_library(
   name = "indexing-impl",
   module_name = "intellij.java.indexing.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",

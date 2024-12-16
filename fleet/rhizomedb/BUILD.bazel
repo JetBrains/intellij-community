@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.rhizomedb` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -14,7 +14,6 @@ jvm_library(
   module_name = "fleet.rhizomedb",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
   kotlinc_opts = ":custom",
   deps = [
     "//fleet/util/core:fleet-util-core",
@@ -22,6 +21,8 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ]
 )
 ### auto-generated section `build fleet.rhizomedb` end

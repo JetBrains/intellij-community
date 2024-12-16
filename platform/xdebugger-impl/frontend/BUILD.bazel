@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "debugger-impl-frontend_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "debugger-impl-frontend",
   module_name = "intellij.platform.debugger.impl.frontend",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
@@ -24,6 +21,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/lang-impl",
+    "//platform/platform-impl/rpc:ide-rpc",
     "//platform/core-ui",
     "//platform/util/coroutines",
     "//platform/core-api:core",

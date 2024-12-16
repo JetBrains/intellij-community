@@ -1,14 +1,11 @@
 ### auto-generated section `build kotlin.base.util` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "kotlin-base-util",
   module_name = "kotlin.base.util",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc_kotlin-compiler-common",
@@ -31,12 +28,10 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "kotlin-base-util_test",
+jvm_library(
+  name = "kotlin-base-util_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":kotlin-base-util"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -45,6 +40,7 @@ kt_jvm_test(
     "@lib//:kotlinx-coroutines-core",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/lang-core",
@@ -61,5 +57,10 @@ kt_jvm_test(
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
   ]
+)
+
+jvm_test(
+  name = "kotlin-base-util_test",
+  runtime_deps = [":kotlin-base-util_test_lib"]
 )
 ### auto-generated section `build kotlin.base.util` end

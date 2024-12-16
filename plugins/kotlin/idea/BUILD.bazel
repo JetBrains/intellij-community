@@ -1,7 +1,6 @@
 ### auto-generated section `build kotlin.idea` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -36,8 +35,7 @@ jvm_library(
   name = "idea",
   module_name = "kotlin.idea",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlinc_kotlin-compiler-common",
@@ -55,6 +53,7 @@ jvm_library(
     "@lib//:kotlinc_kotlin-scripting-common",
     "@lib//:kotlinc_kotlin-scripting-dependencies",
     "@lib//:kotlinc_kotlin-scripting-jvm",
+    "//platform/ide-core-impl",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
@@ -88,8 +87,6 @@ jvm_library(
     "@lib//:kotlinc_kotlin-jps-common",
     "@lib//:kotlinc_kotlin-jps-plugin-classpath",
     "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
-    "//plugins/kotlin/j2k/k1.old:kotlin-j2k-k1-old",
-    "//plugins/kotlin/j2k/k1.new:kotlin-j2k-k1-new",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/scripting",
     "//plugins/kotlin/inspections",

@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.workspace.storage` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -15,8 +15,8 @@ jvm_library(
   name = "storage",
   module_name = "intellij.platform.workspace.storage",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",

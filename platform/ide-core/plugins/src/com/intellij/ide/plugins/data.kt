@@ -24,9 +24,9 @@ data class PluginData(
     get() = nullablePluginName ?: pluginIdString
 
   constructor(descriptor: PluginDescriptor) : this(
-    descriptor.pluginId.idString,
-    descriptor.name,
-    descriptor.isBundled,
+    pluginIdString = descriptor.pluginId.idString,
+    nullablePluginName = descriptor.name,
+    isBundled = descriptor.isBundled,
   )
 
   override fun compareTo(other: PluginData): Int {

@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.featuresTrainer` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "featuresTrainer_resources",
@@ -13,10 +11,7 @@ jvm_library(
   name = "featuresTrainer",
   module_name = "intellij.featuresTrainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:guava",
@@ -28,6 +23,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/ide-core-impl",
     "//platform/statistics",
     "//platform/tasks-platform-impl:tasks-impl",
     "//platform/core-ui",
@@ -48,14 +44,11 @@ jvm_library(
   runtime_deps = [":featuresTrainer_resources"]
 )
 
-kt_jvm_test(
-  name = "featuresTrainer_test",
+jvm_library(
+  name = "featuresTrainer_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":featuresTrainer"],
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
@@ -65,12 +58,16 @@ kt_jvm_test(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core-impl",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//platform/tasks-platform-impl:tasks-impl",
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
@@ -80,9 +77,15 @@ kt_jvm_test(
     "@lib//:kotlinx-datetime-jvm",
     "//platform/util/jdom",
     "//platform/lvcs-impl",
+    "//platform/lvcs-impl:lvcs-impl_test_lib",
     "//platform/tips-of-the-day:tips",
     "//platform/diagnostic",
   ],
   runtime_deps = [":featuresTrainer_resources"]
+)
+
+jvm_test(
+  name = "featuresTrainer_test",
+  runtime_deps = [":featuresTrainer_test_lib"]
 )
 ### auto-generated section `build intellij.featuresTrainer` end

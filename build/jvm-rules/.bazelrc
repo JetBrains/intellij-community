@@ -12,6 +12,7 @@ build --tool_java_runtime_version=remotejdk_21
 
 # make sure you don't need to open file to read commpilation errors
 common --experimental_ui_max_stdouterr_bytes=-1
+common --symlink_prefix=/
 
 # disable deprecated WORKSPACE support
 # common --noenable_workspace

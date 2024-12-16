@@ -11,6 +11,7 @@ jvm_resources(
 java_library(
   name = "junit4",
   visibility = ["//visibility:public"],
+  exports = ["@lib//:junit4"],
   runtime_deps = [":junit4_resources"]
 )
 ### auto-generated section `build intellij.libraries.junit4` end

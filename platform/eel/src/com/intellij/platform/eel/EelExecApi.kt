@@ -33,6 +33,14 @@ interface EelExecApi {
     interface Builder {
       fun args(args: List<String>): Builder
       fun env(env: Map<String, String>): Builder
+
+      /**
+       * When set pty, be sure to accept esc codes for a terminal you are emulating.
+       * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
+       * If not set, `xterm` will be used as a most popular one.
+       *
+       * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
+       */
       fun pty(pty: Pty?): Builder
       fun workingDirectory(workingDirectory: String?): Builder
       fun build(): ExecuteProcessOptions

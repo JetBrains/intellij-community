@@ -1,0 +1,49 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "worker-lib",
+    srcs = glob(["*.kt"]),
+    deps = [
+        "//:kotlin-compiler",
+        ":kotlin-build-tools-impl",
+        "//src/worker-framework",
+        "//src/jar",
+        "//zip:build-zip",
+        # we parse `jdeps` to support reduced classpath building and checking for unused deps
+        # (both features are disabled by default for now)
+        "@bazel_tools//src/main/protobuf:deps_java_proto",
+        "@rules_java//java/runfiles",
+    ],
+    runtime_deps = [
+        "//src/kotlin-plugins/jdeps",
+        "//src/kotlin-plugins/abi",
+        "//:kotlin-metadata-jvm",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+java_binary(
+    name = "worker-jvm",
+    runtime_deps = [":worker-lib"],
+    main_class = "org.jetbrains.bazel.jvm.kotlin.KotlinBuildWorker",
+    data = [
+        "//src/kotlin-plugins/jdeps:resources",
+        "//src/kotlin-plugins/abi:resources",
+    ],
+    jvm_flags = [
+        "-Djava.awt.headless=true",
+        "-Dapple.awt.UIElement=true",
+        "-Dzip.handler.uses.crc.instead.of.timestamp=true",
+        "-Dkotlin.bazel.jdeps.plugin=$(rlocationpath //src/kotlin-plugins/jdeps:resources)",
+        "-Dkotlin.bazel.abi.plugin=$(rlocationpath //src/kotlin-plugins/abi:resources)",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-build-tools-impl",
+    jar = "@kotlin-build-tools-impl_http//file",
+    source_jar = "@kotlin-build-tools-impl-sources_http//file",
+)

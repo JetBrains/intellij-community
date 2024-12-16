@@ -105,12 +105,9 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCreatingFromArchetype() = runBlocking {
-    needFixForMaven4()
     setArchetype(MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null))
     val id = MavenId("org.foo", "module", "1.0")
     createNewModule(id)
-
-
 
     waitForArchetypeGenerated("org.foo")
     val projects = MavenProjectsManager.getInstance(project).projects
@@ -126,8 +123,11 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
   private fun waitForArchetypeGenerated(groupId: String) {
     object : WaitFor(10000) {
-      override fun condition() =
-        projectRoot.toNioPath().resolve("src/main/java/${groupId.split('.').joinToString("/")}/App.java").exists()
+      override fun condition(): Boolean {
+        val p = groupId.split('.').joinToString("/")
+        return projectRoot.toNioPath().resolve("src/main/java/$p/App.java").exists()
+               && projectRoot.toNioPath().resolve("src/test/java/$p/AppTest.java").exists()
+      }
     }
   }
 
@@ -285,7 +285,6 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingParentAndInheritWhenGeneratingFromArchetype() = runBlocking {
-    needFixForMaven4()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -299,7 +298,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     createNewModule(MavenId("org.foo", "module", "1.0"))
     waitForArchetypeGenerated("org.foo")
 
-    assertEquals("""
+    val expectedModulePom = """
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -322,8 +321,15 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     </dependencies>
 </project>
 
-""".trimIndent(),
-                 VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!))
+""".trimIndent()
+
+    val actualModulePom = VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!)
+
+    assertEquals(expectedModulePom.normalizeLineEndings(), actualModulePom.normalizeLineEndings())
+  }
+
+  private fun String.normalizeLineEndings(): String {
+    return this.replace("\r\n", "\n")
   }
 
   private fun deleteModule(name: String?) {

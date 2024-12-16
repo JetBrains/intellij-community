@@ -1,26 +1,18 @@
 ### auto-generated section `build intellij.junit.v5.rt.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "junit-v5-rt-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "junit-v5-rt-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/junit5_rt:junit-v5-rt",
     "//java/testFramework",
     "//java/execution/impl:java-execution-impl",
     "//plugins/junit",
-    "//java/java-tests:tests_test",
+    "//java/java-tests:tests_test_lib",
     "//aether-dependency-resolver:java-aetherDependencyResolver",
-    "//aether-dependency-resolver:java-aetherDependencyResolver_test",
+    "//aether-dependency-resolver:java-aetherDependencyResolver_test_lib",
     "//java/compiler/openapi:java-compiler",
     "@lib//:junit5",
     "@lib//:junit5Launcher",
@@ -29,7 +21,7 @@ kt_jvm_test(
     "@lib//:junit5Jupiter",
     "@lib//:junit5Vintage",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ]
 )
 ### auto-generated section `build intellij.junit.v5.rt.tests` end

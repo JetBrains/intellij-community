@@ -12,19 +12,11 @@ java_library(
 
 ### auto-generated section `build intellij.platform.core.nio.fs.benchmarks` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "core-nio-fs-benchmarks",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "core-nio-fs-benchmarks_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["benchmarks/**/*.kt", "benchmarks/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["benchmarks/**/*.kt", "benchmarks/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-nio-fs",
     "@lib//:jmh-core",
@@ -36,7 +28,8 @@ kt_jvm_test(
 
 ### auto-generated section `build intellij.platform.core.nio.fs.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -45,17 +38,10 @@ kt_javac_options(
   add_exports = ["java.base/sun.nio.fs=ALL-UNNAMED"]
 )
 
-java_library(
-  name = "core-nio-fs-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "core-nio-fs-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   javac_opts = ":custom-javac-options",
-  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
     "//platform/core-nio-fs",
     "//platform/util",

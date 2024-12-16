@@ -29,6 +29,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.BuildDependenciesJps;
@@ -37,6 +38,8 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -174,12 +177,13 @@ public class RemoteConnectionBuilder {
         }
         Path agentArtifactPath;
 
+        String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
         Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
         // isDirectory(classesRoot) is used instead of `PluginManagerCore.isRunningFromSources()`
         // because we want to use installer's layout when running "IDEA (dev build)" run configuration
         // where the layout is quite the same as in installers.
         // but `PluginManagerCore.isRunningFromSources()` still returns `true` in this case
-        if (Files.isDirectory(classesRoot)) {
+        if (Files.isDirectory(classesRoot) || (relevantJarsRoot != null && classesRoot.startsWith(relevantJarsRoot))) {
           // Code runs from IDEA run configuration (code from .class file in out/ directory)
           try {
             // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
@@ -242,10 +246,10 @@ public class RemoteConnectionBuilder {
     }
     if (!properties.isEmpty()) {
       try {
-        File file = FileUtil.createTempFile("capture", ".props");
-        try (FileOutputStream out = new FileOutputStream(file)) {
+        Pair<Path, URI> path = DebugUtilsKt.createLocalizedTempFile(project, "capture", ".props");
+        try (OutputStream out = Files.newOutputStream(path.getFirst())) {
           properties.store(out, null);
-          return "=" + file.toURI().toASCIIString();
+          return "=" + path.getSecond().toASCIIString();
         }
       }
       catch (IOException e) {

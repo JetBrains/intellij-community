@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.eclipse.jps` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "jps_resources",
-  files = glob(["src/META-INF/services/org.jetbrains.jps.model.serialization.JpsModelSerializerExtension"]),
+  files = glob(["src/META-INF/**/*"]),
   strip_prefix = "src"
 )
 
@@ -12,9 +11,9 @@ jvm_library(
   name = "jps",
   module_name = "intellij.eclipse.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
-  kotlinc_opts = "@rules_jvm//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
+  kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
     "//jps/model-api:model",

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.markdown` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "markdown_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "markdown",
   module_name = "intellij.markdown",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/lang-impl",
     "//platform/markdown-utils",
@@ -23,6 +20,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/platform-impl:ide-impl",
     "@lib//:netty-codec-http",
+    "//platform/ide-core-impl",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:jcef",

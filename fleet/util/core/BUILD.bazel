@@ -1,14 +1,11 @@
 ### auto-generated section `build fleet.util.core` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "fleet-util-core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -24,10 +21,7 @@ jvm_library(
     "@lib//:slf4j-api",
   ],
   exports = [
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
     "//fleet/util/logging/api:fleet-util-logging-api",
-    "@lib//:fastutil-min",
     "@lib//:kotlinx-collections-immutable",
   ]
 )

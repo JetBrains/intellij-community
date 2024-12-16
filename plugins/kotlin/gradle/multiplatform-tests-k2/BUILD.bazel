@@ -1,33 +1,29 @@
 ### auto-generated section `build intellij.kotlin.gradle.multiplatform-tests.k2` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "kotlin-gradle-multiplatform-tests-k2",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "kotlin-gradle-multiplatform-tests-k2_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit4",
     "@lib//:kotlinc_kotlin-jps-common",
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/tests-common:tests-common_test",
-    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/gradle/java",
-    "//plugins/gradle:gradle-tests_test",
+    "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl_test_lib",
     "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
     "//android/android:core",
     "@lib//:kotlinc_kotlin-compiler-common",
@@ -35,8 +31,8 @@ kt_jvm_test(
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlinc_kotlin-compiler-tests",
-    "//plugins/gradle/java:java-tests_test",
-    "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test",
+    "//plugins/gradle/java:java-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.multiplatform-tests.k2` end

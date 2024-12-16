@@ -1,13 +1,11 @@
 ### auto-generated section `build kotlin.ide` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "ide",
   module_name = "kotlin.ide",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-ui",
     "//platform/analysis-api:analysis",
@@ -16,6 +14,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "//platform/ide-core-impl",
     "//plugins/kotlin/project-configuration",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",

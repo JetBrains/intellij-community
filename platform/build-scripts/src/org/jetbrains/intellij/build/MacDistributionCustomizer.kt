@@ -171,7 +171,7 @@ open class MacDistributionCustomizer {
    * @see org.jetbrains.intellij.build.NativeBinaryDownloader.getLauncher
    */
   @ApiStatus.Internal
-  open fun getDistributionUUID(context: BuildContext): UUID {
+  open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID {
     return UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
   }
 }

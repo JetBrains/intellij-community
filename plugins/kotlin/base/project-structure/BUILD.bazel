@@ -1,8 +1,6 @@
 ### auto-generated section `build kotlin.base.project-structure` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
@@ -25,8 +23,7 @@ jvm_library(
   name = "kotlin-base-project-structure",
   module_name = "kotlin.base.project-structure",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -61,11 +58,10 @@ jvm_library(
   runtime_deps = [":kotlin-base-project-structure_resources"]
 )
 
-kt_jvm_test(
-  name = "kotlin-base-project-structure_test",
+jvm_library(
+  name = "kotlin-base-project-structure_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":kotlin-base-project-structure"],
   deps = [
@@ -77,7 +73,9 @@ kt_jvm_test(
     "@lib//:kotlinc_analysis-api-platform-interface",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/base/project-model:kotlin-base-project-model",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
@@ -100,5 +98,10 @@ kt_jvm_test(
     "@lib//:fastutil-min",
   ],
   runtime_deps = [":kotlin-base-project-structure_resources"]
+)
+
+jvm_test(
+  name = "kotlin-base-project-structure_test",
+  runtime_deps = [":kotlin-base-project-structure_test_lib"]
 )
 ### auto-generated section `build kotlin.base.project-structure` end

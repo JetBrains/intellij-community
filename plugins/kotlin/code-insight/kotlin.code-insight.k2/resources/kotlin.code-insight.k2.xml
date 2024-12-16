@@ -212,7 +212,7 @@
     <codeInsight.declarativeInlayProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsProvider"
-            isEnabledByDefault="false"
+            isEnabledByDefault="true"
             group="PARAMETERS_GROUP"
             providerId="kotlin.parameters.hints"
             bundle="messages.KotlinBundle"

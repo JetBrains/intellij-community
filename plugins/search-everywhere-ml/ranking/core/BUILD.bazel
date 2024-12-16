@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "searchEverywhereMl-ranking-core_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "searchEverywhereMl-ranking-core",
   module_name = "intellij.searchEverywhereMl.ranking.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jackson",
@@ -43,12 +39,10 @@ jvm_library(
   runtime_deps = [":searchEverywhereMl-ranking-core_resources"]
 )
 
-kt_jvm_test(
-  name = "searchEverywhereMl-ranking-core_test",
+jvm_library(
+  name = "searchEverywhereMl-ranking-core_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":searchEverywhereMl-ranking-core"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -58,13 +52,15 @@ kt_jvm_test(
     "@lib//:caffeine",
     "//platform/lang-impl",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
     "//platform/platform-impl/internal:ide-internal",
     "//platform/core-ui",
     "//platform/execution-impl",
     "//json",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:search_everywhere_ml_ranking_core_find-action-model",
     "@lib//:search_everywhere_ml_ranking_core_find-action-model-experimental",
     "@lib//:search_everywhere_ml_ranking_core_find-file-model",
@@ -74,7 +70,13 @@ kt_jvm_test(
     "@lib//:search_everywhere_ml_ranking_core_find-all-model-experimental",
     "//plugins/search-everywhere-ml/ranking/ext:searchEverywhereMl-ranking-ext",
     "//plugins/search-everywhere-ml:searchEverywhereMl",
+    "//plugins/search-everywhere-ml:searchEverywhereMl_test_lib",
   ],
   runtime_deps = [":searchEverywhereMl-ranking-core_resources"]
+)
+
+jvm_test(
+  name = "searchEverywhereMl-ranking-core_test",
+  runtime_deps = [":searchEverywhereMl-ranking-core_test_lib"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end

@@ -5,10 +5,7 @@ import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputStorage
 import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
 import org.jetbrains.intellij.build.io.readZipFile
@@ -21,9 +18,15 @@ import kotlin.io.path.writeLines
 @ApiStatus.Internal
 class ArchivedCompilationContext(
   private val delegate: CompilationContext,
-  private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory).apply {
+  private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory, messages = delegate.messages).apply {
     delegate.options.pathToCompiledClassesArchivesMetadata?.let {
       this.loadMetadataFile(it)
+    }
+    System.getProperty("intellij.test.jars.mapping.file")?.let {
+      this.loadMapping(Path.of(it))
+    }
+    if (getMapping().isNotEmpty()) {
+      delegate.messages.info("Loading archived compilation mappings: " + getMapping())
     }
   },
 ) : CompilationContext by delegate {
@@ -95,3 +98,19 @@ class ArchivedCompilationContext(
     file.writeLines(storage.getMapping().map { "${it.key.parent.fileName}/${it.key.fileName}=${it.value}" })
   }
 }
+
+val CompilationContext.asArchivedIfNeeded: CompilationContext
+  get() {
+    if (this is ArchivedCompilationContext) return this
+    return if (TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank()) {
+      this.asArchived
+    }
+    else this
+  }
+
+val CompilationContext.asArchived: CompilationContext
+  get() {
+    if (this is ArchivedCompilationContext) return this
+    if (this is BuildContextImpl) return this.compilationContext.asArchived
+    return ArchivedCompilationContext(this)
+  }

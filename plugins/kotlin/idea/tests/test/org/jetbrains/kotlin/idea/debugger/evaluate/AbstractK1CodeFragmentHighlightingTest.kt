@@ -48,7 +48,13 @@ abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHigh
     }
 
     override fun checkHighlighting(filePath: String) {
-        val inspectionName = InTextDirectivesUtils.findStringWithPrefixes(File(filePath).readText(), "// INSPECTION_CLASS: ")
+        val inspectionName =
+            inspectionDirectives.firstNotNullOfOrNull {
+                InTextDirectivesUtils.findStringWithPrefixes(
+                    File(filePath).readText(),
+                    "// $it: "
+                )
+            }
         if (inspectionName != null) {
             val inspection = Class.forName(inspectionName).getDeclaredConstructor().newInstance() as InspectionProfileEntry
             myFixture.enableInspections(inspection)
@@ -62,4 +68,10 @@ abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHigh
 
         super.checkHighlighting(filePath)
     }
+
+    private val inspectionDirectives: List<String> =
+        buildList {
+            if (isFirPlugin) this += "K2INSPECTION_CLASS"
+            this += "INSPECTION_CLASS"
+        }
 }

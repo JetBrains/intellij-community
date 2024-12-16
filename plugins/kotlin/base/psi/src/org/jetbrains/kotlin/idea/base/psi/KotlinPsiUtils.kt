@@ -44,20 +44,24 @@ val KtCallableDeclaration.callableIdIfNotLocal: CallableId?
         return CallableId(classId, callableName)
     }
 
+private fun PsiElement.isNotNewLineWhitespace(): Boolean = this is PsiWhiteSpace && !textContains('\n')
+
 fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset)
-    if (element is PsiWhiteSpace) {
-        return file.findElementAt(element.getTextRange().endOffset)
+    return if (element?.isNotNewLineWhitespace() == true) {
+        file.findElementAt(element.getTextRange().endOffset)
+    } else {
+        element
     }
-    return element
 }
 
 fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset - 1)
-    if (element is PsiWhiteSpace) {
-        return file.findElementAt(element.getTextRange().startOffset - 1)
+    return if (element?.isNotNewLineWhitespace() == true) {
+        file.findElementAt(element.getTextRange().startOffset - 1)
+    } else {
+        element
     }
-    return element
 }
 
 fun getStartLineOffset(file: PsiFile, line: Int): Int? {

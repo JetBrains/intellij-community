@@ -1,13 +1,13 @@
 ### auto-generated section `build intellij.platform.runtime.loader` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "loader",
   module_name = "intellij.platform.runtime.loader",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
-  kotlinc_opts = "@rules_jvm//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
+  kotlinc_opts = "@community//:k11",
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/runtime/repository",

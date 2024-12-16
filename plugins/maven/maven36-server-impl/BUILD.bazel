@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.maven.server.m36.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "server-m36-impl_resources",
-  files = glob(["src/META-INF/plexus/components.xml"]),
+  files = glob(["src/META-INF/**/*"]),
   strip_prefix = "src"
 )
 
@@ -12,19 +11,19 @@ jvm_library(
   name = "server-m36-impl",
   module_name = "intellij.maven.server.m36.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/maven-server-api:maven-server",
     "@lib//:commons-logging",
     "//plugins/maven/maven3-server-common:server-m3-common",
     "//plugins/maven/maven3-server-impl:server-m3-impl",
-    "@lib//:maven_server_m36_impl_org_apache_maven_maven-compat_3_6_0.provided",
-    "@lib//:maven_server_m36_impl_com_google_inject_guice-no_aop_4_2_1.provided",
-    "@lib//:maven_server_m36_impl_org_apache_maven_maven-core_3_6_0.provided",
-    "@lib//:maven_server_m36_impl_org_apache_maven_maven-embedder_3_6_0.provided",
-    "@lib//:maven_server_m36_impl_org_apache_maven_shared_maven-dependency-tree_1_2.provided",
+    "@lib//:maven_server_m36_impl_org_apache_maven_maven-compat_3_6_0-provided",
+    "@lib//:maven_server_m36_impl_com_google_inject_guice-no_aop_4_2_1-provided",
+    "@lib//:maven_server_m36_impl_org_apache_maven_maven-core_3_6_0-provided",
+    "@lib//:maven_server_m36_impl_org_apache_maven_maven-embedder_3_6_0-provided",
+    "@lib//:maven_server_m36_impl_org_apache_maven_shared_maven-dependency-tree_1_2-provided",
   ],
   runtime_deps = [":server-m36-impl_resources"]
 )

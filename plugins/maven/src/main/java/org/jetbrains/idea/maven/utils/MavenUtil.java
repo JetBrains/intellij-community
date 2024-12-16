@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.LocalEelApi;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
@@ -1009,8 +1010,11 @@ public class MavenUtil {
     throw new IllegalArgumentException("Cannot resolve local repository for wrapped maven, this API is deprecated");
   }
 
+  /**
+   * @param path any path pointing to an environment where the repository should be searched.
+   */
   @NotNull
-  public static Path resolveDefaultLocalRepository(@Nullable Project project) {
+  public static Path resolveDefaultLocalRepository(@Nullable Path path) {
     String mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL);
 
     if (mavenRepoLocal != null) {
@@ -1024,11 +1028,8 @@ public class MavenUtil {
       return Path.of(forcedM2Home);
     }
 
-    Path result = doResolveLocalRepository(resolveUserSettingsPath(null, project), null);
-
-    if (result == null) {
-      result = resolveM2Dir(project).resolve(REPOSITORY_DIR);
-    }
+    EelApi api = path == null ? EelProviderUtil.getLocalEel() : MavenSuspendUtil.getEelApiBlocking(path);
+    Path result = MavenEelUtil.resolveM2Dir(api).resolve(REPOSITORY_DIR);
 
     try {
       return result.toRealPath();

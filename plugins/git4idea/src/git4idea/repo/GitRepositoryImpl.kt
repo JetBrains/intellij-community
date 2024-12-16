@@ -11,12 +11,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsScope
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.*
+import git4idea.GitDisposable
+import git4idea.GitLocalBranch
+import git4idea.GitUtil
+import git4idea.GitVcs
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.status.GitStagingAreaHolder
@@ -24,7 +26,6 @@ import git4idea.telemetry.GitTelemetrySpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 
 /**
  * @param rootDir Root of the repository (parent directory of '.git' file/directory).
@@ -179,7 +180,7 @@ class GitRepositoryImpl private constructor(
       val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
 
       val hooksInfo = repositoryReader.readHooksInfo()
-      val submoduleFile = File(VfsUtilCore.virtualToIoFile(root), ".gitmodules")
+      val submoduleFile = root.toNioPath().resolve(".gitmodules")
       val submodules = GitModulesFileReader().read(submoduleFile)
       recentCheckoutBranches = collectRecentCheckoutBranches(project, root) { branch: GitLocalBranch -> localBranches.containsKey(branch) }
       GitRepoInfo(currentBranch = state.currentBranch,

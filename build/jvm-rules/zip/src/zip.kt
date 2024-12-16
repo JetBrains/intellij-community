@@ -100,7 +100,7 @@ fun zip(
         },
         dirs = dirs,
       )
-      packageIndexBuilder.writePackageIndex(zipCreator = zipFileWriter, addDirEntriesMode = addDirEntriesMode)
+      packageIndexBuilder.writePackageIndex(writer = zipFileWriter, addDirEntriesMode = addDirEntriesMode)
     }
   }
 }

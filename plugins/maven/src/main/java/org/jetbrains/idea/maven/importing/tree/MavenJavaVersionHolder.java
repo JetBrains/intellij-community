@@ -20,14 +20,6 @@ public class MavenJavaVersionHolder {
     this.testTargetLevel = testTargetLevel;
   }
 
-  public MavenJavaVersionHolder(@Nullable LanguageLevel sourceLevel,
-                                @Nullable LanguageLevel targetLevel) {
-    this.sourceLevel = sourceLevel;
-    this.targetLevel = targetLevel;
-    this.testSourceLevel = null;
-    this.testTargetLevel = null;
-  }
-
   public boolean needSeparateTestModule() {
     return testSourceLevel != null && !testSourceLevel.equals(sourceLevel)
       || testTargetLevel != null && !testTargetLevel.equals(targetLevel);

@@ -11,7 +11,6 @@ jvm_resources(
 java_library(
   name = "java-resources",
   visibility = ["//visibility:public"],
-  exports = ["//RegExpSupport:regexp"],
   runtime_deps = [
     ":java-resources_resources",
     "//RegExpSupport:regexp",

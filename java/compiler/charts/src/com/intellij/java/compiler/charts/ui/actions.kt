@@ -2,6 +2,7 @@
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.java.compiler.charts.CompilationChartsBundle
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
@@ -29,15 +30,15 @@ interface CompilationChartsAction {
   }
 }
 
-class OpenDirectoryAction(private val project: Project, private val name: String, private val close: () -> Unit) : CompilationChartsAction {
-  override fun isAccessible() = true
-  override fun position() = CompilationChartsAction.Position.LEFT
+class OpenDirectoryAction(private val project: Project, private val key: EventKey, private val close: () -> Unit) : CompilationChartsAction {
+  override fun isAccessible(): Boolean = true
+  override fun position(): CompilationChartsAction.Position = CompilationChartsAction.Position.LEFT
   override fun draw(row: Row) {
     val text = CompilationChartsBundle.message("charts.action.open.module.directory.text")
     val description = CompilationChartsBundle.message("charts.action.open.module.directory.description")
-    val action = object : DumbAwareAction(text, description, Settings.Popup.MODULE_IMAGE) {
+    val action = object : DumbAwareAction(text, description, Settings.Popup.rootIcon(key.test)) {
       override fun actionPerformed(e: AnActionEvent) {
-        val module = ModuleManager.getInstance(project).findModuleByName(name) ?: return
+        val module = ModuleManager.getInstance(project).findModuleByName(key.name) ?: return
         val path = findModuleDirectory(module.moduleFilePath) ?: return
         close()
         OpenFileDescriptor(project, path, -1).navigate(true)
@@ -59,12 +60,12 @@ class OpenProjectStructureAction(
   private val name: String,
   private val close: () -> Unit,
 ) : CompilationChartsAction {
-  override fun isAccessible() = true
-  override fun position() = CompilationChartsAction.Position.RIGHT
+  override fun isAccessible(): Boolean = true
+  override fun position(): CompilationChartsAction.Position = CompilationChartsAction.Position.RIGHT
   override fun draw(row: Row) {
     val text = CompilationChartsBundle.message("charts.action.open.project.structure.text")
     val description = CompilationChartsBundle.message("charts.action.open.project.structure.description")
-    val action = object : DumbAwareAction(text, description, Settings.Popup.EDIT_IMAGE) {
+    val action = object : DumbAwareAction(text, description, Settings.Popup.EDIT_ICON) {
       override fun actionPerformed(e: AnActionEvent) {
         val module = ModuleManager.getInstance(project).findModuleByName(name) ?: return
         val projectStructure = ProjectStructureConfigurable.getInstance(project)
@@ -85,9 +86,9 @@ class ShowModuleDependenciesAction(
 ) : CompilationChartsAction {
   private val action = ActionManager.getInstance().getAction("ShowModulesDependencies")
 
-  override fun isAccessible() = action != null
+  override fun isAccessible(): Boolean = action != null
 
-  override fun position() = CompilationChartsAction.Position.LIST
+  override fun position(): CompilationChartsAction.Position = CompilationChartsAction.Position.LIST
 
   @Suppress("DialogTitleCapitalization", "UNCHECKED_CAST")
   override fun draw(row: Row) {
@@ -114,9 +115,9 @@ class ShowMatrixDependenciesAction(
 ) : CompilationChartsAction {
   private val action = ActionManager.getInstance().getAction("DSM.Analyze")
 
-  override fun isAccessible() = action != null
+  override fun isAccessible(): Boolean = action != null
 
-  override fun position() = CompilationChartsAction.Position.LIST
+  override fun position(): CompilationChartsAction.Position = CompilationChartsAction.Position.LIST
 
   @Suppress("DialogTitleCapitalization", "UNCHECKED_CAST")
   override fun draw(row: Row) {

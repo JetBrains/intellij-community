@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.frontback.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "frontback-impl_resources",
@@ -12,13 +11,12 @@ jvm_library(
   name = "frontback-impl",
   module_name = "intellij.java.frontback.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//platform/core-impl",
+    "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",

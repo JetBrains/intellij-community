@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "externalSystem-dependencyUpdater_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "externalSystem-dependencyUpdater",
   module_name = "intellij.platform.externalSystem.dependencyUpdater",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -29,31 +26,24 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "externalSystem-dependencyUpdater-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "externalSystem-dependencyUpdater-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
     "//java/openapi:java",
     "//plugins/groovy/groovy-psi:psi",
     "//plugins/gradle",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/gradle/java",
-    "//plugins/gradle:gradle-tests_test",
+    "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
     "//plugins/maven",
     "//plugins/maven/testFramework",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` end

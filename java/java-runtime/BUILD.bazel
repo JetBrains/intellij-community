@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.rt` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "rt_resources",
@@ -12,11 +11,11 @@ jvm_library(
   name = "rt",
   module_name = "intellij.java.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:java_rt_ant-1_7_1.provided",
+    "@lib//:java_rt_ant-1_7_1-provided",
     "@lib//:junit4",
   ],
   runtime_deps = [":rt_resources"]

@@ -1,12 +1,12 @@
 ### auto-generated section `build kotlin.base.fe10.project-structure` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "17",
-  context_receivers = True
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi"]
 )
 
 jvm_resources(
@@ -19,8 +19,7 @@ jvm_library(
   name = "kotlin-base-fe10-project-structure",
   module_name = "kotlin.base.fe10.project-structure",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",

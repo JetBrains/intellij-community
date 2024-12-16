@@ -34,6 +34,7 @@ import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
@@ -53,10 +54,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.relativeToOrNull
+import kotlin.io.path.*
 
 @Obsolete
 fun createCompilationContextBlocking(
@@ -571,5 +569,56 @@ internal suspend fun resolveProjectDependencies(context: CompilationContext) {
     spanBuilder("resolve project dependencies").use {
       JpsCompilationRunner(context).resolveProjectDependencies()
     }
+  }
+}
+
+@Internal
+suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePath: String): Boolean {
+  val output = this.getModuleOutputDir(module)
+  if (!Files.exists(output)) {
+    return false
+  }
+  if (output.isDirectory()) {
+    return Files.exists(output.resolve(relativePath))
+  }
+  else if (output.isRegularFile() && output.extension == "jar") {
+    var found = false
+    readZipFile(output) { name, _ ->
+      if (name == relativePath) {
+        found = true
+      }
+    }
+    return found
+  }
+  else {
+    throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar ${output.pathString}")
+  }
+}
+
+@Internal
+suspend fun CompilationContext.getModuleOutputFileContent(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray? {
+  val output = this.getModuleOutputDir(module, forTests = forTests)
+  if (!Files.exists(output)) {
+    return null
+  }
+  if (output.isDirectory()) {
+    val path = output.resolve(relativePath)
+    if (!Files.exists(path)) return null
+    return path.readBytes()
+  }
+  else if (output.isRegularFile() && output.extension == "jar") {
+    var content: ByteArray? = null
+    readZipFile(output) { name, dataSupplier ->
+      if (name == relativePath) {
+        val buffer = dataSupplier()
+        val array = ByteArray(buffer.remaining())
+        buffer.get(array)
+        content = array
+      }
+    }
+    return content
+  }
+  else {
+    throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar ${output.pathString}")
   }
 }

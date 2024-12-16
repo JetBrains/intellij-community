@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.statsCollector` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "statsCollector_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "statsCollector",
   module_name = "intellij.statsCollector",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/platform-api:ide",
@@ -33,19 +30,17 @@ jvm_library(
 
 ### auto-generated section `build intellij.statsCollector.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "statsCollector-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "statsCollector-tests_test",
+jvm_library(
+  name = "statsCollector-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//java/testFramework",
     "@lib//:mockito",
@@ -55,5 +50,10 @@ kt_jvm_test(
     "@lib//:stats_collector_tests_completion-log-events",
     "//platform/core-ui",
   ]
+)
+
+jvm_test(
+  name = "statsCollector-tests_test",
+  runtime_deps = [":statsCollector-tests_test_lib"]
 )
 ### auto-generated section `build intellij.statsCollector.tests` end

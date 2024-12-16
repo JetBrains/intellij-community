@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.xml.psi.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "psi-impl_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "psi-impl",
   module_name = "intellij.xml.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
@@ -25,6 +22,7 @@ jvm_library(
     "//platform/indexing-impl",
     "@lib//:xerces",
     "//RegExpSupport:regexp",
+    "//platform/ide-core-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "@lib//:xml-resolver",

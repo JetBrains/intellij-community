@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "pycharm-community-ide-impl_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "pycharm-community-ide-impl",
   module_name = "intellij.pycharm.community.ide.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
     "//python:python-community-impl",
@@ -35,11 +32,8 @@ jvm_library(
     "//platform/whatsNew",
     "//platform/util/coroutines",
     "//platform/experiment",
+    "@lib//:jna",
   ],
-  runtime_deps = [
-    ":pycharm-community-ide-impl_resources",
-    "//xml/dom-impl",
-    "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
-  ]
+  runtime_deps = [":pycharm-community-ide-impl_resources"]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end

@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.macOS
 
+import com.intellij.openapi.util.SystemInfoRt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.io.runProcess
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -12,10 +14,10 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 
 /**
- * Patches UUID value in the Mach-O [executable] with the [newUuid].
+ * Patches UUID value in the Mach-O [executable] with the [MacDistributionCustomizer.getDistributionUUID].
  * Only single-arch 64-bit files are supported.
  */
-internal class MachOUuid(private val executable: Path, private val newUuid: UUID, private val context: BuildContext) {
+internal class MachOUuid(private val executable: Path, private val customizer: MacDistributionCustomizer, private val context: BuildContext) {
   private companion object {
     const val LC_UUID = 0x1b
   }
@@ -46,8 +48,10 @@ internal class MachOUuid(private val executable: Path, private val newUuid: UUID
           buffer.flip()
           val msb = buffer.getLong()
           val lsb = buffer.getLong()
-          context.messages.info("current UUID of $executable: ${UUID(msb, lsb)}")
+          val currentUuid = UUID(msb, lsb)
+          context.messages.info("current UUID of $executable: $currentUuid")
           buffer.clear()
+          val newUuid = customizer.getDistributionUUID(context, currentUuid)
           buffer.putLong(newUuid.mostSignificantBits)
           buffer.putLong(newUuid.leastSignificantBits)
           buffer.flip()
@@ -63,7 +67,7 @@ internal class MachOUuid(private val executable: Path, private val newUuid: UUID
       context.messages.error("LC_UUID not found in $executable")
     }
 
-    if (context.options.isInDevelopmentMode) {
+    if (context.options.isInDevelopmentMode && SystemInfoRt.isMac) {
       runBlocking {
         runProcess(listOf("codesign", "-s", "-", "--force", executable.toString()))
       }

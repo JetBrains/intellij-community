@@ -4,6 +4,7 @@ package com.jetbrains.python.newProjectWizard.impl
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.ui.tree.ui.DefaultTreeUI.AUTO_EXPAND_ALLOWED
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.newProjectWizard.PyV3UIServices
 import com.jetbrains.python.util.ErrorSink
@@ -23,6 +24,14 @@ internal object PyV3UIServicesProd : PyV3UIServices {
   override val errorSink: ErrorSink = ShowingMessageErrorSync
 
   override suspend fun expandProjectTreeView(project: Project): Unit = withContext(Dispatchers.EDT) {
-    AbstractProjectViewPane.EP.getExtensions(project).firstNotNullOf { pane -> pane.tree }.expandRow(0)
+    val tree = AbstractProjectViewPane.EP.getExtensions(project).firstNotNullOf { pane -> pane.tree }
+    with(tree) {
+      // Project view expands lonely branch if it is the only child of its parent
+      // As `.venv` is usually the only child of project directory it is opened automatically.
+      // No need to do that
+      putClientProperty(AUTO_EXPAND_ALLOWED, false)
+      expandRow(0)
+      putClientProperty(AUTO_EXPAND_ALLOWED, true)
+    }
   }
 }

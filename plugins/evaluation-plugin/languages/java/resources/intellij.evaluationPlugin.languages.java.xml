@@ -18,7 +18,7 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCompletionContextEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaFunctionCallingVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSelfIdentificationVisitor"/>
-    <apiCallExtractor implementation="com.intellij.cce.java.chat.JavaApiCallExtractor"/>
+    <apiCallExtractor implementation="com.intellij.cce.java.chat.JavaApiCallExtractorProvider"/>
     <exposedApiExtractor implementation="com.intellij.cce.java.evaluable.JavaExposedApiExtractor"/>
   </extensions>
 </idea-plugin>

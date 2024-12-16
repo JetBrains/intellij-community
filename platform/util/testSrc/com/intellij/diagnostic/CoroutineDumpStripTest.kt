@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.CoroutineDumpStripTest.JobTree.Companion.dump
 import com.intellij.diagnostic.CoroutineDumpStripTest.JobTree.Companion.parseAsJobTree
-import com.intellij.testFramework.utils.io.getChildren
+import com.intellij.util.io.URLUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import java.io.StringWriter
+import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readLines
@@ -17,7 +19,16 @@ import kotlin.io.path.toPath
 class CoroutineDumpStripTest {
   @TestFactory
   fun generateTests(): List<DynamicTest> {
-    val dataPath = this.javaClass.getResource("/coroutine-dump-strip")!!.toURI().toPath()
+    val resource = this.javaClass.classLoader.getResource("coroutine-dump-strip")!!
+    val uri = resource.toURI()
+    if (uri.scheme == URLUtil.JAR_PROTOCOL) {
+      try {
+        FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+      }
+      catch (_: FileSystemAlreadyExistsException) {
+      }
+    }
+    val dataPath: Path = uri.toPath()
     return dataPath.listDirectoryEntries().map {
       DynamicTest.dynamicTest(it.relativeTo(dataPath).toString()) {
         runScenario(it)

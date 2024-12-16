@@ -1,14 +1,13 @@
 ### auto-generated section `build intellij.java.aetherDependencyResolver` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "java-aetherDependencyResolver",
   module_name = "intellij.java.aetherDependencyResolver",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
-  kotlinc_opts = "@rules_jvm//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
+  kotlinc_opts = "@community//:k11",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:http-client",
@@ -33,12 +32,12 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "java-aetherDependencyResolver_test",
+jvm_library(
+  name = "java-aetherDependencyResolver_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
-  kotlinc_opts = "@rules_jvm//:k11",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
+  kotlinc_opts = "@community//:k11",
   associates = [":java-aetherDependencyResolver"],
   deps = [
     "@lib//:jetbrains-annotations",
@@ -47,7 +46,7 @@ kt_jvm_test(
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:maven-resolver-provider",
     "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-transport-file",
     "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-transport-http",
@@ -57,5 +56,10 @@ kt_jvm_test(
     "@lib//:commons-codec",
     "//platform/util",
   ]
+)
+
+jvm_test(
+  name = "java-aetherDependencyResolver_test",
+  runtime_deps = [":java-aetherDependencyResolver_test_lib"]
 )
 ### auto-generated section `build intellij.java.aetherDependencyResolver` end

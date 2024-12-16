@@ -1,0 +1,19 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
+load("//:jvm.bzl", "jvm_resources")
+
+kt_jvm_library(
+    name = "abi",
+    srcs = glob(["**/*.kt"]),
+    deps = [
+        "//:kotlin-metadata-jvm",
+         "//:kotlin-compiler",
+    ],
+    runtime_deps = [":resources"],
+    visibility = ["//src/kotlin-builder:__pkg__"],
+)
+
+jvm_resources(
+    name = "resources",
+    files = glob(["META-INF/**/*"]),
+    visibility = ["//src/kotlin-builder:__pkg__"],
+)

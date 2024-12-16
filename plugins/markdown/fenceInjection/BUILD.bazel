@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.markdown.fenceInjection` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "fenceInjection_resources",
@@ -8,18 +7,21 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_provided_library(
+  name = "xml-langInjection_provided",
+  lib = "//plugins/IntelliLang:xml-langInjection"
+)
+
 jvm_library(
   name = "fenceInjection",
   module_name = "intellij.markdown.fenceInjection",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang:xml-langInjection",
     "//platform/monolith",
+    ":xml-langInjection_provided",
   ],
   runtime_deps = [":fenceInjection_resources"]
 )

@@ -2261,7 +2261,6 @@ a:com.intellij.psi.impl.PsiElementBase
 com.intellij.psi.impl.PsiFileEx
 - com.intellij.psi.PsiFile
 - sf:BATCH_REFERENCE_PROCESSING:com.intellij.openapi.util.Key
-- s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z
 - a:isContentsLoaded():Z
 - a:markInvalidated():V
 - a:onContentReload():V

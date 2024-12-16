@@ -32,7 +32,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration
 
 class BuildContextImpl internal constructor(
-  private val compilationContext: CompilationContext,
+  internal val compilationContext: CompilationContext,
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
@@ -93,7 +93,7 @@ class BuildContextImpl internal constructor(
 
   private var builtinModulesData: BuiltinModulesFileData? = null
 
-  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }
+  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this.compilationContext) }
 
   override val nonBundledPlugins: Path by lazy { paths.artifactDir.resolve("${applicationInfo.productCode}-plugins") }
 
@@ -156,7 +156,7 @@ class BuildContextImpl internal constructor(
         LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
       } ?: NonCachingJarCacheManager
       return BuildContextImpl(
-        compilationContext = compilationContext,
+        compilationContext = compilationContext.asArchivedIfNeeded,
         productProperties = productProperties,
         windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString),
         linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),

@@ -6,11 +6,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.BenchmarkTestInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
+import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.ZonedDateTime
@@ -50,7 +53,15 @@ class SpanExtractionFromUnitPerfTest {
   }
 
   private val openTelemetryReports by lazy {
-    Paths.get(this::class.java.classLoader.getResource("telemetry")!!.toURI())
+    val uri = this::class.java.classLoader.getResource("telemetry")!!.toURI()
+    if (uri.scheme == URLUtil.JAR_PROTOCOL) {
+      try {
+        FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+      }
+      catch (_: FileSystemAlreadyExistsException) {
+      }
+    }
+    Paths.get(uri)
   }
 
   @Test

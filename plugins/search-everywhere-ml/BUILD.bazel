@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.searchEverywhereMl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "searchEverywhereMl_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "searchEverywhereMl",
   module_name = "intellij.searchEverywhereMl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
@@ -26,21 +22,25 @@ jvm_library(
   runtime_deps = [":searchEverywhereMl_resources"]
 )
 
-kt_jvm_test(
-  name = "searchEverywhereMl_test",
+jvm_library(
+  name = "searchEverywhereMl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":searchEverywhereMl"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:search_everywhere_ml_ai_grazie_emb",
   ],
   runtime_deps = [":searchEverywhereMl_resources"]
+)
+
+jvm_test(
+  name = "searchEverywhereMl_test",
+  runtime_deps = [":searchEverywhereMl_test_lib"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl` end

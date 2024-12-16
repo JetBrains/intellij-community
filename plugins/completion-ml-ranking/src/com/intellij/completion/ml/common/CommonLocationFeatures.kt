@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import kotlin.math.abs
 
-class CommonLocationFeatures : ContextFeatureProvider {
+private class CommonLocationFeatures : ContextFeatureProvider {
   override fun getName(): String = "common"
   override fun calculateFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
     val result = mutableMapOf<String, MLFeatureValue>()

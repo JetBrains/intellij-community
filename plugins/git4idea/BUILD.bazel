@@ -1,8 +1,6 @@
 ### auto-generated section `build intellij.vcs.git` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
@@ -26,10 +24,8 @@ jvm_library(
   name = "vcs-git",
   module_name = "intellij.vcs.git",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
@@ -70,6 +66,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/collaboration-tools:collaborationTools",
+    "//platform/ide-core-impl",
     "//platform/util/text-matching",
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/new-ui-onboarding:ide-newUiOnboarding",
@@ -93,38 +90,41 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "vcs-git_test",
+jvm_library(
+  name = "vcs-git_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":vcs-git"],
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/lang-api:lang",
     "@lib//:junit4",
     "//platform/lvcs-api:lvcs",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-api:ide",
     "@lib//:guava",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//plugins/git4idea/rt:vcs-git-rt",
     "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
     "//platform/dvcs-api:vcs-dvcs",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/built-in-server-api:builtInServer",
     "@lib//:mockito",
     "@lib//:kotlin-test",
-    "//platform/vcs-tests:vcs-tests_test",
+    "//platform/vcs-tests:vcs-tests_test_lib",
     "//platform/util",
     "@lib//:cucumber-testing",
     "@lib//:ini4j",
@@ -138,6 +138,7 @@ kt_jvm_test(
     "@lib//:xz",
     "@lib//:stream_ex",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "@lib//:miglayout-swing",
     "//platform/core-ui",
     "@lib//:fastutil-min",
@@ -148,19 +149,27 @@ kt_jvm_test(
     "@lib//:kotlinx-serialization-json",
     "@lib//:commons-lang3",
     "//platform/external-process-auth-helper:externalProcessAuthHelper",
+    "//platform/external-process-auth-helper:externalProcessAuthHelper_test_lib",
     "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
     "//platform/util/jdom",
     "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/collaboration-tools:collaborationTools",
+    "//platform/collaboration-tools:collaborationTools_test_lib",
+    "//platform/ide-core-impl",
     "//platform/util/text-matching",
     "//plugins/performanceTesting/core:performanceTesting",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "//platform/new-ui-onboarding:ide-newUiOnboarding",
     "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
     "//platform/util/coroutines",
     "//plugins/terminal",
+    "//plugins/terminal:terminal_test_lib",
     "//plugins/terminal/completion",
+    "//plugins/terminal/completion:completion_test_lib",
     "@lib//:http-client",
     "//platform/platform-impl/ui:ide-ui",
   ],
@@ -168,5 +177,10 @@ kt_jvm_test(
     ":vcs-git_resources",
     ":vcs-git_resources_1",
   ]
+)
+
+jvm_test(
+  name = "vcs-git_test",
+  runtime_deps = [":vcs-git_test_lib"]
 )
 ### auto-generated section `build intellij.vcs.git` end

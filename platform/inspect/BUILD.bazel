@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.platform.inspect` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "inspect_resources",
@@ -13,10 +11,7 @@ jvm_library(
   name = "inspect",
   module_name = "intellij.platform.inspect",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/extensions",
@@ -48,14 +43,11 @@ jvm_library(
   runtime_deps = [":inspect_resources"]
 )
 
-kt_jvm_test(
-  name = "inspect_test",
+jvm_library(
+  name = "inspect_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":inspect"],
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/core-api:core",
     "//platform/extensions",
@@ -64,6 +56,7 @@ kt_jvm_test(
     "//platform/analysis-impl",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-api:diff",
     "//platform/vcs-api:vcs",
     "@lib//:stream_ex",
@@ -78,10 +71,15 @@ kt_jvm_test(
     "@lib//:jsoup",
     "@lib//:jackson",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
   ],
   runtime_deps = [":inspect_resources"]
+)
+
+jvm_test(
+  name = "inspect_test",
+  runtime_deps = [":inspect_test_lib"]
 )
 ### auto-generated section `build intellij.platform.inspect` end

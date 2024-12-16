@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.configurationStore.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "configurationStore-impl_resources",
@@ -12,10 +11,7 @@ jvm_library(
   name = "configurationStore-impl",
   module_name = "intellij.platform.configurationStore.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util",
@@ -51,44 +47,48 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.configurationStore.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "configurationStore-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "configurationStore-tests_test",
+jvm_library(
+  name = "configurationStore-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = ["//platform/configuration-store-impl:configurationStore-impl"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/ide-core/plugins:ide-core-plugins",
     "@lib//:assert_j",
     "//platform/testFramework/extensions:testExtensions",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
-    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/object-serializer:objectSerializer",
-    "//platform/object-serializer:objectSerializer_test",
+    "//platform/object-serializer:objectSerializer_test_lib",
     "//platform/service-container:serviceContainer",
-    "//platform/service-container:serviceContainer_test",
+    "//platform/service-container:serviceContainer_test_lib",
+    "//platform/ide-core-impl",
     "@lib//:kotlinx-coroutines-core",
     "//platform/statistics",
-    "//platform/statistics:statistics_test",
+    "//platform/statistics:statistics_test_lib",
     "@lib//:fastutil-min",
     "//platform/util/jdom",
     "//platform/settings",
     "//platform/settings-local",
-    "//platform/settings-local:settings-local_test",
+    "//platform/settings-local:settings-local_test_lib",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "//java/java-impl:impl",
   ]
+)
+
+jvm_test(
+  name = "configurationStore-tests_test",
+  runtime_deps = [":configurationStore-tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end

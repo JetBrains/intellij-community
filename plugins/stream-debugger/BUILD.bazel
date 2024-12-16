@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.java.debugger.streams` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "java-debugger-streams_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "java-debugger-streams",
   module_name = "intellij.java.debugger.streams",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:stream_ex",
@@ -33,12 +29,10 @@ jvm_library(
   runtime_deps = [":java-debugger-streams_resources"]
 )
 
-kt_jvm_test(
-  name = "java-debugger-streams_test",
+jvm_library(
+  name = "java-debugger-streams_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":java-debugger-streams"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -48,6 +42,7 @@ kt_jvm_test(
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
     "//java/testFramework",
@@ -56,5 +51,10 @@ kt_jvm_test(
     "//platform/platform-util-io:ide-util-io",
   ],
   runtime_deps = [":java-debugger-streams_resources"]
+)
+
+jvm_test(
+  name = "java-debugger-streams_test",
+  runtime_deps = [":java-debugger-streams_test_lib"]
 )
 ### auto-generated section `build intellij.java.debugger.streams` end

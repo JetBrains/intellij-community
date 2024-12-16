@@ -52,7 +52,7 @@ java_library(
     "//plugins/kotlin/highlighting/highlighting-shared/tests:kotlin-highlighting-shared-tests",
     "//plugins/kotlin/j2k/k2/tests:kotlin-j2k-k2-tests",
     "//plugins/kotlin/code-insight/fixes-k2/tests:kotlin-code-insight-fixes-k2-tests",
-    "//plugins/kotlin/gradle/gradle-java/tests.k2:kotlin-gradle-gradle-java-tests-k2",
+    "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-gradle-java-k2",
     "//plugins/kotlin/kotlin.lombok.tests:k2-lombok-tests",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/junit/kotlin-tests-k2",

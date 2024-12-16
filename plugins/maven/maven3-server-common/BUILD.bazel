@@ -1,24 +1,24 @@
 ### auto-generated section `build intellij.maven.server.m3.common` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "server-m3-common",
   module_name = "intellij.maven.server.m3.common",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/maven-server-api:maven-server",
     "@lib//:commons-logging",
-    "@lib//:maven_server_m3_common_org_sonatype_nexus_nexus-indexer-artifact_1_0_1.provided",
-    "@lib//:maven_server_m3_common_org_sonatype_nexus_nexus-indexer_3_0_4.provided",
-    "@lib//:maven_server_m3_common_org_apache_maven_shared_maven-dependency-tree_1_2.provided",
-    "@lib//:maven_server_m3_common_org_apache_maven_archetype_archetype-common_2_2.provided",
-    "@lib//:maven_server_m3_common_org_apache_maven_maven-compat_3_6_0.provided",
-    "@lib//:maven_server_m3_common_com_google_inject_guicen-no_aop_4_2_1.provided",
+    "@lib//:maven_server_m3_common_org_sonatype_nexus_nexus-indexer-artifact_1_0_1-provided",
+    "@lib//:maven_server_m3_common_org_sonatype_nexus_nexus-indexer_3_0_4-provided",
+    "@lib//:maven_server_m3_common_org_apache_maven_shared_maven-dependency-tree_1_2-provided",
+    "@lib//:maven_server_m3_common_org_apache_maven_archetype_archetype-common_2_2-provided",
+    "@lib//:maven_server_m3_common_org_apache_maven_maven-compat_3_6_0-provided",
+    "@lib//:maven_server_m3_common_com_google_inject_guicen-no_aop_4_2_1-provided",
     "//platform/util/jdom",
-    "@lib//:maven_server_m3_common_org_apache_lucene_lucene-core_2_4_1.provided",
+    "@lib//:maven_server_m3_common_org_apache_lucene_lucene-core_2_4_1-provided",
   ]
 )
 ### auto-generated section `build intellij.maven.server.m3.common` end

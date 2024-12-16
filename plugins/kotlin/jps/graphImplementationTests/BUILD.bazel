@@ -1,35 +1,40 @@
 ### auto-generated section `build kotlin.jps.graphImplementationTests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "kotlin-jps-graphImplementationTests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "kotlin-jps-graphImplementationTests_test",
+jvm_library(
+  name = "kotlin-jps-graphImplementationTests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlinc_kotlin-jps-plugin-classpath-bootstrap-for-tests",
     "@lib//:kotlinc_kotlin-jps-plugin-tests",
     "@lib//:kotlinc_kotlin-compiler-tests",
-    "//plugins/kotlin/tests-common:tests-common_test",
-    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/util/compiler-dependencies:kotlin-util-compiler-dependencies",
     "@lib//:kotlinc_kotlin-compiler-common",
     "//plugins/devkit/jps-plugin:jps",
     "//jps/jps-builders:build-tests",
+    "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-api:model",
     "//platform/core-api:core",
     "//platform/util",
     "@lib//:kotlin-reflect",
-    "//plugins/kotlin/tests-from-compiler:testsFromCompiler_test",
-  ]
+    "//plugins/kotlin/tests-from-compiler:testsFromCompiler_test_lib",
+  ],
+  runtime_deps = ["//platform/util/trove"]
+)
+
+jvm_test(
+  name = "kotlin-jps-graphImplementationTests_test",
+  runtime_deps = [":kotlin-jps-graphImplementationTests_test_lib"]
 )
 ### auto-generated section `build kotlin.jps.graphImplementationTests` end

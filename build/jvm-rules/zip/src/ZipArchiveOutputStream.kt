@@ -15,7 +15,7 @@ import java.util.zip.ZipEntry
 const val INDEX_FILENAME: String = "__index__"
 private val INDEX_FILENAME_BYTES = "__index__".toByteArray()
 
-internal class ZipArchiveOutputStream(
+class ZipArchiveOutputStream(
   private val channel: GatheringByteChannel,
   private val zipIndexWriter: ZipIndexWriter,
 ) : AutoCloseable {
@@ -167,17 +167,15 @@ internal class ZipArchiveOutputStream(
     val headerSize = 30 + name.size
     val dataOffset = channelPosition + headerSize
 
-    val method = ZipEntry.STORED
-
     buffer.clear()
-    writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = method, buffer = buffer)
+    writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = ZipEntry.STORED, buffer = buffer)
     assert(buffer.readableBytes() == headerSize)
     writeBuffer()
 
     zipIndexWriter.writeCentralFileHeader(
       size = size,
       compressedSize = size,
-      method = method,
+      method = ZipEntry.STORED,
       crc = 0,
       name = name,
       localFileHeaderOffset = localFileHeaderOffset,
@@ -346,12 +344,15 @@ internal class ZipArchiveOutputStream(
     return p
   }
 
-  internal fun transferFrom(fileChannel: FileChannel, size: Long) {
+  internal fun transferFrom(source: FileChannel, size: Long) {
     var position = 0L
+    val to = this.fileChannel!!
     while (position < size) {
-      position += fileChannel.transferTo(position, size - position, channel)
+      val n = to.transferFrom(source, channelPosition, size - position)
+      assert(n >= 0)
+      position += n
+      channelPosition += n
     }
-    channelPosition += size
   }
 
   private fun writeBuffer(buffer: ByteBuf = this.buffer): Int {

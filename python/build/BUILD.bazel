@@ -1,14 +1,11 @@
 ### auto-generated section `build intellij.pycharm.community.build` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "pycharm-community-build",
   module_name = "intellij.pycharm.community.build",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//build",
     "@lib//:kotlin-stdlib",
@@ -30,12 +27,10 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "pycharm-community-build_test",
+jvm_library(
+  name = "pycharm-community-build_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":pycharm-community-build"],
   deps = [
     "//build",
@@ -46,6 +41,7 @@ kt_jvm_test(
     "@lib//:kotlinx-coroutines-core",
     "//platform/build-scripts/downloader:buildScripts-downloader",
     "//build/tasks",
+    "//build/tasks:tasks_test_lib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:opentelemetry-extension-kotlin",
@@ -54,9 +50,15 @@ kt_jvm_test(
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core",
     "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
     "//python/python-parser:parser",
     "//jps/model-api:model",
     "@lib//:jsoup",
   ]
+)
+
+jvm_test(
+  name = "pycharm-community-build_test",
+  runtime_deps = [":pycharm-community-build_test_lib"]
 )
 ### auto-generated section `build intellij.pycharm.community.build` end

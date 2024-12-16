@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.pycharm.community.customization.shared` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "pycharm-community-customization-shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "pycharm-community-customization-shared",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    ":pycharm-community-customization-shared_resources",
+    "//python/ide/impl:pycharm-community-ide-impl",
+    "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
+    "//platform/whatsNew",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.customization.shared` end

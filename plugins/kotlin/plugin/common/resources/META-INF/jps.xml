@@ -21,6 +21,9 @@
 
     <sdkType implementation="org.jetbrains.kotlin.idea.framework.KotlinSdkType"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.framework.CreateKotlinSdkActivity"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.actions.internal.KotlinNonLocalProjectDetector"/>
+    <notificationGroup id="Kotlin Daemon Disable Advice" displayType="BALLOON" bundle="messages.KotlinIdeaBundle"
+                       key="notification.title.disable.kotlin.daemon" hideFromSettings="true"/>
     <facetType implementation="org.jetbrains.kotlin.idea.facet.KotlinFacetTypeImpl"/>
     <library.type implementation="org.jetbrains.kotlin.idea.framework.CommonLibraryType"/>
 

@@ -2,17 +2,17 @@
   <library name="snakeyaml-engine" type="repository">
     <properties include-transitive-deps="false" maven-id="org.snakeyaml:snakeyaml-engine:2.8">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.8.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.8/snakeyaml-engine-2.8.jar">
           <sha256sum>32571d6e539f1794a1cdfc8b2f656e14387a39635202e389af05509e52916720</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.8/snakeyaml-engine-2.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.7/snakeyaml-engine-2.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/snakeyaml/snakeyaml-engine/2.8/snakeyaml-engine-2.8-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

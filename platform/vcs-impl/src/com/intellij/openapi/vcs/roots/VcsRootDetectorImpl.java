@@ -121,6 +121,17 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
       if (scannedDirs.containsKey(dir)) return CONTINUE;
 
+      VirtualFile canonicalFile = dir.getCanonicalFile(); // NO_FOLLOW_SYMLINKS still allows iterating over symlinks non-recursively
+      if (canonicalFile != null) {
+        Boolean scanResult = scannedDirs.get(canonicalFile);
+        if (scanResult != null) {
+          scannedDirs.put(canonicalFile, scanResult);
+          return CONTINUE;
+        }
+
+        dir = canonicalFile; // scan links for vcs repos, once
+      }
+
       VcsRoot vcsRoot = getVcsRootFor(dir, null);
       scannedDirs.put(dir, vcsRoot != null);
 

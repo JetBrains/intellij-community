@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.execution.dashboard` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "execution-dashboard_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "execution-dashboard",
   module_name = "intellij.platform.execution.dashboard",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-ui",
     "//platform/lang-impl",
@@ -22,6 +19,7 @@ jvm_library(
     "//platform/statistics",
     "@lib//:fastutil-min",
     "@lib//:guava",
+    "//platform/ide-core-impl",
     "//platform/execution.serviceView:execution-serviceView",
   ],
   runtime_deps = [":execution-dashboard_resources"]

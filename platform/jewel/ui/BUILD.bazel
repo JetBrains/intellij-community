@@ -1,0 +1,89 @@
+### auto-generated section `build intellij.platform.jewel.ui` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "ui_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "ui",
+  module_name = "intellij.platform.jewel.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/skiko",
+    "//platform/jewel/foundation",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_components_components_resources",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_components_components_resources_desktop",
+  ],
+  exports = [
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_components_components_resources",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_components_components_resources_desktop",
+  ],
+  runtime_deps = [":ui_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "ui_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":ui"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//libraries/skiko",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_components_components_resources",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_components_components_resources_desktop",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_test_junit4",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_test_junit4_desktop",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_test",
+    "@lib//:platform_jewel_ui_org_hamcrest_hamcrest_core",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_test_desktop",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_runtime_runtime",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_text",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_unit",
+    "@lib//:platform_jewel_ui_org_jetbrains_annotations",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_desktop_desktop",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_desktop_desktop_jvm",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_runtime_runtime2",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui2",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_tooling_preview",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_ui_ui_tooling_preview_desktop",
+    "@lib//:platform_jewel_ui_org_jetbrains_compose_runtime_runtime3",
+    "//libraries/junit4",
+    "@lib//:kotlinx-coroutines-test",
+  ],
+  runtime_deps = [":ui_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "ui_test",
+  runtime_deps = [":ui_test_lib"]
+)
+### auto-generated section `build intellij.platform.jewel.ui` end

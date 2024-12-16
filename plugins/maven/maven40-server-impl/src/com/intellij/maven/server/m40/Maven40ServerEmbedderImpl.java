@@ -264,6 +264,17 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       commandLineOptions.add("-o");
     }
 
+    // configure our logger
+    // raw streams are needed because otherwise in org.apache.maven.cling.invoker.LookupInvoker.doConfigureWithTerminal
+    // the logger will be cast to MavenSimpleLogger resulting in ClassCastException:
+    //         if (options.rawStreams().isEmpty() || !options.rawStreams().get()) {
+    //            MavenSimpleLogger stdout = (MavenSimpleLogger) context.loggerFactory.getLogger("stdout");
+    //            MavenSimpleLogger stderr = (MavenSimpleLogger) context.loggerFactory.getLogger("stderr");
+    System.setProperty("slf4j.provider", Maven40Slf4jServiceProvider.class.getName());
+    commandLineOptions.add("-raw-streams");
+    commandLineOptions.add("true");
+    initLogging(myConsoleWrapper);
+
     ParserRequest parserRequest = ParserRequest.builder(
         "",
         "",

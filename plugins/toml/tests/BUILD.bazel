@@ -1,22 +1,26 @@
 ### auto-generated section `build intellij.toml.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "tests_test",
+jvm_library(
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/toml",
     "//platform/testFramework",
-    "//plugins/grazie/src/test:grazie-tests_test",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
   ]
+)
+
+jvm_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build intellij.toml.tests` end

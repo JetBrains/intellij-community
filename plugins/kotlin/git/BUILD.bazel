@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.git` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "git_resources",
@@ -8,13 +7,16 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_provided_library(
+  name = "vcs-git_provided",
+  lib = "//plugins/git4idea:vcs-git"
+)
+
 jvm_library(
   name = "git",
   module_name = "kotlin.git",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/base/util:kotlin-base-util",
@@ -22,7 +24,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/platform-api:ide",
-    "//plugins/git4idea:vcs-git",
+    ":vcs-git_provided",
   ],
   runtime_deps = [":git_resources"]
 )

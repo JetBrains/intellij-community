@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.configurationScript` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "configurationScript_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "configurationScript",
   module_name = "intellij.configurationScript",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
@@ -36,12 +32,10 @@ jvm_library(
   runtime_deps = [":configurationScript_resources"]
 )
 
-kt_jvm_test(
-  name = "configurationScript_test",
+jvm_library(
+  name = "configurationScript_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":configurationScript"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -52,47 +46,58 @@ kt_jvm_test(
     "//json",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/workspace/jps",
     "//platform/execution-impl",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/extensions:testExtensions",
     "//plugins/yaml",
-    "//plugins/yaml:yaml_test",
+    "//plugins/yaml:yaml_test_lib",
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer_test_lib",
     "@lib//:jackson",
     "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
     "@lib//:snakeyaml-engine",
     "//platform/util/jdom",
   ],
   runtime_deps = [":configurationScript_resources"]
 )
+
+jvm_test(
+  name = "configurationScript_test",
+  runtime_deps = [":configurationScript_test_lib"]
+)
 ### auto-generated section `build intellij.configurationScript` end
 
 ### auto-generated section `build intellij.configurationScript.test.java` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "configurationScript-test-java",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "configurationScript-test-java_test",
+jvm_library(
+  name = "configurationScript-test-java_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testJava/**/*.kt", "testJava/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testJava/**/*.kt", "testJava/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/configuration-script:configurationScript",
-    "//plugins/configuration-script:configurationScript_test",
+    "//plugins/configuration-script:configurationScript_test_lib",
     "//java/execution/impl:java-execution-impl",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
   ]
+)
+
+jvm_test(
+  name = "configurationScript-test-java_test",
+  runtime_deps = [":configurationScript-test-java_test_lib"]
 )
 ### auto-generated section `build intellij.configurationScript.test.java` end

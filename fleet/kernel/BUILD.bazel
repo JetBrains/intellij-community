@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.kernel` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -16,28 +16,24 @@ jvm_library(
   module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
   kotlinc_opts = ":custom",
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//fleet/rhizomedb",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:rhizomedb-compiler-plugin.provided",
+    "@lib//:rhizomedb-compiler-plugin-provided",
     "//fleet/util/core:fleet-util-core",
     "//fleet/rpc",
     "@lib//:kotlinx-coroutines-core",
     "//fleet/preferences",
     "//fleet/reporting/api:fleet-reporting-api",
+    "@lib//:fastutil-min",
   ],
   exports = [
     "//fleet/rhizomedb",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
     "//fleet/util/core:fleet-util-core",
     "//fleet/rpc",
-    "@lib//:kotlinx-coroutines-core",
   ]
 )
 ### auto-generated section `build fleet.kernel` end

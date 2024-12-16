@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.java.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "impl_resources",
@@ -8,19 +7,11 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-jvm_resources(
-  name = "impl_resources_1",
-  files = glob(["src/META-INF/JavaPlugin.xml"]),
-  strip_prefix = "src"
-)
-
 jvm_library(
   name = "impl",
   module_name = "intellij.java.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/util",
     "//java/openapi:java",
@@ -30,6 +21,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//java/jsp-openapi:jsp",
+    "//platform/ide-core-impl",
     "//java/jsp-spi",
     "//java/execution/openapi:java-execution",
     "//xml/dom-impl",
@@ -75,7 +67,7 @@ jvm_library(
     "@lib//:jetbrains_markdown",
     "//platform/threadDumpParser",
     "//platform/eel",
-    "//platform/eelProvider:eel-provider",
+    "//platform/eel-impl",
   ],
   exports = [
     "//platform/lang-impl",
@@ -90,7 +82,6 @@ jvm_library(
   ],
   runtime_deps = [
     ":impl_resources",
-    ":impl_resources_1",
     "@lib//:jaxb-runtime",
   ]
 )

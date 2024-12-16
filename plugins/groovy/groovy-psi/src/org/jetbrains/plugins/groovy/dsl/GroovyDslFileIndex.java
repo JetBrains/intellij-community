@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -296,7 +297,19 @@ public final class GroovyDslFileIndex {
     for (Class<?> aClass : classes) {
       File jarPath = new File(PathUtil.getJarPathForClass(aClass));
       if (jarPath.isFile()) {
-        jarPath = jarPath.getParentFile();
+        String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+        if (relevantJarsRoot != null && jarPath.toPath().startsWith(relevantJarsRoot)) {
+          // compilation output jar
+          jarPath = switch (jarPath.getParentFile().getName()) {
+            case "intellij.groovy.psi" -> new File(PathManager.getCommunityHomePath(), "plugins/groovy/groovy-psi/resources/");
+            case "intellij.groovy.grails" -> new File(PathManager.getHomePath(), "plugins/groovy/mvc/");
+            default -> jarPath.getParentFile();
+          };
+        }
+        else {
+          // plugin jar file
+          jarPath = jarPath.getParentFile();
+        }
       }
       scriptFolders.add(new File(jarPath, "standardDsls"));
     }

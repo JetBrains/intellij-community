@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.util.os` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -13,7 +13,6 @@ jvm_library(
   module_name = "fleet.util.os",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
   kotlinc_opts = ":custom"
 )
 ### auto-generated section `build fleet.util.os` end

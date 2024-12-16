@@ -1,18 +1,22 @@
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k2` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "analysis-kotlin-tests-k2",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "analysis-kotlin-tests-k2_test",
+jvm_library(
+  name = "analysis-kotlin-tests-k2_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  deps = ["//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test"]
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = ["//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib"],
+  runtime_deps = ["//plugins/kotlin/plugin/k2:kotlin-plugin-k2"]
+)
+
+jvm_test(
+  name = "analysis-kotlin-tests-k2_test",
+  runtime_deps = [":analysis-kotlin-tests-k2_test_lib"]
 )
 ### auto-generated section `build intellij.jvm.analysis.kotlin.tests.k2` end

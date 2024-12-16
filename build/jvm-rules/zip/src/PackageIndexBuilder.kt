@@ -24,7 +24,11 @@ class PackageIndexBuilder {
     }
   }
 
-  fun writePackageIndex(zipCreator: ZipFileWriter, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
+  fun writePackageIndex(writer: ZipFileWriter, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
+    writePackageIndex(stream = writer.resultStream, addDirEntriesMode = addDirEntriesMode)
+  }
+
+  fun writePackageIndex(stream: ZipArchiveOutputStream, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
     if (!indexWriter.resourcePackages.isEmpty()) {
       // add empty package if top-level directory will be requested
       indexWriter.resourcePackages.add(0)
@@ -33,7 +37,6 @@ class PackageIndexBuilder {
     val sortedDirsToRegister = dirsToRegister.toTypedArray()
     sortedDirsToRegister.sort()
 
-    val stream = zipCreator.resultStream
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
       for (dirName in sortedDirsToRegister) {
         val nameBytes = dirName.encodeToByteArray()

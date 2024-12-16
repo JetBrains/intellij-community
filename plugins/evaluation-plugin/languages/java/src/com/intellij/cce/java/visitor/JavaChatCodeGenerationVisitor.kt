@@ -2,8 +2,8 @@
 package com.intellij.cce.java.visitor
 
 import com.intellij.cce.core.*
-import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
 import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
+import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.java.chat.extractCalledInternalApiMethods
 import com.intellij.cce.visitor.EvaluationVisitor
@@ -41,8 +41,8 @@ class JavaChatCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVis
         method.text,
         method.startOffset,
         SimpleTokenProperties.create(tokenType = TypeProperty.METHOD, SymbolLocation.PROJECT) {
-          put(INTERNAL_API_CALLS_PROPERTY, internalApiCalls.joinToString("\n"))
-          put(INTERNAL_RELEVANT_FILES_PROPERTY, internalRelevantFiles.joinToString("\n"))
+          put(INTERNAL_API_CALLS_PROPERTY, internalApiCalls.distinct().joinToString("\n"))
+          put(INTERNAL_RELEVANT_FILES_PROPERTY, internalRelevantFiles.distinct().joinToString("\n"))
           put(METHOD_NAME_PROPERTY, method.name)
         })
     )

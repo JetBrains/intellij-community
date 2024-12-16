@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "yaml_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "yaml",
   module_name = "intellij.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",
@@ -25,47 +21,53 @@ jvm_library(
     "//json",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:stream_ex",
+    "//platform/ide-core-impl",
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/statistics",
     "//plugins/yaml/editing",
   ],
-  exports = ["//plugins/yaml/editing"],
   runtime_deps = [":yaml_resources"]
 )
 
-kt_jvm_test(
-  name = "yaml_test",
+jvm_library(
+  name = "yaml_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":yaml"],
   deps = [
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
     "//xml/openapi:xml",
     "//json",
-    "//json/tests:tests_test",
+    "//json/tests:tests_test_lib",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:stream_ex",
+    "//platform/ide-core-impl",
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//plugins/IntelliLang:langInjection",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//RegExpSupport:regexp",
-    "//RegExpSupport:regexp_test",
+    "//RegExpSupport:regexp_test_lib",
     "//plugins/sh",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//plugins/yaml/editing",
   ],
   runtime_deps = [":yaml_resources"]
+)
+
+jvm_test(
+  name = "yaml_test",
+  runtime_deps = [":yaml_test_lib"]
 )
 ### auto-generated section `build intellij.yaml` end

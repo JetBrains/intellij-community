@@ -1,32 +1,30 @@
 ### auto-generated section `build intellij.maven.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "maven-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "maven-tests_test",
+jvm_library(
+  name = "maven-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["java/**/*.kt", "java/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["java/**/*.kt", "java/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/maven",
     "//plugins/maven/testFramework",
     "//java/testFramework",
     "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test",
+    "//plugins/repository-search:repository-search_test_lib",
     "@lib//:assert_j",
     "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
-    "//platform/external-system-impl:externalSystem-tests_test",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/properties/properties-psi-api:psi",
     "//spellchecker",
-    "//spellchecker:spellchecker_test",
+    "//spellchecker:spellchecker_test_lib",
     "//plugins/groovy",
-    "//plugins/groovy:groovy_test",
+    "//plugins/groovy:groovy_test_lib",
     "//plugins/groovy/jps-plugin:jps",
     "//platform/platform-util-io:ide-util-io",
     "//jps/model-impl",
@@ -35,7 +33,7 @@ kt_jvm_test(
     "//plugins/maven/artifact-resolver/common:maven-artifactResolver-common",
     "@lib//:mockito",
     "//plugins/maven/jps-plugin:jps",
-    "//plugins/maven/jps-plugin:jps_test",
+    "//plugins/maven/jps-plugin:jps_test_lib",
     "//plugins/maven/maven3-server-common:server-m3-common",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
@@ -44,9 +42,15 @@ kt_jvm_test(
     "//platform/backend/workspace",
     "//java/java-impl:impl",
     "//platform/backend/observation",
-    "//platform/backend/observation:observation_test",
+    "//platform/backend/observation:observation_test_lib",
     "@lib//:hash4j",
     "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-serialization-core",
   ]
+)
+
+jvm_test(
+  name = "maven-tests_test",
+  runtime_deps = [":maven-tests_test_lib"]
 )
 ### auto-generated section `build intellij.maven.tests` end
