@@ -11,11 +11,12 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
-import git4idea.GitActionIdsHolder.Id.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import git4idea.GitActionIdsHolder.Id.*
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_PROPOSE
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION
@@ -27,8 +28,12 @@ import kotlin.io.path.exists
 @Service(Service.Level.PROJECT)
 internal class GpgAgentConfigurationNotificator(private val project: Project) {
 
+  private fun isEnabled() = Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal", false)
+
   @RequiresBackgroundThread
   fun proposeCustomPinentryAgentConfiguration(isSuggestion: Boolean) {
+    if (!isEnabled()) return
+
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     if (!GpgAgentConfigurator.isEnabled(project, executable)) return
     if (project.service<GpgAgentConfigurator>().isConfigured(project)) return
