@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,14 +83,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   protected int myRightComponentWidth;
 
-  private final ListCellRenderer<PsiElement> myBackgroundRenderer;
+  private final PsiElementBackgroundListCellRenderer myBackgroundRenderer;
 
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
-    myBackgroundRenderer =
-      Registry.is("psi.element.list.cell.renderer.background")
-      ? new PsiElementBackgroundListCellRenderer(this)
-      : null;
+    myBackgroundRenderer = new PsiElementBackgroundListCellRenderer(this);
   }
 
   private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
@@ -114,9 +110,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public void setUsedInPopup(boolean value) {
-    if (myBackgroundRenderer instanceof PsiElementBackgroundListCellRenderer psiElementRenderer) {
-      psiElementRenderer.setUsedInPopup(value);
-    }
+    myBackgroundRenderer.setUsedInPopup(value);
   }
 
   public static final class ItemMatchers {
@@ -226,7 +220,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       putClientProperty(TARGET_PRESENTATION_KEY, computePresentation((PsiElement)value));
       return this;
     }
-    else if (myBackgroundRenderer != null && value instanceof PsiElement) {
+    else if (value instanceof PsiElement) {
       //noinspection unchecked
       return myBackgroundRenderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
     }
