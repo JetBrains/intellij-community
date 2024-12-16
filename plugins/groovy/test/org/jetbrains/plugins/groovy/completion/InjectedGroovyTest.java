@@ -70,8 +70,8 @@ public class InjectedGroovyTest extends LightJavaCodeInsightFixtureTestCase {
       """);
     TestCase.assertNotNull(psiFile);
     PsiReference ref = psiFile.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
-    assert ref.resolve() instanceof PsiClass;
-    assert ((PsiClass)ref.resolve()).getQualifiedName().equals("foo.Bar");
+    assertInstanceOf(ref.resolve(), PsiClass.class);
+    assertEquals("foo.Bar", ((PsiClass)ref.resolve()).getQualifiedName());
   }
 
   public void testResolveAnnotationsInInjectedCodeInMethodCall() {

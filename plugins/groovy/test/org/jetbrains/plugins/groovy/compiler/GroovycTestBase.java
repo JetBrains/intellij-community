@@ -26,8 +26,8 @@ public abstract class GroovycTestBase extends GroovyCompilerTest {
     myFixture.addClass("class Java4 extends Groovy3 {}");
 
     final Optional<CompilerMessage> msg = make().stream().filter(it -> it.getMessage().contains("InvalidType")).findFirst();
-    assert msg.isPresent();
-    assert msg.get().getVirtualFile() != null;
+    assertTrue(msg.isPresent());
+    assertNotNull(msg.get().getVirtualFile());
 
     EdtTestUtil.runInEdtAndWait(() -> {
         ApplicationManager.getApplication().runWriteAction(() -> {
@@ -37,16 +37,16 @@ public abstract class GroovycTestBase extends GroovyCompilerTest {
     });
 
     List<CompilerMessage> messages = make();
-    assert messages != null;
+    assertNotNull(messages);
     final Optional<CompilerMessage> msg2 = messages.stream().filter(it -> it.getMessage().contains("InvalidType")).findFirst();
-    assert msg2.isPresent();
-    assert msg2.get().getVirtualFile() != null;
+    assertTrue(msg2.isPresent());
+    assertNotNull(msg2.get().getVirtualFile());
 
-    assert ReadAction.compute(() -> {
+    assertTrue(ReadAction.compute(() -> {
         return myFixture
           .findClass("Groovy3")
           .equals(GroovyStubNotificationProvider.findClassByStub(getProject(), msg2.get().getVirtualFile()));
-    });
+    }));
   }
 
   public void test_config_script() throws IOException {
@@ -66,8 +66,9 @@ public abstract class GroovycTestBase extends GroovyCompilerTest {
       class Bar {}
     """);
     CompilerMessage msg = UsefulTestCase.assertOneElement(make());
-    assert msg.getMessage().contains("Please");
-    assert msg.getMessage().contains("org.apache.commons.logging.Log");
+    String message = msg.getMessage();
+    assertTrue(message, message.contains("Please"));
+    assertTrue(message, message.contains("org.apache.commons.logging.Log"));
   }
 
 public void test_circular_dependency_with_in_process_class_loading_resolving() throws IOException {
@@ -95,7 +96,7 @@ public void test_circular_dependency_with_in_process_class_loading_resolving() t
     configuration.setBuildProcessVMOptions(
       configuration.getBuildProcessVMOptions() + " -D" + JpsGroovycRunner.GROOVYC_IN_PROCESS + "=true -D" + GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY + "=false"
     );
-    assert(make().isEmpty());
+  assertEmpty("Expected zero compilation errors", make());
 
     touch(groovyFile.getVirtualFile());
 
@@ -105,7 +106,7 @@ public void test_circular_dependency_with_in_process_class_loading_resolving() t
        GroovyClass.class file from the generated stub isn't produced, and the classloader failed to load JavaClass during compilation of
        GroovyClass. After chunk rebuild is requested, javac is called so it compiles the stub and groovyc finishes successfully.  
      */
-    assert ContainerUtil.map(messages, m -> m.getMessage()).equals(chunkRebuildMessage("Groovy compiler"));
+  assertEquals(chunkRebuildMessage("Groovy compiler"), ContainerUtil.map(messages, CompilerMessage::getMessage));
   }
 
   @Override

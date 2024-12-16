@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.util.BaseTest;
 import org.junit.Test;
@@ -9,6 +10,7 @@ import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
+import static com.intellij.testFramework.UsefulTestCase.assertSize;
 import static junit.framework.TestCase.assertEquals;
 
 public class SpockDataVariablesTest extends SpockTestBase implements BaseTest {
@@ -29,8 +31,8 @@ public class SpockDataVariablesTest extends SpockTestBase implements BaseTest {
 
   private void testVariableNames(String text, String... names) {
     Map<String, SpockVariableDescriptor> variables = variableMap(text);
-    assert names.length == variables.size();
-    assertContainsElements(variables.values().stream().map(SpockVariableDescriptor::getName).toList(), names);
+    assertSize(names.length, variables.entrySet());
+    assertContainsElements(ContainerUtil.map(variables.values(), SpockVariableDescriptor::getName), names);
   }
 
   @Test

@@ -45,6 +45,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary;
 import org.jetbrains.plugins.groovy.TestLibrary;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,7 +77,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   public void testPlainGroovy() throws Throwable {
     myFixture.addFileToProject("A.groovy", "println '239'");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("A", "239");
   }
 
@@ -129,14 +130,14 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
                                                                  "  System.out.println(new Foo().foo());" +
                                                                  "}" +
                                                                  "}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Bar", "239");
 
     touch(ifoo);
     touch(bar.getVirtualFile());
 
     //assertTrue(assertOneElement(make()).contains("WARNING: Groovyc stub generation failed"));
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Bar", "239");
   }
 
@@ -159,7 +160,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
         }
       }
     """);
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(iFoo.getVirtualFile());
     touch(bar.getVirtualFile());
@@ -176,9 +177,9 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     // => chunk rebuild
     //see also org.codehaus.groovy.control.ClassNodeResolver#tryAsLoaderClassOrScript
     if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
-      assert ContainerUtil.map(make(), m -> m.getMessage()).equals(chunkRebuildMessage("Groovy stub generator"));
+      assertEquals(chunkRebuildMessage("Groovy stub generator"), ContainerUtil.map(make(), CompilerMessage::getMessage));
     } else {
-      assert make().isEmpty();
+      assertEmpty("Expected zero compilation errors", make());
     }
 
   }
@@ -187,29 +188,29 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     PsiFile foo = myFixture.addFileToProject("Foo.groovy", "class Foo {} ");
     PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo {}");
     PsiFile goo = myFixture.addFileToProject("Goo.groovy", "class Goo extends Bar {}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(foo.getVirtualFile());
     touch(goo.getVirtualFile());
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testTransitiveDependencyViaAnnotation() throws IOException {
     PsiFile foo = myFixture.addFileToProject("Foo.groovy", "class Foo {}");
     myFixture.addFileToProject("Bar.groovy", "class Bar { Bar plugin(@DelegatesTo(Foo) c) {} }");
     PsiFile goo = myFixture.addFileToProject("Goo.groovy", "@groovy.transform.CompileStatic class Goo { def x(Bar bar) { bar.plugin {} } }");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(foo.getVirtualFile());
     touch(goo.getVirtualFile());
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testJavaDependsOnGroovyEnum() throws Throwable {
     myFixture.addFileToProject("Foo.groovy", "enum Foo { FOO }");
     myFixture.addClass("class Bar { Foo f; }");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testDeleteTransitiveJavaClass() throws Throwable {
@@ -222,14 +223,14 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
         System.out.println(new Foo().foo());\
       }\
       }""");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Bar", "239");
 
     deleteClassFile("IFoo");
     touch(bar.getVirtualFile());
 
     //assertTrue(assertOneElement(make()).contains("WARNING: Groovyc stub generation failed"));
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Bar", "239");
   }
 
@@ -243,12 +244,12 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
         System.out.println(239);\
       }\
       }""");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Bar", "239");
 
     touch(bar.getVirtualFile());
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Bar", "239");
   }
 
@@ -281,7 +282,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   public void testMakeInTests() throws Throwable {
     setupTestSources();
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     myFixture.addFileToProject("tests/Sub.groovy", """
       class Sub {
@@ -293,7 +294,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     myFixture.addFileToProject("tests/Java.java", "public class Java {}");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Sub", "hello");
   }
 
@@ -302,14 +303,14 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     myFixture.addFileToProject("src/com/Bar.groovy", "package com\nclass Bar {}");
     myFixture.addFileToProject("src/com/ToGenerateStubs.java", "package com;\npublic class ToGenerateStubs {}");
     myFixture.addFileToProject("tests/com/BarTest.groovy", "package com\nclass BarTest extends Bar {}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testStubForGroovyExtendingJava() throws Exception {
     PsiFile foo = myFixture.addFileToProject("Foo.groovy", "class Foo extends Goo { }");
     myFixture.addFileToProject("Goo.groovy", "class Goo extends Main { void bar() { println 'hello' } }");
     PsiClass main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
       long oldFooStamp = findClassFile("Foo").lastModified();
@@ -320,17 +321,17 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       touch(main.getContainingFile().getVirtualFile());
       GroovyCompilerTestCase.shouldSucceed(make());
 
-      assert oldFooStamp != findClassFile("Foo").lastModified();
-      assert oldMainStamp != findClassFile("Main").lastModified();
-      assert oldGooStamp != findClassFile("Goo").lastModified();
+      Assert.assertNotEquals(oldFooStamp, findClassFile("Foo").lastModified());
+      Assert.assertNotEquals(oldMainStamp, findClassFile("Main").lastModified());
+      Assert.assertNotEquals(oldGooStamp, findClassFile("Goo").lastModified());
     }
     else {
       touch(foo.getVirtualFile());
       touch(main.getContainingFile().getVirtualFile());
       if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
-        assert ContainerUtil.map(make(), it -> it.getMessage()).equals(chunkRebuildMessage("Groovy stub generator"));
+        assertEquals(chunkRebuildMessage("Groovy stub generator"), ContainerUtil.map(make(), CompilerMessage::getMessage));
       } else {
-        assert make().isEmpty();
+        assertEmpty("Expected zero compilation errors", make());
       }
     }
   }
@@ -340,7 +341,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     myFixture.addClass("public class JavaClassToGenerateStubs {}");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   private void addTransform() throws IOException {
@@ -390,7 +391,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     addGroovyLibrary(dep);
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("Bar", "239", dep);
   }
 
@@ -407,19 +408,19 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     addGroovyLibrary(dep1);
     addGroovyLibrary(dep2);
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(main.getVirtualFile());
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testExtendFromGroovyAbstractClass() {
     myFixture.addFileToProject("Super.groovy", "abstract class Super {}");
     myFixture.addFileToProject("AJava.java", "public class AJava {}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     myFixture.addFileToProject("Sub.groovy", "class Sub extends Super {}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void test1_7InnerClass() throws Exception {
@@ -429,10 +430,10 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       }
     """);
     PsiFile javaFile = myFixture.addFileToProject("AJava.java", "public class AJava extends Foo.Bar {}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(javaFile.getVirtualFile());
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
 public void testRecompileDependentClass() throws Exception {
@@ -450,11 +451,11 @@ public void testRecompileDependentClass() throws Exception {
     """);
     PsiFile goo = myFixture.addFileToProject("Goo.groovy", "class Goo {}");
 
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
 
     touch(cloud.getVirtualFile());
     touch(goo.getVirtualFile());
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
   }
 
 public void testRecompileExpressionReferences() throws Exception {
@@ -468,10 +469,10 @@ public void testRecompileExpressionReferences() throws Exception {
         static def foo() { }
       }
     """);
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
 
     touch(rusCon.getVirtualFile());
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
   }
 
 public void testRecompileImportedClass() throws Exception {
@@ -490,11 +491,11 @@ public void testRecompileImportedClass() throws Exception {
       class Goo {}
     """);
 
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
 
     touch(bar.getVirtualFile());
     touch(goo.getVirtualFile());
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
   }
 
 public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
@@ -508,10 +509,10 @@ public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
       }
     """);
 
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
 
     touch(bar.getVirtualFile());
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testDollarGroovyInnerClassUsagesInStubs() throws Exception {
@@ -525,7 +526,7 @@ public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
         static class Inner {}
       }
     """);
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     myFixture.addFileToProject("Usage.groovy", """
       class Usage {
@@ -535,7 +536,7 @@ public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
     """);
 
     touch(javaFile.getContainingFile().getVirtualFile());
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testDollarGroovyInnerClassUsagesInStubs2() throws Exception {
@@ -551,7 +552,7 @@ public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
         def foo(WithInner.Inner i) {}
       }
     """);
-  assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testGroovyAnnotations() {
@@ -559,7 +560,7 @@ public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
     myFixture.addFileToProject("Foo.groovy", "@Anno([String]) class Foo {}");
     myFixture.addFileToProject("Bar.java", "class Bar extends Foo {}");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void test_with_annotation_processing_enabled() {
@@ -569,13 +570,13 @@ public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
 
     myFixture.addFileToProject("Foo.groovy", "class Foo {}");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
 public void testGenericStubs() {
     myFixture.addFileToProject("Foo.groovy", "class Foo { List<String> list }");
     myFixture.addFileToProject("Bar.java", "class Bar {{ for (String s : new Foo().getList()) { s.hashCode(); } }}");
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testDuplicateClassDuringCompilation() throws Exception {
@@ -589,11 +590,11 @@ public void testGenericStubs() {
       }
      """).getVirtualFile();
     VirtualFile foo = myFixture.addFileToProject("Foo.groovy", "class Foo { p.Indirect foo() {} }").getVirtualFile();
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(foo);
     touch(base);
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void testDontRecompileUnneeded() throws IOException {
@@ -601,40 +602,40 @@ public void testGenericStubs() {
     VirtualFile foo = myFixture.addFileToProject("Foo.groovy", "class Foo extends Base { }").getVirtualFile();
     myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo { }");
     VirtualFile main = myFixture.addFileToProject("Main.groovy", "class Main extends Bar { }").getVirtualFile();
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     long oldBaseStamp = findClassFile("Base").lastModified();
     long oldMainStamp = findClassFile("Main").lastModified();
 
     touch(main);
     touch(foo);
-    assert make().isEmpty();
-    assert oldMainStamp != findClassFile("Main").lastModified();
-    assert oldBaseStamp == findClassFile("Base").lastModified();
+    assertEmpty("Expected zero compilation errors", make());
+    Assert.assertNotEquals(oldMainStamp, findClassFile("Main").lastModified());
+    Assert.assertEquals(oldBaseStamp, findClassFile("Base").lastModified());
   }
 
   public void test_changed_groovy_refers_to_java_which_refers_to_changed_groovy_and_fails_in_stub_generator() throws IOException {
     PsiFile used = myFixture.addFileToProject("Used.groovy", "class Used { }");
     PsiFile java = myFixture.addFileToProject("Java.java", "class Java { void foo(Used used) {} }");
     VirtualFile main = myFixture.addFileToProject("Main.groovy", "class Main extends Java {  }").getVirtualFile();
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(used.getVirtualFile());
     touch(main);
     if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
-      assert ContainerUtil.map(make(), it -> it.getMessage()).equals(chunkRebuildMessage("Groovy stub generator"));
+      assertEquals(chunkRebuildMessage("Groovy stub generator"), ContainerUtil.map(make(), CompilerMessage::getMessage));
     } else {
-      assert make().isEmpty();
+      assertEmpty("Expected zero compilation errors", make());
     }
 
     setFileText(used, "class Used2 {}");
     GroovyCompilerTestCase.shouldFail(make());
-    assert findClassFile("Used") == null;
+    assertNull(findClassFile("Used"));
 
     setFileText(used, "class Used3 {}");
     setFileText(java, "class Java { void foo(Used3 used) {} }");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
-    assert findClassFile("Used2") == null;
+    assertNull(findClassFile("Used2"));
   }
 
   protected abstract List<String> chunkRebuildMessage(String builder);
@@ -655,16 +656,16 @@ public void testGenericStubs() {
       }
     """).getVirtualFile();
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(used.getVirtualFile());
     touch(main);
 
     List<CompilerMessage> messages = make();
     if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()){
-      assert ContainerUtil.map(messages, it -> it.getMessage()).equals(chunkRebuildMessage("Groovy compiler"));
+      assertEquals(chunkRebuildMessage("Groovy compiler"), ContainerUtil.map(messages, CompilerMessage::getMessage));
     } else {
-      assert messages.isEmpty();
+      assertEmpty(messages);
     }
   }
 
@@ -677,16 +678,16 @@ public void testGenericStubs() {
 
     PsiFile dep = myFixture.addFileToProject("dependent/Dep.java", "class Dep { }");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     setFileText(used, "class Used { String prop }");
     touch(main);
     setFileText(dep, "class Dep { String prop = new Used().getProp(); }");
 
     if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
-      assert ContainerUtil.map(make(), it -> it.getMessage()).equals(chunkRebuildMessage("Groovy stub generator"));
+      assertEquals(chunkRebuildMessage("Groovy stub generator"), ContainerUtil.map(make(), CompilerMessage::getMessage));
     } else {
-      assert make().isEmpty();
+      assertEmpty("Expected zero compilation errors", make());
     }
   }
 
@@ -697,13 +698,13 @@ public void testGenericStubs() {
     myFixture.addFileToProject("dependent/foo/Bar.java", "package foo; class Bar extends Foo {}");
     myFixture.addFileToProject("dependent/foo/Goo.groovy", "package foo; class Goo extends Bar {}");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void test_do_not_recompile_unrelated_files_after_breaking_compilation() throws IOException {
     PsiFile fooFile = myFixture.addFileToProject("Foo.groovy", "class Foo {}");
     myFixture.addFileToProject("Bar.groovy", "class Bar {}");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     File barCompiled = findClassFile("Bar");
     long barStamp = barCompiled.lastModified();
@@ -711,9 +712,9 @@ public void testGenericStubs() {
     setFileText(fooFile, "class Foo ext { }");
     GroovyCompilerTestCase.shouldFail(make());
     setFileText(fooFile, "interface Foo extends Runnable { }");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
-    assert barStamp == barCompiled.lastModified();
+    assertEquals(barStamp, barCompiled.lastModified());
   }
 
   public void test_module_cycle() throws ExecutionException {
@@ -729,15 +730,15 @@ public void testGenericStubs() {
     myFixture.addFileToProject("dependent/BarY.groovy", "class BarY extends FooX { }");
 
     Runnable checkClassFiles = () -> {
-      assert findClassFile("Foo", getModule()) != null;
-      assert findClassFile("FooX", getModule()) != null;
-      assert findClassFile("Bar", dep) != null;
-      assert findClassFile("BarX", dep) != null;
+      assertNotNull(findClassFile("Foo", getModule()));
+      assertNotNull(findClassFile("FooX", getModule()));
+      assertNotNull(findClassFile("Bar", dep));
+      assertNotNull(findClassFile("BarX", dep));
 
-      assert findClassFile("Bar", getModule()) == null;
-      assert findClassFile("BarX", getModule()) == null;
-      assert findClassFile("Foo", dep) == null;
-      assert findClassFile("FooX", dep) == null;
+      assertNull(findClassFile("Bar", getModule()));
+      assertNull(findClassFile("BarX", getModule()));
+      assertNull(findClassFile("Foo", dep));
+      assertNull(findClassFile("FooX", dep));
     };
 
     assertEmpty(make());
@@ -789,7 +790,7 @@ public void testCompileTimeConstants() throws ExecutionException {
 
     excludeFromCompilation(GroovyCompilerConfiguration.getInstance(getProject()).getExcludeFromStubGeneration(), foo);
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   private void excludeFromCompilation(PsiFile foo) {
@@ -804,7 +805,7 @@ public void testCompileTimeConstants() throws ExecutionException {
     PsiFile foo = myFixture.addFileToProject("Foo.groovy", "class Foo { }");
     myFixture.addFileToProject("Bar.java", "class Bar extends Foo {}");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     setFileText(foo, "class Foo implements Runnabl {}");
 
@@ -815,7 +816,7 @@ public void testCompileTimeConstants() throws ExecutionException {
 
     setFileText(foo, "class Foo {}");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void test_reporting_module_compile_errors_caused_by_missing_files_excluded_from_compilation() {
@@ -836,12 +837,12 @@ public void testCompileTimeConstants() throws ExecutionException {
     PsiFile java =
       myFixture.addFileToProject("Java.java", "class Java extends Client { String getName(Bar bar) { return bar.toString();  } }");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     setFileText(bar, "class Bar { }");
 
-    assert make().isEmpty();
-    assert findClassFile("Client") != null;
+    assertEmpty("Expected zero compilation errors", make());
+    assertNotNull(findClassFile("Client"));
   }
 
   public void test_ignore_groovy_internal_non_existent_interface_helper_inner_class() {
@@ -855,8 +856,8 @@ public void testCompileTimeConstants() throws ExecutionException {
     """);
     PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar { def foo = new Zoo.Inner() {}  }");
 
-    assert make().isEmpty();
-    assert compileFiles(bar.getVirtualFile()).isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
+    assertEmpty(compileFiles(bar.getVirtualFile()));
   }
 
 public void test_multiline_strings() {
@@ -871,7 +872,7 @@ public void test_multiline_strings() {
     """);
     myFixture.addFileToProject("Bar.java", "class Bar extends Foo {} ");
 
-    assert make().isEmpty();
+  assertEmpty("Expected zero compilation errors", make());
   }
 
   protected boolean isRebuildExpectedAfterChangesInGroovyWhichUseJava() {
@@ -886,7 +887,7 @@ public void test_multiline_strings() {
     myFixture.addClass("package foo; public class Outer { public static class Inner extends bar.Bar1 { } }");
     PsiFile using = myFixture.addFileToProject("UsingInner.groovy", "import foo.Outer; class UsingInner extends bar.Bar1 { Outer.Inner property } ");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
       long oldBar1Stamp = findClassFile("bar/Bar1").lastModified();
@@ -897,18 +898,18 @@ public void test_multiline_strings() {
       touch(bar3.getVirtualFile());
       GroovyCompilerTestCase.shouldSucceed(make());
 
-      assert oldBar1Stamp != findClassFile("bar/Bar1").lastModified();
-      assert oldBar2Stamp != findClassFile("bar/Bar2").lastModified();
-      assert oldBar3Stamp != findClassFile("bar/Bar3").lastModified();
+      Assert.assertNotEquals(oldBar1Stamp, findClassFile("bar/Bar1").lastModified());
+      Assert.assertNotEquals(oldBar2Stamp, findClassFile("bar/Bar2").lastModified());
+      Assert.assertNotEquals(oldBar3Stamp, findClassFile("bar/Bar3").lastModified());
     } else {
       touch(bar1.getVirtualFile());
       touch(bar3.getVirtualFile());
       touch(using.getVirtualFile());
 
       if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()){
-        assert ContainerUtil.map(make(), it -> it.getMessage()).equals(chunkRebuildMessage("Groovy compiler"));
+        assertEquals(chunkRebuildMessage("Groovy compiler"), ContainerUtil.map(make(), CompilerMessage::getMessage));
       } else {
-        assert make().isEmpty();
+        assertEmpty("Expected zero compilation errors", make());
       }
     }
   }
@@ -916,11 +917,11 @@ public void test_multiline_strings() {
   public void test_rename_class_to_java_and_touch_its_usage() throws IOException {
     PsiFile usage = myFixture.addFileToProject("Usage.groovy", "class Usage { Renamed r } ");
     PsiFile renamed = myFixture.addFileToProject("Renamed.groovy", "public class Renamed { } ");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch(usage.getVirtualFile());
     setFileName(renamed, "Renamed.java");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
   public void test_compiling_static_extension() throws ExecutionException {
@@ -952,7 +953,7 @@ public void test_multiline_strings() {
           }
       }
 """);
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
     assertOutput("AppTest", "b");
   }
 
@@ -960,8 +961,9 @@ public void test_multiline_strings() {
     myFixture.addFileToProject("dependent/a.groovy", "");
     addModule("dependent", true);
 
-    List<CompilerMessage> messages = make();
-    assert ContainerUtil.exists(messages, it -> it.getMessage().contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'"));
+    List<String> messages = ContainerUtil.map(make(), CompilerMessage::getMessage);
+    assertNotEmpty(ContainerUtil.filter(messages, it -> it.contains(
+      "Cannot compile Groovy files: no Groovy library is defined for module 'dependent'")));
   }
 
   public void testGroovyOutputIsInstrumented() throws ExecutionException {
@@ -975,7 +977,7 @@ public void test_multiline_strings() {
     File annotations = new File(PathManager.getJarPathForClass(NotNull.class));
     PsiTestUtil.addLibrary(getModule(), "annotations", annotations.getParent(), annotations.getName());
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE);
     ProcessHandler process = runProcess("Bar", getModule(), DefaultRunExecutor.class, new ProcessAdapter() {
@@ -992,10 +994,10 @@ public void test_multiline_strings() {
                                         }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class));
     process.waitFor();
 
-    assert exceptionFound.get();
+    assertTrue(exceptionFound.get());
   }
 
-public void test_extend_groovy_classes_with_additional_dependencies() {
+  public void test_extend_groovy_classes_with_additional_dependencies() {
     PsiTestUtil.addProjectLibrary(getModule(), "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"));
     TestLibrary library = getGroovyLibrary();
     String coordinate = DefaultGroovyMethods.first((DefaultGroovyMethods.asType(library, RepositoryTestLibrary.class)).getCoordinates());
@@ -1010,10 +1012,10 @@ public void test_extend_groovy_classes_with_additional_dependencies() {
       myFixture.addFileToProject("a.groovy", "class Foo extends groovy.test.GroovyTestCase {}");
     }
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
   }
 
-public void test_java_depends_on_stub_whose_generation_failed() {
+  public void test_java_depends_on_stub_whose_generation_failed() {
     CompilerConfiguration.getInstance(getProject()).setParallelCompilationOption(ParallelCompilationOption.DISABLED);
     Function<String, Runnable> createFiles = (prefix) -> {
       final PsiFile genParam = myFixture.addFileToProject(prefix + "GenParam.java", "class GenParam {}");
@@ -1035,12 +1037,12 @@ public void test_java_depends_on_stub_whose_generation_failed() {
     Runnable touch1 = createFiles.apply("");
     Runnable touch2 = createFiles.apply("mod2/");
 
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     touch1.run();
     touch2.run();
 
-    assert make().stream().noneMatch(it -> it.getCategory() == CompilerMessageCategory.ERROR);
+    assertEmpty(ContainerUtil.filter(make(), it -> it.getCategory() == CompilerMessageCategory.ERROR));
   }
 
   public void test_recompile_one_file_that_triggers_chunk_rebuild_inside() throws IOException {
@@ -1064,19 +1066,20 @@ public void test_java_depends_on_stub_whose_generation_failed() {
       }
     """;
     PsiFile sub = myFixture.addFileToProject("BuildContextImpl.groovy", subText);
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     setFileText(sub, subText + " ");
 
     List<CompilerMessage> makeMessages = make();
     List<CompilerMessage> fileMessages = compileFiles(sub.getVirtualFile());
     if (expectRebuild) {
-      assert ContainerUtil.map(makeMessages, it -> it.getMessage()).equals(chunkRebuildMessage("Groovy compiler"));
-      assert ContainerUtil.exists(fileMessages, it -> it.getMessage().contains("Consider building whole project or rebuilding the module"));
+      assertEquals(chunkRebuildMessage("Groovy compiler"), ContainerUtil.map(makeMessages, CompilerMessage::getMessage));
+      assertTrue(
+        ContainerUtil.exists(fileMessages, it -> it.getMessage().contains("Consider building whole project or rebuilding the module")));
     }
     else {
-      assert makeMessages.isEmpty();
-      assert fileMessages.isEmpty();
+      assertEmpty(makeMessages);
+      assertEmpty(fileMessages);
     }
   }
 
@@ -1106,13 +1109,13 @@ public void test_java_depends_on_stub_whose_generation_failed() {
     CompilerConfiguration.getInstance(getProject()).setBytecodeTargetLevel(getModule(), base.name);
 
     myFixture.addFileToProject("a.groovy", "class Foo { }");
-    assert make().isEmpty();
-    assert getClassFileVersion("Foo") == base.code;
+    assertEmpty("Expected zero compilation errors", make());
+    assertEquals(base.code.intValue(), getClassFileVersion("Foo"));
 
     IdeaTestUtil.setModuleLanguageLevel(getModule(), old.level);
     CompilerConfiguration.getInstance(getProject()).setBytecodeTargetLevel(getModule(), old.name);
-    assert rebuild().isEmpty();
-    assert getClassFileVersion("Foo") == old.code;
+    assertEmpty("Expected zero compilation errors on rebuild", rebuild());
+    assertEquals(old.code.intValue(), getClassFileVersion("Foo"));
   }
 
   private int getClassFileVersion(String className) throws IOException {
@@ -1130,10 +1133,10 @@ public void test_java_depends_on_stub_whose_generation_failed() {
   public void test_using_trait_from_java() {
     myFixture.addFileToProject("a.groovy", "trait Foo { }");
     myFixture.addFileToProject("b.java", "class Bar implements Foo { Foo f; }");
-    assert make().isEmpty();
+    assertEmpty("Expected zero compilation errors", make());
 
     final var config = CompilerConfiguration.getInstance(getProject());
     config.setBuildProcessVMOptions(config.getBuildProcessVMOptions() + " -D" + JpsGroovycRunner.GROOVYC_IN_PROCESS + "=false");
-    assert rebuild().isEmpty();
+    assertEmpty("Expected zero compilation errors on rebuild", rebuild());
   }
 }

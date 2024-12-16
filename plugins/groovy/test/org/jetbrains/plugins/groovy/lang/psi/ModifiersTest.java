@@ -17,12 +17,12 @@ public class ModifiersTest extends LightGroovyTestCase {
   public void test_top_level_enum_is_not_static() {
     getFixture().addFileToProject("classes.groovy", "enum E {}");
     PsiClass enumClass = getFixture().findClass("E");
-    assert !enumClass.hasModifierProperty(PsiModifier.STATIC);
+    assertFalse(enumClass.hasModifierProperty(PsiModifier.STATIC));
   }
 
   public void test_inner_enum_is_static() {
     getFixture().addFileToProject("classes.groovy", "class Outer { enum E {} }");
     PsiClass enumClass = getFixture().findClass("Outer.E");
-    assert enumClass.hasModifierProperty(PsiModifier.STATIC);
+    assertTrue(enumClass.hasModifierProperty(PsiModifier.STATIC));
   }
 }

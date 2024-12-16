@@ -82,7 +82,7 @@ public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase 
     }
 
     PsiExpression initializer = expr == null ? localVar.getInitializer() : expr;
-    assert initializer != null;
+    assertNotNull(initializer);
     IntList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, null) : new IntArrayList();
     final Project project = myFixture.getProject();
     final IntroduceParameterProcessor processor =

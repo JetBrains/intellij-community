@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiMethod;
@@ -70,8 +70,8 @@ public class JsonBuilderTest extends LightGroovyTestCase {
       var file = (GroovyFile)getFixture().configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
       GrTopStatement[] statements = file.getTopStatements();
       var call = (GrCallExpression)statements[statements.length - 1];
-      assert call.resolveMethod() != null;
-      assert call.getType().getCanonicalText().equals(returnType);
+      assertNotNull(call.resolveMethod());
+      assertEquals(returnType, call.getType().getCanonicalText());
     }
   }
 
@@ -96,8 +96,8 @@ public class JsonBuilderTest extends LightGroovyTestCase {
       )) {
         getFixture().configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
         var reference = (GrReferenceExpression)getFixture().getReferenceAtCaretPosition();
-        assert reference.resolve() instanceof PsiMethod;
-        assert reference.getType().getCanonicalText().equals(returnType);
+        assertInstanceOf(reference.resolve(), PsiMethod.class);
+        assertEquals(returnType, reference.getType().getCanonicalText());
       }
     }
   }
@@ -127,8 +127,8 @@ public class JsonBuilderTest extends LightGroovyTestCase {
                                        "def builder = new groovy.json.JsonBuilder(); " + text);
           var reference =
             (GrReferenceExpression)getFixture().getReferenceAtCaretPosition();
-          assert reference.resolve() instanceof PsiMethod;
-          assert reference.getType().getCanonicalText().equals(returnType);
+          assertInstanceOf(reference.resolve(), PsiMethod.class);
+          assertEquals(returnType, reference.getType().getCanonicalText());
         }
       }
     }

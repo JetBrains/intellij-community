@@ -16,8 +16,8 @@ public class JavaWithGroovyCompletionTest extends GroovyCompletionTestBase {
       """);
     myFixture.configureByText("a.java", "class Bar {{ con<caret> }}");
     myFixture.complete(CompletionType.BASIC, 2);
-    assert !(myFixture.getLookupElementStrings().contains("const"));
-    assert !(myFixture.getLookupElementStrings().contains("continue"));
+    assertDoesntContain(myFixture.getLookupElementStrings(), "const");
+    assertDoesntContain(myFixture.getLookupElementStrings(), "continue");
   }
 
   public void test_using_java_expression_keywords_in_member_names() {

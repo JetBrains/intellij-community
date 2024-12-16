@@ -165,8 +165,8 @@ public class DsldTest extends LightGroovyTestCase {
       PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), GrNewExpression.class,
                                              false);
     PsiMethod method = newExpr.resolveMethod();
-    assert method.isConstructor();
-    assert method.getParameterList().getParameters().length == 3;
+    assertTrue(method.isConstructor());
+    assertSize(3, method.getParameterList().getParameters());
   }
 
   public void testMeta() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.PsiMethod;
@@ -16,7 +16,7 @@ public class ResolveMethod23Test extends GroovyResolveTestCase {
                                            numbers.findAll { it.double<caret>Value() }
                                        }
                                        """, PsiMethod.class);
-    assert method.getContainingClass().getQualifiedName().equals("java.lang.Number");
+    assertEquals("java.lang.Number", method.getContainingClass().getQualifiedName());
   }
 
   public void test_resolve_unknown_class_reference() {

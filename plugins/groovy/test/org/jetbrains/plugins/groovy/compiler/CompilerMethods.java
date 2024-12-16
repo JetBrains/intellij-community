@@ -9,12 +9,12 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.util.concurrency.Semaphore;
+import junit.framework.TestCase;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -43,7 +43,7 @@ public interface CompilerMethods {
       }
       disposeOnTearDown(descriptor);
       final ProcessHandler handler = descriptor.getProcessHandler();
-      assert handler != null;
+      TestCase.assertNotNull(handler);
       handler.addProcessListener(listener);
       processHandler.set(handler);
       semaphore.up();
