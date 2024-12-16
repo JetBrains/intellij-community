@@ -184,7 +184,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val reflectionLibSourceFile = getFile("FunctionWithAllInvokes.kt")
         val reflectionLibSourceModule = kaModuleWithAssertion<KaLibrarySourceModule>(reflectionLibSourceFile)
         assertEquals(kotlinReflectLibraryName, reflectionLibSourceModule.libraryName)
-        
+
         val libModuleForBinaryFile = kaModuleWithAssertion<KaLibraryModule>(libraryFile, contextualModule = libSourceModule)
         assertEquals(libraryModuleWithoutContext, libModuleForBinaryFile)
 
@@ -596,8 +596,8 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
           },
         )
 
-        // KTIJ-26841: Should be KaNotUnderContentRootModule as well
-        assertKaModuleType<KaSourceModule>("resource.kt")
+        // KTIJ-26841
+        assertKaModuleType<KaNotUnderContentRootModule>("resource.kt")
     }
 
     fun `test dangling file module`() {
