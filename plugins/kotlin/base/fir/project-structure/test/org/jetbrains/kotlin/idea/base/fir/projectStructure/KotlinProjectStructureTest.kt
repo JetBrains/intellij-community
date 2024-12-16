@@ -39,12 +39,14 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiSdk
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -229,7 +231,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         val libraryCName = "module_library_c"
-        moduleLibrary(
+        val libraryC = moduleLibrary(
           moduleA,
           libraryName = libraryCName,
           classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
@@ -285,25 +287,25 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val sharedLibrarySourceFile = getFile("_Collections.kt")
         val sharedLibrarySourceModuleWithoutContext = kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile)
+        val libraryBModule = libraryB.toKaModule()
         assertEquals(
             "The library source should be from the first module due to a context absence",
-            libraryCModule.librarySources,
+            libraryBModule.librarySources!!,
             sharedLibrarySourceModuleWithoutContext,
         )
 
-        val sharedLibrarySourceModuleWithCContext = kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile, sourceAModule)
         assertEquals(
             "The library source must be the same due to the same context as the first library",
-            sharedLibrarySourceModuleWithoutContext,
-            sharedLibrarySourceModuleWithCContext,
+            libraryBModule.librarySources!!,
+            kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile, moduleA.toKaSourceModule(KaSourceModuleKind.PRODUCTION)),
         )
 
         val sharedLibrarySourceModuleWithBContext = kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile, sourceBModule)
-      Assert.assertNotEquals(
-        "The library source module must be from the corresponding module if a context passed",
-        sharedLibrarySourceModuleWithoutContext,
-        sharedLibrarySourceModuleWithBContext,
-      )
+        Assert.assertEquals(
+            "The library source module must be from the corresponding module if a context passed",
+            libraryBModule.librarySources!!,
+            sharedLibrarySourceModuleWithBContext,
+        )
 
         assertEquals(libraryBModuleWithContext.librarySources, sharedLibrarySourceModuleWithBContext)
     }
