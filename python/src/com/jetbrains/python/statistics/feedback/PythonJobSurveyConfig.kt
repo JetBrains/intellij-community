@@ -19,7 +19,7 @@ class PythonJobSurveyConfig : InIdeFeedbackSurveyConfig {
   override val surveyId: String = "python_user_job_survey"
   override val requireIdeEAP: Boolean = true
   override val lastDayOfFeedbackCollection: LocalDate
-    get() = LocalDate(2024, 12, 31)
+    get() = LocalDate(2025, 2, 15)
 
   override fun checkIdeIsSuitable(): Boolean = PlatformUtils.isPyCharmCommunity()
   override fun checkExtraConditionSatisfied(project: Project): Boolean = shouldShowSurvey()
