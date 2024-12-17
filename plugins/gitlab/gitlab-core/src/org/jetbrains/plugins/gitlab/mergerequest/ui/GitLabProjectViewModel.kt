@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -23,8 +24,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepos
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class GitLabProjectViewModel(
+class GitLabProjectViewModel(
   private val project: Project,
   parentCs: CoroutineScope
 ) {

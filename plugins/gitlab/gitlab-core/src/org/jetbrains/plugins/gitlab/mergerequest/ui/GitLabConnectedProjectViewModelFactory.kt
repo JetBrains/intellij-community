@@ -3,12 +3,14 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
 
-internal interface GitLabConnectedProjectViewModelFactory {
+@ApiStatus.Internal
+interface GitLabConnectedProjectViewModelFactory {
   fun create(
     project: Project,
     cs: CoroutineScope,

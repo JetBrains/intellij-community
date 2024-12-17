@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
@@ -40,7 +41,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsList
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-internal interface GitLabConnectedProjectViewModel {
+@ApiStatus.Internal
+interface GitLabConnectedProjectViewModel {
   val connectionId: String
   val avatarIconProvider: IconsProvider<GitLabUserDTO>
   val accountVm: GitLabAccountViewModel
@@ -58,7 +60,8 @@ internal interface GitLabConnectedProjectViewModel {
   fun openMergeRequestTimeline(mrIid: String, focus: Boolean)
 }
 
-internal abstract class GitLabConnectedProjectViewModelBase(
+@ApiStatus.Internal
+abstract class GitLabConnectedProjectViewModelBase(
   parentCs: CoroutineScope,
   private val project: Project,
   private val connection: GitLabProjectConnection,

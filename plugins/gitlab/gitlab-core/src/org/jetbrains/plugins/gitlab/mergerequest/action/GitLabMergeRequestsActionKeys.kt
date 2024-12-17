@@ -2,14 +2,16 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 
-internal object GitLabMergeRequestsActionKeys {
+@ApiStatus.Internal
+object GitLabMergeRequestsActionKeys {
   @JvmStatic
-  val SELECTED = DataKey.create<GitLabMergeRequestDetails>("org.jetbrains.plugins.gitlab.mergerequest.selected")
+  val SELECTED: DataKey<GitLabMergeRequestDetails> = DataKey.create<GitLabMergeRequestDetails>("org.jetbrains.plugins.gitlab.mergerequest.selected")
 
   @JvmStatic
   val REVIEW_LIST_VM: DataKey<GitLabMergeRequestsListViewModel> =

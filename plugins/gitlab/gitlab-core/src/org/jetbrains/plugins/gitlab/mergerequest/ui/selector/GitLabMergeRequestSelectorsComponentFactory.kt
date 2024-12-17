@@ -12,6 +12,7 @@ import com.intellij.util.asSafely
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
@@ -27,7 +28,8 @@ import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 
-internal object GitLabMergeRequestSelectorsComponentFactory {
+@ApiStatus.Internal
+object GitLabMergeRequestSelectorsComponentFactory {
   fun createSelectorsComponent(cs: CoroutineScope, selectorVm: GitLabRepositoryAndAccountSelectorViewModel): JComponent {
 
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, selectorVm.accountManager) { account ->
