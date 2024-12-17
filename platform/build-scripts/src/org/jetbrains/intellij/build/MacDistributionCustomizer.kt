@@ -50,7 +50,7 @@ open class MacDistributionCustomizer {
    * and the hyphen ("-").
    *
    * Reference:
-   * [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070).
+   * [CFBundleIdentifier](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleidentifier).
    */
   lateinit var bundleIdentifier: String
 
