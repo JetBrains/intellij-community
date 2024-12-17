@@ -231,8 +231,8 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun createTemporaryDirectory(
-    options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
-  ): EelResult<EelPath, EelFileSystemApi.CreateTemporaryDirectoryError> =
+    options: EelFileSystemApi.CreateTemporaryEntryOptions,
+  ): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
     holder.withDelegateRetrying {
       createTemporaryDirectory(options)
     }

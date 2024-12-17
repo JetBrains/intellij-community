@@ -379,11 +379,11 @@ interface EelFileSystemApi {
   suspend fun changeAttributes(path: EelPath, options: ChangeAttributesOptions): EelResult<Unit, ChangeAttributesError>
 
   @CheckReturnValue
-  suspend fun createTemporaryDirectory(options: CreateTemporaryDirectoryOptions): EelResult<
+  suspend fun createTemporaryDirectory(options: CreateTemporaryEntryOptions): EelResult<
     EelPath,
-    CreateTemporaryDirectoryError>
+    CreateTemporaryEntryError>
 
-  interface CreateTemporaryDirectoryOptions {
+  interface CreateTemporaryEntryOptions {
     val prefix: String
     val suffix: String
     val deleteOnExit: Boolean
@@ -394,18 +394,18 @@ interface EelFileSystemApi {
       fun suffix(suffix: String): Builder
       fun deleteOnExit(deleteOnExit: Boolean): Builder
       fun parentDirectory(parentDirectory: EelPath?): Builder
-      fun build(): CreateTemporaryDirectoryOptions
+      fun build(): CreateTemporaryEntryOptions
     }
 
     companion object {
-      fun Builder(): Builder = CreateTemporaryDirectoryOptionsImpl()
+      fun Builder(): Builder = CreateTemporaryEntryOptionsImpl()
     }
   }
 
-  sealed interface CreateTemporaryDirectoryError : EelFsError {
-    interface NotDirectory : CreateTemporaryDirectoryError, EelFsError.NotDirectory
-    interface PermissionDenied : CreateTemporaryDirectoryError, EelFsError.PermissionDenied
-    interface Other : CreateTemporaryDirectoryError, EelFsError.Other
+  sealed interface CreateTemporaryEntryError : EelFsError {
+    interface NotDirectory : CreateTemporaryEntryError, EelFsError.NotDirectory
+    interface PermissionDenied : CreateTemporaryEntryError, EelFsError.PermissionDenied
+    interface Other : CreateTemporaryEntryError, EelFsError.Other
   }
 
   companion object Arguments {
@@ -726,7 +726,7 @@ suspend fun EelFileSystemApi.copy(
 }
 
 @CheckReturnValue
-suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder).() -> Unit): EelResult<EelPath, EelFileSystemApi.CreateTemporaryDirectoryError> {
-  val options = EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().apply(setup).build()
+suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryEntryOptions.Builder).() -> Unit): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
+  val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder().apply(setup).build()
   return createTemporaryDirectory(options)
 }

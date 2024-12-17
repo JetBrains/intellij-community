@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryError
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryError
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.getPath
@@ -33,7 +33,7 @@ internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
     return eelApi.fs.getPath(path.toString(), eelApi.platform.pathOs)
   }
 
-  override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryDirectoryOptions): EelPath {
+  override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryEntryOptions): EelPath {
     return getOriginalPath(path)
   }
 
@@ -62,8 +62,8 @@ internal class LocalWindowsEelApiImpl(private val nioFs: FileSystem = FileSystem
     override fun toNioFs(): FileSystem = nioFs
 
     override suspend fun createTemporaryDirectory(
-      options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
-    ): EelResult<EelPath, CreateTemporaryDirectoryError> =
+      options: EelFileSystemApi.CreateTemporaryEntryOptions,
+    ): EelResult<EelPath, CreateTemporaryEntryError> =
       doCreateTemporaryDirectory(mapper, options)
   }
 }
@@ -109,16 +109,16 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
     override fun toNioFs(): FileSystem  = nioFs
 
     override suspend fun createTemporaryDirectory(
-      options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
-    ): EelResult<EelPath, CreateTemporaryDirectoryError> =
+      options: EelFileSystemApi.CreateTemporaryEntryOptions,
+    ): EelResult<EelPath, CreateTemporaryEntryError> =
       doCreateTemporaryDirectory(mapper, options)
   }
 }
 
 private fun doCreateTemporaryDirectory(
   mapper: EelPathMapper,
-  options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
-): EelResult<EelPath, CreateTemporaryDirectoryError> {
+  options: EelFileSystemApi.CreateTemporaryEntryOptions,
+): EelResult<EelPath, CreateTemporaryEntryError> {
   val dir =
     options.parentDirectory?.let(mapper::toNioPath)?.toFile()
     ?: run {

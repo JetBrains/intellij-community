@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryOptions
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
@@ -9,7 +9,7 @@ import java.nio.file.Path
 fun EelPath.toNioPath(eelApi: EelApi): Path = eelApi.mapper.toNioPath(this)
 
 suspend fun EelPathMapper.maybeUploadPath(path: Path, scope: CoroutineScope): EelPath {
-  val options = CreateTemporaryDirectoryOptions.Builder()
+  val options = CreateTemporaryEntryOptions.Builder()
     .prefix(path.fileName.toString())
     .suffix("eel")
     .deleteOnExit(true)
@@ -39,7 +39,7 @@ interface EelPathMapper {
   suspend fun maybeUploadPath(
     path: Path,
     scope: CoroutineScope,
-    options: CreateTemporaryDirectoryOptions,
+    options: CreateTemporaryEntryOptions,
   ): EelPath
 
   fun toNioPath(path: EelPath): Path

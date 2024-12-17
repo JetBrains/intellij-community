@@ -50,7 +50,7 @@ private class EelEphemeralRootAwareMapper(
     return null
   }
 
-  override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryDirectoryOptions): EelPath {
+  override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryEntryOptions): EelPath {
     val originalPath = getOriginalPath(path)
 
     if (originalPath != null) {

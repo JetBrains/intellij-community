@@ -31,7 +31,7 @@ object JdkInstallerEel {
         val archiveName = downloadFile.name
 
         downloadFileEelCopy = eel.fs
-          .createTemporaryDirectory(EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().prefix("download-jdk-").build()).getOrThrow()
+          .createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().prefix("download-jdk-").build()).getOrThrow()
           .resolve(archiveName)
 
         Files.copy(downloadFile, downloadFileEelCopy.toNioPath(eel), StandardCopyOption.REPLACE_EXISTING)

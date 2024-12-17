@@ -56,7 +56,7 @@ internal fun createLocalizedTempFile(project: Project?, prefix: String, suffix: 
   }
   return runBlockingMaybeCancellable {
     val eelApi = Path.of(projectFilePath).getEelApi()
-    val eelPath = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().build()).getOrThrow().resolve(prefix + suffix)
+    val eelPath = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOrThrow().resolve(prefix + suffix)
     eelApi.mapper.toNioPath(eelPath).apply { createFile() }
     eelApi.mapper.toNioPath(eelPath) to URI("file:$eelPath")
   }

@@ -176,7 +176,7 @@ open class MavenModuleBuilderHelper(
     val eel = project.getEelApi()
 
     val workingDir: Path = try {
-      val tmpOptions = EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().apply {
+      val tmpOptions = EelFileSystemApi.CreateTemporaryEntryOptions.Builder().apply {
         suffix("tmp")
         prefix("archetype")
         deleteOnExit(true)

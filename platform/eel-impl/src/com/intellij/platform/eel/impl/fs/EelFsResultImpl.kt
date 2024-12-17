@@ -26,7 +26,7 @@ object EelFsResultImpl {
     EelFileSystemApi.SameFileError.Other,
     EelFileSystemApi.StatError.Other,
     EelFileSystemApi.CanonicalizeError.Other,
-    EelFileSystemApi.CreateTemporaryDirectoryError.Other,
+    EelFileSystemApi.CreateTemporaryEntryError.Other,
     EelOpenedFile.SeekError.Other,
     EelOpenedFile.TellError.Other,
     EelOpenedFile.Reader.ReadError.Other,
@@ -67,7 +67,7 @@ object EelFsResultImpl {
   class PermissionDenied(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.PermissionDenied,
     EelFileSystemApi.ChangeAttributesError.PermissionDenied,
-    EelFileSystemApi.CreateTemporaryDirectoryError.PermissionDenied,
+    EelFileSystemApi.CreateTemporaryEntryError.PermissionDenied,
     EelFileSystemApi.FileReaderError.PermissionDenied,
     EelFileSystemApi.FileWriterError.PermissionDenied,
     EelFileSystemApi.ListDirectoryError.PermissionDenied,
@@ -83,7 +83,7 @@ object EelFsResultImpl {
 
   data class NotDirectory(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotDirectory,
-    EelFileSystemApi.CreateTemporaryDirectoryError.NotDirectory,
+    EelFileSystemApi.CreateTemporaryEntryError.NotDirectory,
     EelFileSystemApi.FileReaderError.NotDirectory,
     EelFileSystemApi.FileWriterError.NotDirectory,
     EelFileSystemApi.ListDirectoryError.NotDirectory,

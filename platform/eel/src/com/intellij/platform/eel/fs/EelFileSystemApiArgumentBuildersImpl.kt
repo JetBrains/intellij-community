@@ -63,29 +63,29 @@ internal data class ChangeAttributesOptionsImpl(
   }
 }
 
-internal data class CreateTemporaryDirectoryOptionsImpl(
+internal data class CreateTemporaryEntryOptionsImpl(
   override var prefix: String = "tmp",
   override var suffix: String = "",
   override var deleteOnExit: Boolean = false,
   override var parentDirectory: EelPath? = null,
-) : CreateTemporaryDirectoryOptions, CreateTemporaryDirectoryOptions.Builder {
-  override fun prefix(prefix: String): CreateTemporaryDirectoryOptions.Builder = apply {
+) : CreateTemporaryEntryOptions, CreateTemporaryEntryOptions.Builder {
+  override fun prefix(prefix: String): CreateTemporaryEntryOptions.Builder = apply {
     this.prefix = prefix
   }
 
-  override fun suffix(suffix: String): CreateTemporaryDirectoryOptions.Builder = apply {
+  override fun suffix(suffix: String): CreateTemporaryEntryOptions.Builder = apply {
     this.suffix = suffix
   }
 
-  override fun deleteOnExit(deleteOnExit: Boolean): CreateTemporaryDirectoryOptions.Builder = apply {
+  override fun deleteOnExit(deleteOnExit: Boolean): CreateTemporaryEntryOptions.Builder = apply {
     this.deleteOnExit = deleteOnExit
   }
 
-  override fun parentDirectory(parentDirectory: EelPath?): CreateTemporaryDirectoryOptions.Builder = apply {
+  override fun parentDirectory(parentDirectory: EelPath?): CreateTemporaryEntryOptions.Builder = apply {
     this.parentDirectory = parentDirectory
   }
 
-  override fun build(): CreateTemporaryDirectoryOptions {
+  override fun build(): CreateTemporaryEntryOptions {
     return copy()
   }
 }
