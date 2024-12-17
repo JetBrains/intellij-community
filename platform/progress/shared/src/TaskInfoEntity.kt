@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
+import com.intellij.platform.ide.progress.suspender.TaskSuspendable
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.asProject
 import com.intellij.platform.project.asProjectOrNull
@@ -42,6 +43,16 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
   val cancellation: TaskCancellation by TaskCancellationType
 
   /**
+   * Specifies whether the task can be suspended and resumed.
+   *
+   * Possible values are:
+   *
+   * - [TaskSuspendable.NonSuspendable]: The task cannot be suspended, and no pause button should be displayed in the UI.
+   * - [TaskSuspendable.Suspendable]: The task can be suspended, and a pause button should be displayed
+   */
+  val suspendable: TaskSuspendable by TaskSuspendableType
+
+  /**
    * Represents the current progress state of the task.
    *
    * This state includes:
@@ -79,6 +90,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
   ) {
     var Title: Required<String> = requiredValue("title", String.serializer())
     var TaskCancellationType: Required<TaskCancellation> = requiredValue("taskCancellation", TaskCancellation.serializer())
+    val TaskSuspendableType: Required<TaskSuspendable> = requiredValue("isSuspendable", TaskSuspendable.serializer())
     var ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
     var TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
     val ProjectEntityType: Optional<ProjectEntity> = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)

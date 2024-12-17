@@ -31,12 +31,12 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
+import com.intellij.platform.ide.progress.suspender.TaskSuspendable
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElementKey
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
 import com.intellij.platform.ide.progress.suspender.asContextElement
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
@@ -104,7 +104,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
     val pipe = cs.createProgressPipe()
 
-    val taskInfoEntity = taskStorage.addTask(project, title, cancellation)
+    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, suspender.getSuspendableInfo())
     val entityId = taskInfoEntity.eid
     LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
 
@@ -118,6 +118,13 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         taskStorage.removeTask(taskInfoEntity)
         LOG.trace { "Task removed from storage: entityId=$entityId, title=$title" }
       }
+    }
+  }
+
+  private fun TaskSuspender?.getSuspendableInfo(): TaskSuspendable {
+    return when (this) {
+      is TaskSuspenderImpl -> TaskSuspendable.Suspendable(defaultSuspendedReason)
+      else -> TaskSuspendable.NonSuspendable
     }
   }
 

@@ -3,6 +3,7 @@ package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.suspender.TaskSuspendable
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.util.progress.ProgressState
@@ -32,6 +33,7 @@ abstract class TaskStorage {
     project: Project,
     title: String,
     cancellation: TaskCancellation,
+    suspendable: TaskSuspendable,
   ): TaskInfoEntity {
     var taskInfoEntity: TaskInfoEntity? = null
     try {
@@ -42,6 +44,7 @@ abstract class TaskStorage {
             it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) projectEntity else null
             it[TaskInfoEntity.Title] = title
             it[TaskInfoEntity.TaskCancellationType] = cancellation
+            it[TaskInfoEntity.TaskSuspendableType] = suspendable
             it[TaskInfoEntity.ProgressStateType] = null
             it[TaskInfoEntity.TaskStatusType] = TaskStatus.RUNNING
           }
