@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -275,6 +277,11 @@ object ChangeTypeQuickFixFactories {
                         add(RoundNumberFix(expression, renderedExpectedType))
                     }
                 }
+            }
+            if (expression is KtPrefixExpression) {
+                val declaration =
+                    expression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.psi as? KtCallableDeclaration ?: return@buildList
+                add(UpdateTypeQuickFix(declaration, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType)))
             }
         }
     }

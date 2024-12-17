@@ -5396,6 +5396,35 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/fixOverloadedOperator")
+    public static class FixOverloadedOperator extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("changeNotFunctionReturnType.kt")
+        public void testChangeNotFunctionReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/fixOverloadedOperator/changeNotFunctionReturnType.kt");
+        }
+
+        @TestMetadata("changePlusFunctionReturnType.kt")
+        public void testChangePlusFunctionReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/fixOverloadedOperator/changePlusFunctionReturnType.kt");
+        }
+
+        @TestMetadata("changeTimesFunctionParameterType.kt")
+        public void testChangeTimesFunctionParameterType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/fixOverloadedOperator/changeTimesFunctionParameterType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch")
     public static class TypeMismatch extends AbstractHighLevelQuickFixTest {
         @java.lang.Override

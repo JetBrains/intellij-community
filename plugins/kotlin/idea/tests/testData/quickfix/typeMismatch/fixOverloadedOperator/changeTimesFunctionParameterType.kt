@@ -5,3 +5,4 @@ interface A {
 
 fun foo(a: A): A = a * <caret>""
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
+/* IGNORE_K2 */

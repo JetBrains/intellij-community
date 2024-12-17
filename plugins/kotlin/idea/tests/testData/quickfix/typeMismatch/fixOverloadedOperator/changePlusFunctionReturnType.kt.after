@@ -7,3 +7,4 @@ fun foo(a: A): () -> Int {
     return a + a<caret>
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled
+/* IGNORE_K2 */
