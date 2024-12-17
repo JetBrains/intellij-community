@@ -413,8 +413,6 @@ public class GitExecutableDetector {
   }
 
   private static @Nullable String checkWslDistribution(@NotNull WSLDistribution distribution) {
-    if (distribution.getVersion() != 2) return null;
-
     Path root = distribution.getUNCRootPath();
     for (String p : UNIX_PATHS) {
       Path f = root.resolve(p).resolve(UNIX_EXECUTABLE);
