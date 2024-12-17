@@ -435,11 +435,11 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-      checkIsNotLiteral(defaultExpression)
+      checkIsCorrectTypeExpression(defaultExpression)
       checkDefaultIsInScope(defaultExpression, typeParameter)
     }
 
-    private fun checkIsNotLiteral(expression: PyExpression) {
+    private fun checkIsCorrectTypeExpression(expression: PyExpression) {
       if (PyTypingTypeProvider.getType(expression, myTypeEvalContext) == null) {
         registerProblem(expression, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"))
       }
@@ -460,7 +460,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (defaultExpression is PyNoneLiteralExpression && defaultExpression.isEllipsis) return
       if (defaultExpression is PyListLiteralExpression) {
         defaultExpression.elements.forEach {
-          checkIsNotLiteral(it)
+          checkIsCorrectTypeExpression(it)
           checkDefaultIsInScope(it, typeParameter)
         }
         return
