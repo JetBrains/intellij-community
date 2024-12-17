@@ -13,20 +13,16 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.reflect.KClass
 
 private class SerializationContext(val streamDescriptors: MutableList<StreamDescriptor>,
-                                   val callJob: Job?,
                                    val rpcCoroutineScope: CoroutineScope,
                                    val token: RpcToken?,
                                    val displayName: String)
@@ -36,12 +32,10 @@ private val SerializationContextThreadLocal: ThreadLocal<SerializationContext> =
 fun <T> withSerializationContext(displayName: String,
                                  token: RpcToken?,
                                  rpcScope: CoroutineScope,
-                                 callJob: Job? = null,
                                  f: () -> T): Pair<T, List<StreamDescriptor>> {
   val old = SerializationContextThreadLocal.get()
   try {
     val ctx = SerializationContext(streamDescriptors = mutableListOf(),
-                                   callJob = callJob,
                                    token = token,
                                    rpcCoroutineScope = rpcScope,
                                    displayName = displayName)
@@ -184,60 +178,6 @@ class DeferredSerializer<T>(elementSerializer: KSerializer<T>) :
     return receiver
   }
 }
-
-@Serializable
-internal data class Scope(val cancellation: ReceiveChannel<Unit>, val completion: SendChannel<Unit>)
-
-internal object CoroutineScopeSerializer : DataSerializer<CoroutineScope, Scope>(Scope.serializer()) {
-  override fun fromData(data: Scope): CoroutineScope {
-    val ctx = requireSerializationContext<CoroutineScope>()
-    val supervisorJob = SupervisorJob(ctx.rpcCoroutineScope.coroutineContext[Job])
-    val scopeJob = Job(supervisorJob)
-
-    val callJob = requireNotNull(ctx.callJob) { "CoroutineScopes can be deserialized only as args of call method, not stream data" }
-    ctx.rpcCoroutineScope.launch {
-      try {
-        callJob.join()
-        // This completes only the created CompletableJob; we'll wait for children in `invokeOnCompletion`
-        scopeJob.complete()
-      }
-      catch (t: Throwable) {
-        scopeJob.completeExceptionally(t)
-      }
-    }
-
-    // This waits for both scopeJob and its children completion
-    scopeJob.invokeOnCompletion { cause ->
-      data.completion.close(cause)
-    }
-    ctx.rpcCoroutineScope.launch { data.cancellation.consumeEach { } }.invokeOnCompletion { scopeJob.cancel() }
-    return CoroutineScope(ctx.rpcCoroutineScope.coroutineContext + CoroutineExceptionHandler { _, _ -> } + scopeJob)
-  }
-
-  override fun toData(value: CoroutineScope): Scope {
-    val (completion_sender, completion_receiver) = channels<Unit>()
-    val (cancellation_sender, cancellation_receiver) = channels<Unit>()
-    value.launch {
-      try {
-        completion_receiver.consumeEach { }
-      }
-      finally {
-        cancellation_sender.close()
-      }
-    }
-    return Scope(cancellation_receiver, completion_sender)
-  }
-}
-
-fun KClass<*>.fasterIsSubclassOf(c: KClass<*>): Boolean =
-  c.java.isAssignableFrom(this.java)
-
-private fun <T : Any> KSerializer<T>.nullable(shouldBeNullable: Boolean): KSerializer<T?> =
-  @Suppress("UNCHECKED_CAST")
-  when {
-    shouldBeNullable -> nullable
-    else -> this as KSerializer<T?>
-  }
 
 private val RpcJson: Json by lazy {
   Json {

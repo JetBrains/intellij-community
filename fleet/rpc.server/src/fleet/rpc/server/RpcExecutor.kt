@@ -28,24 +28,28 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-class RpcExecutor private constructor(private val services: RpcServiceLocator,
-                                      private val route: UID,
-                                      private val queue: SendChannel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>,
-                                      private val coroutineScope: CoroutineScope,
-                                      private val rpcInterceptor: RpcExecutorMiddleware,
-                                      private val rpcCallDispatcher: CoroutineDispatcher?) {
+class RpcExecutor private constructor(
+  private val services: RpcServiceLocator,
+  private val route: UID,
+  private val queue: SendChannel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>,
+  private val coroutineScope: CoroutineScope,
+  private val rpcInterceptor: RpcExecutorMiddleware,
+  private val rpcCallDispatcher: CoroutineDispatcher?,
+) {
 
   private val remoteObjects = ConcurrentHashMap<InstanceId, ServiceImplementation>()
 
   companion object {
     internal val logger = KLoggers.logger(RpcExecutor::class)
 
-    suspend fun serve(services: RpcServiceLocator,
-                      route: UID,
-                      sendChannel: SendChannel<TransportMessage>,
-                      receiveChannel: ReceiveChannel<TransportMessage>,
-                      rpcInterceptor: RpcExecutorMiddleware,
-                      rpcCallDispatcher: CoroutineDispatcher? = null) {
+    suspend fun serve(
+      services: RpcServiceLocator,
+      route: UID,
+      sendChannel: SendChannel<TransportMessage>,
+      receiveChannel: ReceiveChannel<TransportMessage>,
+      rpcInterceptor: RpcExecutorMiddleware,
+      rpcCallDispatcher: CoroutineDispatcher? = null,
+    ) {
       val queueChannel = Channel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>(Channel.UNLIMITED)
       val rpcScope = CoroutineScope(coroutineContext + SupervisorJob(coroutineContext[Job]))
       val executor = RpcExecutor(services = services,
@@ -137,7 +141,7 @@ class RpcExecutor private constructor(private val services: RpcServiceLocator,
             requireNotNull(arg) { "missing parameter $parameterName in ${message.service}/${message.method}" }
             val displayName = methodParamDisplayName(message.classMethodDisplayName(), parameterName)
             val kser = p.parameterKind.serializer(message.classMethodDisplayName())
-            val (`object`, streamDescriptors) = withSerializationContext(displayName, null, coroutineScope, requestJob) {
+            val (`object`, streamDescriptors) = withSerializationContext(displayName, null, coroutineScope) {
               json.decodeFromJsonElement(kser, arg)
             }
             streamDescriptors.forEach {
@@ -297,10 +301,12 @@ class RpcExecutor private constructor(private val services: RpcServiceLocator,
     return registeredStream
   }
 
-  private fun registerRequest(requestId: UID,
-                              span: Span,
-                              requestJob: CompletableJob,
-                              route: UID?) {
+  private fun registerRequest(
+    requestId: UID,
+    span: Span,
+    requestJob: CompletableJob,
+    route: UID?,
+  ) {
     requestJobs[requestId] = requestJob
     spans[requestId] = span
     if (route != null) routeRequests.computeIfAbsent(route) { ConcurrentHashMap.newKeySet() }.add(requestId)
@@ -331,7 +337,11 @@ class RpcExecutor private constructor(private val services: RpcServiceLocator,
     return true
   }
 
-  private fun registerRemoteObject(path: InstanceId, remoteApiDescriptor: RemoteApiDescriptor<*>, inst: RemoteApi<*>) {
+  private fun registerRemoteObject(
+    path: InstanceId,
+    remoteApiDescriptor: RemoteApiDescriptor<*>,
+    inst: RemoteApi<*>,
+  ) {
     val impl = ServiceImplementation(remoteApiDescriptor, inst)
     remoteObjects.putIfAbsent(path, impl)?.let { old ->
       if (old.instance !== inst) {
