@@ -6214,6 +6214,15 @@ public class PyTypingTest extends PyTestCase {
                    """);
   }
 
+  // PY-77940
+  public void testUnderscoredNameInPyiStub() {
+    doMultiFileStubAwareTest("int", """
+      from lib import f
+      
+      expr = f()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

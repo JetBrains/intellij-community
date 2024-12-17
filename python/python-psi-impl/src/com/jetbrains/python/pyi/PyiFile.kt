@@ -40,7 +40,6 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
     if (name == "function" && PyBuiltinCache.getInstance(this).builtinsFile == this) return emptyList()
-    if (exported && isPrivateName(name)) return emptyList()
 
     val baseResults = super.multiResolveName(name, exported)
     val dunderAll = dunderAll ?: emptyList()
@@ -55,10 +54,17 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
                                    lastParent: PsiElement?,
                                    place: PsiElement): Boolean {
     val dunderAll = dunderAll ?: emptyList()
+    val completingInPyiStub = PyiUtil.isInsideStub(place)
     val wrapper = object : DelegatingScopeProcessor(processor) {
       override fun execute(element: PsiElement, state: ResolveState): Boolean = when {
+        // According to the typing spec, underscored names in .pyi stubs should be considered
+        // "stub-only" objects (https://typing.readthedocs.io/en/latest/guides/writing_stubs.html#stub-only-objects).
+        // However, they can still be re-used between .pyi stubs and imported in .py files under typing.TYPE_CHECKING.
+        // Also, they can point to some inadvertently exposed de-facto API of some .py module.
+        // Therefore, we do allow resolving such names, but don't suggest them among completion variants
+        // to avoid polluting the lookup with internal names like "_T", "_Ts", etc.
+        !completingInPyiStub && element is PsiNamedElement && isPrivateName(element.name) -> true
         isPrivateImport(element, dunderAll) -> true
-        element is PsiNamedElement && isPrivateName(element.name) -> true
         else -> super.execute(element, state)
       }
     }

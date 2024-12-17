@@ -2007,15 +2007,30 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   // PY-38172
-  public void testNoPrivateStubElementsInModuleCompletion() {
-    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, "import collections\n" +
-                                                                      "collections.<caret>");
+  public void testNoPrivateStubElementsInCompletionForCollectionsModule() {
+    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, """
+      import collections
+      collections.<caret>
+      """);
     myFixture.completeBasic();
     List<String> suggested = myFixture.getLookupElementStrings();
     assertNotEmpty(suggested);
     assertDoesntContain(suggested, "Union", "TypeVar", "Generic", "_S", "_T");
     assertProjectFilesNotParsed(file);
     assertSdkRootsNotParsed(file);
+  }
+
+  // PY-38172
+  public void testPrivateStubElementsNotSuggestedInPyFiles() {
+    doMultiFileTest();
+  }
+
+  // PY-38172
+  public void testPrivateStubElementsSuggestedInOtherPyiStubs() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.pyi");
+    myFixture.complete(CompletionType.BASIC, 1);
+    myFixture.checkResultByFile(getTestName(true) + "/a.after.pyi");
   }
 
   // PY-42520

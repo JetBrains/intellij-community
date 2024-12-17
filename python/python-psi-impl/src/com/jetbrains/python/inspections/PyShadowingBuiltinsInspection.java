@@ -152,7 +152,7 @@ public final class PyShadowingBuiltinsInspection extends PyInspection {
         return;
       }
       final String name = element.getName();
-      if (name != null && !myIgnoredNames.contains(name)) {
+      if (name != null && PyUtil.getInitialUnderscores(name) != 1 && !myIgnoredNames.contains(name)) {
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
         final PsiElement builtin = builtinCache.getByName(name);
         if (builtin != null && !PyUtil.inSameFile(builtin, element)) {
