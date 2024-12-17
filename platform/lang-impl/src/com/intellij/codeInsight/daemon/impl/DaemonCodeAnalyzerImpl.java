@@ -56,6 +56,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
@@ -1174,20 +1175,25 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           !project.isDefault() &&
           project.isInitialized() &&
           !LightEdit.owns(project)) {
-        ((DaemonCodeAnalyzerImpl)getInstance(project)).runUpdate();
+        String result = ((DaemonCodeAnalyzerImpl)getInstance(project)).runUpdate();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("runUpdate: "+result);
+        }
       }
     }
   }
 
-  private void runUpdate() {
+  // return update outcome for debug
+  @NotNull @NonNls
+  private String runUpdate() {
     ThreadingAssertions.assertEventDispatchThread();
     if (myDisposed) {
-      return;
+      return "wasn't run because i'm disposed";
     }
     if (PowerSaveMode.isEnabled()) {
       // to show the correct "power save" traffic light icon
       myListeners.repaintTrafficLightIconForAllEditors();
-      return;
+      return "wasn't run because power save mode was on";
     }
 
     synchronized (this) {
@@ -1195,32 +1201,23 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (actualDelay > 0) {
          // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
         scheduleUpdateRunnable(actualDelay);
-        return;
+        return "wasn't run because called too soon: rescheduled in "+TimeUnit.NANOSECONDS.toMillis(actualDelay)+"ms";
       }
     }
 
     Collection<? extends FileEditor> activeEditors = getSelectedEditors();
     boolean updateByTimerEnabled = isUpdateByTimerEnabled();
-    PsiDocumentManager documentManager = getPsiDocumentManager();
-    if (PassExecutorService.LOG.isDebugEnabled()) {
-      PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
-        updateByTimerEnabled, "activeEditors:", activeEditors,
-        (documentManager.hasEventSystemEnabledUncommittedDocuments() ? "hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(documentManager.getUncommittedDocuments()) + ")" : ""),
-        (ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside write action" : ""));
-    }
     if (!updateByTimerEnabled || activeEditors.isEmpty()) {
-      return;
+      return "wasn't run because updateByTimerEnabled="+updateByTimerEnabled+"; activeEditors: ("+activeEditors.size()+"): "+activeEditors;
     }
 
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       // makes no sense to start from within write action - will cancel anyway
       // we'll restart when the write action finish
-      return;
+      return "wasn't run because inside write action";
     }
+    PsiDocumentManager documentManager = getPsiDocumentManager();
     if (documentManager.hasEventSystemEnabledUncommittedDocuments()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Reschedule after commit. Uncommitted documents: " + Arrays.toString(documentManager.getUncommittedDocuments()));
-      }
       // restart when everything committed
       documentManager.performLaterWhenAllCommitted(() -> {
         synchronized (DaemonCodeAnalyzerImpl.this) {
@@ -1228,13 +1225,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           scheduleIfNotRunning();
         }
       });
-      return;
+      return "wasn't run because uncommitted docs found: "+Arrays.toString(documentManager.getUncommittedDocuments())+"; delayed until commit";
     }
 
     boolean submitted = false;
     ProcessCanceledException pce = null;
     // have to store created indicators because myUpdateProgress removes canceled indicator immediately
     List<ProgressIndicator> createdIndicators = new ArrayList<>();
+    List<String> result = new SmartList<>();
     try {
       for (FileEditor fileEditor : activeEditors) {
         if (fileEditor instanceof TextEditor textEditor && !textEditor.isEditorLoaded()) {
@@ -1243,6 +1241,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           if (PassExecutorService.LOG.isDebugEnabled()) {
             PassExecutorService.log(null, null, "runUpdate for ", fileEditor, " rescheduled because the editor was not loaded yet");
           }
+          result.add("didn't submit " + fileEditor + " because it's not loaded");
           // AsyncEditorLoader will restart
         }
         else {
@@ -1252,13 +1251,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           if (session != null) {
             createdIndicators.add(session.getProgressIndicator());
           }
-          ProgressIndicator indicator = session == null ? null : session.getProgressIndicator();
-          PassExecutorService.log(indicator, null, "submit:", virtualFile, "; submitted=", submitted);
+          result.add(fileEditor+" submitted="+submitted);
         }
       }
     }
     catch (ProcessCanceledException e) {
       pce = e;
+      return "wasn't run because PCE was thrown:"+ExceptionUtil.getThrowableText(e);
     }
     finally {
       boolean wasCanceledDuringSubmit = ContainerUtil.exists(createdIndicators, p -> p.isCanceled());
@@ -1272,6 +1271,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         ApplicationManager.getApplication().invokeLater(() -> stopProcess(true, reason), __->myDisposed);
       }
     }
+    return StringUtil.join(result, "; ");
   }
 
   private static VirtualFile getVirtualFile(@NotNull FileEditor fileEditor) {
