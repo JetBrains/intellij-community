@@ -99,6 +99,13 @@ object ImportFixHelper {
              * - `java.`
              * - (lowest) all other 3rd party libs
              */
+            // BEGIN ANDROID STUDIO CHANGE
+            // This change is a workaround for https://youtrack.jetbrains.com/issue/KTIJ-31471.
+            // Using 6 instead of 7, because we still don't want to pre-empt local sources (which
+            // get 7 below), and for this case there are no conflicting `kotlin.*` imports.
+            // TODO(b/384782441): Remove this workaround after KTIJ-31471 is fixed.
+            fqNameString == "androidx.compose.ui.Modifier" -> 6
+            // END ANDROID STUDIO CHANGE
             fqNameString.startsWith("kotlin.") -> 6
             fqNameString.startsWith("kotlinx.") -> 5
             fqNameString.startsWith("java.") -> 2
