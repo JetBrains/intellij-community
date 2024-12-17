@@ -1,0 +1,86 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.testDiscovery
+
+import com.intellij.execution.testframework.autotest.AutoTestListener
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.java.JavaBundle
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.toolbar.floating.*
+import com.intellij.openapi.project.DumbAware
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.asSafely
+import com.intellij.util.ui.GridBag
+import java.awt.GridBagLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
+
+/**
+ * Shows a floating toolbar when tests run automatically.
+ */
+class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
+  override val autoHideable: Boolean = true
+  override val actionGroup: ActionGroup
+    get() = DefaultActionGroup(DisableAutoTestAction())
+
+  override fun isApplicable(dataContext: DataContext): Boolean {
+    return isInsideMainEditor(dataContext)
+           && dataContext.getData(CommonDataKeys.EDITOR)?.editorKind == EditorKind.MAIN_EDITOR
+  }
+
+  override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
+    val floatingPanel = component.asSafely<ActionToolbar>()?.component ?: return
+
+    if (component is AbstractFloatingToolbarComponent) {
+      component.backgroundAlpha = 0.9f
+    }
+
+    val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+    val autoRunManager = JavaAutoRunManager.getInstance(project)
+
+    ApplicationManager.getApplication().invokeLater {
+      updateFloatingToolbarVisibility(floatingPanel, autoRunManager)
+    }
+
+    project.messageBus.connect(parentDisposable).subscribe(AutoTestListener.TOPIC, object: AutoTestListener {
+      override fun runConfigurationsChanged() {
+        updateFloatingToolbarVisibility(floatingPanel, autoRunManager)
+      }
+    })
+  }
+
+  private fun updateFloatingToolbarVisibility(floatingPanel: JComponent, autoRunManager: JavaAutoRunManager) {
+    val floatingToolbar = floatingPanel.parent as? EditorFloatingToolbar
+    floatingToolbar?.isVisible = autoRunManager.hasEnabledAutoTests()
+  }
+}
+
+private class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAware {
+  override fun actionPerformed(e: AnActionEvent) {}
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent  {
+    val panel = JPanel(GridBagLayout())
+
+    val constraints = GridBag()
+    panel.add(JBLabel(JavaBundle.message("auto.test.on")), constraints.next().insets(0, 8, 0, 8))
+
+    val disableButton = ActionButton(DisableAction(), null, ActionPlaces.EDITOR_FLOATING_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    disableButton.putClientProperty(Toggleable.SELECTED_KEY, true)
+    panel.add(disableButton, constraints.next())
+
+    return panel
+  }
+}
+
+private class DisableAction : AnAction(IdeBundle.message("button.disable"), JavaBundle.message("disable.auto.test"), AllIcons.Actions.RerunAutomatically) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    val manager = JavaAutoRunManager.getInstance(project)
+    manager.disableAllAutoTests()
+  }
+}

@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,9 +130,25 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
         clearRestarterListener(processHandler);
       }
     }
+
+    environment.getProject().getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).runConfigurationsChanged();
   }
 
-  private boolean hasEnabledAutoTests() {
+  public void disableAllAutoTests() {
+    deactivateWatcher();
+    for (RunContentDescriptor descriptor : RunContentManager.getInstance(myProject).getAllDescriptors()) {
+      if (!isAutoTestEnabled(descriptor)) continue;
+      ProcessHandler processHandler = descriptor.getProcessHandler();
+      if (processHandler != null) {
+        clearRestarterListener(processHandler);
+      }
+    }
+    myEnabledRunProfiles.clear();
+    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).runConfigurationsChanged();
+  }
+
+  @ApiStatus.Internal
+  public boolean hasEnabledAutoTests() {
     return ContainerUtil.exists(RunContentManager.getInstance(myProject).getAllDescriptors(), this::isAutoTestEnabled);
   }
 

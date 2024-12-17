@@ -342,6 +342,7 @@ a:com.intellij.execution.testframework.autotest.AbstractAutoTestManager
 - p:myDelayMillis:I
 - <init>(com.intellij.openapi.project.Project):V
 - pa:createWatcher(com.intellij.openapi.project.Project):com.intellij.execution.testframework.autotest.AutoTestWatcher
+- disableAllAutoTests():V
 - getState():com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State
 - loadState(com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State):V
 - p:restartAllAutoTests(I):V
