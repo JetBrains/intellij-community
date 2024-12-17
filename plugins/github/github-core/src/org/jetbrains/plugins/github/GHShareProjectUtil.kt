@@ -100,7 +100,7 @@ object GHShareProjectUtil {
               val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
               val names = GithubApiPagesLoader
                 .loadAll(requestExecutor, progressManager.progressIndicator,
-                         GithubApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER))
+                         GithubApiRequests.CurrentUser.Repos.pages(account.server, type = Type.OWNER))
                 .mapSmartSet { it.name }
               user.canCreatePrivateRepo() to names
             }, GithubBundle.message("share.process.loading.account.info", account), true, project)

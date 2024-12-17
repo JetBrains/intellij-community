@@ -62,31 +62,31 @@ object GithubApiRequests {
       @JvmStatic
       fun pages(
         server: GithubServerPath,
-        type: Type = Type.DEFAULT,
-        visibility: Visibility = Visibility.DEFAULT,
-        affiliation: Affiliation = Affiliation.DEFAULT,
+        type: Type? = null,
+        visibility: Visibility? = null,
+        affiliations: Set<Affiliation>? = null,
         pagination: GithubRequestPagination? = null,
       ) =
-        GithubApiPagesLoader.Request(get(server, type, visibility, affiliation, pagination), ::get)
+        GithubApiPagesLoader.Request(get(server, type, visibility, affiliations, pagination), ::get)
 
       @JvmOverloads
       @JvmStatic
       fun get(
         server: GithubServerPath,
-        type: Type = Type.DEFAULT,
-        visibility: Visibility = Visibility.DEFAULT,
-        affiliation: Affiliation = Affiliation.DEFAULT,
+        type: Type? = null,
+        visibility: Visibility? = null,
+        affiliations: Set<Affiliation>? = null,
         pagination: GithubRequestPagination? = null,
       ): GithubApiRequest<GithubResponsePage<GithubRepo>> {
-        if (type != Type.DEFAULT && (visibility != Visibility.DEFAULT || affiliation != Affiliation.DEFAULT)) {
+        if (type != null && (visibility != null || affiliations != null)) {
           throw IllegalArgumentException("Param 'type' should not be used together with 'visibility' or 'affiliation'")
         }
 
         return get(getUrl(server, CurrentUser.urlSuffix, urlSuffix,
                           urlQuery {
-                            param(Type.KEY, type.value)
-                            param(Visibility.KEY, visibility.value)
-                            param(Affiliation.KEY, affiliation.value)
+                            param(Type.KEY, type?.value)
+                            param(Visibility.KEY, visibility?.value)
+                            param(Affiliation.KEY, affiliations?.let(Affiliation::combine))
                             param(pagination)
                           }))
       }

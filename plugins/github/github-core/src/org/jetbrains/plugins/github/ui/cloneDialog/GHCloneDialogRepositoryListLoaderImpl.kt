@@ -70,8 +70,7 @@ internal class GHCloneDialogRepositoryListLoaderImpl(parentCs: CoroutineScope) :
       val executor = serviceAsync<GithubApiRequestExecutor.Factory>().create(account.server, token)
       val details = executor.executeSuspend(GithubApiRequests.CurrentUser.get(account.server))
       val repoPagesRequest = GithubApiRequests.CurrentUser.Repos.pages(account.server,
-                                                                       affiliation = Affiliation.combine(Affiliation.OWNER,
-                                                                                                         Affiliation.COLLABORATOR),
+                                                                       affiliations = setOf(Affiliation.OWNER, Affiliation.COLLABORATOR),
                                                                        pagination = GithubRequestPagination.DEFAULT)
 
 
