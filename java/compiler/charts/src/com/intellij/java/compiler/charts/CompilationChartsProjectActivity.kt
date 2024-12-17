@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.messages.MessageBusConnection
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 class CompilationChartsProjectActivity : ProjectActivity {
   companion object {
@@ -64,6 +65,7 @@ class CompilationChartsProjectActivity : ProjectActivity {
     private val states: Queue<CompilationChartsBuildEvent> = ArrayDeque()
     private var currentState: CompilationChartsBuildEvent? = null
     private val defaultUUID: UUID = UUID.randomUUID()
+    private val lateInitState = AtomicReference<(CompilationChartsBuildEvent) -> Unit>()
 
     fun addState(event: CompilationChartsBuildEvent) {
       states.add(event)
@@ -87,7 +89,7 @@ class CompilationChartsProjectActivity : ProjectActivity {
 
     private fun status(messageType: String?) {
       when (messageType) {
-        "START" -> currentState?.run { view.onEvent(buildId, this) }
+        "START" -> lateInitState.set { state -> state.view.onEvent(state.buildId, state) }
         "FINISH" -> {}
       }
     }
@@ -96,6 +98,7 @@ class CompilationChartsProjectActivity : ProjectActivity {
       try {
         when (messageType) {
           "STARTED" -> {
+            currentState?.run { lateInitState.getAndSet(null)?.invoke(this) }
             val values = json.readValue(messageText, object : TypeReference<List<StartTarget>>() {})
             currentState?.run { vm().started(values) }
           }
