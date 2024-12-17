@@ -262,7 +262,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
                        paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInJetBrainsClient(entry.origin) } == true } ?:
-                       paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend") }
+                       paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend", "frontend-split") }
     if (mainLocation != null) {
       return mainLocation
     }
