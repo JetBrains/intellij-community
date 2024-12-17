@@ -168,7 +168,15 @@ open class MacDistributionCustomizer {
   }
 
   /**
-   * @see org.jetbrains.intellij.build.NativeBinaryDownloader.getLauncher
+   * Generates a UUID to be used as an identity of an IDE Mach-O image.
+   *
+   * For a native macOS app, the Apple linker (ld) sets the build UUID based on a hash of the built code. But for an IDE it doesn't work that way.
+   * For different IDEs, the source code can be different, but a [org.jetbrains.intellij.build.NativeBinaryDownloader.getLauncher] binary may be exactly the same.
+   * So, the different IDEs may get the same UUIDs.
+   * And according to [the technote](https://developer.apple.com/documentation/technotes/tn3178-checking-for-and-resolving-build-uuid-problems), this may lead to the troubles:
+   * > Each distinct Mach-O image must have its own unique build UUID.
+   * > If you have two apps with different bundle IDs and the same main executable UUID, you might encounter weird problems with those subsystems.
+   * > For example, the network subsystem might apply constraints for one of your apps to the other app.
    */
   @ApiStatus.Internal
   open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID {
