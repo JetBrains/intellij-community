@@ -226,7 +226,7 @@ object ChangeTypeQuickFixFactories {
             val expectedType = diagnostic.expectedType
 
             val declaration = if (expression is KtReferenceExpression) {
-                expression.mainReference.resolve() as? KtCallableDeclaration
+                expression.mainReference.resolve() as? KtVariableDeclaration
             } else {
                 null
             }
