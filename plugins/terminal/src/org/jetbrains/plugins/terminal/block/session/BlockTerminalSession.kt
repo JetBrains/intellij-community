@@ -63,7 +63,7 @@ internal class BlockTerminalSession(
 
   init {
     val styleState = StyleState()
-    textBuffer = TerminalTextBuffer(80, 24, styleState, AdvancedSettings.getInt("terminal.buffer.max.lines.count"), null)
+    textBuffer = TerminalTextBuffer(80, 24, styleState, AdvancedSettings.getInt("terminal.buffer.max.lines.count"))
     model = TerminalModel(textBuffer)
     val alarmManager = TerminalAlarmManager(settings)
     controller = JediTerminal(ModelUpdatingTerminalDisplay(alarmManager, model, settings), textBuffer, styleState)

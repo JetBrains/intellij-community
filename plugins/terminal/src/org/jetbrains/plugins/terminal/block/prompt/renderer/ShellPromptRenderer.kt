@@ -67,7 +67,7 @@ internal class ShellPromptRenderer(
                                  TerminalColor { colorPalette.defaultBackground })
     styleState.setDefaultStyle(defaultStyle)
     val terminalSize = terminalSizeProvider()
-    val textBuffer = TerminalTextBuffer(terminalSize.columns, terminalSize.rows, styleState, 0, null)
+    val textBuffer = TerminalTextBuffer(terminalSize.columns, terminalSize.rows, styleState, 0)
     val terminal = JediTerminal(FakeDisplay(settings), textBuffer, styleState)
     terminal.setModeEnabled(TerminalMode.AutoNewLine, true)
     val dataStream = ArrayTerminalDataStream(escapedPrompt.toCharArray())

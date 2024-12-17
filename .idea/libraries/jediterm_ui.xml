@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jediterm-ui" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-ui:3.47">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-ui:3.48">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.47/jediterm-ui-3.47.jar">
-          <sha256sum>5217fe12ddcdb5bb134bc22410c74400ffc3ecca1bc465692e42809f64be1158</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.48/jediterm-ui-3.48.jar">
+          <sha256sum>42a2af8143f1576c156607981a49956d1de07fea954aca2b6c9014f81525ea40</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.47/jediterm-ui-3.47.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.48/jediterm-ui-3.48.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.47/jediterm-ui-3.47-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.48/jediterm-ui-3.48-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

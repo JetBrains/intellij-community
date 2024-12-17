@@ -114,7 +114,7 @@ internal class TerminalContentChangesTrackerTest {
 
   @Suppress("SameParameterValue")
   private fun createTextBuffer(width: Int, height: Int, maxHistoryLinesCount: Int): TerminalTextBuffer {
-    return TerminalTextBuffer(width, height, StyleState(), maxHistoryLinesCount, null)
+    return TerminalTextBuffer(width, height, StyleState(), maxHistoryLinesCount)
   }
 
   private fun createChangesTracker(textBuffer: TerminalTextBuffer): TerminalContentChangesTracker {
