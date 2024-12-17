@@ -108,7 +108,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
 
     override fun getEelDescriptor(path: Path): EelDescriptor? =
       service<IjentWslNioFsToggler>().strategy?.enabledInDistros
-        ?.find { distro -> path.root != null && distro.getUNCRootPath().isSameFileAs(path.root) }
+        ?.find { distro -> path.root != null && distro.getUNCRootPath() == path.root }
         ?.let { WslEelDescriptor(it) }
 
     /**
