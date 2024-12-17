@@ -8,7 +8,10 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -19,11 +22,12 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorM
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.KotlinLibraryDeduplicator
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleDependentsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinLibraryDeduplicator
 import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.projectStructure.useNewK2ProjectStructureProvider
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -64,9 +68,29 @@ private class K2LibraryUsageIndex(private val project: Project) {
     }
 
     private fun computeLibraryModuleDependents(): Map<LibraryId, List<ModuleId>> {
-        val libraryDeduplicator = KotlinLibraryDeduplicator.getInstance(project)
+        return if (useNewK2ProjectStructureProvider) {
+            computeForNewStructureProvider()
+        } else {
+            computeForOldStructureProvider()
+        }
+    }
 
+    private fun computeForNewStructureProvider(): Map<LibraryId, List<ModuleId>> {
         val result = mutableMapOf<LibraryId, MutableList<ModuleId>>()
+        val storage = project.workspaceModel.currentSnapshot
+
+        for (module in storage.entities(ModuleEntity::class.java)) {
+            checkCanceled()
+            for (dependency in module.dependencies) {
+                if (dependency !is LibraryDependency) continue
+                result.getOrPut(dependency.library) { mutableListOf() } += module.symbolicId
+            }
+        }
+        return result
+    }
+    private fun computeForOldStructureProvider(): Map<LibraryId, List<ModuleId>> {
+        val result = mutableMapOf<LibraryId, MutableList<ModuleId>>()
+        val libraryDeduplicator = KotlinLibraryDeduplicator.getInstance(project)
         for (module in ModuleManager.getInstance(project).modules) {
             check(module is ModuleBridge)
             checkCanceled()
@@ -75,14 +99,14 @@ private class K2LibraryUsageIndex(private val project: Project) {
 
                 // We still use LibraryInfoCache here for deduplication.
                 // The next steps will be to implement KaModule without IdeaModuleInfo and try to get rid of the deduplication logic
-                val library = entry.library?.let { libraryDeduplicator.deduplicatedLibrary(it)  } ?: continue
+                val library = entry.library?.let { libraryDeduplicator.deduplicatedLibrary(it) } ?: continue
                 check(library is LibraryBridge)
                 result.getOrPut(library.libraryId) { mutableListOf() } += module.moduleEntityId
             }
         }
-
         return result
     }
+
 
     companion object {
         fun getInstance(project: Project): K2LibraryUsageIndex =
