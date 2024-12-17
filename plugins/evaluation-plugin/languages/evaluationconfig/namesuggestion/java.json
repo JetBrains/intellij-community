@@ -7,7 +7,7 @@
   "strategy": {
     "placeholderName": "DUMMY",
     "suggestionsProvider": "LLM-Rename",
-    "collectContextOnly": true
+    "collectContextOnly": false
   },
   "actions": {
     "evaluationRoots": [
