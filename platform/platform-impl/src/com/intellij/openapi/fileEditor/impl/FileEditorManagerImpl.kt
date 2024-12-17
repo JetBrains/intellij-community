@@ -2463,7 +2463,10 @@ private suspend fun updateFileNames(allSplitters: Set<EditorsSplitters>, file: V
 internal fun isSingletonFileEditor(fileEditor: FileEditor?): Boolean = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW.get(fileEditor, false)
 
 private fun isSingletonDockWindow(window: EditorWindow): Boolean {
-  if (getWindowDockContainer(window) == null) return false
+  val windowDockContainer = getWindowDockContainer(window)
+  if (windowDockContainer == null || windowDockContainer == window.manager.dockContainer) {
+    return false
+  }
   return window.tabCount == 1 && window.composites().all { composite ->
     composite.allEditors.any { isSingletonFileEditor(it) }
   }
