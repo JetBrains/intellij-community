@@ -42,7 +42,7 @@ abstract class TaskStorage {
         taskInfoEntity = createTaskInfoEntity {
           TaskInfoEntity.new {
             it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) projectEntity else null
-            it[TaskInfoEntity.Title] = title
+            it[TaskInfoEntity.TitleType] = title
             it[TaskInfoEntity.TaskCancellationType] = cancellation
             it[TaskInfoEntity.TaskSuspendableType] = suspendable
             it[TaskInfoEntity.ProgressStateType] = null

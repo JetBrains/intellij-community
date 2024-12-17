@@ -29,7 +29,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
   /**
    * Human-readable title of a task, which is used to display the task in UI
    */
-  val title: String by Title
+  val title: String by TitleType
 
   /**
    * Specifies whether the task can be canceled.
@@ -88,11 +88,11 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
     "com.intellij.platform.ide.progress",
     ::TaskInfoEntity
   ) {
-    var Title: Required<String> = requiredValue("title", String.serializer())
-    var TaskCancellationType: Required<TaskCancellation> = requiredValue("taskCancellation", TaskCancellation.serializer())
+    val TitleType: Required<String> = requiredValue("title", String.serializer())
+    val TaskCancellationType: Required<TaskCancellation> = requiredValue("taskCancellation", TaskCancellation.serializer())
     val TaskSuspendableType: Required<TaskSuspendable> = requiredValue("isSuspendable", TaskSuspendable.serializer())
-    var ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
-    var TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
+    val ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
+    val TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
     val ProjectEntityType: Optional<ProjectEntity> = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
   }
 }
