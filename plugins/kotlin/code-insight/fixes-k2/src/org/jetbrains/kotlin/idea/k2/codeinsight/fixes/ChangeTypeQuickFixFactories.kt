@@ -174,7 +174,7 @@ object ChangeTypeQuickFixFactories {
             val declaration = diagnostic.psi as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            registerVariableTypeFixes(declaration, getActualType(diagnostic.actualType))
+            registerVariableTypeFixes(declaration, getActualType(diagnostic.actualType), diagnostic.expectedType)
         }
 
     val assignmentTypeMismatch =
@@ -207,15 +207,23 @@ object ChangeTypeQuickFixFactories {
                 ?: return@ModCommandBased emptyList()
 
             val actualType = property.getPropertyInitializerType() ?: diagnostic.actualType
-            registerVariableTypeFixes(property, getActualType(actualType))
+            registerVariableTypeFixes(property, getActualType(actualType), diagnostic.expectedType)
         }
 
-    private fun KaSession.registerVariableTypeFixes(declaration: KtProperty, actualType: KaType): List<ModCommandAction> {
-        val expectedType = declaration.returnType
+    private fun KaSession.registerVariableTypeFixes(
+        declaration: KtProperty,
+        actualType: KaType,
+        expectedTypeFromDiagnostics: KaType
+    ): List<ModCommandAction> {
+        val expectedTypeFromDeclaration = declaration.returnType
         val expression = declaration.initializer ?: return emptyList()
         return buildList {
-            add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(actualType))))
-            addAll(registerExpressionTypeFixes(expression, expectedType, actualType))
+            if (!expectedTypeFromDeclaration.semanticallyEquals(actualType)) {
+                add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(actualType))))
+            } else {
+                add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(expectedTypeFromDiagnostics)))
+            }
+            addAll(registerExpressionTypeFixes(expression, expectedTypeFromDeclaration, actualType))
         }
     }
 
@@ -225,20 +233,18 @@ object ChangeTypeQuickFixFactories {
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
 
-            val declaration = if (expression is KtReferenceExpression) {
-                expression.mainReference.resolve() as? KtVariableDeclaration
-            } else {
-                null
-            }
-
-            buildList {
-                declaration?.let {
-                    add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(expectedType)))
+            val fixes = mutableListOf<ModCommandAction>()
+            if (expression is KtReferenceExpression) {
+                val property = expression.mainReference.resolve() as? KtProperty
+                if (property != null) {
+                    fixes.addAll(registerVariableTypeFixes(property, actualType, expectedType))
+                } else {
+                    fixes.addAll(registerExpressionTypeFixes(expression, expectedType, actualType))
                 }
-                addAll(
-                    registerExpressionTypeFixes(expression, expectedType, actualType)
-                )
+            } else {
+                fixes.addAll(registerExpressionTypeFixes(expression, expectedType, actualType))
             }
+            fixes
         }
 
     @OptIn(KaExperimentalApi::class)
@@ -253,6 +259,7 @@ object ChangeTypeQuickFixFactories {
                 wrongPrimitiveLiteralFix = WrongPrimitiveLiteralFix.createIfAvailable(expression, expectedType, useSiteSession)
                 addIfNotNull(wrongPrimitiveLiteralFix)
             }
+
             if (expectedType.isNumberOrCharType() && actualType.isNumberOrCharType()) {
                 if (wrongPrimitiveLiteralFix == null) {
                     val elementContext = prepareNumberConversionElementContext(actualType, expectedType)
