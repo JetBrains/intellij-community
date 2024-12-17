@@ -2,6 +2,7 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,7 @@ public abstract class MemoryAgentSimpleReferringObject extends MemoryAgentReferr
 
       @Override
       public String getName() {
-        return "Ref";
+        return JavaDebuggerBundle.message("ref");
       }
 
       @Override

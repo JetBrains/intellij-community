@@ -2,6 +2,7 @@
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -31,7 +32,7 @@ public class GCRootReferringObject implements ReferringObject {
     return new ValueDescriptorImpl(project, null) {
       @Override
       public String getName() {
-        return "Ref";
+        return JavaDebuggerBundle.message("ref");
       }
 
       @Override
