@@ -15,9 +15,12 @@ internal class PyMiscFileActionGroup : ActionGroup() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction> =
+  private val actions = lazy {
     if (miscProjectEnabled.value)
       (MiscFileType.EP.extensionList + listOf(MiscScriptFileType)).map { PyMiscFileAction(it) }.toTypedArray()
     else
       emptyArray()
+  }
+
+  override fun getChildren(e: AnActionEvent?): Array<out AnAction> = actions.value
 }
