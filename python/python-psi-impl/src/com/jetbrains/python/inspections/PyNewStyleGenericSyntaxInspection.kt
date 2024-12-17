@@ -13,10 +13,7 @@ import com.jetbrains.python.ast.PyAstTypeParameter
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.types.PyClassLikeType
-import com.jetbrains.python.psi.types.PyTypeParameterType
-import com.jetbrains.python.psi.types.PyTypeVarType
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 class PyNewStyleGenericSyntaxInspection : PyInspection() {
 
@@ -29,19 +26,26 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
 
     override fun visitPyTypeParameter(typeParameter: PyTypeParameter) {
       val boundExpression = typeParameter.boundExpression
-      if (boundExpression != null) {
-        val boundElementsToProcess =
-          PsiTreeUtil.findChildrenOfAnyType(boundExpression, false, PyReferenceExpression::class.java, PyLiteralExpression::class.java)
+      val defaultExpression = typeParameter.defaultExpression
 
-        boundElementsToProcess
-          .filterIsInstance<PyReferenceExpression>()
-          .associateWith { Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext)) }
-          .filter { (_, v) -> v is PyTypeVarType }
-          .forEach { (k, _) ->
-            registerProblem(k,
-                            PyPsiBundle.message("INSP.new.style.generics.are.not.allowed.inside.type.param.bounds"),
-                            ProblemHighlightType.GENERIC_ERROR)
-          }
+      if (boundExpression != null) {
+        processReferences(boundExpression) { true }.forEach { reference ->
+          registerProblem(reference,
+                          PyPsiBundle.message("INSP.new.style.generics.are.not.allowed.inside.type.param.bounds"),
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+      }
+
+      if (defaultExpression != null) {
+        val scopeOwner = ScopeUtil.getScopeOwner(typeParameter)
+        if (scopeOwner == null) return
+
+        processReferences(defaultExpression) { scopeOwner != it.scopeOwner || it.declarationElement is PyTargetExpression }
+          .forEach { reference ->
+          registerProblem(reference,
+                          PyPsiBundle.message("INSP.new.style.type.parameter.out.of.scope", reference.name),
+                          ProblemHighlightType.WARNING)
+        }
       }
     }
 
@@ -133,16 +137,10 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
     }
 
     private fun reportOldStyleTypeVarsUsage(element: PsiElement, @InspectionMessage message: String) {
-      PsiTreeUtil.findChildrenOfAnyType(element, false, PyReferenceExpression::class.java)
-        .associateWith { Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext)) }
-        // if declarationElement a.k.a target expression is null then it most likely resolves to type parameter
-        .filter { (_, v) -> v is PyTypeParameterType
-                            && v.declarationElement is PyTargetExpression
-                            && ScopeUtil.getScopeOwner(v.declarationElement) !is PyTypeAliasStatement }
-        .forEach { (k, _) ->
-          registerProblem(k, message,
-                          ProblemHighlightType.GENERIC_ERROR)
-        }
+      processReferences(element) {
+        it.declarationElement is PyTargetExpression
+        && ScopeUtil.getScopeOwner(it.declarationElement) !is PyTypeAliasStatement
+      }.forEach { reference -> registerProblem(reference, message, ProblemHighlightType.GENERIC_ERROR)}
     }
 
     private fun reportAssignmentExpressions(element: PsiElement, @InspectionMessage message: String) {
@@ -151,6 +149,24 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
           registerProblem(assignmentExpr, message,
                           ProblemHighlightType.GENERIC_ERROR)
         }
+    }
+
+    private fun processReferences(element: PsiElement,
+                                  condition: (PyTypeParameterType) -> Boolean): List<PyReferenceExpression> {
+      val elementsToProcess =
+        PsiTreeUtil.findChildrenOfAnyType(element, false, PyReferenceExpression::class.java, PyLiteralExpression::class.java)
+
+      val list = mutableListOf<PyReferenceExpression>()
+
+      elementsToProcess
+        .filterIsInstance<PyReferenceExpression>()
+        .associateWith { Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext)) }
+        .filter { (_, v) -> v is PyTypeParameterType && condition.invoke(v) }
+        .forEach { (k, _) ->
+          list.add(k)
+        }
+
+      return list
     }
   }
 }

@@ -10,8 +10,11 @@ public class PyNewStyleGenericSyntaxInspectionTest extends PyInspectionTestCase 
   public void testGenericTypeReportedInTypeVarBound() {
     runWithLanguageLevel(LanguageLevel.PYTHON312,
                          () -> doTestByText("""
-                                              class ClassC[V]:
-                                                  class ClassD[T: dict[str, <error descr="Generic types are not allowed inside constraints and bounds of type parameters">V</error>]]: ...
+                                              class ClassA[V]:
+                                                  class ClassB[T: dict[str, <error descr="Generic types are not allowed inside constraints and bounds of type parameters">V</error>]]: ...
+                                              
+                                              class ClassC[**P, T: <error descr="Generic types are not allowed inside constraints and bounds of type parameters">P</error>]: ...
+                                              class ClassD[*Ts, T: <error descr="Generic types are not allowed inside constraints and bounds of type parameters">Ts</error>]: ...
                                               """));
   }
 
@@ -149,6 +152,29 @@ public class PyNewStyleGenericSyntaxInspectionTest extends PyInspectionTestCase 
                           class ClassB[*Ts = *tuple[int], <error descr="TypeVar with a default value cannot follow TypeVarTuple">T = int</error>]: ...
                           class ClassC[*Ts, **P = [float, bool]]: ...
                           class ClassD[*Ts, **P]: ...
+                          """));
+  }
+
+  // PY-75759
+  public void testTypeVarDefaultOutOfScopeReported() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doTestByText("""
+                          from typing import Callable, Concatenate
+                          
+                          class A[K]:
+                              def m[T = dict[int, <error descr="Default type of type parameter 'T' refers to a type variable that is out of scope">K</error>]](self):
+                                  pass
+                          
+                              def outer[T](self):
+                                  def inner[X = <error descr="Default type of type parameter 'X' refers to a type variable that is out of scope">T</error>]():
+                                      pass
+                          
+                          class B[**P]:
+                              def apply[T = Callable[Concatenate[int, <error descr="Default type of type parameter 'T' refers to a type variable that is out of scope">P</error>], int]](self):
+                                  pass
+                          
+                          class C[T]:
+                              class D[V = <error descr="Default type of type parameter 'V' refers to a type variable that is out of scope">T</error>]: ...
                           """));
   }
 
