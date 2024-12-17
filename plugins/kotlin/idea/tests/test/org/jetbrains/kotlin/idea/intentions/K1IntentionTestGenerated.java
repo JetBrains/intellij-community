@@ -11803,6 +11803,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/insertCurlyBracesToTemplate/dontInsertBrackets1.kt");
         }
 
+        @TestMetadata("dontInsertBracketsMultiDollar.kt")
+        public void testDontInsertBracketsMultiDollar() throws Exception {
+            runTest("testData/intentions/insertCurlyBracesToTemplate/dontInsertBracketsMultiDollar.kt");
+        }
+
         @TestMetadata("insertBrackets1.kt")
         public void testInsertBrackets1() throws Exception {
             runTest("testData/intentions/insertCurlyBracesToTemplate/insertBrackets1.kt");
@@ -11836,6 +11841,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("insertBracketsMiddle.kt")
         public void testInsertBracketsMiddle() throws Exception {
             runTest("testData/intentions/insertCurlyBracesToTemplate/insertBracketsMiddle.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar1.kt")
+        public void testInsertBracketsMultidollar1() throws Exception {
+            runTest("testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar1.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar2.kt")
+        public void testInsertBracketsMultidollar2() throws Exception {
+            runTest("testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar2.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar3.kt")
+        public void testInsertBracketsMultidollar3() throws Exception {
+            runTest("testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar3.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar4.kt")
+        public void testInsertBracketsMultidollar4() throws Exception {
+            runTest("testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar4.kt");
         }
     }
 
