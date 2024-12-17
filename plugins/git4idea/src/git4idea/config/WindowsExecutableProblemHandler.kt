@@ -24,6 +24,8 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
   }
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+    if (exception is UnsupportedWSLVersionException) return
+
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"), getHumanReadableErrorFor(exception),
       ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
         downloadAndInstall(errorNotifier, onErrorResolved)
