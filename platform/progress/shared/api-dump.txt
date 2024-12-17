@@ -40,9 +40,9 @@ com.intellij.platform.ide.progress.suspender.TaskSuspender
 - a:pause(java.lang.String):V
 - bs:pause$default(com.intellij.platform.ide.progress.suspender.TaskSuspender,java.lang.String,I,java.lang.Object):V
 - a:resume():V
-- s:suspendable(kotlinx.coroutines.CoroutineScope,java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
+- s:suspendable(java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
 f:com.intellij.platform.ide.progress.suspender.TaskSuspender$Companion
-- f:suspendable(kotlinx.coroutines.CoroutineScope,java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
+- f:suspendable(java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
 f:com.intellij.platform.ide.progress.suspender.TaskSuspenderContextElementKt
 - sf:asContextElement(com.intellij.platform.ide.progress.suspender.TaskSuspender):kotlin.coroutines.CoroutineContext
 a:com.intellij.platform.ide.progress.suspender.TaskSuspenderState

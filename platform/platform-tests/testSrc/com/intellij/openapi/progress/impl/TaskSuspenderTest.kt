@@ -9,7 +9,6 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElement
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ConcurrencyUtil
@@ -21,11 +20,10 @@ class TaskSuspenderTest : BasePlatformTestCase() {
   fun testSuspendResumeTask(): Unit = timeoutRunBlocking {
     val mayStop = CompletableDeferred<Unit>()
 
-    val suspenderScope = childScope("TestSuspenderScope")
-    val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
     val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
-    suspendTaskAndRun(taskSuspender, suspenderScope) {
+    suspendTaskAndRun(taskSuspender) {
       mayStop.complete(Unit)
       letBackgroundThreadsSuspend()
 
@@ -38,8 +36,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
   fun testInnerTaskIsSuspended(): Unit = timeoutRunBlocking {
     val mayStop = CompletableDeferred<Unit>()
 
-    val suspenderScope = childScope("TestSuspenderScope")
-    val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
 
     val task = startBackgroundTask(taskSuspender) {
       withBackgroundProgress(project, "TaskSuspenderTest inner task") {
@@ -47,7 +44,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       }
     }
 
-    suspendTaskAndRun(taskSuspender, suspenderScope) {
+    suspendTaskAndRun(taskSuspender) {
       mayStop.complete(Unit)
       letBackgroundThreadsSuspend()
 
@@ -60,9 +57,8 @@ class TaskSuspenderTest : BasePlatformTestCase() {
   fun testInnerTaskWithCustomSuspenderIsNotSuspended(): Unit = timeoutRunBlocking {
     val mayStop = CompletableDeferred<Unit>()
 
-    val suspenderScope = childScope("TestSuspenderScope")
-    val outerSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
-    val innerSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+    val outerSuspender = TaskSuspender.suspendable("Paused by test")
+    val innerSuspender = TaskSuspender.suspendable("Paused by test")
 
     val task = startBackgroundTask(outerSuspender) {
       withBackgroundProgress(project, "TaskSuspenderTest inner task", innerSuspender) {
@@ -70,7 +66,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       }
     }
 
-    suspendTaskAndRun(outerSuspender, suspenderScope) {
+    suspendTaskAndRun(outerSuspender) {
       mayStop.complete(Unit)
       letBackgroundThreadsSuspend()
 
@@ -81,12 +77,11 @@ class TaskSuspenderTest : BasePlatformTestCase() {
   fun testTasksWithTheSameSuspenderAreSuspended(): Unit = timeoutRunBlocking {
     val mayStop = CompletableDeferred<Unit>()
 
-    val suspenderScope = childScope("TestSuspenderScope")
-    val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
     val task1 = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
     val task2 = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
-    suspendTaskAndRun(taskSuspender, suspenderScope) {
+    suspendTaskAndRun(taskSuspender) {
       mayStop.complete(Unit)
       letBackgroundThreadsSuspend()
 
@@ -121,8 +116,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
   fun testTaskUnderOuterTaskSuspenderIsSuspended(): Unit = timeoutRunBlocking {
     val mayStop = CompletableDeferred<Unit>()
 
-    val suspenderScope = childScope("TestSuspenderScope")
-    val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
     // TaskSuspenderElement(taskSuspender) is used here instead taskSuspender.asContextElement(),
     // because it provides context with both task and coroutine suspenders.
     // Check that task is going to be suspended even if no `CoroutineScope` was in context beforehand
@@ -132,7 +126,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       }
     }
 
-    suspendTaskAndRun(taskSuspender, suspenderScope) {
+    suspendTaskAndRun(taskSuspender) {
       mayStop.complete(Unit)
       letBackgroundThreadsSuspend()
 
@@ -153,8 +147,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
 
     val mayStop = CompletableDeferred<Unit>().apply { complete(Unit) }
 
-    val suspenderScope = childScope("TestSuspenderScope")
-    val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test").apply { pause() }
+    val taskSuspender = TaskSuspender.suspendable("Paused by test").apply { pause() }
     val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
     val progressSuspender = progressSuspenderDeferred.await()
@@ -163,8 +156,6 @@ class TaskSuspenderTest : BasePlatformTestCase() {
 
     taskSuspender.resume()
     task.waitAssertCompletedNormally()
-
-    suspenderScope.cancel()
   }
 
   fun testTaskSuspendedByProgressSuspender(): Unit = timeoutRunBlocking {
@@ -179,8 +170,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
 
       val mayStop = CompletableDeferred<Unit>()
 
-      val suspenderScope = childScope("TestSuspenderScope")
-      val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+      val taskSuspender = TaskSuspender.suspendable("Paused by test")
       val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
       val progressSuspender = progressSuspenderDeferred.await()
@@ -200,8 +190,6 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       task.waitAssertCompletedNormally()
 
       connection.disconnect()
-
-      suspenderScope.cancel()
     }
   }
 
@@ -217,8 +205,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
 
       val mayStop = CompletableDeferred<Unit>()
 
-      val suspenderScope = childScope("TestSuspenderScope")
-      val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+      val taskSuspender = TaskSuspender.suspendable("Paused by test")
       val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
       val progressSuspender = progressSuspenderDeferred.await()
@@ -238,8 +225,6 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       task.waitAssertCompletedNormally()
 
       connection.disconnect()
-
-      suspenderScope.cancel()
     }
   }
 
@@ -255,8 +240,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
 
       val mayStop = CompletableDeferred<Unit>()
 
-      val suspenderScope = childScope("TestSuspenderScope")
-      val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+      val taskSuspender = TaskSuspender.suspendable("Paused by test")
       val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
       val progressSuspender = progressSuspenderDeferred.await()
@@ -276,8 +260,6 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       task.waitAssertCompletedNormally()
 
       connection.disconnect()
-
-      suspenderScope.cancel()
     }
   }
 
@@ -291,14 +273,13 @@ class TaskSuspenderTest : BasePlatformTestCase() {
 
     val mayStop = CompletableDeferred<Unit>()
 
-    val suspenderScope = childScope("TestSuspenderScope")
-    val taskSuspender = TaskSuspender.suspendable(suspenderScope, "Paused by test")
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
     val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
     val progressSuspender = progressSuspenderDeferred.await()
     assertFalse(progressSuspender.isSuspended)
 
-    suspendTaskAndRun(taskSuspender, suspenderScope) {
+    suspendTaskAndRun(taskSuspender) {
       assertTrue(progressSuspender.isSuspended)
       assertFalse(task.isCompleted)
     }
@@ -309,7 +290,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
     task.waitAssertCompletedNormally()
   }
 
-  private suspend fun suspendTaskAndRun(taskSuspender: TaskSuspender, suspenderScope: CoroutineScope, action: suspend () -> Unit) {
+  private suspend fun suspendTaskAndRun(taskSuspender: TaskSuspender, action: suspend () -> Unit) {
     taskSuspender.pause(reason = "Paused by test")
     assertTrue(taskSuspender.isPaused())
 
@@ -320,7 +301,6 @@ class TaskSuspenderTest : BasePlatformTestCase() {
     finally {
       taskSuspender.resume()
       assertFalse(taskSuspender.isPaused())
-      suspenderScope.cancel()
     }
   }
 

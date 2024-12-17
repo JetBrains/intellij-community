@@ -7,13 +7,15 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -23,13 +25,11 @@ import kotlin.coroutines.CoroutineContext
  * NOTE: Use [TaskSuspender.suspendable] instead of creating suspender manually
  *
  * @constructor Creates an instance with a default suspended text and an optional coroutine suspender.
- * @param coroutineScope The scope to define suspender's lifetime
  * @param defaultSuspendedReason The default message to be displayed when the tasks are suspended.
  * @param coroutineSuspender The coroutine suspender to manage the state
  */
-@ApiStatus.Internal
+@Internal
 class TaskSuspenderImpl(
-  val coroutineScope: CoroutineScope,
   @ProgressText val defaultSuspendedReason: String,
   private val coroutineSuspender: CoroutineSuspenderImpl = CoroutineSuspenderImpl(true),
 ) : TaskSuspender {
@@ -39,17 +39,54 @@ class TaskSuspenderImpl(
 
   private val suspenderLock = Any()
 
-  init {
-    coroutineScope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
-      coroutineSuspender.isPaused.collectLatest { paused ->
-        if (paused) {
-          // don't erase the original reason if paused
-          _state.compareAndSet(TaskSuspenderState.Active, TaskSuspenderState.Paused(defaultSuspendedReason))
-        }
-        else {
-          _state.update { TaskSuspenderState.Active }
+  private val attachTaskLock = Any()
+  private val attachedTasks = AtomicInteger(0)
+  private var subscription: Job? = null
+
+  /**
+   * Attaches the suspender to the given coroutine scope.
+   * This method ensures that the suspender transitions between active and paused states based on updates
+   * from the [coroutineSuspender].
+   *
+   * NOTE: This method is intended to be used only by internal implementation of [com.intellij.platform.ide.progress.TaskSupport]
+   *
+   * @param coroutineScope The [CoroutineScope] in which the suspender should be executed.
+   * It determines the lifecycle and context of the task.
+   */
+  @Internal
+  fun attachTask(coroutineScope: CoroutineScope) {
+    synchronized(attachTaskLock) {
+      if (attachedTasks.getAndIncrement() > 0) return
+
+      subscription = coroutineScope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
+        coroutineSuspender.isPaused.collectLatest { paused ->
+          if (paused) {
+            // don't erase the original reason if paused
+            _state.compareAndSet(TaskSuspenderState.Active, TaskSuspenderState.Paused(defaultSuspendedReason))
+          }
+          else {
+            _state.update { TaskSuspenderState.Active }
+          }
         }
       }
+    }
+  }
+
+  /**
+   * If there are no remaining tasks attached, the associated subscription is canceled
+   * and disposed to release resources.
+   *
+   * NOTE: This method is intended to be used only by internal implementation of [com.intellij.platform.ide.progress.TaskSupport]
+   */
+  @Internal
+  fun detachTask() {
+    synchronized(attachTaskLock) {
+      // The subscription should be stopped only when there are no active tasks attached to the same suspender,
+      // Otherwise some tasks might stop getting the necessary updates
+      if (attachedTasks.decrementAndGet() > 0) return
+
+      subscription?.cancel()
+      subscription = null
     }
   }
 

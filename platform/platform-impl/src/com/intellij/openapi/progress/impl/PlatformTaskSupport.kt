@@ -167,11 +167,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val pipe = cs.createProgressPipe()
     val indicator = coroutineCancellingIndicator(taskJob)
 
-    val suspenderScope = childScope("TaskSuspenderScope")
-    val taskSuspender = retrieveSuspender(suspenderScope, providedSuspender)
+    val taskSuspender = retrieveSuspender(providedSuspender)
+    taskSuspender?.attachTask()
 
     // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
-    val suspenderSynchronizer = indicator.markSuspendableIfNeeded(suspenderScope, taskSuspender)
+    val suspenderSynchronizer = indicator.markSuspendableIfNeeded(taskSuspender)
 
     val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
 
@@ -184,25 +184,33 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     finally {
       showIndicatorJob.cancel()
       suspenderSynchronizer?.stop()
-      suspenderScope.cancel()
+      taskSuspender?.detachTask()
     }
   }
 
-  private fun CoroutineScope.retrieveSuspender(suspenderScope: CoroutineScope, providedSuspender: TaskSuspender?): TaskSuspender? {
+  private fun CoroutineScope.retrieveSuspender(providedSuspender: TaskSuspender?): TaskSuspender? {
     return providedSuspender
            ?: coroutineContext[TaskSuspenderElementKey]?.taskSuspender
            ?: coroutineContext[CoroutineSuspenderElementKey]?.coroutineSuspender?.let {
-             TaskSuspenderImpl(suspenderScope, IdeBundle.message("progress.text.paused"), it as CoroutineSuspenderImpl)
+             TaskSuspenderImpl(IdeBundle.message("progress.text.paused"), it as CoroutineSuspenderImpl)
            }
   }
 
-  private fun ProgressIndicatorEx.markSuspendableIfNeeded(suspenderScope: CoroutineScope, taskSuspender: TaskSuspender?): TaskToProgressSuspenderSynchronizer? {
+  private fun TaskSuspender.attachTask() {
+    (this as? TaskSuspenderImpl)?.attachTask(cs)
+  }
+
+  private fun TaskSuspender.detachTask() {
+    (this as? TaskSuspenderImpl)?.detachTask()
+  }
+
+  private fun ProgressIndicatorEx.markSuspendableIfNeeded(taskSuspender: TaskSuspender?): TaskToProgressSuspenderSynchronizer? {
     if (taskSuspender !is TaskSuspenderImpl) return null
 
     @Suppress("UsagesOfObsoleteApi")
     val progressSuspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
       { ProgressSuspender.markSuspendable(this, taskSuspender.defaultSuspendedReason) }, this)
-    return TaskToProgressSuspenderSynchronizer(suspenderScope, taskSuspender, progressSuspender)
+    return TaskToProgressSuspenderSynchronizer(cs, taskSuspender, progressSuspender)
   }
 
   override suspend fun <T> withModalProgressInternal(

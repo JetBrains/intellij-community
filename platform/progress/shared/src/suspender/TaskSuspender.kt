@@ -3,10 +3,8 @@ package com.intellij.platform.ide.progress.suspender
 
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.NonExtendable
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Interface for suspending and resuming running tasks.
@@ -41,13 +39,12 @@ interface TaskSuspender {
     /**
      * Creates a new instance of [TaskSuspender] which can be used to suspend and resume tasks.
      *
-     * @param coroutineScope The scope to define suspender's lifetime
      * @param suspendedText a default message displayed in UI for paused tasks
      * @return a new instance of [TaskSuspender].
      */
     @JvmStatic
-    fun suspendable(coroutineScope: CoroutineScope, suspendedText: @ProgressText String): TaskSuspender {
-      return TaskSuspenderImpl(coroutineScope, suspendedText)
+    fun suspendable(suspendedText: @ProgressText String): TaskSuspender {
+      return TaskSuspenderImpl(suspendedText)
     }
   }
 }
