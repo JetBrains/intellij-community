@@ -34,11 +34,12 @@ object ChangeParameterTypeFixFactory {
     val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         val psi = diagnostic.psi
         val targetType = diagnostic.expectedType
-        if (targetType is KaDefinitelyNotNullType) {
-            createTypeMismatchFixesForDefinitelyNonNullable(psi, targetType)
-        } else {
+        buildList {
+            if (targetType is KaDefinitelyNotNullType) {
+                addAll(createTypeMismatchFixesForDefinitelyNonNullable(psi, targetType))
+            }
             // Here we change the type of the value argument to the type the function/constructor is called with (actualType)
-            createTypeMismatchFixes(psi, diagnostic.actualType)
+            addAll(createTypeMismatchFixes(psi, diagnostic.actualType))
         }
     }
 
@@ -142,6 +143,7 @@ internal class ChangeParameterTypeFix(
                     it.name.toString(), functionName, typePresentation
                 )
             }
+
             else -> {
                 KotlinBundle.message(
                     "fix.change.return.type.text.function",
