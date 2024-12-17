@@ -79,6 +79,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -1086,6 +1088,13 @@ public final class BuildManager implements Disposable {
     // automatically disable process preloading when debugging or testing
     if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || myBuildProcessDebuggingEnabled) {
       return false;
+    }
+    if (canUseEel()) {
+      Path projectFilePath = Path.of(getProjectPath(project));
+      if (!EelProviderUtil.getEelDescriptor(projectFilePath).equals(LocalEelDescriptor.INSTANCE)) {
+        // non-local projects do not work correctly with preloaded processes
+        return false;
+      }
     }
     if (project.isDisposed()) {
       return true;
