@@ -11965,8 +11965,9 @@ a:com.intellij.openapi.wm.impl.welcomeScreen.AbstractWelcomeScreen
 f:com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper
 - <init>():V
 - s:createActionGroupPanel(com.intellij.openapi.actionSystem.ActionGroup,java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.openapi.util.Pair
+- s:createActionGroupPanel(java.util.List,java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.openapi.util.Pair
 - s:installQuickSearch(com.intellij.ui.components.JBList):V
-- s:wrapGroups(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.Disposable):com.intellij.openapi.actionSystem.AnAction
+- s:wrapGroups(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):com.intellij.openapi.actionSystem.AnAction
 com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider
 f:com.intellij.openapi.wm.impl.welcomeScreen.BottomLineBorder
 - javax.swing.border.EmptyBorder

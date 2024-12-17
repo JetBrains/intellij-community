@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.FocusUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Font
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 
 
@@ -61,6 +62,7 @@ private fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolb
   val moreActionGroup = DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true)
 
   val toolbarGroup = object : ActionGroupWrapper(baseGroup) {
+    val wrappers = ConcurrentHashMap<AnAction, AnAction>()
     override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
       moreActionGroup.removeAll()
       val mapped = visibleChildren.mapIndexedNotNull { index, action ->
@@ -70,11 +72,9 @@ private fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolb
             null
           }
           action is ActionGroup && action is ActionsWithPanelProvider -> {
-            val p = e.updateSession.presentation(action)
-            val wrapper = p.getClientProperty(ActionUtil.INLINE_ACTIONS)?.first()
-                          ?: ActionGroupPanelWrapper.wrapGroups(action, parentDisposable).also {
-                            p.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(it))
-                          }
+            val wrapper = wrappers.getOrPut(action) {
+              ActionGroupPanelWrapper.wrapGroups(action, parentDisposable)
+            }
             e.updateSession.presentation(wrapper)
             wrapper
           }
