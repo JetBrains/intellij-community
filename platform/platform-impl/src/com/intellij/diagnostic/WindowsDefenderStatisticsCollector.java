@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.project.Project;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class WindowsDefenderStatisticsCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("defender", 3);
+  private static final EventLogGroup GROUP = new EventLogGroup("defender", 4);
 
   private enum Status {Skipped, Enabled, Disabled, Error}
   private enum Reaction {Auto, Manual, ProjectMute, GlobalMute}
@@ -23,6 +24,7 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
   private static final EventId1<Boolean> AUTO_CONFIG_EVENT = GROUP.registerEvent("auto_config", EventFields.Boolean("success"));
   private static final EventId1<ExcludedScope> TRUST_DIALOG_EVENT =
     GROUP.registerEvent("excluded_from_trust_dialog", EventFields.Enum("excluded_folders", ExcludedScope.class));
+  private static final EventId CHECKBOX_SHOWN_IN_TRUST_DIALOG = GROUP.registerEvent("checkbox_shown_in_trust_dialog");
 
   static void protectionCheckSkipped(@NotNull Project project) {
     PROTECTION_CHECK_EVENT.log(project, Status.Skipped);
@@ -50,6 +52,10 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
 
   public static void excludedFromTrustDialog(boolean parentExcluded) {
     TRUST_DIALOG_EVENT.log(parentExcluded ? ExcludedScope.PARENT_FOLDER : ExcludedScope.PROJECT_ONLY);
+  }
+
+  public static void checkboxShownInTrustDialog() {
+    CHECKBOX_SHOWN_IN_TRUST_DIALOG.log();
   }
 
   @Override

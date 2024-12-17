@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
+import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
@@ -175,6 +176,7 @@ internal class TrustedProjectStartupDialog(
                 component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
                 comment(IdeBundle.message("untrusted.project.location.comment"))
                 visible(pathsToExclude.isNotEmpty())
+                if (pathsToExclude.isNotEmpty()) WindowsDefenderStatisticsCollector.checkboxShownInTrustDialog()
               }
           }
         }.align(AlignX.FILL + AlignY.FILL)
