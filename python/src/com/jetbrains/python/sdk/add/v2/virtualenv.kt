@@ -15,7 +15,7 @@ import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.PythonBinary
+import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal

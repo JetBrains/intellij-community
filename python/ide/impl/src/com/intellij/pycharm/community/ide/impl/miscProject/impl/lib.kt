@@ -43,7 +43,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkToInstallManager
-import com.jetbrains.python.sdk.PythonBinary
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.createSdk
 import com.jetbrains.python.sdk.add.v2.createVirtualenv

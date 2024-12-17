@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.sdk.PythonBinary
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor

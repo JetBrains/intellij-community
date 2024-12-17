@@ -5,16 +5,13 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PythonBinary
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.*
 
-/**
- * `python` or `python.exe`
- */
-typealias PythonBinary = Path
 typealias Directory = Path
 
 @ApiStatus.Internal
