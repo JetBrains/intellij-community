@@ -233,5 +233,6 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
   </component>
 </module>
