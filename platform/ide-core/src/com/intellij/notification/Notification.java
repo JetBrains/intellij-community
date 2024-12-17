@@ -179,7 +179,11 @@ public class Notification {
 
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
-    if (myDoNotAskId == null) {
+    if (myDoNotAskId == null && myDisplayId != null) {
+      myDoNotAskDisplayName = myTitle;
+      myDoNotAskId = myDisplayId;
+    }
+    else if (myDoNotAskId == null) {
       @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
       if (title == null) {
         title = myGroupId;
