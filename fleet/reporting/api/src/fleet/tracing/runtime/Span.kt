@@ -6,18 +6,21 @@ import io.opentelemetry.api.common.AttributeKey
 
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
 val THREAD_ID_KEY: AttributeKey<Long> = AttributeKey.longKey("threadId")
+
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
 val SCOPE_KEY: AttributeKey<Boolean> = AttributeKey.booleanKey("isScope")
 
 val currentSpan: Span get() = currentSpanThreadLocal.get() ?: Span.Noop
 
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
-data class SpanInfo(val name: String,
-                    val isScope: Boolean,
-                    val job: Any,
-                    val map: Map<String, String>,
-                    val startTimestampNano: Long?,
-                    val cause: Span?)
+data class SpanInfo(
+  val name: String,
+  val isScope: Boolean,
+  val job: Any,
+  val map: Map<String, String>,
+  val startTimestampNano: Long?,
+  val cause: Span?,
+)
 
 interface Span {
   object Noop : CompletableSpan {
