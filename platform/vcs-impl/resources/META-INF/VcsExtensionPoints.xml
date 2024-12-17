@@ -9,6 +9,9 @@
     <extensionPoint name="vcsRootChecker"
                     interface="com.intellij.openapi.vcs.VcsRootChecker"
                     dynamic="true"/>
+    <extensionPoint name="vcsRootErrorFilter"
+                    interface="com.intellij.openapi.vcs.VcsRootErrorFilter"
+                    dynamic="true"/>
     <extensionPoint name="vcsIgnoreChecker"
                     interface="com.intellij.openapi.vcs.VcsIgnoreChecker"
                     dynamic="true"/>

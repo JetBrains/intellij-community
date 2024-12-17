@@ -42,7 +42,7 @@ public final class VcsRootErrorsFinder {
     Collection<VcsRootError> errors = new ArrayList<>();
     errors.addAll(findExtraMappings(mappings));
     errors.addAll(findUnregisteredRoots(mappings, detectedRoots));
-    return errors;
+    return VcsRootErrorFilter.filter(myProject, errors);
   }
 
   @NotNull
