@@ -841,7 +841,6 @@ f:com.intellij.xdebugger.impl.inline.InlineWatch
 - f:getLine():I
 - f:getPosition():com.intellij.xdebugger.XSourcePosition
 - f:setMarker():Z
-- f:setPosition(com.intellij.xdebugger.XSourcePosition):V
 - f:updatePosition():Z
 c:com.intellij.xdebugger.impl.inline.InlineWatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode

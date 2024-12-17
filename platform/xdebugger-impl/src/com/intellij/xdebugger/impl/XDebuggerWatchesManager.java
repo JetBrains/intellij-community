@@ -35,7 +35,13 @@ import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class XDebuggerWatchesManager {
+  /**
+   * Maps run configuration to a list of watches.
+   */
   private final Map<String, List<XExpression>> watches = new ConcurrentHashMap<>();
+  /**
+   * Maps file URL to a set of inline watches.
+   */
   private final Map<String, Set<InlineWatch>> inlineWatches = new ConcurrentHashMap<>();
   private final MergingUpdateQueue myInlinesUpdateQueue;
   private final Project myProject;
@@ -53,8 +59,8 @@ public final class XDebuggerWatchesManager {
     myInlinesUpdateQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("XInlineWatches", 300, coroutineScope);
   }
 
-  public @NotNull List<XExpression> getWatches(String confName) {
-    return ContainerUtil.notNullize(watches.get(confName));
+  public @NotNull List<XExpression> getWatches(String configurationName) {
+    return ContainerUtil.notNullize(watches.get(configurationName));
   }
 
   public void setWatches(@NotNull String configurationName, @NotNull List<XExpression> expressions) {
@@ -146,12 +152,7 @@ public final class XDebuggerWatchesManager {
       final Document document = e.getDocument();
       Collection<InlineWatch> inlines = getDocumentInlines(document);
       if (!inlines.isEmpty()) {
-        myInlinesUpdateQueue.queue(new Update(document) {
-          @Override
-          public void run() {
-            updateInlines(document);
-          }
-        });
+        myInlinesUpdateQueue.queue(Update.create(document, () -> updateInlines(document)));
       }
     }
   }

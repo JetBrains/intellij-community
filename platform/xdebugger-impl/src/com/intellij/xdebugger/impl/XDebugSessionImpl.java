@@ -154,8 +154,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     String currentConfigurationName = computeConfigurationName();
     if (oldSessionData == null || !oldSessionData.getConfigurationName().equals(currentConfigurationName)) {
-      List<XExpression> watchExpressions = myDebuggerManager.getWatchesManager().getWatches(currentConfigurationName);
-      oldSessionData = new XDebugSessionData(watchExpressions, currentConfigurationName);
+      oldSessionData = new XDebugSessionData(myProject, currentConfigurationName);
     }
     mySessionData = oldSessionData;
   }

@@ -124,7 +124,6 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     List<InlineWatchNodeImpl> getChildren() {
       return myChildren;
     }
-
   }
 
 
@@ -133,9 +132,10 @@ public class InlineWatchesRootNode extends WatchesRootNode {
   @Unmodifiable
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> children = super.getLoadedChildren();
-    if(inlinesRootNodeIsShown()) {
+    if (inlinesRootNodeIsShown()) {
       return ContainerUtil.prepend(children, myInlinesRootNode);
-    } else {
+    }
+    else {
       return children;
     }
   }
@@ -145,9 +145,10 @@ public class InlineWatchesRootNode extends WatchesRootNode {
   @Unmodifiable
   public List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
-    if(myInlinesRootNode != null && inlinesRootNodeIsShown()) {
+    if (myInlinesRootNode != null && inlinesRootNodeIsShown()) {
       return ContainerUtil.prepend(children, myInlinesRootNode);
-    } else {
+    }
+    else {
       return children;
     }
   }
@@ -204,7 +205,8 @@ public class InlineWatchesRootNode extends WatchesRootNode {
   public void editWatch(@Nullable WatchNodeImpl node) {
     if (node instanceof InlineWatchNodeImpl) {
       new WatchInplaceEditor(this, myWatchesView, node, node).show();
-    } else {
+    }
+    else {
       super.editWatch(node);
     }
   }

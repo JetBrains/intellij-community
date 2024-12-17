@@ -40,8 +40,8 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     private final XStackFrame stackFrame;
     private final boolean watchesInVariables;
 
-    public RootContainerNode(@Nullable XStackFrame stackFrame,
-                             boolean watchesInVariables) {
+    RootContainerNode(@Nullable XStackFrame stackFrame,
+                      boolean watchesInVariables) {
       this.stackFrame = stackFrame;
       this.watchesInVariables = watchesInVariables;
     }
@@ -59,8 +59,9 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     @Nullable
     @Override
     public String getTag() {
-      if (stackFrame instanceof PinToTopParentValue)
-        return ((PinToTopParentValue) stackFrame).getTag();
+      if (stackFrame instanceof PinToTopParentValue pinToTopParentValue) {
+        return pinToTopParentValue.getTag();
+      }
       return null;
     }
   }
@@ -261,7 +262,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     int index = node != null ? myChildren.indexOf(node) : -1;
     if (index == -1) {
       int selectedIndex = myChildren.indexOf(ArrayUtil.getFirstElement(myTree.getSelectedNodes(WatchNodeImpl.class, null)));
-      int targetIndex = selectedIndex == - 1 ? myChildren.size() : selectedIndex + 1;
+      int targetIndex = selectedIndex == -1 ? myChildren.size() : selectedIndex + 1;
       messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, (XStackFrame)null);
       myChildren.add(targetIndex, messageNode);
       fireNodeInserted(targetIndex);
