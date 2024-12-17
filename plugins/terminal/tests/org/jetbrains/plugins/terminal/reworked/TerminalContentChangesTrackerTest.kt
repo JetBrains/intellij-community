@@ -64,6 +64,8 @@ internal class TerminalContentChangesTrackerTest {
       fourth
       fifth
       sixth
+      
+      
     """.trimIndent()
     assertEquals(expectedText, update.text)
     assertEquals(0, update.startLineLogicalIndex)
@@ -103,6 +105,8 @@ internal class TerminalContentChangesTrackerTest {
       fourth
       fifth
       sixth
+      
+      
     """.trimIndent()
     assertEquals(expectedText, update.text)
     assertEquals(1, update.startLineLogicalIndex)
