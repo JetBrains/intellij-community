@@ -35,7 +35,6 @@ import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.plugin.LegacySupport;
-import org.apache.maven.plugin.PluginResolutionException;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
@@ -803,9 +802,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         }
       };
 
-      DependencyNode node = resolvePluginDependencies(
-        pluginDependenciesResolver, plugin, pluginArtifact, dependencyFilter, remoteRepos, session
-      );
+      DependencyNode node = pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
 
       PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
       node.accept(nlg);
@@ -832,21 +829,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     finally {
       long totalTime = System.currentTimeMillis() - startTime;
       MavenServerGlobals.getLogger().debug("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
-    }
-  }
-
-  private static DependencyNode resolvePluginDependencies(PluginDependenciesResolver pluginDependenciesResolver,
-                                                          Plugin plugin,
-                                                          org.eclipse.aether.artifact.Artifact pluginArtifact,
-                                                          DependencyFilter dependencyFilter,
-                                                          List<RemoteRepository> remoteRepos,
-                                                          RepositorySystemSession session) throws PluginResolutionException {
-    // retry resolution twice because there seems to be a race condition leading to PluginResolutionException (as of Maven 4.0.0-rc-1)
-    try {
-      return pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
-    }
-    catch (PluginResolutionException firstException) {
-      return pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
     }
   }
 
