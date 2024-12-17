@@ -25,18 +25,23 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
                                       @Nullable DataContext dataContext) {
     if (activeVcs == null || !replaceVcsActionsFor(activeVcs, dataContext)) return null;
 
-    final ActionManager manager = ActionManager.getInstance();
-    final List<AnAction> actions = new ArrayList<>();
-
+    ActionManager manager = ActionManager.getInstance();
     ActionGroup vcsGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP);
-    ActionGroup vcsAwareGroup = (ActionGroup)ContainerUtil.find(vcsGroup.getChildren(null), action -> {
-      if (action instanceof CustomisedActionGroup o) action = o.getDelegate();
-      return action instanceof VcsQuickListPopupAction.VcsAware;
+    if (vcsGroup == null) return null;
+    return List.of(new ActionGroup() {
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return EMPTY_ARRAY;
+        final List<AnAction> actions = new ArrayList<>();
+        ActionGroup vcsAwareGroup = (ActionGroup)ContainerUtil.find(e.getUpdateSession().children(vcsGroup), action -> {
+          AnAction adjusted = action instanceof CustomisedActionGroup o ? o.getDelegate() : action;
+          return adjusted instanceof VcsQuickListPopupAction.VcsAware;
+        });
+        if (vcsAwareGroup != null) ContainerUtil.addAll(actions, e.getUpdateSession().children(vcsAwareGroup));
+        customizeActions(manager, actions);
+        return actions.toArray(EMPTY_ARRAY);
+      }
     });
-    if (vcsAwareGroup != null) ContainerUtil.addAll(actions, vcsAwareGroup.getChildren(null));
-
-    customizeActions(manager, actions);
-    return actions;
   }
 
   protected void customizeActions(@NotNull ActionManager manager, @NotNull List<? super AnAction> actions) {
