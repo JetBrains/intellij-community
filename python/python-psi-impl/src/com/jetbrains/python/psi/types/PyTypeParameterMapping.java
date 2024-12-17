@@ -227,14 +227,16 @@ public final class PyTypeParameterMapping {
     }
     else if (actualTypesDeque.size() == 0) {
       // [T1, T2, ...] <- []
+      boolean allMapped = true;
       for (PyType unmatchedType : expectedTypesDeque.toList()) {
         Couple<PyType> fallbackMapping = mapToFallback(unmatchedType, optionSet);
-        if (optionSet.contains(Option.MAP_WITH_DEFAULTS_STRICT) && fallbackMapping == null) {
-          return null;
+        allMapped = fallbackMapping != null;
+        if (!allMapped) {
+          break;
         }
-        ContainerUtil.addIfNotNull(centerMappedTypes, fallbackMapping);
-        sizeMismatch = fallbackMapping == null;
+        centerMappedTypes.add(fallbackMapping);
       }
+      sizeMismatch = !allMapped;
     }
     if (sizeMismatch) {
       return null;
@@ -274,7 +276,6 @@ public final class PyTypeParameterMapping {
   public enum Option {
     MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
     USE_DEFAULTS,
-    MAP_WITH_DEFAULTS_STRICT,
   }
 
   private static final class NullTolerantDeque<T> {

@@ -1085,8 +1085,7 @@ class PyTypeHintsInspection : PyInspection() {
 
           val mapping = PyTypeParameterMapping.mapByShape(typeParameters,
                                                           typeArguments,
-                                                          PyTypeParameterMapping.Option.USE_DEFAULTS,
-                                                          PyTypeParameterMapping.Option.MAP_WITH_DEFAULTS_STRICT)
+                                                          PyTypeParameterMapping.Option.USE_DEFAULTS)
           if (mapping == null) {
             val expectedMax = typeParameters.size
             val expectedMin = expectedMax - numOfDispensable
