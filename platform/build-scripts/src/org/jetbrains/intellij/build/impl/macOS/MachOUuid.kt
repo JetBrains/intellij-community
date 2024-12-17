@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl.macOS
 
 import com.intellij.openapi.util.SystemInfoRt
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
@@ -16,6 +15,7 @@ import java.util.*
 
 /**
  * Patches UUID value in the Mach-O [executable] with the [MacDistributionCustomizer.getDistributionUUID].
+ * No changes to the [executable] will be made if no re-signing can be performed.
  * Only single-arch 64-bit files are supported.
  */
 @ApiStatus.Internal
@@ -24,7 +24,8 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
     const val LC_UUID = 0x1b
   }
 
-  fun patch() {
+  suspend fun patch() {
+    val canBeSignedLocally = context.options.isInDevelopmentMode && SystemInfoRt.isMac
     Files.newByteChannel(executable, StandardOpenOption.READ, StandardOpenOption.WRITE).use { channel ->
       var buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
       channel.read(buffer)
@@ -57,9 +58,11 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
           buffer.putLong(newUuid.mostSignificantBits)
           buffer.putLong(newUuid.leastSignificantBits)
           buffer.flip()
-          channel.position(channel.position() - 16)
-          channel.write(buffer)
-          context.messages.info("new UUID of $executable: $newUuid")
+          if (context.isMacCodeSignEnabled || canBeSignedLocally) {
+            channel.position(channel.position() - 16)
+            channel.write(buffer)
+            context.messages.info("new UUID of $executable: $newUuid")
+          }
           return@use
         }
         else {
@@ -69,10 +72,8 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
       context.messages.error("LC_UUID not found in $executable")
     }
 
-    if (context.options.isInDevelopmentMode && SystemInfoRt.isMac) {
-      runBlocking {
-        runProcess(listOf("codesign", "-s", "-", "--force", executable.toString()))
-      }
+    if (canBeSignedLocally) {
+      runProcess(listOf("codesign", "--sign", "-", "--force", executable.toString()), inheritOut = true)
     }
   }
 }
