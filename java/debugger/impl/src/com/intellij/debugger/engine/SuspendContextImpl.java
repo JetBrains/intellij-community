@@ -134,6 +134,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
    * <p>
    * The scope is canceled when this suspend context is resumed.
    */
+  @ApiStatus.Experimental
   @NotNull
   public CoroutineScope getCoroutineScope() {
     return myCoroutineScope;
