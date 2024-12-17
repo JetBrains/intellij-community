@@ -3,6 +3,8 @@ package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.util.NlsContexts.ProgressText
+import com.intellij.platform.ide.progress.suspender.TaskSuspendable
 import com.intellij.platform.kernel.withKernel
 import fleet.kernel.*
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +31,7 @@ object TaskManager {
         return@tryWithEntities
       }
 
-      taskInfoEntity.setTaskStatus(TaskStatus.CANCELED)
+      taskInfoEntity.setTaskStatus(TaskStatus.Canceled)
     }
   }
 
@@ -39,11 +41,14 @@ object TaskManager {
    *
    * @param taskInfoEntity task to pause
    */
-  suspend fun pauseTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
+  suspend fun pauseTask(taskInfoEntity: TaskInfoEntity, reason: @ProgressText String? = null): Unit = withKernel {
     tryWithEntities(taskInfoEntity) {
-      // TODO Check that task can be suspended RDCT-1620
+      if (taskInfoEntity.suspendable is TaskSuspendable.NonSuspendable) {
+        LOG.error("Task ${taskInfoEntity.eid} is not suspendable")
+        return@tryWithEntities
+      }
 
-      taskInfoEntity.setTaskStatus(TaskStatus.PAUSED)
+      taskInfoEntity.setTaskStatus(TaskStatus.Paused(reason))
     }
   }
 
@@ -55,7 +60,7 @@ object TaskManager {
    */
   suspend fun resumeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     tryWithEntities(taskInfoEntity) {
-      taskInfoEntity.setTaskStatus(TaskStatus.RUNNING)
+      taskInfoEntity.setTaskStatus(TaskStatus.Running)
     }
   }
 
@@ -84,11 +89,11 @@ object TaskManager {
   private fun canChangeStatus(from: TaskStatus, to: TaskStatus): Boolean {
     return when (to) {
       // Task can be resumed only if it was suspended before
-      TaskStatus.RUNNING -> from == TaskStatus.PAUSED
+      is TaskStatus.Running -> from is TaskStatus.Paused
       // Task can be suspended only if it was running before
-      TaskStatus.PAUSED -> from == TaskStatus.RUNNING
+      is TaskStatus.Paused -> from is TaskStatus.Running
       // Task can be canceled from any status
-      TaskStatus.CANCELED -> true
+      is TaskStatus.Canceled -> true
     }
   }
 }

@@ -146,9 +146,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       taskInfo.statuses.collect { status ->
         LOG.trace { "Task status changed to $status, entityId=$entityId, title=$title" }
         when (status) {
-          TaskStatus.RUNNING -> { /* TODO RDCT-1620 */ }
-          TaskStatus.PAUSED -> { /* TODO RDCT-1620 */ }
-          TaskStatus.CANCELED -> context.cancel()
+          TaskStatus.Running -> { /* TODO RDCT-1620 */ }
+          is TaskStatus.Paused -> { /* TODO RDCT-1620 */ }
+          TaskStatus.Canceled -> context.cancel()
         }
       }
     }

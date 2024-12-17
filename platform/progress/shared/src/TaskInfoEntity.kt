@@ -69,9 +69,9 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
    * Indicates the current status of the task.
    *
    * The task can have one of the following statuses defined by [TaskStatus]:
-   * - [TaskStatus.RUNNING]: The task is currently in progress.
-   * - [TaskStatus.PAUSED]: The task has been temporarily paused.
-   * - [TaskStatus.CANCELED]: The task has been requested to stop, though it might still be running until it can be safely aborted.
+   * - [TaskStatus.Running]: The task is currently in progress.
+   * - [TaskStatus.Paused]: The task has been temporarily paused.
+   * - [TaskStatus.Canceled]: The task has been requested to stop, though it might still be running until it can be safely aborted.
    *
    * The status can be changed based on certain conditions:
    * - A running task can be suspended or canceled.

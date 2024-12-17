@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
+import com.intellij.openapi.util.NlsContexts
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -9,20 +10,24 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @Serializable
-enum class TaskStatus {
+sealed interface TaskStatus {
   /**
    * Indicates that a task is currently in progress.
-   * The task can be suspended ([PAUSED]), canceled ([CANCELED]) or finish without status change
+   * The task can be suspended ([Paused]), canceled ([Canceled]) or finish without status change
    */
-  RUNNING,
+  @Serializable
+  object Running : TaskStatus
 
   /**
    * Indicates that a task has been temporarily paused.
    *
-   * A task in this state may be resumed ([RUNNING]) or canceled ([CANCELED]).
+   * A task in this state may be resumed ([Running]) or canceled ([Canceled]).
    * It implies that the task has been running before suspension.
+   *
+   * @property reason a message, explaining the reason for the pause, to be displayed in the progress bar.
    */
-  PAUSED,
+  @Serializable
+  data class Paused(@NlsContexts.ProgressText val reason: String? = null) : TaskStatus
 
   /**
    * Indicates that a task has been requested to stop.
@@ -30,5 +35,6 @@ enum class TaskStatus {
    *
    * A task in this state cannot be resumed or paused anymore.
    */
-  CANCELED
+  @Serializable
+  object Canceled : TaskStatus
 }
