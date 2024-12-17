@@ -517,11 +517,6 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
     use std::collections::BTreeSet;
     use std::mem;
 
-    if is_fips() {
-      debug!("Unable to use libraries for self-contained distribution with FIPS enabled.");
-      return Ok(());
-    }
-
     let use_libs = parse_bool_env_var("REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS", true)?;
     if !use_libs {
         return Ok(())
@@ -617,12 +612,5 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
 fn is_wsl2() -> bool {
     fs::read_to_string("/proc/sys/kernel/osrelease")
         .map(|x| x.contains("WSL2"))
-        .unwrap_or(false)
-}
-
-#[cfg(target_os = "linux")]
-fn is_fips() -> bool {
-    fs::read_to_string("/proc/sys/crypto/fips_enabled")
-        .map(|x| x.contains("1"))
         .unwrap_or(false)
 }
