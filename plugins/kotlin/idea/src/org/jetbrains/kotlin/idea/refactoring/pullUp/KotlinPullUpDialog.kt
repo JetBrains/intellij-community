@@ -13,7 +13,7 @@ import com.intellij.refactoring.memberPullUp.PullUpProcessor
 import com.intellij.refactoring.util.DocCommentPolicy
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.*
@@ -156,7 +156,7 @@ class KotlinPullUpDialog(
                 sourceClass.toLightClass() ?: error("can't build lightClass for $sourceClass"),
                 targetPsiClass,
                 memberInfos.mapNotNull { it.toJavaMemberInfo() }.toTypedArray(),
-                DocCommentPolicy(KotlinRefactoringSettings.instance.PULL_UP_MEMBERS_JAVADOC)
+                DocCommentPolicy(KotlinCommonRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC)
             )
         }
     }

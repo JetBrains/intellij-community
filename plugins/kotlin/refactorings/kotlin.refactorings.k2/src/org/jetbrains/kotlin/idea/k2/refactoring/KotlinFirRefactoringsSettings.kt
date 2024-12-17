@@ -32,6 +32,10 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var INTRODUCE_DECLARE_WITH_VAR: Boolean = false
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean = false
 
+    var PULL_UP_MEMBERS_JAVADOC: Int = 0
+    
+    var PUSH_DOWN_PREVIEW_USAGES: Boolean = false
+
     var INLINE_METHOD_THIS: Boolean = false
     var INLINE_LOCAL_THIS: Boolean = false
     var INLINE_TYPE_ALIAS_THIS: Boolean = false
