@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.bindTextIn
@@ -44,7 +45,7 @@ class SearchEverywherePopupContentPane(private val vm: SearchEverywherePopupVm):
     RowsGridBuilder(this)
       .row().cell(tabsPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
-      .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
+      .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
 
     textField.bindTextIn(vm.searchPattern, vm.coroutineScope)
 
