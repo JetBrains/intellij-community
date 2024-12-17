@@ -173,7 +173,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
       }
     }
     catch (e: IOException) {
-      LOG.error("Cannot read $gpgAgentConf", e)
+      LOG.warn("Cannot read $gpgAgentConf", e)
       return null
     }
     return GpgAgentConfig(gpgAgentConf, config)
