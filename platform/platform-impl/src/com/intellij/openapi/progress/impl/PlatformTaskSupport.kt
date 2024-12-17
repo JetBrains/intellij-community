@@ -112,7 +112,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
     try {
       taskSuspender?.attachTask()
-      subscribeToTask(taskInfoEntity, context, pipe)
+      subscribeToTask(taskInfoEntity, context, taskSuspender, pipe)
       pipe.collectProgressUpdates(action)
     }
     finally {
@@ -132,26 +132,35 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
-  private fun CoroutineScope.subscribeToTask(taskInfo: TaskInfoEntity, taskContext: CoroutineContext, pipe: ProgressPipe) {
+  private fun CoroutineScope.subscribeToTask(
+    taskInfo: TaskInfoEntity,
+    taskContext: CoroutineContext,
+    taskSuspender: TaskSuspender?,
+    pipe: ProgressPipe,
+  ) {
     launch {
       withKernel {
         tryWithEntities(taskInfo) {
-          subscribeToTaskStatus(taskInfo, taskContext)
+          subscribeToTaskStatus(taskInfo, taskContext, taskSuspender)
           subscribeToTaskUpdates(taskInfo, pipe)
         }
       }
     }
   }
 
-  private fun CoroutineScope.subscribeToTaskStatus(taskInfo: TaskInfoEntity, context: CoroutineContext) {
+  private fun CoroutineScope.subscribeToTaskStatus(
+    taskInfo: TaskInfoEntity,
+    context: CoroutineContext,
+    taskSuspender: TaskSuspender?,
+  ) {
     launch {
       val title = taskInfo.title
       val entityId = taskInfo.eid
       taskInfo.statuses.collect { status ->
         LOG.trace { "Task status changed to $status, entityId=$entityId, title=$title" }
         when (status) {
-          TaskStatus.Running -> { /* TODO RDCT-1620 */ }
-          is TaskStatus.Paused -> { /* TODO RDCT-1620 */ }
+          is TaskStatus.Running -> taskSuspender?.resume()
+          is TaskStatus.Paused -> taskSuspender?.pause(status.reason)
           TaskStatus.Canceled -> context.cancel()
         }
       }
