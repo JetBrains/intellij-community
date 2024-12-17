@@ -99,6 +99,9 @@ internal class GpgAgentConfigurationNotificator(private val project: Project) {
     init {
       setDisplayId(displayId)
       setSuggestionType(isSuggestion)
+      configureDoNotAskOption(displayId,
+                              if (isSuggestion) GitBundle.message("gpg.pinentry.configuration.global.suggestion.do.not.ask.again.display.name")
+                              else GitBundle.message("gpg.pinentry.configuration.suggestion.do.not.ask.again.display.name"))
     }
 
     fun notifyExpirePrevious(project: Project) {
