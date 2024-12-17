@@ -1520,6 +1520,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckNegateForNull.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckWithWhenGuard.kt")
+        public void testRemoveUselessIsCheckWithWhenGuard() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/expressions/removeUselessIsCheckWithWhenGuard.kt");
+        }
+
         @TestMetadata("unnecessaryNonNullAssertion1.kt")
         public void testUnnecessaryNonNullAssertion1() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/unnecessaryNonNullAssertion1.kt");

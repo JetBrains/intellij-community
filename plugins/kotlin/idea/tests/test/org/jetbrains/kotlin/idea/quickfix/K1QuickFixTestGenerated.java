@@ -9588,6 +9588,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/expressions/removeUselessIsCheckNegateForNull.kt");
         }
 
+        @TestMetadata("removeUselessIsCheckWithWhenGuard.kt")
+        public void testRemoveUselessIsCheckWithWhenGuard() throws Exception {
+            runTest("testData/quickfix/expressions/removeUselessIsCheckWithWhenGuard.kt");
+        }
+
         @TestMetadata("unnecessaryNonNullAssertion1.kt")
         public void testUnnecessaryNonNullAssertion1() throws Exception {
             runTest("testData/quickfix/expressions/unnecessaryNonNullAssertion1.kt");

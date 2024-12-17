@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSu
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern, val compileTimeCheckResult: Boolean? = null) : KotlinPsiOnlyQuickFixAction<KtWhenConditionIsPattern>(element) {
     override fun getFamilyName(): String = KotlinBundle.message("remove.useless.is.check")
@@ -21,6 +22,7 @@ class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern, val comp
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val condition = element ?: return
         val whenEntry = condition.parent as? KtWhenEntry ?: return
+        if (whenEntry.guard != null) return
         val whenExpression = whenEntry.parent as? KtWhenExpression ?: return
 
         if (compileTimeCheckResult?.not() ?: condition.isNegated) {
@@ -36,6 +38,7 @@ class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern, val comp
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
             val expression = psiElement.getNonStrictParentOfType<KtWhenConditionIsPattern>() ?: return emptyList()
+            if (expression.getStrictParentOfType<KtWhenEntry>()?.guard != null) return emptyList()
             return listOf(RemoveUselessIsCheckFixForWhen(expression))
         }
     }
