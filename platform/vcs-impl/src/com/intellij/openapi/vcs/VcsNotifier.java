@@ -67,7 +67,7 @@ public class VcsNotifier {
    * {@link NotificationDisplayType#STICKY_BALLOON} notification that is NOT hidden automatically on timer
    */
   public static @NotNull NotificationGroup importantNotification() {
-    return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Important Messages");
+    return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Important Notifications");
   }
 
   /**
