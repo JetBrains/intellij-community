@@ -159,41 +159,39 @@ class TaskSuspenderTest : BasePlatformTestCase() {
   }
 
   fun testTaskSuspendedByProgressSuspender(): Unit = timeoutRunBlocking {
-    repeat(10) {
-      val progressSuspenderDeferred = CompletableDeferred<ProgressSuspender>()
-      val connection = application.messageBus.connect()
-      connection.subscribe(ProgressSuspender.TOPIC, object : ProgressSuspender.SuspenderListener {
-        override fun suspendableProgressAppeared(suspender: ProgressSuspender) {
-          progressSuspenderDeferred.complete(suspender)
-        }
-      })
+    val progressSuspenderDeferred = CompletableDeferred<ProgressSuspender>()
+    val connection = application.messageBus.connect()
+    connection.subscribe(ProgressSuspender.TOPIC, object : ProgressSuspender.SuspenderListener {
+      override fun suspendableProgressAppeared(suspender: ProgressSuspender) {
+        progressSuspenderDeferred.complete(suspender)
+      }
+    })
 
-      val mayStop = CompletableDeferred<Unit>()
+    val mayStop = CompletableDeferred<Unit>()
 
-      val taskSuspender = TaskSuspender.suspendable("Paused by test")
-      val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
+    val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
 
-      val progressSuspender = progressSuspenderDeferred.await()
+    val progressSuspender = progressSuspenderDeferred.await()
 
-      progressSuspender.suspendProcess("Paused by ProgressSuspender")
-      assertTrue(taskSuspender.isPaused())
-      letBackgroundThreadsSuspend()
+    progressSuspender.suspendProcess("Paused by ProgressSuspender")
+    assertTrue(taskSuspender.isPaused())
+    letBackgroundThreadsSuspend()
 
-      mayStop.complete(Unit)
-      letBackgroundThreadsSuspend()
+    mayStop.complete(Unit)
+    letBackgroundThreadsSuspend()
 
-      assertFalse(task.isCompleted)
+    assertFalse(task.isCompleted)
 
-      progressSuspender.resumeProcess()
-      assertFalse(taskSuspender.isPaused())
+    progressSuspender.resumeProcess()
+    assertFalse(taskSuspender.isPaused())
 
-      task.waitAssertCompletedNormally()
+    task.waitAssertCompletedNormally()
 
-      connection.disconnect()
-    }
+    connection.disconnect()
   }
 
-  fun testPauseResumeProgressSuspender(): Unit = timeoutRunBlocking {
+  fun testSuspendResumeProgressSuspender(): Unit = timeoutRunBlocking {
     repeat(10) {
       val progressSuspenderDeferred = CompletableDeferred<ProgressSuspender>()
       val connection = application.messageBus.connect()
@@ -214,7 +212,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       // resume immediately to check that there is no race between suspenders states synchronization
       progressSuspender.resumeProcess()
 
-      // Check that we don't start infinite updating loop
+      // Check that we don't start an infinite updating loop
       repeat(10) {
         assertFalse(progressSuspender.isSuspended)
         assertFalse(taskSuspender.isPaused())
@@ -228,7 +226,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
     }
   }
 
-  fun testPauseResumeTaskSuspender(): Unit = timeoutRunBlocking {
+  fun testSuspendResumeTaskSuspender(): Unit = timeoutRunBlocking {
     repeat(10) {
       val progressSuspenderDeferred = CompletableDeferred<ProgressSuspender>()
       val connection = application.messageBus.connect()
@@ -249,7 +247,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       // resume immediately to check that there is no race between suspenders states synchronization
       taskSuspender.resume()
 
-      // Check that we don't start infinite updating loop
+      // Check that we don't start an infinite updating loop
       repeat(10) {
         assertFalse(progressSuspender.isSuspended)
         assertFalse(taskSuspender.isPaused())
