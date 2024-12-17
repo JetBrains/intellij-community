@@ -78,7 +78,7 @@ object TaskManager {
 
   private fun TaskInfoEntity.trySetTaskStatus(newStatus: TaskStatus) {
     if (!canChangeStatus(from = taskStatus, to = newStatus)) {
-      LOG.info("Task status cannot be changed from ${taskStatus} to $newStatus")
+      LOG.trace { "Task status cannot be changed from ${taskStatus} to $newStatus" }
       return
     }
 

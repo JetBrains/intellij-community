@@ -35,6 +35,7 @@ import com.intellij.platform.ide.progress.suspender.TaskSuspendable
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElementKey
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
+import com.intellij.platform.ide.progress.suspender.TaskSuspenderState
 import com.intellij.platform.ide.progress.suspender.asContextElement
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
@@ -155,9 +156,20 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     context: CoroutineContext,
     taskSuspender: TaskSuspender?,
   ) {
+    val title = taskInfo.title
+    val entityId = taskInfo.eid
+
     launch {
-      val title = taskInfo.title
-      val entityId = taskInfo.eid
+      taskSuspender?.state?.collect { state ->
+        LOG.trace { "Task suspender state changed to $state, entityId=$entityId, title=$title" }
+        when (state) {
+          TaskSuspenderState.Active -> TaskManager.resumeTask(taskInfo)
+          is TaskSuspenderState.Paused -> TaskManager.pauseTask(taskInfo, state.suspendedReason)
+        }
+      }
+    }
+
+    launch {
       taskInfo.statuses.collect { status ->
         LOG.trace { "Task status changed to $status, entityId=$entityId, title=$title" }
         when (status) {
