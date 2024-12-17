@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
@@ -23,12 +24,11 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Extra spaces surrounding '='";
+        return DotEnvBundle.message("extra.spaces.surrounding");
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -37,7 +37,7 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvProperty.class).forEach(dotEnvProperty -> {
@@ -49,14 +49,11 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
                     .replaceFirst(Pattern.quote(value) + "$", "");
 
             if (separator.matches("([ \t]+=.*)|(.*=[ \t]+)")) {
-                problemsHolder.registerProblem(dotEnvProperty,
-                        new TextRange(
-                                dotEnvProperty.getKey().getText().length(), 
-                                dotEnvProperty.getKey().getText().length() + separator.length()
-                        ),
-                        "Extra spaces surrounding '='",
-                        new RemoveSpaceAroundSeparatorQuickFix()
-                );
+                problemsHolder.registerProblem(dotEnvProperty, new TextRange(dotEnvProperty.getKey().getText().length(),
+                                                                             dotEnvProperty.getKey().getText().length() +
+                                                                             separator.length()),
+                                               DotEnvBundle.message("inspection.message.extra.spaces.surrounding"),
+                                               new RemoveSpaceAroundSeparatorQuickFix());
             }
         });
 
@@ -68,7 +65,7 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
         @NotNull
         @Override
         public String getName() {
-            return "Remove spaces surrounding '='";
+            return DotEnvBundle.message("intention.name.remove.spaces.surrounding");
         }
 
         @Override

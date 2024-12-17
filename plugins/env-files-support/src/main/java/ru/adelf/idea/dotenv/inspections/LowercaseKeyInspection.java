@@ -9,10 +9,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvKey;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
+
+import java.util.Locale;
 
 public class LowercaseKeyInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
@@ -20,12 +23,11 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Key uses lowercase chars";
+        return DotEnvBundle.message("key.uses.lowercase.chars");
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -34,13 +36,13 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKey.class).forEach(dotEnvKey -> {
             if (dotEnvKey.getText().matches(".*[a-z].*")) {
                 problemsHolder.registerProblem(dotEnvKey,
-                        "Key uses lowercase chars. Only keys with uppercase chars are allowed."/*,
+                                               DotEnvBundle.message("inspection.message.key.uses.lowercase.chars.only.keys.with.uppercase.chars.are.allowed")/*,
                         new ForceUppercaseQuickFix()*/
                 );
             }
@@ -54,7 +56,7 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
         @NotNull
         @Override
         public String getName() {
-            return "Change to uppercase";
+            return DotEnvBundle.message("intention.name.change.to.uppercase");
         }
 
         @Override
@@ -63,7 +65,7 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
                 PsiElement psiElement = descriptor.getPsiElement();
 
                 PsiElement newPsiElement = DotEnvFactory.createFromText(project, DotEnvTypes.KEY,
-                        psiElement.getText().toUpperCase() +"=dummy");
+                                                                        psiElement.getText().toUpperCase(Locale.ROOT) + "=dummy");
 
                 psiElement.replace(newPsiElement);
             } catch (IncorrectOperationException e) {

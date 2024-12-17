@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
@@ -24,12 +25,11 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Value has trailing whitespace";
+        return DotEnvBundle.message("value.has.trailing.whitespace");
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -38,14 +38,14 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvValue.class).forEach(dotEnvValue -> {
             if (dotEnvValue.getText().matches(".*[ \\t]+")) {
                 problemsHolder.registerProblem(dotEnvValue,
                     new TextRange(dotEnvValue.getText().stripTrailing().length(), dotEnvValue.getText().length()),
-                    "Line has trailing whitespace.",
+                                               DotEnvBundle.message("inspection.message.line.has.trailing.whitespace"),
                     new TrailingWhitespaceInspection.RemoveTrailingWhitespaceQuickFix()
                 );
             }
@@ -54,7 +54,7 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
         PsiTreeUtil.findChildrenOfType(file, PsiWhiteSpaceImpl.class).forEach(whiteSpace -> {
             if (whiteSpace.getText().matches("\\s*[ \\t]\\n\\s*")) {
                 problemsHolder.registerProblem(whiteSpace,
-                    "Line has trailing whitespace.",
+                                               DotEnvBundle.message("inspection.message.line.has.trailing.whitespace"),
                     new TrailingWhitespaceInspection.RemoveTrailingWhitespaceQuickFix()
                 );
             }
@@ -68,7 +68,7 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
         @NotNull
         @Override
         public String getName() {
-            return "Remove trailing whitespace";
+            return DotEnvBundle.message("intention.name.remove.trailing.whitespace");
         }
 
         @Override

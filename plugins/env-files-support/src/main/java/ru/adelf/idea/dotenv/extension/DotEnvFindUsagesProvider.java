@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.grammars.DotEnvLexerAdapter;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
@@ -37,7 +38,7 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
     @Override
     public String getType(@NotNull PsiElement element) {
         if (element instanceof DotEnvProperty) {
-            return "Environment variable";
+            return DotEnvBundle.message("environment.variable");
         } else {
             return "";
         }
@@ -46,8 +47,8 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
     @NotNull
     @Override
     public String getDescriptiveName(@NotNull PsiElement element) {
-        if (element instanceof DotEnvProperty) {
-            return ((DotEnvProperty) element).getKeyText();
+        if (element instanceof DotEnvProperty property) {
+            return property.getKeyText();
         } else {
             return "";
         }
@@ -56,8 +57,8 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
     @NotNull
     @Override
     public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
-        if (element instanceof DotEnvProperty) {
-            return ((DotEnvProperty) element).getKeyText() + ":" + ((DotEnvProperty) element).getValueText();
+        if (element instanceof DotEnvProperty property) {
+            return property.getKeyText() + ":" + property.getValueText();
         } else {
             return "";
         }

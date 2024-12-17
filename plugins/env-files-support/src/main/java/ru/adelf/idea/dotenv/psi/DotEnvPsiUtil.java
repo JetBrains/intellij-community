@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class DotEnvPsiUtil {
+public final class DotEnvPsiUtil {
     public static String getKeyText(DotEnvProperty element) {
         // IMPORTANT: Convert embedded escaped spaces to simple spaces
         return element.getKey().getText().replaceAll("\\\\ ", " ");

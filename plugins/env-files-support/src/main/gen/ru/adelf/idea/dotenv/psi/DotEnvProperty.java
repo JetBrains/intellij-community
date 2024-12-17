@@ -2,6 +2,8 @@
 package ru.adelf.idea.dotenv.psi;
 
 import java.util.List;
+
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
@@ -13,9 +15,9 @@ public interface DotEnvProperty extends DotEnvNamedElement {
   @Nullable
   DotEnvValue getValue();
 
-  String getKeyText();
+  @NlsSafe String getKeyText();
 
-  String getValueText();
+  @NlsSafe String getValueText();
 
   String getName();
 

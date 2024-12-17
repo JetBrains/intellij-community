@@ -8,11 +8,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvPsiElementsVisitor;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class DuplicateKeyInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
@@ -20,7 +24,7 @@ public class DuplicateKeyInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Duplicate key";
+        return DotEnvBundle.message("inspection.message.duplicate.key");
     }
 
     @Override
@@ -39,7 +43,7 @@ public class DuplicateKeyInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         DotEnvPsiElementsVisitor visitor = new DotEnvPsiElementsVisitor();
         file.acceptChildren(visitor);
 
@@ -51,11 +55,11 @@ public class DuplicateKeyInspection extends LocalInspectionTool {
             final String key = keyValue.getKey();
 
             if(existingKeys.containsKey(key)) {
-                problemsHolder.registerProblem(keyValue.getElement(), "Duplicate key");
+                problemsHolder.registerProblem(keyValue.getElement(), DotEnvBundle.message("inspection.message.duplicate.key"));
 
                 PsiElement markedElement = existingKeys.get(key);
                 if(!markedElements.contains(markedElement)) {
-                    problemsHolder.registerProblem(markedElement, "Duplicate key");
+                    problemsHolder.registerProblem(markedElement, DotEnvBundle.message("inspection.message.duplicate.key"));
                     markedElements.add(markedElement);
                 }
             } else {

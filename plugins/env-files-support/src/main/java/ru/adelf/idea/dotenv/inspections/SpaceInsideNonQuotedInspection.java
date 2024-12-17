@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
@@ -23,19 +24,18 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Space inside non-quoted value";
+        return DotEnvBundle.message("space.inside.non.quoted.value");
     }
 
-    private AddQuotesQuickFix addQuotesQuickFix = new AddQuotesQuickFix();
+    private final AddQuotesQuickFix addQuotesQuickFix = new AddQuotesQuickFix();
 
     @Override
     public boolean runForWholeFile() {
         return true;
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -52,7 +52,8 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
             // first child QUOTE -> quoted value
             if(dotEnvValue.getFirstChild().getNode().getElementType() == DotEnvTypes.VALUE_CHARS) {
                 if (dotEnvValue.getText().trim().contains(" ")) {
-                    problemsHolder.registerProblem(dotEnvValue, "Space inside allowed only for quoted values", addQuotesQuickFix);
+                    problemsHolder.registerProblem(dotEnvValue,
+                                                   DotEnvBundle.message("inspection.message.space.inside.allowed.only.for.quoted.values"), addQuotesQuickFix);
                 }
             }
         });
@@ -65,7 +66,7 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
         @NotNull
         @Override
         public String getName() {
-            return "Add quotes";
+            return DotEnvBundle.message("intention.name.add.quotes");
         }
 
         /**

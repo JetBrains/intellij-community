@@ -23,7 +23,7 @@ public class DotEnvFileType extends LanguageFileType {
     @NotNull
     @Override
     public String getDescription() {
-        return ".env file";
+        return DotEnvBundle.message("label.env.file");
     }
 
     @NotNull

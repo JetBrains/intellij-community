@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvKey;
 
@@ -17,12 +18,11 @@ public class LeadingCharacterInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return "Invalid leading character";
+        return DotEnvBundle.message("invalid.leading.character");
     }
-
-    @Nullable
+    
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -31,7 +31,7 @@ public class LeadingCharacterInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKey.class).forEach(dotEnvKey -> {
@@ -39,7 +39,7 @@ public class LeadingCharacterInspection extends LocalInspectionTool {
             // same for dash (-> IncorrectDelimiter
             if (!dotEnvKey.getText().matches("[A-Za-z_-].*")){
                 problemsHolder.registerProblem(dotEnvKey,
-                        "Invalid first char for a key. Only A-Z and '_' are allowed.");
+                                               DotEnvBundle.message("inspection.message.invalid.first.char.for.key.only.z.are.allowed"));
             }
         });
 
