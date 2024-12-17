@@ -195,7 +195,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       if (statement.getResourceList() != null) {
-        throw new EvaluateRuntimeException(new UnsupportedExpressionException("Try with resources is not yet supported"));
+        throw unsupportedExpression("Try with resources is not yet supported");
       }
       Evaluator bodyEvaluator = accept(statement.getTryBlock());
       if (bodyEvaluator != null) {
@@ -245,7 +245,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-      throw new EvaluateRuntimeException(new UnsupportedExpressionException("Synchronized is not yet supported"));
+      throw unsupportedExpression("Synchronized is not yet supported");
     }
 
     @Override
@@ -978,6 +978,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       return new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(message));
     }
 
+    @Contract(pure = true) // to warn about unused result
+    private static EvaluateRuntimeException unsupportedExpression(String message) throws EvaluateRuntimeException {
+      return new EvaluateRuntimeException(new UnsupportedExpressionException(message));
+    }
+
     @Override
     public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       if (LOG.isDebugEnabled()) {
@@ -1217,8 +1222,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (psiMethod != null) {
         signature = JVMNameUtil.getJVMSignature(psiMethod);
         if (AnnotationUtil.isAnnotated(psiMethod, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
-          throw new EvaluateRuntimeException(new UnsupportedExpressionException(
-            JavaDebuggerBundle.message("evaluation.error.signature.polymorphic.call.evaluation.not.supported")));
+          throw unsupportedExpression(JavaDebuggerBundle.message("evaluation.error.signature.polymorphic.call.evaluation.not.supported"));
         }
 
         PsiClass methodPsiClass = psiMethod.getContainingClass();
@@ -1433,8 +1437,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
-      throw new EvaluateRuntimeException(new UnsupportedExpressionException(
-        JavaDebuggerBundle.message("evaluation.error.lambda.evaluation.not.supported")));
+      throw unsupportedExpression(JavaDebuggerBundle.message("evaluation.error.lambda.evaluation.not.supported"));
     }
 
     @Override
@@ -1510,8 +1513,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           LOG.error(e);
         }
       }
-      throw new EvaluateRuntimeException(
-        new UnsupportedExpressionException(JavaDebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
+      throw unsupportedExpression(JavaDebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported"));
     }
 
     private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
@@ -1538,7 +1540,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
         else if (dimensions.length > 1) {
-          throw evaluateException(JavaDebuggerBundle.message("evaluation.error.multi.dimensional.arrays.creation.not.supported"));
+          throw unsupportedExpression(JavaDebuggerBundle.message("evaluation.error.multi.dimensional.arrays.creation.not.supported"));
         }
 
         Evaluator initializerEvaluator = null;
@@ -1581,8 +1583,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       else if (expressionPsiType instanceof PsiClassType) { // must be a class ref
         PsiClass aClass = CompilingEvaluatorTypesUtil.getClass((PsiClassType)expressionPsiType);
         if (aClass instanceof PsiAnonymousClass) {
-          throw new EvaluateRuntimeException(new UnsupportedExpressionException(
-            JavaDebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported")));
+          throw unsupportedExpression(JavaDebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported"));
         }
         PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList == null) {
