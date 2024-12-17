@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.server.m40;
+package com.intellij.maven.server.m40.utils;
 
-import com.intellij.maven.server.m40.utils.Maven40TransferListenerAdapter;
-import com.intellij.maven.server.m40.utils.Maven40WorkspaceMapReader;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.resolver.RepositorySystemSessionFactory;
 import org.eclipse.aether.ConfigurationProperties;
@@ -16,14 +14,14 @@ import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class IdeaRepositorySystemSessionFactory implements RepositorySystemSessionFactory {
+public class Maven40RepositorySystemSessionFactory implements RepositorySystemSessionFactory {
   private final RepositorySystemSessionFactory mySystemSessionFactory;
   private final MavenWorkspaceMap myWorkspaceMap;
   private final MavenServerConsoleIndicatorImpl myIndicator;
 
-  public IdeaRepositorySystemSessionFactory(RepositorySystemSessionFactory systemSessionFactory,
-                                            MavenWorkspaceMap map,
-                                            MavenServerConsoleIndicatorImpl indicator) {
+  public Maven40RepositorySystemSessionFactory(RepositorySystemSessionFactory systemSessionFactory,
+                                               MavenWorkspaceMap map,
+                                               MavenServerConsoleIndicatorImpl indicator) {
     mySystemSessionFactory = systemSessionFactory;
     myWorkspaceMap = map;
     myIndicator = indicator;

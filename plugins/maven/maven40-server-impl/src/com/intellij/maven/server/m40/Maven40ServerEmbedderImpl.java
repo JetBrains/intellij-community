@@ -10,7 +10,6 @@ import org.apache.maven.api.*;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.api.cli.ParserException;
 import org.apache.maven.api.cli.ParserRequest;
-import org.apache.maven.api.cli.extensions.CoreExtension;
 import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
@@ -21,12 +20,8 @@ import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cling.invoker.ProtoLookup;
-import org.apache.maven.cling.invoker.mvn.MavenContext;
-import org.apache.maven.cling.invoker.mvn.MavenInvoker;
 import org.apache.maven.cling.invoker.mvn.MavenInvokerRequest;
 import org.apache.maven.cling.invoker.mvn.MavenParser;
-import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenContext;
-import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenInvoker;
 import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
@@ -69,8 +64,6 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -82,7 +75,7 @@ import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertR
 import static org.apache.maven.cling.invoker.Utils.getCanonicalPath;
 
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
-  @NotNull private final Maven40ServerEmbedderImpl.IdeaMavenInvoker myMavenInvoker;
+  @NotNull private final Maven40Invoker myMavenInvoker;
   @NotNull private final Lookup myContainer;
   @NotNull private final Settings myMavenSettings;
 
@@ -95,113 +88,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull private final Maven40ImporterSpy myImporterSpy;
 
   @NotNull protected final MavenEmbedderSettings myEmbedderSettings;
-
-  static class IdeaMavenInvokerRequest extends MavenInvokerRequest {
-    IdeaMavenInvokerRequest(ParserRequest parserRequest,
-                            Path cwd,
-                            Path installationDirectory,
-                            Path userHomeDirectory,
-                            Map<String, String> userProperties,
-                            Map<String, String> systemProperties,
-                            Path topDirectory,
-                            Path rootDirectory,
-                            InputStream in,
-                            OutputStream out,
-                            OutputStream err,
-                            List<CoreExtension> coreExtensions,
-                            List<String> jvmArguments,
-                            MavenOptions options) {
-      super(parserRequest, cwd, installationDirectory, userHomeDirectory, userProperties, systemProperties, topDirectory, rootDirectory, in,
-            out, err, coreExtensions, jvmArguments, options);
-    }
-
-    private boolean coreExtensionsDisabled = false;
-
-    void disableCoreExtensions() {
-      coreExtensionsDisabled = true;
-    }
-
-    @Override
-    public Optional<List<CoreExtension>> coreExtensions() {
-      if (coreExtensionsDisabled) return Optional.empty();
-      return super.coreExtensions();
-    }
-  }
-
-  static class IdeaMavenInvoker extends ResidentMavenInvoker {
-    ResidentMavenContext myContext = null;
-
-    IdeaMavenInvoker(ProtoLookup protoLookup) {
-      super(protoLookup);
-    }
-
-    @Override
-    protected int doInvoke(ResidentMavenContext context) throws Exception {
-      pushCoreProperties(context);
-      validate(context);
-      prepare(context);
-      configureLogging(context);
-      createTerminal(context);
-      activateLogging(context);
-      helpOrVersionAndMayExit(context);
-      preCommands(context);
-      tryRunAndRetryOnFailure(
-        "container",
-        () -> container(context),
-        () -> ((IdeaMavenInvokerRequest)context.invokerRequest).disableCoreExtensions()
-      );
-      postContainer(context);
-      pushUserProperties(context);
-      lookup(context);
-      init(context);
-      postCommands(context);
-      tryRun(
-        "settings",
-        () -> settings(context),
-        () -> context.localRepositoryPath = localRepositoryPath(context)
-      );
-      //return execute(context);
-      myContext = context;
-      return 0;
-    }
-
-    /**
-     * adapted from {@link MavenInvoker#execute(MavenContext)}
-     */
-    protected MavenExecutionRequest createMavenExecutionRequest() throws Exception {
-      ResidentMavenContext context = myContext;
-      MavenExecutionRequest request = prepareMavenExecutionRequest();
-      toolchains(context, request);
-      populateRequest(context, context.lookup, request);
-      //return doExecute(context, request);
-      return request;
-    }
-
-    private boolean tryRun(String methodName, ThrowingRunnable action, Runnable onFailure) {
-      try {
-        action.run();
-      }
-      catch (Exception e) {
-        warn("IdeaMavenInvoker." + methodName + ": " + e.getMessage(), e);
-        if (null != onFailure) {
-          onFailure.run();
-        }
-        return false;
-      }
-      return true;
-    }
-
-    private void tryRunAndRetryOnFailure(String methodName, ThrowingRunnable action, Runnable onFailure) {
-      if (!tryRun(methodName, action, onFailure)) {
-        tryRun(methodName, action, null);
-      }
-    }
-
-    @FunctionalInterface
-    interface ThrowingRunnable {
-      void run() throws Exception;
-    }
-  }
 
   public Maven40ServerEmbedderImpl(MavenEmbedderSettings settings) {
     myEmbedderSettings = settings;
@@ -217,7 +103,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     myConsoleWrapper.setThreshold(serverSettings.getLoggingLevel());
 
     ClassWorld classWorld = new ClassWorld("plexus.core", Thread.currentThread().getContextClassLoader());
-    myMavenInvoker = new IdeaMavenInvoker(ProtoLookup.builder().addMapping(ClassWorld.class, classWorld).build());
+    myMavenInvoker = new Maven40Invoker(ProtoLookup.builder().addMapping(ClassWorld.class, classWorld).build());
     String userHomeProperty = System.getProperty("user.home");
     String userHome = userHomeProperty == null ? multiModuleProjectDirectory : userHomeProperty;
     Path mavenHomeDirectory = getCanonicalPath(Paths.get(mavenHome));
@@ -290,7 +176,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenParser mavenParser = new MavenParser() {
       @Override
       protected MavenInvokerRequest getInvokerRequest(LocalContext context) {
-        return new IdeaMavenInvokerRequest(
+        return new Maven40InvokerRequest(
           context.parserRequest,
           context.cwd,
           context.installationDirectory,
@@ -329,8 +215,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       throw new RuntimeException(e);
     }
 
-    myMavenInvoker.invoke(invokerRequest);
-    myContainer = myMavenInvoker.myContext.lookup;
+    myContainer = myMavenInvoker.invokeAndGetContext(invokerRequest).lookup;
 
     SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
 
@@ -683,7 +568,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                       @Nullable MavenServerConsoleIndicatorImpl indicator,
                                                       Consumer<MavenSession> runnable) {
     RepositorySystemSessionFactory rsf = getComponent(RepositorySystemSessionFactory.class);
-    IdeaRepositorySystemSessionFactory irsf = new IdeaRepositorySystemSessionFactory(
+    Maven40RepositorySystemSessionFactory irsf = new Maven40RepositorySystemSessionFactory(
       rsf,
       workspaceMap,
       indicator
