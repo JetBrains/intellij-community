@@ -165,9 +165,7 @@ open class MarketplacePluginDownloadService {
   private fun guessPluginFilenameAndRenameDownloadedFile(contentDisposition: String?, url: String, file: Path, pluginUrl: String): Path {
     val fileName = guessFileName(contentDisposition, url, file, pluginUrl)
     val newFile = file.resolveSibling(fileName)
-    if (newFile != file) {
-      file.moveTo(newFile)
-    }
+    file.moveTo(newFile, overwrite = true)
     return newFile
   }
 
