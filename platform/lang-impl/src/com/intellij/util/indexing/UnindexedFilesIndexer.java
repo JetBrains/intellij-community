@@ -14,7 +14,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ExceptionUtil;
@@ -32,49 +32,71 @@ import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.FileIndexingRequest;
 import io.opentelemetry.api.trace.SpanBuilder;
 import kotlin.jvm.functions.Function0;
-import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 
 /**
- * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.,
+ * UnindexedFilesIndexer is to index files: explicitly provided (see {@linkplain PerProjectIndexingQueue}), and implicitly marked as dirty, e.g.,
  * by VFS (as reported by FileBasedIndexImpl#getFilesToUpdate).
  */
 @Internal
 public final class UnindexedFilesIndexer extends DumbModeTask {
+  private record IndexingReason(@NonNls @NotNull String reason, int counter) {
+    @Override
+    public String toString() {
+      if (counter > 1) {
+        return reason + " (x" + counter + ")";
+      }
+      else {
+        return reason;
+      }
+    }
+  }
+
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
   private final @NotNull Project myProject;
   private final FileBasedIndexImpl myIndex;
-  private final @NotNull QueuedFiles files;
-  private final @NonNls @NotNull String indexingReason;
+  private final @NotNull List<IndexingReason> indexingReasons;
   private final IncompleteIndexingToken taskToken;
+  private final @Nullable PerProjectIndexingQueue customFilesSource;
 
   UnindexedFilesIndexer(@NotNull Project project,
                         @NonNls @NotNull String indexingReason) {
-    this(project, new QueuedFiles(), indexingReason);
+    this(project, null, indexingReason);
   }
 
   /**
-   * if `files` is empty, only FileBasedIndexImpl#getFilesToUpdate files will be indexed.
-   * <p>
-   * if `files` is not empty, `files` will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
+   * If customFilesSource is NOT null,
+   * then files from customFilesSource will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
+   * (files from PerProjectIndexingQueue are not indexed in this case)
+   * <br>
+   * If customFilesSource is null,
+   * then files from PerProjectIndexingQueue will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
    */
-  @ApiStatus.Experimental
+  @VisibleForTesting
   public UnindexedFilesIndexer(@NotNull Project project,
-                               @NotNull QueuedFiles files,
+                               @Nullable PerProjectIndexingQueue customFilesSource,
                                @NonNls @NotNull String indexingReason) {
-    myProject = project;
-    myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    this.files = files;
-    this.indexingReason = indexingReason;
-    taskToken = myProject.getService(ProjectIndexingDependenciesService.class).newIncompleteIndexingToken();
+    this(project, customFilesSource, Collections.singletonList(new IndexingReason(indexingReason, 1)));
   }
 
+  private UnindexedFilesIndexer(@NotNull Project project,
+                                @Nullable PerProjectIndexingQueue customFilesSource,
+                                @NotNull List<@NotNull IndexingReason> indexingReasons) {
+    myProject = project;
+    myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    this.customFilesSource = customFilesSource;
+    this.indexingReasons = indexingReasons;
+    taskToken = myProject.getService(ProjectIndexingDependenciesService.class).newIncompleteIndexingToken();
+  }
 
   private ProgressIndicator unwrapAll(ProgressIndicator indicator) {
     // Can't use "ProgressWrapper.unwrapAll" here because it unwraps "ProgressWrapper"s only (not any "WrappedProgressIndicator")
@@ -93,8 +115,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     SpanBuilder spanBuilder = TelemetryManager.getInstance().getTracer(Indexes).spanBuilder("InternalSpanForIndexingDiagnostic");
     TraceKt.use(spanBuilder, span -> {
-      projectDumbIndexingHistory.setScanningIds(files.getScanningIds());
-
       PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
       ProgressIndicator poweredIndicator =
@@ -121,7 +141,10 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     var originalSuspender = ProgressSuspender.getSuspender(unwrapAll(indicator));
     Function0<Boolean> pauseCondition = originalSuspender == null ? () -> false : originalSuspender::isSuspended;
 
-    IndexUpdateRunner.FileSet fileSets = getExplicitlyRequestedFilesSets(pauseCondition);
+    QueuedFiles queuedFiles = getExplicitlyRequestedFiles();
+    projectDumbIndexingHistory.setScanningIds(queuedFiles.getScanningIds());
+
+    IndexUpdateRunner.FileSet fileSets = getExplicitlyRequestedFilesSets(pauseCondition, queuedFiles);
     if (!fileSets.isEmpty()) {
       var reporter = IndexingProgressReporter2.Companion.createInstance(indicator, fileSets.size());
       doIndexFiles(projectDumbIndexingHistory, indexUpdateRunner, fileSets, reporter);
@@ -145,7 +168,19 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
                                          pauseCondition);
   }
 
-  private IndexUpdateRunner.@NotNull FileSet getExplicitlyRequestedFilesSets(@NotNull Function0<@NotNull Boolean> pauseCondition) {
+  private @NotNull QueuedFiles getExplicitlyRequestedFiles() {
+    PerProjectIndexingQueue sourceQueue;
+    if (customFilesSource != null) {
+      sourceQueue = customFilesSource;
+    }
+    else {
+      sourceQueue = myProject.getService(PerProjectIndexingQueue.class);
+    }
+    return sourceQueue.getAndResetQueuedFiles$intellij_platform_lang_impl();
+  }
+
+  private IndexUpdateRunner.@NotNull FileSet getExplicitlyRequestedFilesSets(@NotNull Function0<@NotNull Boolean> pauseCondition,
+                                                                             QueuedFiles files) {
     return new IndexUpdateRunner.FileSet(myProject, "<indexing queue>", files, pauseCondition);
   }
 
@@ -256,25 +291,32 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   @Override
   public @Nullable UnindexedFilesIndexer tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
     if (!(taskFromQueue instanceof UnindexedFilesIndexer otherIndexingTask)) return null;
-    QueuedFiles otherQueue = otherIndexingTask.files;
+    if (otherIndexingTask.customFilesSource != customFilesSource) {
+      LOG.error("Indexing tasks with different sources should not appear in the same task queue. " +
+                "This is likely a bug in a test (custom sources is a test-only feature)");
+      return null;
+    }
 
-    QueuedFiles mergedQueue = new QueuedFiles();
-    mergedQueue.addRequests$intellij_platform_lang_impl(files.getRequests(), files.getScanningIds());
-    mergedQueue.addRequests$intellij_platform_lang_impl(otherQueue.getRequests(), otherQueue.getScanningIds());
-
-    String mergedReason = mergeReasons(otherIndexingTask);
-    return new UnindexedFilesIndexer(myProject, mergedQueue, mergedReason);
+    List<IndexingReason> mergedReason = mergeReasons(otherIndexingTask);
+    return new UnindexedFilesIndexer(myProject, customFilesSource, mergedReason);
   }
 
-  private @NotNull String mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
-    String trimmedReason = StringUtil.trimStart(indexingReason, "Merged ");
-    String trimmedOtherReason = StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
-    if (otherIndexingTask.files.isEmpty() && trimmedReason.endsWith(trimmedOtherReason)) {
-      return indexingReason;
+  private List<IndexingReason> mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
+    TreeMap<String, IndexingReason> mergedReasons = new TreeMap<>(); // to preserve the order
+    for (IndexingReason reason : indexingReasons) {
+      mergedReasons.put(reason.reason, reason);
     }
-    else {
-      return "Merged " + trimmedReason + " with " + trimmedOtherReason;
+    for (IndexingReason reason : otherIndexingTask.indexingReasons) {
+      var existingReason = mergedReasons.get(reason.reason);
+      if (existingReason != null) {
+        mergedReasons.put(existingReason.reason, new IndexingReason(existingReason.reason, existingReason.counter + reason.counter));
+      }
+      else {
+        mergedReasons.put(reason.reason, reason);
+      }
     }
+
+    return new ArrayList<>(mergedReasons.values());
   }
 
   private static double getPowerForSmoothProgressIndicator() {
@@ -290,18 +332,21 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
   }
 
-  @TestOnly
-  @NotNull
-  QueuedFiles getFiles() {
-    return files;
-  }
-
   public @NotNull String getIndexingReason() {
-    return indexingReason;
+    if (indexingReasons.size() == 1) {
+      return indexingReasons.get(0).toString();
+    }
+    else if (indexingReasons.size() > 1) {
+      return "Merged " + Strings.join(indexingReasons, " with ");
+    }
+    else {
+      LOG.error("indexingReasons should never be empty");
+      return "<unknown>";
+    }
   }
 
   @Override
   public String toString() {
-    return "UnindexedFilesIndexer[" + myProject.getName() + ", " + files.getSize() + " files, reason: " + indexingReason + "]";
+    return "UnindexedFilesIndexer[" + myProject.getName() + ", reasons: " + indexingReasons + "]";
   }
 }

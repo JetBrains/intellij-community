@@ -141,6 +141,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
                   } finally {
                     // Scanning may throw exception (or error).
                     // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
+                    // TODO: we should flush the queue before setting the future, otherwise we have a race in UnindexedFilesScannerTest:
+                    //  it clears "allowFlushing" after future is set, expecting that if flush might be called, it had already been called
                     val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
                     if (!indexingScheduled) {
                       modCount.incrementAndGet()

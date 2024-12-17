@@ -110,6 +110,8 @@ class PerProjectIndexingQueue(private val project: Project) {
     // Files that will be re-indexed
     private val requestsSoFar: MutableStateFlow<PersistentSet<FileIndexingRequest>> = MutableStateFlow(persistentSetOf())
 
+    internal fun currentFilesCount(): Int = requestsSoFar.value.size
+
     internal val estimatedFilesCount: Flow<Int> = requestsSoFar.map { it.size }
 
     // Ids of scannings from which [filesSoFar] came
@@ -179,10 +181,18 @@ class PerProjectIndexingQueue(private val project: Project) {
       LOG.info("Flushing is not allowed at the moment")
       return false
     }
-    val snapshot = getAndResetQueuedFiles()
-    return if (snapshot.size > 0) {
+
+    val queuedFilesCount = queuedFilesLock.readLock().withLock {
+      // note: read lock only ensures that reference to queuedFiles does change during the operation,
+      // so we can safely invoke queuedFiles.value. List of queued files may change (currentFilesCount may change)
+      // In order to prevent currentFilesCount changing, we need a write lock. At the moment this is not a problem, because
+      // currentFilesCount may only grow, and it is expected that this number may change immediately after we release the lock.
+      queuedFiles.value.currentFilesCount()
+    }
+
+    return if (queuedFilesCount > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
-      UnindexedFilesIndexer(project, snapshot, reason).queue(project)
+      UnindexedFilesIndexer(project, reason).queue(project)
       true
     }
     else {
@@ -196,18 +206,24 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   @TestOnly
-  fun <T> getFilesSubmittedDuring(block: () -> T): Pair<T, Collection<FileIndexingRequest>> {
+  fun <T> disableFlushingDuring(block: () -> T): T {
     allowFlushing = false
     try {
-      val result: T = block()
-      return Pair(result, getAndResetQueuedFiles().requests)
+      return block()
     }
     finally {
       allowFlushing = true
     }
   }
 
-  private fun getAndResetQueuedFiles(): QueuedFiles {
+  @TestOnly
+  fun getQueuedFiles(): QueuedFiles {
+    return queuedFilesLock.readLock().withLock {
+      queuedFiles.value
+    }
+  }
+
+  internal fun getAndResetQueuedFiles(): QueuedFiles {
     return queuedFilesLock.writeLock().withLock {
       queuedFiles.getAndUpdate { QueuedFiles() }
     }
