@@ -10,9 +10,7 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.impl.utils.getEelApi
-import com.intellij.platform.eel.impl.utils.getEelApiBlocking
 import com.intellij.platform.eel.impl.utils.getEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.jetbrains.annotations.ApiStatus
@@ -85,6 +83,6 @@ class EelGradleExecutionAware : GradleExecutionAware {
            && projectFilePath != null
            && WSLUtil.isSystemCompatible()
            && WslPath.getDistributionByWindowsUncPath(projectFilePath!!) != null
-           && getEelApiBlocking() !is LocalEelApi
+           && getEelDescriptor() !is LocalEelDescriptor
   }
 }
