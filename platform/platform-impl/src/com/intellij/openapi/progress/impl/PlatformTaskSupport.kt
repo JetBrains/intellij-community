@@ -113,7 +113,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     try {
       taskSuspender?.attachTask()
       subscribeToTask(taskInfoEntity, context, taskSuspender, pipe)
-      pipe.collectProgressUpdates(action)
+      withContext(taskSuspender?.asContextElement() ?: EmptyCoroutineContext) {
+        pipe.collectProgressUpdates(action)
+      }
     }
     finally {
       LOG.trace { "Task finished: entityId=$entityId, title=$title" }
