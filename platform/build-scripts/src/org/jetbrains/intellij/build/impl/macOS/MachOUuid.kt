@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.macOS
 
+import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
@@ -13,6 +14,7 @@ import java.util.*
 
 /**
  * Patches UUID value in the Mach-O [executable] with the [MacDistributionCustomizer.getDistributionUUID].
+ * No changes to the [executable] will be made if no re-signing can be performed.
  * Only single-arch 64-bit files are supported.
  */
 @ApiStatus.Internal
@@ -21,7 +23,8 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
     const val LC_UUID = 0x1b
   }
 
-  fun patch() {
+  suspend fun patch() {
+    val canBeSignedLocally = context.options.isInDevelopmentMode && SystemInfoRt.isMac
     Files.newByteChannel(executable, StandardOpenOption.READ, StandardOpenOption.WRITE).use { channel ->
       var buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
       channel.read(buffer)
@@ -54,18 +57,22 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
           buffer.putLong(newUuid.mostSignificantBits)
           buffer.putLong(newUuid.leastSignificantBits)
           buffer.flip()
-          if (!context.options.isInDevelopmentMode) {
+          if (context.isMacCodeSignEnabled || canBeSignedLocally) {
             channel.position(channel.position() - 16)
             channel.write(buffer)
             context.messages.info("new UUID of $executable: $newUuid")
           }
-          return
+          return@use
         }
         else {
           channel.position(channel.position() + cmdSize - 8)
         }
       }
       context.messages.error("LC_UUID not found in $executable")
+    }
+
+    if (canBeSignedLocally) {
+      runProcess(listOf("codesign", "--sign", "-", "--force", executable.toString()), inheritOut = true)
     }
   }
 }
