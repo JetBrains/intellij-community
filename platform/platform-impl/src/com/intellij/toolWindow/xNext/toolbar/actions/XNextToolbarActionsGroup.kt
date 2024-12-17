@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
-  private val arrayOf = arrayOf<AnAction>(ActionManager.getInstance().getAction("SearchEverywhere"), XNextHideAllToolWindowsAction())
+  private val arrayOf = arrayOf<AnAction>(ActionManager.getInstance().getAction("SearchEverywhere"), ActionManager.getInstance().getAction("MiniAiChat.Toggle"), XNextHideAllToolWindowsAction())
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = arrayOf
 }
