@@ -109,6 +109,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -1654,7 +1655,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           case UPDATE_FILE_AND_KEEP_DOCUMENT_CLEAN -> {
             try {
               ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, IOException>)() -> {
-                copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
+                byte[] newBytes = loader.newFileText.getBytes(copy.getCharset());
+                if (copy.getFileSystem() instanceof ArchiveFileSystem) {
+                  assertArrayEquals("Cannot modify file on read-only archive file system: " + copy.getPath(), copy.contentsToByteArray(), newBytes);
+                } else {
+                  copy.setBinaryContent(newBytes);
+                }
                 return null;
               });
             }
@@ -1667,7 +1673,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             if (document == null) {
               throw new IllegalStateException("Document not found: " + copy);
             }
-            WriteAction.runAndWait(() -> document.setText(loader.newFileText));
+            WriteAction.runAndWait(() -> {
+              String newText = loader.newFileText;
+              if (copy.getFileSystem() instanceof ArchiveFileSystem) {
+                assertEquals("Cannot modify file on read-only archive file system: " + copy.getPath(), document.getText(), newText);
+              } else {
+                document.setText(newText);
+              }
+            });
           }
           default -> throw new IllegalArgumentException(String.valueOf(mySelectionAndCaretMarkupApplyPolicy));
         }
