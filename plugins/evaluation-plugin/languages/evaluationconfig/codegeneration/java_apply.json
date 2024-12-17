@@ -31,7 +31,8 @@
     "sessionsLimit": 400,
     "filesLimit": 100,
     "order": "LINEAR",
-    "trainTestSplit": 70
+    "trainTestSplit": 70,
+    "registry": ""
   },
   "reports": {
     "evaluationTitle": "Default",
