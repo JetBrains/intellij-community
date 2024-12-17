@@ -23,8 +23,8 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.OpenProjectImplOptions
 import com.intellij.openapi.project.impl.createIdeFrame
@@ -914,7 +914,7 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val storePath = ProjectCoreUtil.getProjectStoreDirectory(file)
+  val storePath = ProjectStorePathManager.getInstance().getStoreDirectoryPath(file)
   return JpsPathUtil.readProjectName(storePath) ?: PathUtilRt.getFileName(path)
 }
 

@@ -15,6 +15,7 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -22,8 +23,8 @@ import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -346,9 +347,10 @@ object ProjectUtil {
       }
     }
     if (fileAttributes.isDirectory) {
-      val isKnownProject = ProjectCoreUtil.isKnownProjectDirectory(file)
+      val storePathManager = ProjectStorePathManager.getInstance()
+      val isKnownProject = storePathManager.testStoreDirectoryExistsForProjectRoot(file)
       if (!isKnownProject) {
-        val dirPath = ProjectCoreUtil.getProjectStoreDirectory(file)
+        val dirPath = storePathManager.getStoreDirectoryPath(file)
         Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", dirPath.toString()), CommonBundle.getErrorTitle())
         return null
       }
@@ -603,7 +605,7 @@ object ProjectUtil {
 
   fun getProjectFile(name: String): Path? {
     val projectDir = getProjectPath(name)
-    return if (ProjectCoreUtil.isKnownProjectDirectory(projectDir)) projectDir else null
+    return if (service<ProjectStorePathManager>().testStoreDirectoryExistsForProjectRoot(projectDir)) projectDir else null
   }
 
   @JvmStatic
@@ -615,7 +617,8 @@ object ProjectUtil {
   }
 
   private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
-    val existingFile = if (ProjectCoreUtil.isKnownProjectDirectory(file)) file else null
+    val storePathManager = serviceAsync<ProjectStorePathManager>()
+    val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
     val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
     if (existingFile != null) {
       for (p in projectManager.openProjects) {

@@ -126,7 +126,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
     }
     else {
-      val dotIdea = ProjectCoreUtil.getProjectStoreDirectory(file)
+      val dotIdea = ProjectStorePathManager.getInstance().getStoreDirectoryPath(file)
       this.dotIdea = dotIdea
 
       // PROJECT_CONFIG_DIR must be the first macro

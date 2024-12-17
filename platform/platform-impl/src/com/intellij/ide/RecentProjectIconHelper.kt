@@ -5,7 +5,7 @@ package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
@@ -42,7 +42,7 @@ private const val IDEA_DIR = Project.DIRECTORY_STORE_FOLDER
 
 private fun getDotIdeaPath(path: Path): Path {
   if (Files.isDirectory(path) || path.parent == null) {
-    return ProjectCoreUtil.getProjectStoreDirectory(path)
+    return ProjectStorePathManager.getInstance().getStoreDirectoryPath(path)
   }
 
   val fileName = path.fileName.toString()
