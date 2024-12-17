@@ -13,6 +13,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.impl.utils.getEelApiBlocking
+import com.intellij.platform.eel.impl.utils.getEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware
@@ -34,7 +36,7 @@ class EelGradleExecutionAware : GradleExecutionAware {
   }
 
   override fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project): Boolean {
-    return true
+    return project.getEelDescriptor() !is LocalEelDescriptor
   }
 
   override fun getEnvironmentConfigurationProvider(
