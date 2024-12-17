@@ -22,6 +22,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -503,5 +504,16 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     return UIUtil.getListCellPadding();
+  }
+
+  @Override
+  @NlsSafe
+  protected String getDelegateAccessibleName() {
+    String textLabelAccessibleName = myTextLabel == null ? null : myTextLabel.getAccessibleContext().getAccessibleName();
+    String shortcutLabelAccessibleName = myShortcutLabel == null ? null : myShortcutLabel.getAccessibleContext().getAccessibleName();
+    if (shortcutLabelAccessibleName != null) {
+      shortcutLabelAccessibleName = shortcutLabelAccessibleName.trim();
+    }
+    return AccessibleContextUtil.combineAccessibleStrings(textLabelAccessibleName, shortcutLabelAccessibleName);
   }
 }

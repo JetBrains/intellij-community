@@ -16287,6 +16287,7 @@ c:com.intellij.ui.popup.list.PopupListElementRenderer
 - p:createSeparator():com.intellij.ui.SeparatorWithText
 - p:customizeComponent(javax.swing.JList,java.lang.Object,Z):V
 - p:getBackground():java.awt.Color
+- p:getDelegateAccessibleName():java.lang.String
 - getPopup():com.intellij.ui.popup.list.ListPopupImpl
 - p:isShowSecondaryIcon():Z
 - p:isShowSecondaryText():Z
