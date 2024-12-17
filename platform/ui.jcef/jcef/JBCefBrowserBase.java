@@ -53,6 +53,7 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -98,7 +99,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @SuppressWarnings("SpellCheckingInspection")
   public static final @NotNull String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
   private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
-  private volatile @Nullable LoadDeferrer myLoadDeferrer;
+  private final LoadDeferrer NO_LOADER = new LoadDeferrer(null, "");
+  private final AtomicReference<LoadDeferrer> myLoadDeferrer = new AtomicReference<>(NO_LOADER);
   private @NotNull String myLastRequestedUrl = "";
   private @Nullable String myLoadingUrl = "";
   private final @NotNull Object myUrlLock = new Object();
@@ -205,10 +207,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
         @Override
         public void onAfterCreated(CefBrowser browser) {
-          LoadDeferrer loader = myLoadDeferrer;
-          if (loader != null) {
+          LoadDeferrer loader = myLoadDeferrer.getAndSet(null);
+          if (loader != null && loader != NO_LOADER) {
             loader.load();
-            myLoadDeferrer = null;
           }
         }
 
@@ -367,11 +368,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * Loads URL.
    */
   public final void loadURL(@NotNull String url) {
-    if (isCefBrowserCreated()) {
+    if (isCefBrowserCreated() || !scheduleLoading(new LoadDeferrer(null, url))) {
       loadUrlImpl(url);
-    }
-    else {
-      myLoadDeferrer = new LoadDeferrer(null, url);
     }
   }
 
@@ -385,12 +383,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * @param url  the URL
    */
   public final void loadHTML(@NotNull String html, @NotNull String url) {
-    if (isCefBrowserCreated()) {
+    if (isCefBrowserCreated() || !scheduleLoading(new LoadDeferrer(html, url))) {
       loadHtmlImpl(html, url);
     }
-    else {
-      myLoadDeferrer = new LoadDeferrer(html, url);
-    }
+  }
+
+  // returns true if loading is scheduled for when the browser will finish initialization
+  private boolean scheduleLoading(@NotNull LoadDeferrer loader) {
+    return myLoadDeferrer.getAndUpdate(value -> value == null ? null : loader) != null;
   }
 
   /**
