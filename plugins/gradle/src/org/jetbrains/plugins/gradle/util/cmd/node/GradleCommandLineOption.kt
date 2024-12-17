@@ -34,7 +34,5 @@ sealed interface GradleCommandLineOption : GradleCommandLineNode {
   data class VarargNotation(override val name: String, override val values: List<String>) : GradleCommandLineOption {
 
     override val tokens: List<String> = listOf(name) + values
-
-    constructor(name: String, vararg values: String) : this(name, values.toList())
   }
 }
