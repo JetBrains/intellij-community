@@ -19,3 +19,13 @@ internal data class TerminalCursorPositionChangedEvent(
 internal data class TerminalStateChangedEvent(val state: TerminalStateDto) : TerminalOutputEvent
 
 internal object TerminalBeepEvent : TerminalOutputEvent
+
+// Shell Integration Events
+
+internal sealed interface TerminalShellIntegrationEvent : TerminalOutputEvent
+
+internal object TerminalShellIntegrationInitializedEvent : TerminalShellIntegrationEvent
+
+internal data class TerminalCommandStartedEvent(val command: String) : TerminalShellIntegrationEvent
+
+internal data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int) : TerminalShellIntegrationEvent

@@ -24,6 +24,7 @@ internal fun createTerminalOutputChannel(
   val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
   val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
   val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
+  val shellIntegrationController = TerminalShellIntegrationController(controller)
 
   /**
    * Events should be sent in the following order: content update, cursor position update, other events.
@@ -56,6 +57,20 @@ internal fun createTerminalOutputChannel(
   contentChangesTracker.addHistoryOverflowListener { contentUpdate ->
     collectAndSendEvents(contentUpdateEvent = contentUpdate, otherEvent = null)
   }
+
+  shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
+    override fun initialized() {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalShellIntegrationInitializedEvent)
+    }
+
+    override fun commandStarted(command: String) {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandStartedEvent(command))
+    }
+
+    override fun commandFinished(command: String, exitCode: Int) {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode))
+    }
+  })
 
   var curState = TerminalStateDto(
     isCursorVisible = terminalDisplay.isCursorVisible,

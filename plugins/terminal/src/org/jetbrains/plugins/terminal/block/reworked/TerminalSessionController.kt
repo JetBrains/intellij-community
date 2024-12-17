@@ -56,6 +56,15 @@ internal class TerminalSessionController(
           Toolkit.getDefaultToolkit().beep()
         }
       }
+      TerminalShellIntegrationInitializedEvent -> {
+        // TODO
+      }
+      is TerminalCommandStartedEvent -> {
+        // TODO
+      }
+      is TerminalCommandFinishedEvent -> {
+        // TODO
+      }
     }
   }
 
