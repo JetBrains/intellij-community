@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -43,6 +45,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 final class JUnitDevKitPatcher extends JUnitPatcher {
@@ -149,8 +152,12 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       }
       else if (!files.isEmpty()) {
         var file = files.iterator().next();
+        String projectFilePath =
+          Objects.requireNonNull(project.getProjectFilePath(), "Run configurations should not be invoked on the default project");
+        EelApi eelApi = EelProviderUtil.getEelApiBlocking(Path.of(projectFilePath));
+        OS targetOs = EelProviderUtil.systemOs(eelApi);
         try (var stream = file.getInputStream()) {
-          JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
+          JavaModuleOptions.readOptions(stream, targetOs).forEach(vm::add);
         }
         catch (ProcessCanceledException e) {
           throw e; //unreachable

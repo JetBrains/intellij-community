@@ -12,12 +12,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.pathOs
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -97,6 +100,14 @@ interface EelProvider {
    * so the implementation is expected to exit quickly if it decides that it is not responsible for [project].
    */
   suspend fun tryInitialize(project: Project)
+}
+
+fun EelApi.systemOs(): OS {
+  return when (platform) {
+    is EelPlatform.Linux -> OS.Linux
+    is EelPlatform.Darwin -> OS.macOS
+    is EelPlatform.Windows -> OS.Windows
+  }
 }
 
 private val EP_NAME = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
