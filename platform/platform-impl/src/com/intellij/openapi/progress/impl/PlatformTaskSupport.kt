@@ -104,11 +104,14 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
     val pipe = cs.createProgressPipe()
 
-    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, suspender.getSuspendableInfo())
+    val taskSuspender = retrieveSuspender(suspender)
+
+    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, taskSuspender.getSuspendableInfo())
     val entityId = taskInfoEntity.eid
     LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
 
     try {
+      taskSuspender?.attachTask()
       subscribeToTask(taskInfoEntity, context, pipe)
       pipe.collectProgressUpdates(action)
     }
@@ -118,6 +121,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         taskStorage.removeTask(taskInfoEntity)
         LOG.trace { "Task removed from storage: entityId=$entityId, title=$title" }
       }
+      taskSuspender?.detachTask()
     }
   }
 
