@@ -1,9 +1,6 @@
 - name: lib/aether-dependency-resolver.jar
   modules:
   - name: intellij.java.aetherDependencyResolver
-- name: lib/client/java-frontend.jar
-  modules:
-  - name: intellij.java.frontend
 - name: lib/debugger-memory-agent.jar
 - name: lib/ecj/eclipse.jar
   projectLibraries:
@@ -11,6 +8,9 @@
     files:
     - name: $PROJECT_DIR$/community/lib/ecj-4.jar
     reason: withProjectLibrary
+- name: lib/frontend-split/java-frontend.jar
+  modules:
+  - name: intellij.java.frontend
 - name: lib/java-frontback.jar
   modules:
   - name: intellij.java.frontback.impl

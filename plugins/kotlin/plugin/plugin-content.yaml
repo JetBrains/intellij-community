@@ -1,4 +1,4 @@
-- name: lib/client/kotlin-frontend.jar
+- name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend
 - name: lib/jps/kotlin-jps-plugin.jar
