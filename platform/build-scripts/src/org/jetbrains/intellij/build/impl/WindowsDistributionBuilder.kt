@@ -14,7 +14,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
-import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
+import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -67,7 +67,7 @@ internal class WindowsDistributionBuilder(
 
       buildWinLauncher(targetPath, arch, context, copyLicense = true)
 
-      createJetBrainsClientContextForLaunchers(context)?.let { clientContext ->
+      createFrontendContextForLaunchers(context)?.let { clientContext ->
         writeWindowsVmOptions(distBinDir, clientContext)
         buildWinLauncher(targetPath, arch, clientContext, copyLicense = false)
       }
@@ -394,7 +394,7 @@ internal class WindowsDistributionBuilder(
   }
 
   private suspend fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
-    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(arch = arch, os = OsFamily.WINDOWS, ideContext = context) {
+    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch = arch, os = OsFamily.WINDOWS, ideContext = context) {
       "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS)
@@ -412,7 +412,7 @@ internal class WindowsDistributionBuilder(
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
           mainClass = context.ideMainClassName,
-          customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData),
+          customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData),
         )
       ),
       context)

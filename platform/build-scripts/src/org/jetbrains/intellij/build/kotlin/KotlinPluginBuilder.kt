@@ -392,7 +392,7 @@ object KotlinPluginBuilder {
       setupTracer = true,
       projectHome = home,
       productProperties = properties,
-      options = BuildOptions(enableEmbeddedJetBrainsClient = false)
+      options = BuildOptions(enableEmbeddedFrontend = false)
     )
     createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }

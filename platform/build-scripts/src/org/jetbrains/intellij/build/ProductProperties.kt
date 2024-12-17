@@ -189,19 +189,18 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
-   * Specifies the main module of JetBrains Client product which distribution should be embedded into the IDE's distribution to allow 
-   * running JetBrains Client. 
-   * If it's set to a non-null value and [BuildOptions.enableEmbeddedJetBrainsClient] is set to `true`, product-modules.xml from the 
-   * specified module is used to compute [JetBrainsClientModuleFilter]. 
+   * Specifies the main module of a frontend variant (JetBrains Client) which distribution should be embedded into the IDE's distribution. 
+   * If it's set to a non-null value and [BuildOptions.enableEmbeddedFrontend] is set to `true`, product-modules.xml from the 
+   * specified module is used to compute [FrontendModuleFilter]. 
    */
   @ApiStatus.Experimental
-  var embeddedJetBrainsClientMainModule: String? = null
+  var embeddedFrontendRootModule: String? = null
 
   /**
-   * Specifies a factory function for an instance which will be used to generate launchers for the embedded JetBrains Client. 
+   * Specifies a factory function for an instance which will be used to generate launchers for the embedded frontend variant (JetBrains Client). 
    */
   @ApiStatus.Experimental
-  var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
+  var embeddedFrontendProperties: (() -> ProductProperties)? = null
 
   /**
    * Set to the root product module (the one containing product-modules.xml file) to enable using module-based loader for the product. 

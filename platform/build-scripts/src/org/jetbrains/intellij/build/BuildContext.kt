@@ -145,9 +145,9 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  suspend fun getJetBrainsClientModuleFilter(): JetBrainsClientModuleFilter
+  suspend fun getFrontendModuleFilter(): FrontendModuleFilter
 
-  val isEmbeddedJetBrainsClientEnabled: Boolean
+  val isEmbeddedFrontendEnabled: Boolean
 
   fun shouldBuildDistributions(): Boolean
 

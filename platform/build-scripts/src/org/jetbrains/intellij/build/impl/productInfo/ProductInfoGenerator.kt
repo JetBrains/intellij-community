@@ -7,7 +7,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
-import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
+import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -72,13 +72,13 @@ internal fun writeProductInfoJson(targetFile: Path, json: String, context: Build
   Files.setLastModifiedTime(targetFile, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
 }
 
-internal suspend fun generateJetBrainsClientLaunchData(
+internal suspend fun generateEmbeddedFrontendLaunchData(
   arch: JvmArchitecture,
   os: OsFamily,
   ideContext: BuildContext,
   vmOptionsFilePath: (BuildContext) -> String
 ): CustomCommandLaunchData? {
-  return createJetBrainsClientContextForLaunchers(ideContext)?.let { clientContext ->
+  return createFrontendContextForLaunchers(ideContext)?.let { clientContext ->
     CustomCommandLaunchData(
       commands = listOf("thinClient", "thinClient-headless", "installFrontendPlugins"),
       vmOptionsFilePath = vmOptionsFilePath(clientContext),

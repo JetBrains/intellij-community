@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.intellij.build.JetBrainsClientModuleFilter
+import org.jetbrains.intellij.build.FrontendModuleFilter
 
 /**
  * Names of JAR files from IDE_HOME/lib directory. These names are implementation detail and may be changed in the future, code outside
@@ -22,8 +22,8 @@ object PlatformJarNames {
   /**
    * Returns name of the default JAR for a platform module.
    */
-  internal fun getPlatformModuleJarName(moduleName: String, jetBrainsClientModuleFilter: JetBrainsClientModuleFilter): String {
-    return if (jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) APP_CLIENT_JAR else APP_JAR
+  internal fun getPlatformModuleJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
+    return if (frontendModuleFilter.isModuleIncluded(moduleName)) APP_CLIENT_JAR else APP_JAR
   }
 
   /**

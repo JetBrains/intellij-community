@@ -312,8 +312,8 @@ private suspend fun collectModulesToCompileForDistribution(context: BuildContext
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
   result.addAll(getToolModules())
-  if (context.isEmbeddedJetBrainsClientEnabled) {
-    result.add(context.productProperties.embeddedJetBrainsClientMainModule!!)
+  if (context.isEmbeddedFrontendEnabled) {
+    result.add(context.productProperties.embeddedFrontendRootModule!!)
   }
   result.add("intellij.idea.community.build.tasks")
   result.add("intellij.platform.images.build")
@@ -466,8 +466,8 @@ private suspend fun createBuildContext(
           BuildOptions.FUS_METADATA_BUNDLE_STEP,
         )
 
-        if (request.isUnpackedDist && options.enableEmbeddedJetBrainsClient) {
-          options.enableEmbeddedJetBrainsClient = false
+        if (request.isUnpackedDist && options.enableEmbeddedFrontend) {
+          options.enableEmbeddedFrontend = false
         }
 
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository

@@ -534,12 +534,12 @@ private suspend fun checkProductProperties(context: BuildContext) {
   checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
-  properties.embeddedJetBrainsClientMainModule?.let { embeddedJetBrainsClientMainModule ->
-    checkModule(embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)
-    if (findProductModulesFile(context, embeddedJetBrainsClientMainModule) == null) {
+  properties.embeddedFrontendRootModule?.let { embeddedFrontendRootModule ->
+    checkModule(embeddedFrontendRootModule, "productProperties.embeddedFrontendRootModule", context)
+    if (findProductModulesFile(context, embeddedFrontendRootModule) == null) {
       context.messages.error(
-        "Cannot find product-modules.xml file in sources of '$embeddedJetBrainsClientMainModule' module specified as " +
-        "'productProperties.embeddedJetBrainsClientMainModule'."
+        "Cannot find product-modules.xml file in sources of '$embeddedFrontendRootModule' module specified as " +
+        "'productProperties.embeddedFrontendRootModule'."
       )
     }
   }

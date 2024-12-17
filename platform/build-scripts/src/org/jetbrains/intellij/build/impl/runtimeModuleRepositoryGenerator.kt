@@ -254,14 +254,14 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
                        || entry.origin is ModuleOutputEntry }
     .groupBy({ it.origin.getRuntimeModuleId()!! }, { it.relativePath })
 
-  suspend fun isIncludedInJetBrainsClient(entry: DistributionFileEntry): Boolean {
-    return entry is ModuleOutputEntry && context.getJetBrainsClientModuleFilter().isModuleIncluded(entry.moduleName)
+  suspend fun isIncludedInEmbeddedFrontend(entry: DistributionFileEntry): Boolean {
+    return entry is ModuleOutputEntry && context.getFrontendModuleFilter().isModuleIncluded(entry.moduleName)
   }
   
   suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
     val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
-                       paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInJetBrainsClient(entry.origin) } == true } ?:
+                       paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInEmbeddedFrontend(entry.origin) } == true } ?:
                        paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend", "frontend-split") }
     if (mainLocation != null) {
       return mainLocation

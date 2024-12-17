@@ -194,11 +194,11 @@ private suspend fun doRunTestBuild(context: suspend () -> BuildContext, traceSpa
       }
       try {
         build(context)
-        val jetBrainsClientMainModule = context.productProperties.embeddedJetBrainsClientMainModule
-        if (jetBrainsClientMainModule != null && context.generateRuntimeModuleRepository) {
+        val frontendRootModule = context.productProperties.embeddedFrontendRootModule
+        if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
           val softly = SoftAssertions()
-          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(jetBrainsClientMainModule, ProductMode.FRONTEND, context, softly)
-          checkKeymapPluginsAreBundledWithFrontend(jetBrainsClientMainModule, context, softly)
+          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(frontendRootModule, ProductMode.FRONTEND, context, softly)
+          checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
           softly.assertAll()
         }
       }

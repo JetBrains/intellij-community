@@ -3,9 +3,9 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.repository.RuntimeModuleId
-import org.jetbrains.intellij.build.JetBrainsClientModuleFilter
+import org.jetbrains.intellij.build.FrontendModuleFilter
 
-internal class JetBrainsClientModuleFilterImpl(productModules: ProductModules): JetBrainsClientModuleFilter {
+internal class FrontendModuleFilterImpl(productModules: ProductModules): FrontendModuleFilter {
   private val includedModules: Set<RuntimeModuleId> = (sequenceOf(productModules.mainModuleGroup) + productModules.bundledPluginModuleGroups.asSequence())
     .flatMap { it.includedModules.asSequence() }
     .filter { included -> included.moduleDescriptor.moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND }
@@ -39,7 +39,7 @@ val MODULES_SCRAMBLED_WITH_FRONTEND: Set<RuntimeModuleId> by lazy {
   PROJECT_LIBRARIES_SCRAMBLED_WITH_FRONTEND.map { RuntimeModuleId.projectLibrary(it) }
 }
 
-internal object EmptyJetBrainsClientModuleFilter : JetBrainsClientModuleFilter {
+internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
   override fun isModuleIncluded(moduleName: String): Boolean = false
   override fun isProjectLibraryIncluded(libraryName: String): Boolean = false
 }

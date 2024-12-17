@@ -83,7 +83,7 @@ private val notImportantKotlinLibs = java.util.Set.of(
 const val rdJarName: String = "rd.jar"
 
 // must be sorted
-private val predefinedMergeRules = java.util.List.of<Pair<String, (String, JetBrainsClientModuleFilter) -> Boolean>>(
+private val predefinedMergeRules = java.util.List.of<Pair<String, (String, FrontendModuleFilter) -> Boolean>>(
   "groovy.jar" to { it, _ -> it.startsWith("org.codehaus.groovy:") },
   "jsch-agent.jar" to { it, _ -> it.startsWith("jsch-agent") },
   rdJarName to { it, _ -> it.startsWith("rd-") },
@@ -166,20 +166,20 @@ class JarPackager private constructor(
       packager.computeModuleSources(includedModules = includedModules, searchableOptionSet = searchableOptionSet, layout = layout)
       packager.computeModuleCustomLibrarySources(layout)
 
-      val clientModuleFilter = context.getJetBrainsClientModuleFilter()
-      val libraryToMerge = packager.computeProjectLibrariesSources(outDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles, clientModuleFilter = clientModuleFilter)
+      val frontendModuleFilter = context.getFrontendModuleFilter()
+      val libraryToMerge = packager.computeProjectLibrariesSources(outDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles, frontendModuleFilter = frontendModuleFilter)
       if (isRootDir) {
         for ((jarName, predicate) in predefinedMergeRules) {
-          packager.mergeLibsByPredicate(jarName = jarName, libraryToMerge = libraryToMerge, outputDir = outputDir, predicate = predicate, clientModuleFilter = clientModuleFilter)
+          packager.mergeLibsByPredicate(jarName = jarName, libraryToMerge = libraryToMerge, outputDir = outputDir, predicate = predicate, frontendModuleFilter = frontendModuleFilter)
         }
 
         if (!libraryToMerge.isEmpty()) {
-          val clientLibraries = libraryToMerge.filterKeys { clientModuleFilter.isProjectLibraryIncluded(it.name) }
+          val clientLibraries = libraryToMerge.filterKeys { frontendModuleFilter.isProjectLibraryIncluded(it.name) }
           if (clientLibraries.isNotEmpty()) {
             packager.filesToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_CLIENT_JAR), libraryToMerge = clientLibraries)
           }
 
-          val nonClientLibraries = libraryToMerge.filterKeys { !clientModuleFilter.isProjectLibraryIncluded(it.name) }
+          val nonClientLibraries = libraryToMerge.filterKeys { !frontendModuleFilter.isProjectLibraryIncluded(it.name) }
           if (nonClientLibraries.isNotEmpty()) {
             packager.filesToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = nonClientLibraries)
           }
@@ -529,14 +529,14 @@ class JarPackager private constructor(
     jarName: String,
     libraryToMerge: MutableMap<JpsLibrary, List<Path>>,
     outputDir: Path,
-    predicate: (String, JetBrainsClientModuleFilter) -> Boolean,
-    clientModuleFilter: JetBrainsClientModuleFilter
+    predicate: (String, FrontendModuleFilter) -> Boolean,
+    frontendModuleFilter: FrontendModuleFilter
   ) {
     val result = LinkedHashMap<JpsLibrary, List<Path>>()
     val iterator = libraryToMerge.entries.iterator()
     while (iterator.hasNext()) {
       val (key, value) = iterator.next()
-      if (predicate(key.name, clientModuleFilter)) {
+      if (predicate(key.name, frontendModuleFilter)) {
         iterator.remove()
         result.put(key, value)
       }
@@ -558,7 +558,7 @@ class JarPackager private constructor(
     outDir: Path,
     layout: BaseLayout,
     copiedFiles: MutableMap<CopiedForKey, CopiedFor>,
-    clientModuleFilter: JetBrainsClientModuleFilter
+    frontendModuleFilter: FrontendModuleFilter
   ): MutableMap<JpsLibrary, List<Path>> {
     if (layout.includedProjectLibraries.isEmpty()) {
       return LinkedHashMap()
@@ -572,7 +572,7 @@ class JarPackager private constructor(
       libToMetadata.put(library, libraryData)
       val libName = library.name
       var packMode = libraryData.packMode
-      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.any { it.second(libName, clientModuleFilter) } && !isLibraryMergeable(libName)) {
+      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.any { it.second(libName, frontendModuleFilter) } && !isLibraryMergeable(libName)) {
         packMode = LibraryPackMode.STANDALONE_MERGED
       }
 

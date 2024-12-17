@@ -43,11 +43,11 @@ data class BuildOptions(
 
   var forceRebuild: Boolean = getBooleanProperty(FORCE_REBUILD_PROPERTY),
   /**
-   * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
+   * If `true` and [ProductProperties.embeddedFrontendRootModule] is not null, the JAR files in the distribution will be adjusted
    * to allow starting JetBrains Client directly from the IDE's distribution.
    */
   @ApiStatus.Experimental
-  var enableEmbeddedJetBrainsClient: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
+  var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
 
   /**
    * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.

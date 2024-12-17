@@ -14,7 +14,7 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
-import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
+import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
@@ -244,7 +244,7 @@ class MacDistributionBuilder(
     )
 
     writeVmOptions(macBinDir)
-    createJetBrainsClientContextForLaunchers(context)?.let { clientContext ->
+    createFrontendContextForLaunchers(context)?.let { clientContext ->
       writeMacOsVmOptions(macBinDir, clientContext)
     }
 
@@ -350,7 +350,7 @@ class MacDistributionBuilder(
     )
 
   private suspend fun createProductInfoLaunchData(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean): ProductInfoLaunchData {
-    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(arch, OsFamily.MACOS, context) {
+    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
@@ -363,7 +363,7 @@ class MacDistributionBuilder(
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
       mainClass = context.ideMainClassName,
-      customCommands = listOfNotNull(jetbrainsClientCustomLaunchData, qodanaCustomLaunchData)
+      customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData)
     )
   }
 

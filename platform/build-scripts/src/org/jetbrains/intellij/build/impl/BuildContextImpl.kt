@@ -224,21 +224,21 @@ class BuildContextImpl internal constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val _jetBrainsClientModuleFilter = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("JetBrains client module filter"), start = CoroutineStart.LAZY) {
-    val mainModule = productProperties.embeddedJetBrainsClientMainModule
-    if (mainModule != null && options.enableEmbeddedJetBrainsClient) {
-      val productModules = getOriginalModuleRepository().loadProductModules(mainModule, ProductMode.FRONTEND)
-      JetBrainsClientModuleFilterImpl(productModules = productModules)
+  private val _frontendModuleFilter = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("JetBrains client module filter"), start = CoroutineStart.LAZY) {
+    val rootModule = productProperties.embeddedFrontendRootModule
+    if (rootModule != null && options.enableEmbeddedFrontend) {
+      val productModules = getOriginalModuleRepository().loadProductModules(rootModule, ProductMode.FRONTEND)
+      FrontendModuleFilterImpl(productModules = productModules)
     }
     else {
-      EmptyJetBrainsClientModuleFilter
+      EmptyFrontendModuleFilter
     }
   }
 
-  override suspend fun getJetBrainsClientModuleFilter(): JetBrainsClientModuleFilter = _jetBrainsClientModuleFilter.await()
+  override suspend fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.await()
 
-  override val isEmbeddedJetBrainsClientEnabled: Boolean
-    get() = productProperties.embeddedJetBrainsClientMainModule != null && options.enableEmbeddedJetBrainsClient
+  override val isEmbeddedFrontendEnabled: Boolean
+    get() = productProperties.embeddedFrontendRootModule != null && options.enableEmbeddedFrontend
 
   override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
 
