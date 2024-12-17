@@ -40,11 +40,11 @@ internal class GpgAgentConfigurationNotificator(private val project: Project) {
 
     val displayId = if (isSuggestion) GPG_AGENT_CONFIGURATION_PROPOSE else GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION
     GpgAgentConfiguratorNotification(displayId,
-                                     GitBundle.message("pgp.pinentry.configuration.proposal.title"),
-                                     GitBundle.message("pgp.pinentry.configuration.proposal.message"), isSuggestion = isSuggestion).apply {
+                                     GitBundle.message("gpg.pinentry.configuration.proposal.title"),
+                                     GitBundle.message("gpg.pinentry.configuration.proposal.message"), isSuggestion = isSuggestion).apply {
       val configureActionId =
         if (isSuggestion) GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_CONFIGURE.id else GPG_AGENT_CONFIGURATION_PROPOSE_CONFIGURE.id
-      addAction(NotificationAction.createSimple(GitBundle.message("pgp.pinentry.configuration.proposal.configure"),
+      addAction(NotificationAction.createSimple(GitBundle.message("gpg.pinentry.configuration.proposal.configure"),
                                                 configureActionId) {
         expire()
         project.service<GpgAgentConfigurator>().configure()
@@ -61,14 +61,14 @@ internal class GpgAgentConfigurationNotificator(private val project: Project) {
   fun notifyConfigurationSuccessful(paths: GpgAgentPaths) {
     val message: String
     if (paths.gpgAgentConfBackup.exists()) {
-      message = GitBundle.message("pgp.pinentry.configured.successfully.backup.message", paths.gpgAgentConfBackup)
+      message = GitBundle.message("gpg.pinentry.configured.successfully.backup.message", paths.gpgAgentConfBackup)
     }
     else {
-      message = GitBundle.message("pgp.pinentry.configured.successfully.message", paths.gpgAgentConf)
+      message = GitBundle.message("gpg.pinentry.configured.successfully.message", paths.gpgAgentConf)
     }
     var displayId = GPG_AGENT_CONFIGURATION_SUCCESS
     GpgAgentConfiguratorNotification(displayId,
-                                     GitBundle.message("pgp.pinentry.configured.successfully.title"),
+                                     GitBundle.message("gpg.pinentry.configured.successfully.title"),
                                      message,
                                      NotificationType.INFORMATION).apply {
       addAction(NotificationAction.createSimple(GitBundle.message("gpg.error.see.documentation.link.text"),
@@ -82,7 +82,7 @@ internal class GpgAgentConfigurationNotificator(private val project: Project) {
     val exceptionMessage = exception.message ?: return
     var message = HtmlBuilder().append(HtmlChunk.text(exceptionMessage)).toString()
     GpgAgentConfiguratorNotification(GPG_AGENT_CONFIGURATION_ERROR,
-                                     GitBundle.message("pgp.pinentry.configuration.error.title"),
+                                     GitBundle.message("gpg.pinentry.configuration.error.title"),
                                      message,
                                      NotificationType.ERROR)
       .notifyExpirePrevious(project)
