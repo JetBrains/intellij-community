@@ -144,7 +144,8 @@ private class LibraryWithoutSourceScope(
 
     override val modules: Set<Module> get() = emptySet()
 
-    override val includesLibraryRoots: Boolean get() = true
+    override val includesLibraryClassRoots: Boolean get() = true
+    override val includesLibrarySourceRoots: Boolean get() = false
 
     override fun equals(other: Any?): Boolean = other is LibraryWithoutSourceScope && library == other.library
     override fun calcHashCode(): Int = library.hashCode()

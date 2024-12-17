@@ -17,18 +17,21 @@ abstract class AbstractCombinedSourceAndClassRootsScopeContainsTest : AbstractCo
         combinedProductionScope: CombinedSourceAndClassRootsScope?,
         combinedTestScope: CombinedSourceAndClassRootsScope?,
         combinedLibraryScope: CombinedSourceAndClassRootsScope?,
+        combinedLibrarySourcesScope: CombinedSourceAndClassRootsScope?,
         combinedScope: CombinedSourceAndClassRootsScope?,
     ) {
         val productionSourceFiles = getAllSourceFiles(includedTestModules, TestContentRootKind.PRODUCTION)
         val testSourceFiles = getAllSourceFiles(includedTestModules, TestContentRootKind.TESTS)
         val libraryFiles = getAllLibraryClassFiles(includedTestLibraries)
+        val librarySourceFiles = getAllLibrarySourceFiles(includedTestLibraries)
 
         val excludedProductionSourceFiles = getAllSourceFiles(excludedTestModules, TestContentRootKind.PRODUCTION)
         val excludedTestSourceFiles = getAllSourceFiles(excludedTestModules, TestContentRootKind.TESTS)
         val excludedLibraryFiles = getAllLibraryClassFiles(excludedTestLibraries)
+        val excludedLibrarySourceFiles = getAllLibraryClassFiles(excludedTestLibraries)
 
-        val allIncludedFiles = productionSourceFiles + testSourceFiles + libraryFiles
-        val allExcludedFiles = excludedProductionSourceFiles + excludedTestSourceFiles + excludedLibraryFiles
+        val allIncludedFiles = productionSourceFiles + testSourceFiles + libraryFiles + librarySourceFiles
+        val allExcludedFiles = excludedProductionSourceFiles + excludedTestSourceFiles + excludedLibraryFiles + excludedLibrarySourceFiles
 
         val allFiles = allIncludedFiles + allExcludedFiles
 
@@ -48,6 +51,12 @@ abstract class AbstractCombinedSourceAndClassRootsScopeContainsTest : AbstractCo
             "combined library scope",
             containedFiles = libraryFiles,
             nonContainedFiles = allFiles - libraryFiles,
+        )
+
+        combinedLibrarySourcesScope?.checkScopeContains(
+            "combined library sources scope",
+            containedFiles = librarySourceFiles,
+            nonContainedFiles = allFiles - librarySourceFiles,
         )
 
         combinedScope?.checkScopeContains(
@@ -86,6 +95,11 @@ abstract class AbstractCombinedSourceAndClassRootsScopeContainsTest : AbstractCo
         testLibraries
             .flatMap { it.toLibrary().classRoots }
             .flatMap { findAllChildren(it, JavaClassFileType.INSTANCE) }
+
+    private fun getAllLibrarySourceFiles(testLibraries: List<TestProjectLibrary>): List<VirtualFile> =
+        testLibraries
+            .flatMap { it.toLibrary().sourceRoots }
+            .flatMap { findAllChildren(it, KotlinFileType.INSTANCE) }
 
     private fun findAllChildren(root: VirtualFile, fileType: FileType): List<VirtualFile> {
         return buildList {

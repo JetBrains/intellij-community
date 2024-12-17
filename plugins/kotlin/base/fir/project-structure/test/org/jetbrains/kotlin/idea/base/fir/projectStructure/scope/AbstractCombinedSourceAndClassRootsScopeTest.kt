@@ -43,6 +43,7 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
         combinedProductionScope: CombinedSourceAndClassRootsScope?,
         combinedTestScope: CombinedSourceAndClassRootsScope?,
         combinedLibraryScope: CombinedSourceAndClassRootsScope?,
+        combinedLibrarySourcesScope: CombinedSourceAndClassRootsScope?,
         combinedScope: CombinedSourceAndClassRootsScope?,
     )
 
@@ -59,18 +60,21 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
         val productionScopes = includedTestModules.mapNotNull { it.getModuleScope(KaSourceModuleKind.PRODUCTION) }
         val testScopes = includedTestModules.mapNotNull { it.getModuleScope(KaSourceModuleKind.TEST) }
         val libraryScopes = includedTestLibraries.map { it.getLibraryScope() }
+        val librarySourcesScopes = includedTestLibraries.map { it.getLibrarySourceScope() }
 
         val combinedProductionScope = productionScopes.combine()
         val combinedTestScope = testScopes.combine()
         val combinedLibraryScope = libraryScopes.combine()
+        val combinedLibrarySourcesScope = librarySourcesScopes.combine()
 
-        val combinedScope = listOfNotNull(combinedProductionScope, combinedTestScope, combinedLibraryScope).combine()
+        val combinedScope = listOfNotNull(combinedProductionScope, combinedTestScope, combinedLibraryScope, combinedLibrarySourcesScope).combine()
 
         doTestWithScopes(
-            combinedProductionScope,
-            combinedTestScope,
-            combinedLibraryScope,
-            combinedScope,
+            combinedProductionScope = combinedProductionScope,
+            combinedTestScope = combinedTestScope,
+            combinedLibraryScope = combinedLibraryScope,
+            combinedLibrarySourcesScope = combinedLibrarySourcesScope,
+            combinedScope = combinedScope,
         )
     }
 
@@ -127,9 +131,25 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
         }
     }
 
+    internal fun TestProjectLibrary.getLibrarySourceScope(): CombinableSourceAndClassRootsScope {
+        val library = toLibrary()
+        val expectedRoots = library.sourceRoots
+
+        require(expectedRoots.isNotEmpty()) { "The test library should have at least one source root." }
+
+        val librarySourceModule = library.toKaLibraryModules(project).singleOrNull()?.librarySources
+            ?: error("The test library should correspond to exactly one library module.")
+
+        return librarySourceModule.combinableContentScope.also { scope ->
+            assertOrderedEquals(scope.getOrderedRoots(), expectedRoots)
+        }
+    }
+
+
     internal val Library.classRoots: List<VirtualFile> get() = getFiles(OrderRootType.CLASSES).toList()
+    internal val Library.sourceRoots: List<VirtualFile> get() = getFiles(OrderRootType.SOURCES).toList()
 
     private val KaModule.combinableContentScope: CombinableSourceAndClassRootsScope
         get() = contentScope as? CombinableSourceAndClassRootsScope
-            ?: error("Expected the content scope of the `${KaModule::class.simpleName}` to be combinable.")
+            ?: error("Expected the content scope of the `${this::class.simpleName}` to be combinable, but it was ${contentScope::class.simpleName}.")
 }

@@ -25,9 +25,14 @@ interface CombinableSourceAndClassRootsScope {
     val modules: Set<Module>
 
     /**
-     * Whether the scope contains a root which originated from a library.
+     * Whether the scope contains a root which originated from a library binary.
      */
-    val includesLibraryRoots: Boolean
+    val includesLibraryClassRoots: Boolean
+
+    /**
+     * Whether the scope contains a root which originated from a library source.
+     */
+    val includesLibrarySourceRoots: Boolean
 }
 
 /**

@@ -31,7 +31,9 @@ class ModuleSourcesScope(
 
     override val modules: Set<Module> get() = setOf(module)
 
-    override val includesLibraryRoots: Boolean get() = false
+    override val includesLibraryClassRoots: Boolean get() = false
+
+    override val includesLibrarySourceRoots: Boolean get() = false
 
     override fun getFileRoot(file: VirtualFile): VirtualFile? = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file)
 
