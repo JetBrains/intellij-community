@@ -56,6 +56,13 @@ internal class TerminalOutputModelImpl(
       editor.doWithScrollingAware {
         contentUpdateInProgress = true
         try {
+          // If absolute line index is far in the past - in the already trimmed part of the output,
+          // then it means that the terminal was cleared, and we should reset to the initial state.
+          if (absoluteLineIndex < trimmedLinesCount) {
+            trimmedLinesCount = 0
+            trimmedCharsCount = 0
+          }
+
           val editorLineIndex = absoluteLineIndex - trimmedLinesCount
           doUpdateEditorContent(editorLineIndex, text, styles)
         }

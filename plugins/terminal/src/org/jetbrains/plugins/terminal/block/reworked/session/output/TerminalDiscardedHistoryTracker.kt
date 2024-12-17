@@ -25,6 +25,13 @@ internal class TerminalDiscardedHistoryTracker(private val textBuffer: TerminalT
           }
         }
       }
+
+      override fun historyCleared() {
+        // Reset to the initial state if history was cleared
+        if (!textBuffer.isUsingAlternateBuffer) {
+          discardedLogicalLinesCount = 0
+        }
+      }
     })
   }
 }

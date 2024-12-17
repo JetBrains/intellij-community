@@ -143,6 +143,27 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
   }
 
+  @Test
+  fun `update editor content from the start when some lines were trimmed already (clear)`() = runBlocking(Dispatchers.EDT) {
+    val model = createOutputModel(maxLength = 10)
+
+    // Prepare
+    val fillerText = "12345"
+    for (lineInd in 0 until 10) {
+      model.update(lineInd, fillerText, emptyList())
+    }
+
+    // Test
+    model.update(0, "abcde", listOf(styleRange(0, 3), styleRange(3, 5)))
+
+    val expectedText = "abcde"
+    val expectedHighlightings = listOf(highlighting(0, 3), highlighting(3, 5))
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
+
+    assertEquals(expectedText, model.editor.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
+  }
+
   private fun createOutputModel(maxLength: Int = 0): TerminalOutputModelImpl {
     val document = EditorFactory.getInstance().createDocument("")
     val editor = EditorFactory.getInstance().createEditor(document, project) as EditorEx

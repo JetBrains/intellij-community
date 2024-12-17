@@ -112,6 +112,63 @@ internal class TerminalContentChangesTrackerTest {
     assertEquals(1, update.startLineLogicalIndex)
   }
 
+  @Test
+  fun `test clearing history`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    // Prepare
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("third", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fourth", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fifth", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("sixth", 2, 0)
+    contentChangesTracker.getContentUpdate()
+
+    // Test
+    textBuffer.clearHistory()
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+
+    val expectedText = """
+      fifth
+      sixth
+    """.trimIndent()
+    assertEquals(expectedText, update.text)
+    assertEquals(0, update.startLineLogicalIndex)
+  }
+
+  @Test
+  fun `test clearing history and screen`() {
+    val textBuffer = createTextBuffer(width = 10, height = 2, maxHistoryLinesCount = 2)
+    val contentChangesTracker = createChangesTracker(textBuffer)
+
+    // Prepare
+    textBuffer.write("first", 1, 0)
+    textBuffer.write("second", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("third", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fourth", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("fifth", 2, 0)
+    textBuffer.scrollDown(1)
+    textBuffer.write("sixth", 2, 0)
+    contentChangesTracker.getContentUpdate()
+
+    // Test
+    textBuffer.clearScreenAndHistoryBuffers()
+    textBuffer.write("newFirst", 1, 0)
+    val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
+
+    assertEquals("newFirst", update.text)
+    assertEquals(0, update.startLineLogicalIndex)
+  }
+
   @Suppress("SameParameterValue")
   private fun createTextBuffer(width: Int, height: Int, maxHistoryLinesCount: Int): TerminalTextBuffer {
     return TerminalTextBuffer(width, height, StyleState(), maxHistoryLinesCount)
