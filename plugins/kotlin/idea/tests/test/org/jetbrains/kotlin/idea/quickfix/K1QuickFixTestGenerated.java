@@ -18867,6 +18867,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType4.kt");
             }
 
+            @TestMetadata("changeFunctionParameterType5.kt")
+            public void testChangeFunctionParameterType5() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5.kt");
+            }
+
+            @TestMetadata("changeFunctionParameterType5k2.kt")
+            public void testChangeFunctionParameterType5k2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5k2.kt");
+            }
+
             @TestMetadata("changeFunctionParameterTypeWithComment.kt")
             public void testChangeFunctionParameterTypeWithComment() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeWithComment.kt");
