@@ -67,7 +67,7 @@ class EditorCellView(
   var outputs: EditorCellOutputsView? = null
     private set
 
-  var selected = false
+  var selected: Boolean = false
     set(value) {
       field = value
       updateFolding()
@@ -100,6 +100,9 @@ class EditorCellView(
     }
     val executionStatus = cell.executionStatus.get()
     updateExecutionStatus(executionStatus.count, executionStatus.status, executionStatus.startTime, executionStatus.endTime)
+    editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) { backgroundColor ->
+      updateCellHighlight(force = true)
+    }
     recreateControllers()
     updateSelection(false)
     updateOutputs()
@@ -277,13 +280,13 @@ class EditorCellView(
     cellHighlighters.clear()
   }
 
-  private fun updateCellHighlight() {
+  private fun updateCellHighlight(force: Boolean = false) {
     val interval = intervalPointer.get() ?: error("Invalid interval")
 
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
 
-    if (interval.lines == lastHighLightersLines) {
+    if (!force && interval.lines == lastHighLightersLines) {
       return
     }
     lastHighLightersLines = IntRange(interval.lines.first, interval.lines.last)
@@ -299,7 +302,7 @@ class EditorCellView(
           // Code cell background should be seen behind any syntax highlighting, selection or any other effect.
           HighlighterLayer.FIRST - 100,
           TextAttributes().apply {
-            backgroundColor = editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+            backgroundColor = editor.notebookAppearance.codeCellBackgroundColor.get()
           },
           HighlighterTargetArea.LINES_IN_RANGE
         ).apply {
@@ -364,10 +367,10 @@ class EditorCellView(
     input.runCellButton?.updateGutterAction(progressStatus)
   }
 
-  fun highlightAbovePanel() =
+  fun highlightAbovePanel(): Unit? =
     _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.addHighlight()
 
-  fun removeHighlightAbovePanel() =
+  fun removeHighlightAbovePanel(): Unit? =
     _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.removeHighlight()
 
   internal data class NotebookCellDataProvider(

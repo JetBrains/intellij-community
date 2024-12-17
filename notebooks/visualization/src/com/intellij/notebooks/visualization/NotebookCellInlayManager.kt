@@ -1,7 +1,6 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.notebooks.ui.isFoldingEnabledKey
 import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
@@ -27,7 +26,6 @@ import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.removeUserData
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
@@ -45,7 +43,7 @@ class NotebookCellInlayManager private constructor(
 
   val cells: List<EditorCell> get() = notebook.cells
 
-  val views = mutableMapOf<EditorCell, EditorCellView>()
+  internal val views: MutableMap<EditorCell, EditorCellView> = mutableMapOf<EditorCell, EditorCellView>()
 
   private var belowLastCellInlay: Inlay<*>? = null
 
@@ -80,7 +78,7 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  fun forceUpdateAll() = runInEdt {
+  fun forceUpdateAll(): Unit = runInEdt {
     if (initialized) {
       updateCells(cells, force = true)
     }
@@ -90,11 +88,11 @@ class NotebookCellInlayManager private constructor(
     updateCells(pointers.mapNotNull { it.get()?.ordinal }.sorted().map { cells[it] }, force = false)
   }
 
-  fun update(cell: EditorCell) = runInEdt {
+  fun update(cell: EditorCell): Unit = runInEdt {
     update(cell.intervalPointer)
   }
 
-  fun update(pointer: NotebookIntervalPointer) = runInEdt {
+  fun update(pointer: NotebookIntervalPointer): Unit = runInEdt {
     update(SmartList(pointer))
   }
 
@@ -313,7 +311,6 @@ class NotebookCellInlayManager private constructor(
         shouldCheckInlayOffsets,
         notebook
       ).also { Disposer.register(editor.disposable, it) }
-      editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
       notebookCellInlayManager.initialize()
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, notebookCellInlayManager)
       return notebookCellInlayManager
@@ -336,7 +333,7 @@ class NotebookCellInlayManager private constructor(
       return CELL_INLAY_MANAGER_KEY.get(editor)
     }
 
-    val FOLDING_MARKER_KEY = Key<Boolean>("jupyter.folding.paragraph")
+    val FOLDING_MARKER_KEY: Key<Boolean> = Key<Boolean>("jupyter.folding.paragraph")
     private val CELL_INLAY_MANAGER_KEY = Key.create<NotebookCellInlayManager>(NotebookCellInlayManager::class.java.name)
   }
 
@@ -349,7 +346,7 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  override fun bulkUpdateFinished() = update { ctx ->
+  override fun bulkUpdateFinished(): Unit = update { ctx ->
     val events = currentEventsQueue.toList()
     currentEventsQueue.clear()
     for (event in events) {

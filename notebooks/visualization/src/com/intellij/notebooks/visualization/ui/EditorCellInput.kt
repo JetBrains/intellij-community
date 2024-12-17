@@ -24,11 +24,14 @@ class EditorCellInput(
 
   val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
 
-  val folding = EditorCellFoldingBar(editor, ::getFoldingBounds) { toggleFolding() }
+  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, ::getFoldingBounds) { toggleFolding() }
+    .also {
+      Disposer.register(this, it)
+    }
 
-  val draggableBar = EditorCellDraggableBar(editor, this, ::getFoldingBounds)
+  val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this, ::getFoldingBounds)
 
-  var folded = false
+  var folded: Boolean = false
     private set
 
   private fun shouldShowRunButton(): Boolean {
@@ -83,7 +86,7 @@ class EditorCellInput(
     return bounds
   }
 
-  fun updateInput() = editor.updateManager.update { ctx ->
+  fun updateInput(): Unit? = editor.updateManager.update { ctx ->
     (component as? InputComponent)?.updateInput(ctx)
   }
 

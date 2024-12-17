@@ -15,6 +15,6 @@ class NotebookAboveCodeCellGutterLineMarkerRenderer(private val highlighter: Ran
     val inlayBounds = getInlayBounds(editor, lines) ?: return
 
     val bottomRectHeight = editor.notebookAppearance.cellBorderHeight / 2
-    paintNotebookCellBackgroundGutter(editor, g, r, lines, inlayBounds.y + inlayBounds.height - bottomRectHeight, bottomRectHeight)
+    paintNotebookCellBackgroundGutter(editor, g, r, inlayBounds.y + inlayBounds.height - bottomRectHeight, bottomRectHeight)
   }
 }

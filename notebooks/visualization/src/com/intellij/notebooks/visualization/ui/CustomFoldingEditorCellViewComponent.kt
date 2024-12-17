@@ -1,14 +1,14 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.notebooks.ui.bind
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentLayoutManager.CustomFoldingConstraint
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.EditorGutterColor
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
@@ -33,7 +33,6 @@ class CustomFoldingEditorCellViewComponent(
   private val bottomContainer = JPanel().apply {
     isOpaque = false
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
-    background = EditorGutterColor.getEditorGutterBackgroundColor(editor as EditorImpl, false)
   }
 
   private val mainComponent = JPanel(BorderLayout()).apply {
@@ -63,9 +62,12 @@ class CustomFoldingEditorCellViewComponent(
       updateGutterIcons(action)
     }
     updateGutterIcons(cell.gutterAction.get())
+    editor.notebookAppearance.editorBackgroundColor.bind(this) {
+      bottomContainer.background = it
+    }
   }
 
-  override fun dispose() = editor.updateManager.update { ctx ->
+  override fun dispose(): Unit = editor.updateManager.update { ctx ->
     disposeFolding(ctx)
   }
 

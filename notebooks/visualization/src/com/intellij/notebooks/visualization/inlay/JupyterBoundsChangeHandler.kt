@@ -91,10 +91,14 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
     }, this)
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   fun subscribe(listener: JupyterBoundsChangeListener) {
     dispatcher.addListener(listener)
+  }
+
+  fun subscribe(parentDisposable: Disposable, listener: JupyterBoundsChangeListener) {
+    dispatcher.addListener(listener, parentDisposable)
   }
 
   fun unsubscribe(listener: JupyterBoundsChangeListener) {

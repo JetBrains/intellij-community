@@ -27,7 +27,7 @@ class NotebookCodeCellBackgroundLineMarkerRenderer(
     val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
     val (top, height) = boundsProvider(editor)
 
-    paintNotebookCellBackgroundGutter(editor, g, r, lines, top, height, presentationModeMasking) {
+    paintNotebookCellBackgroundGutter(editor, g, r, top, height, presentationModeMasking) {
       paintCaretRow(editor, g, lines)
     }
   }
