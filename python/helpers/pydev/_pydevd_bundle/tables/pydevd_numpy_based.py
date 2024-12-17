@@ -37,12 +37,15 @@ def get_type(table):
 
 def get_shape(table):
     # type: (np.ndarray) -> str
-    return str(table.shape[0])
+    if table.ndim == 1:
+        return str((table.shape[0], 1))
+    else:
+        return str((table.shape[0], table.shape[1]))
 
 
 def get_head(table):
     # type: (np.ndarray) -> str
-    return repr(__create_table(table).head(1).to_html(notebook=True))
+    return "None"
 
 
 def get_column_types(table):
@@ -151,8 +154,11 @@ class _NpTable:
             html.append('<th>{}</th>\n'.format(int(self.indexes[row_num])))
             if self.type == ONE_DIM:
                 # None usually is not supported in tensors, but to be totally sure
-                if self.format is not None and self.array[row_num] is not None:
-                    value = self.format % self.array[row_num]
+                if self.format is not None and self.array[row_num] is not None and self.array[row_num] == self.array[row_num]:
+                    try:
+                        value = self.format % self.array[row_num]
+                    except Exception as _:
+                        value = self.array[row_num]
                 else:
                     value = self.array[row_num]
                 html.append('<td>{}</td>\n'.format(value))
@@ -160,8 +166,11 @@ class _NpTable:
                 cols = len(self.array[0])
                 max_cols = cols if max_cols is None else min(max_cols, cols)
                 for col_num in range(max_cols):
-                    if self.format is not None and self.array[row_num][col_num]:
-                        value = self.format % self.array[row_num][col_num]
+                    if self.format is not None and self.array[row_num][col_num] is not None and self.array[row_num][col_num] == self.array[row_num][col_num]:
+                        try:
+                            value = self.format % self.array[row_num][col_num]
+                        except Exception as _:
+                            value = self.array[row_num][col_num]
                     else:
                         value = self.array[row_num][col_num]
                     html.append('<td>{}</td>\n'.format(value))
@@ -361,7 +370,7 @@ def __define_format_function(format):
     if format is None or format == 'null':
         return None
 
-    if format.startswith("%"):
+    if type(format) == str and format.startswith("%"):
         return lambda x: format % x
     else:
         return None
