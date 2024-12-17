@@ -1954,6 +1954,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/internalFunctionEvaluate.kt");
             }
 
+            @TestMetadata("internalMembersInInlinedLambda.kt")
+            public void testInternalMembersInInlinedLambda() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/internalMembersInInlinedLambda.kt");
+            }
+
             @TestMetadata("internalProperty.kt")
             public void testInternalProperty() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/internalProperty.kt");
@@ -2751,6 +2756,16 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("inlineInternal.kt")
             public void testInlineInternal() throws Exception {
                 runTest("../testData/evaluation/jvmMultiModule/inlineInternal.kt");
+            }
+
+            @TestMetadata("inlineInternalWithDefaultParams.kt")
+            public void testInlineInternalWithDefaultParams() throws Exception {
+                runTest("../testData/evaluation/jvmMultiModule/inlineInternalWithDefaultParams.kt");
+            }
+
+            @TestMetadata("internalMembersInInlinedLambda.kt")
+            public void testInternalMembersInInlinedLambda() throws Exception {
+                runTest("../testData/evaluation/jvmMultiModule/internalMembersInInlinedLambda.kt");
             }
         }
     }

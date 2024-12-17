@@ -353,8 +353,8 @@ open class MppDebuggerCompilerFacility(
     compileConfig: TestCompileConfiguration,
 ) : DebuggerTestCompilerFacility(project, files, jvmTarget, compileConfig) {
 
-    override fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File): List<String> {
-        return super.getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir) +
+    override fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File, moduleName: String): List<String> {
+        return super.getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir, moduleName) +
                 getExtraOptionsForMultiplatform(jvmSrcDir, commonSrcDir)
     }
 

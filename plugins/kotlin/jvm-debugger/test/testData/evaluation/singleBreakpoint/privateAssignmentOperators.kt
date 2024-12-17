@@ -80,3 +80,6 @@ fun main() {
 
 // EXPRESSION: x.fieldWithExtensionPlus += ClassWithExtensionPlus(1); x.fieldWithExtensionPlus.field
 // RESULT: 9: I
+
+// See KTIJ-32493
+// IGNORE_K1

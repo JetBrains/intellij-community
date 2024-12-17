@@ -130,6 +130,8 @@
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.RootKindMatcherImpl"/>
 
+    <psi.batchReferenceProcessingSuppressor implementation="org.jetbrains.kotlin.idea.base.analysis.KotlinBatchReferenceProcessingSuppressor"/>
+
     <applicationConfigurable
             groupId="language"
             bundle="messages.KotlinPreferencesBundle"
