@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
-import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -24,7 +23,7 @@ import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 class KotlinMemberInfoStorage(
     classOrObject: KtClassOrObject,
     filter: (KtNamedDeclaration) -> Boolean = { true }
-) : AbstractMemberInfoStorage<KtNamedDeclaration, PsiNamedElement, KotlinMemberInfo>(classOrObject, filter) {
+) : AbstractKotlinMemberInfoStorage(classOrObject, filter) {
 
     @OptIn(FrontendInternals::class)
     override fun memberConflict(member1: KtNamedDeclaration, member: KtNamedDeclaration): Boolean {
