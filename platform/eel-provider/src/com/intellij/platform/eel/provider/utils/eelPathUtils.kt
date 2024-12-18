@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
@@ -17,6 +20,20 @@ import kotlin.io.path.relativeTo
 @ApiStatus.Internal
 object EelPathUtils {
   private val LOG = com.intellij.openapi.diagnostic.logger<EelPathUtils>()
+
+  /**
+   * Determines whether [path] correponds to the local Eel
+   */
+  @JvmStatic
+  fun isPathLocal(path: Path): Boolean {
+    return path.getEelDescriptor() == LocalEelDescriptor
+  }
+
+  @JvmStatic
+  fun isProjectLocal(project: Project): Boolean {
+    val projectFilePath = project.projectFilePath ?: return true
+    return isPathLocal(Path.of(projectFilePath))
+  }
 
   @RequiresBackgroundThread
   fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, copyAttributes: Boolean) {
