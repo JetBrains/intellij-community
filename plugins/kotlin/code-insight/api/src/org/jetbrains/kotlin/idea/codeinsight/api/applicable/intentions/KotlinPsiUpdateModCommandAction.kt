@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
-sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private constructor(
+sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
     element: E?,
     elementClass: KClass<E>?,
 ) : PsiBasedModCommandAction<E>(element, elementClass?.java) {
