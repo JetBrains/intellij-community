@@ -20,11 +20,15 @@ import org.intellij.plugins.intelliLang.inject.*
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -186,12 +190,23 @@ private fun canInjectWithAnnotation(host: PsiElement): Boolean {
     return javaPsiFacade.findClass(AnnotationUtil.LANGUAGE, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null
 }
 
-private fun findElementToInjectWithAnnotation(host: KtElement): KtModifierListOwner? = PsiTreeUtil.getParentOfType(
-    host,
-    KtModifierListOwner::class.java,
-    false, /* strict */
-    KtBlockExpression::class.java, KtParameterList::class.java, KtTypeParameterList::class.java /* Stop at */
-)
+private fun findElementToInjectWithAnnotation(host: KtElement): KtModifierListOwner? {
+    PsiTreeUtil.getParentOfType(
+        host,
+        KtModifierListOwner::class.java,
+        false, /* strict */
+        KtBlockExpression::class.java, KtParameterList::class.java, KtTypeParameterList::class.java /* Stop at */
+    )?.let { return it }
+    // try to handle an assignment case like `val foo: String; foo = "fun"`
+    val binaryExpression = PsiTreeUtil.getParentOfType(
+        host,
+        KtBinaryExpression::class.java,
+        false, /* strict */
+        KtBlockExpression::class.java, KtParameterList::class.java, KtTypeParameterList::class.java /* Stop at */
+    )?.takeIf { it.operationToken in KtTokens.ALL_ASSIGNMENTS } ?: return null
+    val left = binaryExpression.left ?: return null
+    return left.mainReference?.resolve() as? KtModifierListOwner
+}
 
 private fun findElementToInjectWithComment(host: KtElement): KtExpression? {
     val parentBlockExpression = PsiTreeUtil.getParentOfType(

@@ -16,6 +16,36 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
+
+    fun testInjectionLanguageOnString() {
+        doInjectLanguageOrReferenceTest(
+            before = """
+            fun bar(){ val code = "fun foo() { <caret> }" }
+        """.trimIndent(),
+            after = """
+            import org.intellij.lang.annotations.Language
+
+            fun bar(){ @Language("kotlin") val code = "fun foo() {  }" }
+        """.trimIndent()
+        )
+    }
+
+    fun testInjectionLanguageOnStringSplitDeclaration() {
+        doInjectLanguageOrReferenceTest(
+            before = """
+            var code: String? = null
+            fun bar(){ code = "fun foo() { <caret> }" }
+        """.trimIndent(),
+            after = """
+            import org.intellij.lang.annotations.Language
+
+            @Language("kotlin")
+            var code: String? = null
+            fun bar(){ code = "fun foo() {  }" }
+        """.trimIndent()
+        )
+    }
+
     fun testInjectionOnJavaPredefinedMethodWithAnnotation() = doInjectionPresentTest(
         """
         val test1 = java.util.regex.Pattern.compile("<caret>pattern")
