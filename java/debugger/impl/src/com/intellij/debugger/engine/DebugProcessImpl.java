@@ -2256,7 +2256,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       getVirtualMachineProxy().suspend();
       logThreads();
       SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
-      if (myPredefinedThread != null) {
+      if (myPredefinedThread != null && !myPredefinedThread.isCollected()) {
         suspendContext.setThread(myPredefinedThread.getThreadReference());
       }
       myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
