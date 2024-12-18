@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -16,7 +17,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 import java.io.File
 
-class MavenProjectTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenProjectTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testCollectingPlugins() = runBlocking {
     importProjectAsync("""
