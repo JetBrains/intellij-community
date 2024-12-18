@@ -4,38 +4,17 @@ package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.resolveDirectSupertypes
-import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.OverloadChecker
 
 class KotlinMemberInfoStorage(
     classOrObject: KtClassOrObject,
     filter: (KtNamedDeclaration) -> Boolean = { true }
 ) : AbstractKotlinMemberInfoStorage(classOrObject, filter) {
 
-    @OptIn(FrontendInternals::class)
     override fun memberConflict(member1: KtNamedDeclaration, member: KtNamedDeclaration): Boolean {
-        val descriptor1 = member1.resolveToDescriptorWrapperAware()
-        val descriptor = member.resolveToDescriptorWrapperAware()
-        if (descriptor1.name != descriptor.name) return false
-
-        return when {
-            descriptor1 is FunctionDescriptor && descriptor is FunctionDescriptor -> {
-                val overloadUtil = member1.getResolutionFacade().frontendService<OverloadChecker>()
-                !overloadUtil.isOverloadable(descriptor1, descriptor)
-            }
-            descriptor1 is PropertyDescriptor && descriptor is PropertyDescriptor ||
-                    descriptor1 is ClassDescriptor && descriptor is ClassDescriptor -> true
-            else -> false
-        }
+        return KotlinMemberInfoStorageSupport.getInstance().memberConflict(member1, member)
     }
 
     override fun buildSubClassesMap(aClass: PsiNamedElement) {
@@ -48,9 +27,7 @@ class KotlinMemberInfoStorage(
     }
 
     override fun isInheritor(baseClass: PsiNamedElement, aClass: PsiNamedElement): Boolean {
-        val baseDescriptor = baseClass.getClassDescriptorIfAny() ?: return false
-        val currentDescriptor = aClass.getClassDescriptorIfAny() ?: return false
-        return DescriptorUtils.isSubclass(currentDescriptor, baseDescriptor)
+        return KotlinMemberInfoStorageSupport.getInstance().isInheritor(aClass, baseClass)
     }
 
     override fun extractClassMembers(aClass: PsiNamedElement, temp: ArrayList<KotlinMemberInfo>) {

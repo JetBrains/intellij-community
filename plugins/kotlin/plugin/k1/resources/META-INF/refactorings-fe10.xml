@@ -90,6 +90,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpConflictSearcher"
             serviceImplementation="org.jetbrains.kotlin.idea.refactoring.pullUp.K1PullUpConflictSearcher"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.memberInfo.K1MemberInfoStorageSupport"/>
 
     <refactoring.pushDown
             language="kotlin"
