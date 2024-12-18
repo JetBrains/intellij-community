@@ -20,9 +20,6 @@
             <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.13/ktor-network-jvm-2.3.13.jar">
               <sha256sum>17fc53774c193c11443457bf5dbc9991e95daca09b2d8cd475050dfa0c71f280</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.13/ktor-websockets-jvm-2.3.13.jar">
-              <sha256sum>7dc3c3087d46a6e9d3a1176650bf56f6ccbd47d1bc615b744777442263579e7b</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.13/ktor-network-tls-jvm-2.3.13.jar">
               <sha256sum>80998b6c6171845bec17b1c1cf29712514e76c6b43c2ad68a4261e555fd90bb2</sha256sum>
             </artifact>
@@ -37,13 +34,13 @@
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="io.ktor:ktor-utils-jvm" />
             <dependency maven-id="io.ktor:ktor-http-jvm" />
+            <dependency maven-id="io.ktor:ktor-websockets-jvm" />
           </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.13/ktor-client-cio-jvm-2.3.13.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.13/ktor-http-cio-jvm-2.3.13.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.13/ktor-network-jvm-2.3.13.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.13/ktor-websockets-jvm-2.3.13.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.13/ktor-network-tls-jvm-2.3.13.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -51,7 +48,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.13/ktor-client-cio-jvm-2.3.13-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.13/ktor-http-cio-jvm-2.3.13-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.13/ktor-network-jvm-2.3.13-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.13/ktor-websockets-jvm-2.3.13-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.13/ktor-network-tls-jvm-2.3.13-sources.jar!/" />
         </SOURCES>
       </library>
