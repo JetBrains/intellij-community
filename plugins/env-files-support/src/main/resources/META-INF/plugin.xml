@@ -65,64 +65,80 @@
                                      targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyUsageSymbol"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvDuplicateKeyInspection"
-                         displayName="Duplicate keys"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.duplicate.keys"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvSpaceInsideNonQuotedInspection"
-                         displayName="Space inside non-quoted value"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.space.inside.non.quoted.value"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvExtraBlankLineInspection"
-                         displayName="Extra blank line"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.extra.blank.line"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.ExtraBlankLineInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvIncorrectDelimiterInspection"
-                         displayName="Incorrect delimiter"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.incorrect.delimiter"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.IncorrectDelimiterInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvLeadingCharacterInspection"
-                         displayName="Invalid leading character"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.invalid.leading.character"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.LeadingCharacterInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvLowercaseKeyInspection"
-                         displayName="Key uses lowercase chars"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.key.uses.lowercase.chars"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.LowercaseKeyInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvTrailingWhitespaceInspection"
-                         displayName="Value has trailing whitespace"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.value.has.trailing.whitespace"
                          enabledByDefault="true"
                          level="WARNING" implementationClass="ru.adelf.idea.dotenv.inspections.TrailingWhitespaceInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvSpaceAroundSeparatorInspection"
-                         displayName="Extra spaces surrounding '='"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.extra.spaces.surrounding"
                          enabledByDefault="true" 
                          implementationClass="ru.adelf.idea.dotenv.inspections.SpaceAroundSeparatorInspection"/>
         
@@ -130,9 +146,10 @@
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 
         <applicationConfigurable instance="ru.adelf.idea.dotenv.ui.DotEnvSettingsConfigurable"
-                             id="DotEnv.SettingsForm"
-                             displayName="DotEnv"
-                             groupId="language"
+                                 id="DotEnv.SettingsForm"
+                                 bundle="messages.DotEnvBundle"
+                                 key="group.dotenv"
+                                 groupId="language"
         />
     </extensions>
 

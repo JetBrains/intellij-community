@@ -24,7 +24,7 @@ public class ExtraBlankLineInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return DotEnvBundle.message("extra.blank.line");
+        return DotEnvBundle.message("inspection.name.extra.blank.line");
     }
 
     @Override
@@ -32,9 +32,8 @@ public class ExtraBlankLineInspection extends LocalInspectionTool {
         return true;
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }

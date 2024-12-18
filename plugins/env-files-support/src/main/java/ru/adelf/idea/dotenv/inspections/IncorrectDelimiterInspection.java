@@ -21,7 +21,7 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return DotEnvBundle.message("incorrect.delimiter");
+        return DotEnvBundle.message("inspection.name.incorrect.delimiter");
     }
 
     @Override

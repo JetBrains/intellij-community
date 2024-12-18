@@ -24,7 +24,7 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return DotEnvBundle.message("extra.spaces.surrounding");
+        return DotEnvBundle.message("inspection.name.extra.spaces.surrounding");
     }
 
     @Override

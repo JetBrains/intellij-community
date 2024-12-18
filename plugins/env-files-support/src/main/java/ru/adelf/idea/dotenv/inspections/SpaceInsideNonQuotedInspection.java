@@ -24,7 +24,7 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return DotEnvBundle.message("space.inside.non.quoted.value");
+        return DotEnvBundle.message("inspection.name.space.inside.non.quoted.value");
     }
 
     private final AddQuotesQuickFix addQuotesQuickFix = new AddQuotesQuickFix();

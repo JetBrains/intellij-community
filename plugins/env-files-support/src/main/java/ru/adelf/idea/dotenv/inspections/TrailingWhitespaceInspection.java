@@ -25,7 +25,7 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return DotEnvBundle.message("value.has.trailing.whitespace");
+        return DotEnvBundle.message("inspection.name.value.has.trailing.whitespace");
     }
 
     @Override

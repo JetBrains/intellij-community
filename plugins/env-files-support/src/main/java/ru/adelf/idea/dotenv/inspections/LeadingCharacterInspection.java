@@ -18,7 +18,7 @@ public class LeadingCharacterInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return DotEnvBundle.message("invalid.leading.character");
+        return DotEnvBundle.message("inspection.name.invalid.leading.character");
     }
     
     @Override

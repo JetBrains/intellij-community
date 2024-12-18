@@ -23,7 +23,7 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getDisplayName() {
-        return DotEnvBundle.message("key.uses.lowercase.chars");
+        return DotEnvBundle.message("inspection.name.key.uses.lowercase.chars");
     }
 
     @Override
