@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.psi.CommonClassNames
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.debugger.engine.DebuggerUtils
 
 class JavaValueInterpreter : XValueInterpreter {
   override fun tryExtractResult(session: XDebugSession, result: XValue): XValueInterpreter.Result? {
@@ -42,24 +42,13 @@ class JavaValueInterpreter : XValueInterpreter {
             classType = classType.superclass()
           }
           if (classType != null) {
-            val exceptionMessage: String? = tryExtractExceptionMessage(reference)
+            val exceptionMessage: String? = DebuggerUtils.tryExtractExceptionMessage(reference)
             val description = ("Evaluation failed: " + type.name()) + " exception thrown"
             val descriptionWithReason = if (exceptionMessage == null) description else "$description: $exceptionMessage"
             return descriptionWithReason
           }
         }
       }
-    }
-    return null
-  }
-
-  private fun tryExtractExceptionMessage(exception: com.sun.jdi.ObjectReference): String? {
-    val type = exception.referenceType()
-    val messageField = DebuggerUtils.findField(type, "detailMessage");
-    if (messageField == null) return null
-    val message = exception.getValue(messageField)
-    if (message is com.sun.jdi.StringReference) {
-      return message.value()
     }
     return null
   }

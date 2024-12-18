@@ -11,7 +11,7 @@ class JavaEvaluationContext(val context: EvaluationContextImpl) : EvaluationCont
     get() = context.project
 
   override fun scheduleDebuggerCommand(command: Runnable) {
-    context.debugProcess.managerThread.invoke(object : DebuggerCommandImpl() {
+    context.managerThread.invoke(object : DebuggerCommandImpl() {
       override fun action() = command.run()
     })
   }
