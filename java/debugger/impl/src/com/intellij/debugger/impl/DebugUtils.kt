@@ -45,23 +45,6 @@ catch (e: Throwable) {
   defaultValue
 }
 
-/**
- * We are going to pass this file to a remote process, which may run in an isolated environment. In this case we need to create a file on the remote side.
- */
-internal fun createLocalizedTempFile(project: Project?, prefix: String, suffix: String): Pair<Path, URI> {
-  val projectFilePath = project?.projectFilePath
-  if (!Registry.`is`("compiler.build.can.use.eel") || projectFilePath == null) {
-    val localFile = Files.createTempFile(prefix, suffix)
-    return localFile to localFile.toUri()
-  }
-  return runBlockingMaybeCancellable {
-    val eelApi = Path.of(projectFilePath).getEelApi()
-    val eelPath = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOrThrow().resolve(prefix + suffix)
-    eelApi.mapper.toNioPath(eelPath).apply { createFile() }
-    eelApi.mapper.toNioPath(eelPath) to URI("file:$eelPath")
-  }
-}
-
 // do not catch VMDisconnectedException
 inline fun <T : Any, R> computeSafeIfAny(ep: ExtensionPointName<T>, processor: (T) -> R?): R? =
   ep.extensionList.firstNotNullOfOrNull { t ->

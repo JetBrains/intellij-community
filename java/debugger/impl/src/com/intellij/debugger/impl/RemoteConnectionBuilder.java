@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SlowOperations;
@@ -246,10 +247,10 @@ public class RemoteConnectionBuilder {
     }
     if (!properties.isEmpty()) {
       try {
-        Pair<Path, URI> path = DebugUtilsKt.createLocalizedTempFile(project, "capture", ".props");
-        try (OutputStream out = Files.newOutputStream(path.getFirst())) {
+        Path path = EelPathUtils.createTemporaryFile(project, "capture", ".props");
+        try (OutputStream out = Files.newOutputStream(path)) {
           properties.store(out, null);
-          return "=" + path.getSecond().toASCIIString();
+          return "=" + EelPathUtils.getUriLocalToEel(path).toASCIIString();
         }
       }
       catch (IOException e) {
