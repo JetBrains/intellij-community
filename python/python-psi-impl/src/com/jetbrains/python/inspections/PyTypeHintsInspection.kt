@@ -424,15 +424,10 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkTypeVarDefaultType(defaultExpression: PyExpression, typeParameter: PyTypeParameter?) {
-      val referencesInDefault =
-        PsiTreeUtil.findChildrenOfAnyType(defaultExpression, false, PyReferenceExpression::class.java, PyStringLiteralExpression::class.java)
-
-      referencesInDefault.forEach {
-        val type = Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext))
-        when (type) {
-          is PyParamSpecType -> registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "ParamSpec"))
-          is PyTypeVarTupleType -> registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "TypeVarTuple"))
-        }
+      val type = Ref.deref(PyTypingTypeProvider.getType(defaultExpression, myTypeEvalContext))
+      when (type) {
+        is PyParamSpecType -> registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "ParamSpec"))
+        is PyTypeVarTupleType -> registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "TypeVarTuple"))
       }
 
       checkIsCorrectTypeExpression(defaultExpression)

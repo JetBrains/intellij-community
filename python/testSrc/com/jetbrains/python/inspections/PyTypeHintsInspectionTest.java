@@ -1969,8 +1969,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                    P = ParamSpec("P")
                    T2 = TypeVar("T2", default=<warning descr="'ParamSpec' cannot be used in default type of TypeVar">P</warning>)
-                   T3 = TypeVar("T3", default=dict[str, <warning descr="'TypeVarTuple' cannot be used in default type of TypeVar">Ts</warning>])
-                   T4 = TypeVar("T4", default=dict[list[<warning descr="'ParamSpec' cannot be used in default type of TypeVar">P</warning>], str])
+                   T3 = TypeVar("T3", default=dict[str, Ts])
+                   T4 = TypeVar("T4", default=dict[list[P], str])
                    """);
   }
 
