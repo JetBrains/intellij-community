@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
@@ -159,7 +158,7 @@ class KotlinPullUpDialog(
     override fun doAction() {
         val selectedMembers = selectedMemberInfos
         val targetClass = superClass!!
-        checkConflicts(project, sourceClass, targetClass, selectedMembers, { close(DialogWrapper.OK_EXIT_CODE) }) {
+        checkPullUpConflicts(project, sourceClass, targetClass, selectedMembers, { close(OK_EXIT_CODE) }) {
             invokeRefactoring(createProcessor(sourceClass, targetClass, selectedMembers))
         }
     }

@@ -94,7 +94,7 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
             val helper = dataContext?.getData(PULL_UP_TEST_HELPER_KEY) as TestHelper
             val selectedMembers = helper.adjustMembers(members)
             val targetClass = helper.chooseSuperClass(superClasses)
-            checkConflicts(project, classOrObject, targetClass, selectedMembers) {
+            checkPullUpConflicts(project, classOrObject, targetClass, selectedMembers) {
                 KotlinPullUpDialog.createProcessor(classOrObject, targetClass, selectedMembers).run()
             }
         } else {

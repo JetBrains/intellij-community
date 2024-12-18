@@ -2,10 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -20,7 +16,6 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.resolveToDescriptorWrapperAware
@@ -44,35 +39,6 @@ import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
-
-fun checkConflicts(
-    project: Project,
-    sourceClass: KtClassOrObject,
-    targetClass: PsiNamedElement,
-    memberInfos: List<KotlinMemberInfo>,
-    onShowConflicts: () -> Unit = {},
-    onAccept: () -> Unit
-) {
-    val conflicts = MultiMap<PsiElement, String>()
-
-    val conflictsCollected = runProcessWithProgressSynchronously(RefactoringBundle.message("detecting.possible.conflicts"), project) {
-        runReadAction {
-            conflicts.putAllValues(KotlinPullUpConflictSearcher.getInstance().collectConflicts(sourceClass, targetClass, memberInfos)) 
-        }
-    }
-
-    if (conflictsCollected) {
-        project.checkConflictsInteractively(conflicts, onShowConflicts, onAccept)
-    } else {
-        onShowConflicts()
-    }
-}
-
-private fun runProcessWithProgressSynchronously(
-    progressTitle: @NlsContexts.ProgressTitle String,
-    project: Project?,
-    process: Runnable,
-): Boolean = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
 
 internal fun collectConflicts(
     sourceClass: KtClassOrObject,
