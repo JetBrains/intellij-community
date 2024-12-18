@@ -87,6 +87,9 @@
             language="JAVA"
             order="first"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.pullUp.JavaToKotlinPullUpHelperFactory"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.pullUp.K1PullUpConflictSearcher"/>
 
     <refactoring.pushDown
             language="kotlin"

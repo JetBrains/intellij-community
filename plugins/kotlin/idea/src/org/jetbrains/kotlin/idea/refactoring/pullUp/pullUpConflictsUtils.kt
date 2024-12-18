@@ -56,7 +56,9 @@ fun checkConflicts(
     val conflicts = MultiMap<PsiElement, String>()
 
     val conflictsCollected = runProcessWithProgressSynchronously(RefactoringBundle.message("detecting.possible.conflicts"), project) {
-        runReadAction { collectConflicts(sourceClass, targetClass, memberInfos, conflicts) }
+        runReadAction {
+            conflicts.putAllValues(KotlinPullUpConflictSearcher.getInstance().collectConflicts(sourceClass, targetClass, memberInfos)) 
+        }
     }
 
     if (conflictsCollected) {
@@ -72,7 +74,7 @@ private fun runProcessWithProgressSynchronously(
     process: Runnable,
 ): Boolean = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
 
-private fun collectConflicts(
+internal fun collectConflicts(
     sourceClass: KtClassOrObject,
     targetClass: PsiNamedElement,
     memberInfos: List<KotlinMemberInfo>,
