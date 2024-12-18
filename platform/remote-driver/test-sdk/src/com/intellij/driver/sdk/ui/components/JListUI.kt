@@ -49,14 +49,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun clickItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
     findItemIndex(itemText, fullMatch)?.let { index ->
-      if (offset == null) {
-        fixture.clickItemAtIndex(index)
-      } else {
-        val cellBounds = getCellBounds(index)
-        val cellOffset = Point(offset.x, offset.y + cellBounds.getY().toInt())
-        check(cellBounds.contains(cellOffset)) { "point is out of cell bounds" }
-        robot.click(component, cellOffset)
-      }
+      clickItemAtIndex(index, offset)
     } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
 
@@ -81,7 +74,16 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
 
-  fun clickItemAtIndex(index: Int) = fixture.clickItemAtIndex(index)
+  fun clickItemAtIndex(index: Int, offset: Point? = null) {
+    if (offset == null) {
+      fixture.clickItemAtIndex(index)
+    } else {
+      val cellBounds = getCellBounds(index)
+      val cellOffset = Point(offset.x, offset.y + cellBounds.getY().toInt())
+      check(cellBounds.contains(cellOffset)) { "point is out of cell bounds" }
+      robot.click(component, cellOffset)
+    }
+  }
 
   fun collectIconsAtIndex(index: Int) = fixture.collectIconsAtIndex(index)
 
@@ -100,6 +102,9 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun isSelectedIndex(index: Int) = listComponent.isSelectedIndex(index)
 
+  fun getCellBounds(index: Int): Rectangle =
+    driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
+
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
     fixture.collectItems().indexOfFirst {
       if (fullMatch) it == itemText
@@ -108,9 +113,6 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
       if (it == -1) null
       else it
     }
-
-  private fun getCellBounds(index: Int): Rectangle =
-    driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
