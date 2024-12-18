@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.valuebased;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.valuebased.SynchronizeOnValueBasedClassInspection;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class SynchronizeOnValueBasedClassHighlightTest extends LightJavaCodeInsightFixtureTestCase {
+public class SynchronizeOnValueBasedClassInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   static final @NonNls String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/valuebased";
 
   @Override
@@ -36,5 +38,10 @@ public class SynchronizeOnValueBasedClassHighlightTest extends LightJavaCodeInsi
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21_ANNOTATED;
   }
 }

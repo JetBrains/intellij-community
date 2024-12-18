@@ -40,7 +40,7 @@ public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
     }
     else if (description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
       String text = element.getText();
-      if ((text.equals(PsiKeyword.SEALED) || text.equals(PsiKeyword.NON_SEALED)) &&
+      if ((text.equals(PsiKeyword.SEALED) || text.equals(PsiKeyword.NON_SEALED) || text.equals(PsiKeyword.VALUE)) &&
           PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiClass) {
         return false;
       }

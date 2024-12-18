@@ -351,7 +351,8 @@ public final class HighlightClassUtil {
     return PsiKeyword.VAR.equals(typeName) && JavaFeature.LVTI.isSufficient(level) ||
            PsiKeyword.YIELD.equals(typeName) && JavaFeature.SWITCH_EXPRESSION.isSufficient(level) ||
            PsiKeyword.RECORD.equals(typeName) && JavaFeature.RECORDS.isSufficient(level) ||
-           (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && JavaFeature.SEALED_CLASSES.isSufficient(level);
+           (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && JavaFeature.SEALED_CLASSES.isSufficient(level) ||
+           PsiKeyword.VALUE.equals(typeName) && JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(level);
   }
 
   static HighlightInfo.Builder checkClassAndPackageConflict(@NotNull PsiClass aClass) {
@@ -588,15 +589,20 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo.Builder checkCannotInheritFromFinal(@NotNull PsiClass superClass, @NotNull PsiElement elementToHighlight) {
-    HighlightInfo.Builder errorResult = null;
     if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
-      String message = JavaErrorBundle.message("inheritance.from.final.class", HighlightUtil.formatClass(superClass),
-                                               superClass.isEnum() ? PsiKeyword.ENUM : PsiKeyword.FINAL);
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
+      int choice;
+      if (superClass.isEnum()) choice = 2;
+      else if (superClass.isRecord()) choice = 3;
+      else if (superClass.isValueClass()) choice = 4;
+      else choice = 1;
+      String message = JavaErrorBundle.message("inheritance.from.final.class", HighlightUtil.formatClass(superClass), choice);
+      HighlightInfo.Builder errorResult =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
       ChangeModifierRequest removeFinal = MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false);
       QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(superClass, removeFinal));
+      return errorResult;
     }
-    return errorResult;
+    return null;
   }
 
   static HighlightInfo.Builder checkAnonymousInheritFinal(@NotNull PsiNewExpression expression) {
@@ -1107,10 +1113,19 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkExtendsProhibitedClass(@NotNull PsiClass superClass, @NotNull PsiClass psiClass, @NotNull PsiElement elementToHighlight) {
+  static HighlightInfo.Builder checkExtendsProhibitedClass(@NotNull PsiClass superClass,
+                                                           @NotNull PsiClass psiClass,
+                                                           @NotNull PsiElement elementToHighlight) {
     String qualifiedName = superClass.getQualifiedName();
-    if (CommonClassNames.JAVA_LANG_ENUM.equals(qualifiedName) && !psiClass.isEnum() || CommonClassNames.JAVA_LANG_RECORD.equals(qualifiedName) && !psiClass.isRecord()) {
+    if (CommonClassNames.JAVA_LANG_ENUM.equals(qualifiedName) && !psiClass.isEnum() ||
+        CommonClassNames.JAVA_LANG_RECORD.equals(qualifiedName) && !psiClass.isRecord()) {
       String message = JavaErrorBundle.message("classes.extends.prohibited.super", qualifiedName);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
+    }
+    else if (!(!psiClass.isValueClass() ||
+               superClass.isValueClass() ||
+               CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()))) {
+      String message = JavaErrorBundle.message("value.class.can.only.inherit");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
     }
     return null;

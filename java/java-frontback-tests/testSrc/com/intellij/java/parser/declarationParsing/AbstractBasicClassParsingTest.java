@@ -80,6 +80,8 @@ public abstract class AbstractBasicClassParsingTest extends AbstractBasicJavaPar
     doTest(true);
   }
 
+  public void testValueClass() { doTest(true); }
+
   public void testSealedInterface() { doTest(true); }
   public void testSealedClassOldLanguageLevel() {
     setLanguageLevel(LanguageLevel.JDK_1_8);

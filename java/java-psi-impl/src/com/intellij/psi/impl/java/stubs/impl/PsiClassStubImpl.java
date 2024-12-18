@@ -27,6 +27,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int HAS_DOC_COMMENT = 0x400;
   private static final int RECORD = 0x800;
   private static final int IMPLICIT = 0x1000;
+  private static final int VALUE_CLASS = 0x2000;
 
   private final @NotNull TypeInfo myTypeInfo;
   private final String myQualifiedName;
@@ -36,20 +37,20 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private String mySourceFileName;
 
   public PsiClassStubImpl(@NotNull JavaClassElementType type,
-                          final StubElement parent,
-                          final @Nullable String qualifiedName,
-                          final @Nullable String name,
-                          final @Nullable String baseRefText,
-                          final short flags) {
+                          StubElement parent,
+                          @Nullable String qualifiedName,
+                          @Nullable String name,
+                          @Nullable String baseRefText,
+                          short flags) {
     this(type, parent, TypeInfo.fromString(qualifiedName), name, baseRefText, flags);
   }
 
   public PsiClassStubImpl(@NotNull JavaClassElementType type,
-                          final StubElement parent,
-                          final @NotNull TypeInfo typeInfo,
-                          final @Nullable String name,
-                          final @Nullable String baseRefText,
-                          final short flags) {
+                          StubElement parent,
+                          @NotNull TypeInfo typeInfo,
+                          @Nullable String name,
+                          @Nullable String baseRefText,
+                          short flags) {
     super(parent, type);
     myTypeInfo = typeInfo;
     myQualifiedName = typeInfo.text();
@@ -112,15 +113,20 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   @Override
+  public boolean isValueClass() {
+    return BitUtil.isSet(myFlags, VALUE_CLASS);
+  }
+
+  @Override
   public boolean isEnumConstantInitializer() {
     return isEnumConstInitializer(myFlags);
   }
 
-  public static boolean isEnumConstInitializer(final short flags) {
+  public static boolean isEnumConstInitializer(short flags) {
     return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
   }
 
-  public static boolean isImplicit(final short flags) {
+  public static boolean isImplicit(short flags) {
     return BitUtil.isSet(flags, IMPLICIT);
   }
 
@@ -129,7 +135,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return isAnonymous(myFlags);
   }
 
-  public static boolean isAnonymous(final short flags) {
+  public static boolean isAnonymous(short flags) {
     return BitUtil.isSet(flags, ANONYMOUS);
   }
 
@@ -184,6 +190,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                      localClassInner,
                      hasDocComment,
                      false,
+                     false,
                      false);
   }
 
@@ -199,7 +206,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                                 boolean localClassInner,
                                 boolean hasDocComment,
                                 boolean isRecord,
-                                boolean isImplicit) {
+                                boolean isImplicit,
+                                boolean isValueClass) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -214,6 +222,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (hasDocComment) flags |= HAS_DOC_COMMENT;
     if (isRecord) flags |= RECORD;
     if (isImplicit) flags |= IMPLICIT;
+    if (isValueClass) flags |= VALUE_CLASS;
     return flags;
   }
 

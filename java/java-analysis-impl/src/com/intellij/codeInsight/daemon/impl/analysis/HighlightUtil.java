@@ -119,17 +119,19 @@ public final class HighlightUtil {
     PsiModifier.STATIC, Set.of(),
     PsiModifier.TRANSIENT, Set.of(),
     PsiModifier.VOLATILE, Set.of(PsiModifier.FINAL));
-  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = Map.of(
-    PsiModifier.ABSTRACT, Set.of(PsiModifier.FINAL),
-    PsiModifier.FINAL, Set.of(PsiModifier.ABSTRACT, PsiModifier.SEALED, PsiModifier.NON_SEALED),
-    PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED),
-    PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED),
-    PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED),
-    PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE),
-    PsiModifier.STRICTFP, Set.of(),
-    PsiModifier.STATIC, Set.of(),
-    PsiModifier.SEALED, Set.of(PsiModifier.FINAL, PsiModifier.NON_SEALED),
-    PsiModifier.NON_SEALED, Set.of(PsiModifier.FINAL, PsiModifier.SEALED));
+  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = Map.ofEntries(
+    Map.entry(PsiModifier.ABSTRACT, Set.of(PsiModifier.FINAL)),
+    Map.entry(PsiModifier.FINAL, Set.of(PsiModifier.ABSTRACT, PsiModifier.SEALED, PsiModifier.NON_SEALED)),
+    Map.entry(PsiModifier.PACKAGE_LOCAL, Set.of(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PRIVATE, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PUBLIC, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED)),
+    Map.entry(PsiModifier.PROTECTED, Set.of(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE)),
+    Map.entry(PsiModifier.STRICTFP, Set.of()),
+    Map.entry(PsiModifier.STATIC, Set.of()),
+    Map.entry(PsiModifier.SEALED, Set.of(PsiModifier.FINAL, PsiModifier.NON_SEALED)),
+    Map.entry(PsiModifier.NON_SEALED, Set.of(PsiModifier.FINAL, PsiModifier.SEALED)),
+    Map.entry(PsiModifier.VALUE, Set.of())
+  );
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = Map.of(PsiModifier.STATIC, Set.of());
   private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = Map.of(PsiModifier.OPEN, Set.of());
   private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = Map.of(
@@ -1181,10 +1183,10 @@ public final class HighlightUtil {
 
         if (aClass.isEnum()) {
           isAllowed &=
-            !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier) || PsiModifier.SEALED.equals(modifier));
+            !PsiModifier.FINAL.equals(modifier) && !PsiModifier.ABSTRACT.equals(modifier) && !PsiModifier.SEALED.equals(modifier)
+            && !PsiModifier.VALUE.equals(modifier);
         }
-
-        if (aClass.isRecord()) {
+        else if (aClass.isRecord()) {
           isAllowed &= !PsiModifier.ABSTRACT.equals(modifier);
         }
 
@@ -1222,9 +1224,11 @@ public final class HighlightUtil {
       }
       else if (PsiModifier.PROTECTED.equals(modifier) ||
                PsiModifier.TRANSIENT.equals(modifier) ||
-               PsiModifier.SYNCHRONIZED.equals(modifier) ||
                PsiModifier.FINAL.equals(modifier)) {
         isAllowed &= !isInterface;
+      }
+      else if (PsiModifier.SYNCHRONIZED.equals(modifier)) {
+        isAllowed &= !isInterface && (containingClass == null || !containingClass.isValueClass());
       }
 
       if (containingClass != null && (containingClass.isInterface() || containingClass.isRecord())) {
@@ -1242,7 +1246,7 @@ public final class HighlightUtil {
     }
     else if (modifierOwner instanceof PsiField) {
       if (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
-          PsiModifier.STRICTFP.equals(modifier) || PsiModifier.SYNCHRONIZED.equals(modifier)) {
+          PsiModifier.STRICTFP.equals(modifier)) {
         isAllowed = modifierOwnerParent instanceof PsiClass psiClass && !psiClass.isInterface();
       }
     }

@@ -437,6 +437,12 @@ public class BasicDeclarationParser {
            PsiKeyword.SEALED.equals(builder.getTokenText());
   }
 
+  private static boolean isValueToken(PsiBuilder builder, IElementType tokenType) {
+    return JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(getLanguageLevel(builder)) &&
+           tokenType == JavaTokenType.IDENTIFIER &&
+           PsiKeyword.VALUE.equals(builder.getTokenText());
+  }
+
    static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
     if (!JavaFeature.SEALED_CLASSES.isSufficient(getLanguageLevel(builder)) ||
         tokenType != JavaTokenType.IDENTIFIER ||
@@ -458,14 +464,18 @@ public class BasicDeclarationParser {
   }
 
   @NotNull
-  public Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder, final TokenSet modifiers) {
+  public Pair<PsiBuilder.Marker, Boolean> parseModifierList(PsiBuilder builder, TokenSet modifiers) {
     final PsiBuilder.Marker modList = builder.mark();
     boolean isEmpty = true;
 
     while (true) {
       IElementType tokenType = builder.getTokenType();
       if (tokenType == null) break;
-      if (isSealedToken(builder, tokenType)) {
+      if (isValueToken(builder, tokenType)) {
+        builder.remapCurrentToken(JavaTokenType.VALUE_KEYWORD);
+        tokenType = JavaTokenType.VALUE_KEYWORD;
+      }
+      else if (isSealedToken(builder, tokenType)) {
         builder.remapCurrentToken(JavaTokenType.SEALED_KEYWORD);
         tokenType = JavaTokenType.SEALED_KEYWORD;
       }

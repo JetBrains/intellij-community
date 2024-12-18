@@ -59,22 +59,23 @@ public final class PsiUtil extends PsiUtilCore {
   private static final @NotNull Map<CharSequence, JavaFeature> SOFT_KEYWORDS = CollectionFactory.createCharSequenceMap(true);
 
   static {
-    SOFT_KEYWORDS.put(VAR, JavaFeature.LVTI);
-    SOFT_KEYWORDS.put(RECORD, JavaFeature.RECORDS);
-    SOFT_KEYWORDS.put(YIELD, JavaFeature.SWITCH_EXPRESSION);
-    SOFT_KEYWORDS.put(SEALED, JavaFeature.SEALED_CLASSES);
-    SOFT_KEYWORDS.put(PERMITS, JavaFeature.SEALED_CLASSES);
-    SOFT_KEYWORDS.put(WHEN, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
-    SOFT_KEYWORDS.put(OPEN, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(MODULE, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(REQUIRES, JavaFeature.MODULES);
     SOFT_KEYWORDS.put(EXPORTS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(MODULE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(OPEN, JavaFeature.MODULES);
     SOFT_KEYWORDS.put(OPENS, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(USES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(PERMITS, JavaFeature.SEALED_CLASSES);
     SOFT_KEYWORDS.put(PROVIDES, JavaFeature.MODULES);
-    SOFT_KEYWORDS.put(TRANSITIVE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(RECORD, JavaFeature.RECORDS);
+    SOFT_KEYWORDS.put(REQUIRES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(SEALED, JavaFeature.SEALED_CLASSES);
     SOFT_KEYWORDS.put(TO, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TRANSITIVE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(USES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(VAR, JavaFeature.LVTI);
+    SOFT_KEYWORDS.put(VALUE, JavaFeature.VALHALLA_VALUE_CLASSES);
+    SOFT_KEYWORDS.put(WHEN, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
     SOFT_KEYWORDS.put(WITH, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(YIELD, JavaFeature.SWITCH_EXPRESSION);
   }
 
   private PsiUtil() {}

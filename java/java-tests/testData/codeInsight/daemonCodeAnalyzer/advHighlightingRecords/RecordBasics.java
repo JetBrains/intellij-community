@@ -10,7 +10,7 @@ class ClassWithComponents2<error descr="Record header declared for non-record">(
 <error descr="Modifier 'abstract' not allowed here">abstract</error> record AbstractRecord() {}
 record ExtendsObject() <error descr="'extends' not allowed on record">extends</error> Object {}
 record PermitsObject() <error descr="'permits' not allowed on record">permits</error> Object {}
-class ExtendsRecord extends <error descr="Cannot inherit from final 'NoComponents'">NoComponents</error> {}
+class ExtendsRecord extends <error descr="Cannot inherit from record 'NoComponents'">NoComponents</error> {}
 abstract class ExtendsJLR extends <error descr="Classes cannot directly extend 'java.lang.Record'">Record</error> {}
 class AnonymousExtendsJLR {
   Record r = new <error descr="Classes cannot directly extend 'java.lang.Record'">Record</error>() {

@@ -48,6 +48,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     NAME_TO_KEYWORD_TYPE_MAP.put(TRANSITIVE, JavaTokenType.TRANSITIVE_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(SEALED, JavaTokenType.SEALED_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(NON_SEALED, JavaTokenType.NON_SEALED_KEYWORD);
+    NAME_TO_KEYWORD_TYPE_MAP.put(VALUE, JavaTokenType.VALUE_KEYWORD);
 
     KEYWORD_TYPE_TO_NAME_MAP = new HashMap<>();
     for (String name : NAME_TO_KEYWORD_TYPE_MAP.keySet()) {
@@ -120,6 +121,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(STATIC);
         }
       }
+      else {
+        if (explicitModifiers.contains(VALUE) && !explicitModifiers.contains(ABSTRACT)) {
+          implicitModifiers.add(FINAL);
+        }
+      }
       if (((PsiClass)parent).isRecord()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
@@ -173,8 +179,13 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       }
       else {
         PsiClass aClass = ((PsiField)parent).getContainingClass();
-        if (aClass != null && aClass.isInterface()) {
-          Collections.addAll(implicitModifiers, PUBLIC, STATIC, FINAL);
+        if (aClass != null) {
+          if (aClass.isInterface()) {
+            Collections.addAll(implicitModifiers, PUBLIC, STATIC, FINAL);
+          }
+          else if (aClass.isValueClass()) {
+            implicitModifiers.add(FINAL);
+          }
         }
       }
     }

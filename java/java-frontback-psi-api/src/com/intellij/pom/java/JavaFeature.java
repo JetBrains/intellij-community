@@ -121,6 +121,7 @@ public enum JavaFeature {
   MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_23_PREVIEW, "feature.module.import.declarations"),
   PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import"),
   TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base"),
+  VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
 
   private final @NotNull LanguageLevel myLevel;

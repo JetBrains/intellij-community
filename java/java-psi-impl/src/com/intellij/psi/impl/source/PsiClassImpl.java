@@ -455,6 +455,16 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
+  public boolean isValueClass() {
+    PsiClassStub<?> stub = getGreenStub();
+    if (stub != null) {
+      return stub.isValueClass();
+    }
+
+    return hasModifierProperty(PsiKeyword.VALUE);
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClass(this);
