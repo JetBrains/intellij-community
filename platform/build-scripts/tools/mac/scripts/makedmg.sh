@@ -110,7 +110,19 @@ fi
 
 
 if [ "$CONTENT_SIGNED" = "true" ]; then
+  log "Checking the signature"
   codesign --verify --deep --strict --verbose "$MOUNT_POINT/$BUILD_NAME"
+fi
+
+LAUNCHER="$(ls "$MOUNT_POINT/$BUILD_NAME/Contents/MacOS")"
+LAUNCHER_PATH="$MOUNT_POINT/$BUILD_NAME/Contents/MacOS/$LAUNCHER"
+LAUNCHER_ARCH="$(lipo -archs "$LAUNCHER_PATH")"
+HOST_ARCH="$(arch)"
+if [ "$LAUNCHER_ARCH" = "$HOST_ARCH" ]; then
+  log "Checking the launcher integrity"
+  "$LAUNCHER_PATH" --version
+else
+  log "The launcher arch is $LAUNCHER_ARCH, the host arch is $HOST_ARCH, integrity may not be checked"
 fi
 
 function detach_disk() {
