@@ -56,6 +56,9 @@
     <orderEntry type="module" module-name="intellij.platform.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.exec" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="RUNTIME" />
