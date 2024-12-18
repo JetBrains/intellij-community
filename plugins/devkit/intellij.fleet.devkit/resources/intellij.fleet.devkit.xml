@@ -11,7 +11,7 @@
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
-                     implementationClass="org.jetbrains.idea.devkit.fleet.inspections.SettingIsDocumentedInspection"
+                     implementationClass="org.jetbrains.idea.devkit.fleet.inspections.SettingRegistrationDocumentationInspection"
                      key="inspections.plugin.fleet.setting.is.documented"/>
   </extensions>
 </idea-plugin>
