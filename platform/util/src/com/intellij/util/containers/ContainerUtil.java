@@ -1368,7 +1368,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from the {@code collection} of the specified {@code aClass}
+   * @return read-only list consisting of the elements from the result of {@code listGenerator} applied to each element of {@code array} concatenated
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T, V> List<T> concat(V @NotNull [] array, @NotNull Function<? super V, ? extends Collection<? extends T>> listGenerator) {
@@ -1381,9 +1381,10 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of all the elements from the collections stored in the list merged together
+   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull Iterable<? extends Collection<? extends T>> list) {
+  public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull @Unmodifiable Iterable<? extends Collection<? extends T>> list) {
     int totalSize = 0;
     for (Collection<? extends T> ts : list) {
       totalSize += ts.size();
@@ -1444,7 +1445,8 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of {@code list1} and {@code list2} added together
+   * @return read-only list consisting of {@code list1} and {@code list2} added together.
+   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<? extends T> list1, @NotNull List<? extends T> list2) {
@@ -1516,9 +1518,12 @@ public final class ContainerUtil {
     };
   }
 
+  /**
+   * return {@link Iterable} which iterates all arguments in sequence
+   */
   @SafeVarargs
   @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> concat(@NotNull Iterable<? extends T> @NotNull ... iterables) {
+  public static @NotNull <T> Iterable<T> concat(@NotNull @Unmodifiable Iterable<? extends T> @NotNull ... iterables) {
     if (iterables.length == 0) return Collections.emptyList();
     if (iterables.length == 1) {
       //noinspection unchecked
@@ -1561,10 +1566,11 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of the lists added together
+   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @SafeVarargs
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<? extends T> @NotNull ... lists) {
+  public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull @Unmodifiable List<? extends T> @NotNull ... lists) {
     if (lists.length == 1) {
       //noinspection unchecked
       return (List<T>)lists[0];
@@ -1602,6 +1608,7 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of the lists added together
+   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<List<? extends T>> lists) {
