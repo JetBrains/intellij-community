@@ -66,9 +66,6 @@ private class JavaConstructorRenderer(
     //to avoid possible overload conflicts
     val parameters = request.expectedParameters 
     var constructor = renderConstructor()
-    if (targetClass.modifierList?.hasExplicitModifier(PsiModifier.PUBLIC) != true) {
-      constructor.modifierList.setModifierProperty(PsiModifier.PUBLIC, false)
-    }
     constructor = insertConstructor(constructor)
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return
 
