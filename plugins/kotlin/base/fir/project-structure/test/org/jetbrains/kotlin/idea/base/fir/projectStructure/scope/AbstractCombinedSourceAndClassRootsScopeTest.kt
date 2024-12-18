@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure.scope
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryWithoutSourceScope
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinedSourceAndClassRootsScope
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.getOrderedRoots
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestContentRootKind
@@ -54,9 +56,9 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
             }
         }
 
-        val productionScopes = includedTestModules.map { it.createModuleScope(ModuleSourcesScope.SourceRootKind.PRODUCTION) }
-        val testScopes = includedTestModules.map { it.createModuleScope(ModuleSourcesScope.SourceRootKind.TESTS) }
-        val libraryScopes = includedTestLibraries.map { it.createLibraryScope() }
+        val productionScopes = includedTestModules.mapNotNull { it.getModuleScope(KaSourceModuleKind.PRODUCTION) }
+        val testScopes = includedTestModules.mapNotNull { it.getModuleScope(KaSourceModuleKind.TEST) }
+        val libraryScopes = includedTestLibraries.map { it.getLibraryScope() }
 
         val combinedProductionScope = productionScopes.combine()
         val combinedTestScope = testScopes.combine()
@@ -81,38 +83,53 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
     internal val includedTestModules: List<TestProjectModule>
         get() = testProjectStructure.modules.filterNot { it.name in testProjectStructure.excludedModules }
 
+    internal val includedTestModulesWithProductionRoots: List<TestProjectModule>
+        get() = includedTestModules.filterByContentRootKind(TestContentRootKind.PRODUCTION)
+
+    internal val includedTestModulesWithTestRoots: List<TestProjectModule>
+        get() = includedTestModules.filterByContentRootKind(TestContentRootKind.TESTS)
+
     internal val excludedTestModules: List<TestProjectModule>
         get() = testProjectStructure.modules.filter { it.name in testProjectStructure.excludedModules }
 
     internal fun List<CombinableSourceAndClassRootsScope>.combine(): CombinedSourceAndClassRootsScope? =
         CombinedSourceAndClassRootsScope.create(this, project) as? CombinedSourceAndClassRootsScope
 
-    internal fun TestProjectModule.createModuleScope(
-        sourceRootKind: ModuleSourcesScope.SourceRootKind,
-    ): ModuleSourcesScope {
-        val module = toModule()
+    internal fun TestProjectModule.getModuleScope(
+        sourceRootKind: KaSourceModuleKind,
+    ): CombinableSourceAndClassRootsScope? {
+        val ideaModule = toModule()
+        val sourceModule = ideaModule.toKaSourceModule(sourceRootKind) ?: return null
+
         val expectedRoots = contentRootVirtualFilesByKind(sourceRootKind.toTestContentRootKind())
 
-        return ModuleSourcesScope(module, sourceRootKind).also { scope ->
+        return sourceModule.combinableContentScope.also { scope ->
             assertOrderedEquals(scope.getOrderedRoots(), expectedRoots)
         }
     }
 
-    private fun ModuleSourcesScope.SourceRootKind.toTestContentRootKind() = when (this) {
-        ModuleSourcesScope.SourceRootKind.PRODUCTION -> TestContentRootKind.PRODUCTION
-        ModuleSourcesScope.SourceRootKind.TESTS -> TestContentRootKind.TESTS
+    private fun KaSourceModuleKind.toTestContentRootKind() = when (this) {
+        KaSourceModuleKind.PRODUCTION -> TestContentRootKind.PRODUCTION
+        KaSourceModuleKind.TEST -> TestContentRootKind.TESTS
     }
 
-    internal fun TestProjectLibrary.createLibraryScope(): LibraryWithoutSourceScope {
+    internal fun TestProjectLibrary.getLibraryScope(): CombinableSourceAndClassRootsScope {
         val library = toLibrary()
         val expectedRoots = library.classRoots
 
         require(expectedRoots.isNotEmpty()) { "The test library should have at least one class root." }
 
-        return LibraryWithoutSourceScope(project, null, null, library).also { scope ->
+        val libraryModule = library.toKaLibraryModules(project).singleOrNull()
+            ?: error("The test library should correspond to exactly one library module.")
+
+        return libraryModule.combinableContentScope.also { scope ->
             assertOrderedEquals(scope.getOrderedRoots(), expectedRoots)
         }
     }
 
     internal val Library.classRoots: List<VirtualFile> get() = getFiles(OrderRootType.CLASSES).toList()
+
+    private val KaModule.combinableContentScope: CombinableSourceAndClassRootsScope
+        get() = contentScope as? CombinableSourceAndClassRootsScope
+            ?: error("Expected the content scope of the `${KaModule::class.simpleName}` to be combinable.")
 }

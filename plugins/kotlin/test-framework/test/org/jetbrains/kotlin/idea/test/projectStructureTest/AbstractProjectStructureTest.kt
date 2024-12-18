@@ -292,6 +292,9 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
             }
     }
 
+    protected fun List<TestProjectModule>.filterByContentRootKind(kind: TestContentRootKind): List<TestProjectModule> =
+        filter { it.contentRoots.any { root -> root.kind == kind } }
+
     protected fun TestProjectLibrary.toLibrary(): Library = projectLibrariesByName.getValue(name)
 }
 

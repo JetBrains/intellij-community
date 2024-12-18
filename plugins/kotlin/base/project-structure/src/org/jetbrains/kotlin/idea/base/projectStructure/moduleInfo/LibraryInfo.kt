@@ -14,7 +14,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import it.unimi.dsi.fastutil.objects.Object2IntMap
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -123,8 +122,7 @@ abstract class LibraryInfo internal constructor(
 
 
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
-@ApiStatus.Internal
-class LibraryWithoutSourceScope(
+private class LibraryWithoutSourceScope(
     project: Project,
     topPackageNames: Set<String>?,
     entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
