@@ -4,8 +4,10 @@ package com.jetbrains.python.packaging.toolwindow
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -18,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
@@ -38,6 +41,7 @@ import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
+import kotlin.coroutines.CoroutineContext
 
 @Service(Service.Level.PROJECT)
 class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
@@ -107,44 +111,56 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun installPackage(specification: PythonPackageSpecification, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-
     val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.new.project.install.failed.title", specification.name), specification.name) {
       manager.installPackage(specification, options)
     }
-    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.installed", specification.name))
+
+    if (result.isSuccess) {
+      handleActionCompleted(message("python.packaging.notification.installed", specification.name))
+    }
   }
 
   suspend fun deletePackage(selectedPackage: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
-    val result =  runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.operation.failed.title")) {
+    val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.operation.failed.title")) {
       manager.uninstallPackage(selectedPackage.instance)
     }
-    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
+
+    if (result.isSuccess) {
+      handleActionCompleted(message("python.packaging.notification.deleted", selectedPackage.name))
+    }
   }
 
   suspend fun updatePackage(specification: PythonPackageSpecification) {
     val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.notification.update.failed", specification.name), specification.name) {
       manager.updatePackage(specification)
     }
-    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
+
+    if (result.isSuccess) {
+      handleActionCompleted(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
+    }
   }
 
   internal suspend fun initForSdk(sdk: Sdk?) {
     if (sdk == null) {
       toolWindowPanel?.packageListController?.setLoadingState(false)
     }
-    if (sdk == currentSdk)
+
+    if (sdk == currentSdk) {
       return
+    }
 
     withContext(Dispatchers.EDT) {
       toolWindowPanel?.startLoadingSdk()
     }
+
     val previousSdk = currentSdk
     currentSdk = sdk
     if (sdk == null) {
       return
     }
-    manager = PythonPackageManager.forSdk(project, currentSdk!!)
+
+    manager = PythonPackageManager.forSdk(project, sdk)
     manager.repositoryManager.initCaches()
     runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.operation.failed.title")) {
       manager.reloadPackages()
@@ -189,7 +205,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       }
     })
   }
-
 
   suspend fun refreshInstalledPackages() {
     val packages = manager.installedPackages.map {
@@ -258,6 +273,11 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
+  private suspend fun handleActionCompleted(text: @Nls String) {
+    VirtualFileManager.getInstance().asyncRefresh()
+    showPackagingNotification(text)
+  }
+
   private suspend fun showPackagingNotification(text: @Nls String) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("PythonPackages")
@@ -289,7 +309,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     searchJob?.cancel()
     serviceScope.cancel()
   }
-
 
   fun reloadPackages() {
     serviceScope.launch(Dispatchers.IO) {
