@@ -80,7 +80,7 @@ class LinuxDistributionBuilder(
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     setLastModifiedTime(osAndArchSpecificDistPath, context)
-    val executableFileMatchers = generateExecutableFilesMatchers(true, arch).keys
+    val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
     updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
     context.executeStep(spanBuilder("Build Linux artifacts").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildArtifactWithoutRuntime) {

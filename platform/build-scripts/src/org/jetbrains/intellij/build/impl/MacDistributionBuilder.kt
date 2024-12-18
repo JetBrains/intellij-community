@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalPathApi::class)
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -224,12 +222,11 @@ class MacDistributionBuilder(
     MachOUuid(copy, customizer, context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 
-    val icnsPath = Path.of((if (context.applicationInfo.isEAP) customizer.icnsPathForEAP else null) ?: customizer.icnsPath)
+    val icnsPath = Path.of(customizer.icnsPathForEAP?.takeIf { context.applicationInfo.isEAP } ?: customizer.icnsPath)
     val resourcesDistDir = macDistDir.resolve("Resources")
     copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
 
-    val alternativeIcon = (if (context.applicationInfo.isEAP) customizer.icnsPathForAlternativeIconForEAP else null)
-                          ?: customizer.icnsPathForAlternativeIcon
+    val alternativeIcon = customizer.icnsPathForAlternativeIconForEAP?.takeIf { context.applicationInfo.isEAP } ?: customizer.icnsPathForAlternativeIcon
     if (alternativeIcon != null) {
       copyFile(Path.of(alternativeIcon), resourcesDistDir.resolve("custom.icns"))
     }
@@ -294,9 +291,8 @@ class MacDistributionBuilder(
     }
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
-    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
-  }
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> =
+    customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
 
   private suspend fun buildForArch(arch: JvmArchitecture, macZip: Path, macZipWithoutRuntime: Path?) {
     spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).use(Dispatchers.IO) {
@@ -317,7 +313,7 @@ class MacDistributionBuilder(
       if (customizer.buildArtifactWithoutRuntime) {
         requireNotNull(macZipWithoutRuntime)
         createSkippableJob(
-          spanBuilder = spanBuilder("build DMG without Runtime").setAttribute("arch", archStr),
+          spanBuilder("build DMG without Runtime").setAttribute("arch", archStr),
           stepId = "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_${archStr}",
           context
         ) {
@@ -524,9 +520,8 @@ class MacDistributionBuilder(
       }
   }
 
-  private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
-    return "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
-  }
+  private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String =
+    "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
 
   private val publishSitArchive: Boolean
     get() = !context.isStepSkipped(BuildOptions.MAC_SIT_PUBLICATION_STEP)
@@ -646,6 +641,7 @@ class MacDistributionBuilder(
     }
   }
 
+  @OptIn(ExperimentalPathApi::class)
   private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, arch: JvmArchitecture, context: BuildContext) {
     if (context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
       return

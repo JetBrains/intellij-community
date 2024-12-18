@@ -6,13 +6,13 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 import java.util.function.Predicate
 
 open class MacDistributionCustomizer {
   companion object {
     /**
-     * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
+     * Pass 'true' to this system property to produce additional .dmg and .sit archives for macOS without a runtime.
      */
     const val BUILD_ARTIFACT_WITHOUT_RUNTIME: String = "intellij.build.dmg.without.bundled.jre"
   }
@@ -25,17 +25,17 @@ open class MacDistributionCustomizer {
   lateinit var icnsPath: String
 
   /**
-   * Path to icns file for EAP builds (if `null`, [icnsPath] will be used).
+   * Path to an .icns file for EAP builds (if `null`, [icnsPath] will be used).
    */
   var icnsPathForEAP: String? = null
 
   /**
-   * Path to alternative icns file in macOS Big Sur style
+   * Path to an alternative .icns file in macOS Big Sur style
    */
   var icnsPathForAlternativeIcon: String? = null
 
   /**
-   * Path to alternative icns file in macOS Big Sur style for EAP
+   * Path to an alternative .icns file in macOS Big Sur style for EAP
    */
   var icnsPathForAlternativeIconForEAP: String? = null
 
@@ -46,8 +46,7 @@ open class MacDistributionCustomizer {
 
   /**
    * A unique identifier string that specifies the app type of the bundle.
-   * The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), the dot ("."),
-   * and the hyphen ("-").
+   * The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), dots ('.'), and hyphens ('-').
    *
    * Reference:
    * [CFBundleIdentifier](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleidentifier).
@@ -55,7 +54,7 @@ open class MacDistributionCustomizer {
   lateinit var bundleIdentifier: String
 
   /**
-   * Path to an image which will be injected into .dmg file.
+   * Path to an image which will be injected into the .dmg file.
    */
   lateinit var dmgImagePath: String
 
@@ -85,7 +84,7 @@ open class MacDistributionCustomizer {
   var additionalDocTypes: String = ""
 
   /**
-   * Note that users won't be able to switch off some of these associations during installation
+   * Note that users won't be able to switch off some of these associations during installation,
    * so include only types of files which users will definitely prefer to open by the product.
    *
    * @see FileAssociation
@@ -153,18 +152,13 @@ open class MacDistributionCustomizer {
       "MacOS/*"
     )
 
-    val rtPatterns = if (includeRuntime) {
-      context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
-    }
-    else {
-      emptySequence()
-    }
+    val rtPatterns =
+      if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
+      else emptySequence()
 
-    return basePatterns +
-           rtPatterns +
-           RepairUtilityBuilder.executableFilesPatterns(context) +
-           extraExecutables +
-           context.getExtraExecutablePattern(OsFamily.MACOS)
+    val utilPatters = RepairUtilityBuilder.executableFilesPatterns(context)
+
+    return basePatterns + rtPatterns + utilPatters + extraExecutables + context.getExtraExecutablePattern(OsFamily.MACOS)
   }
 
   /**
@@ -175,11 +169,10 @@ open class MacDistributionCustomizer {
    * So, the different IDEs may get the same UUIDs.
    * And according to [the technote](https://developer.apple.com/documentation/technotes/tn3178-checking-for-and-resolving-build-uuid-problems), this may lead to the troubles:
    * > Each distinct Mach-O image must have its own unique build UUID.
-   * > If you have two apps with different bundle IDs and the same main executable UUID, you might encounter weird problems with those subsystems.
+   * > If you have two apps with different bundle IDs and the same main executable UUID, you might encounter strange problems with those subsystems.
    * > For example, the network subsystem might apply constraints for one of your apps to the other app.
    */
   @ApiStatus.Internal
-  open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID {
-    return UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
-  }
+  open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID =
+    UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
 }
