@@ -142,13 +142,13 @@ public final class MultiRoutingFileSystemProvider
 
   @Override
   public @NotNull MultiRoutingFileSystem getFileSystem(@NotNull URI uri) {
-    if (!uri.getScheme().equals("file") || uri.getAuthority() != null && !uri.getAuthority().isEmpty()) {
-      throw new UnsupportedOperationException(String.format(
-        "Unexpected URI: %s\nThis class is supposed to replace the local file system.",
-        uri
-      ));
+    if (uri.equals(URI.create("file:///"))) {
+      return myFileSystem;
     }
-    return myFileSystem;
+    throw new UnsupportedOperationException(String.format(
+      "Unexpected URI: %s\nThis class is supposed to replace the local file system.",
+      uri
+    ));
   }
 
   @Override

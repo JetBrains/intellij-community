@@ -2,18 +2,46 @@
 package com.intellij.platform.core.nio.fs
 
 import com.intellij.util.containers.forEachGuaranteed
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldBeSingleton
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldNotBeInstanceOf
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 import java.net.URI
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.util.concurrent.ThreadLocalRandom
+import java.util.zip.ZipOutputStream
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.outputStream
 
 class MultiRoutingFileSystemProviderTest {
+
+  @Test
+  fun `zip file system can be created`() {
+    val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
+    provider.getPath(defaultSunNioFs.rootDirectories.first().toUri().resolve("file.zip")).shouldBeInstanceOf<MultiRoutingFsPath>()
+    shouldThrow<UnsupportedOperationException> {
+      provider.getFileSystem(defaultSunNioFs.rootDirectories.first().toUri().resolve("file.zip"))
+    }
+    val emptyZip = createTempFile("empty-zip", ".zip")
+    ZipOutputStream(emptyZip.outputStream()).use { }
+    try {
+      FileSystems.newFileSystem(emptyZip).shouldNotBeInstanceOf<MultiRoutingFileSystem>()
+      FileSystems.newFileSystem(emptyZip).rootDirectories.shouldBeSingleton().single().listDirectoryEntries().shouldBeEmpty()
+    } finally {
+      emptyZip.deleteIfExists()
+    }
+  }
+
   @Nested
   inner class `everything must return MultiRoutingFsPath` {
     val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
