@@ -1116,6 +1116,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/addExclExclCall/operationPlusAssign.kt");
             }
 
+            @TestMetadata("operationPlusAssignNullableRhs.kt")
+            public void testOperationPlusAssignNullableRhs() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationPlusAssignNullableRhs.kt");
+            }
+
             @TestMetadata("operationPlusAssignOnMutableMap.kt")
             public void testOperationPlusAssignOnMutableMap() throws Exception {
                 runTest("testData/quickfix/addExclExclCall/operationPlusAssignOnMutableMap.kt");

@@ -36,7 +36,7 @@ class AddExclExclCallFix(psiElement: PsiElement, private val fixImplicitReceiver
                 else -> null
             }
             when {
-                operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && parent is KtBinaryExpression -> {
+                operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && parent is KtBinaryExpression && modifiedExpression == parent.left -> {
                     val right = parent.right ?: return
                     val newOperationToken = when (operationToken) {
                         KtTokens.PLUSEQ -> KtTokens.PLUS
@@ -51,6 +51,7 @@ class AddExclExclCallFix(psiElement: PsiElement, private val fixImplicitReceiver
                     )
                     parent.replace(newExpression)
                 }
+
                 (operationToken == KtTokens.PLUSPLUS || operationToken == KtTokens.MINUSMINUS) && parent is KtUnaryExpression -> {
                     val newOperationToken = if (operationToken == KtTokens.PLUSPLUS) KtTokens.PLUS else KtTokens.MINUS
                     val newExpression = psiFactory.createExpressionByPattern(
@@ -58,6 +59,7 @@ class AddExclExclCallFix(psiElement: PsiElement, private val fixImplicitReceiver
                     )
                     parent.replace(newExpression)
                 }
+
                 else -> modifiedExpression.replace(psiFactory.createExpressionByPattern("$0!!", modifiedExpression))
             }
         }

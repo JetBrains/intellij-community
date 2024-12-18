@@ -478,6 +478,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/addExclExclCall/operationPlusAssign.kt");
             }
 
+            @TestMetadata("operationPlusAssignNullableRhs.kt")
+            public void testOperationPlusAssignNullableRhs() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addExclExclCall/operationPlusAssignNullableRhs.kt");
+            }
+
             @TestMetadata("operationPlusAssignOnMutableMap.kt")
             public void testOperationPlusAssignOnMutableMap() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/addExclExclCall/operationPlusAssignOnMutableMap.kt");
