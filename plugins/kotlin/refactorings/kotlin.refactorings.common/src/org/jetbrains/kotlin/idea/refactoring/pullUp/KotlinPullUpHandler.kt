@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -11,9 +10,10 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.refactoring.AbstractPullPushMembersHandler
-import org.jetbrains.kotlin.idea.refactoring.canRefactor
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
+@ApiStatus.Internal
 class KotlinPullUpHandler : AbstractPullPushMembersHandler(
     refactoringName = PULL_MEMBERS_UP,
     helpId = HelpID.MEMBERS_PULL_UP,
@@ -31,7 +32,7 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
 ) {
     companion object {
         @TestOnly
-        val PULL_UP_TEST_HELPER_KEY: DataKey<TestHelper> = DataKey.create("PULL_UP_TEST_HELPER_KEY")
+        val PULL_UP_TEST_HELPER_KEY: DataKey<TestHelper> = DataKey.Companion.create("PULL_UP_TEST_HELPER_KEY")
     }
 
     interface TestHelper {
@@ -65,7 +66,7 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
             .resolveAllSupertypes()
             .mapNotNull { declaration ->
                 if ((declaration is KtClass || declaration is PsiClass)
-                    && declaration.canRefactor()
+                    && declaration.canRefactorElement()
                 ) declaration as PsiNamedElement else null
             }
             .sortedBy { it.qualifiedClassNameForRendering() }
@@ -99,4 +100,5 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
     }
 }
 
+@get:ApiStatus.Internal
 val PULL_MEMBERS_UP: String get() = RefactoringBundle.message("pull.members.up.title")
