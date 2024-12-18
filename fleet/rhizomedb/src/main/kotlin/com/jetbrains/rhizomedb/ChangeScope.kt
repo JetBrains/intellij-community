@@ -231,7 +231,7 @@ interface ChangeScope {
    * */
   fun <E : Entity> EntityType<E>.new(builder: EntityBuilder<E> = EntityBuilder {}): E = let { entityType ->
     require(entity(entityType.eid) != null) {
-      "Entity type '${entityType.entityTypeIdent}' is not registered. It should be registered automatically, report and use ChangeScope.register as mitigation"
+      "Entity type '${entityType.entityTypeIdent}' is not registered.\nDid you export package to rhizomedb?\nIt should be registered automatically, report and use ChangeScope.register as mitigation"
     }
     val eid = context.impl.createEntity(pipeline = context,
                                         entityTypeEid = entityType.eid,
