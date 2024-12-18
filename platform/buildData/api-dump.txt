@@ -31,6 +31,9 @@ bc:com.intellij.platform.buildData.productInfo.CustomProperty$$serializer
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.buildData.productInfo.CustomProperty$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.buildData.productInfo.CustomPropertyNames
+- sf:GIT_REVISION:java.lang.String
+- sf:INSTANCE:com.intellij.platform.buildData.productInfo.CustomPropertyNames
 f:com.intellij.platform.buildData.productInfo.ProductFlavorData
 - sf:Companion:com.intellij.platform.buildData.productInfo.ProductFlavorData$Companion
 - f:id:java.lang.String

@@ -2,10 +2,12 @@
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.intellij.platform.buildData.productInfo.*
+import com.jetbrains.plugin.structure.base.utils.isDirectory
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.Git
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
 import java.nio.file.Files
@@ -54,7 +56,7 @@ internal fun generateProductInfoJson(
     svgIconPath = if (appInfo.svgRelativePath == null) null else "${relativePathToBin}/${productProperties.baseFileName}.svg",
     productVendor = appInfo.shortCompanyName,
     launch = launch,
-    customProperties = productProperties.generateCustomPropertiesForProductInfo(),
+    customProperties = listOfNotNull(generateGitRevisionProperty(context)) + productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
     fileExtensions = builtinModules?.fileExtensions ?: emptyList(),
 
@@ -64,6 +66,24 @@ internal fun generateProductInfoJson(
     flavors = jbrFlavors + productFlavors,
   )
   return jsonEncoder.encodeToString<ProductInfoData>(json)
+}
+
+private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? {
+  val gitRoot = context.paths.projectHome
+  if (!gitRoot.resolve(".git").isDirectory) {
+    if (!context.options.isInDevelopmentMode) {
+      context.messages.error("Cannot find Git repository root in '$gitRoot'")
+    }
+    return null
+  }
+  try {
+    val revision = Git(gitRoot).currentCommitShortHash()
+    return CustomProperty(CustomPropertyNames.GIT_REVISION, revision)
+  }
+  catch (e: Exception) {
+    context.messages.error("Cannot determine Git revision to store in product-info.json: ${e.message}", e)
+    return null
+  }
 }
 
 internal fun writeProductInfoJson(targetFile: Path, json: String, context: BuildContext) {
