@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -24,9 +24,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Gradle script installs two types of python: conda and vanilla. Env could be obtained by [getTestEnvironment] which also provides closable
- * to cleanup after the usage
+ * to clean up after the usage
  */
-sealed class PythonType<T : Any>(private val tag: @NonNls String) {
+sealed class PythonType<T : Any>(private val tag: @NonNls String? = null) {
   private companion object {
     val cache: MutableMap<Set<String>, List<Path>> = ConcurrentHashMap()
   }
@@ -37,19 +37,22 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
    */
   suspend fun getTestEnvironments(vararg additionalTags: @NonNls String): Flow<Pair<T, AutoCloseable>> {
     val key = setOf(*additionalTags)
-    var pythons = cache.getOrPut(key) {
+    val pythons = cache.getOrPut(key) {
       PyEnvTestSettings
         .fromEnvVariables()
         .pythons
         .map { it.toPath() }
-        .sortedByDescending {
-          val binary = VirtualEnvReader.Instance.findPythonInPythonRoot(it)
-                       ?: error("No python in $it")
+        .mapNotNull { path ->
+          val binary = VirtualEnvReader.Instance.findPythonInPythonRoot(path)
+                       ?: error("No python in $path")
           val flavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(binary.toString())
                        ?: error("Unknown flavor: $binary")
-          flavor.getVersionString(binary.toString())?.let { flavor.getLanguageLevelFromVersionString(it) }
+          flavor.getVersionString(binary.toString())?.let { path to flavor.getLanguageLevelFromVersionString(it) }
           ?: error("Can't get language level for $flavor , $binary")
         }
+        .sortedByDescending { (_, languageLevel) -> languageLevel }
+        .filter { (_, languageLevel) -> languageLevel.isPy3K }
+        .map { (path, _) -> path }
     }
     return pythons.asFlow()
       .filter { typeMatchesEnv(it, *additionalTags) }
@@ -72,7 +75,7 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
   protected abstract suspend fun pythonPathToEnvironment(pythonBinary: PythonBinary, envDir: Path): Pair<T, AutoCloseable>
 
 
-  data object VanillaPython3 : PythonType<PythonBinary>("python3") {
+  data object VanillaPython3 : PythonType<PythonBinary>() {
     // Python is directly executable
     override suspend fun pythonPathToEnvironment(pythonBinary: PythonBinary, envDir: Path): Pair<PythonBinary, AutoCloseable> {
       val disposable = Disposer.newDisposable("Python tests disposable for VfsRootAccess")
@@ -126,8 +129,8 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
     val envTags = loadEnvTags(env)
 
     for (badTag in PythonType::class.sealedSubclasses.filterNot { it.isInstance(this) }.map { it.objectInstance!!.tag }) {
-      if (badTag in envTags) return false
+      if (badTag != null && badTag in envTags) return false
     }
-    return tag in envTags && additionalTags.all { it in envTags }
+    return (tag == null || tag in envTags) && additionalTags.all { it in envTags }
   }
 }
