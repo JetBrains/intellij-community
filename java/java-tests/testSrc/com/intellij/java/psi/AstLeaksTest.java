@@ -132,4 +132,21 @@ public class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(bound.equalsToText(CharSequence.class.getName()));
     assertFalse(file.isContentsLoaded());
   }
+
+  public void test_no_hard_refs_to_AST_via_annotated_type() {
+    final PsiClass cls = myFixture.addClass("class Foo { Outer.@Anno Inner bar() {} } @interface Anno {}");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getReturnType();
+    assertTrue(type instanceof PsiClassReferenceType);
+    assertEquals("Outer.Inner", type.getCanonicalText(true));
+
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
+
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
+
+    assertEquals("Outer.Inner", type.getCanonicalText(true));
+    assertFalse(file.isContentsLoaded());
+  }
 }
