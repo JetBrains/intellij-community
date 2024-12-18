@@ -25,6 +25,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
@@ -142,12 +145,12 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       LOG.warn("Gradle JVM ($gradleJvm) isn't resolved: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    val homePath = sdkInfo.homePath ?: run {
+    val homePath = sdkInfo.homePath?.toNioPathOrNull() ?: run {
       LOG.warn("No Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    checkForWslJdkOnWindows(homePath, projectSettings.externalProjectPath, task)
-    if (!JdkUtil.checkForJdk(homePath)) {
+    checkForWslJdkOnWindows(homePath.toCanonicalPath(), projectSettings.externalProjectPath, task)
+    if (!JdkUtil.checkForJdk(homePath, isWindowsJDKRequired(projectSettings.externalProjectPath))) {
       LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
@@ -165,6 +168,13 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       val message = GradleBundle.message("gradle.incorrect.jvm.wslJdk.on.win.issue.description")
       throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))
     }
+  }
+
+  private fun isWindowsJDKRequired(externalProjectPath: String): Boolean {
+    if (WSLUtil.isSystemCompatible() && WslPath.isWslUncPath(externalProjectPath)) {
+      return false
+    }
+    return SystemInfo.isWindows
   }
 
   private class GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : GradleServerConfigurationProvider {
