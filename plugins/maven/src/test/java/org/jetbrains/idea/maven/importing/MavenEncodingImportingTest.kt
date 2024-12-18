@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import junit.framework.TestCase
@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 
-class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
+class MavenEncodingImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testShouldSetEncodingForNewProject() = runBlocking {
     val subFile = createProjectSubFile("src/main/java/MyClass.java")

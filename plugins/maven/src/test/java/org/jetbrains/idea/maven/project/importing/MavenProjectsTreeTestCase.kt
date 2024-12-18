@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
@@ -14,7 +14,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
 
-abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() {
+abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCaseLegacy() {
   private var myTree: MavenProjectsTree? = null
   protected val rawProgressReporter: RawProgressReporter = object : RawProgressReporter {}
 

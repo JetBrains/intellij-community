@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -25,7 +25,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
-class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
+class MavenPropertyResolverTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testResolvingProjectAttributes() = runBlocking {
     importProjectAsync("""

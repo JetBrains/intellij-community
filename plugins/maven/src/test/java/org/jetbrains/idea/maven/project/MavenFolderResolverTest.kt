@@ -3,12 +3,12 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class MavenFolderResolverTest : MavenMultiVersionImportingTestCase() {
+class MavenFolderResolverTest : MavenMultiVersionImportingTestCaseLegacy() {
   
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()

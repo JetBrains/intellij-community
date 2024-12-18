@@ -2,14 +2,14 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.java.workspace.entities.javaSettings
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiJavaModule
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class MavenJarManifestImportingTest : MavenMultiVersionImportingTestCase() {
+class MavenJarManifestImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   
   @Test
   fun `test jar manifest automatic module name`() = runBlocking {

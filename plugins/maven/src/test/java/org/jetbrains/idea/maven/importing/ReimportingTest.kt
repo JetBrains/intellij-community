@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -15,7 +15,7 @@ import org.intellij.lang.annotations.Language
 import org.junit.Test
 import java.io.File
 
-class ReimportingTest : MavenMultiVersionImportingTestCase() {
+class ReimportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   override fun setUp() = runBlocking {
     super.setUp()
     createProjectPom("""

@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElementVisitor

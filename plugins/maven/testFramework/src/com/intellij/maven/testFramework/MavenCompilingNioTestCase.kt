@@ -26,7 +26,7 @@ import kotlin.io.path.notExists
 import kotlin.io.path.readText
 
 @Suppress("DuplicatedCode")
-abstract class MavenCompilingNioTestCase : MavenMultiVersionNioImportingTestCase() {
+abstract class MavenCompilingNioTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun compileModules(vararg moduleNames: String) {
     // blockingContextScope here because we want to propagate cancellation to invokeAndWait

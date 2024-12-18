@@ -24,7 +24,7 @@ import java.io.IOException
 import java.util.*
 
 @Deprecated("Use 'MavenCompilingNioTestCase' instead")
-abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
+abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCaseLegacy() {
   protected suspend fun compileModules(vararg moduleNames: String) {
     // blockingContextScope here because we want to propagate cancellation to invokeAndWait
     blockingContextScope {

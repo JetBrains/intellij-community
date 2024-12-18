@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.command.WriteCommandAction
@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.tasks.MavenShortcutsManager
 import org.junit.Test
 import java.io.IOException
 
-class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
+class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCaseLegacy() {
 
   private var myShortcutsManager: MavenShortcutsManager? = null
 

@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.actions
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.testFramework.TestActionEvent
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
-class ReimportProjectActionTest : MavenMultiVersionImportingTestCase() {
+class ReimportProjectActionTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testReloadOnlyVisibleForNonIgnoredProjects() = runBlocking {
     val parentFile = createProjectPom("""

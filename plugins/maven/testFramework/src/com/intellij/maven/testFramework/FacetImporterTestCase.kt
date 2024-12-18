@@ -4,7 +4,7 @@ package com.intellij.maven.testFramework
 import com.intellij.facet.*
 import com.intellij.openapi.vfs.VfsUtilCore
 
-abstract class FacetImporterTestCase<FACET, C : FacetConfiguration> : MavenMultiVersionImportingTestCase() where FACET : Facet<C> {
+abstract class FacetImporterTestCase<FACET, C : FacetConfiguration> : MavenMultiVersionImportingTestCaseLegacy() where FACET : Facet<C> {
   protected abstract fun getFacetTypeId(): FacetTypeId<FACET>
 
   protected fun doAssertSourceRoots(actualRoots: List<String>, vararg roots: String) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.util.registry.Registry
 import junit.framework.TestCase
@@ -21,7 +21,7 @@ import java.net.URL
 import java.util.stream.Collectors
 
 
-class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
+class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegacy() {
 
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String

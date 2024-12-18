@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 
-class MavenSplitRepositoryTest : MavenMultiVersionImportingTestCase() {
+class MavenSplitRepositoryTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testSplitRepositoryProjectSync() = runBlocking {
     // configure split repository

@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
+class RepositoriesImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testMirrorCentralImport() = runBlocking {
     val oldSettingsFile = mavenGeneralSettings.userSettingsFile

@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.FileUtil
@@ -32,7 +32,7 @@ import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.name
 
-class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
+class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCaseLegacy() {
   override fun setUp() = runBlocking {
     super.setUp()
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassArgLine = true

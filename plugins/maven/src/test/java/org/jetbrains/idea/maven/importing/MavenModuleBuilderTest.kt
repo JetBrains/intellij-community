@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -28,7 +28,7 @@ import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.junit.Test
 import kotlin.io.path.exists
 
-class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
+class MavenModuleBuilderTest : MavenMultiVersionImportingTestCaseLegacy() {
   private lateinit var myFixture: MavenProjectJDKTestFixture
   private lateinit var myBuilder: MavenJavaModuleBuilder
 

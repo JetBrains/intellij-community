@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.OrderRootType
@@ -15,7 +15,7 @@ import org.junit.Test
 import java.io.File
 import java.util.*
 
-class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
+class GroovyImporterTest : MavenMultiVersionImportingTestCaseLegacy() {
   private var repoPath: String? = null
 
   

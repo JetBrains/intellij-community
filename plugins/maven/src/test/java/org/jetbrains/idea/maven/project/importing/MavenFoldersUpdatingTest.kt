@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.*
@@ -31,7 +31,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.Test
 import java.io.File
 
-class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
+class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCaseLegacy() {
     @Test
   fun testUpdatingExternallyCreatedFolders() = runBlocking {
     importProjectAsync("""

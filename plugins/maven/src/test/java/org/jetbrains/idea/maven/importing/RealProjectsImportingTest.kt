@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class RealProjectsImportingTest : MavenMultiVersionImportingTestCase() {
+class RealProjectsImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
 
   @Test
   fun testImportStringBootStarter() = runBlocking {

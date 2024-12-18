@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven.indices
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
 
-abstract class MavenIndicesTestCase : MavenMultiVersionImportingTestCase() {
+abstract class MavenIndicesTestCase : MavenMultiVersionImportingTestCaseLegacy() {
   override fun tearDown() {
     try {
       getInstance().closeAllConnectorsAndWait()

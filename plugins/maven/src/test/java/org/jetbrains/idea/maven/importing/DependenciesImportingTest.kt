@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionNioImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeAction
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
@@ -27,7 +26,7 @@ import java.nio.file.Paths
 import java.util.*
 import kotlin.io.path.exists
 
-class DependenciesImportingTest : MavenMultiVersionNioImportingTestCase() {
+class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   override fun setUp() {
     super.setUp()

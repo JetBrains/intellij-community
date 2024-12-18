@@ -1,7 +1,7 @@
 package com.intellij.externalSystem
 
 import com.intellij.externalSystem.DependencyModifierService.Companion.getInstance
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.FileUtil
@@ -27,7 +27,7 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 
-abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCase() {
+abstract class MavenDependencyUpdaterTestBase : MavenMultiVersionImportingTestCaseLegacy() {
   private var myTestDataDir: File? = null
   private var myProjectDataDir: File? = null
   protected var myExpectedDataDir: File? = null

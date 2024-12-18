@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.projectView.TestProjectTreeStructure
@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 import org.junit.Test
 import javax.swing.JTree
 
-class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
+class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCaseLegacy() {
   private lateinit var myStructure: TestProjectTreeStructure
 
   override fun setUp() {

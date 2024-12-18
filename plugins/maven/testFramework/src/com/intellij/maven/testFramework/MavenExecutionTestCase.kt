@@ -6,7 +6,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 
-abstract class MavenExecutionTestCase : MavenMultiVersionImportingTestCase() {
+abstract class MavenExecutionTestCase : MavenMultiVersionImportingTestCaseLegacy() {
   private lateinit var myFixture: MavenProjectJDKTestFixture
 
   public override fun setUp() {

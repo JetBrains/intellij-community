@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -26,12 +26,10 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MAVEN_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getModuleProfileName
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
-import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.junit.Assert
 import org.junit.Test
 
-class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
+class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testImportAnnotationProcessorProfiles() = runBlocking {
     createModulePom("module1", """

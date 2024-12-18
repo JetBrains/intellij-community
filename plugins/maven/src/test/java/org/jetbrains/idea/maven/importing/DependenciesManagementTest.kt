@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
-class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
+class DependenciesManagementTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testImportingDependencies() = runBlocking {
     if (!hasMavenInstallation()) return@runBlocking

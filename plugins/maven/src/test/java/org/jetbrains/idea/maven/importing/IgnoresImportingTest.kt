@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class IgnoresImportingTest : MavenMultiVersionImportingTestCase() {
+class IgnoresImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   override fun setUp() {
     super.setUp()
     initProjectsManager(false)

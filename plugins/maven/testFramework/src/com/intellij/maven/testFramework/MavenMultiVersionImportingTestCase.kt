@@ -6,6 +6,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
@@ -26,9 +27,9 @@ import org.junit.runners.Parameterized
 import java.util.*
 import kotlin.math.min
 
-@Deprecated("Use 'MavenMultiVersionNioImportingTestCase'")
 @RunWith(Parameterized::class)
-abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
+abstract class MavenMultiVersionImportingTestCase : MavenNioImportingTestCase() {
+
   override fun runInDispatchThread(): Boolean {
     return false
   }
@@ -203,7 +204,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
 
   protected fun assertRelativeContentRoots(moduleName: String, vararg expectedRelativeRoots: String?) {
     val expectedRoots = expectedRelativeRoots
-      .map{ root -> projectPath + (if ("" == root) "" else "/$root") }
+      .map { root -> projectPath.resolve(if ("" == root) "" else "/$root").toCanonicalPath() }
       .toTypedArray<String>()
     assertContentRoots(moduleName, *expectedRoots)
   }
@@ -331,13 +332,13 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     @Parameterized.Parameters(name = "with Maven-{0}")
     @JvmStatic
     fun getMavenVersions(): List<Array<String>> {
-        val mavenVersionsString = System.getProperty("maven.versions.to.run")
-        var mavenVersionsToRun: Array<String> = MAVEN_VERSIONS
-        if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
-          mavenVersionsToRun = mavenVersionsString.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        }
-        return mavenVersionsToRun.map { arrayOf<String>(it) }
+      val mavenVersionsString = System.getProperty("maven.versions.to.run")
+      var mavenVersionsToRun: Array<String> = MAVEN_VERSIONS
+      if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
+        mavenVersionsToRun = mavenVersionsString.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
       }
+      return mavenVersionsToRun.map { arrayOf<String>(it) }
+    }
 
     protected fun getActualVersion(version: String): String {
       if (version == "bundled") {
@@ -347,7 +348,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     }
   }
 
-  protected suspend fun withRealJDK(jdkName: String = "JDK_FOR_MAVEN_TESTS", block: suspend () -> Unit)  {
+  protected suspend fun withRealJDK(jdkName: String = "JDK_FOR_MAVEN_TESTS", block: suspend () -> Unit) {
     val fixture = MavenProjectJDKTestFixture(project, jdkName)
     try {
       writeAction {

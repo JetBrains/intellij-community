@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 
-class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
+class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun `test maven shade plugin uber jar dependency`() = runBlocking {
     createProjectPom("""

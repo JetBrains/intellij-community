@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -10,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
-class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
+class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCaseLegacy() {
   override fun setUp() = runBlocking {
     super.setUp()
 

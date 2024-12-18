@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.junit.Test
 
-class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestCase() {
+class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestCaseLegacy() {
   private var myBuilder: AbstractMavenModuleBuilder? = null
 
   override fun setUp() {

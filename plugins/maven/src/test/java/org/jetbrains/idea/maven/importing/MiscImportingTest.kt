@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -24,7 +24,7 @@ import java.util.*
 import java.util.function.Function
 import kotlin.io.path.exists
 
-class MiscImportingTest : MavenMultiVersionImportingTestCase() {
+class MiscImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   private val myEventsTestHelper = MavenEventsTestHelper()
 
   override fun setUp() {

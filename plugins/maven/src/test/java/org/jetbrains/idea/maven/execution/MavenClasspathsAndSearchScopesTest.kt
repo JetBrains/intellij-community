@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -34,7 +34,7 @@ import org.junit.Test
 import java.io.File
 import java.io.IOException
 
-class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() {
+class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCaseLegacy() {
   private enum class Type {
     PRODUCTION, TESTS
   }

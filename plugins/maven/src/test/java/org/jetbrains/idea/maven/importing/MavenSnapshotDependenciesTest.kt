@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.junit.Test
 
-class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
+class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCaseLegacy() {
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
 
   public override fun setUp() {

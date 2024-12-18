@@ -6,7 +6,6 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
@@ -27,10 +26,9 @@ import org.junit.runners.Parameterized
 import java.util.*
 import kotlin.math.min
 
-@Suppress("DuplicatedCode")
+@Deprecated("Use 'MavenMultiVersionImportingTestCase'")
 @RunWith(Parameterized::class)
-abstract class MavenMultiVersionNioImportingTestCase : MavenNioImportingTestCase() {
-
+abstract class MavenMultiVersionImportingTestCaseLegacy : MavenImportingTestCase() {
   override fun runInDispatchThread(): Boolean {
     return false
   }
@@ -205,7 +203,7 @@ abstract class MavenMultiVersionNioImportingTestCase : MavenNioImportingTestCase
 
   protected fun assertRelativeContentRoots(moduleName: String, vararg expectedRelativeRoots: String?) {
     val expectedRoots = expectedRelativeRoots
-      .map { root -> projectPath.resolve(if ("" == root) "" else "/$root").toCanonicalPath() }
+      .map{ root -> projectPath + (if ("" == root) "" else "/$root") }
       .toTypedArray<String>()
     assertContentRoots(moduleName, *expectedRoots)
   }
@@ -349,7 +347,7 @@ abstract class MavenMultiVersionNioImportingTestCase : MavenNioImportingTestCase
     }
   }
 
-  protected suspend fun withRealJDK(jdkName: String = "JDK_FOR_MAVEN_TESTS", block: suspend () -> Unit) {
+  protected suspend fun withRealJDK(jdkName: String = "JDK_FOR_MAVEN_TESTS", block: suspend () -> Unit)  {
     val fixture = MavenProjectJDKTestFixture(project, jdkName)
     try {
       writeAction {

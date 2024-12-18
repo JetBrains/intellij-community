@@ -6,7 +6,7 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
@@ -16,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
-open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
+open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   private lateinit var ideCompilerConfiguration: CompilerConfigurationImpl
 
   private lateinit var javacCompiler: BackendCompiler

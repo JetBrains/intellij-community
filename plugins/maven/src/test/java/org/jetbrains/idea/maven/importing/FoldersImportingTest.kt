@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters
 import com.intellij.execution.util.ProgramParametersUtil
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -36,7 +36,7 @@ import java.io.File
 import java.io.IOException
 import java.util.function.Consumer
 
-class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
+class FoldersImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
 
   override fun setUp() {
     super.setUp()

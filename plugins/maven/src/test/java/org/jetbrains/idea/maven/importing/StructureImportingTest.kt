@@ -1,20 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 
-class StructureImportingTest : MavenMultiVersionImportingTestCase() {
+class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testInheritProjectJdkForModules() = runBlocking {
     importProjectAsync("""

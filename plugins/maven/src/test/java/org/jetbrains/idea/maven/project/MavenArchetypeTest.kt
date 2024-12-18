@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.junit.Test
 import java.nio.file.Path
 
-class MavenArchetypeTest : MavenMultiVersionImportingTestCase() {
+class MavenArchetypeTest : MavenMultiVersionImportingTestCaseLegacy() {
   private var myManager: MavenEmbeddersManager? = null
 
   override fun setUp() {

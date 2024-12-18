@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.execution
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ProjectRootManager
 import kotlinx.coroutines.runBlocking
@@ -26,7 +26,7 @@ import java.io.BufferedInputStream
 import java.io.FileInputStream
 import java.util.*
 
-abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCase() {
+abstract class MavenResolveToWorkspaceTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testIgnoredProject() = runBlocking {
     createProjectPom("""
