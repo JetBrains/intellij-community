@@ -1,8 +1,8 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.ide.DataManager
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.SwingClientProperty
+import com.intellij.notebooks.visualization.context.NotebookDataContext
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
@@ -12,7 +12,6 @@ import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
 import com.intellij.notebooks.visualization.settings.NotebookSettings
-import com.intellij.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -70,8 +69,8 @@ class EditorCellOutputsView(
     }
   }
 
-  private val outerComponent = SurroundingComponent.create(editor, innerComponent).also {
-    DataManager.registerDataProvider(it, NotebookCellDataProvider(editor, it) { cell.interval })
+  private val outerComponent = UiDataProvider.wrapComponent(SurroundingComponent.create(editor, innerComponent)){ sink ->
+    sink[NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL] = cell.interval
   }
 
   internal var inlay: Inlay<*>? = null
@@ -102,12 +101,12 @@ class EditorCellOutputsView(
     return inlay?.bounds ?: Rectangle(0, 0, 0, 0)
   }
 
-  fun update() = runInEdt {
+  fun update(): Unit = runInEdt {
     updateView(cell.outputs.outputs.get())
     onViewportChange()
   }
 
-  fun updateView(newDataKeys: List<EditorCellOutput>) = runInEdt {
+  fun updateView(newDataKeys: List<EditorCellOutput>): Unit = runInEdt {
     updateData(newDataKeys.map { it.dataKey.get() })
     recreateInlayIfNecessary()
   }

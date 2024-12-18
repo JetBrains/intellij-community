@@ -1,11 +1,13 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL
 import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
@@ -217,7 +219,9 @@ class NotebookCellInlayManager private constructor(
 
   private fun addBelowLastCellInlay() {  // PY-77218
     belowLastCellInlay = editor.addComponentInlay(
-      NotebookBelowLastCellPanel(editor),
+      UiDataProvider.wrapComponent(NotebookBelowLastCellPanel(editor)) { sink ->
+        sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebook?.cells?.last()?.interval
+      },
       isRelatedToPrecedingText = true,
       showAbove = false,
       priority = 0,

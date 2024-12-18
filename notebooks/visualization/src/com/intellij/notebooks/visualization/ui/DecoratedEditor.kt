@@ -3,12 +3,9 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import com.intellij.notebooks.ui.editor.actions.command.mode.setMode
 import com.intellij.notebooks.visualization.*
-import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.ClientSystemInfo
@@ -129,7 +126,7 @@ class DecoratedEditor private constructor(
     private val editor: Editor,
     private val editorViewport: JViewport,
     component: Component,
-  ) : JPanel(BorderLayout()), UiDataProvider {
+  ) : JPanel(BorderLayout()) {
     init {
       isOpaque = false
       // The reason why we need to wrap into fate viewport is the code in [com/intellij/openapi/editor/impl/EditorImpl.java:2031]
@@ -148,10 +145,6 @@ class DecoratedEditor private constructor(
         super.validateTree()
         JupyterBoundsChangeHandler.get(editor).performPostponed()
       }
-    }
-
-    override fun uiDataSnapshot(sink: DataSink) {
-      sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebookEditor.mouseOverCell?.cell?.interval
     }
   }
 
