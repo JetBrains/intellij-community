@@ -8,7 +8,7 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSeria
 
 import java.util.List;
 
-public class JpsJavaFxPreloaderArtifactPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsJavaFxPreloaderArtifactProperties> {
+public final class JpsJavaFxPreloaderArtifactPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsJavaFxPreloaderArtifactProperties> {
   public JpsJavaFxPreloaderArtifactPropertiesSerializer() {
     super("javafx-preloader", JpsJavaFxPreloaderArtifactType.INSTANCE);
   }

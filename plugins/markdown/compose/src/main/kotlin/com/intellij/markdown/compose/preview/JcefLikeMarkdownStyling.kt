@@ -32,7 +32,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 
 @Suppress("FunctionName")
-fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
+internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
   val fontSizeDp = fontSize.value.dp
   val defaultTextStyle = TextStyle(
     fontSize = fontSize,

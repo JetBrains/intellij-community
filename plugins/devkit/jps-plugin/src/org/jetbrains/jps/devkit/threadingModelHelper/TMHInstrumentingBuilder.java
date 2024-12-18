@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
+public final class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
   private static final Logger LOG = Logger.getInstance(TMHInstrumentingBuilder.class);
   static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
   static final String GENERATE_LINE_NUMBERS_PROPERTY = "tmh.generate.line.numbers";
@@ -31,9 +31,8 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
   public TMHInstrumentingBuilder() {
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return DevKitJpsBundle.message("tmh.instrumenting.builder.name");
   }
 
@@ -54,12 +53,11 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
   }
 
   @Override
-  @Nullable
-  protected BinaryContent instrument(CompileContext context,
-                                     CompiledClass compiledClass,
-                                     ClassReader reader,
-                                     ClassWriter writer,
-                                     InstrumentationClassFinder finder) {
+  protected @Nullable BinaryContent instrument(CompileContext context,
+                                               CompiledClass compiledClass,
+                                               ClassReader reader,
+                                               ClassWriter writer,
+                                               InstrumentationClassFinder finder) {
     try {
       boolean generateLineNumbers = SystemProperties.getBooleanProperty(GENERATE_LINE_NUMBERS_PROPERTY, false);
       var generators = hasThreadingAssertions(finder) ? TMHAssertionGenerator2.generators()

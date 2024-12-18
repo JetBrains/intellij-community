@@ -23,7 +23,7 @@ import kotlin.io.path.*
  * Checks that runtime module descriptors in the product distribution are valid.
  */
 @OptIn(ExperimentalPathApi::class)
-class RuntimeModuleRepositoryChecker private constructor(
+internal class RuntimeModuleRepositoryChecker private constructor(
   private val commonDistPath: Path,
   private val osSpecificDistPath: Path?,
   private val currentMode: ProductMode,

@@ -2127,6 +2127,7 @@ org.jetbrains.jps.incremental.CompileContext
 - a:getLoggingManager():org.jetbrains.jps.builders.logging.BuildLoggingManager
 - a:getProjectDescriptor():org.jetbrains.jps.cmdline.ProjectDescriptor
 - a:getScope():org.jetbrains.jps.incremental.CompileScope
+- isCanceled():Z
 - a:isProjectRebuild():Z
 - a:markNonIncremental(org.jetbrains.jps.incremental.ModuleBuildTarget):V
 - a:removeBuildListener(org.jetbrains.jps.incremental.BuildListener):V

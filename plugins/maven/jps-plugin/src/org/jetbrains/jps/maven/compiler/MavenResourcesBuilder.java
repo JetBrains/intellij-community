@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
+public final class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
   private static final Logger LOG = Logger.getInstance(MavenResourcesBuilder.class);
 
   public MavenResourcesBuilder() {
@@ -36,7 +36,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   }
 
   @Override
-  public void build(@NotNull final MavenResourcesTarget target, @NotNull final DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, @NotNull final BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException, IOException {
+  public void build(final @NotNull MavenResourcesTarget target, final @NotNull DirtyFilesHolder<MavenResourceRootDescriptor, MavenResourcesTarget> holder, final @NotNull BuildOutputConsumer outputConsumer, final @NotNull CompileContext context) throws ProjectBuildException, IOException {
     final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
     final MavenProjectConfiguration projectConfig = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(dataPaths);
     if (projectConfig == null) {
@@ -121,7 +121,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           LOG.info(e);
         }
 
-        if (context.getCancelStatus().isCanceled()) {
+        if (context.isCanceled()) {
           return;
         }
       }
@@ -133,8 +133,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return MavenJpsBundle.message("maven.resources.compiler");
   }
 }

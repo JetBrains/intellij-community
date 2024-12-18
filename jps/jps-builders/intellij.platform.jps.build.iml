@@ -25,7 +25,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
@@ -62,8 +62,8 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.tracing.rt" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
+    <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="caffeine" level="project" />

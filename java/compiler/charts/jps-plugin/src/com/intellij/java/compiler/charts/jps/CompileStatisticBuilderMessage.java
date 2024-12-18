@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.java.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID;
 
-public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
+public final class CompileStatisticBuilderMessage extends CustomBuilderMessage {
   private static final Gson JSON = new Gson();
 
   private CompileStatisticBuilderMessage(@NotNull String messageType, @NotNull String data) {

@@ -24,7 +24,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.runtime.repository" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
   </component>

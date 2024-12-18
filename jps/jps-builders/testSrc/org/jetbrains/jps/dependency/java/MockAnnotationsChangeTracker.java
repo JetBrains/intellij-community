@@ -11,7 +11,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-public class MockAnnotationsChangeTracker implements AnnotationChangesTracker {
+public final class MockAnnotationsChangeTracker implements AnnotationChangesTracker {
   private static final String ANOTATION_NAME = MockAnnotation.class.getName().replace('.', '/');
   private static final String HIERARCHY_ANOTATION_NAME = MockHierarchyAnnotation.class.getName().replace('.', '/');
   private static final Set<String> KOTLIN_TESTS_ANOTATION_NAMES = Set.of("foo/Ann", "Ann");

@@ -34,7 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GroovyBuilder extends ModuleLevelBuilder {
+public final class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GroovyBuilder.class);
   static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
   private static final Key<Boolean> FILES_MARKED_DIRTY_FOR_NEXT_ROUND = Key.create("SRC_MARKED_DIRTY");
@@ -161,8 +161,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return 100;
   }
 
-  private static class RecompileStubSources implements ClassPostProcessor {
-
+  private static final class RecompileStubSources implements ClassPostProcessor {
     @Override
     public void process(CompileContext context, OutputFileObject out) {
       final Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
