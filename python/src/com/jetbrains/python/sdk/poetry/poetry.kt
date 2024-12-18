@@ -1,31 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.execution.ExecutionException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.icons.PythonIcons
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.FileNotFoundException
 import java.nio.file.Path
 import kotlin.io.path.pathString
-
-const val POETRY_LOCK: String = "poetry.lock"
-const val POETRY_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 
 // TODO: Provide a special icon for poetry
 val POETRY_ICON = PythonIcons.Python.Origami
 
-
+@Internal
 fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath.pathString)})"
 
 /**
@@ -39,42 +37,35 @@ fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getF
  *
  * @return the SDK for poetry, not stored in the SDK table yet.
  */
-fun setupPoetrySdkUnderProgress(project: Project?,
-                                module: Module?,
-                                existingSdks: List<Sdk>,
-                                newProjectPath: String?,
-                                python: String?,
-                                installPackages: Boolean,
-                                poetryPath: String? = null): Sdk? {
-  val projectPath = newProjectPath ?: module?.basePath ?: project?.basePath ?: return null
-  val task = object : Task.WithResult<String, ExecutionException>(project,
-                                                                  PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"),
-                                                                  true) {
-    override fun compute(indicator: ProgressIndicator): String {
-      indicator.isIndeterminate = true
-      val poetry = when (poetryPath) {
-        is String -> poetryPath
-        else -> {
-          val init = StandardFileSystems.local().findFileByPath(projectPath)?.findChild(PY_PROJECT_TOML)?.let {
-            getPyProjectTomlForPoetry(it)
-          } == null
-          setupPoetry(Path.of(projectPath), python, installPackages, init)
-        }
-      }
-      return getPythonExecutable(poetry)
-    }
-  }
+@Internal
+suspend fun setupPoetrySdkUnderProgress(
+  project: Project?,
+  module: Module?,
+  existingSdks: List<Sdk>,
+  newProjectPath: String?,
+  python: String?,
+  installPackages: Boolean,
+  poetryPath: String? = null,
+): Result<Sdk> {
+  val projectPath = newProjectPath ?: module?.basePath ?: project?.basePath
+                    ?: return Result.failure(FileNotFoundException("Can't find path to project or module"))
 
-  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData()).apply {
-    module?.let { setAssociationToModule(it) }
+  val actualProject = project ?: module?.project
+  val pythonExecutablePath =  if (actualProject != null) {
+      withBackgroundProgress(actualProject, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
+        setUpPoetry(projectPath, python, installPackages, poetryPath)
+      }
+  } else {
+    setUpPoetry(projectPath, python, installPackages, poetryPath)
+  }.getOrElse { return Result.failure(it) }
+
+  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData()).onSuccess { sdk ->
+    module?.let { sdk.setAssociationToModule(it) }
   }
 }
 
 internal val Sdk.isPoetry: Boolean
   get() = sdkAdditionalData is PyPoetrySdkAdditionalData
-
-val Module.poetryLock: VirtualFile?
-  get() = baseDir?.findChild(POETRY_LOCK)
 
 internal fun allModules(project: Project?): List<Module> {
   return project?.let {
@@ -83,3 +74,16 @@ internal fun allModules(project: Project?): List<Module> {
 }
 
 internal fun sdkHomes(sdks: List<Sdk>): Set<String> = sdks.mapNotNull { it.homePath }.toSet()
+
+private suspend fun setUpPoetry(projectPathString: String, python: String?, installPackages: Boolean, poetryPath: String? = null): Result<Path> {
+  val poetryExecutablePathString = when (poetryPath) {
+    is String -> poetryPath
+    else -> {
+      val pyProjectToml = withContext(Dispatchers.IO) { StandardFileSystems.local().findFileByPath(projectPathString)?.findChild(PY_PROJECT_TOML) }
+      val init = pyProjectToml?.let { getPyProjectTomlForPoetry(it) } == null
+      setupPoetry(Path.of(projectPathString), python, installPackages, init).getOrElse { return Result.failure(it) }
+    }
+  }
+
+  return Result.success(Path.of(getPythonExecutable(poetryExecutablePathString)))
+}

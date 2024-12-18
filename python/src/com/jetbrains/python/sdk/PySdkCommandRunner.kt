@@ -6,14 +6,13 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.packaging.IndicatedProcessOutputListener
 import com.jetbrains.python.packaging.PyExecutionException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.pathString
 
 internal object Logger {
   val LOG = logger<Logger>()
@@ -25,37 +24,49 @@ internal object Logger {
  * @param [commandLine] The command line to execute.
  * @return A [Result] object containing the output of the command execution.
  */
-@RequiresBackgroundThread
-internal fun runCommandLine(commandLine: GeneralCommandLine): Result<String> {
+internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<String> {
   Logger.LOG.info("Running command: ${commandLine.commandLineString}")
   val commandOutput = with(CapturingProcessHandler(commandLine)) {
-    runProcess()
+    withContext(Dispatchers.IO) {
+      runProcess()
+    }
   }
 
   return processOutput(
     commandOutput,
     commandLine.commandLineString,
-    emptyList()
+    commandLine.parametersList.list,
   )
 }
 
-fun runCommand(executable: Path, projectPath: Path?, @NlsContexts.DialogMessage errorMessage: String, vararg args: String): Result<String> {
-  val command = listOf(executable.absolutePathString()) + args
-  val commandLine = GeneralCommandLine(command).withWorkingDirectory(projectPath)
-  val handler = CapturingProcessHandler(commandLine)
-  val indicator = ProgressManager.getInstance().progressIndicator
-  val result = with(handler) {
-    when {
-      indicator != null -> {
-        addProcessListener(IndicatedProcessOutputListener(indicator))
-        runProcessWithProgressIndicator(indicator)
-      }
-      else ->
-        runProcess()
-    }
-  }
+/**
+ * Executes a given executable with specified arguments within an optional project directory.
+ *
+ * @param [executable] The [Path] to the executable to run.
+ * @param [projectPath] The path to the project directory in which to run the executable, or null if no specific directory is required.
+ * @param [errorMessage] The message to log or show in case of an error during the execution.
+ * @param [args] The arguments to pass to the executable.
+ * @return A [Result] object containing the output of the command execution.
+ */
+@Internal
+suspend fun runExecutable(executable: Path, projectPath: Path?, vararg args: String): Result<String> {
+  val commandLine = GeneralCommandLine(listOf(executable.absolutePathString()) + args).withWorkingDirectory(projectPath)
+  return runCommandLine(commandLine)
+}
 
-  return processOutput(result, executable.pathString, args.asList(), errorMessage)
+/**
+ * Executes a specified [command] within the given project path with optional arguments.
+ *
+ * @param [projectPath] the path to the project directory where the command should be executed
+ * @param [command] the command to be executed
+ * @param [errorMessage] the error message to be shown in case of failure
+ * @param [args] optional arguments for the command
+ * @return a [Result] object containing the output of the command execution
+ */
+@Internal
+suspend fun runCommand(projectPath: Path, command: String, vararg args: String): Result<String> {
+  val commandLine = GeneralCommandLine(listOf(command) + args).withWorkingDirectory(projectPath)
+  return runCommandLine(commandLine)
 }
 
 /**

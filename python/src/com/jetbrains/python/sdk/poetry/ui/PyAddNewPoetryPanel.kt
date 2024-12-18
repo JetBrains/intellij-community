@@ -3,8 +3,10 @@ package  com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
@@ -22,6 +24,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
@@ -29,6 +32,9 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -66,20 +72,24 @@ class PyAddNewPoetryPanel(
 
 
   private val installPackagesCheckBox = JBCheckBox(PyBundle.message("python.sdk.poetry.install.packages.from.toml.checkbox.text")).apply {
-    isVisible = projectPath?.let {
-      StandardFileSystems.local().findFileByPath(it)?.findChild(PY_PROJECT_TOML)?.let { file -> getPyProjectTomlForPoetry(file) }
-    } != null
-    isSelected = isVisible
+    service<PythonSdkCoroutineService>().cs.launch {
+      isVisible = projectPath?.let {
+        withContext(Dispatchers.IO) {
+          StandardFileSystems.local().findFileByPath(it)?.findChild(PY_PROJECT_TOML)?.let { file -> getPyProjectTomlForPoetry(file) }
+        }
+      } != null
+      isSelected = isVisible
+    }
   }
 
   private val poetryPathField = TextFieldWithBrowseButton().apply {
     addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileDescriptor())
     val field = textField as? JBTextField ?: return@apply
-    detectPoetryExecutable()?.let {
-      field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
-    }
-    PropertiesComponent.getInstance().poetryPath?.let {
-      field.text = it
+    service<PythonSdkCoroutineService>().cs.launch {
+      detectPoetryExecutable().getOrNull()?.let { field.emptyText.text = "Auto-detected: ${it.absolutePathString()}" }
+      PropertiesComponent.getInstance().poetryPath?.let {
+        field.text = it
+      }
     }
   }
 
@@ -124,10 +134,12 @@ class PyAddNewPoetryPanel(
 
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = poetryPathField.text.nullize()
-    return setupPoetrySdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-                                       baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected)?.apply {
-      PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk.homePath
-    }
+    return runBlockingCancellable {
+      setupPoetrySdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
+                                  baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected).onSuccess {
+        PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk.homePath
+      }
+    }.getOrNull()
   }
 
   override fun getStatisticInfo(): InterpreterStatisticsInfo {
@@ -154,8 +166,10 @@ class PyAddNewPoetryPanel(
    * Updates the view according to the current state of UI controls.
    */
   private fun update() {
-    selectedModule?.let {
-      installPackagesCheckBox.isEnabled = it.pyProjectToml != null
+    service<PythonSdkCoroutineService>().cs.launch {
+      selectedModule?.let {
+        installPackagesCheckBox.isEnabled = pyProjectToml(it) != null
+      }
     }
   }
 

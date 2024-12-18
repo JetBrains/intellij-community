@@ -41,8 +41,8 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(
    * Updates the list of outdated packages by running the Poetry command
    * `poetry show --outdated`, parsing its output, and storing the results.
    */
-  private fun updateOutdatedPackages() {
-    val outputOutdatedPackages = runPoetry(sdk, "show", "--outdated").getOrElse {
+  private suspend fun updateOutdatedPackages() {
+    val outputOutdatedPackages = runPoetryWithSdk(sdk, "show", "--outdated").getOrElse {
       outdatedPackages = emptyMap()
       return
     }

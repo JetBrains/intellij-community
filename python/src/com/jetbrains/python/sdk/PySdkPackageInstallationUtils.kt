@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.PyExecutionException
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -48,7 +47,6 @@ internal class PackageInstallationFilesService {
  * @param pythonExecutable The path to the Python executable (could be "py" or "python").
  * @return A [Result] object that represents the [ProcessOutput] of the installation command.
  */
-@RequiresBackgroundThread
 internal suspend fun installPackageWithPython(url: URL, pythonExecutable: String): Result<String> {
   val installationFile = downloadFile(url).getOrThrow()
   val command = GeneralCommandLine(pythonExecutable, installationFile.absolutePathString())
@@ -81,8 +79,7 @@ internal suspend fun downloadFile(url: URL): Result<Path> {
  * @return true if the package is installed, false otherwise
  */
 @Internal
-@RequiresBackgroundThread
-fun isPackageInstalled(vararg commands: String): Boolean {
+suspend fun isPackageInstalled(vararg commands: String): Boolean {
   val command = GeneralCommandLine(*commands, "--version")
   return runCommandLine(command).isSuccess
 }
@@ -95,8 +92,7 @@ fun isPackageInstalled(vararg commands: String): Boolean {
  * @param [isUserSitePackages] Whether to install the executable in the user's site packages directory. Defaults to true.
  */
 @Internal
-@RequiresBackgroundThread
-fun installExecutableViaPip(
+suspend fun installExecutableViaPip(
   executableName: String,
   pythonExecutable: String,
   isUserSitePackages: Boolean = true,
@@ -109,7 +105,6 @@ fun installExecutableViaPip(
   runCommandLine(GeneralCommandLine(commandList)).getOrThrow()
 }
 
-@RequiresBackgroundThread
 internal suspend fun installPipIfNeeded(pythonExecutable: String) {
   if (!isPackageInstalled(pythonExecutable, "-m", "pip") && !isPackageInstalled("pip")) {
     installPackageWithPython(URL("https://bootstrap.pypa.io/get-pip.py"), pythonExecutable).getOrThrow()
@@ -126,6 +121,5 @@ internal suspend fun installPipIfNeeded(pythonExecutable: String) {
  * @throws [PyExecutionException] if the command execution fails.
  */
 @Internal
-@RequiresBackgroundThread
-fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String) =
+suspend fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String) =
   runCommandLine(GeneralCommandLine(pythonExecutable, scriptPath.absolutePathString())).getOrThrow()

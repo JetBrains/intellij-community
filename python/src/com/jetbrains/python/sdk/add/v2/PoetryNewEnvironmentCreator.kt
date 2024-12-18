@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.poetry.PyProjectTomlPythonVersionsService
+import com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPythonVersionsService
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.sdk.poetry.poetryPath
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
@@ -30,7 +30,7 @@ class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel,
 
     val validatedInterpreters =
       if (moduleDir != null) {
-        PyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
+        PoetryPyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
           as? StateFlow<List<PythonSelectableInterpreter>> ?: model.baseInterpreters
       }
       else {
@@ -44,7 +44,7 @@ class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel,
     PropertiesComponent.getInstance().poetryPath = executable.get().nullize()
   }
 
-  override fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk? =
+  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk> =
     setupPoetrySdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages)
 
   override suspend fun detectExecutable() {

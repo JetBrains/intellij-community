@@ -75,7 +75,7 @@ internal fun validateSdks(module: Module?, existingSdks: List<Sdk>, context: Use
              ?: detectSystemWideSdks(module, existingSdks, context)
 
   return if (moduleFile != null) {
-    PyProjectTomlPythonVersionsService.instance.validateSdkVersions(moduleFile, sdks)
+    PoetryPyProjectTomlPythonVersionsService.instance.validateSdkVersions(moduleFile, sdks)
   }
   else {
     sdks

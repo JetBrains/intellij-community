@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -18,7 +17,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.pythonSdk
 import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.Nls
@@ -27,6 +25,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.findDocument
@@ -38,6 +37,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
+import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.poetry.VersionType.Companion.getVersionType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.toml.lang.psi.TomlKeyValue
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -53,42 +54,41 @@ import java.util.concurrent.ConcurrentMap
  */
 
 const val PY_PROJECT_TOML: String = "pyproject.toml"
+const val POETRY_LOCK: String = "poetry.lock"
+const val POETRY_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 
-fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): Pair<Long, VirtualFile?> {
-  return Pair(virtualFile.modificationStamp, try {
-    ReadAction.compute<VirtualFile, Throwable> {
-      Toml.parse(virtualFile.inputStream).getTable("tool.poetry")?.let { virtualFile }
+val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
+
+internal suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
+  withContext(Dispatchers.IO) {
+    readAction {
+      try {
+        Toml.parse(virtualFile.inputStream).getTable("tool.poetry")?.let { virtualFile }
+      }
+      catch (e: IOException) {
+        LOGGER.info(e)
+        null
+      }
     }
   }
-  catch (e: Throwable) {
-    null
-  })
-}
+
+
+private suspend fun poetryLock(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, POETRY_LOCK) }
 
 /**
  * The PyProject.toml found in the main content root of the module.
  */
-val pyProjectTomlCache = mutableMapOf<String, Pair<Long, VirtualFile?>>()
-val Module.pyProjectToml: VirtualFile?
-  get() =
-    baseDir?.findChild(PY_PROJECT_TOML)?.let { virtualFile ->
-      (this.name + virtualFile.path).let { key ->
-        pyProjectTomlCache.getOrPut(key) { getPyProjectTomlForPoetry(virtualFile) }.let { pair ->
-          when (virtualFile.modificationStamp) {
-            pair.first -> pair.second
-            else -> pyProjectTomlCache.put(key, getPyProjectTomlForPoetry(virtualFile))?.second
-          }
-        }
-      }
-    }
+@Internal
+suspend fun pyProjectToml(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PY_PROJECT_TOML) }
+
 
 /**
  * Watches for edits in PyProjectToml inside modules with a poetry SDK set.
  */
-class PyProjectTomlWatcher : EditorFactoryListener {
+class PoetryPyProjectTomlWatcher : EditorFactoryListener {
   private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
   private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
-  private val content: @Nls String = if (poetryVersion?.let { it < "1.1.1" } == true) {
+  private suspend fun content(): @Nls String = if (getPoetryVersion()?.let { it < "1.1.1" } == true) {
     PyBundle.message("python.sdk.poetry.pip.file.notification.content")
   }
   else {
@@ -96,34 +96,41 @@ class PyProjectTomlWatcher : EditorFactoryListener {
   }
 
   override fun editorCreated(event: EditorFactoryEvent) {
-    val project = event.editor.project
-    if (project == null || !isPyProjectTomlEditor(event.editor)) return
-    val listener = object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        try {
-          val document = event.document
-          val module = document.virtualFile?.getModule(project) ?: return
-          // TODO: Should we remove listener when a sdk is changed to non-poetry sdk?
-          //                    if (!isPoetry(module.project)) {
-          //                        with(document) {
-          //                            putUserData(notificationActive, null)
-          //                            val listener = getUserData(changeListenerKey) ?: return
-          //                            removeDocumentListener(listener)
-          //                            putUserData(changeListenerKey, null)
-          //                            return
-          //                        }
-          //                    }
-          if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-            notifyPyProjectTomlChanged(module)
+    val project = event.editor.project ?: return
+    service<PythonSdkCoroutineService>().cs.launch {
+      if (!isPyProjectTomlEditor(event.editor)) return@launch
+      val listener = object : DocumentListener {
+        override fun documentChanged(event: DocumentEvent) {
+          service<PythonSdkCoroutineService>().cs.launch {
+            try {
+              val document = event.document
+
+              val module = document.virtualFile?.let { getModule(it, project) } ?: return@launch
+              // TODO: Should we remove listener when a sdk is changed to non-poetry sdk?
+              //                    if (!isPoetry(module.project)) {
+              //                        with(document) {
+              //                            putUserData(notificationActive, null)
+              //                            val listener = getUserData(changeListenerKey) ?: return
+              //                            removeDocumentListener(listener)
+              //                            putUserData(changeListenerKey, null)
+              //                            return
+              //                        }
+              //                    }
+              if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+                notifyPyProjectTomlChanged(module)
+              }
+
+            }
+            catch (_: AlreadyDisposedException) {
+            }
           }
-        }
-        catch (_: AlreadyDisposedException) {
+
         }
       }
-    }
-    with(event.editor.document) {
-      addDocumentListener(listener)
-      putUserData(changeListenerKey, listener)
+      with(event.editor.document) {
+        addDocumentListener(listener)
+        putUserData(changeListenerKey, listener)
+      }
     }
   }
 
@@ -132,13 +139,13 @@ class PyProjectTomlWatcher : EditorFactoryListener {
     event.editor.document.removeDocumentListener(listener)
   }
 
-  private fun notifyPyProjectTomlChanged(module: Module) {
+  private suspend fun notifyPyProjectTomlChanged(module: Module) {
     if (module.getUserData(notificationActive) == true) return
-    @Suppress("DialogTitleCapitalization") val title = when (module.poetryLock) {
+    @Suppress("DialogTitleCapitalization") val title = when (poetryLock(module)) {
       null -> PyBundle.message("python.sdk.poetry.pip.file.lock.not.found")
       else -> PyBundle.message("python.sdk.poetry.pip.file.lock.out.of.date")
     }
-    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION).setListener(
+    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, content(), NotificationType.INFORMATION).setListener(
       NotificationListener { notification, event ->
         FileDocumentManager.getInstance().saveAllDocuments()
         when (event.description) {
@@ -160,21 +167,22 @@ class PyProjectTomlWatcher : EditorFactoryListener {
     notification.notify(module.project)
   }
 
-  private fun isPyProjectTomlEditor(editor: Editor): Boolean {
+  private suspend fun isPyProjectTomlEditor(editor: Editor): Boolean {
     val file = editor.document.virtualFile ?: return false
     if (file.name != PY_PROJECT_TOML) return false
     val project = editor.project ?: return false
-    val module = file.getModule(project) ?: return false
+    val module = getModule(file, project) ?: return false
     val sdk = module.pythonSdk ?: return false
     if (!sdk.isPoetry) return false
-    return module.pyProjectToml == file
+    return pyProjectToml(module) == file
   }
 
   private val Document.virtualFile: VirtualFile?
     get() = FileDocumentManager.getInstance().getFile(this)
 
-  private fun VirtualFile.getModule(project: Project): Module? =
-    ModuleUtil.findModuleForFile(this, project)
+  private suspend fun getModule(file: VirtualFile, project: Project): Module? = withContext(Dispatchers.IO) {
+    ModuleUtil.findModuleForFile(file, project)
+  }
 
   private val LOCK_NOTIFICATION_GROUP by lazy { NotificationGroupManager.getInstance().getNotificationGroup("pyproject.toml Watcher") }
 }
@@ -183,17 +191,17 @@ class PyProjectTomlWatcher : EditorFactoryListener {
  * This class represents a post-startup activity for PyProjectToml files in a project.
  * It finds valid python versions in PyProjectToml files and saves them in PyProjectTomlPythonVersionsService.
  */
-private class PyProjectTomlPostStartupActivity : ProjectActivity {
+private class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val modulesRoots = PythonSdkUpdater.getModuleRoots(project)
     for (module in modulesRoots) {
       val tomlFile = withContext(Dispatchers.IO) {
-        module.findChild(PY_PROJECT_TOML)?.let { getPyProjectTomlForPoetry(it).second }
+        module.findChild(PY_PROJECT_TOML)?.let { getPyProjectTomlForPoetry(it) }
       } ?: continue
-        val versionString = findPythonVersion(tomlFile, project) ?: continue
+      val versionString = poetryFindPythonVersionFromToml(tomlFile, project) ?: continue
 
-        PyProjectTomlPythonVersionsService.instance.setVersion(module, versionString)
-        addDocumentListener(tomlFile, project, module)
+      PoetryPyProjectTomlPythonVersionsService.instance.setVersion(module, versionString)
+      addDocumentListener(tomlFile, project, module)
     }
   }
 
@@ -211,14 +219,14 @@ private class PyProjectTomlPostStartupActivity : ProjectActivity {
       tomlFile.findDocument()?.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
           service<PythonSdkCoroutineService>().cs.launch {
-            val newVersion = findPythonVersion(tomlFile, project) ?: return@launch
-            val oldVersion = PyProjectTomlPythonVersionsService.instance.getVersionString(module)
+            val newVersion = poetryFindPythonVersionFromToml(tomlFile, project) ?: return@launch
+            val oldVersion = PoetryPyProjectTomlPythonVersionsService.instance.getVersionString(module)
             if (oldVersion != newVersion) {
-              PyProjectTomlPythonVersionsService.instance.setVersion(module, newVersion)
+              PoetryPyProjectTomlPythonVersionsService.instance.setVersion(module, newVersion)
             }
           }
         }
-      }, PyProjectTomlPythonVersionsService.instance)
+      }, PoetryPyProjectTomlPythonVersionsService.instance)
     }
   }
 }
@@ -231,7 +239,7 @@ private class PyProjectTomlPostStartupActivity : ProjectActivity {
  * @return The Python version specified in the toml file, or null if not found.
  */
 @Internal
-suspend fun findPythonVersion(tomlFile: VirtualFile, project: Project): String? {
+suspend fun poetryFindPythonVersionFromToml(tomlFile: VirtualFile, project: Project): String? {
   val versionElement = readAction {
     val tomlPsiFile = tomlFile.findPsiFile(project) ?: return@readAction null
     (PsiTreeUtil.collectElements(tomlPsiFile, object : PsiElementFilter {
@@ -254,11 +262,11 @@ suspend fun findPythonVersion(tomlFile: VirtualFile, project: Project): String? 
  */
 @Internal
 @Service
-class PyProjectTomlPythonVersionsService : Disposable {
+class PoetryPyProjectTomlPythonVersionsService : Disposable {
   private val modulePythonVersions: ConcurrentMap<VirtualFile, PoetryPythonVersion> = ConcurrentHashMap()
 
   companion object {
-    val instance: PyProjectTomlPythonVersionsService
+    val instance: PoetryPyProjectTomlPythonVersionsService
       get() = service()
   }
 
