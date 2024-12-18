@@ -2,9 +2,9 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 
-class JpsLanguageLevelQuickFixTest : MavenTestCase() {
+class JpsLanguageLevelQuickFixTest : MavenTestCaseLegacy() {
   private val jpsLanguageLevelQuickFix = JpsLanguageLevelQuickFix()
 
   fun `test get laguage level 11`() {

@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 
-class MavenEmbeddersManagerTest : MavenTestCase() {
+class MavenEmbeddersManagerTest : MavenTestCaseLegacy() {
   private var myManager: MavenEmbeddersManager? = null
 
   override fun setUp() {

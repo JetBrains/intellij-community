@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-abstract class MavenImportingTestCase : MavenNioTestCase() {
+abstract class MavenImportingTestCase : MavenTestCase() {
 
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null

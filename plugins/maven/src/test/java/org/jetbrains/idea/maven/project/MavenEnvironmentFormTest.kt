@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.ui.TextFieldWithHistory
 import com.intellij.util.ReflectionUtil
@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class MavenEnvironmentFormTest : MavenTestCase() {
+class MavenEnvironmentFormTest : MavenTestCaseLegacy() {
   @Test
   fun shouldNotShowDuplicatedBundledMavenHome() {
     val panel = MavenGeneralPanel()

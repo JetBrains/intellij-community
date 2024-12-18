@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.configurationStore.deserializeState
 import com.intellij.configurationStore.jdomSerializer
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
@@ -15,7 +15,7 @@ import junit.framework.TestCase
 import org.jdom.output.XMLOutputter
 import org.jetbrains.idea.maven.utils.MavenSettings
 
-class MavenSettingsTest : MavenTestCase() {
+class MavenSettingsTest : MavenTestCaseLegacy() {
   fun testCloningGeneralSettingsWithoutListeners() {
     val log: Array<String> = arrayOf<String>("")
 

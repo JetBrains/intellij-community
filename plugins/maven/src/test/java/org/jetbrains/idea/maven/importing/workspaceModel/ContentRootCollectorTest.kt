@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootCollector.collect
@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.Test
 
-class ContentRootCollectorTest : MavenTestCase() {
+class ContentRootCollectorTest : MavenTestCaseLegacy() {
   @Test
   fun `test simple content root`() = runBlocking {
     val baseContentRoot = "/home/a/b/c/maven"

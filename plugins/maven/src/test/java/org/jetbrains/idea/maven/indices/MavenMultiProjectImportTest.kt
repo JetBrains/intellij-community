@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.indices
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -68,7 +68,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val projectDir = myDir!!.resolve(dir)
     projectDir.toFile().mkdirs()
     val pom = projectDir.resolve("pom.xml")
-    pom.write(MavenTestCase.createPomXml(xml))
+    pom.write(MavenTestCaseLegacy.createPomXml(xml))
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)
   }
 

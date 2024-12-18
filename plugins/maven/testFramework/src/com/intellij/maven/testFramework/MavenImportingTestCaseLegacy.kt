@@ -62,7 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @Deprecated("Use 'MavenImportingTestCase'")
-abstract class MavenImportingTestCaseLegacy : MavenTestCase() {
+abstract class MavenImportingTestCaseLegacy : MavenTestCaseLegacy() {
   private var myProjectsManager: MavenProjectsManager? = null
   private var myCodeStyleSettingsTracker: CodeStyleSettingsTracker? = null
   private var myNotificationAware: AutoImportProjectNotificationAware? = null

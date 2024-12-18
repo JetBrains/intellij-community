@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.*
 import org.junit.Assert
@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.String
 
-class ArchetypesTest : MavenTestCase() {
+class ArchetypesTest : MavenTestCaseLegacy() {
   
   /**
    * very time consumed test (uses the network and -U maven flag)

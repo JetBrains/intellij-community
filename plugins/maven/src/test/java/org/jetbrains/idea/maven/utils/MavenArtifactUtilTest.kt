@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class MavenArtifactUtilTest : MavenTestCase() {
+class MavenArtifactUtilTest : MavenTestCaseLegacy() {
   @Test
   fun `test get artifact path with illegal newline char in version`() = runBlocking {
     val groupId = "groupId"

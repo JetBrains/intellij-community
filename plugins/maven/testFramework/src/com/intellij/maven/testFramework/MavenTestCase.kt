@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
+import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
@@ -25,6 +26,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -32,9 +35,11 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.TemporaryDirectory.Companion.generateTemporaryPath
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
@@ -50,7 +55,6 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.awt.HeadlessException
-import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -58,22 +62,21 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.absolutePathString
+import kotlin.io.path.*
 
-@Deprecated("Use 'MavenNioTestCase' instead")
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
     private set
   private var myWSLDistribution: WSLDistribution? = null
   private var myPathTransformer: RemotePathTransformerFactory.Transformer? = null
 
-  private var ourTempDir: File? = null
+  private lateinit var ourTempDir: Path
+  private lateinit var myDir: Path
 
   private var myTestFixture: IdeaProjectTestFixture? = null
 
   private var myProject: Project? = null
 
-  private var myDir: File? = null
   private var myProjectRoot: VirtualFile? = null
 
   private var myProjectPom: VirtualFile? = null
@@ -95,8 +98,8 @@ abstract class MavenTestCase : UsefulTestCase() {
   val project: Project
     get() = myProject!!
 
-  val dir: File
-    get() = myDir!!
+  val dir: Path
+    get() = myDir
 
   val projectRoot: VirtualFile
     get() = myProjectRoot!!
@@ -123,9 +126,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     setupWsl()
     ensureTempDirCreated()
 
-    myDir = File(ourTempDir, getTestName(false))
-    FileUtil.ensureExists(myDir!!)
-
+    myDir = ourTempDir.resolve(getTestName(false))
+    myDir.ensureExists()
 
     mavenProgressIndicator = MavenProgressIndicator(project, EmptyProgressIndicator(ModalityState.nonModal()), null)
 
@@ -171,7 +173,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
     val wslSdk = getWslSdk(myWSLDistribution!!.getWindowsPath(jdkPath))
     WriteAction.runAndWait<RuntimeException> { ProjectRootManagerEx.getInstanceEx(myProject).projectSdk = wslSdk }
-    assertTrue(File(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!)).isDirectory)
+    assertTrue(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!).toNioPathOrNull()!!.isDirectory())
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
@@ -182,10 +184,12 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
-      override fun processError(category: String,
-                                message: String,
-                                details: Array<String>,
-                                t: Throwable?): Set<Action> {
+      override fun processError(
+        category: String,
+        message: String,
+        details: Array<String>,
+        t: Throwable?,
+      ): Set<Action> {
         val intercept = t != null && ((t.message ?: "").contains("The network name cannot be found") &&
                                       message.contains("Couldn't read shelf information") ||
                                       "JDK annotations not found" == t.message && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl" == category)
@@ -228,7 +232,7 @@ abstract class MavenTestCase : UsefulTestCase() {
       ThrowableRunnable { deleteDirOnTearDown(myDir) },
       ThrowableRunnable {
         if (myWSLDistribution != null && basePath != null) {
-          deleteDirOnTearDown(File(basePath))
+          deleteDirOnTearDown(basePath.toNioPathOrNull())
         }
       },
       ThrowableRunnable { super.tearDown() }
@@ -258,17 +262,15 @@ abstract class MavenTestCase : UsefulTestCase() {
 
 
   private fun ensureTempDirCreated() {
-    if (ourTempDir != null) return
-
     ourTempDir = if (myWSLDistribution == null) {
-      File(FileUtil.getTempDirectory(), "mavenTests")
+      FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
     }
     else {
-      File(myWSLDistribution!!.getWindowsPath("/tmp"), "mavenTests")
+      myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
     }
 
-    FileUtil.delete(ourTempDir!!)
-    FileUtil.ensureExists(ourTempDir!!)
+    FileUtil.delete(ourTempDir)
+    ourTempDir.ensureExists()
   }
 
   protected open fun setUpFixtures() {
@@ -293,9 +295,9 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected open fun setUpInWriteAction() {
-    val projectDir = File(myDir, "project")
-    projectDir.mkdirs()
-    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)
+    val projectDir = myDir.resolve("project")
+    projectDir.createDirectories()
+    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
   }
 
   protected open fun tearDownFixtures() {
@@ -337,11 +339,11 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected val repositoryFile: Path
     get() = mavenGeneralSettings.effectiveRepositoryPath
 
-  protected val projectPath: String
-    get() = myProjectRoot!!.path
+  protected val projectPath: Path
+    get() = myProjectRoot!!.path.toNioPathOrNull()!!
 
-  protected val parentPath: String
-    get() = myProjectRoot!!.parent.path
+  protected val parentPath: Path
+    get() = projectPath.parent
 
   protected fun pathFromBasedir(relPath: String): String {
     return pathFromBasedir(myProjectRoot, relPath)
@@ -349,7 +351,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun createSettingsXml(innerContent: String): VirtualFile {
     val content = createSettingsXmlContent(innerContent)
-    val path = Path.of(myDir!!.path, "settings.xml")
+    val path = myDir.resolve("settings.xml")
     Files.writeString(path, content)
     mavenGeneralSettings.setUserSettingsFile(path.toString())
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
@@ -360,9 +362,9 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
-    val ioFile = File(myDir, "settings.xml")
-    ioFile.createNewFile()
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
+    val ioFile = myDir.resolve("settings.xml")
+    ioFile.findOrCreateFile()
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
     setFileContent(f, content)
     refreshFiles(listOf(f))
     mavenGeneralSettings.setUserSettingsFile(f.path)
@@ -408,25 +410,33 @@ abstract class MavenTestCase : UsefulTestCase() {
     return pom
   }
 
-  protected fun createModulePom(relativePath: String,
-                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun createModulePom(
+    relativePath: String,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     return createPomFile(createProjectSubDir(relativePath), xml)
   }
 
-  protected fun updateModulePom(relativePath: String,
-                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun updateModulePom(
+    relativePath: String,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     val pom = createModulePom(relativePath, xml)
     refreshFiles(listOf(pom))
     return pom
   }
 
-  protected fun createPomFile(dir: VirtualFile,
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun createPomFile(
+    dir: VirtualFile,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     return createPomFile(dir, "pom.xml", xml)
   }
 
-  protected fun createPomFile(dir: VirtualFile, fileName: String = "pom.xml",
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun createPomFile(
+    dir: VirtualFile, fileName: String = "pom.xml",
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     val filePath = Path.of(dir.path, fileName)
     setPomContent(filePath, xml)
     dir.refresh(false, false)
@@ -474,16 +484,16 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun createProjectSubDir(relativePath: String): VirtualFile {
-    val f = File(projectPath, relativePath)
-    f.mkdirs()
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)!!
+    val f = projectPath.resolve(relativePath)
+    f.createDirectories()
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
   }
 
   protected fun createProjectSubFile(relativePath: String): VirtualFile {
-    val f = File(projectPath, relativePath)
-    f.parentFile.mkdirs()
-    f.createNewFile()
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)!!
+    val f = projectPath.resolve(relativePath)
+    f.parent.createDirectories()
+    f.createFile()
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
   }
 
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
@@ -494,7 +504,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun refreshFiles(files: List<VirtualFile>) {
-    val relativePaths = files.map { dir.toPath().relativize(Path.of(it.path)) }
+    val relativePaths = files.map { dir.relativize(it.path.toNioPathOrNull()!!) }
     MavenLog.LOG.warn("Refreshing files: $relativePaths")
     LocalFileSystem.getInstance().refreshFiles(files)
   }
@@ -560,28 +570,25 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun deleteDirOnTearDown(dir: File?) {
+  protected fun deleteDirOnTearDown(dir: Path?) {
     FileUtil.delete(dir!!)
     // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
     // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
     if (dir.exists()) {
       System.err.println("Cannot delete $dir")
       //printDirectoryContent(myDir);
-      dir.deleteOnExit()
+      dir.toFile().deleteOnExit()
     }
   }
 
-  private fun printDirectoryContent(dir: File) {
-    val files = dir.listFiles()
-    if (files == null) return
-
-    for (file in files) {
-      println(file.absolutePath)
-
-      if (file.isDirectory) {
-        printDirectoryContent(file)
+  private fun printDirectoryContent(dir: Path) {
+    dir.listDirectoryEntries()
+      .forEach { file ->
+        println(file.toAbsolutePath())
+        if (file.isDirectory()) {
+          printDirectoryContent(file)
+        }
       }
-    }
   }
 
   protected val root: String
@@ -654,7 +661,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun setFileContent(file: Path, content: String) {
-    val relativePath = dir.toPath().relativize(file)
+    val relativePath = dir.relativize(file)
     MavenLog.LOG.warn("Writing content to $relativePath")
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
   }
@@ -740,11 +747,21 @@ abstract class MavenTestCase : UsefulTestCase() {
   private val testMavenHome: String?
     get() = System.getProperty("idea.maven.test.home")
 
-  protected fun fileContentEqual(file1: File, file2: File): Boolean {
+  protected fun fileContentEqual(file1: Path, file2: Path): Boolean {
     val file1Bytes = file1.readBytes()
     val file2Bytes = file2.readBytes()
-
     return file1Bytes.contentEquals(file2Bytes)
+  }
+
+  private fun Path.ensureExists() {
+    if (!exists()) {
+      try {
+        createDirectories()
+      }
+      catch (e: Exception) {
+        throw IOException(UtilBundle.message("exception.directory.can.not.create", this), e)
+      }
+    }
   }
 
   companion object {

@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import junit.framework.TestCase
 import java.io.IOException
 import java.nio.file.Path
 
-class MavenExternalParametersVmTest : MavenTestCase() {
+class MavenExternalParametersVmTest : MavenTestCaseLegacy() {
   @Throws(IOException::class)
   fun testGetRunVmOptionsSettingsAndJvm() {
     createProjectSubFile(".mvn/jvm.config", "-Xms800m")
