@@ -202,7 +202,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         return StatisticsEvaluationResult.MISCOMPILED
                     }
                 }
-                if (type.signature().startsWith("Ljava/lang/invoke/") || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")) {
+                if (type.signature().startsWith("Ljava/lang/invoke/")
+                    || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")
+                    || type.isSubTypeOrSame("java.lang.LinkageError")
+                ) {
                     return StatisticsEvaluationResult.MISCOMPILED
                 }
                 if (type.isSubTypeOrSame("java.lang.ClassCastException")) {
