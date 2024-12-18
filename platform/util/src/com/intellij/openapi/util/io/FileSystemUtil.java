@@ -175,12 +175,6 @@ public final class FileSystemUtil {
       static native int stat(String path, Pointer stat);
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
-    private static final class LinuxLibC {
-      static native int __lxstat64(int ver, String path, Pointer stat);
-      static native int __xstat64(int ver, String path, Pointer stat);
-    }
-
     private static final int[] LINUX_64 =  {24, 48, 88, 28};
     private static final int[] DARWIN_64 = { 8, 72, 40, 12};
     private static final int STAT_VER = 1;
@@ -202,7 +196,7 @@ public final class FileSystemUtil {
       Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, CharsetToolkit.getPlatformCharset().name());
       NativeLibrary lib = NativeLibrary.getInstance("c", options);
       Native.register(LibC.class, lib);
-      Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, lib);
+      Native.register(UnixLibC.class, lib);
 
       myUid = LibC.getuid();
     }
@@ -211,7 +205,7 @@ public final class FileSystemUtil {
     public FileAttributes getAttributes(@NotNull String path) {
       Memory buffer = myMemoryPool.alloc();
       try {
-        int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
+        int res = UnixLibC.lstat(path, buffer);
         if (res != 0) return null;
 
         int mode = getModeFlags(buffer) & LibC.S_MASK;
@@ -270,7 +264,7 @@ public final class FileSystemUtil {
     }
 
     private static boolean loadFileStatus(String path, Memory buffer) {
-      return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
+      return UnixLibC.stat(path, buffer) == 0;
     }
 
     private int getModeFlags(Memory buffer) {
