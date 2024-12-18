@@ -27,8 +27,8 @@ class KotlinPullUpDialog(
   project: Project,
   classOrObject: KtClassOrObject,
   superClasses: List<PsiNamedElement>,
-  memberInfoStorage: AbstractKotlinMemberInfoStorage,
-) : PullUpDialogBase<AbstractKotlinMemberInfoStorage, KotlinMemberInfo, KtNamedDeclaration, PsiNamedElement>(
+  memberInfoStorage: KotlinMemberInfoStorage,
+) : PullUpDialogBase<KotlinMemberInfoStorage, KotlinMemberInfo, KtNamedDeclaration, PsiNamedElement>(
     project, classOrObject, superClasses, memberInfoStorage, RefactoringBundle.message("pull.members.up.title")
 ) {
     init {
@@ -122,7 +122,7 @@ class KotlinPullUpDialog(
         }
     }
 
-    private val memberInfoStorage: AbstractKotlinMemberInfoStorage get() = myMemberInfoStorage
+    private val memberInfoStorage: KotlinMemberInfoStorage get() = myMemberInfoStorage
 
     private val sourceClass: KtClassOrObject get() = myClass as KtClassOrObject
 

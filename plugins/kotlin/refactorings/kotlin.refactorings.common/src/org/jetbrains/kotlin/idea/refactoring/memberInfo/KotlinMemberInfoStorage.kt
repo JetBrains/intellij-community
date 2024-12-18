@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
+import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.resolveDirectSupertypes
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.psi.*
 class KotlinMemberInfoStorage(
     classOrObject: KtClassOrObject,
     filter: (KtNamedDeclaration) -> Boolean = { true }
-) : AbstractKotlinMemberInfoStorage(classOrObject, filter) {
+) : AbstractMemberInfoStorage<KtNamedDeclaration, PsiNamedElement, KotlinMemberInfo>(classOrObject, filter) {
 
     override fun memberConflict(member1: KtNamedDeclaration, member: KtNamedDeclaration): Boolean {
         return KotlinMemberInfoStorageSupport.getInstance().memberConflict(member1, member)
