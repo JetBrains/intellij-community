@@ -601,6 +601,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/assignmentExpression/bitOperationPriorityComments.java");
         }
 
+        @TestMetadata("compoundAssignmentNullability.java")
+        public void testCompoundAssignmentNullability() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/assignmentExpression/compoundAssignmentNullability.java");
+        }
+
         @TestMetadata("compoundAssignmentOnPrimitives.java")
         public void testCompoundAssignmentOnPrimitives() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/assignmentExpression/compoundAssignmentOnPrimitives.java");
