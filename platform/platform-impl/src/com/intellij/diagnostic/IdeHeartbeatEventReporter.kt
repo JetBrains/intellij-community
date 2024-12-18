@@ -4,6 +4,8 @@ package com.intellij.diagnostic
 import com.intellij.diagnostic.VMOptions.MemoryKind
 import com.intellij.diagnostic.opentelemetry.SafepointBean
 import com.intellij.ide.PowerSaveMode
+import com.intellij.idea.IdeaLogger
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
@@ -124,7 +126,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 74)
+  private val GROUP = EventLogGroup("performance", 75)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -172,10 +174,22 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   @JvmField
   val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
 
+  private val MEMORY_TYPE_FIELD = Enum("type", MemoryKind::class.java)
+  private val HEAP_SIZE_FIELD = Int("heap_size_gigabytes")
+  private val PROJECT_COUNT_FIELD = Int("project_count")
+  private val IS_OOM_HAPPENED_FIELD = Boolean("oom_error")
+  private val IS_FROM_CRASH_FIELD = Boolean("oom_crash")
+  private val LAST_ACTION_FIELD = ActionsEventLogGroup.ActionIdField("last_action_id")
+
   @JvmField
-  val LOW_MEMORY_CONDITION: EventId2<MemoryKind, Int> = GROUP.registerEvent("low.memory",
-                                                                            Enum("type", MemoryKind::class.java),
-                                                                            Int("heap_size_gigabytes"))
+  val LOW_MEMORY_CONDITION: VarargEventId = GROUP.registerVarargEvent("low.memory",
+                                                                      MEMORY_TYPE_FIELD,
+                                                                      HEAP_SIZE_FIELD,
+                                                                      PROJECT_COUNT_FIELD,
+                                                                      IS_OOM_HAPPENED_FIELD,
+                                                                      IS_FROM_CRASH_FIELD,
+                                                                      LAST_ACTION_FIELD,
+                                                                      EventFields.Dumb)
 
   // ==== JVMResponsivenessMonitor: overall system run-time-variability sampling
 
@@ -217,7 +231,22 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun lowMemory(kind: MemoryKind, currentXmxMegabytes: Int) {
-    LOW_MEMORY_CONDITION.log(kind, (currentXmxMegabytes.toDouble() / 1024).roundToInt())
+  fun lowMemory(
+    kind: MemoryKind,
+    currentXmxMegabytes: Int,
+    projectCount: Int,
+    oomError: Boolean,
+    fromCrashReport: Boolean,
+    dumbMode: Boolean,
+  ) {
+    LOW_MEMORY_CONDITION.log(
+      MEMORY_TYPE_FIELD.with(kind),
+      HEAP_SIZE_FIELD.with((currentXmxMegabytes.toDouble() / 1024).roundToInt()),
+      PROJECT_COUNT_FIELD.with(projectCount),
+      IS_OOM_HAPPENED_FIELD.with(oomError),
+      IS_FROM_CRASH_FIELD.with(fromCrashReport),
+      LAST_ACTION_FIELD.with(IdeaLogger.ourLastActionId),
+      EventFields.Dumb.with(dumbMode)
+    )
   }
 }
