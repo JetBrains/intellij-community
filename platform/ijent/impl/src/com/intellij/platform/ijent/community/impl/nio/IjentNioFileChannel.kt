@@ -9,6 +9,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE
 import java.io.IOException
 import java.nio.ByteBuffer

@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.community.impl.nio
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes

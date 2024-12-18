@@ -13,7 +13,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.ijent.community.impl.nio.getOrThrowFileSystemException
+import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path

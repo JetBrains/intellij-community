@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import java.nio.file.FileStore

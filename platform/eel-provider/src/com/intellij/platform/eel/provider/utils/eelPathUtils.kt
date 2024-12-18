@@ -1,13 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -33,6 +37,28 @@ object EelPathUtils {
   fun isProjectLocal(project: Project): Boolean {
     val projectFilePath = project.projectFilePath ?: return true
     return isPathLocal(Path.of(projectFilePath))
+  }
+
+  @JvmStatic
+  fun createTemporaryFile(project: Project?, prefix: String = "", suffix: String = ""): Path {
+    val projectFilePath = project?.projectFilePath ?: return Files.createTempFile(prefix, suffix)
+    return runBlockingMaybeCancellable {
+      val eel = Path.of(projectFilePath).getEelApi()
+      val file = eel.fs.createTemporaryFile(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).build()).getOrThrowFileSystemException()
+      eel.mapper.toNioPath(file)
+    }
+  }
+
+  /**
+   * ```kotlin
+   * getUriLocalToEel(Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user\\dir")).toString() = "file:/home/user/dir"
+   * ```
+   */
+  @JvmStatic
+  fun getUriLocalToEel(path: Path): URI = runBlockingMaybeCancellable {
+    val eel = path.getEelApi()
+    val eelPath = eel.mapper.getOriginalPath(path)
+    URI.create("file:$eelPath")
   }
 
   @RequiresBackgroundThread
