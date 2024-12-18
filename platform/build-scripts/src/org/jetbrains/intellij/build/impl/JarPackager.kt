@@ -416,8 +416,9 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName")
-          libToMetadata.put(element.library!!, projectLibraryData)
+          projectLibraryData = ProjectLibraryData(libName, LibraryPackMode.MERGED, reason = "<- $moduleName")
+          val library = element.library ?: throw IllegalStateException("cannot find ${libRef}")
+          libToMetadata.put(library, projectLibraryData)
         }
         else if (platformLayout != null && platformLayout.isLibraryAlwaysPackedIntoPlugin(libName)) {
           platformLayout.findProjectLibrary(libName)?.let {
@@ -428,15 +429,16 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName (always packed into plugin)")
-          libToMetadata.put(element.library!!, projectLibraryData)
+          projectLibraryData = ProjectLibraryData(libName, LibraryPackMode.MERGED, reason = "<- $moduleName (always packed into plugin)")
+          val library = element.library ?: throw IllegalStateException("cannot find ${libRef}")
+          libToMetadata.put(library, projectLibraryData)
         }
         else {
           continue
         }
       }
 
-      val library = element.library!!
+      val library = element.library ?: throw IllegalStateException("cannot find ${libRef}")
       val libraryName = getLibraryFileName(library)
       if (excluded.contains(libraryName) || alreadyHasLibrary(layout, libraryName)) {
         continue
