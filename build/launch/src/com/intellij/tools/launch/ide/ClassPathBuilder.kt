@@ -77,7 +77,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
   }
 
   private fun <T : Comparable<T>> buildClasspath(modulesToScopes: Map<String, JpsJavaClasspathKind>, logClasspath: Boolean, mapper: (Path) -> T): List<T> {
-    val classpath = mutableListOf<T>()
+    val classpath = LinkedHashSet<T>()
     for ((moduleName, jpsJavaClasspathKind) in modulesToScopes) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
                    ?: throw Exception("Module $moduleName not found")
@@ -98,7 +98,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
       logger.warning("Verbose classpath logging is disabled, set logClasspath to true to see it.")
     }
 
-    return classpath
+    return classpath.toList()
   }
 
   private fun <T> getClasspathForModule(module: JpsModule, jpsJavaClasspathKind: JpsJavaClasspathKind, mapper: (Path) -> T): List<T> {
