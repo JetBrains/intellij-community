@@ -110,12 +110,12 @@ abstract class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTe
       JvmLanguage.KOTLIN, """
       import org.junit.Test
 
-      public class Presen<caret>ter {
+      class Presen<caret>ter {
           @Test
-          public fun testJUnit4() {}
+          fun testJUnit4() {}
       
           @org.junit.jupiter.api.Test
-          public fun testJUnit5() {}
+          fun testJUnit5() {}
       }
     """.trimIndent(), """
       import org.junit.jupiter.api.Test
@@ -125,7 +125,7 @@ abstract class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTe
           fun testJUnit4() {}
       
           @org.junit.jupiter.api.Test
-          public fun testJUnit5() {}
+          fun testJUnit5() {}
       }
     """.trimIndent(), "Migrate to JUnit 5")
   }
