@@ -66,6 +66,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
     coroutineScope.launch(Dispatchers.EDT) {
       writeAction {
+        model.syncSdks()
         model.setupInstallableSdk(JavaSdkImpl.getInstance(), downloadTask) { sdk ->
           ProjectJdkTable.getInstance().addJdk(sdk)
           setSdk(sdk)
