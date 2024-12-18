@@ -378,11 +378,6 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
     return if (overriddenElementsToDescriptor.isEmpty()) listOf(declaration) else overriddenElementsToDescriptor.keys.toList()
 }
 
-fun KtNamedDeclaration.isCompanionMemberOf(klass: KtClassOrObject): Boolean {
-    val containingObject = containingClassOrObject as? KtObjectDeclaration ?: return false
-    return containingObject.isCompanion() && containingObject.containingClassOrObject == klass
-}
-
 internal fun KtDeclaration.resolveToExpectedDescriptorIfPossible(): DeclarationDescriptor {
     val descriptor = unsafeResolveToDescriptor()
     return descriptor.liftToExpected() ?: descriptor

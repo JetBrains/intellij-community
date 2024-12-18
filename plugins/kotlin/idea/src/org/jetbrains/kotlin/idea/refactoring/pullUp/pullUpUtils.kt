@@ -25,25 +25,6 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
-fun KtProperty.mustBeAbstractInInterface() =
-    hasInitializer() || hasDelegate() || (!hasInitializer() && !hasDelegate() && accessors.isEmpty())
-
-fun KtNamedDeclaration.isAbstractInInterface(originalClass: KtClassOrObject) =
-    originalClass is KtClass && originalClass.isInterface() && isAbstract()
-
-fun KtNamedDeclaration.canMoveMemberToJavaClass(targetClass: PsiClass): Boolean {
-    return when (this) {
-        is KtProperty, is KtParameter -> {
-            if (targetClass.isInterface) return false
-            if (hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD)) return false
-            if (this is KtProperty && (accessors.isNotEmpty() || delegateExpression != null)) return false
-            true
-        }
-        is KtNamedFunction -> valueParameters.all { it.defaultValue == null }
-        else -> false
-    }
-}
-
 fun addMemberToTarget(targetMember: KtNamedDeclaration, targetClass: KtClassOrObject): KtNamedDeclaration {
     if (targetClass is KtClass && targetClass.isInterface()) {
         targetMember.removeModifier(KtTokens.FINAL_KEYWORD)
@@ -175,14 +156,4 @@ fun addSuperTypeEntry(
     val renderedType = IdeDescriptorRenderers.SOURCE_CODE.renderType(typeInTargetClass)
     val newSpecifier = KtPsiFactory(targetClass.project).createSuperTypeEntry(renderedType)
     targetClass.addSuperTypeListEntry(newSpecifier).addToShorteningWaitSet()
-}
-
-fun getInterfaceContainmentVerifier(getMemberInfos: () -> List<KotlinMemberInfo>): (KtNamedDeclaration) -> Boolean = result@{ member ->
-    val psiMethodToCheck = lightElementForMemberInfo(member) as? PsiMethod ?: return@result false
-    getMemberInfos().any {
-        if (!it.isSuperClass || it.overrides != false) return@any false
-
-        val psiSuperInterface = (it.member as? KtClass)?.toLightClass()
-        psiSuperInterface?.findMethodBySignature(psiMethodToCheck, true) != null
-    }
 }

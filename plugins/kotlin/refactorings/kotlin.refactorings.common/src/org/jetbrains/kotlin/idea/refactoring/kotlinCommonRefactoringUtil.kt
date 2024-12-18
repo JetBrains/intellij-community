@@ -87,6 +87,11 @@ fun KtDeclaration.isAbstract(): Boolean = when {
     else -> false
 }
 
+fun KtNamedDeclaration.isCompanionMemberOf(klass: KtClassOrObject): Boolean {
+    val containingObject = containingClassOrObject as? KtObjectDeclaration ?: return false
+    return containingObject.isCompanion() && containingObject.containingClassOrObject == klass
+}
+
 fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
     if (lambdaArguments.isNotEmpty()) return null
     return valueArguments.lastOrNull()?.getArgumentExpression()?.unpackFunctionLiteral()

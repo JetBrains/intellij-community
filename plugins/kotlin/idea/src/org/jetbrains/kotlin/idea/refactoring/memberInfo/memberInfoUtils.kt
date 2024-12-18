@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? = null): ClassDescriptor? {
@@ -31,15 +29,16 @@ fun PsiNamedElement.getClassDescriptorIfAny(resolutionFacade: ResolutionFacade? 
 }
 
 // Applies to JetClassOrObject and PsiClass
+@JvmName("qualifiedClassNameForRendering") // to preserve binary compatibility with external usages
+@Deprecated(
+    "Use 'qualifiedClassNameForRendering' instead",
+    ReplaceWith(
+        "this.qualifiedClassNameForRendering()", 
+        "org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering"
+    )
+)
 @NlsSafe
-fun PsiNamedElement.qualifiedClassNameForRendering(): String {
-    val fqName = when (this) {
-        is KtClassOrObject -> fqName?.asString()
-        is PsiClass -> qualifiedName
-        else -> throw AssertionError("Not a class: ${getElementTextWithContext()}")
-    }
-    return fqName ?: name ?: KotlinBundle.message("text.anonymous")
-}
+fun PsiNamedElement.qualifiedClassNameForRenderingOld(): String = qualifiedClassNameForRendering()
 
 fun KotlinMemberInfo.getChildrenToAnalyze(): List<PsiElement> {
     val member = member

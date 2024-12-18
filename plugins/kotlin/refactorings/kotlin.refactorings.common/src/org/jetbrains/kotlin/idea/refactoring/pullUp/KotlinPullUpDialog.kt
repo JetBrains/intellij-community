@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.project.Project
@@ -11,6 +10,7 @@ import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.memberPullUp.PullUpDialogBase
 import com.intellij.refactoring.memberPullUp.PullUpProcessor
 import com.intellij.refactoring.util.DocCommentPolicy
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
@@ -22,22 +22,23 @@ import org.jetbrains.kotlin.psi.*
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
 
+@ApiStatus.Internal
 class KotlinPullUpDialog(
-    project: Project,
-    classOrObject: KtClassOrObject,
-    superClasses: List<PsiNamedElement>,
-    memberInfoStorage: AbstractKotlinMemberInfoStorage,
+  project: Project,
+  classOrObject: KtClassOrObject,
+  superClasses: List<PsiNamedElement>,
+  memberInfoStorage: AbstractKotlinMemberInfoStorage,
 ) : PullUpDialogBase<AbstractKotlinMemberInfoStorage, KotlinMemberInfo, KtNamedDeclaration, PsiNamedElement>(
-    project, classOrObject, superClasses, memberInfoStorage, PULL_MEMBERS_UP
+    project, classOrObject, superClasses, memberInfoStorage, RefactoringBundle.message("pull.members.up.title")
 ) {
     init {
         init()
     }
 
     private inner class MemberInfoModelImpl(
-        originalClass: KtClassOrObject,
-        superClass: PsiNamedElement?,
-        interfaceContainmentVerifier: (KtNamedDeclaration) -> Boolean
+      originalClass: KtClassOrObject,
+      superClass: PsiNamedElement?,
+      interfaceContainmentVerifier: (KtNamedDeclaration) -> Boolean
     ) : KotlinUsesAndInterfacesDependencyMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(
         originalClass,
         superClass,
@@ -132,7 +133,7 @@ class KotlinPullUpDialog(
     override fun createMemberInfoModel(): MemberInfoModel<KtNamedDeclaration, KotlinMemberInfo> =
         MemberInfoModelImpl(sourceClass, preselection, getInterfaceContainmentVerifier { selectedMemberInfos })
 
-    override fun initClassCombo(classCombo: JComboBox<*>) {
+  override fun initClassCombo(classCombo: JComboBox<*>) {
         @Suppress("UNCHECKED_CAST") 
         val castedClassCombo = classCombo as JComboBox<PsiNamedElement>
         
@@ -151,7 +152,7 @@ class KotlinPullUpDialog(
     override fun getPreselection() = mySuperClasses.firstOrNull { !it.isInterfaceClass() } ?: mySuperClasses.firstOrNull()
 
     override fun createMemberSelectionTable(infos: MutableList<KotlinMemberInfo>) =
-        KotlinMemberSelectionTable(infos, null, RefactoringBundle.message("make.abstract"))
+      KotlinMemberSelectionTable(infos, null, RefactoringBundle.message("make.abstract"))
 
     override fun isOKActionEnabled() = selectedMemberInfos.size > 0
 
@@ -165,16 +166,16 @@ class KotlinPullUpDialog(
 
     companion object {
         fun createProcessor(
-            sourceClass: KtClassOrObject,
-            targetClass: PsiNamedElement,
-            memberInfos: List<KotlinMemberInfo>
+          sourceClass: KtClassOrObject,
+          targetClass: PsiNamedElement,
+          memberInfos: List<KotlinMemberInfo>
         ): PullUpProcessor {
             val targetPsiClass = targetClass as? PsiClass ?: (targetClass as KtClass).toLightClass()
             return PullUpProcessor(
                 sourceClass.toLightClass() ?: error("can't build lightClass for $sourceClass"),
                 targetPsiClass,
                 memberInfos.mapNotNull { it.toJavaMemberInfo() }.toTypedArray(),
-                DocCommentPolicy(KotlinCommonRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC)
+                DocCommentPolicy(KotlinCommonRefactoringSettings.Companion.getInstance().PULL_UP_MEMBERS_JAVADOC)
             )
         }
     }

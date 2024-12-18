@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.classMembers.MemberInfoBase
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class KotlinMemberInfo @JvmOverloads constructor(
@@ -72,4 +74,15 @@ fun MemberInfo.toKotlinMemberInfo(): KotlinMemberInfo? {
     return KotlinMemberInfo(declaration, declaration is KtClass && overrides != null).apply {
         this.isToAbstract = this@toKotlinMemberInfo.isToAbstract
     }
+}
+
+// Applies to KtClassOrObject and PsiClass
+@NlsSafe
+fun PsiNamedElement.qualifiedClassNameForRendering(): String {
+    val fqName = when (this) {
+        is KtClassOrObject -> fqName?.asString()
+        is PsiClass -> qualifiedName
+        else -> throw AssertionError("Not a class: ${getElementTextWithContext()}")
+    }
+    return fqName ?: name ?: KotlinBundle.message("text.anonymous")
 }
