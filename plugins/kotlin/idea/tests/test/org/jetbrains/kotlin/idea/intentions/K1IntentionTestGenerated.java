@@ -15206,6 +15206,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveMemberToTopLevel/abstractProperty.kt");
         }
 
+        @TestMetadata("avoidNameCapture.kt")
+        public void testAvoidNameCapture() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/avoidNameCapture.kt");
+        }
+
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/function.kt");
@@ -15254,6 +15259,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("redeclarationPropertyConflictK2.kt")
         public void testRedeclarationPropertyConflictK2() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflictK2.kt");
+        }
+
+        @TestMetadata("restrictedInstanceName.kt")
+        public void testRestrictedInstanceName() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/restrictedInstanceName.kt");
         }
 
         @TestMetadata("script.kts")
@@ -15527,6 +15537,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveToCompanion/abstractProperty.kt");
         }
 
+        @TestMetadata("avoidNameCapture.kt")
+        public void testAvoidNameCapture() throws Exception {
+            runTest("testData/intentions/moveToCompanion/avoidNameCapture.kt");
+        }
+
         @TestMetadata("doNotQualifyThisLabel.kt")
         public void testDoNotQualifyThisLabel() throws Exception {
             runTest("testData/intentions/moveToCompanion/doNotQualifyThisLabel.kt");
@@ -15650,6 +15665,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("redeclarationConflictK2.kt")
         public void testRedeclarationConflictK2() throws Exception {
             runTest("testData/intentions/moveToCompanion/redeclarationConflictK2.kt");
+        }
+
+        @TestMetadata("restrictedInstanceName.kt")
+        public void testRestrictedInstanceName() throws Exception {
+            runTest("testData/intentions/moveToCompanion/restrictedInstanceName.kt");
         }
 
         @TestMetadata("topLevelFunction.kt")

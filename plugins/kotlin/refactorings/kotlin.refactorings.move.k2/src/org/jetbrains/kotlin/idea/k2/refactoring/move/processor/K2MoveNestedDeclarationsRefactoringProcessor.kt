@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInsta
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.types.Variance
 
 class K2MoveNestedDeclarationsRefactoringProcessor(
@@ -55,8 +56,9 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
     }
 
     init {
-      require(operationDescriptor.sourceElements.size == 1) { "We can only move a single nested declaration at a time" }
+        require(operationDescriptor.sourceElements.size == 1) { "We can only move a single nested declaration at a time" }
     }
+
     private val elementToMove = operationDescriptor.sourceElements.single()
 
     private fun willLoseOuterInstanceReference(): Boolean {
@@ -130,7 +132,7 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
     ) {
         val outerInstanceParameterName = operationDescriptor.outerInstanceParameterName ?: return
         val psiFactory = KtPsiFactory(project)
-        val newOuterInstanceRef = psiFactory.createExpression(outerInstanceParameterName)
+        val newOuterInstanceRef = psiFactory.createExpression(quoteNameIfNeeded(outerInstanceParameterName))
         val declarationToMove = moveSource.elements.singleOrNull() as? KtNamedDeclaration
 
         for (usage in usages) {
@@ -155,9 +157,25 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                 }
 
                 is OuterInstanceReferenceUsageInfo.ImplicitReceiver -> {
-                    usage.callElement.let { it.replace(psiFactory.createExpressionByPattern("$0.$1", outerInstanceParameterName, it)) }
+                    usage.callElement.let {
+                        it.replace(
+                            psiFactory.createExpressionByPattern(
+                                "$0.$1",
+                                quoteNameIfNeeded(outerInstanceParameterName),
+                                it
+                            )
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    private fun quoteNameIfNeeded(name: String): String {
+        return if (name.isIdentifier()) {
+            name
+        } else {
+            "`$name`"
         }
     }
 
@@ -186,7 +204,8 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                                 renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
                                 position = Variance.INVARIANT
                             ) ?: return
-                            val parameter = KtPsiFactory(project).createParameter("private val $outerInstanceParameterName: $type")
+                            val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)
+                            val parameter = KtPsiFactory(project).createParameter("private val $possiblyQuotedName: $type")
                             createPrimaryConstructorParameterListIfAbsent().addParameter(parameter)
                         }
                     }
@@ -199,9 +218,10 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                             type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
                         }
                         if (outerInstanceType == null) return
+                        val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)
                         valueParameterList?.addParameterBefore(
                             psiFactory.createParameter(
-                                "${outerInstanceParameterName}: $outerInstanceType"
+                                "${possiblyQuotedName}: $outerInstanceType"
                             ),
                             valueParameterList?.parameters?.firstOrNull()
                         )
