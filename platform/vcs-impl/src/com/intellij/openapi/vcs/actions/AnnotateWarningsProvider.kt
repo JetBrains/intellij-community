@@ -30,7 +30,7 @@ internal class AnnotateWarningsProvider : EditorNotificationProvider, DumbAware 
     }
   }
 
-  private class NotificationPanel(
+  private inner class NotificationPanel(
     private val project: Project,
     private val editor: Editor,
     warning: AnnotationWarning,
@@ -55,7 +55,7 @@ internal class AnnotateWarningsProvider : EditorNotificationProvider, DumbAware 
 
     private fun hideNotification() {
       editor.putUserData(AnnotateDataKeys.WARNING_DATA, null)
-      EditorNotifications.getInstance(project).updateNotifications(editor.virtualFile)
+      EditorNotifications.getInstance(project).updateNotifications(this@AnnotateWarningsProvider)
     }
   }
 }

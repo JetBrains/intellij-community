@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -139,13 +141,13 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     AnnotationWarning warning = warningsService != null ? warningsService.getWarning(fileAnnotation, upToDateLineNumbers) : null;
     if (warning == null) {
       resetWarningData(editor);
-      EditorNotifications.getInstance(project).updateNotifications(editor.getVirtualFile());
+      updateEditorNotifications(editor, project);
     }
     else {
       editor.putUserData(AnnotateDataKeys.WARNING_DATA, new AnnotationWarningUserData(warning, () -> {
         doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, null);
       }));
-      EditorNotifications.getInstance(project).updateNotifications(editor.getVirtualFile());
+      updateEditorNotifications(editor, project);
       if (!warning.getShowAnnotation()) {
         return;
       }
@@ -262,6 +264,13 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     }
 
     InlineDiffFromAnnotation.showDiffOnHover(editor, fileAnnotation, presentation, disposable);
+  }
+
+  private static void updateEditorNotifications(@NotNull Editor editor, @NotNull Project project) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    if (file != null) {
+      EditorNotifications.getInstance(project).updateNotifications(file);
+    }
   }
 
   @NotNull
