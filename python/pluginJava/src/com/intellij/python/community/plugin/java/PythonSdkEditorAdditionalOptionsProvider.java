@@ -15,7 +15,6 @@ import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -26,9 +25,8 @@ public final class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdd
     super(PythonSdkType.getInstance());
   }
 
-  @Nullable
   @Override
-  public AdditionalDataConfigurable createOptions(@NotNull Project project, @NotNull Sdk sdk) {
+  public @NotNull AdditionalDataConfigurable createOptions(@NotNull Project project, @NotNull Sdk sdk) {
     return new PythonSdkOptionsAdditionalDataConfigurable(project);
   }
 
