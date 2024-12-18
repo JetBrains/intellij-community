@@ -71,7 +71,7 @@ public final class DefaultIdeaErrorLogger {
       var kind = getOOMErrorKind(event.getThrowable());
       if (kind != null) {
         ourOomOccurred = true;
-        LowMemoryNotifier.showNotification(kind, true, true);
+        LowMemoryNotifier.showNotification(kind, true);
       }
       else if (!ourOomOccurred) {
         MessagePool.getInstance().addIdeFatalMessage(event);
