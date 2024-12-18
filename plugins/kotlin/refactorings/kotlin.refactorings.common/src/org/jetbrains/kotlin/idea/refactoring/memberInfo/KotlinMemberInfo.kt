@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -37,13 +38,6 @@ class KotlinMemberInfo @JvmOverloads constructor(
             }
             overrides = KotlinMemberInfoSupport.getInstance().getOverrides(member)
         }
-    }
-
-    private fun PsiNamedElement.isInterfaceClass(): Boolean = when (this) {
-        is KtClass -> isInterface()
-        is PsiClass -> isInterface
-        is KtPsiClassWrapper -> psiClass.isInterface
-        else -> false
     }
 }
 
