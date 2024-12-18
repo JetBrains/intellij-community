@@ -27,6 +27,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
+import static com.intellij.openapi.util.io.FileUtil.exists;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -133,14 +135,28 @@ public final class BuildOperations {
     return dropped;
   }
 
+
+  /**
+   * Cleans the output files corresponding to changed source files across multiple build targets.
+   * Tracks and removes outdated or modified output files, manages mappings between sources and outputs,
+   * and prunes empty directories if necessary.
+   *
+   * @param context the compilation context that provides data about the current build, such as the
+   *                state of the project, output file mappings, and logging capabilities.
+   * @param dirtyFilesHolder a container that holds information about files that have been modified
+   *                         or deleted since the last build, organized by their associated build targets.
+   * @return a map where the keys are build targets, and the values are maps between specific source files
+   *         and their cleaned output file lists. The map indicates which outputs have been removed or retained for
+   *         each changed source.
+   */
   public static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
-  Map<T, Set<File>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
+  Map<T, Map<File, List<String>>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
-      final Map<T, Set<File>> cleanedSources = new HashMap<>();
+      final Map<T, Map<File, List<String>>> sourcesToCleanedOutputByTargets = new HashMap<>();
 
       Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
-      final Collection<String> deletedPaths = new ArrayList<>();
+      final Collection<String> allDeletedOutputPaths = new ArrayList<>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
         private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<>(); // cache the mapping locally
@@ -163,6 +179,7 @@ public final class BuildOperations {
           }
 
           Collection<String> outputs = srcToOut.getOutputs(file.getPath());
+          List<String> failedToDeleteOutputs = new ArrayList<>();
           if (outputs == null) {
             return true;
           }
@@ -170,35 +187,39 @@ public final class BuildOperations {
           boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
           List<String> deletedForThisSource = new ArrayList<>(outputs.size());
           for (String output : outputs) {
-            deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
+            boolean deletedSuccessfully = deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
+            if (!deletedSuccessfully && exists(output)) {
+              failedToDeleteOutputs.add(output);
+            }
           }
 
-          deletedPaths.addAll(deletedForThisSource);
+          allDeletedOutputPaths.addAll(deletedForThisSource);
           dataManager.getOutputToTargetMapping().removeMappings(deletedForThisSource, targetId, srcToOut);
-          Set<File> cleaned = cleanedSources.get(target);
+          Map<File, List<String>> cleaned = sourcesToCleanedOutputByTargets.get(target);
           if (cleaned == null) {
-            cleaned = FileCollectionFactory.createCanonicalFileSet();
-            cleanedSources.put(target, cleaned);
+            cleaned = new HashMap<>();
+            sourcesToCleanedOutputByTargets.put(target, cleaned);
           }
-          cleaned.add(file);
+
+          cleaned.put(file, failedToDeleteOutputs);
           return true;
         }
       });
 
-      if (!deletedPaths.isEmpty()) {
+      if (!allDeletedOutputPaths.isEmpty()) {
         if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
           final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
           if (logger.isEnabled()) {
-            logger.logDeletedFiles(deletedPaths);
+            logger.logDeletedFiles(allDeletedOutputPaths);
           }
         }
 
-        context.processMessage(new FileDeletedEvent(deletedPaths));
+        context.processMessage(new FileDeletedEvent(allDeletedOutputPaths));
       }
       // attempting to delete potentially empty directories
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
 
-      return cleanedSources;
+      return sourcesToCleanedOutputByTargets;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
