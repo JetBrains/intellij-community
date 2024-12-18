@@ -8,17 +8,13 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
+import org.jetbrains.kotlin.idea.refactoring.resolveDirectSupertypes
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.OverloadChecker
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 
 class KotlinMemberInfoStorage(
     classOrObject: KtClassOrObject,
@@ -43,10 +39,7 @@ class KotlinMemberInfoStorage(
     }
 
     override fun buildSubClassesMap(aClass: PsiNamedElement) {
-        val classDescriptor = aClass.getClassDescriptorIfAny() ?: return
-        val classType = classDescriptor.defaultType
-        for (supertype in classType.immediateSupertypes()) {
-            val superClass = supertype.constructor.declarationDescriptor?.source?.getPsi()
+        for (superClass in aClass.resolveDirectSupertypes()) {
             if (superClass is KtClass || superClass is PsiClass) {
                 getSubclasses(superClass as PsiNamedElement).add(aClass)
                 buildSubClassesMap(superClass)
@@ -91,14 +84,9 @@ fun extractClassMembers(
     val result = ArrayList<KotlinMemberInfo>()
 
     if (collectSuperTypeEntries) {
-        aClass.superTypeListEntries
-            .asSequence()
-            .filterIsInstance<KtSuperTypeEntry>()
-            .mapNotNull {
-                val typeReference = it.typeReference ?: return@mapNotNull null
-                val type = typeReference.analyze(BodyResolveMode.PARTIAL)[BindingContext.TYPE, typeReference]
-                val classDescriptor = type?.constructor?.declarationDescriptor as? ClassDescriptor
-                when (val classPsi = classDescriptor?.source?.getPsi()) {
+        aClass.resolveDirectSupertypes()
+            .mapNotNull { classPsi ->
+                when (classPsi) {
                     is KtClass -> classPsi
                     is PsiClass -> KtPsiClassWrapper(classPsi)
                     else -> null

@@ -12,20 +12,17 @@ import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.refactoring.AbstractPullPushMembersHandler
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
+import org.jetbrains.kotlin.idea.refactoring.resolveAllSupertypes
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 class KotlinPullUpHandler : AbstractPullPushMembersHandler(
     refactoringName = PULL_MEMBERS_UP,
@@ -64,14 +61,9 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
             return
         }
 
-        val classDescriptor = classOrObject.unsafeResolveToDescriptor() as ClassDescriptor
-        val superClasses = classDescriptor.defaultType
-            .supertypes()
-            .mapNotNull {
-                val descriptor = it.constructor.declarationDescriptor
-                val declaration = descriptor?.let { classifierDescriptor ->
-                    DescriptorToSourceUtilsIde.getAnyDeclaration(project, classifierDescriptor)
-                }
+        val superClasses = classOrObject
+            .resolveAllSupertypes()
+            .mapNotNull { declaration ->
                 if ((declaration is KtClass || declaration is PsiClass)
                     && declaration.canRefactor()
                 ) declaration as PsiNamedElement else null
