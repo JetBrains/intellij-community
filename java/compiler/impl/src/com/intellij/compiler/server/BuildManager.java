@@ -81,6 +81,7 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -1373,7 +1374,7 @@ public final class BuildManager implements Disposable {
 
     BuildCommandLineBuilder cmdLine;
     WslPath wslPath;
-    if (canUseEel()) {
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
       wslPath = null;
       EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
