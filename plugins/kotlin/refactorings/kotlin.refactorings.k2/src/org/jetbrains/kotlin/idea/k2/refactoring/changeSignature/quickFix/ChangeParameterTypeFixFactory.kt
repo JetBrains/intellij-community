@@ -81,34 +81,35 @@ object ChangeParameterTypeFixFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createTypeMismatchFixesForDefinitelyNonNullable(psi: PsiElement, targetType: KaType): List<KotlinQuickFixAction<*>> {
+        if (targetType !is KaDefinitelyNotNullType) return emptyList()
+
         val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
 
         val isPrimaryConstructorParameter: Boolean
-        val functionName: String
 
-        if (targetType !is KaDefinitelyNotNullType) return emptyList()
         val referencedSymbol = valueArgument.argumentExpression?.mainReference?.resolveToSymbol()
         val parameter = referencedSymbol?.psi as? KtParameter ?: return emptyList()
+        val functionSymbol: KaFunctionSymbol
 
         when (referencedSymbol) {
             is KaPropertySymbol -> { // Might be a constructor parameter
                 val probableConstructorParameterPsi = referencedSymbol.psi as? KtParameter
                 val matchingValueParameterSymbol = probableConstructorParameterPsi?.symbol
-                val probableConstructor = matchingValueParameterSymbol?.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
-                isPrimaryConstructorParameter = probableConstructor is KaConstructorSymbol && probableConstructor.isPrimary
-                functionName = getDeclarationName(probableConstructor) ?: return emptyList()
+                functionSymbol = matchingValueParameterSymbol?.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
+                isPrimaryConstructorParameter = functionSymbol is KaConstructorSymbol && functionSymbol.isPrimary
             }
 
             is KaValueParameterSymbol -> {
+                functionSymbol = referencedSymbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
                 isPrimaryConstructorParameter = false
-                val functionSymbol = referencedSymbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
-                functionName = getDeclarationName(functionSymbol) ?: return emptyList()
             }
 
             else -> {
                 return emptyList()
             }
         }
+        val functionName = getDeclarationName(functionSymbol) ?: return emptyList()
+
         val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
         val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
         val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
