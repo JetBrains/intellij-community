@@ -11,6 +11,8 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.psi.search.GlobalSearchScope
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -37,7 +39,12 @@ abstract class KaLibraryModuleBase<E : WorkspaceEntityWithSymbolicId, EID : Symb
     // libraries have no dependencies
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
     override val directFriendDependencies: List<KaModule> get() = emptyList()
-    override val directRegularDependencies: List<KaModule> get() = emptyList()
+
+    @OptIn(KaImplementationDetail::class)
+    override val directRegularDependencies: List<KaModule>
+        // should be empty, mitigation of KT-74010
+        get() = listOf(KaBuiltinsModuleImpl(targetPlatform, project))
+
     override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
 
 }

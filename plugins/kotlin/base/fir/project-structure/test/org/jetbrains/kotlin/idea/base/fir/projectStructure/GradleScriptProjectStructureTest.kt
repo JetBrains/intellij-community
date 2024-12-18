@@ -6,6 +6,7 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KOTLIN_FIXTURE
@@ -62,5 +63,7 @@ class GradleScriptProjectStructureTest : AbstractGradleCodeInsightTest() {
         val files = testDataFiles.map { getFile(it.path).getPsiFile(project) }
         val modules = files.map { it.getKaModule(project, useSiteModule = null) }
         return modules.computeDependenciesClosure()
+            // should not be here empty, mitigation of KT-74010
+            .filter { it !is KaBuiltinsModule }
     }
 }

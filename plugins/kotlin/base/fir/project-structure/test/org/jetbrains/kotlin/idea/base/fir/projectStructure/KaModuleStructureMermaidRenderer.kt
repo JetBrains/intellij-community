@@ -53,7 +53,10 @@ object KaModuleStructureMermaidRenderer {
                 }
 
                 val dependencies = buildList {
-                    regularDependencies.map { (from, to) -> "${from.nodeId()} --> ${to.nodeId()}" }.sorted()
+                    regularDependencies
+                        /* mitigation of KT-74010 */
+                        .filter { (_, to) -> to !is KaBuiltinsModule }
+                        .map { (from, to) -> "${from.nodeId()} --> ${to.nodeId()}" }.sorted()
                         .mapTo(this) { it to DependencyKind.Regular }
                     friendDependencies.map { (from, to) -> "${from.nodeId()} --friend--> ${to.nodeId()}" }.sorted()
                         .mapTo(this) { it to DependencyKind.Friend }

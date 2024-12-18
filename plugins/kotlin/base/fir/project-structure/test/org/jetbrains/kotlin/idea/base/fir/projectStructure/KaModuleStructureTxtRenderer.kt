@@ -71,7 +71,7 @@ object KaModuleStructureTxtRenderer {
                 }
             }
         }
-        renderDependenciesByType("regularDependencies", module.directRegularDependencies)
+        renderDependenciesByType("regularDependencies", module.directRegularDependencies.filter { it !is KaBuiltinsModule /* mitigation of KT-74010 */  })
         renderDependenciesByType("friendDependencies", module.directFriendDependencies)
         renderDependenciesByType("dependsOnDependencies", module.directDependsOnDependencies)
     }
