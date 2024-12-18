@@ -60,11 +60,7 @@ suspend fun <T> causal(value: T): Causal<T> {
 
 suspend fun LocalDbTimestamp.await() {
   require(transactor() == kernelId) { "waiting on different kernel ${transactor()} than mine $kernelId" }
-  if (db().timestamp < timestamp) {
-    DbContext.threadBound.set(coroutineContext.dbSource.flow.first { db ->
-      db.timestamp >= timestamp
-    })
-  }
+  waitForDbSourceToCatchUpWithTimestamp(timestamp)
 }
 
 /**

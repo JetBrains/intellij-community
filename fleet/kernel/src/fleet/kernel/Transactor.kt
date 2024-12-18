@@ -82,19 +82,34 @@ interface Transactor : CoroutineContext.Element {
   }
 }
 
+internal suspend fun waitForDbSourceToCatchUpWithTimestamp(timestamp: Long) {
+  if (db().timestamp < timestamp) {
+    DbContext.threadBound.set(currentCoroutineContext().dbSource.flow.first { db ->
+      db.timestamp >= timestamp
+    })
+  }
+}
+
 /**
  * "Synchronous" version of [Transactor.changeAsync] carried out in [saga]
  * resulting [Change.dbAfter] will be bound to [coroutineContext] after the function returns
  * @return the result of [f]
  * */
 suspend fun <T> change(f: ChangeScope.() -> T): T {
-  val context = currentCoroutineContext()
-  val kernel = context.transactor
-  val interceptor = context[ChangeInterceptor] ?: ChangeInterceptor.Identity
+  val currentCoroutineContext = currentCoroutineContext()
+  val kernel = currentCoroutineContext.transactor
+  val interceptor = currentCoroutineContext[ChangeInterceptor] ?: ChangeInterceptor.Identity
   var res: T? = null
-  interceptor.change({ res = f() }) { changeFn ->
+  var timestamp = -1L
+  interceptor.change(
+    {
+      res = f()
+      timestamp = currentTimestamp()
+    }
+  ) { changeFn ->
     kernel.changeSuspend(changeFn)
   }
+  waitForDbSourceToCatchUpWithTimestamp(timestamp + 1)
   return res as T
 }
 
@@ -511,9 +526,12 @@ private data class DbTimestamp(override val eid: EID) : Entity {
   }
 }
 
+internal fun currentTimestamp(): Long = 
+  DbTimestamp.single()[DbTimestamp.Timestamp]
+
 val Q.timestamp: Long
   get() = asOf(this) {
-    DbTimestamp.single()[DbTimestamp.Timestamp]
+    currentTimestamp()
   }
 
 private fun checkDuration(
