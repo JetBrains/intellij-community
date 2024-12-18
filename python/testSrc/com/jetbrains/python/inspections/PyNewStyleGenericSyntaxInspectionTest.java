@@ -156,25 +156,53 @@ public class PyNewStyleGenericSyntaxInspectionTest extends PyInspectionTestCase 
   }
 
   // PY-75759
-  public void testTypeVarDefaultOutOfScopeReported() {
+  public void testTypeVarDefaultsOutOfScopeReported() {
     runWithLanguageLevel(LanguageLevel.PYTHON312,
                          () -> doTestByText("""
                           from typing import Callable, Concatenate
                           
                           class A[K]:
-                              def m[T = dict[int, <error descr="Default type of type parameter 'T' refers to a type variable that is out of scope">K</error>]](self):
+                              def m[T = dict[int, <warning descr="Type variable 'K' is out of scope">K</warning>]](self):
                                   pass
                           
                               def outer[T](self):
-                                  def inner[X = <error descr="Default type of type parameter 'X' refers to a type variable that is out of scope">T</error>]():
+                                  def inner[X = <warning descr="Type variable 'T' is out of scope">T</warning>]():
                                       pass
                           
                           class B[**P]:
-                              def apply[T = Callable[Concatenate[int, <error descr="Default type of type parameter 'T' refers to a type variable that is out of scope">P</error>], int]](self):
+                              def apply[T = Callable[Concatenate[int, <warning descr="Type variable 'P' is out of scope">P</warning>], int]](self):
                                   pass
                           
                           class C[T]:
-                              class D[V = <error descr="Default type of type parameter 'V' refers to a type variable that is out of scope">T</error>]: ...
+                              class D[V = <warning descr="Type variable 'T' is out of scope">T</warning>]: ...
+                          """));
+  }
+
+  // PY-75759
+  public void testTypeVarDefaultsOutOfScopeReportedForReferencesToOldStyleTypeVars() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doTestByText("""
+                          from typing import TypeVar, Generic
+                          
+                          T1 = TypeVar('T1')
+                          T2 = TypeVar('T2')
+                          T3 = TypeVar('T3', default=T1 | T2)
+                          
+                          class Clazz1[R = <warning descr="Type variable 'T1' is out of scope">T1</warning> | <warning descr="Type variable 'T2' is out of scope">T2</warning>]: ...
+                          """));
+  }
+
+  // PY-75759
+  public void testTypeVarDefaultOutOfScopeReportedForParamSpecs() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doTestByText("""
+                          from typing import TypeVar, ParamSpec
+                          T1 = TypeVar("T1")
+                          P1 = ParamSpec("P1")
+                          
+                          class Clazz1[**P = [<warning descr="Type variable 'T1' is out of scope">T1</warning>]]: ...
+                          class Clazz2[**P = <warning descr="Type variable 'P1' is out of scope">P1</warning>]: ...
+                          class Clazz3[**P = [int, list[<warning descr="Type variable 'T1' is out of scope">T1</warning>]]]: ...
                           """));
   }
 

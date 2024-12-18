@@ -436,7 +436,6 @@ class PyTypeHintsInspection : PyInspection() {
       }
 
       checkIsCorrectTypeExpression(defaultExpression)
-      checkDefaultIsInScope(defaultExpression, typeParameter)
     }
 
     private fun checkIsCorrectTypeExpression(expression: PyExpression) {
@@ -449,7 +448,6 @@ class PyTypeHintsInspection : PyInspection() {
       if ((typeParameter != null && defaultExpression is PyStarExpression) || defaultExpression is PySubscriptionExpression) {
        val type = Ref.deref(PyTypingTypeProvider.getType(defaultExpression, myTypeEvalContext))
         if (type is PyUnpackedTupleType || type is PyTypeVarTupleType) {
-          checkDefaultIsInScope(defaultExpression, typeParameter)
           return
         }
       }
@@ -461,7 +459,6 @@ class PyTypeHintsInspection : PyInspection() {
       if (defaultExpression is PyListLiteralExpression) {
         defaultExpression.elements.forEach {
           checkIsCorrectTypeExpression(it)
-          checkDefaultIsInScope(it, typeParameter)
         }
         return
       }
@@ -470,22 +467,9 @@ class PyTypeHintsInspection : PyInspection() {
         if (defaultType !is PyParamSpecType) {
           registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.of.param.spec.must.be.param.spec.or.list.of.types"))
         }
-        checkDefaultIsInScope(defaultExpression, typeParameter)
         return
       }
       registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.of.param.spec.must.be.param.spec.or.list.of.types"))
-    }
-
-    private fun checkDefaultIsInScope(expression: PyExpression?, parent: PsiElement?) {
-      if (parent is PyTypeParameter && expression != null) {
-        val defaultOutOfScope =
-          PyTypeChecker.collectGenerics(Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext)), myTypeEvalContext)
-          .allTypeParameters
-          .any { typeParam -> typeParam.declarationElement !is PyTypeParameter }
-        if (defaultOutOfScope) {
-          registerProblem(expression, PyPsiBundle.message("INSP.type.hints.default.type.is.out.of.scope", parent.name))
-        }
-      }
     }
 
     private fun checkNameIsTheSameAsTarget(argument: PyExpression?, target: PyExpression?,
@@ -928,7 +912,7 @@ class PyTypeHintsInspection : PyInspection() {
 
                   if (defaultOutOfScope != null) {
                     registerProblem(it,
-                                    PyPsiBundle.message("INSP.type.hints.default.type.refers.to.type.var.out.of.scope", defaultOutOfScope.name))
+                                    PyPsiBundle.message("INSP.type.hints.default.type.refers.to.type.var.out.of.scope"))
                   }
                 }
                 else if (lastIsDefault) {
