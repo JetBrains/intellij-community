@@ -38,7 +38,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.mixedmode.MonoXDebugSessionMixedModeExtension;
 import com.intellij.xdebugger.impl.mixedmode.XDebugSessionMixedModeExtension;
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeSuspendContext;
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess;
@@ -337,9 +336,8 @@ public final class XDebugSessionImpl implements XDebugSession {
                      @NotNull XDebugProcess mixedModeLowLevelProcess,
                      @Nullable RunContentDescriptor contentToReuse) {
     myMixedModeLowLevelDebugProcess = mixedModeLowLevelProcess;
-    myMixedModeExtension =
-      /*TODO[merge blocker]: move to rider cpp plugin*/
-      new MonoXDebugSessionMixedModeExtension(this.myCoroutineScope, (XMixedModeHighLevelDebugProcess)process, (XMixedModeLowLevelDebugProcess)mixedModeLowLevelProcess);
+    myMixedModeExtension = new XDebugSessionMixedModeExtension(this.myCoroutineScope, (XMixedModeHighLevelDebugProcess)process,
+                                          (XMixedModeLowLevelDebugProcess)mixedModeLowLevelProcess);
       // add low level console since it more likely includes more information (since the low level process has started earlier)
     init(process, contentToReuse, mixedModeLowLevelProcess.createConsole());
   }

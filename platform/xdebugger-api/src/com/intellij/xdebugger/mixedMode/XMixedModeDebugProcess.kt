@@ -2,10 +2,12 @@
 package com.intellij.xdebugger.mixedMode
 
 import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 
 interface XMixedModeDebugProcess {
   fun getStoppedThreadId(context : XSuspendContext) : Long
+  fun belongsToMe(frame: XStackFrame): Boolean
 }
 
 val XMixedModeDebugProcess.asXDebugProcess: XDebugProcess

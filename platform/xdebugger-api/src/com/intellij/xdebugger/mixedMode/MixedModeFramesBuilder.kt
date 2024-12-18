@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.mixedMode
 
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 
 interface MixedModeFramesBuilder {
@@ -9,9 +10,10 @@ interface MixedModeFramesBuilder {
   * On exception only low level threads will be shown
    * frameToSelectIndex == null, means we agree to select the highest frame by default
    */
-  data class MixedBuiltStackResult(val lowLevelToHighLevelFrameMap: Map<XStackFrame, XStackFrame?>, val frameToSelect: XStackFrame?)
+  data class MixedBuiltStackResult(val lowLevelToHighLevelFrameMap: Map<XStackFrame, XStackFrame?>, val highestHighLevelFrame: XStackFrame?)
   suspend fun buildMixedStack(
     session: XDebugSession,
+    lowExecutionStack: XExecutionStack,
     lowLevelFrames: List<XStackFrame>,
     highLevelFrames: List<XStackFrame>,
   ): MixedBuiltStackResult

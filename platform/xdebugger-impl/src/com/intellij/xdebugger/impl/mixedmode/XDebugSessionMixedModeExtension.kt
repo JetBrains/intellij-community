@@ -2,12 +2,13 @@
 package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.*
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.asXDebugProcess
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.*
-import com.intellij.xdebugger.impl.XDebugSessionImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
@@ -15,17 +16,13 @@ import java.util.concurrent.CompletableFuture
 
 private val logger = logger<XDebugSessionMixedModeExtension>()
 
-abstract class XDebugSessionMixedModeExtension(
+class XDebugSessionMixedModeExtension(
   private val coroutineScope: CoroutineScope,
   private val high: XMixedModeHighLevelDebugProcess,
   private val low: XMixedModeLowLevelDebugProcess,
 ) {
   private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
   private val session = (high.asXDebugProcess.session as XDebugSessionImpl)
-
-
-  abstract fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean
-  abstract fun isLowStackFrame(stackFrame: XStackFrame): Boolean
 
   fun pause() {
     coroutineScope.launch {
@@ -56,7 +53,8 @@ abstract class XDebugSessionMixedModeExtension(
   fun stepInto(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
     val stepSuspendContext = getSuspendContextFromStackFrame(suspendContext, stepStackFrame)
 
-    if (isLowSuspendContext(stepSuspendContext)) {
+    val isLowLevelStep = low.belongsToMe(stepStackFrame)
+    if (isLowLevelStep) {
       stateMachine.set(LowLevelStepRequested(stepSuspendContext, StepType.Into))
     }
     else {
@@ -74,9 +72,10 @@ abstract class XDebugSessionMixedModeExtension(
 
   fun stepOver(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
     val stepSuspendContext = getSuspendContextFromStackFrame(suspendContext, stepStackFrame)
+    val isLowLevelStep = low.belongsToMe(stepStackFrame)
 
     val stepType = StepType.Over
-    val newState = if (isLowSuspendContext(stepSuspendContext)) LowLevelStepRequested(stepSuspendContext, stepType) else HighLevelDebuggerStepRequested(stepSuspendContext, stepType)
+    val newState = if (isLowLevelStep) LowLevelStepRequested(stepSuspendContext, stepType) else HighLevelDebuggerStepRequested(stepSuspendContext, stepType)
     this.stateMachine.set(newState)
   }
 
@@ -85,9 +84,10 @@ abstract class XDebugSessionMixedModeExtension(
     //  (we got in suspend_current method when step from native call wrapper, as I understand this happens because the wrappers' nop instructions
     //  are replaced by a trampin going to suspend_current method
     val stepSuspendContext = getSuspendContextFromStackFrame(suspendContext, stepStackFrame)
+    val isLowLevelStep = low.belongsToMe(stepStackFrame)
 
     val stepType = StepType.Out
-    val newState = if (isLowSuspendContext(stepSuspendContext)) LowLevelStepRequested(stepSuspendContext, stepType) else HighLevelDebuggerStepRequested(stepSuspendContext, stepType)
+    val newState = if (isLowLevelStep) LowLevelStepRequested(stepSuspendContext, stepType) else HighLevelDebuggerStepRequested(stepSuspendContext, stepType)
     this.stateMachine.set(newState)
   }
 
@@ -107,23 +107,11 @@ abstract class XDebugSessionMixedModeExtension(
   fun isMixedModeHighProcessReady(): Boolean = stateMachine.isMixedModeHighProcessReady()
 
   private fun getSuspendContextFromStackFrame(suspendContext: XMixedModeSuspendContext, stackFrame: XStackFrame): XSuspendContext {
-    if (isLowStackFrame(stackFrame)) {
+    if (low.belongsToMe(stackFrame)) {
       return suspendContext.lowLevelDebugSuspendContext
     }
     else {
       return suspendContext.highLevelDebugSuspendContext
     }
-  }
-}
-
-
-class MonoXDebugSessionMixedModeExtension(coroutineScope: CoroutineScope, high: XMixedModeHighLevelDebugProcess, low: XMixedModeLowLevelDebugProcess)
-  : XDebugSessionMixedModeExtension(coroutineScope, high, low) {
-  override fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean {
-    return suspendContext.javaClass.name.contains("Cidr")
-  }
-
-  override fun isLowStackFrame(stackFrame: XStackFrame): Boolean {
-    return stackFrame.javaClass.name.contains("Cidr")
   }
 }

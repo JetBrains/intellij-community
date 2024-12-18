@@ -75,7 +75,7 @@ class XMixedModeExecutionStack(
 
         val mixFramesResult = logger.runCatching {
           measureTimedValue {
-            framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames)
+            framesMatcher.buildMixedStack(session, lowLevelExecutionStack, lowLevelFrames, highLevelFrames)
           }.also { logger.info("Mixed stack built in ${it.duration}") }.value
         }
 
@@ -89,7 +89,7 @@ class XMixedModeExecutionStack(
           container as XStackFrameContainerEx
 
           val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
-          container.addStackFrames(combinedFrames, builtResult.frameToSelect, true)
+          container.addStackFrames(combinedFrames, builtResult.highestHighLevelFrame, true)
           computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
         }
       }
