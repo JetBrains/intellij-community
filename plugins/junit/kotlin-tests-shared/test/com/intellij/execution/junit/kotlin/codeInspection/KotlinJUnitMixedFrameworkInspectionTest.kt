@@ -145,15 +145,15 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
   fun `test junit 5 test case with junit 4 quickfix`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
-      public class MyTest {
+      class MyTest {
         @org.junit.Test
-        public fun test<caret>Foo() { }
+        fun test<caret>Foo() { }
         
         @org.junit.jupiter.api.Test
-        public fun testBar() { }
+        fun testBar() { }
         
         @org.junit.jupiter.api.Test
-        public fun testFooBar() { }
+        fun testFooBar() { }
       }
     """.trimIndent(), """
       import org.junit.jupiter.api.Test
@@ -163,10 +163,10 @@ abstract class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInsp
         fun testFoo() { }
         
         @org.junit.jupiter.api.Test
-        public fun testBar() { }
+        fun testBar() { }
         
         @org.junit.jupiter.api.Test
-        public fun testFooBar() { }
+        fun testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }
