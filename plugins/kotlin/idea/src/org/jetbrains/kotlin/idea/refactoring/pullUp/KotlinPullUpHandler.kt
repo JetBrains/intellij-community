@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -10,7 +11,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -32,8 +33,8 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
     wrongPositionMessage = RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from")
 ) {
     companion object {
-        @NonNls
-        const val PULL_UP_TEST_HELPER_KEY = "PULL_UP_TEST_HELPER_KEY"
+        @TestOnly
+        val PULL_UP_TEST_HELPER_KEY: DataKey<TestHelper> = DataKey.create("PULL_UP_TEST_HELPER_KEY")
     }
 
     interface TestHelper {
@@ -91,7 +92,7 @@ class KotlinPullUpHandler : AbstractPullPushMembersHandler(
         val members = memberInfoStorage.getClassMemberInfos(classOrObject)
 
         if (isUnitTestMode()) {
-            val helper = dataContext?.getData(PULL_UP_TEST_HELPER_KEY) as TestHelper
+            val helper = requireNotNull(dataContext?.getData(PULL_UP_TEST_HELPER_KEY))
             val selectedMembers = helper.adjustMembers(members)
             val targetClass = helper.chooseSuperClass(superClasses)
             checkPullUpConflicts(project, classOrObject, targetClass, selectedMembers) {

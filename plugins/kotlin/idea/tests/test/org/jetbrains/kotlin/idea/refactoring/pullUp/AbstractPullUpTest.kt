@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
@@ -37,9 +38,8 @@ abstract class AbstractPullUpTest : AbstractMemberPullPushTest() {
                     return superClasses.first()
                 }
             }
-            KotlinPullUpHandler().invoke(project, editor, file) {
-                if (it == KotlinPullUpHandler.PULL_UP_TEST_HELPER_KEY) helper else null
-            }
+            val dataContext = SimpleDataContext.getSimpleContext(KotlinPullUpHandler.PULL_UP_TEST_HELPER_KEY, helper)
+            KotlinPullUpHandler().invoke(project, editor, file, dataContext) 
         }
     }
 
