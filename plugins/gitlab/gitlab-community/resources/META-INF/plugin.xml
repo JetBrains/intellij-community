@@ -41,7 +41,7 @@
   <incompatible-with>com.intellij.modules.ultimate</incompatible-with>
 
   <content>
-    <module name="intellij.vcs.gitlab" loading="required"/>
+    <module name="intellij.vcs.gitlab" loading="embedded"/>
     <module name="intellij.vcs.gitlab.yaml"/>
   </content>
 
