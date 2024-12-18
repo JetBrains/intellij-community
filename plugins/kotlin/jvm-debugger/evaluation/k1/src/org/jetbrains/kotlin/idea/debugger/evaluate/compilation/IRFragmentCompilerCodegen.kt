@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.backend.jvm.FacadeClassSourceShimForFragmentCompilat
 import org.jetbrains.kotlin.backend.jvm.JvmGeneratorExtensionsImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
-import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -41,7 +40,7 @@ internal class IRFragmentCompilerCodegen {
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
         parameterInfo: K1CodeFragmentParameterInfo
-    ): CodegenFactory {
+    ): JvmIrCodegenFactory {
         val mangler = JvmDescriptorMangler(MainFunctionDetector(bindingContext, compilerConfiguration.languageVersionSettings))
         val evaluatorFragmentInfo = EvaluatorFragmentInfo(
             classDescriptor,

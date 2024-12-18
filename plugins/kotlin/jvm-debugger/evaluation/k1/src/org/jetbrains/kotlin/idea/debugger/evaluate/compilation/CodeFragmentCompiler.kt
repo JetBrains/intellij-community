@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.doNotClearBindingContext
@@ -89,7 +88,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         )
 
         try {
-            KotlinCodegenFacade.compileCorrectFiles(filesToCompile, generationState, bindingContext, codegenFactory)
+            codegenFactory.convertAndGenerate(filesToCompile, generationState, bindingContext)
             return fragmentCompilerBackend.extractResult(parameterInfo, generationState)
         } catch (e: ProcessCanceledException) {
             throw e
