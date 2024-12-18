@@ -13,7 +13,7 @@ import kotlinx.serialization.builtins.serializer
 @Serializable(with = InstanceIdSerializer::class)
 data class InstanceId(val id: String)
 
-private class InstanceIdSerializer : DataSerializer<InstanceId, String>(String.serializer()) {
+internal class InstanceIdSerializer : DataSerializer<InstanceId, String>(String.serializer()) {
   override fun fromData(data: String): InstanceId = InstanceId(data)
   override fun toData(value: InstanceId): String = value.id
 }
