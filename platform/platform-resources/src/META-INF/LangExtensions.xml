@@ -1716,6 +1716,7 @@
                         serviceImplementation="com.intellij.util.indexing.diagnostic.StubInconsistencyReporterImpl"/>
 
     <advancedSetting id="floating.codeToolbar.hide" default="false" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="floating.codeToolbar.show.without.selection" default="true" groupKey="group.advanced.settings.editor"/>
 
     <actionOnSaveInfoProvider id="FormatOnSaveInfoProvider"
                               implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveInfoProvider"

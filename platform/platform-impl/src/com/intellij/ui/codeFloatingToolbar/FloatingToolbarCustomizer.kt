@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
@@ -42,7 +43,7 @@ internal fun findActionGroupFor(language: Language): String? {
         return null
       }
 
-      return FLOATING_CODE_TOOLBAR_GROUP_ID
+      return bean.actionGroup ?: FLOATING_CODE_TOOLBAR_GROUP_ID
     }
 
     DEPRECATED_EP.allForLanguage(lang)
@@ -60,6 +61,15 @@ internal fun hasMinimalFloatingToolbar(language: Language): Boolean {
   }
 
   return false
+}
+
+internal fun isSelectionRequiredForFloatingToolbar(language: Language): Boolean {
+  if (!AdvancedSettings.getBoolean("floating.codeToolbar.show.without.selection")) return true
+
+  for (lang in LanguageUtil.getBaseLanguages(language)) {
+    forLanguage(lang)?.let { return it.selectionRequired }
+  }
+  return true
 }
 
 @ApiStatus.Experimental
@@ -81,6 +91,12 @@ internal class FloatingToolbarLanguageBean : PluginAware {
 
   @Attribute("minimal")
   var isMinimal: Boolean = false
+
+  @Attribute("selectionRequired")
+  var selectionRequired: Boolean = true
+
+  @Attribute("actionGroup")
+  var actionGroup: String? = null
 
   @Attribute("customizationClass")
   var customizationClass: String? = null

@@ -256,14 +256,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @RequiresEdt
   private void showPopup(boolean mouseClick) {
-    if (mouseClick && myLightBulbPanel.isShowing()) {
-      showPopup(findPositionForBulbButton(), IntentionSource.LIGHT_BULB);
-      return;
-    }
     CodeFloatingToolbar.temporarilyDisable(false);
     CodeFloatingToolbar toolbar = getFloatingToolbar();
     if (toolbar != null && toolbar.canBeShownAtCurrentSelection()) {
       showPopupFromToolbar(toolbar);
+      return;
+    }
+    if (mouseClick && myLightBulbPanel.isShowing()) {
+      showPopup(findPositionForBulbButton(), IntentionSource.LIGHT_BULB);
       return;
     }
     showPopup(null, IntentionSource.CONTEXT_ACTIONS);
@@ -290,7 +290,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private @Nullable CodeFloatingToolbar getFloatingToolbar() {
-    if (!myEditor.getSelectionModel().hasSelection()) return null;
     return CodeFloatingToolbar.getToolbar(myEditor);
   }
 
@@ -577,7 +576,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       add(myIconLabel, BorderLayout.CENTER);
       setBorder(LightBulbUtil.createInactiveBorder(editor));
       CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
-      if (floatingToolbar != null && floatingToolbar.canBeShownAtCurrentSelection()) {
+      if (floatingToolbar != null && editor.getSelectionModel().hasSelection() && floatingToolbar.canBeShownAtCurrentSelection()) {
         setVisible(false);
       }
     }
