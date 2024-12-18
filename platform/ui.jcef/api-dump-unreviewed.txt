@@ -271,3 +271,19 @@ f:com.intellij.ui.jcef.JcefShortcutProvider
 - <init>():V
 - s:getActions():java.util.List
 - s:registerShortcuts(javax.swing.JComponent,com.intellij.ui.jcef.JBCefBrowser):V
+c:com.intellij.ui.jcef.utils.JBCefLocalRequestHandler
+- org.cef.handler.CefRequestHandlerAdapter
+- <init>(java.lang.String,java.lang.String):V
+- f:addResource(java.lang.String,kotlin.jvm.functions.Function0):V
+- f:createResource(java.lang.String,kotlin.jvm.functions.Function0):java.lang.String
+- getResourceRequestHandler(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.network.CefRequest,Z,Z,java.lang.String,org.cef.misc.BoolRef):org.cef.handler.CefResourceRequestHandler
+c:com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
+- com.intellij.openapi.Disposable
+- org.cef.handler.CefResourceHandler
+- <init>(java.io.InputStream,java.lang.String,com.intellij.openapi.Disposable,java.util.Map):V
+- b:<init>(java.io.InputStream,java.lang.String,com.intellij.openapi.Disposable,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- cancel():V
+- dispose():V
+- getResponseHeaders(org.cef.network.CefResponse,org.cef.misc.IntRef,org.cef.misc.StringRef):V
+- processRequest(org.cef.network.CefRequest,org.cef.callback.CefCallback):Z
+- readResponse(B[],I,org.cef.misc.IntRef,org.cef.callback.CefCallback):Z

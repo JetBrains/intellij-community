@@ -20,6 +20,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.ui.jcef.*
+import com.intellij.ui.jcef.utils.JBCefLocalRequestHandler
+import com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
 import com.intellij.util.IncorrectOperationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -180,32 +182,32 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   init {
     myDocument.addDocumentListener(this)
-    myRequestHandler = CefLocalRequestHandler(PROTOCOL, HOST_NAME)
+    myRequestHandler = JBCefLocalRequestHandler(PROTOCOL, HOST_NAME)
 
     myRequestHandler.addResource(VIEWER_PATH) {
       javaClass.getResourceAsStream("resources/image_viewer.html")?.let {
-        CefStreamResourceHandler(it, "text/html", this@JCefImageViewer)
+        JBCefStreamResourceHandler(it, "text/html", this@JCefImageViewer)
       }
     }
 
     myRequestHandler.addResource(OVERLAY_SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceCSS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceCSS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(OVERLAY_SCROLLBARS_JS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceJS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceJS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(GRID_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(buildGridStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(buildGridStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(IMAGE_PATH) {
@@ -218,11 +220,11 @@ class JCefImageViewer(private val myFile: VirtualFile,
         Logger.getInstance(JCefImageViewer::class.java).warn("Failed to read the file", e)
       }
 
-      var resourceHandler: CefStreamResourceHandler? = null
+      var resourceHandler: JBCefStreamResourceHandler? = null
       stream?.let {
         try {
-          resourceHandler = CefStreamResourceHandler(it, mimeType, this@JCefImageViewer,
-                                                     mapOf("Content-Security-Policy" to "script-src 'none'"))
+          resourceHandler = JBCefStreamResourceHandler(it, mimeType, this@JCefImageViewer,
+                                                       mapOf("Content-Security-Policy" to "script-src 'none'"))
         }
         catch (_: IncorrectOperationException) { // The viewer has been disposed just return null that will reject all requests
         }
