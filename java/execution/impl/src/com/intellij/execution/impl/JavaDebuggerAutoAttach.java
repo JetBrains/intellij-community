@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,6 @@ public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
 
   @Override
   public boolean isApplicableFor(@NotNull RunConfigurationBase<?> configuration) {
-    return true;
+    return EelPathUtils.isProjectLocal(configuration.getProject());
   }
 }
