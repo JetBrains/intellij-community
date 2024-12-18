@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil
@@ -12,22 +12,19 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope
 import com.intellij.testFramework.CompilerTester
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.TestFileSystemBuilder
+import java.io.File
 import java.io.IOException
-import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.exists
-import kotlin.io.path.notExists
-import kotlin.io.path.readText
 
-@Suppress("DuplicatedCode")
-abstract class MavenCompilingNioTestCase : MavenMultiVersionImportingTestCase() {
-
+@Deprecated("Use 'MavenCompilingTestCase' instead")
+abstract class MavenCompilingTestCaseLegacy : MavenMultiVersionImportingTestCaseLegacy() {
   protected suspend fun compileModules(vararg moduleNames: String) {
     // blockingContextScope here because we want to propagate cancellation to invokeAndWait
     blockingContextScope {
@@ -107,18 +104,15 @@ abstract class MavenCompilingNioTestCase : MavenMultiVersionImportingTestCase() 
   }
 
   protected fun assertDirectory(relativePath: String, fileSystemBuilder: TestFileSystemBuilder) {
-    val directory = projectPom.parent.toNioPath().resolve(relativePath)
-    fileSystemBuilder.build().assertDirectoryEqual(directory.toFile())
+    fileSystemBuilder.build().assertDirectoryEqual(File(projectPom.parent.path, relativePath))
   }
 
   protected fun assertJar(relativePath: String, fileSystemBuilder: TestFileSystemBuilder) {
-    val jar = projectPom.parent.toNioPath().resolve(relativePath)
-    fileSystemBuilder.build().assertFileEqual(jar.toFile())
+    fileSystemBuilder.build().assertFileEqual(File(projectPom.parent.path, relativePath))
   }
 
   protected fun assertCopied(path: String) {
-    val parent = projectPom.parent.toNioPath()
-    assertTrue(parent.resolve(path).exists())
+    assertTrue(File(projectPom.parent.path, path).exists())
   }
 
   protected fun assertExists(path: String) {
@@ -129,22 +123,15 @@ abstract class MavenCompilingNioTestCase : MavenMultiVersionImportingTestCase() 
     assertNotCopied(path)
   }
 
-  protected fun assertExists(path: Path) {
-    assertTrue("File should exist $path", path.exists());
-  }
-
   @Throws(IOException::class)
   protected fun assertCopied(path: String, content: String?) {
-    val parent = projectPom.parent.toNioPath()
-    val file = parent.resolve(path)
+    val file = File(projectPom.parent.path, path)
     assertTrue(file.exists())
-    assertEquals(content, file.readText())
+    assertEquals(content, FileUtil.loadFile(file))
   }
 
   protected fun assertNotCopied(path: String) {
-    val parent = projectPom.parent.toNioPath()
-    val file = parent.resolve(path)
-    assertTrue(file.notExists())
+    assertFalse(File(projectPom.parent.path, path).exists())
   }
 
   @Throws(IOException::class)
@@ -154,10 +141,9 @@ abstract class MavenCompilingNioTestCase : MavenMultiVersionImportingTestCase() 
 
   @Throws(IOException::class)
   protected fun loadResult(pomFile: VirtualFile, relativePath: String): String {
-    val parent = pomFile.parent.toNioPath()
-    val file = parent.resolve(relativePath)
+    val file = File(pomFile.parent.path, relativePath)
     assertTrue("file not found: $relativePath", file.exists())
-    return file.readText()
+    return String(FileUtil.loadFileText(file))
   }
 
   protected fun extractJdkVersion(module: Module, fallbackToInternal: Boolean): String? {
