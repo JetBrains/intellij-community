@@ -24,7 +24,7 @@ internal fun sendRequestToCompileModules(moduleNames: List<String>): Boolean {
 
   try {
     val host = "http://localhost:$idePort"
-    println("Sending build request to $host:$idePort...")
+    println("Sending build request to $host...")
     val startTime = System.currentTimeMillis()
     val url = URL("$host/devkit/build?project-hash=$projectHash")
     val connection = url.openConnection() as HttpURLConnection
