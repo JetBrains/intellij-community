@@ -161,7 +161,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val entityId = taskInfo.eid
 
     launch {
-      taskSuspender?.state?.collect { state ->
+      taskSuspender?.state?.collectLatest { state ->
         LOG.trace { "Task suspender state changed to $state, entityId=$entityId, title=$title" }
         when (state) {
           TaskSuspenderState.Active -> TaskManager.resumeTask(taskInfo, TaskStatus.Source.SYSTEM)
