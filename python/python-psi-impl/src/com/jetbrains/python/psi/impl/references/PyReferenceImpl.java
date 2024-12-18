@@ -655,8 +655,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = new ArrayList<>();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
+    final PyQualifiedExpression element = CompletionUtilCoreImpl.getOriginalOrSelf(myElement);
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
     final LanguageLevel languageLevel = LanguageLevel.forElement(myElement);
@@ -666,18 +665,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           return false;
         }
 
-        final String name = e instanceof PyElement ? ((PyElement)e).getName() : null;
+        final String name = e instanceof PyElement pyElement ? pyElement.getName() : null;
         if (PyUtil.getInitialUnderscores(name) == 1) {
           return false;
         }
 
-        if (languageLevel.isPython2() && PyNames.PRINT.equals(name)) {
-          final PyFile file = PyUtil.as(myElement.getContainingFile(), PyFile.class);
-          if (file != null && !file.hasImportFromFuture(FutureFeature.PRINT_FUNCTION)) {
-            return false;
-          }
+        if (languageLevel.isPython2() && PyNames.PRINT.equals(name) &&
+            myElement.getContainingFile() instanceof PyFile pyFile && !pyFile.hasImportFromFuture(FutureFeature.PRINT_FUNCTION)) {
+          return false;
         }
-      } else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
+      }
+      else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
         return PyDefUseUtil.isDefinedBefore(e, element);
       }
       return true;
