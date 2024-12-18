@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.resolveDirectSupertypes
 import org.jetbrains.kotlin.psi.*
 
+@ApiStatus.Internal
 class KotlinMemberInfoStorage(
     classOrObject: KtClassOrObject,
     filter: (KtNamedDeclaration) -> Boolean = { true }
@@ -37,6 +38,7 @@ class KotlinMemberInfoStorage(
     }
 }
 
+@ApiStatus.Internal
 fun extractClassMembers(
     aClass: KtClassOrObject,
     collectSuperTypeEntries: Boolean = true,
