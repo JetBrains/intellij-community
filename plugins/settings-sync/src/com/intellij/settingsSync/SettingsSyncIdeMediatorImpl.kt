@@ -2,17 +2,16 @@ package com.intellij.settingsSync
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.ui.NewUiValue
 import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.io.write
 import org.jetbrains.annotations.VisibleForTesting
@@ -77,19 +76,21 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       SettingsSyncPluginManager.getInstance().pushChangesToIde(snapshot.plugins)
     }
 
-    // 3. after that update the rest of changed settings
-    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
-    writeStatesToAppConfig(regularFileStates)
+    if (!AppMode.isRemoteDevHost()) {
+      // 3. after that update the rest of changed settings
+      val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
+      writeStatesToAppConfig(regularFileStates)
 
-    // 4. apply changes from custom providers
-    for ((id, state) in snapshot.settingsFromProviders) {
-      val provider = findProviderById(id, state)
-      if (provider != null) {
-        LOG.debug("Applying settings for provider '$id'")
-        provider.applyNewSettings(state)
-      }
-      else {
-        LOG.warn("Couldn't find provider for id '$id' and state '${state.javaClass}'")
+      // 4. apply changes from custom providers
+      for ((id, state) in snapshot.settingsFromProviders) {
+        val provider = findProviderById(id, state)
+        if (provider != null) {
+          LOG.debug("Applying settings for provider '$id'")
+          provider.applyNewSettings(state)
+        }
+        else {
+          LOG.warn("Couldn't find provider for id '$id' and state '${state.javaClass}'")
+        }
       }
     }
     notifyRestartNeeded()
