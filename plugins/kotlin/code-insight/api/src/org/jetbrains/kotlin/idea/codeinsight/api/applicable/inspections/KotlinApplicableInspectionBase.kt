@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitor
 
-abstract class KotlinApplicableInspectionBase<E : KtElement, C> : LocalInspectionTool(),
+abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalInspectionTool(),
                                                                   ApplicableRangesProvider<E>,
                                                                   ContextProvider<E, C> {
 
@@ -64,7 +64,7 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C> : LocalInspectio
         session: LocalInspectionToolSession,
     ): PsiElementVisitor = super.buildVisitor(holder, isOnTheFly, session)
 
-    abstract class Simple<E : KtElement, C> : KotlinApplicableInspectionBase<E, C>() {
+    abstract class Simple<E : KtElement, C : Any> : KotlinApplicableInspectionBase<E, C>() {
 
         protected abstract fun getProblemDescription(
             element: E,
