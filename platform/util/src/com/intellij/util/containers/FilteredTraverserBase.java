@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.WeakHashMap;
 import java.util.*;
+import java.util.WeakHashMap;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -105,6 +105,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   /**
    * Restricts the nodes that can have children by the specified condition.
    * Subsequent calls will AND all the conditions.
+   * <p>
+   * If the condition is false, the node children will not be traversed over.
+   * Use {@link #expandAndFilter(Condition)} to skip the non-matching nodes themselves as well.
    */
   public final @NotNull Self expand(@NotNull Condition<? super T> c) {
     return newInstance(myMeta.expand(c));
