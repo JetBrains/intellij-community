@@ -74,7 +74,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       PlatformUtils.PHP_PREFIX -> RuntimeModuleId.module("intellij.phpstorm.frontend.split")
       PlatformUtils.WEB_PREFIX -> RuntimeModuleId.module("intellij.webstorm.frontend.split")
       PlatformUtils.RUBY_PREFIX -> RuntimeModuleId.module("intellij.rubymine.frontend.split")
-      PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.module("intellij.rustrover.frontend")
+      PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.module("intellij.rustrover.frontend.split")
       else -> RuntimeModuleId.module("intellij.platform.frontend.split")
     }
 
