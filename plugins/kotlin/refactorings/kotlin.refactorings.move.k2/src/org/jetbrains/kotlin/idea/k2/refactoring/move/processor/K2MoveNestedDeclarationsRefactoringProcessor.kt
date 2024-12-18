@@ -42,30 +42,14 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
         return super.getUsages(moveDescriptor) + findInternalUsages(moveDescriptor.source)
     }
 
-    private enum class MoveType {
-        CLASS, PROPERTY, FUNCTION, UNKNOWN
-    }
-
-    private val moveType: MoveType by lazy {
-        when (operationDescriptor.sourceElements.singleOrNull()) {
-            is KtClass -> MoveType.CLASS
-            is KtProperty -> MoveType.PROPERTY
-            is KtNamedFunction -> MoveType.FUNCTION
-            else -> MoveType.UNKNOWN
-        }
-    }
-
-    init {
-        require(operationDescriptor.sourceElements.size == 1) { "We can only move a single nested declaration at a time" }
-    }
-
-    private val elementToMove = operationDescriptor.sourceElements.single()
-
-    private fun willLoseOuterInstanceReference(): Boolean {
+    private fun PsiElement.willLoseOuterInstanceReference(): Boolean {
+        if (this !is KtDeclaration) return false
+        val containingClassOrObject = containingClassOrObject ?: return false
         // For properties, any outer instance reference is a conflict because we do not process them.
-        val canReferenceOuterInstance = moveType != MoveType.PROPERTY && operationDescriptor.outerInstanceParameterName != null
+        val canReferenceOuterInstance = (this is KtFunction || this is KtClass) &&
+                operationDescriptor.outerInstanceParameterName != null
         // For anything else, it is a conflict if it is contained in a class rather than an object
-        return !canReferenceOuterInstance && elementToMove.containingClassOrObject !is KtObjectDeclaration
+        return !canReferenceOuterInstance && containingClassOrObject !is KtObjectDeclaration
     }
 
     override fun collectConflicts(
@@ -79,7 +63,8 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
 
             val isConflict = when (usage) {
                 is K2MoveRenameUsageInfo.Light -> {
-                    if (moveType != MoveType.CLASS && operationDescriptor.outerInstanceParameterName != null) {
+                    val referencedElement = usage.upToDateReferencedElement
+                    if (referencedElement !is KtClassOrObject && operationDescriptor.outerInstanceParameterName != null) {
                         // We only have the facility to correct outer class usages if the moved declaration is a nested class.
                         conflicts.putValue(
                             element,
@@ -103,12 +88,13 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                 }
 
                 is OuterInstanceReferenceUsageInfo -> {
-                    if (willLoseOuterInstanceReference()) {
+                    val upToDateMember = usage.upToDateMember
+                    if (upToDateMember != null && upToDateMember.willLoseOuterInstanceReference()) {
                         conflicts.putValue(
                             element,
                             KotlinBundle.message(
                                 "usages.of.outer.class.instance.inside.declaration.0.won.t.be.processed",
-                                elementToMove.nameAsSafeName.asString()
+                                upToDateMember.nameAsSafeName.asString()
                             )
                         )
                         true

@@ -276,7 +276,7 @@ private fun traverseOuterInstanceReferences(
                             symbol.isStrictAncestorOf(outerClassSymbol) -> true
                             else -> return null
                         }
-                        OuterInstanceReferenceUsageInfo.ExplicitThis(element, isIndirect)
+                        OuterInstanceReferenceUsageInfo.ExplicitThis(element, member, isIndirect)
                     }
 
                     is KtSimpleNameExpression -> {
@@ -307,7 +307,7 @@ private fun traverseOuterInstanceReferences(
                             element.parent as? KtCallExpression
                         } ?: return null
 
-                        OuterInstanceReferenceUsageInfo.ImplicitReceiver(callElement, isIndirect, isDoubleReceiver)
+                        OuterInstanceReferenceUsageInfo.ImplicitReceiver(callElement, member, isIndirect, isDoubleReceiver)
                     }
 
                     else -> null

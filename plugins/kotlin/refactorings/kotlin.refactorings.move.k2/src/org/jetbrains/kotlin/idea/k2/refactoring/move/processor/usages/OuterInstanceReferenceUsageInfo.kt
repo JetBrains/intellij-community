@@ -2,15 +2,26 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
-internal sealed class OuterInstanceReferenceUsageInfo(element: PsiElement, private val isIndirectOuter: Boolean) : UsageInfo(element) {
+internal sealed class OuterInstanceReferenceUsageInfo(
+    element: PsiElement,
+    member: KtNamedDeclaration,
+    private val isIndirectOuter: Boolean
+) : UsageInfo(element) {
+    private val memberPointer = member.createSmartPointer()
+
+    internal val upToDateMember: KtNamedDeclaration?
+        get() = memberPointer.element
+
     open fun reportConflictIfAny(conflicts: MultiMap<PsiElement, String>): Boolean {
         val element = element ?: return false
         if (isIndirectOuter) {
@@ -22,16 +33,18 @@ internal sealed class OuterInstanceReferenceUsageInfo(element: PsiElement, priva
 
     class ExplicitThis(
       expression: KtThisExpression,
+      member: KtNamedDeclaration,
       isIndirectOuter: Boolean
-    ) : OuterInstanceReferenceUsageInfo(expression, isIndirectOuter) {
+    ) : OuterInstanceReferenceUsageInfo(expression, member, isIndirectOuter) {
         val expression: KtThisExpression get() = element as KtThisExpression
     }
 
     class ImplicitReceiver(
       callElement: KtElement,
+      member: KtNamedDeclaration,
       isIndirectOuter: Boolean,
       private val isDoubleReceiver: Boolean
-    ) : OuterInstanceReferenceUsageInfo(callElement, isIndirectOuter) {
+    ) : OuterInstanceReferenceUsageInfo(callElement, member, isIndirectOuter) {
         val callElement: KtElement get() = element as KtElement
 
         override fun reportConflictIfAny(conflicts: MultiMap<PsiElement, String>): Boolean {
