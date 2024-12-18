@@ -74,7 +74,9 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
   private fun isPrivateName(name: String?) = PyUtil.getInitialUnderscores(name) == 1
 
   private fun isPrivateImport(element: PsiElement?, dunderAll: List<String>): Boolean {
-    return element is PyImportElement && element.asName == null && element.visibleName !in dunderAll
+    // See https://typing.readthedocs.io/en/latest/spec/distributing.html#import-conventions 
+    // and https://peps.python.org/pep-0484/#stub-files
+    return element is PyImportElement && element.asName != element.importedQName?.toString() && element.visibleName !in dunderAll
   }
 
   override fun prioritizeNameRedefinitions(definitions: MutableList<PsiNamedElement>, typeEvalContext: TypeEvalContext) {
