@@ -11,9 +11,9 @@ import com.intellij.platform.ide.progress.suspender.TaskSuspenderElement
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.application
 import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class TaskSuspenderTest : BasePlatformTestCase() {
 
@@ -338,7 +338,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
     return job
   }
 
-  private suspend fun letBackgroundThreadsSuspend(): Unit = delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+  private suspend fun letBackgroundThreadsSuspend(): Unit = delay(30.milliseconds)
 
   private suspend fun Job.waitAssertCompletedNormally() {
     join()
