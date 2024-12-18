@@ -1,0 +1,2 @@
+open class SecondCtorG { protected constructor<caret>() }
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">protected</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">SecondCtorG</span>()</pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://SecondCtorG"><code><span style="color:#000000;">SecondCtorG</span></code></a><br/></div>

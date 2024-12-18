@@ -425,6 +425,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     testGroup("fir/tests", category = CODE_INSIGHT) {
         testClass<AbstractFirQuickDocTest> {
             model("../../../idea/tests/testData/editor/quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""), isRecursive = false)
+            model("../../../idea/tests/testData/editor/quickDoc/misc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""), isRecursive = true, excludedDirectories = listOf("dependencies"))
         }
         testClass<AbstractFirQuickDocMultiplatformTest> {
             model("../../../idea/tests/testData/editor/quickDoc/multiplatform", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
