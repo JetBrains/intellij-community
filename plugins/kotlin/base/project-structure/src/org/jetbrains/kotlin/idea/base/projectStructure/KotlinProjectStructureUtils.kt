@@ -176,6 +176,7 @@ fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
     return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)
 }
 
+@K1ModeProjectStructureApi
 fun IdeaModuleInfo.supportsFeature(project: Project, feature: LanguageFeature): Boolean {
     return project.service<LanguageSettingsProvider>()
         .getLanguageVersionSettings(this, project)
