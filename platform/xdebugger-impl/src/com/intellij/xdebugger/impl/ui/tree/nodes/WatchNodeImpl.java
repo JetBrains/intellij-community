@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.Obsolescent;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
@@ -15,10 +16,13 @@ import com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch;
 import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   private final XWatch myWatch;
@@ -46,7 +50,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     this(tree, parent, new XAlwaysEvaluatedWatch(expression), null, null, value);
   }
 
-  XWatch getWatch() {
+  public XWatch getXWatch() {
     return myWatch;
   }
 
@@ -99,6 +103,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     private final XDebuggerTree myTree;
     private final XStackFrame myStackFrame;
     private volatile XValue myValue;
+    private final AtomicBoolean myEvaluateRequested = new AtomicBoolean(false);
 
     XWatchValue(XWatch watch, XDebuggerTree tree, XStackFrame stackFrame) {
       super(watch.getExpression().getExpression());
@@ -116,6 +121,11 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
 
     @Override
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      clearPausedLink(node);
+      if (myWatch.isPaused() && !myEvaluateRequested.getAndSet(false)) {
+        showPausedPresentation(node, place);
+        return;
+      }
       if (myStackFrame != null) {
         if (myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
           XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
@@ -130,6 +140,18 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
       }
 
       node.setPresentation(AllIcons.Debugger.Db_watch, EMPTY_PRESENTATION, false);
+    }
+
+    private void clearPausedLink(@NotNull XValueNode node) {
+      if (node instanceof XValueNodeImpl xValueNode
+          && xValueNode.getFullValueEvaluator() instanceof EvaluateLink) {
+        xValueNode.clearFullValueEvaluator();
+      }
+    }
+
+    private void showPausedPresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      node.setPresentation(AllIcons.Actions.Pause, PAUSED_PRESENTATION, false);
+      node.setFullValueEvaluator(new EvaluateLink(node, place));
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
@@ -240,5 +262,38 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     public XReferrersProvider getReferrersProvider() {
       return myValue != null ? myValue.getReferrersProvider() : null;
     }
+
+    private class EvaluateLink extends XFullValueEvaluator {
+      private final @NotNull XValueNode myNode;
+      private final @NotNull XValuePlace myPlace;
+
+      private EvaluateLink(@NotNull XValueNode node, @NotNull XValuePlace place) {
+        super(XDebuggerBundle.message("xdebugger.evaluate.paused.watch"));
+        myNode = node;
+        myPlace = place;
+        setShowValuePopup(false);
+      }
+
+      @Override
+      public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+        callback.evaluated("");
+        myEvaluateRequested.set(true);
+        computePresentation(myNode, myPlace);
+      }
+    }
   }
+
+  @ApiStatus.Internal
+  public static final XValuePresentation PAUSED_PRESENTATION = new XValuePresentation() {
+    @NotNull
+    @Override
+    public String getSeparator() {
+      return " ";
+    }
+
+    @Override
+    public void renderValue(@NotNull XValueTextRenderer renderer) {
+      renderer.renderComment(XDebuggerBundle.message("xdebugger.watch.is.paused.message"));
+    }
+  };
 }

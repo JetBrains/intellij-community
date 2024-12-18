@@ -165,7 +165,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return StreamEx.of(getWatchChildren())
       .select(WatchNodeImpl.class)
       .filter(node -> !(node instanceof ResultNode))
-      .map(WatchNodeImpl::getWatch)
+      .map(WatchNodeImpl::getXWatch)
       .toList();
   }
 

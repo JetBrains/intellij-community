@@ -26,6 +26,7 @@
       <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MoveLineDown"/>
       <action id="XDebugger.SeparateWatches" class="com.intellij.xdebugger.impl.frame.actions.XSeparateWatchesAndVariables"
               icon="AllIcons.Debugger.Watch"/>
+      <action id="XDebugger.PauseWatch" class="com.intellij.xdebugger.impl.frame.actions.XPauseWatchAction"/>
       <action id="XDebugger.ToggleEvaluateExpressionField" class="com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction"/>
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
@@ -152,6 +153,7 @@
       <reference ref="XDebugger.RemoveWatch"/>
       <reference ref="XDebugger.RemoveAllWatches"/>
       <reference ref="XDebugger.EditWatch"/>
+      <reference ref="XDebugger.PauseWatch"/>
       <separator/>
       <reference ref="XDebugger.ValueGroup"/>
     </group>
