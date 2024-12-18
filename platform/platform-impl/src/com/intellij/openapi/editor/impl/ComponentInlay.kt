@@ -24,6 +24,7 @@ import javax.swing.JComponent
 import javax.swing.JScrollPane
 import javax.swing.RepaintManager
 import javax.swing.SwingUtilities
+import javax.swing.event.ChangeListener
 import kotlin.math.max
 import kotlin.math.min
 
@@ -32,14 +33,24 @@ import kotlin.math.min
  */
 @Experimental
 internal object ComponentInlayManager {
-  fun <T : Component> add(editor: Editor,
-                          offset: Int,
-                          properties: InlayProperties,
-                          renderer: ComponentInlayRenderer<T>): Inlay<ComponentInlayRenderer<T>>? =
-    editor.inlayModel.addBlockElement(offset, properties, renderer)?.also {
+  fun <T : Component> add(
+    editor: Editor,
+    offset: Int,
+    properties: InlayProperties,
+    renderer: ComponentInlayRenderer<T>,
+  ): Inlay<ComponentInlayRenderer<T>>? {
+    val inlay = if (renderer.alignment == ComponentInlayAlignment.OVERLAY_RIGHT)
+      editor.inlayModel.addAfterLineEndElement(offset, properties, renderer)
+    else
+      editor.inlayModel.addBlockElement(offset, properties, renderer)
+
+    if (inlay != null) {
       @Suppress("UNCHECKED_CAST")
-      ComponentInlaysContainer.addInlay(it as Inlay<ComponentInlayRenderer<*>>)
+      ComponentInlaysContainer.addInlay(inlay as Inlay<ComponentInlayRenderer<*>>)
     }
+
+    return inlay
+  }
 }
 
 /**
@@ -112,8 +123,9 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
 
   init {
     editor.foldingModel.addListener(foldingListener, this)
+    editor.scrollPane.viewport.addChangeListener(ChangeListener { layoutOverlayInlays() })
   }
-
+  
   private fun remove(inlay: Inlay<ComponentInlayRenderer<*>>): Boolean {
     if (!inlays.remove(inlay))
       return false
@@ -247,8 +259,16 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
           component.isVisible = true
           val alignment = inlay.renderer.alignment
 
-          // x in inlay bounds contains left gap of content, which we do not need
-          componentBounds.x = if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) contentXInViewport else 0
+
+          componentBounds.x = when (alignment) {
+            // x in inlay bounds contains left gap of content, which we do not need
+            ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> contentXInViewport
+            ComponentInlayAlignment.OVERLAY_RIGHT -> calcXBoundForOverlay(componentBounds.width)
+            else -> 0
+          }
+
+          if (alignment == ComponentInlayAlignment.OVERLAY_RIGHT)
+            componentBounds.height = component.preferredSize.height
 
           if (alignment == ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH || alignment == ComponentInlayAlignment.FIT_CONTENT_WIDTH) {
             componentBounds.width = bounds.width
@@ -269,4 +289,24 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
   }
 
   override fun dispose() = Unit
+
+  private fun layoutOverlayInlays() {
+    for (inlay in inlays) {
+      if (inlay.renderer.alignment != ComponentInlayAlignment.OVERLAY_RIGHT)
+        continue
+
+      val componentBounds = inlay.bounds ?: continue
+      componentBounds.x = calcXBoundForOverlay(componentBounds.width)
+      inlay.renderer.component.bounds = componentBounds
+    }
+  }
+
+  private fun calcXBoundForOverlay(componentWidth: Int): Int {
+    val contentXInViewport = editor.scrollPane.viewport.viewPosition.x
+
+    val viewportWidth = editor.scrollPane.viewport.width
+    val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
+
+    return contentXInViewport + viewportWidth - componentWidth - scrollBarWidth
+  }
 }
