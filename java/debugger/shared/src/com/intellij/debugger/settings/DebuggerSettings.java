@@ -19,6 +19,7 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -232,7 +233,8 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     return null;
   }
 
-  List<CapturePoint> cloneCapturePoints() {
+  @ApiStatus.Internal
+  public List<CapturePoint> cloneCapturePoints() {
     try {
       ArrayList<CapturePoint> res = new ArrayList<>(myCapturePoints.size());
       for (CapturePoint point : myCapturePoints) {
