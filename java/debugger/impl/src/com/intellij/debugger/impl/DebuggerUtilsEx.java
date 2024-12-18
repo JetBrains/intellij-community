@@ -387,15 +387,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static StringReference mirrorOfString(@NotNull String s, @NotNull EvaluationContext context)
     throws EvaluateException {
-    SuspendContext suspendContext = context.getSuspendContext();
-    if (suspendContext instanceof SuspendContextImpl suspendContextImpl) {
-      return mirrorOfString(s, suspendContextImpl.getVirtualMachineProxy(), context);
-    }
-    else { // should never happen, just in case
-      LOG.error("Unexpected suspendContext type: " + suspendContext.getClass().getName());
-      //noinspection UsagesOfObsoleteApi
-      return ((VirtualMachineProxyImpl)context.getDebugProcess().getVirtualMachineProxy()).mirrorOf(s);
-    }
+    return mirrorOfString(s, ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachineProxy(), context);
   }
 
   /**
