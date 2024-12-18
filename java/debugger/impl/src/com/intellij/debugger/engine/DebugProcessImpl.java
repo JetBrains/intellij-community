@@ -72,6 +72,7 @@ import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -120,7 +121,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Deque<VirtualMachineData> myStashedVirtualMachines = new LinkedList<>();
 
   private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
-  protected final List<DebugProcessListener> myDebugProcessListeners = new CopyOnWriteArrayList<>(); // propagate exceptions from listeners
+  protected final DisposableWrapperList<DebugProcessListener> myDebugProcessListeners = new DisposableWrapperList<>(); // propagate exceptions from listeners
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -814,8 +815,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable) {
-    addDebugProcessListener(listener);
-    Disposer.register(parentDisposable, () -> removeDebugProcessListener(listener));
+    myDebugProcessListeners.add(listener, parentDisposable);
   }
 
   @Override
@@ -2567,7 +2567,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         semaphore.up();
         removeDebugProcessListener(this);
       }
-    });
+    }, disposable);
 
     getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
       @Override
