@@ -619,8 +619,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         setConnectorArgument("pid", pid);
       }
       else if (myConnection.isServerMode()) {
-        if (myArguments == null) {
+        if (port == null) {
           throw new CantRunException(JavaDebuggerBundle.message("error.no.debug.listen.port"));
+        }
+        String debuggerHostName = myConnection.getDebuggerHostName();
+        if (debuggerHostName != null) {
+          setConnectorArgument("localAddress", debuggerHostName);
         }
       }
       else { // is client mode, should attach to already running process
@@ -680,7 +684,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
     }
-    setConnectorArgument("localAddress", "*");
     setConnectorArgument("timeout", "0"); // wait forever
     try {
       String listeningAddress = connector.startListening(myArguments);
