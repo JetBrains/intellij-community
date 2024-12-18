@@ -20,57 +20,58 @@ abstract class AbstractCombinedSourceAndClassRootsScopeContainsTest : AbstractCo
         combinedScope: CombinedSourceAndClassRootsScope?,
     ) {
         val productionSourceFiles = getAllSourceFiles(includedTestModules, TestContentRootKind.PRODUCTION)
+        val testSourceFiles = getAllSourceFiles(includedTestModules, TestContentRootKind.TESTS)
+        val libraryFiles = getAllLibraryClassFiles(includedTestLibraries)
+
         val excludedProductionSourceFiles = getAllSourceFiles(excludedTestModules, TestContentRootKind.PRODUCTION)
+        val excludedTestSourceFiles = getAllSourceFiles(excludedTestModules, TestContentRootKind.TESTS)
+        val excludedLibraryFiles = getAllLibraryClassFiles(excludedTestLibraries)
+
+        val allIncludedFiles = productionSourceFiles + testSourceFiles + libraryFiles
+        val allExcludedFiles = excludedProductionSourceFiles + excludedTestSourceFiles + excludedLibraryFiles
+
+        val allFiles = allIncludedFiles + allExcludedFiles
 
         combinedProductionScope?.checkScopeContains(
             "combined production sources scope",
-            productionSourceFiles,
-            excludedProductionSourceFiles,
+            containedFiles = productionSourceFiles,
+            nonContainedFiles = allFiles - productionSourceFiles,
         )
-
-        val testSourceFiles = getAllSourceFiles(includedTestModules, TestContentRootKind.TESTS)
-        val excludedTestSourceFiles = getAllSourceFiles(excludedTestModules, TestContentRootKind.TESTS)
 
         combinedTestScope?.checkScopeContains(
             "combined test sources scope",
-            testSourceFiles,
-            excludedTestSourceFiles,
+            containedFiles = testSourceFiles,
+            nonContainedFiles = allFiles - testSourceFiles,
         )
-
-        val libraryFiles = getAllLibraryClassFiles(includedTestLibraries)
-        val excludedLibraryFiles = getAllLibraryClassFiles(excludedTestLibraries)
 
         combinedLibraryScope?.checkScopeContains(
             "combined library scope",
-            libraryFiles,
-            excludedLibraryFiles,
+            containedFiles = libraryFiles,
+            nonContainedFiles = allFiles - libraryFiles,
         )
-
-        val allFiles = productionSourceFiles + testSourceFiles + libraryFiles
-        val allExcludedFiles = excludedProductionSourceFiles + excludedTestSourceFiles + excludedLibraryFiles
 
         combinedScope?.checkScopeContains(
             "combined scope",
-            allFiles,
-            allExcludedFiles,
+            containedFiles = allIncludedFiles,
+            nonContainedFiles = allExcludedFiles,
         )
     }
 
     private fun CombinedSourceAndClassRootsScope.checkScopeContains(
         scopeName: String,
-        includedFiles: List<VirtualFile>,
-        excludedFiles: List<VirtualFile>,
+        containedFiles: List<VirtualFile>,
+        nonContainedFiles: List<VirtualFile>,
     ) {
-        includedFiles.forEach { file ->
+        containedFiles.forEach { file ->
             assertTrue(
                 "The $scopeName should contain the file `$file`.",
                 contains(file),
             )
         }
 
-        excludedFiles.forEach { file ->
+        nonContainedFiles.forEach { file ->
             assertFalse(
-                "The $scopeName should not contain the excluded file `$file`.",
+                "The $scopeName should not contain the file `$file`.",
                 contains(file),
             )
         }
