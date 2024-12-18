@@ -65,6 +65,12 @@ internal class TerminalSessionController(
       is TerminalCommandFinishedEvent -> {
         // TODO
       }
+      is TerminalPromptStartedEvent -> {
+        // TODO
+      }
+      is TerminalPromptFinishedEvent -> {
+        // TODO
+      }
     }
   }
 

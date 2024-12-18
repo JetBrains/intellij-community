@@ -9,4 +9,8 @@ internal interface TerminalShellIntegrationEventsListener : EventListener {
   fun commandStarted(command: String) {}
 
   fun commandFinished(command: String, exitCode: Int) {}
+
+  fun promptStarted() {}
+
+  fun promptFinished() {}
 }

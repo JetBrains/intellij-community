@@ -70,6 +70,14 @@ internal fun createTerminalOutputChannel(
     override fun commandFinished(command: String, exitCode: Int) {
       collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode))
     }
+
+    override fun promptStarted() {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptStartedEvent)
+    }
+
+    override fun promptFinished() {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptFinishedEvent)
+    }
   })
 
   var curState = TerminalStateDto(

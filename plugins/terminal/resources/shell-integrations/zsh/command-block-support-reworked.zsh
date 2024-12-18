@@ -30,16 +30,41 @@ __jetbrains_intellij_encode() {
 __jetbrains_intellij_command_preexec() {
   builtin local entered_command="$1"
   builtin printf '\e]1341;command_started;command=%s\a' "$(__jetbrains_intellij_encode "$entered_command")"
+
+  __jetbrains_intellij_command_running="1"
+  # Restore the original prompt, our integration will be injected back after command execution in `__jetbrains_intellij_update_prompt`.
+  PS1="$__jetbrains_intellij_original_ps1"
 }
 
 __jetbrains_intellij_command_precmd() {
   builtin local LAST_EXIT_CODE="$?"
   builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
+
+  if [ -n "$__jetbrains_intellij_command_running" ]; then
+    __jetbrains_intellij_update_prompt
+    __jetbrains_intellij_command_running=""
+  fi
+}
+
+__jetbrains_intellij_update_prompt() {
+  # Save the original prompt
+  __jetbrains_intellij_original_ps1="$PS1"
+  PS1="%{$(__jetbrains_intellij_prompt_started)%}$PS1%{$(__jetbrains_intellij_prompt_finished)%}"
+}
+
+__jetbrains_intellij_prompt_started() {
+  builtin printf '\e]1341;prompt_started\a'
+}
+
+__jetbrains_intellij_prompt_finished() {
+  builtin printf '\e]1341;prompt_finished\a'
 }
 
 builtin autoload -Uz add-zsh-hook
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
+
+__jetbrains_intellij_update_prompt
 
 # This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
 builtin printf '\e]1341;initialized\a'

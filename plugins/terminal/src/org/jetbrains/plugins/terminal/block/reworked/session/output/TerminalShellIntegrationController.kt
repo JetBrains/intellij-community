@@ -18,6 +18,8 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
           "initialized" -> dispatcher.multicaster.initialized()
           "command_started" -> processCommandStartedEvent(args)
           "command_finished" -> processCommandFinishedEvent(args)
+          "prompt_started" -> dispatcher.multicaster.promptStarted()
+          "prompt_finished" -> dispatcher.multicaster.promptFinished()
           else -> LOG.warn("Unknown shell integration event: $args")
         }
       }

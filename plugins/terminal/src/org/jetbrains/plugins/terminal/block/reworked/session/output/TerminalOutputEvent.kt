@@ -29,3 +29,7 @@ internal object TerminalShellIntegrationInitializedEvent : TerminalShellIntegrat
 internal data class TerminalCommandStartedEvent(val command: String) : TerminalShellIntegrationEvent
 
 internal data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int) : TerminalShellIntegrationEvent
+
+internal object TerminalPromptStartedEvent : TerminalShellIntegrationEvent
+
+internal object TerminalPromptFinishedEvent : TerminalShellIntegrationEvent
