@@ -150,7 +150,7 @@ open class DebuggerTestCompilerFacility(
         IndexingTestUtil.waitUntilIndexesAreReady(project)
 
         if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
-            val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir)
+            val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir, module.name)
             doWriteAction {
                 compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir, libClassesDir, options)
             }
@@ -195,8 +195,8 @@ open class DebuggerTestCompilerFacility(
 
     fun getCompilerPlugins(): List<String> = compilerPlugins
 
-    protected open fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File): List<String> {
-        return getCompilerOptionsCommonForLibAndSource()
+    protected open fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File, moduleName: String): List<String> {
+        return getCompilerOptionsCommonForLibAndSource() + "-module-name=$moduleName"
     }
 
     private fun getCompilerOptionsCommonForLibAndSource(): List<String> {

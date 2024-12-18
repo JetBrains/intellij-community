@@ -110,16 +110,15 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             return
         }
 
-        when (pluginMode) {
-            KotlinPluginMode.K2 -> IgnoreTests.runTestIfNotDisabledByFileDirective(
-                dataFile().toPath(),
-                getK2IgnoreDirective(),
-                directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
-            ) {
-                super.runBare(testRunnable)
-            }
-
-            KotlinPluginMode.K1 -> super.runBare(testRunnable)
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFile().toPath(),
+            when (pluginMode) {
+                KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
+                KotlinPluginMode.K2 -> getK2IgnoreDirective()
+            },
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) {
+            super.runBare(testRunnable)
         }
     }
 
