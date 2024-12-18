@@ -66,7 +66,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     @VisibleForTesting
     fun getRootFrontendModuleForIde(platformPrefix: String): RuntimeModuleId = when (platformPrefix) {
       PlatformUtils.IDEA_PREFIX, PlatformUtils.IDEA_CE_PREFIX -> RuntimeModuleId.module("intellij.idea.frontend.split")
-      PlatformUtils.IDEA_EDU_PREFIX -> RuntimeModuleId.module("intellij.edu.remote.frontend")
+      PlatformUtils.IDEA_EDU_PREFIX -> RuntimeModuleId.module("intellij.edu.remote.frontend.split")
       PlatformUtils.PYCHARM_PREFIX, PlatformUtils.PYCHARM_CE_PREFIX -> RuntimeModuleId.module("intellij.pycharm.frontend.split")
       PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend.split")
       PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.module("intellij.goland.frontend.split")
