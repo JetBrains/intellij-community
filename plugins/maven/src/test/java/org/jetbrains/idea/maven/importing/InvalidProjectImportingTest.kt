@@ -679,13 +679,14 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
         "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
       else
         "Could not find artifact xxx:yyy:jar:1"
-      assertTrue(problems[0]!!.description!!.contains(description))
+      assertTrue(problems[0].description!!.contains(description))
     }
 
     forMaven4 {
       assertTrue(problems.isNotEmpty())
       assertTrue(
-        problems[0]!!.description!!.contains("Could not find artifact xxx:yyy:jar:1")
+        problems[0].description!!.contains("Could not find artifact xxx:yyy:jar:1") ||
+        problems[0].description!!.contains("xxx:yyy:jar:1 was not found")
       )
     }
 
@@ -781,7 +782,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
         "Unresolveable build extension: Plugin xxx:xxx:1 or one of its dependencies could not be resolved"
       else
         "Could not find artifact xxx:xxx:jar:1"
-      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
+      assertTrue(problems[0].description, problems[0].description!!.contains(description))
 
       problems = getModules(root)[1].problems
       UsefulTestCase.assertSize(1, problems)
@@ -789,19 +790,21 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
         "Unresolveable build extension: Plugin yyy:yyy:1 or one of its dependencies could not be resolved"
       else
         "Could not find artifact yyy:yyy:jar:1"
-      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description2))
+      assertTrue(problems[0].description, problems[0].description!!.contains(description2))
     }
 
     forMaven4 {
       var problems = getModules(root)[0].problems
       assertTrue(
         problems[0].description!!.contains("Plugin xxx:xxx:1 or one of its dependencies could not be resolved")
-        || problems[0].description!!.contains("Could not find artifact xxx:xxx:jar:1")
+        || problems[0].description!!.contains("Could not find artifact xxx:xxx:jar:1") ||
+        problems[0].description!!.contains("xxx:xxx:jar:1 was not found")
       )
       problems = getModules(root)[1].problems
       assertTrue(
         problems[0].description!!.contains("Plugin yyy:yyy:1 or one of its dependencies could not be resolved")
-        || problems[0].description!!.contains("Could not find artifact yyy:yyy:jar:1")
+        || problems[0].description!!.contains("Could not find artifact yyy:yyy:jar:1") ||
+        problems[0].description!!.contains("yyy:yyy:jar:1 was not found")
       )
     }
   }
@@ -882,13 +885,14 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
         "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
       else
         "Could not find artifact xxx:yyy:jar:1"
-      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
+      assertTrue(problems[0].description, problems[0].description!!.contains(description))
     }
 
     forMaven4 {
       UsefulTestCase.assertSize(1, problems)
       assertTrue(
-        problems[0]!!.description!!.contains("Could not find artifact xxx:yyy:jar:1")
+        problems[0].description!!.contains("Could not find artifact xxx:yyy:jar:1") ||
+        problems[0].description!!.contains("xxx:yyy:jar:1 was not found")
       )
     }
   }
