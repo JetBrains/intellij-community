@@ -619,7 +619,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
         ((EscapingCommenter)commenter).unescape(document, marker);
       }
     }
-    return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
+    return marker.getTextRange();
   }
 
   private static int getNearest(String text, String pattern, int position) {

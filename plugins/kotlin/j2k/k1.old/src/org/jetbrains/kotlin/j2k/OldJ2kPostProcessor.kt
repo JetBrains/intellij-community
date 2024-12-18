@@ -169,7 +169,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
     private fun rangeFilter(element: PsiElement, rangeMarker: RangeMarker?): RangeFilterResult {
         if (rangeMarker == null) return RangeFilterResult.PROCESS
         if (!rangeMarker.isValid) return RangeFilterResult.SKIP
-        val range = TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
+        val range = rangeMarker.textRange
         val elementRange = element.textRange
         return when {
             range.contains(elementRange) -> RangeFilterResult.PROCESS

@@ -279,7 +279,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
                                      @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap, @NotNull Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
     matchingInfo.set(null);
     if (UPDATE_REGION.get(region) == Boolean.TRUE) {
-      rangeToExpandStatusMap.put(TextRange.create(region.getStartOffset(), region.getEndOffset()),
+      rangeToExpandStatusMap.put(region.getTextRange(),
                                  region.isExpanded());
       return true;
     }

@@ -78,7 +78,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments()
           val numberOfMethods = countMethodsInsideFile(file) + 1
 
-          val range = TextRange(rangeToExtract.startOffset, rangeToExtract.endOffset)
+          val range = rangeToExtract.textRange
           env.logMessage("Extract inlined lines: ${editor.document.getText(range)}")
           MethodExtractor().doExtract(file, range)
           waitCoroutinesBlocking(ExtractMethodService.getInstance(file.project).scope, SECONDS.toMillis(10))

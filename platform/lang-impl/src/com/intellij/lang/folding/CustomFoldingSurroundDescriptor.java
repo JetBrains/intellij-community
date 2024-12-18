@@ -307,7 +307,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
       PsiDocumentManager.getInstance(project).commitDocument(document);
       adjustLineIndent(project, psiFile, language, TextRange.from(endOffset + delta - endString.length(), endString.length()));
       adjustLineIndent(project, psiFile, language, TextRange.from(startOffset, startString.length()));
-      rangeToSelect = TextRange.create(rangeMarkerToSelect.getStartOffset(), rangeMarkerToSelect.getEndOffset());
+      rangeToSelect = rangeMarkerToSelect.getTextRange();
       rangeMarkerToSelect.dispose();
       updater.select(rangeToSelect);
     }

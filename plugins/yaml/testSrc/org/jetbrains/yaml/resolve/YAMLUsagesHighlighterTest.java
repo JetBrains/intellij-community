@@ -57,7 +57,7 @@ public class YAMLUsagesHighlighterTest extends BasePlatformTestCase {
         continue;
       }
 
-      TextRange range = TextRange.create(highlighter.getStartOffset(), highlighter.getEndOffset());
+      TextRange range = highlighter.getTextRange();
       CharSequence text = highlighter.getDocument().getCharsSequence();
       result
         .append(editor.offsetToLogicalPosition(range.getStartOffset()))

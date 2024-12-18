@@ -141,8 +141,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                                     @NotNull TextRange compositeDocumentDirtyRange) {
     ThreadingAssertions.assertEventDispatchThread();
     TextRange fileRange = psiFile.getTextRange();
-    ProperTextRange visibleRange;
-    visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE))
+    ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE))
                                   : editor.calculateVisibleRange();
     CanISilentlyChange.Result canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
     return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);

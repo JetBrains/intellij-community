@@ -163,7 +163,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
 
         val rangeFilter = { element: PsiElement ->
             if (rangeMarker.isValid) {
-                val range = TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
+                val range = rangeMarker.textRange
 
                 val elementRange = element.textRange!!
                 when {

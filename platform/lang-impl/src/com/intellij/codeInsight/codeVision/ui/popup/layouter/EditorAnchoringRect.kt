@@ -100,7 +100,7 @@ class EditorAnchoringRect(
     require(!editor.isDisposed)
 
     val range = if (rangeMarker.isValid) {
-      TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
+      rangeMarker.textRange
     }
     else {
       return null

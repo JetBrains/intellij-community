@@ -239,7 +239,7 @@ private class CommandCompletionHighlightingListener(
         if (!(attributesKey == CodeInsightColors.ERRORS_ATTRIBUTES || attributesKey == CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES || attributesKey == CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING || attributesKey == CodeInsightColors.RUNTIME_ERROR)) {
           return@EditorHighlightingPredicate true
         }
-        return@EditorHighlightingPredicate !TextRange(startOffset, endOffset).intersects(TextRange(highlighter.startOffset, highlighter.endOffset))
+        return@EditorHighlightingPredicate !TextRange(startOffset, endOffset).intersects(highlighter.textRange)
       })
       installed.set(true)
     }

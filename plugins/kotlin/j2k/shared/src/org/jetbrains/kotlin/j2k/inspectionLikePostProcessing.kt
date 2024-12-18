@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
@@ -120,7 +119,7 @@ class InspectionLikeProcessingGroup(
     private fun rangeFilter(element: PsiElement, rangeMarker: RangeMarker?): RangeFilterResult {
         if (rangeMarker == null) return PROCESS
         if (!rangeMarker.isValid) return SKIP
-        val range = TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
+        val range = rangeMarker.textRange
         val elementRange = element.textRange
         return when {
             range.contains(elementRange) -> PROCESS
