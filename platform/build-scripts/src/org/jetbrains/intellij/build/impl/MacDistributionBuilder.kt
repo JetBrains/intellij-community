@@ -119,7 +119,12 @@ class MacDistributionBuilder(
 
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
       setLastModifiedTime(osAndArchSpecificDistPath, context)
-      val runtimeDist = context.bundledRuntime.extract(os = OsFamily.MACOS, arch = arch)
+
+      val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
+      updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
+
+      val runtimeDir = context.bundledRuntime.extract(os = OsFamily.MACOS, arch = arch)
+      updateExecutablePermissions(runtimeDir, executableFileMatchers)
 
       if (context.isMacCodeSignEnabled) {
         /**
@@ -127,7 +132,7 @@ class MacDistributionBuilder(
          * preventing concurrent modifications by different [OsSpecificDistributionBuilder]s,
          * otherwise zip/tar build may fail due to FS change (changed attributes) while reading a file.
          */
-        signMacBinaries(osAndArchSpecificDistPath, runtimeDist, arch)
+        signMacBinaries(osAndArchSpecificDistPath, runtimeDir, arch)
       }
 
       val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
@@ -137,7 +142,7 @@ class MacDistributionBuilder(
       val zipRoot = getMacZipRoot(customizer, context)
       val compressionLevel = if (publishSitArchive || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       val extraFiles = context.getDistFiles(os = OsFamily.MACOS, arch)
-      val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDist)
+      val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
       val builder = this@MacDistributionBuilder
       val productJson = generateProductJson(context, arch = arch, withRuntime = true)
       buildMacZip(
@@ -159,7 +164,7 @@ class MacDistributionBuilder(
           zipRoot = zipRoot,
           arch = arch,
           productJson = generateProductJson(context, arch = arch, withRuntime = false),
-          directories = directories.filterNot { it == runtimeDist },
+          directories = directories.filterNot { it == runtimeDir },
           extraFiles = extraFiles,
           includeRuntime = false,
           compressionLevel = compressionLevel,
