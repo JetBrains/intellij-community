@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -114,10 +115,21 @@ public final class MavenImportUtil {
     LanguageLevel sourceTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, true);
     LanguageLevel targetVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, false);
     LanguageLevel targetTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, true);
-    return new MavenJavaVersionHolder(sourceVersion, targetVersion, sourceTestVersion, targetTestVersion);
+    return new MavenJavaVersionHolder(sourceVersion, targetVersion, sourceTestVersion, targetTestVersion,
+                                      hasAnotherTestExecution(mavenProject));
   }
 
-    private static @Nullable LanguageLevel getMavenLanguageLevel(@NotNull MavenProject mavenProject,
+  private static boolean hasAnotherTestExecution(@NotNull MavenProject project) {
+    MavenPlugin plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (plugin == null) return false;
+    List<MavenPlugin.Execution> executions = plugin.getExecutions();
+    if (executions == null || executions.isEmpty()) return false;
+    return ContainerUtil.exists(executions,
+                                e -> "test-compile".equals(e.getPhase()) ||
+                                     (e.getGoals() != null && e.getGoals().contains("test-comiple")));
+  }
+
+  private static @Nullable LanguageLevel getMavenLanguageLevel(@NotNull MavenProject mavenProject,
                                                                  boolean useReleaseCompilerProp,
                                                                  boolean isSource,
                                                                  boolean isTest) {

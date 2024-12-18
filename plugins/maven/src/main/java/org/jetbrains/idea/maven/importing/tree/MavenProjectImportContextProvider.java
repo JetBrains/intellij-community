@@ -158,7 +158,8 @@ public class MavenProjectImportContextProvider {
       holder.sourceLevel == null ? null : adjustLevelAndNotify(myProject, holder.sourceLevel),
       holder.targetLevel == null ? null : adjustLevelAndNotify(myProject, holder.targetLevel),
       holder.testSourceLevel == null ? null : adjustLevelAndNotify(myProject, holder.testSourceLevel),
-      holder.testTargetLevel == null ? null : adjustLevelAndNotify(myProject, holder.testTargetLevel)
+      holder.testTargetLevel == null ? null : adjustLevelAndNotify(myProject, holder.testTargetLevel),
+      holder.hasExecutionsForTests
     );
   }
 

@@ -9,19 +9,22 @@ public class MavenJavaVersionHolder {
   @Nullable public final LanguageLevel targetLevel;
   @Nullable public final LanguageLevel testSourceLevel;
   @Nullable public final LanguageLevel testTargetLevel;
+  public final boolean hasExecutionsForTests;
 
   public MavenJavaVersionHolder(@Nullable LanguageLevel sourceLevel,
                                 @Nullable LanguageLevel targetLevel,
                                 @Nullable LanguageLevel testSourceLevel,
-                                @Nullable LanguageLevel testTargetLevel) {
+                                @Nullable LanguageLevel testTargetLevel,
+                                boolean hasExecutionsForTests) {
     this.sourceLevel = sourceLevel;
     this.targetLevel = targetLevel;
     this.testSourceLevel = testSourceLevel;
     this.testTargetLevel = testTargetLevel;
+    this.hasExecutionsForTests = hasExecutionsForTests;
   }
 
   public boolean needSeparateTestModule() {
-    return testSourceLevel != null && !testSourceLevel.equals(sourceLevel)
-      || testTargetLevel != null && !testTargetLevel.equals(targetLevel);
+    return hasExecutionsForTests || (testSourceLevel != null && !testSourceLevel.equals(sourceLevel))
+           || (testTargetLevel != null && !testTargetLevel.equals(targetLevel));
   }
 }
