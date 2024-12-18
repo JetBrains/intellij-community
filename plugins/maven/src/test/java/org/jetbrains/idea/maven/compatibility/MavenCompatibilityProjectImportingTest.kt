@@ -381,7 +381,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
     @get:Parameterized.Parameters(name = "with Maven-{0}")
     val mavenVersions: List<Array<String>>
       get() = listOf(
-        arrayOf("4.0.0-rc-1"),
+        arrayOf("4.0.0-rc-2"),
         arrayOf("3.9.9"),
         arrayOf("3.9.8"),
         arrayOf("3.9.7"),

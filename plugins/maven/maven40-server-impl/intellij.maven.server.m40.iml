@@ -13,40 +13,40 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-embedder:4.0.0-rc-1" type="repository">
-        <properties maven-id="org.apache.maven:maven-embedder:4.0.0-rc-1">
+        <properties maven-id="org.apache.maven:maven-embedder:4.0.0-rc-2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-1/maven-embedder-4.0.0-rc-1.jar">
-              <sha256sum>64d3c60dc3f5c562625249eab6c8b00252f75eb778c80a9c259abcc540f55189</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-2/maven-embedder-4.0.0-rc-2.jar">
+              <sha256sum>dee7145bad16b1cf2f6cc4c0ce037aacabb492b0c152f7de6e1184e46f4d0656</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-cli/4.0.0-rc-1/maven-api-cli-4.0.0-rc-1.jar">
-              <sha256sum>97e19c624b22a8d5671ba6a03daf5785ef854938bf74c48ff7d808657f2df78f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-cli/4.0.0-rc-2/maven-api-cli-4.0.0-rc-2.jar">
+              <sha256sum>7d82c27037b13eba2f903cf88d1830caf5ff3af31174448fc982b0721d202762</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-meta/4.0.0-rc-1/maven-api-meta-4.0.0-rc-1.jar">
-              <sha256sum>480e4495b9bf4802592e8a428232f914420318360e0f4102cb28d086e76989c9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-annotations/4.0.0-rc-2/maven-api-annotations-4.0.0-rc-2.jar">
+              <sha256sum>dc61f601ad6b4dcc7bcb688b712eeb8e6cf22d36994d2d7851f7f1ab5fc152b2</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-core/4.0.0-rc-1/maven-api-core-4.0.0-rc-1.jar">
-              <sha256sum>9b41ba1a14c907631da85207560e105b96e26ce49036f9b1d869d5d2fd2233f4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-core/4.0.0-rc-2/maven-api-core-4.0.0-rc-2.jar">
+              <sha256sum>8644b8f92a97034c362b079b00aa729488a2c047d512dbfbb59dbf1b92171dad</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-di/4.0.0-rc-1/maven-api-di-4.0.0-rc-1.jar">
-              <sha256sum>b1ceaf90310e4d285969d36dc2aeff48fc2814336e4ed52fd2d00d0a4db4787a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-di/4.0.0-rc-2/maven-api-di-4.0.0-rc-2.jar">
+              <sha256sum>c1fd0d406973b3f48d3cf05531d4e1129aee24e4716aae6e18a4206c1349cf22</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-1/maven-cli-4.0.0-rc-1.jar">
-              <sha256sum>a6f2873fe0f8660f3519acec5858f71c6025a8d6ea5f034732af4049b890cc89</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-2/maven-cli-4.0.0-rc-2.jar">
+              <sha256sum>b2111c6839f0a2dfb51e80c8f4e7dbaf9d266d1fe5b07246b6a1491b3703173f</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.8.0/plexus-classworlds-2.8.0.jar">
               <sha256sum>081b40e0eab033cd5ac72d2501bfff4f5fd2a3eef827051111730ea152681c72</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/4.0.0-rc-1/maven-settings-4.0.0-rc-1.jar">
-              <sha256sum>09bb25afbe84a4f76b6faef2429826dbd4a19f75c945e5350e7e615c47601887</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/4.0.0-rc-2/maven-settings-4.0.0-rc-2.jar">
+              <sha256sum>c91d81518f44f863b9f1e7ad67723f417eff990ffb5953b18974d0b2b075e2c1</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-settings/4.0.0-rc-1/maven-api-settings-4.0.0-rc-1.jar">
-              <sha256sum>9ee4fd535e74808a9147a53907eb9f864746d7bc02a0733cb7c25b782444b5af</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-settings/4.0.0-rc-2/maven-api-settings-4.0.0-rc-2.jar">
+              <sha256sum>8e32a548ce312b11a108afac8a53f473fb797895bbaf06e17c66a9c844ac0469</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-xml/4.0.0-rc-1/maven-api-xml-4.0.0-rc-1.jar">
-              <sha256sum>54eeb13262f17a887e8db6d4e8d34e3bbcf577c0fdb66e7bc94f5b15b23647c6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-xml/4.0.0-rc-2/maven-api-xml-4.0.0-rc-2.jar">
+              <sha256sum>4aae69949b6c2c9151900ccf7614fe6b11e33af2f40154ebd6c88e577b4c03e5</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml/4.0.0-rc-1/maven-xml-4.0.0-rc-1.jar">
-              <sha256sum>a4213fa681334de4d48ee70467d52249a3703104256a1fd088600f7742e856e9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml/4.0.0-rc-2/maven-xml-4.0.0-rc-2.jar">
+              <sha256sum>37df63d117f374fd00b82db030c4f27787d44c829f0b98fa163808bfc73c8149</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-xml/4.0.4/plexus-xml-4.0.4.jar">
               <sha256sum>069e78b537108dc6124a67073fc998264791f6b6499e955a38e72bb3e4fe1adf</sha256sum>
@@ -60,71 +60,71 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2.jar">
               <sha256sum>a61c48d553efad78bc01fffc4ac528bebbae64cbaec170b2a5e39cf61eb51abe</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/4.0.0-rc-1/maven-settings-builder-4.0.0-rc-1.jar">
-              <sha256sum>844e274bc81c4fcf84817f1767ca79f40b14b57afdc454f67713d58a17f13c6e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/4.0.0-rc-2/maven-settings-builder-4.0.0-rc-2.jar">
+              <sha256sum>bf250c33d3f651776c4bd785c32c01c1b96d3bf4220673a71a65165d5e01f546</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-impl/4.0.0-rc-1/maven-impl-4.0.0-rc-1.jar">
-              <sha256sum>1eb47aa7eb24644761a87d20d6c81b72502b125cc696df08fb169b91207691f4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-impl/4.0.0-rc-2/maven-impl-4.0.0-rc-2.jar">
+              <sha256sum>4a0bfeb819f255135609ef906b9d90989632fd90db89fd972c2e188d7b63d9de</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-metadata/4.0.0-rc-1/maven-api-metadata-4.0.0-rc-1.jar">
-              <sha256sum>d9e2bbb62c21dab6fb90d8c6078336e94ba365943e46a9fb4c25a83f99054cb8</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-metadata/4.0.0-rc-2/maven-api-metadata-4.0.0-rc-2.jar">
+              <sha256sum>6d96a3c2cb6d8216360299991485c2cb49b57f19ef2696787fae6f1c8fd89ef8</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-builder/4.0.0-rc-1/maven-toolchain-builder-4.0.0-rc-1.jar">
-              <sha256sum>32367390ba15a78d676b13ef883a301f7a57dbffe4037012189fd91c6122efee</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-builder/4.0.0-rc-2/maven-toolchain-builder-4.0.0-rc-2.jar">
+              <sha256sum>dfdda1687cc5ba46912297c9dfa807b91e0352ef43592c440a0a0c837a35af73</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-toolchain/4.0.0-rc-1/maven-api-toolchain-4.0.0-rc-1.jar">
-              <sha256sum>a1825e82202621f142c5e11ba8e1763246fc6ffdab3c47be374ea9a3fe259378</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-toolchain/4.0.0-rc-2/maven-api-toolchain-4.0.0-rc-2.jar">
+              <sha256sum>c447946edb46d58045acae5efffc05c91f315eeea9f5d63839c210501b2d96c8</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-model/4.0.0-rc-1/maven-toolchain-model-4.0.0-rc-1.jar">
-              <sha256sum>f6656eecd612636ce60186d6af6735a7d630ec038adf31328becab2eb89742e1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-model/4.0.0-rc-2/maven-toolchain-model-4.0.0-rc-2.jar">
+              <sha256sum>47c101b8b8505dcb0a08ff776eb1bfd9306516d72e8fbdd3f13f52d61ddbb755</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/4.0.0-rc-1/maven-core-4.0.0-rc-1.jar">
-              <sha256sum>1d2bb2f170fe33a04f31c96d798820675b4e6dde51b30b90e7d418c6080f16b1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/4.0.0-rc-2/maven-core-4.0.0-rc-2.jar">
+              <sha256sum>fcd996cda925126e58dc2a37ec7ab17860baa007d78449a208ff4f068dda4903</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-1/maven-di-4.0.0-rc-1.jar">
-              <sha256sum>593ac429392884593cd836e54ec33d9d97ce2b5c2b70a0cee74cdc0994800439</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-2/maven-di-4.0.0-rc-2.jar">
+              <sha256sum>37afd35961ad1f640c46ceae90e8ccb00f3758246838407fafb26c861ce1e0a1</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-1/maven-repository-metadata-4.0.0-rc-1.jar">
-              <sha256sum>fc7f8b1d419f590ddae1f5338f6093862d13032f5a0ff0b6e86d3f8c7ea1b646</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-2/maven-repository-metadata-4.0.0-rc-2.jar">
+              <sha256sum>2deca1ff2f37a3e8e52e929a7217c61b855d8f82a519ff110190432c34249d4f</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/4.0.0-rc-1/maven-artifact-4.0.0-rc-1.jar">
-              <sha256sum>9799c94bb1a7a60adb98f6b8efecf1c707b119db01c8983cdbc4945f78acb810</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/4.0.0-rc-2/maven-artifact-4.0.0-rc-2.jar">
+              <sha256sum>4a5b2b94b2a98f6a6fcb6ef639eaa0c2b12ae91449249750473678b06ca85cb2</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-spi/4.0.0-rc-1/maven-api-spi-4.0.0-rc-1.jar">
-              <sha256sum>0baa8ef26d111b0a4079a022be8c108de7f0c7bffe5cb454ac911c468ffceae6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-spi/4.0.0-rc-2/maven-api-spi-4.0.0-rc-2.jar">
+              <sha256sum>3b1458a23eb0c8b850c040a61367911c5abeae1b7f2b24bf6be461cfba6f68e9</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/2.0.4/maven-resolver-spi-2.0.4.jar">
-              <sha256sum>a8ab3fcb9fa3031261ccb004f2d3f378f0766fe51588515d44649ce68dfead47</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/2.0.5/maven-resolver-spi-2.0.5.jar">
+              <sha256sum>a93d80cd3c3acd392105d34d8b17ac689fb09717f922e356e88e0cf9a5315ef7</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar">
               <sha256sum>57928d6e5a6edeb2abd3770a8f95ba44dce45f3b23b7a9dc2b309c581552a78b</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/2.0.4/maven-resolver-impl-2.0.4.jar">
-              <sha256sum>05d8cf24421f2f588bbc971473e0fc8eb89a17a1b08a9aee7bd8bacbff742948</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/2.0.5/maven-resolver-impl-2.0.5.jar">
+              <sha256sum>548fd7b310d7f6253d368ebea93650148472267d819dd585c2b5dc90ff4ced3a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/2.0.4/maven-resolver-named-locks-2.0.4.jar">
-              <sha256sum>1ba631305131829ec6d9e9f363c61f9e5cab3a5836f0ad951e15bd996c18d7c4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/2.0.5/maven-resolver-named-locks-2.0.5.jar">
+              <sha256sum>c1fdf803d3aee232979b3a6caf5331fb09cf3ca0bde3d6e01e5de0b0d6a0c203</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-1/maven-jline-4.0.0-rc-1.jar">
-              <sha256sum>45bf018cbaad22de05572132864bd5b493f41b70e07e417cafe6fef9dcb11700</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-2/maven-jline-4.0.0-rc-2.jar">
+              <sha256sum>f43e76e9e55f65508dc218ecd734811cee3150462b8663be94e16aa2122b13c2</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-reader/3.27.1/jline-reader-3.27.1.jar">
-              <sha256sum>feddb180aabd05bfa04e013379f6938cf8f9faf1e5a342991762b8fcd3334578</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-reader/3.28.0/jline-reader-3.28.0.jar">
+              <sha256sum>a98f3bfd1ba6fb05373766774656f00abb0b82498adc7dab378d1fdedc932560</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-style/3.27.1/jline-style-3.27.1.jar">
-              <sha256sum>3fb19871b25984d6983074205c7a4a139bfac2e6099b7b1ae8a48958b282313a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-style/3.28.0/jline-style-3.28.0.jar">
+              <sha256sum>fa18df3b62f8ede85cdcb07d42c3b68ae34bb5bcc5cdec2d1aaf41bdb849e59a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-builtins/3.27.1/jline-builtins-3.27.1.jar">
-              <sha256sum>2d5a649201dc802afe5eb606c1830d7bfea550b4266db93672a4d7b54c8d8d87</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-builtins/3.28.0/jline-builtins-3.28.0.jar">
+              <sha256sum>01ca30cda5617b45c157f3bf5e2f88d2b5af817cfcacdfd5a1f3cf4b3ed954f2</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-console-ui/3.27.1/jline-console-ui-3.27.1.jar">
-              <sha256sum>618eb4646fc6ee4c6cdc0b6f04089343745d7e5ba70fe974561d8f646884ef10</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-console-ui/3.28.0/jline-console-ui-3.28.0.jar">
+              <sha256sum>fb3dc713716dc6929e017c2f2e695ced346a6e4b762fd1ffa8592f5d41a3515e</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jni/3.27.1/jline-terminal-jni-3.27.1.jar">
-              <sha256sum>e4bc64f1e68e9fb25d80517338e76abca1e0145b82e389b5c2b2c7d71d150f82</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jni/3.28.0/jline-terminal-jni-3.28.0.jar">
+              <sha256sum>30758a4236bc1f3db6ecc39e78940ae7f4fd2f982b48f7bb12dabfebb9de075d</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.1/jline-native-3.27.1.jar">
-              <sha256sum>636646da40413e74963b3f4b40c9c5dcfb42f3d0ecf1b93d6ddf5c895effe422</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-native/3.28.0/jline-native-3.28.0.jar">
+              <sha256sum>de0997840bbdc576dad302998b9256c6f81cafb64c75c362ed05080d6a3fc686</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar">
               <sha256sum>91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff</sha256sum>
@@ -132,38 +132,38 @@
             <artifact url="file://$MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar">
               <sha256sum>e04ba5195bcd555dc95650f7cc614d151e4bcd52d29a10b8aa2197f3ab89ab9b</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/4.0.0-rc-1/maven-plugin-api-4.0.0-rc-1.jar">
-              <sha256sum>76de46532a6c12e4480a3ddb200306069df0863600ada9074c61ab185992b485</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/4.0.0-rc-2/maven-plugin-api-4.0.0-rc-2.jar">
+              <sha256sum>4071f6b45f89259ef431baec7a78b789c0f58826aab2d4217774f2920c0b26a9</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-plugin/4.0.0-rc-1/maven-api-plugin-4.0.0-rc-1.jar">
-              <sha256sum>ff91d68980b4a7687027cddfdb618566993f389537b42dfa8ea1cc79928cf22d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-plugin/4.0.0-rc-2/maven-api-plugin-4.0.0-rc-2.jar">
+              <sha256sum>7be31532cb5e11c1ff20498c431c286c63c543c79fad0b9d56d5d9bad517d9dd</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M3/org.eclipse.sisu.plexus-0.9.0.M3.jar">
               <sha256sum>c99674d3773e26154885661711f0b6d63aa5008f5cc99227a236756d4ad9de5e</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/4.0.0-rc-1/maven-model-4.0.0-rc-1.jar">
-              <sha256sum>a005c374586353e70773410fdbdc4523a2a71c8571c630b51b79e81cf73f8f32</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/4.0.0-rc-2/maven-model-4.0.0-rc-2.jar">
+              <sha256sum>c88a95031982cda5bd4bb35ec67a99e1bcb367ff4f9943648a842c9618ae513c</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-model/4.0.0-rc-1/maven-api-model-4.0.0-rc-1.jar">
-              <sha256sum>1e791ef4f1dd92343186d5c3bc74566d5cf2e54dd24e4405eec53727fac1b452</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-model/4.0.0-rc-2/maven-api-model-4.0.0-rc-2.jar">
+              <sha256sum>6c7ba3ca2c12ceffaf3c5947f530acc10021d5758f0540d697bf374f705062e2</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/4.0.0-rc-1/maven-model-builder-4.0.0-rc-1.jar">
-              <sha256sum>227bd35a3a85ae3c9036766a3d72792379fd4aa6062db7bbb1f47068b654051f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/4.0.0-rc-2/maven-model-builder-4.0.0-rc-2.jar">
+              <sha256sum>8a88ea34f2d46e7a4944672c38e48017da5243982a8dc0690d925faf40c05baf</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/4.0.0-rc-1/maven-builder-support-4.0.0-rc-1.jar">
-              <sha256sum>964721f34d0a48c1231858bc1b5f272e0a88375c8b277f74a51c52ed84f34c34</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/4.0.0-rc-2/maven-builder-support-4.0.0-rc-2.jar">
+              <sha256sum>b47f31ea577e88660d3375021ce38d7b8c087b6ef10e9b65890329be107102c6</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-logging/4.0.0-rc-1/maven-logging-4.0.0-rc-1.jar">
-              <sha256sum>5e891d9093c7fcf1cea819f6853e565b18dacd0612e38219cef86335d3878b94</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-logging/4.0.0-rc-2/maven-logging-4.0.0-rc-2.jar">
+              <sha256sum>3f46dd57de1d32be14a2ba12a93a560ab315f6813db4d144a49e99f9d64a4e34</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/2.0.4/maven-resolver-api-2.0.4.jar">
-              <sha256sum>f33a38bc30b24b71a938b97541fc8d9e1c4f592bd2c7760c2e4f97ccc03614bb</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/2.0.5/maven-resolver-api-2.0.5.jar">
+              <sha256sum>90db5edf3b35351c5d4eac42a6c003b7d8cec216e61578b91cbfe9c2c7348543</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/2.0.4/maven-resolver-util-2.0.4.jar">
-              <sha256sum>ffea2f65888229da289749a381f5f41cab8d6107bf3c4fe229b80bce53c03b8f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/2.0.5/maven-resolver-util-2.0.5.jar">
+              <sha256sum>c019682426558e866dfd8eb5a50a8bf385ef753ff0159038e13997c897e3619d</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-sec-dispatcher/4.0.2/plexus-sec-dispatcher-4.0.2.jar">
-              <sha256sum>a34f93320a8d84b1aa008eab9f34cc2bafd591351b32133946bc2ba2a0cc2405</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-sec-dispatcher/4.0.3/plexus-sec-dispatcher-4.0.3.jar">
+              <sha256sum>289123f7047bf5e00bede5a210a15f2fe7110e3eae9eca42cd49ea3a04be3196</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.27/plexus-interpolation-1.27.jar">
               <sha256sum>3fb4fb6143fdf964024c3cb738551524b9ea84e5c211cd660c559ad0703e5230</sha256sum>
@@ -177,130 +177,130 @@
             <artifact url="file://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.9.0/commons-cli-1.9.0.jar">
               <sha256sum>d3d530d0f28fd0fbbffe2b0b338f70e8cb96f1605579e2e3abd4db29cac24e69</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jansi-core/3.27.1/jansi-core-3.27.1.jar">
-              <sha256sum>73737901da87c33c19183adeb45605287d5c80c3116b07a9002ce15bdab451aa</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jansi-core/3.28.0/jansi-core-3.28.0.jar">
+              <sha256sum>f8a4603b8b92a696e6f073f56b4a5dcd3c53024acd97cafee4df6b165d3f44fe</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.1/jline-terminal-3.27.1.jar">
-              <sha256sum>42b7b756506bca98b505938426a35c99082f7819c333ed25bd4114bfb0e3b5f2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.28.0/jline-terminal-3.28.0.jar">
+              <sha256sum>964a04e37a32aa27d0372e55c716bdc04e8758d2c0cd1d204f10e4d4f53964ff</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-1/maven-embedder-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-cli/4.0.0-rc-1/maven-api-cli-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-meta/4.0.0-rc-1/maven-api-meta-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-core/4.0.0-rc-1/maven-api-core-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-di/4.0.0-rc-1/maven-api-di-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-1/maven-cli-4.0.0-rc-1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-2/maven-embedder-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-cli/4.0.0-rc-2/maven-api-cli-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-annotations/4.0.0-rc-2/maven-api-annotations-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-core/4.0.0-rc-2/maven-api-core-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-di/4.0.0-rc-2/maven-api-di-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-2/maven-cli-4.0.0-rc-2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.8.0/plexus-classworlds-2.8.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/4.0.0-rc-1/maven-settings-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-settings/4.0.0-rc-1/maven-api-settings-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-xml/4.0.0-rc-1/maven-api-xml-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml/4.0.0-rc-1/maven-xml-4.0.0-rc-1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/4.0.0-rc-2/maven-settings-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-settings/4.0.0-rc-2/maven-api-settings-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-xml/4.0.0-rc-2/maven-api-xml-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml/4.0.0-rc-2/maven-xml-4.0.0-rc-2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-xml/4.0.4/plexus-xml-4.0.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml-impl/4.0.0-alpha-9/maven-xml-impl-4.0.0-alpha-9.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/7.1.0/woodstox-core-7.1.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/4.0.0-rc-1/maven-settings-builder-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-impl/4.0.0-rc-1/maven-impl-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-metadata/4.0.0-rc-1/maven-api-metadata-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-builder/4.0.0-rc-1/maven-toolchain-builder-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-toolchain/4.0.0-rc-1/maven-api-toolchain-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-model/4.0.0-rc-1/maven-toolchain-model-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/4.0.0-rc-1/maven-core-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-1/maven-di-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-1/maven-repository-metadata-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/4.0.0-rc-1/maven-artifact-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-spi/4.0.0-rc-1/maven-api-spi-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/2.0.4/maven-resolver-spi-2.0.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/4.0.0-rc-2/maven-settings-builder-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-impl/4.0.0-rc-2/maven-impl-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-metadata/4.0.0-rc-2/maven-api-metadata-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-builder/4.0.0-rc-2/maven-toolchain-builder-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-toolchain/4.0.0-rc-2/maven-api-toolchain-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-model/4.0.0-rc-2/maven-toolchain-model-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/4.0.0-rc-2/maven-core-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-2/maven-di-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-2/maven-repository-metadata-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/4.0.0-rc-2/maven-artifact-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-spi/4.0.0-rc-2/maven-api-spi-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/2.0.5/maven-resolver-spi-2.0.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/2.0.4/maven-resolver-impl-2.0.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/2.0.4/maven-resolver-named-locks-2.0.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-1/maven-jline-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-reader/3.27.1/jline-reader-3.27.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-style/3.27.1/jline-style-3.27.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-builtins/3.27.1/jline-builtins-3.27.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-console-ui/3.27.1/jline-console-ui-3.27.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jni/3.27.1/jline-terminal-jni-3.27.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.1/jline-native-3.27.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/2.0.5/maven-resolver-impl-2.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/2.0.5/maven-resolver-named-locks-2.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-2/maven-jline-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-reader/3.28.0/jline-reader-3.28.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-style/3.28.0/jline-style-3.28.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-builtins/3.28.0/jline-builtins-3.28.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-console-ui/3.28.0/jline-console-ui-3.28.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jni/3.28.0/jline-terminal-jni-3.28.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.28.0/jline-native-3.28.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/4.0.0-rc-1/maven-plugin-api-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-plugin/4.0.0-rc-1/maven-api-plugin-4.0.0-rc-1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/4.0.0-rc-2/maven-plugin-api-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-plugin/4.0.0-rc-2/maven-api-plugin-4.0.0-rc-2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M3/org.eclipse.sisu.plexus-0.9.0.M3.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/4.0.0-rc-1/maven-model-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-model/4.0.0-rc-1/maven-api-model-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/4.0.0-rc-1/maven-model-builder-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/4.0.0-rc-1/maven-builder-support-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-logging/4.0.0-rc-1/maven-logging-4.0.0-rc-1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/2.0.4/maven-resolver-api-2.0.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/2.0.4/maven-resolver-util-2.0.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-sec-dispatcher/4.0.2/plexus-sec-dispatcher-4.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/4.0.0-rc-2/maven-model-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-model/4.0.0-rc-2/maven-api-model-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/4.0.0-rc-2/maven-model-builder-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/4.0.0-rc-2/maven-builder-support-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-logging/4.0.0-rc-2/maven-logging-4.0.0-rc-2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/2.0.5/maven-resolver-api-2.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/2.0.5/maven-resolver-util-2.0.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-sec-dispatcher/4.0.3/plexus-sec-dispatcher-4.0.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.27/plexus-interpolation-1.27.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interactivity-api/1.3/plexus-interactivity-api-1.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.9.0/commons-cli-1.9.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jansi-core/3.27.1/jansi-core-3.27.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.1/jline-terminal-3.27.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jansi-core/3.28.0/jansi-core-3.28.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.28.0/jline-terminal-3.28.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-1/maven-embedder-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-cli/4.0.0-rc-1/maven-api-cli-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-meta/4.0.0-rc-1/maven-api-meta-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-core/4.0.0-rc-1/maven-api-core-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-di/4.0.0-rc-1/maven-api-di-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-1/maven-cli-4.0.0-rc-1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-2/maven-embedder-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-cli/4.0.0-rc-2/maven-api-cli-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-annotations/4.0.0-rc-2/maven-api-annotations-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-core/4.0.0-rc-2/maven-api-core-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-di/4.0.0-rc-2/maven-api-di-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-2/maven-cli-4.0.0-rc-2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.8.0/plexus-classworlds-2.8.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/4.0.0-rc-1/maven-settings-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-settings/4.0.0-rc-1/maven-api-settings-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-xml/4.0.0-rc-1/maven-api-xml-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml/4.0.0-rc-1/maven-xml-4.0.0-rc-1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/4.0.0-rc-2/maven-settings-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-settings/4.0.0-rc-2/maven-api-settings-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-xml/4.0.0-rc-2/maven-api-xml-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml/4.0.0-rc-2/maven-xml-4.0.0-rc-2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-xml/4.0.4/plexus-xml-4.0.4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-xml-impl/4.0.0-alpha-9/maven-xml-impl-4.0.0-alpha-9-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/7.1.0/woodstox-core-7.1.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/4.0.0-rc-1/maven-settings-builder-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-impl/4.0.0-rc-1/maven-impl-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-metadata/4.0.0-rc-1/maven-api-metadata-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-builder/4.0.0-rc-1/maven-toolchain-builder-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-toolchain/4.0.0-rc-1/maven-api-toolchain-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-model/4.0.0-rc-1/maven-toolchain-model-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/4.0.0-rc-1/maven-core-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-1/maven-di-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-1/maven-repository-metadata-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/4.0.0-rc-1/maven-artifact-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-spi/4.0.0-rc-1/maven-api-spi-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/2.0.4/maven-resolver-spi-2.0.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/4.0.0-rc-2/maven-settings-builder-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-impl/4.0.0-rc-2/maven-impl-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-metadata/4.0.0-rc-2/maven-api-metadata-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-builder/4.0.0-rc-2/maven-toolchain-builder-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-toolchain/4.0.0-rc-2/maven-api-toolchain-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-toolchain-model/4.0.0-rc-2/maven-toolchain-model-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/4.0.0-rc-2/maven-core-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-2/maven-di-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-2/maven-repository-metadata-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/4.0.0-rc-2/maven-artifact-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-spi/4.0.0-rc-2/maven-api-spi-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/2.0.5/maven-resolver-spi-2.0.5-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/2.0.4/maven-resolver-impl-2.0.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/2.0.4/maven-resolver-named-locks-2.0.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-1/maven-jline-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-reader/3.27.1/jline-reader-3.27.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-style/3.27.1/jline-style-3.27.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-builtins/3.27.1/jline-builtins-3.27.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-console-ui/3.27.1/jline-console-ui-3.27.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jni/3.27.1/jline-terminal-jni-3.27.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.1/jline-native-3.27.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/2.0.5/maven-resolver-impl-2.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-named-locks/2.0.5/maven-resolver-named-locks-2.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-2/maven-jline-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-reader/3.28.0/jline-reader-3.28.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-style/3.28.0/jline-style-3.28.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-builtins/3.28.0/jline-builtins-3.28.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-console-ui/3.28.0/jline-console-ui-3.28.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal-jni/3.28.0/jline-terminal-jni-3.28.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.28.0/jline-native-3.28.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/4.0.0-rc-1/maven-plugin-api-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-plugin/4.0.0-rc-1/maven-api-plugin-4.0.0-rc-1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/4.0.0-rc-2/maven-plugin-api-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-plugin/4.0.0-rc-2/maven-api-plugin-4.0.0-rc-2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M3/org.eclipse.sisu.plexus-0.9.0.M3-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/4.0.0-rc-1/maven-model-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-model/4.0.0-rc-1/maven-api-model-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/4.0.0-rc-1/maven-model-builder-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/4.0.0-rc-1/maven-builder-support-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-logging/4.0.0-rc-1/maven-logging-4.0.0-rc-1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/2.0.4/maven-resolver-api-2.0.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/2.0.4/maven-resolver-util-2.0.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-sec-dispatcher/4.0.2/plexus-sec-dispatcher-4.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/4.0.0-rc-2/maven-model-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-api-model/4.0.0-rc-2/maven-api-model-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/4.0.0-rc-2/maven-model-builder-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/4.0.0-rc-2/maven-builder-support-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-logging/4.0.0-rc-2/maven-logging-4.0.0-rc-2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/2.0.5/maven-resolver-api-2.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/2.0.5/maven-resolver-util-2.0.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-sec-dispatcher/4.0.3/plexus-sec-dispatcher-4.0.3-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.27/plexus-interpolation-1.27-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interactivity-api/1.3/plexus-interactivity-api-1.3-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.9.0/commons-cli-1.9.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jansi-core/3.27.1/jansi-core-3.27.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.1/jline-terminal-3.27.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jansi-core/3.28.0/jansi-core-3.28.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.28.0/jline-terminal-3.28.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

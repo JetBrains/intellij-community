@@ -326,7 +326,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   companion object {
-    val MAVEN_VERSIONS: Array<String> = arrayOf<String>("bundled", "4.0.0-rc-1")
+    val MAVEN_VERSIONS: Array<String> = arrayOf<String>("bundled", "4.0.0-rc-2")
 
     @Parameterized.Parameters(name = "with Maven-{0}")
     @JvmStatic
