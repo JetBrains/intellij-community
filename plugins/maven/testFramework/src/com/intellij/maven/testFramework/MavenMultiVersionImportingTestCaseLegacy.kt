@@ -28,7 +28,7 @@ import kotlin.math.min
 
 @Deprecated("Use 'MavenMultiVersionImportingTestCase'")
 @RunWith(Parameterized::class)
-abstract class MavenMultiVersionImportingTestCaseLegacy : MavenImportingTestCase() {
+abstract class MavenMultiVersionImportingTestCaseLegacy : MavenImportingTestCaseLegacy() {
   override fun runInDispatchThread(): Boolean {
     return false
   }

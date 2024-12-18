@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.compatibility
 
-import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.MavenImportingTestCaseLegacy
 import com.intellij.maven.testFramework.MavenWrapperTestFixture
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
+class MavenCompatibilityProjectImportingTest : MavenImportingTestCaseLegacy() {
   protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
 
   @Parameterized.Parameter

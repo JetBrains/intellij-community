@@ -28,7 +28,7 @@ import java.util.*
 import kotlin.math.min
 
 @RunWith(Parameterized::class)
-abstract class MavenMultiVersionImportingTestCase : MavenNioImportingTestCase() {
+abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
 
   override fun runInDispatchThread(): Boolean {
     return false
