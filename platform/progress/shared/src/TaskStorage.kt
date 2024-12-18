@@ -46,7 +46,7 @@ abstract class TaskStorage {
             it[TaskInfoEntity.TaskCancellationType] = cancellation
             it[TaskInfoEntity.TaskSuspendableType] = suspendable
             it[TaskInfoEntity.ProgressStateType] = null
-            it[TaskInfoEntity.TaskStatusType] = TaskStatus.Running
+            it[TaskInfoEntity.TaskStatusType] = TaskStatus.Running(source = TaskStatus.Source.SYSTEM)
           }
         }
         return@withKernel taskInfoEntity

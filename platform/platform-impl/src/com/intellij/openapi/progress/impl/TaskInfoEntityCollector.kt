@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.progress.TaskInfoEntity
 import com.intellij.platform.ide.progress.TaskManager
+import com.intellij.platform.ide.progress.TaskStatus
 import com.intellij.platform.ide.progress.activeTasks
 import com.intellij.platform.ide.progress.updates
 import com.intellij.platform.kernel.withKernel
@@ -77,7 +78,7 @@ private fun taskCancellingIndicator(cs: CoroutineScope, taskInfo: TaskInfoEntity
     override fun cancel() {
       LOG.trace { "Cancelling task: entityId=$entityId, title=$title"}
       cs.launch {
-        TaskManager.cancelTask(taskInfo)
+        TaskManager.cancelTask(taskInfo, TaskStatus.Source.USER)
       }
       super.cancel()
     }
