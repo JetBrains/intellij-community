@@ -88,5 +88,13 @@ internal fun getShellCommandTokens(project: Project, command: String): List<Stri
     }
     else tokens.add(text)
   }
+
+  // Append ';' symbol to the last command
+  // It is the case for running commands like `java -cp [path;path]` under windows.
+  // Shell script treats it as command termination; however, in this case, it might be continuation of the argument.
+  val nextSibling = PsiTreeUtil.skipWhitespacesForward(lastCommand) ?: return tokens
+  if (nextSibling.text == ";" && tokens.isNotEmpty()) {
+    tokens[tokens.lastIndex] = tokens.last() + nextSibling.text
+  }
   return tokens
 }
