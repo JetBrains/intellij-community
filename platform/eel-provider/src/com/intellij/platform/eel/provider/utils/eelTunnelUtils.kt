@@ -4,6 +4,7 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.eel.EelConnectionError
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.component1
 import com.intellij.platform.eel.component2
@@ -59,7 +60,12 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
         launch {
           socket.use {
             tunnels.withConnectionToRemotePort(address, {
-              LOG.error("Failed to connect to remote port $localPort - $address: $it")
+              if (it is EelConnectionError.ConnectionProblem) {
+                LOG.debug("Failed to establish connection $connectionCounter ($localPort - $address: $it); closing socket")
+              }
+              else {
+                LOG.error("Failed to connect to remote port $localPort - $address: $it")
+              }
             }) { (channelTo, channelFrom) ->
               redirectClientConnectionDataToIJent(currentConnection, socket, channelTo)
               redirectIJentDataToClientConnection(currentConnection, socket, channelFrom)
@@ -179,11 +185,16 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
     outputStream.flush()
   }
   catch (e: EelTunnelsApi.RemoteNetworkException) {
-    LOG.warn("Connection $connectionId closed", e)
+    if (e is EelTunnelsApi.RemoteNetworkException.ConnectionReset) {
+      socket.close() // causing TCP RST to be sent back
+    }
+    else {
+      LOG.warn("Connection $connectionId closed", Throwable(e))
+    }
   }
   catch (e: SocketException) {
     if (!socket.isClosed) {
-      LOG.warn("Socket connection $connectionId closed", e)
+      LOG.warn("Socket connection $connectionId closed", Throwable(e))
     }
     else {
       LOG.debug("Socket connection $connectionId closed because of cancellation", e)
