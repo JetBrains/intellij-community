@@ -24,6 +24,7 @@ import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.File
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -65,6 +66,10 @@ internal class LocalWindowsEelApiImpl(private val nioFs: FileSystem = FileSystem
       options: EelFileSystemApi.CreateTemporaryEntryOptions,
     ): EelResult<EelPath, CreateTemporaryEntryError> =
       doCreateTemporaryDirectory(mapper, options)
+
+    override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, CreateTemporaryEntryError> {
+      return doCreateTemporaryFile(mapper, options)
+    }
   }
 }
 
@@ -112,12 +117,35 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
       options: EelFileSystemApi.CreateTemporaryEntryOptions,
     ): EelResult<EelPath, CreateTemporaryEntryError> =
       doCreateTemporaryDirectory(mapper, options)
+
+    override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, CreateTemporaryEntryError> {
+      return doCreateTemporaryFile(mapper, options)
+    }
   }
 }
 
 private fun doCreateTemporaryDirectory(
   mapper: EelPathMapper,
   options: EelFileSystemApi.CreateTemporaryEntryOptions,
+): EelResult<EelPath, CreateTemporaryEntryError> {
+  return doCreateTemporaryEntry(mapper, options) { dir, prefix, suffix, deleteOnExit ->
+    FileUtil.createTempDirectory(dir, prefix, suffix, deleteOnExit)
+  }
+}
+
+private fun doCreateTemporaryFile(
+  mapper: EelPathMapper,
+  options: EelFileSystemApi.CreateTemporaryEntryOptions,
+): EelResult<EelPath, CreateTemporaryEntryError> {
+  return doCreateTemporaryEntry(mapper, options) { dir, prefix, suffix, deleteOnExit ->
+    FileUtil.createTempFile(dir, prefix, suffix, deleteOnExit)
+  }
+}
+
+private fun doCreateTemporaryEntry(
+  mapper: EelPathMapper,
+  options: EelFileSystemApi.CreateTemporaryEntryOptions,
+  localCreator: (File, String, String?, Boolean) -> File,
 ): EelResult<EelPath, CreateTemporaryEntryError> {
   val dir =
     options.parentDirectory?.let(mapper::toNioPath)?.toFile()
@@ -128,18 +156,14 @@ private fun doCreateTemporaryDirectory(
       }
       path.toFile()
     }
-  val tempDirectory = FileUtil.createTempDirectory(
-    dir,
-    options.prefix,
-    options.suffix.nullize(),
-    options.deleteOnExit,
-  )
-  val tempDirectoryEel = mapper.getOriginalPath(tempDirectory.toPath())
+  val tempEntry = localCreator(dir, options.prefix, options.suffix.nullize(), options.deleteOnExit)
+  val tempDirectoryEel = mapper.getOriginalPath(tempEntry.toPath())
   return if (tempDirectoryEel != null)
     Ok(tempDirectoryEel)
   else
-    EelFsResultImpl.Error(Other(EelPath.parse(tempDirectory.toString(), null), "Can't map this path"))
+    EelFsResultImpl.Error(Other(EelPath.parse(tempEntry.toString(), null), "Can't map this path"))
 }
+
 
 private val LOG = Logger.getInstance(EelApi::class.java)
 

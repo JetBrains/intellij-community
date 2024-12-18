@@ -383,6 +383,9 @@ interface EelFileSystemApi {
     EelPath,
     CreateTemporaryEntryError>
 
+  @CheckReturnValue
+  suspend fun createTemporaryFile(options: CreateTemporaryEntryOptions): EelResult<EelPath, CreateTemporaryEntryError>
+
   interface CreateTemporaryEntryOptions {
     val prefix: String
     val suffix: String
