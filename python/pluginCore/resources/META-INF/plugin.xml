@@ -457,7 +457,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                  key="python.debug.halt.variable.resolve.threads.on.step.resume"/>
 
     <!-- Retaining the feature flag for FL-29868 -->
-    <registryKey defaultValue="true" description="Use a single port for communication between PyCharm and the debugger"
+    <registryKey defaultValue="false" description="Use a single port for communication between PyCharm and the debugger"
                  restartRequired="false" key="python.debug.use.single.port"/>
 
     <registryKey defaultValue="1000" description="Timeout between attempts to connect to remote debugger server"
