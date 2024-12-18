@@ -1060,24 +1060,19 @@ class PyTypeHintsInspection : PyInspection() {
         if (typeArguments.isNotEmpty()) {
           val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(type.pyClass, myTypeEvalContext) ?: return
           val typeParameters = genericDefinitionType.elementTypes
-          val numOfDispensable = typeParameters.count { (it is PyTypeParameterType && it.defaultType != null) || it is PyTypeVarTupleType }
 
           val mapping = PyTypeParameterMapping.mapByShape(typeParameters,
                                                           typeArguments,
                                                           PyTypeParameterMapping.Option.USE_DEFAULTS)
           if (mapping == null) {
-            val expectedMax = typeParameters.size
-            val expectedMin = expectedMax - numOfDispensable
-            val actualNum = typeArguments.size
+            val typeParameterListRepresentation = typeParameters
+              .map { it.name }
+              .joinToString(prefix = "[", postfix = "]")
 
-            if (actualNum < expectedMin) {
-              registerProblem(node.indexExpression, PyPsiBundle.message("INSP.type.hints.generic.type.too.few.type.arguments",
-                                                                        type.pyClass.name, expectedMin, actualNum), ProblemHighlightType.WEAK_WARNING)
-            }
-            else if (actualNum > expectedMax) {
-              registerProblem(node.indexExpression, PyPsiBundle.message("INSP.type.hints.generic.type.too.many.type.arguments",
-                                                                        type.pyClass.name, expectedMax, actualNum), ProblemHighlightType.WEAK_WARNING)
-            }
+            registerProblem(node.indexExpression,
+                            PyPsiBundle.message("INSP.type.hints.type.arguments.do.not.match.type.parameters",
+                                                typeParameterListRepresentation,
+                                                genericDefinitionType.pyClass.name), ProblemHighlightType.WARNING)
           }
         }
       }

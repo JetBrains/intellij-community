@@ -1825,13 +1825,13 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                    class Clazz(Generic[NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1]): ...
                    
-                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 1">int</weak_warning>]()
-                   c2 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 2">int, str</weak_warning>]()
+                   c1 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int</warning>]()
+                   c2 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int, str</warning>]()
                    c3 = Clazz[int, str, bool]()
                    c4 = Clazz[int, str, bool, int]()
                    c5 = Clazz[int, str, bool, int, str]()
-                   c6 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 6">int, str, bool, int, str, int</weak_warning>]()
-                   c7 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 7">int, str, bool, int, str, int, int</weak_warning>]()
+                   c6 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int, str, bool, int, str, int</warning>]()
+                   c7 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int, str, bool, int, str, int, int</warning>]()
                    """);
   }
 
@@ -1849,7 +1849,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    c = Clazz[int]()
                    c1 = Clazz[int, str]()
                    c2 = Clazz[int, str, bool]()
-                   c3 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 3, got 4">int, str, bool, float</weak_warning>]()
+                   c3 = Clazz[<warning descr="Passed type arguments do not math type parameters [T, T1, T2] of class 'Clazz'">int, str, bool, float</warning>]()
                    """);
   }
 
@@ -1914,7 +1914,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class Clazz(Generic[NoDefaultT2, NoDefaultT3, DefaultT, DefaultT1, DefaultTs]):
                        ...
                    
-                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 2, got 1">int</weak_warning>]()
+                   c1 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, DefaultT, DefaultT1, *DefaultTs] of class 'Clazz'">int</warning>]()
                    c2 = Clazz[int, str]()
                    c3 = Clazz[int, str, bool]()
                    c4 = Clazz[int, str, bool, int]()
@@ -1932,13 +1932,13 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class Clazz[NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT = int, DefaultT1 = str]:
                        ...
                    
-                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 1">int</weak_warning>]()
-                   c2 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 2">int, str</weak_warning>]()
+                   c1 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int</warning>]()
+                   c2 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int, str</warning>]()
                    c3 = Clazz[int, str, bool]()
                    c4 = Clazz[int, str, bool, int]()
                    c5 = Clazz[int, str, bool, int, str]()
-                   c6 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 6">int, str, bool, int, str, int</weak_warning>]()
-                   c7 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 7">int, str, bool, int, str, int, int</weak_warning>]()
+                   c6 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int, str, bool, int, str, int</warning>]()
+                   c7 = Clazz[<warning descr="Passed type arguments do not math type parameters [NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1] of class 'Clazz'">int, str, bool, int, str, int, int</warning>]()
                    """);
   }
 
@@ -1969,8 +1969,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                    P = ParamSpec("P")
                    T2 = TypeVar("T2", default=<warning descr="'ParamSpec' cannot be used in default type of TypeVar">P</warning>)
-                   T3 = TypeVar("T3", default=dict[str, Ts])
-                   T4 = TypeVar("T4", default=dict[list[P], str])
+                   T3 = TypeVar("T3", default=dict[<warning descr="Passed type arguments do not math type parameters [_KT, _VT] of class 'dict'">str, Ts</warning>])
+                   T4 = TypeVar("T4", default=dict[list[<warning descr="Passed type arguments do not math type parameters [_T] of class 'list'">P</warning>], str])
                    """);
   }
 
@@ -1979,8 +1979,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    class Clazz[T1, T2, *Ts, T3]: ...
                    
-                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 1">int</weak_warning>]()
-                   c2 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 2">int, str</weak_warning>]()
+                   c1 = Clazz[<warning descr="Passed type arguments do not math type parameters [T1, T2, *Ts, T3] of class 'Clazz'">int</warning>]()
+                   c2 = Clazz[<warning descr="Passed type arguments do not math type parameters [T1, T2, *Ts, T3] of class 'Clazz'">int, str</warning>]()
                    c3 = Clazz[int, str, bool]()
                    c4 = Clazz[int, str, bool, float]()
                    """);
