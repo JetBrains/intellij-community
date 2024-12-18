@@ -1254,7 +1254,7 @@ private fun loadDescriptorFromResource(
         }
         else {
           // support for unpacked plugins in classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
-          basePath = file.parent?.takeIf { !it.endsWith("lib") }?.parent ?: file
+          basePath = file.parent?.takeIf { it.endsWith("lib") }?.parent ?: file
           dataLoader = loader
         }
 
