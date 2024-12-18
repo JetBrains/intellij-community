@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.intellij.icons.AllIcons;
@@ -21,7 +21,7 @@ import java.util.Date;
  */
 public abstract class JiraTask extends Task {
   protected final TaskRepository myRepository;
-  // Deferred icon must be stored as a field because otherwise it's going to initiate repainting 
+  // Deferred icon must be stored as a field because otherwise it's going to initiate repainting
   // of the containing component and will be re-built anew indefinitely.
   // It can be accessed not only in EDT, e.g. to get completion items for tasks.
   private volatile Icon myIcon;
@@ -83,9 +83,8 @@ public abstract class JiraTask extends Task {
     return myIcon;
   }
 
-  @Nullable
   @Override
-  public final TaskRepository getRepository() {
+  public final @NotNull TaskRepository getRepository() {
     return myRepository;
   }
 
@@ -100,7 +99,7 @@ public abstract class JiraTask extends Task {
   }
 
   /**
-   * Pick appropriate issue type's icon by its URL, contained in JIRA's responses.
+   * Pick the appropriate issue type's icon by its URL, contained in JIRA's responses.
    * Icons will be lazily fetched using {@link CachedIconLoader}.
    *
    * @param iconUrl unique icon URL as returned from {@link #getIconUrl()}

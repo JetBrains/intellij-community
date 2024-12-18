@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 
-class KotlinGradleTomlVersionCatalogReferencesSearcher :
+internal class KotlinGradleTomlVersionCatalogReferencesSearcher :
     QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
 
     override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {

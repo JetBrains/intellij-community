@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.toml.core" exported="" />
-    <orderEntry type="module" module-name="intellij.toml.json" exported="" />
-    <orderEntry type="module" module-name="intellij.toml.grazie" exported="" />
+    <orderEntry type="module" module-name="intellij.toml.core" />
+    <orderEntry type="module" module-name="intellij.toml.json" />
+    <orderEntry type="module" module-name="intellij.toml.grazie" />
   </component>
 </module>

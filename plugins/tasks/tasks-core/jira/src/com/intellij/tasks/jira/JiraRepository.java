@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
 @Tag("JIRA")
-public class JiraRepository extends BaseRepositoryImpl {
+public final class JiraRepository extends BaseRepositoryImpl {
 
   public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
   private final static Logger LOG = Logger.getInstance(JiraRepository.class);
