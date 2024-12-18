@@ -38,6 +38,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -463,36 +464,38 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     return JavaDebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
-  interface CapturePointConsumer {
-    void accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
+  interface CapturePointConsumer<R> {
+    R accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
   }
 
-  static void processCaptureAnnotations(@Nullable Project project, CapturePointConsumer consumer) {
+  static <R> List<R> processCaptureAnnotations(@Nullable Project project, CapturePointConsumer<R> consumer) {
     if (project == null) { // fallback
       project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }
-    if (!project.isDefault()) {
-      DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
-      scanPointsInt(project, debuggerProjectSettings, true, consumer);
-      scanPointsInt(project, debuggerProjectSettings, false, consumer);
+    if (project.isDefault()) {
+      return Collections.emptyList();
     }
+    DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
+    return ContainerUtil.concat(
+      scanPointsInt(project, debuggerProjectSettings, true, consumer),
+      scanPointsInt(project, debuggerProjectSettings, false, consumer));
   }
 
-  private static void scanPointsInt(Project project,
-                                    DebuggerProjectSettings debuggerProjectSettings,
-                                    boolean capture,
-                                    CapturePointConsumer consumer) {
+  private static <R> List<R> scanPointsInt(Project project,
+                                           DebuggerProjectSettings debuggerProjectSettings,
+                                           boolean capture,
+                                           CapturePointConsumer<R> consumer) {
     try {
-      getAsyncAnnotations(debuggerProjectSettings, capture)
-        .forEach(annotationName -> NodeRendererSettings.visitAnnotatedElements(annotationName, project,
-                                                                               (e, annotation) -> consumer.accept(capture, e, annotation),
-                                                                               PsiMethod.class, PsiParameter.class));
+      return NodeRendererSettings.visitAnnotatedElements(getAsyncAnnotations(debuggerProjectSettings, capture), project,
+                                                         (e, annotation) -> consumer.accept(capture, e, annotation),
+                                                         PsiMethod.class, PsiParameter.class);
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
     catch (Exception e) {
       LOG.error(e);
     }
+    return Collections.emptyList();
   }
 
   static String getAnnotationName(boolean capture) {

@@ -53,7 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 @State(name = "NodeRendererSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
@@ -267,20 +267,23 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   private void addAnnotationRenderers(List<NodeRenderer> renderers, Project project) {
     try {
-      visitAnnotatedElements(Debug.Renderer.class.getName().replace("$", "."), project, (e, annotation) -> {
-        if (e instanceof PsiClass cls) {
-          String text = getAttributeValue(annotation, "text");
-          LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
-          String childrenArray = getAttributeValue(annotation, "childrenArray");
-          String isLeaf = getAttributeValue(annotation, "hasChildren");
-          ExpressionChildrenRenderer childrenRenderer =
-            StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
-          CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
-            cls.getQualifiedName(), cls.getQualifiedName(), labelRenderer, childrenRenderer);
-          renderer.setEnabled(true);
-          renderers.add(renderer);
-        }
-      }, PsiClass.class);
+      List<CompoundReferenceRenderer> annotationRenderers =
+        visitAnnotatedElements(List.of(Debug.Renderer.class.getName().replace("$", ".")), project, (e, annotation) -> {
+          if (e instanceof PsiClass cls) {
+            String text = getAttributeValue(annotation, "text");
+            LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
+            String childrenArray = getAttributeValue(annotation, "childrenArray");
+            String isLeaf = getAttributeValue(annotation, "hasChildren");
+            ExpressionChildrenRenderer childrenRenderer =
+              StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
+            CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
+              cls.getQualifiedName(), cls.getQualifiedName(), labelRenderer, childrenRenderer);
+            renderer.setEnabled(true);
+            return renderer;
+          }
+          return null;
+        }, PsiClass.class);
+      renderers.addAll(annotationRenderers);
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
@@ -592,17 +595,24 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  static <T extends PsiModifierListOwner> void visitAnnotatedElements(String annotationFqn,
-                                                                      Project project,
-                                                                      BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer,
-                                                                      Class<? extends T> @NotNull ... types) {
-    ReadAction.run(() -> {
-      PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
-      if (annotationClass == null) return;
-      AnnotatedElementsSearch.searchElements(annotationClass, GlobalSearchScope.allScope(project), types)
-        .forEach((PsiModifierListOwner owner) -> {
-          consumer.accept(owner, AnnotationUtil.findAnnotation(owner, annotationFqn));
-        });
-    });
+  static <T extends PsiModifierListOwner, R> List<R> visitAnnotatedElements(List<String> annotationFqns,
+                                                                            Project project,
+                                                                            BiFunction<? super PsiModifierListOwner, ? super PsiAnnotation, R> consumer,
+                                                                            Class<? extends T> @NotNull ... types) {
+    return ReadAction.nonBlocking(() -> {
+      List<R> result = new ArrayList<>();
+      for (String annotationFqn : annotationFqns) {
+        PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
+        if (annotationClass == null) continue;
+        AnnotatedElementsSearch.searchElements(annotationClass, GlobalSearchScope.allScope(project), types)
+          .forEach((PsiModifierListOwner owner) -> {
+            R element = consumer.apply(owner, AnnotationUtil.findAnnotation(owner, annotationFqn));
+            if (element != null) {
+              result.add(element);
+            }
+          });
+      }
+      return result;
+    }).executeSynchronously();
   }
 }
