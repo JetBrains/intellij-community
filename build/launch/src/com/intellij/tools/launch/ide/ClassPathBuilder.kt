@@ -1,6 +1,7 @@
 package com.intellij.tools.launch.ide
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.util.SystemProperties
@@ -11,6 +12,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.logging.Logger
@@ -63,7 +65,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
     JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.toPath())
 
     val productionOutput = paths.outputRootFolder.resolve("production")
-    if (!productionOutput.isDirectory) {
+    if (!productionOutput.isDirectory && PathManager.getArchivedCompiledClassesMapping() == null) {
       error("Production classes output directory is missing: $productionOutput")
     }
 
@@ -106,6 +108,11 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
       .dependencies(module)
       .recursively()
       .includedIn(jpsJavaClasspathKind)
-      .classes().roots.filter { it.exists() }.map { mapper(it.toPath()) }.toList()
+      .classes().paths.replaceWithArchivedIfNeeded().filter { Files.exists(it) }.map { mapper(it) }.toList()
+  }
+
+  private fun Collection<Path>.replaceWithArchivedIfNeeded(): Collection<Path> {
+    val mapping = PathManager.getArchivedCompiledClassesMapping() ?: return this
+    return map { path -> if (Files.isRegularFile(path)) path else mapping[path.pathString]?.let { Path.of(it) } ?: path }
   }
 }
