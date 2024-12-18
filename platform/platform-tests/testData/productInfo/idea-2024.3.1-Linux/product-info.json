@@ -121,7 +121,7 @@
             "-Djna.nosys=true",
             "-Djna.noclasspath=true",
             "-Dintellij.platform.runtime.repository.path=$IDE_HOME/modules/module-descriptors.jar",
-            "-Dintellij.platform.root.module=intellij.idea.frontend",
+            "-Dintellij.platform.root.module=intellij.idea.frontend.split",
             "-Dintellij.platform.product.mode=frontend",
             "-Didea.platform.prefix=JetBrainsClient",
             "-Dide.no.platform.update=true",

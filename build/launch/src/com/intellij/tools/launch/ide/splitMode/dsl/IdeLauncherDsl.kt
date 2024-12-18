@@ -18,7 +18,7 @@ enum class Product(val backendMainModule: String,
                    val frontendRootProductModule: String) {
   IDEA_ULTIMATE(
     backendMainModule = "intellij.idea.ultimate.main",
-    frontendRootProductModule = "intellij.idea.frontend"
+    frontendRootProductModule = "intellij.idea.frontend.split"
   ),
 }
 
