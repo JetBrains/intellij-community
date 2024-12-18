@@ -71,6 +71,9 @@ class BuildContextImpl internal constructor(
       "defined in ${SnapshotBuildNumber.PATH}"
     }
     messages.setParameter("build.artifact.buildNumber", buildNumber)
+    if (buildNumber != suppliedBuildNumber) {
+      messages.reportBuildNumber(buildNumber)
+    }
   }
 
   override suspend fun cleanupJarCache() {

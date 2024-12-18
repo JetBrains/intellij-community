@@ -148,6 +148,10 @@ class BuildMessagesImpl private constructor(
   override fun cancelBuild(reason: String) {
     logger.processMessage(LogMessage(LogMessage.Kind.BUILD_CANCEL, reason))
   }
+
+  override fun reportBuildNumber(value: String) {
+    logger.processMessage(LogMessage(LogMessage.Kind.BUILD_NUMBER, value))
+  }
 }
 
 /**

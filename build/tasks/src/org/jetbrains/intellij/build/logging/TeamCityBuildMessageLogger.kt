@@ -154,6 +154,9 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       IMPORT_DATA -> {
         print("importData", "type" to "streamToBuildLog", "filePath" to message.text, "wrapFileContentInBlock" to "false")
       }
+      BUILD_NUMBER -> {
+        print(ServiceMessageTypes.BUILD_NUMBER, message.text)
+      }
     }
   }
 }
