@@ -9,6 +9,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.classMembers.MemberInfoChange
 import com.intellij.refactoring.classMembers.MemberInfoModel
+import com.intellij.refactoring.memberPullUp.PullUpDialogBase
 import com.intellij.refactoring.memberPullUp.PullUpProcessor
 import com.intellij.refactoring.util.DocCommentPolicy
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -19,13 +20,15 @@ import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import java.awt.event.ItemEvent
+import javax.swing.JComboBox
 
 class KotlinPullUpDialog(
     project: Project,
     classOrObject: KtClassOrObject,
     superClasses: List<PsiNamedElement>,
     memberInfoStorage: KotlinMemberInfoStorage
-) : KotlinPullUpDialogBase(
+) : PullUpDialogBase<KotlinMemberInfoStorage, KotlinMemberInfo, KtNamedDeclaration, PsiNamedElement>(
     project, classOrObject, superClasses, memberInfoStorage, PULL_MEMBERS_UP
 ) {
     init {
@@ -129,6 +132,22 @@ class KotlinPullUpDialog(
 
     override fun createMemberInfoModel(): MemberInfoModel<KtNamedDeclaration, KotlinMemberInfo> =
         MemberInfoModelImpl(sourceClass, preselection, getInterfaceContainmentVerifier { selectedMemberInfos })
+
+    override fun initClassCombo(classCombo: JComboBox<*>) {
+        @Suppress("UNCHECKED_CAST") 
+        val castedClassCombo = classCombo as JComboBox<PsiNamedElement>
+        
+        castedClassCombo.setRenderer(KotlinOrJavaClassCellRenderer())
+        castedClassCombo.addItemListener(fun(e: ItemEvent) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                if (myMemberSelectionPanel == null) return
+                val table = myMemberSelectionPanel.getTable()
+                if (table == null) return
+                table.setMemberInfos(myMemberInfos)
+                table.fireExternalDataChange()
+            }
+        })
+    }
 
     override fun getPreselection() = mySuperClasses.firstOrNull { !it.isInterfaceClass() } ?: mySuperClasses.firstOrNull()
 
