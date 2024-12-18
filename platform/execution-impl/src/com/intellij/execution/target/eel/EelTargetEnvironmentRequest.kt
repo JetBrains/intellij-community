@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -215,7 +216,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
         val remoteRoot = when (val targetRootPath = targetPathGetter()) {
           is TargetPath.Temporary -> {
-            eel.mapper.getOriginalPath(localRootPath)?.toString() ?: runBlockingCancellable {
+            eel.mapper.getOriginalPath(localRootPath)?.toString() ?: runBlockingMaybeCancellable {
               val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder()
 
               targetRootPath.prefix?.let(options::prefix)
