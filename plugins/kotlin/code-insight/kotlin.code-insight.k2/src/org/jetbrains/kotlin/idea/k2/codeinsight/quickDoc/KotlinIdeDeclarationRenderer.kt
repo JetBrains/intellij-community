@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParamete
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaModifierListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererModalityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
@@ -269,6 +270,29 @@ internal class KotlinIdeDeclarationRenderer(
         otherModifiersProvider = otherModifiersProvider.onlyIf { symbol ->
           !(symbol is KaNamedFunctionSymbol && symbol.isOverride || symbol is KaPropertySymbol && symbol.isOverride) && !symbol.isInlineClassOrObject()
         }.and(valueModifierRenderer)
+
+        modifierListRenderer = object : KaModifierListRenderer {
+            override fun renderModifiers(
+                analysisSession: KaSession,
+                symbol: KaDeclarationSymbol,
+                declarationModifiersRenderer: KaDeclarationModifiersRenderer,
+                printer: PrettyPrinter
+            ) =
+                with(analysisSession) {
+                    printer {
+                        " ".separated(
+                            {
+                                if (symbol is KaNamedClassSymbol && symbol.isLocal) {
+                                    printer.append(highlight("local") { asKeyword })
+                                }
+                            },
+                            {
+                                KaModifierListRenderer.AS_LIST.renderModifiers(analysisSession, symbol, declarationModifiersRenderer, printer)
+                            })
+                    }
+                }
+        }
+
         keywordsRenderer = keywordsRenderer.keywordsRenderer()
     }
 

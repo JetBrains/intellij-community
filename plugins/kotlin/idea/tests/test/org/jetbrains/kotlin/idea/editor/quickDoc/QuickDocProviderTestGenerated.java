@@ -80,6 +80,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/AtImplicitLambdaParameter.kt");
     }
 
+    @TestMetadata("AtLocalClass.kt")
+    public void testAtLocalClass() throws Exception {
+        runTest("testData/editor/quickDoc/AtLocalClass.kt");
+    }
+
     @TestMetadata("AtLocalFunction.kt")
     public void testAtLocalFunction() throws Exception {
         runTest("testData/editor/quickDoc/AtLocalFunction.kt");

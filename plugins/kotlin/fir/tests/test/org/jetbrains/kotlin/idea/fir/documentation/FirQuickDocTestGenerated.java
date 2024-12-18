@@ -82,6 +82,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/AtImplicitLambdaParameter.kt");
         }
 
+        @TestMetadata("AtLocalClass.kt")
+        public void testAtLocalClass() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/AtLocalClass.kt");
+        }
+
         @TestMetadata("AtLocalFunction.kt")
         public void testAtLocalFunction() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/AtLocalFunction.kt");
