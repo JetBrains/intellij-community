@@ -27,8 +27,11 @@ open class AgentTestLogger(logger: Logger, private val factory: AgentTestLoggerF
     val rdtseType = getRdtseType(t)
     val rdtseStackTrace = getRdtseStackTrace(t?.stackTrace)
     val rdtseCause = getRdtseCause(t)
+    val rdtseProductVersion = com.intellij.openapi.application.ApplicationInfo.getInstance().build.asStringWithoutProductCode()
+    val rdtseProductCode = com.intellij.openapi.application.ApplicationInfo.getInstance().build.productCode
     val rdTestSessionException = RdTestSessionException(type = rdtseType, originalType = null, message = rdtseMessage,
-                                                        stacktrace = rdtseStackTrace, cause = rdtseCause)
+                                                        stacktrace = rdtseStackTrace, cause = rdtseCause, productVersion = rdtseProductVersion,
+                                                        productCode = rdtseProductCode)
 
     info("Fired ex to the test runner ${rdTestSessionException.message}")
 

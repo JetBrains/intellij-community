@@ -57,7 +57,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -2934857283786697801L
+        const val serializationHash = -4114074646566998102L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -607,7 +607,9 @@ data class RdTestSessionException (
     val originalType: String?,
     val message: String?,
     val stacktrace: List<RdTestSessionStackTraceElement>,
-    val cause: RdTestSessionExceptionCause?
+    val cause: RdTestSessionExceptionCause?,
+    val productVersion: String?,
+    val productCode: String?
 ) : IPrintable {
     //companion
     
@@ -622,7 +624,9 @@ data class RdTestSessionException (
             val message = buffer.readNullable { buffer.readString() }
             val stacktrace = buffer.readList { RdTestSessionStackTraceElement.read(ctx, buffer) }
             val cause = buffer.readNullable { RdTestSessionExceptionCause.read(ctx, buffer) }
-            return RdTestSessionException(type, originalType, message, stacktrace, cause)
+            val productVersion = buffer.readNullable { buffer.readString() }
+            val productCode = buffer.readNullable { buffer.readString() }
+            return RdTestSessionException(type, originalType, message, stacktrace, cause, productVersion, productCode)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSessionException)  {
@@ -631,6 +635,8 @@ data class RdTestSessionException (
             buffer.writeNullable(value.message) { buffer.writeString(it) }
             buffer.writeList(value.stacktrace) { v -> RdTestSessionStackTraceElement.write(ctx, buffer, v) }
             buffer.writeNullable(value.cause) { RdTestSessionExceptionCause.write(ctx, buffer, it) }
+            buffer.writeNullable(value.productVersion) { buffer.writeString(it) }
+            buffer.writeNullable(value.productCode) { buffer.writeString(it) }
         }
         
         
@@ -651,6 +657,8 @@ data class RdTestSessionException (
         if (message != other.message) return false
         if (stacktrace != other.stacktrace) return false
         if (cause != other.cause) return false
+        if (productVersion != other.productVersion) return false
+        if (productCode != other.productCode) return false
         
         return true
     }
@@ -662,6 +670,8 @@ data class RdTestSessionException (
         __r = __r*31 + if (message != null) message.hashCode() else 0
         __r = __r*31 + stacktrace.hashCode()
         __r = __r*31 + if (cause != null) cause.hashCode() else 0
+        __r = __r*31 + if (productVersion != null) productVersion.hashCode() else 0
+        __r = __r*31 + if (productCode != null) productCode.hashCode() else 0
         return __r
     }
     //pretty print
@@ -673,6 +683,8 @@ data class RdTestSessionException (
             print("message = "); message.print(printer); println()
             print("stacktrace = "); stacktrace.print(printer); println()
             print("cause = "); cause.print(printer); println()
+            print("productVersion = "); productVersion.print(printer); println()
+            print("productCode = "); productCode.print(printer); println()
         }
         printer.print(")")
     }

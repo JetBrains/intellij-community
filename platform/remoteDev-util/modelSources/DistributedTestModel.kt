@@ -48,6 +48,8 @@ object DistributedTestModel : Ext(TestRoot) {
     field("message", string.nullable)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
     field("cause", RdTestSessionExceptionCause.nullable)
+    field("productVersion", string.nullable)
+    field("productCode", string.nullable)
   }
 
 
