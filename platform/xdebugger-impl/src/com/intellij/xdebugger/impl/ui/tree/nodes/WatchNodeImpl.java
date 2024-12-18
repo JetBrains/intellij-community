@@ -11,6 +11,8 @@ import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch;
+import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
@@ -19,35 +21,33 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
-  private final XExpression myExpression;
+  private final XWatch myWatch;
+
+  public WatchNodeImpl(@NotNull XDebuggerTree tree,
+                       @NotNull XDebuggerTreeNode parent,
+                       @NotNull XWatch watch,
+                       @Nullable XStackFrame stackFrame,
+                       @Nullable String name,
+                       @Nullable XValue value) {
+    super(tree, parent,
+          name == null ? renderName(watch.getExpression()) : name,
+          value == null ? new XWatchValue(watch, tree, stackFrame) : value);
+    myWatch = watch;
+  }
 
   public WatchNodeImpl(@NotNull XDebuggerTree tree,
                        @NotNull WatchesRootNode parent,
                        @NotNull XExpression expression,
                        @Nullable XStackFrame stackFrame) {
-    this(tree, parent, expression, stackFrame, renderName(expression));
-  }
-
-  WatchNodeImpl(@NotNull XDebuggerTree tree,
-                @NotNull WatchesRootNode parent,
-                @NotNull XExpression expression,
-                @Nullable XStackFrame stackFrame,
-                @NotNull String name) {
-    this(tree, parent, expression, name, new XWatchValue(expression, tree, stackFrame));
-  }
-
-  WatchNodeImpl(@NotNull XDebuggerTree tree,
-                @NotNull WatchesRootNode parent,
-                @NotNull XExpression expression,
-                @NotNull String name,
-                @NotNull XValue value) {
-    super(tree, parent, name, value);
-    myExpression = expression;
+    this(tree, parent, new XAlwaysEvaluatedWatch(expression), stackFrame, null, null);
   }
 
   protected WatchNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression, XNamedValue value) {
-    super(tree, parent, renderName(expression), value);
-    myExpression = expression;
+    this(tree, parent, new XAlwaysEvaluatedWatch(expression), null, null, value);
+  }
+
+  XWatch getWatch() {
+    return myWatch;
   }
 
   protected static String renderName(XExpression expression) {
@@ -59,7 +59,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   @Override
   @NotNull
   public XExpression getExpression() {
-    return myExpression;
+    return myWatch.getExpression();
   }
 
   @NotNull
@@ -95,14 +95,14 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   }
 
   private static class XWatchValue extends XNamedValue {
-    private final XExpression myExpression;
+    private final XWatch myWatch;
     private final XDebuggerTree myTree;
     private final XStackFrame myStackFrame;
     private volatile XValue myValue;
 
-    XWatchValue(XExpression expression, XDebuggerTree tree, XStackFrame stackFrame) {
-      super(expression.getExpression());
-      myExpression = expression;
+    XWatchValue(XWatch watch, XDebuggerTree tree, XStackFrame stackFrame) {
+      super(watch.getExpression().getExpression());
+      myWatch = watch;
       myTree = tree;
       myStackFrame = stackFrame;
     }
@@ -120,7 +120,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
         if (myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
           XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
           if (evaluator != null) {
-            evaluator.evaluate(myExpression, new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
+            evaluator.evaluate(myWatch.getExpression(), new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
             return;
           }
         }
@@ -190,7 +190,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     @Override
     @NotNull
     public Promise<XExpression> calculateEvaluationExpression() {
-      return Promises.resolvedPromise(myExpression);
+      return Promises.resolvedPromise(myWatch.getExpression());
     }
 
     @Override

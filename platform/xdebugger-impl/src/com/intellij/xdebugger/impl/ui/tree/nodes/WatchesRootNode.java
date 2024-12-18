@@ -11,9 +11,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.XWatch;
+import com.intellij.xdebugger.impl.XWatchImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.frame.XDebugView;
@@ -66,7 +71,10 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     }
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Use {@link WatchesRootNode#WatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean)} instead
+   */
+  @Deprecated
   // required for com.google.gct.core
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
@@ -74,27 +82,52 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     this(tree, watchesView, Arrays.asList(expressions), null, false);
   }
 
+  /**
+   * @deprecated Use {@link WatchesRootNode#WatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean)} instead
+   */
+  @Deprecated
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          @NotNull List<? extends XExpression> expressions,
                          @Nullable XStackFrame stackFrame,
                          boolean watchesInVariables) {
+    this(tree, watchesView, ContainerUtil.map(expressions, XAlwaysEvaluatedWatch::new), stackFrame, watchesInVariables, false);
+  }
+
+  public WatchesRootNode(@NotNull XDebuggerTree tree,
+                         @NotNull XWatchesView watchesView,
+                         @NotNull String configurationName,
+                         @Nullable XStackFrame stackFrame,
+                         boolean watchesInVariables) {
+    this(tree, watchesView,
+         ((XDebuggerManagerImpl)XDebuggerManager.getInstance(tree.getProject())).getWatchesManager().getWatchEntries(configurationName),
+         stackFrame, watchesInVariables, false);
+  }
+
+  private WatchesRootNode(@NotNull XDebuggerTree tree,
+                          @NotNull XWatchesView watchesView,
+                          @NotNull List<? extends XWatch> watches,
+                          @Nullable XStackFrame stackFrame,
+                          boolean watchesInVariables,
+                          @SuppressWarnings("unused") boolean avoidSignatureClash) {
     super(tree, null, false, new RootContainerNode(stackFrame, watchesInVariables));
     myWatchesView = watchesView;
     myChildren = new ArrayList<>();
+    copyEvaluationResultFromOldRoot(tree, stackFrame);
+
+    for (XWatch watch : watches) {
+      myChildren.add(new WatchNodeImpl(myTree, this, watch, stackFrame, null, null));
+    }
+  }
+
+  private void copyEvaluationResultFromOldRoot(@NotNull XDebuggerTree tree, @Nullable XStackFrame stackFrame) {
     // copy evaluation result by default
-    if (stackFrame != null) {
-      XDebuggerTreeNode root = tree.getRoot();
-      if (root instanceof WatchesRootNode) {
-        StreamEx.of(((WatchesRootNode)root).myChildren)
-          .select(ResultNode.class)
-          .findFirst()
-          .ifPresent(node -> myChildren.add(new ResultNode(myTree, this, node.getExpression(), node.getValueContainer())));
-      }
-    }
-    for (XExpression watchExpression : expressions) {
-      myChildren.add(new WatchNodeImpl(myTree, this, watchExpression, stackFrame));
-    }
+    if (stackFrame == null) return;
+    if (!(tree.getRoot() instanceof WatchesRootNode watchesRootNode)) return;
+    StreamEx.of(watchesRootNode.myChildren)
+      .select(ResultNode.class)
+      .findFirst()
+      .ifPresent(node -> myChildren.add(new ResultNode(myTree, this, node.getExpression(), node.getValueContainer())));
   }
 
   @NotNull
@@ -117,10 +150,22 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return myChildren;
   }
 
+  /**
+   * @deprecated Use {@link WatchesRootNode#getWatches()} instead.
+   */
+  @Deprecated
   public List<XExpression> getWatchExpressions() {
     return StreamEx.of(getWatchChildren())
       .filter(node -> !(node instanceof ResultNode))
       .map(WatchNode::getExpression)
+      .toList();
+  }
+
+  public List<XWatch> getWatches() {
+    return StreamEx.of(getWatchChildren())
+      .select(WatchNodeImpl.class)
+      .filter(node -> !(node instanceof ResultNode))
+      .map(WatchNodeImpl::getWatch)
       .toList();
   }
 
@@ -139,14 +184,14 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                @NotNull WatchesRootNode parent,
                @NotNull XExpression expression,
                @Nullable XStackFrame stackFrame) {
-      super(tree, parent, expression, stackFrame, XDebuggerBundle.message("debugger.result.node.name"));
+      super(tree, parent, new XAlwaysEvaluatedWatch(expression), stackFrame, XDebuggerBundle.message("debugger.result.node.name"), null);
     }
 
     ResultNode(@NotNull XDebuggerTree tree,
                @NotNull WatchesRootNode parent,
                @NotNull XExpression expression,
                @NotNull XValue value) {
-      super(tree, parent, expression, XDebuggerBundle.message("debugger.result.node.name"), value);
+      super(tree, parent, new XAlwaysEvaluatedWatch(expression), null, XDebuggerBundle.message("debugger.result.node.name"), value);
     }
 
     @Override
@@ -195,7 +240,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                                  @NotNull XExpression expression,
                                  int index,
                                  boolean navigateToWatchNode) {
-    WatchNodeImpl message = new WatchNodeImpl(myTree, this, expression, stackFrame);
+    WatchNodeImpl message = new WatchNodeImpl(myTree, this, new XWatchImpl(expression), stackFrame, null, null);
     if (index < 0 || index > myChildren.size()) {
       index = myChildren.size();
     }

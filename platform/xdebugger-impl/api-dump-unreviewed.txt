@@ -146,6 +146,13 @@ f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 - f:reshowInlayRunToCursor(com.intellij.openapi.editor.Editor):V
 f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener$Companion
 - f:isInlayRunToCursorEnabled():Z
+f:com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch
+- com.intellij.xdebugger.impl.XWatch
+- <init>(com.intellij.xdebugger.XExpression):V
+- getCanBePaused():Z
+- getExpression():com.intellij.xdebugger.XExpression
+- isPaused():Z
+- setPaused(Z):V
 a:com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 - com.intellij.xdebugger.XDebugProcessStarter
 - <init>():V
@@ -202,6 +209,18 @@ a:com.intellij.xdebugger.impl.XSourcePositionImpl
 - s:createByOffset(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.impl.XSourcePositionImpl
 - createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
 - getFile():com.intellij.openapi.vfs.VirtualFile
+com.intellij.xdebugger.impl.XWatch
+- a:getCanBePaused():Z
+- a:getExpression():com.intellij.xdebugger.XExpression
+- a:isPaused():Z
+- a:setPaused(Z):V
+f:com.intellij.xdebugger.impl.XWatchImpl
+- com.intellij.xdebugger.impl.XWatch
+- <init>(com.intellij.xdebugger.XExpression):V
+- getCanBePaused():Z
+- getExpression():com.intellij.xdebugger.XExpression
+- isPaused():Z
+- setPaused(Z):V
 c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
 - com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 - <init>():V
@@ -844,6 +863,7 @@ f:com.intellij.xdebugger.impl.inline.InlineWatch
 - f:updatePosition():Z
 c:com.intellij.xdebugger.impl.inline.InlineWatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.lang.String,com.intellij.xdebugger.frame.XStackFrame,Z):V
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
 - addInlineWatchExpression(com.intellij.xdebugger.frame.XStackFrame,com.intellij.xdebugger.impl.inline.InlineWatch,I,Z):V
 - clearChildren():V
@@ -1557,6 +1577,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XStackFrame):V
 - p:<init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XNamedValue):V
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.impl.XWatch,com.intellij.xdebugger.frame.XStackFrame,java.lang.String,com.intellij.xdebugger.frame.XValue):V
 - computePresentationIfNeeded():V
 - p:evaluated():V
 - getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
@@ -1566,6 +1587,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - p:shouldUpdateInlineDebuggerData():Z
 c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.lang.String,com.intellij.xdebugger.frame.XStackFrame,Z):V
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,com.intellij.xdebugger.XExpression[]):V
 - addNewWatch():V
@@ -1578,6 +1600,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - getLoadedChildren():java.util.List
 - getWatchChildren():java.util.List
 - getWatchExpressions():java.util.List
+- getWatches():java.util.List
 - headerNodesCount():I
 - moveDown(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode):V
 - moveUp(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode):V

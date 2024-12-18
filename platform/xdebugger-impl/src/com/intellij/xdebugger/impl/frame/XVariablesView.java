@@ -88,8 +88,9 @@ public class XVariablesView extends XVariablesViewBase {
     super.dispose();
   }
 
+  @ApiStatus.Internal
   @Nullable
-  protected final XDebugSessionImpl getSession() {
+  public final XDebugSessionImpl getSession() {
     return mySession.get();
   }
 

@@ -19,7 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
@@ -38,7 +37,7 @@ public final class XDebuggerWatchesManager {
   /**
    * Maps run configuration to a list of watches.
    */
-  private final Map<String, List<XExpression>> watches = new ConcurrentHashMap<>();
+  private final Map<String, List<XWatch>> watches = new ConcurrentHashMap<>();
   /**
    * Maps file URL to a set of inline watches.
    */
@@ -59,16 +58,33 @@ public final class XDebuggerWatchesManager {
     myInlinesUpdateQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("XInlineWatches", 300, coroutineScope);
   }
 
-  public @NotNull List<XExpression> getWatches(String configurationName) {
+  public @NotNull List<XWatch> getWatchEntries(String configurationName) {
     return ContainerUtil.notNullize(watches.get(configurationName));
   }
 
+  public void setWatchEntries(@NotNull String configurationName, @NotNull List<XWatch> watchList) {
+    if (watchList.isEmpty()) {
+      watches.remove(configurationName);
+    }
+    else {
+      watches.put(configurationName, watchList);
+    }
+  }
+
+  public @NotNull List<XExpression> getWatches(String configurationName) {
+    return ContainerUtil.map(ContainerUtil.notNullize(watches.get(configurationName)), XWatch::getExpression);
+  }
+
+  /**
+   * @deprecated Use {@link XDebuggerWatchesManager#setWatchEntries(String, List)} instead
+   */
+  @Deprecated
   public void setWatches(@NotNull String configurationName, @NotNull List<XExpression> expressions) {
     if (expressions.isEmpty()) {
       watches.remove(configurationName);
     }
     else {
-      watches.put(configurationName, expressions);
+      watches.put(configurationName, ContainerUtil.map(expressions, XWatchImpl::new));
     }
   }
 
@@ -80,7 +96,7 @@ public final class XDebuggerWatchesManager {
   public @NotNull WatchesManagerState saveState(@NotNull WatchesManagerState state) {
     List<ConfigurationState> expressions = state.getExpressions();
     expressions.clear();
-    watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, value)));
+    watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, ContainerUtil.map(value, XWatch::getExpression))));
     List<InlineWatchState> inlineExpressionStates = state.getInlineExpressionStates();
     inlineExpressionStates.clear();
     inlineWatches.values().stream()
@@ -103,7 +119,10 @@ public final class XDebuggerWatchesManager {
     for (ConfigurationState configurationState : state.getExpressions()) {
       List<WatchState> expressionStates = configurationState.getExpressionStates();
       if (!ContainerUtil.isEmpty(expressionStates)) {
-        watches.put(configurationState.getName(), ContainerUtil.mapNotNull(expressionStates, XExpressionState::toXExpression));
+        watches.put(configurationState.getName(), ContainerUtil.mapNotNull(expressionStates, watchState -> {
+          XExpression expression = watchState.toXExpression();
+          return expression == null ? null : new XWatchImpl(expression);
+        }));
       }
     }
 

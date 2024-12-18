@@ -38,10 +38,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
+import com.intellij.xdebugger.impl.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector;
@@ -447,17 +444,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
     if (inlineWatchesEnabled) {
-      myRootNode = new InlineWatchesRootNode(getTree(), this, getExpressions(), getInlineExpressions(), stackFrame, myWatchesInVariables);
+      myRootNode = new InlineWatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
     }
     else {
-      myRootNode = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
+      myRootNode = new WatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
     }
     return myRootNode;
-  }
-
-  @NotNull
-  private List<InlineWatch> getInlineExpressions() {
-    return getWatchesManager().getInlineWatches();
   }
 
   private XDebuggerWatchesManager getWatchesManager() {
@@ -523,6 +515,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
   }
 
+  /**
+   * @deprecated Use {@link XDebuggerWatchesManager#getWatches(String)} directly
+   */
+  @Deprecated
   @NotNull
   protected List<XExpression> getExpressions() {
     return getWatchesManager().getWatches(myConfigurationName);
@@ -590,8 +586,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   public void updateSessionData() {
-    List<XExpression> watchExpressions = myRootNode.getWatchExpressions();
-    getWatchesManager().setWatches(myConfigurationName, watchExpressions);
+    List<XWatch> watches = myRootNode.getWatches();
+    getWatchesManager().setWatchEntries(myConfigurationName, watches);
   }
 
   @Override
