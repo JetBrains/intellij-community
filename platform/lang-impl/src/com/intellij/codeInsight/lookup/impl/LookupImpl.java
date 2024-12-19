@@ -120,6 +120,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
   private boolean myFirstElementAdded = false;
+  private boolean myShowIfMeaningless = false;
 
   final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
 
@@ -323,6 +324,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     for (int i = count; i > 0; i--) {
       getListModel().add(myDummyItem);
     }
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public boolean isShowIfMeaningless() {
+    return myShowIfMeaningless;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void showIfMeaningless() {
+    myShowIfMeaningless = true;
   }
 
   private static boolean containsDummyIdentifier(final @Nullable String s) {

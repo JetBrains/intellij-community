@@ -94,9 +94,10 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     val withPrefixMatcher = resultSet.withPrefixMatcher(CamelHumpMatcher(resultSet.prefixMatcher.prefix, false, true))
       .withRelevanceSorter(createSorter(parameters))
 
+
     withPrefixMatcher.restartCompletionOnPrefixChange(StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
       override fun accepts(t: String, context: ProcessingContext?): Boolean {
-        return commandCompletionType.suffix == "." && t == "."
+        return commandCompletionType.suffix.toString() == t
       }
     }))
 

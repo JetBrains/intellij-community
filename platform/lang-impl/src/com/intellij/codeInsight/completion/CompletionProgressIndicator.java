@@ -718,7 +718,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private boolean hideAutopopupIfMeaningless() {
-    if (lookup.isLookupDisposed() || !isAutopopupCompletion() || lookup.isSelectionTouched() || lookup.isCalculating()) {
+    if (lookup.isLookupDisposed() || !isAutopopupCompletion() || lookup.isSelectionTouched() || lookup.isCalculating() || lookup.isShowIfMeaningless()) {
       return false;
     }
 

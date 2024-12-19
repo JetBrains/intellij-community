@@ -82,6 +82,7 @@ internal class CommandCompletionService(
         offsetOfFullIndex >= editor.document.textLength ||
         editor.document.immutableCharSequence.substring(offsetOfFullIndex, lookup.lookupOriginalStart) != fullSuffix) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
+    lookup.showIfMeaningless() // stop hiding
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
     lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
@@ -93,6 +94,7 @@ internal class CommandCompletionService(
     val userData = lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
     if (userData == true) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
+    lookup.showIfMeaningless() // stop hiding
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
     lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
