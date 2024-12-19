@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.compareVersionNumbers;
@@ -124,9 +126,29 @@ public final class MavenImportUtil {
     if (plugin == null) return false;
     List<MavenPlugin.Execution> executions = plugin.getExecutions();
     if (executions == null || executions.isEmpty()) return false;
-    return ContainerUtil.exists(executions,
-                                e -> "test-compile".equals(e.getPhase()) ||
-                                     (e.getGoals() != null && e.getGoals().contains("test-comiple")));
+    var compileExec = ContainerUtil.find(executions, MavenImportUtil::isCompileExecution);
+    var testExec = ContainerUtil.find(executions, MavenImportUtil::isTestExecution);
+    if (compileExec == null) return testExec != null;
+    if (testExec == null) return true;
+    return !JDOMUtil.areElementsEqual(compileExec.getConfigurationElement(), testExec.getConfigurationElement());
+  }
+
+  public static boolean isTestExecution(MavenPlugin.Execution e) {
+    return checkExecution(e, "test-compile", "test-compile", "default-testCompile");
+  }
+
+
+  private static boolean isCompileExecution(MavenPlugin.Execution e) {
+    return checkExecution(e, "compile", "compile", "default-compile");
+  }
+
+  private static boolean checkExecution(MavenPlugin.Execution e, String phase, String goal, String defaultExecId) {
+    return !Objects.equals("none", e.getPhase()) &&
+           (
+             phase.equals(e.getPhase()) ||
+             (e.getGoals() != null && e.getGoals().contains(goal)) ||
+             (defaultExecId.equals(e.getExecutionId()))
+           );
   }
 
   private static @Nullable LanguageLevel getMavenLanguageLevel(@NotNull MavenProject mavenProject,

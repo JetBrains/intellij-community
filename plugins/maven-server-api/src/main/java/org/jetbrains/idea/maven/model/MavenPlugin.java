@@ -115,9 +115,31 @@ public final class MavenPlugin implements Serializable {
     return result;
   }
 
+  public List<Element> getTestCompileExecutionConfigurations() {
+    List<Element> result = new ArrayList<Element>();
+    for (MavenPlugin.Execution each : getExecutions()) {
+      if (isTestCompileExecution(each) && each.getConfigurationElement() != null) {
+        result.add(each.getConfigurationElement());
+      }
+    }
+    return result;
+  }
+
+
   private static boolean isCompileExecution(Execution each) {
-    return !Objects.equals(each.getPhase(), "none") && ("default-compile".equals(each.getExecutionId()) ||
-           (each.getGoals() != null && each.getGoals().contains("compile")));
+    return !Objects.equals(each.getPhase(), "none") &&
+           ("default-compile".equals(each.getExecutionId()) ||
+            (each.getGoals() != null && each.getGoals().contains("compile")) ||
+            Objects.equals(each.getPhase(), "compile")
+           );
+  }
+
+  private static boolean isTestCompileExecution(Execution each) {
+    return !Objects.equals(each.getPhase(), "none") &&
+           ("default-testCompile".equals(each.getExecutionId()) ||
+            (each.getGoals() != null && each.getGoals().contains("testCompile")) ||
+            Objects.equals(each.getPhase(), "test-compile")
+           );
   }
 
   public String getDisplayString() {

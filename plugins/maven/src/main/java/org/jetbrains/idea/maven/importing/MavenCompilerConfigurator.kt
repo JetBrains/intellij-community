@@ -11,13 +11,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
@@ -32,8 +32,11 @@ private const val propEndTag = "}"
 
 private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
 
+private const val ARTIFACT_ID = "maven-compiler-plugin"
+private const val GROUP_ID = "org.apache.maven.plugins"
+
 @ApiStatus.Internal
-class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.plugins", "maven-compiler-plugin"),
+class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT_ID),
                                   MavenWorkspaceConfigurator {
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     var defaultCompilerExtension = context.project.getUserData(DEFAULT_COMPILER_EXTENSION)
@@ -113,9 +116,15 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.
                                                   module: Module,
                                                   ideCompilerConfiguration: CompilerConfigurationImpl,
                                                   defaultCompilerExtension: MavenCompilerExtension?) {
-    val mavenConfiguration = MavenCompilerConfiguration(mavenProject.properties[MAVEN_COMPILER_PARAMETERS]?.toString(),
-                                                        getConfig(mavenProject))
-    val projectCompilerId = if (mavenProject.packaging != "pom") mavenConfiguration.pluginConfiguration?.let { getCompilerId(it) } else null
+    val isTestModule = MavenImportUtil.isTestModule(module.name)
+    val mavenConfiguration = collectRawMavenData(mavenProject, isTestModule)
+    val projectCompilerId = if (mavenProject.packaging == "pom") {
+      null
+    }
+    else {
+      mavenConfiguration.effectiveConfiguration?.let { getCompilerId(it) }
+    }
+
 
     for (compilerExtension in MavenCompilerExtension.EP_NAME.extensions) {
       val applyThisExtension =
@@ -135,6 +144,20 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.
     }
   }
 
+  private fun collectRawMavenData(mavenProject: MavenProject, forTests: Boolean): MavenCompilerConfigurationRawData {
+    val pluginConfig = getConfig(mavenProject)
+    val propertyConfig = mavenProject.properties[MAVEN_COMPILER_PARAMETERS]
+
+    val executionConfig =
+      if (forTests) {
+        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.testCompileExecutionConfigurations
+      }
+      else {
+        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.compileExecutionConfigurations
+      }?.firstOrNull()
+    return MavenCompilerConfigurationRawData(forTests, propertyConfig?.toString(), pluginConfig, executionConfig)
+  }
+
   private fun configureTargetLevel(mavenProject: MavenProject,
                                    module: Module,
                                    ideCompilerConfiguration: CompilerConfiguration,
@@ -145,9 +168,6 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.
       var level: LanguageLevel?
       if (MavenImportUtil.isTestModule(module.name)) {
         level = MavenImportUtil.getTargetTestLanguageLevel(mavenProject)
-        if (level == null) {
-          level = MavenImportUtil.getTargetLanguageLevel(mavenProject)
-        }
       }
       else {
         level = MavenImportUtil.getTargetLanguageLevel(mavenProject)
@@ -210,59 +230,78 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.
     return getResolvedText(it.textTrim)
   }
 
-  private fun collectCompilerArgs(mavenCompilerConfiguration: MavenCompilerConfiguration): List<String> {
-    val options = mutableListOf<String>()
-
-    val pluginConfiguration = mavenCompilerConfiguration.pluginConfiguration
-    val parameters = pluginConfiguration?.getChild("parameters")
-
-    if (parameters?.textTrim?.toBoolean() == true) {
-      options += "-parameters"
-    }
-    else if (parameters == null && mavenCompilerConfiguration.propertyCompilerParameters?.toBoolean() == true) {
-      options += "-parameters"
+  private fun collectCompilerArgs(configData: MavenCompilerConfigurationRawData): List<String> {
+    val result = LinkedHashSet<String>()
+    configData.propertyCompilerParameters?.let {
+      if (it.toBoolean()) {
+        result.add("-parameters")
+      }
     }
 
-    if (pluginConfiguration == null) return options
+    configData.effectiveConfiguration?.let {
+      it.getChild("parameters")?.let {
+        if (it.textTrim.toBoolean()) {
+          result.add("-parameters")
+        }
+        else {
+          result.remove("-parameters")
+        }
+      }
+      result.addAll(collectCompilerArgs(it))
+    }
 
-    val compilerArguments = pluginConfiguration.getChild("compilerArguments")
-    if (compilerArguments != null) {
+    return result.toList()
+  }
+
+  private fun collectCompilerArgs(element: Element): List<String> {
+    val result = ArrayList<String>()
+    element.getChild("compilerArguments")?.let { arguments ->
       val unresolvedArgs = mutableSetOf<String>()
-      val effectiveArguments = compilerArguments.children.map {
+      val effectiveArguments = arguments.children.associate {
         val key = it.name.run { if (startsWith("-")) this else "-$this" }
         val value = getResolvedText(it)
         if (value == null && hasUnresolvedProperty(it.textTrim)) {
           unresolvedArgs += key
         }
         key to value
-      }.toMap()
-
+      }
       effectiveArguments.forEach { key, value ->
         if (key.startsWith("-A") && value != null) {
-          options.add("$key=$value")
+          result.add("$key=$value")
         }
         else if (key !in unresolvedArgs) {
-          options.add(key)
-          addIfNotNull(options, value)
+          result.add(key)
+          value?.let { result.add(it) }
         }
       }
     }
-
-    addIfNotNull(options, getResolvedText(pluginConfiguration.getChildTextTrim("compilerArgument")))
-
-    val compilerArgs = pluginConfiguration.getChild("compilerArgs")
-    if (compilerArgs != null) {
-      for (arg in compilerArgs.getChildren("arg")) {
-        addIfNotNull(options, getResolvedText(arg))
-      }
-      for (compilerArg in compilerArgs.getChildren("compilerArg")) {
-        addIfNotNull(options, getResolvedText(compilerArg))
+    MavenJDOMUtil.findChildrenValuesByPath(element, "compilerArgs", "arg").forEach {
+      val text = getResolvedText(it)
+      if (text != null && !hasUnresolvedProperty(text)) {
+        result.add(text)
       }
     }
-    return options
+    element.getChild("compilerArgument")?.textTrim?.let {
+      val text = getResolvedText(it)
+      if (text != null && !hasUnresolvedProperty(text)) {
+        result.add(text)
+      }
+    }
+    return result
   }
 }
 
-private data class MavenCompilerConfiguration(val propertyCompilerParameters: String?, val pluginConfiguration: Element?) {
-  fun isEmpty(): Boolean = propertyCompilerParameters == null && pluginConfiguration == null
+
+private data class MavenCompilerConfigurationRawData(
+  val forTests: Boolean,
+  val propertyCompilerParameters: String?,
+  val pluginConfiguration: Element?,
+  val goalConfiguration: Element?,
+) {
+  fun isEmpty(): Boolean = propertyCompilerParameters == null
+                           && pluginConfiguration == null && goalConfiguration == null
+
+
+  val effectiveConfiguration
+    get() = goalConfiguration ?: pluginConfiguration
 }
