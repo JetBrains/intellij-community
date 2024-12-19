@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -245,7 +248,7 @@ internal class ReworkedTerminalView(
 
   override fun dispose() {}
 
-  private class TerminalPanel(initialContent: Editor) : Wrapper() {
+  private class TerminalPanel(initialContent: Editor) : Wrapper(), UiDataProvider {
     private var curEditor: Editor = initialContent
 
     init {
@@ -258,6 +261,10 @@ internal class ReworkedTerminalView(
     fun setTerminalContent(editor: Editor) {
       curEditor = editor
       setContent(editor.component)
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[CommonDataKeys.EDITOR] = curEditor
     }
   }
 }
