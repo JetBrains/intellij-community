@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
@@ -50,9 +49,8 @@ internal class ReloadDependenciesScriptAction : AnAction() {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-
-        e.presentation.isEnabledAndVisible = getNotificationVisibility(editor)
+        val editor = e.getData(CommonDataKeys.EDITOR)
+        e.presentation.isEnabledAndVisible = editor != null && getNotificationVisibility(editor)
     }
 
     private fun getNotificationVisibility(editor: Editor): Boolean {
