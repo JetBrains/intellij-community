@@ -26,6 +26,8 @@ c:com.intellij.openapi.editor.EditorModificationUtilEx
 - a:indent(com.intellij.psi.PsiFile,I):java.lang.String
 - s:indentLine(com.intellij.psi.PsiFile,I):java.lang.String
 - s:useExternalFormatter(com.intellij.psi.PsiFile):Z
+c:com.intellij.psi.codeStyle.PackageEntry
+- *sf:ALL_MODULE_IMPORTS:com.intellij.psi.codeStyle.PackageEntry
 *:com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer

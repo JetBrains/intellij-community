@@ -98,8 +98,8 @@ public final class ImportHelper {
         .sorted(Comparator.comparing(o -> o.name()))
         .collect(Collectors.toList());
 
-    List<Import> resultList = sortItemsAccordingToSettings(imports, mySettings);
-
+    SortedImportItems items = sortItemsWithModulesAccordingToSettings(imports, mySettings);
+    List<Import> resultList = items.imports();
     Map<String, Boolean> classesOrPackagesToImportOnDemand = new HashMap<>();
     List<PsiImportModuleStatement> previousModuleStatements = collectModuleImports(file, mySettings);
     Map<String, PsiImportModuleStatement> moduleStatementMap = collectNamesImportedByModules(file, previousModuleStatements, resultList);
@@ -130,7 +130,6 @@ public final class ImportHelper {
 
     try {
       boolean onDemandFirst = mySettings.isLayoutOnDemandImportFromSamePackageFirst();
-      boolean moduleImportFirst = mySettings.isModuleImportFirst();
       StringBuilder text =
         buildImportListText(resultList,
                             classesOrPackagesToImportOnDemand.keySet(),
@@ -138,7 +137,7 @@ public final class ImportHelper {
                             checker,
                             moduleStatementMap,
                             onDemandFirst,
-                            moduleImportFirst);
+                            items.moduleIndex());
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());
       }
@@ -239,17 +238,31 @@ public final class ImportHelper {
     });
   }
 
-  public static @NotNull List<Import> sortItemsAccordingToSettings(@NotNull List<Import> imports, @NotNull JavaCodeStyleSettings settings) {
+  private record SortedImportItems(@NotNull List<Import> imports, int moduleIndex) { }
+
+  public static @NotNull List<Import> sortItemsAccordingToSettings(@NotNull List<Import> imports,
+                                                                   @NotNull JavaCodeStyleSettings settings) {
+    return sortItemsWithModulesAccordingToSettings(imports, settings).imports;
+  }
+
+  private static @NotNull ImportHelper.SortedImportItems sortItemsWithModulesAccordingToSettings(@NotNull List<Import> imports,
+                                                                                                 @NotNull JavaCodeStyleSettings settings) {
     int[] entryForName = ArrayUtil.newIntArray(imports.size());
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
+    int moduleEntryIndex = findEntryIndex("", false, true, entries);
     for (int i = 0; i < imports.size(); i++) {
       Import anImport = imports.get(i);
       entryForName[i] = findEntryIndex(StringUtil.getPackageName(anImport.name()),
-                                       settings.LAYOUT_STATIC_IMPORTS_SEPARATELY && anImport.isStatic(), entries);
+                                       settings.LAYOUT_STATIC_IMPORTS_SEPARATELY && anImport.isStatic(), false, entries);
     }
 
     List<Import> resultList = new ArrayList<>(imports.size());
+    int moduleIndex = 0;
     for (int i = 0; i < entries.length; i++) {
+      if (i == moduleEntryIndex) {
+        moduleIndex = resultList.size();
+        continue;
+      }
       for (int j = 0; j < imports.size(); j++) {
         if (entryForName[j] == i) {
           resultList.add(imports.get(j));
@@ -260,7 +273,7 @@ public final class ImportHelper {
     for (Import name : imports) {
       if (name != null) resultList.add(name);
     }
-    return resultList;
+    return new SortedImportItems(resultList, moduleIndex);
   }
 
   private static @NotNull Set<String> findSingleImports(@NotNull PsiJavaFile file,
@@ -465,13 +478,17 @@ public final class ImportHelper {
                                                             @NotNull ImportUtils.ImplicitImportChecker implicitImportContext,
                                                             @NotNull Map<String, PsiImportModuleStatement> moduleStatementMap,
                                                             boolean onDemandImportsFirst,
-                                                            boolean moduleImportFirst) {
+                                                            int moduleIndex) {
     Set<String> importedPackagesOrClasses = new HashSet<>();
     @NonNls StringBuilder buffer = new StringBuilder();
 
     Set<PsiImportModuleStatement> usedModuleImports = new HashSet<>();
-
-    for (Import importedName : imports) {
+    int indexModuleString = -1;
+    for (int i = 0; i < imports.size(); i++) {
+      if (i == moduleIndex) {
+        indexModuleString = buffer.length();
+      }
+      Import importedName = imports.get(i);
       String name = importedName.name();
       boolean isStatic = importedName.isStatic();
       String packageOrClassName = StringUtil.getPackageName(name);
@@ -505,8 +522,8 @@ public final class ImportHelper {
     }
 
     if (!moduleStatements.isEmpty()) {
-      if (moduleImportFirst) {
-        buffer.insert(0, moduleStatements);
+      if (indexModuleString != -1) {
+        buffer.insert(indexModuleString, moduleStatements);
       }
       else {
         buffer.append(moduleStatements);
@@ -879,12 +896,6 @@ public final class ImportHelper {
   }
 
   public int getEmptyLinesBetween(@NotNull PsiImportStatementBase statement1, @NotNull PsiImportStatementBase statement2) {
-    boolean spaceBetweenModuleAndOtherImports = mySettings.SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS;
-    boolean isModule1 = statement1 instanceof PsiImportModuleStatement;
-    boolean isModule2 = statement2 instanceof PsiImportModuleStatement;
-    if (((isModule1 && !isModule2) || (!(isModule1) && isModule2))) {
-      return spaceBetweenModuleAndOtherImports ? 1 : 0;
-    }
     int index1 = findEntryIndex(statement1);
     int index2 = findEntryIndex(statement2);
     if (index1 == index2) return 0;
@@ -922,7 +933,7 @@ public final class ImportHelper {
     return table.contains(packageName);
   }
 
-  private static int findEntryIndex(@NotNull String packageName, boolean isStatic, PackageEntry @NotNull [] entries) {
+  private static int findEntryIndex(@NotNull String packageName, boolean isStatic, boolean isModule, PackageEntry @NotNull [] entries) {
     PackageEntry bestEntry = null;
     int bestEntryIndex = -1;
     int allOtherStaticIndex = -1;
@@ -939,6 +950,10 @@ public final class ImportHelper {
         bestEntry = entry;
         bestEntryIndex = i;
       }
+      if (isModule && entry == PackageEntry.ALL_MODULE_IMPORTS) {
+        bestEntry = entry;
+        bestEntryIndex = i;
+      }
     }
     if (bestEntryIndex == -1 && isStatic && allOtherStaticIndex == -1 && allOtherIndex != -1) {
       // if no layout for static imports specified, put them among all others
@@ -949,11 +964,17 @@ public final class ImportHelper {
 
   int findEntryIndex(@NotNull PsiImportStatementBase statement) {
     PsiJavaCodeReferenceElement ref = statement.getImportReference();
+    if (statement instanceof PsiImportModuleStatement) {
+      return findEntryIndex("",
+                            mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY && statement instanceof PsiImportStaticStatement,
+                            true,
+                            mySettings.IMPORT_LAYOUT_TABLE.getEntries());
+    }
     if (ref == null) return -1;
     String packageName = statement.isOnDemand() ? ref.getCanonicalText() : StringUtil.getPackageName(ref.getCanonicalText());
     return findEntryIndex(packageName,
-
                           mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY && statement instanceof PsiImportStaticStatement,
+                          false,
                           mySettings.IMPORT_LAYOUT_TABLE.getEntries());
   }
 
