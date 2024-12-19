@@ -29,11 +29,7 @@ import com.intellij.platform.util.coroutines.limitedParallelism
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
-import com.intellij.remoteDev.tests.modelGenerated.RdProductInfo
-import com.intellij.remoteDev.tests.modelGenerated.RdProductType
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
-import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
+import com.intellij.remoteDev.tests.modelGenerated.*
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
@@ -240,7 +236,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           session.runNextActionGetComponentData.setSuspend(sessionBgtDispatcher) { _, parameters ->
             val actionTitle = parameters.title
-            val queue = getComponentDataRequests[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val queue = getComponentDataRequests[actionTitle]
+                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
 
             return@setSuspend runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
@@ -255,9 +252,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.getProductCodeAndVersion.setSuspend(sessionBgtDispatcher) { _, _ ->
-          val productVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode()
-          val productCode = ApplicationInfo.getInstance().build.productCode
-          RdProductInfo(productCode = productCode, productVersion = productVersion)
+          ApplicationInfo.getInstance().build.let {
+            RdProductInfo(productCode = it.productCode, productVersion = it.asStringWithoutProductCode())
+          }
         }
 
         session.visibleFrameNames.setSuspend(sessionBgtDispatcher) { _, _ ->
