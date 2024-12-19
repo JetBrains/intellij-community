@@ -73,7 +73,7 @@ class MixedModeProcessTransitionStateMachine(
     return suspendContext.javaClass.name.contains("Cidr")
   }
 
-  private var suspendContextCoroutine: CoroutineScope = coroutineScope.childScope("suspendContextCoroutine")
+  private var suspendContextCoroutine: CoroutineScope = coroutineScope.childScope("suspendContextCoroutine", supervisor = true)
   suspend fun onPositionReached(suspendContext: XSuspendContext): XSuspendContext? {
     val currentState = state
     val isHighSuspendContext = !isLowSuspendContext(suspendContext)
@@ -342,8 +342,8 @@ class MixedModeProcessTransitionStateMachine(
 
   private fun changeState(newState: State) {
     if (state is BothStopped) {
-      suspendContextCoroutine.cancel()
-      suspendContextCoroutine = coroutineScope.childScope("suspendContextCoroutine")
+      runBlocking { suspendContextCoroutine.coroutineContext.job.cancelAndJoin() }
+      suspendContextCoroutine = coroutineScope.childScope("suspendContextCoroutine", supervisor = true)
     }
     val oldState = state
     state = newState
