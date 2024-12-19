@@ -837,25 +837,8 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
-  val dependenciesFile = copyDependenciesFile(context)
-  crossPlatformZip(
-    macX64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
-    macArm64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
-    linuxX64DistDir = distResults.first { it.builder.targetOs == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
-    winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
-    targetFile = targetFile,
-    executableName = executableName,
-    productJson = productJson.encodeToByteArray(),
-    executablePatterns = distResults.flatMap {
-      it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.x64).keys +
-      it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.aarch64).keys
-    },
-    distFiles = context.getDistFiles(os = null, arch = null),
-    extraFiles = mapOf("dependencies.txt" to dependenciesFile),
-    distAllDir = context.paths.distAllDir,
-    compress = context.options.compressZipFiles,
-    runtimeModuleRepositoryPath = runtimeModuleRepositoryPath,
-  )
+  val extraFiles = mapOf("dependencies.txt" to copyDependenciesFile(context))
+  crossPlatformZip(context, distResults, targetFile, executableName, productJson, extraFiles, runtimeModuleRepositoryPath)
 
   checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context)
   context.notifyArtifactBuilt(targetFile)
@@ -926,134 +909,86 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
 }
 
 private fun crossPlatformZip(
-  macX64DistDir: Path,
-  macArm64DistDir: Path,
-  linuxX64DistDir: Path,
-  winX64DistDir: Path,
+  context: BuildContext,
+  distResults: List<DistributionForOsTaskResult>,
   targetFile: Path,
   executableName: String,
-  productJson: ByteArray,
-  executablePatterns: List<PathMatcher>,
-  distFiles: Collection<DistFile>,
+  productJson: String,
   extraFiles: Map<String, Path>,
-  distAllDir: Path,
-  compress: Boolean,
   runtimeModuleRepositoryPath: Path?,
 ) {
+  val winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir
+  val macArm64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir
+  val linuxX64DistDir = distResults.first { it.builder.targetOs == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir
+
+  val executablePatterns = distResults.flatMap {
+    it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.x64).keys +
+    it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.aarch64).keys
+  }
+  val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePathString ->
+    val relativePath = Path.of(relativePathString)
+    if (executablePatterns.any { it.matches(relativePath) }) {
+      entry.unixMode = executableFileUnixMode
+    }
+  }
+
   writeNewFile(targetFile) { outFileChannel ->
-    NoDuplicateZipArchiveOutputStream(outFileChannel, compress = compress).use { out ->
+    NoDuplicateZipArchiveOutputStream(outFileChannel, context.options.compressZipFiles).use { out ->
       out.setUseZip64(Zip64Mode.Never)
 
+      // for the `bin/` directory layout, see `PathManager.getBinDirectories(Path)`
+
+      out.entryToDir(winX64DistDir.resolve("bin/brokenPlugins.db"), "bin")
+
+      out.entryToDir(winX64DistDir.resolve("bin/${executableName}.bat"), "bin")
+      out.entryToDir(linuxX64DistDir.resolve("bin/${executableName}.sh"), "bin", executableFileUnixMode)
+
       out.entryToDir(winX64DistDir.resolve("bin/idea.properties"), "bin/win")
+      out.entryToDir(macArm64DistDir.resolve("bin/idea.properties"), "bin/mac")
       out.entryToDir(linuxX64DistDir.resolve("bin/idea.properties"), "bin/linux")
-      out.entryToDir(macX64DistDir.resolve("bin/idea.properties"), "bin/mac")
 
-      out.entryToDir(macX64DistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac")
-      out.entry("bin/mac/${executableName}64.vmoptions", macX64DistDir.resolve("bin/${executableName}.vmoptions"))
+      out.entryToDir(winX64DistDir.resolve("bin/${executableName}64.exe.vmoptions"), "bin/win")
+      out.entryToDir(macArm64DistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac")
+      out.entryToDir(linuxX64DistDir.resolve("bin/${executableName}64.vmoptions"), "bin/linux")
 
-      for ((p, f) in extraFiles) {
-        out.entry(p, f)
-      }
-
-      out.entry(PRODUCT_INFO_FILE_NAME, productJson)
-
-      Files.newDirectoryStream(winX64DistDir.resolve("bin")).use {
-        for (file in it) {
-          val path = file.toString()
-          if (path.endsWith(".exe.vmoptions")) {
-            out.entryToDir(file, "bin/win")
-          }
-          else {
-            val fileName = file.fileName.toString()
-            if (fileName.startsWith("fsnotifier") && fileName.endsWith(".exe")) {
-              out.entry("bin/win/$fileName", file)
-            }
-          }
-        }
-      }
-
-      Files.newDirectoryStream(linuxX64DistDir.resolve("bin")).use {
-        for (file in it) {
-          val name = file.fileName.toString()
-          when {
-            name.endsWith(".vmoptions") -> out.entryToDir(file, "bin/linux")
-            name.endsWith(".sh") -> out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
-            name == "fsnotifier" -> out.entry("bin/linux/${name}", file, unixMode = executableFileUnixMode)
-          }
-        }
-      }
-
-      // At the moment, there is no ARM64 hardware suitable for painless IDEA plugin development,
-      // so corresponding artifacts are not packed in.
-
-      Files.newDirectoryStream(macX64DistDir.resolve("bin")).use {
-        for (file in it) {
-          if (file.toString().endsWith(".jnilib")) {
-            out.entry("bin/mac/${file.fileName.toString().removeSuffix(".jnilib")}.dylib", file)
-          }
-          else {
-            val fileName = file.fileName.toString()
-            if (fileName.startsWith("printenv")) {
-              out.entry("bin/$fileName", file, unixMode = executableFileUnixMode)
-            }
-            else if (fileName.startsWith("fsnotifier")) {
-              out.entry("bin/mac/$fileName", file, unixMode = executableFileUnixMode)
-            }
-          }
-        }
-      }
-
-      val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePathString ->
-        val relativePath = Path.of(relativePathString)
-        if (executablePatterns.any { it.matches(relativePath) }) {
-          entry.unixMode = executableFileUnixMode
-        }
-      }
-
-      val commonFilter: (String) -> Boolean = { relPath ->
-        !relPath.startsWith("bin/fsnotifier") &&
-        !relPath.startsWith("bin/repair") &&
-        !relPath.startsWith("bin/restart") &&
-        !relPath.startsWith("bin/printenv") &&
-        !(relPath.startsWith("bin/") && (relPath.endsWith(".sh") || relPath.endsWith(".vmoptions")) && relPath.count { it == '/' } == 1) &&
-        relPath != "bin/idea.properties" &&
-        !relPath.startsWith("help/") &&
-        relPath != "license/launcher-third-party-libraries.html" &&
-        relPath != MODULE_DESCRIPTORS_JAR_PATH &&
-        relPath != PLUGIN_CLASSPATH &&
-        !relPath.startsWith("bin/remote-dev-server") &&
-        relPath != "license/remote-dev-server.html"
+      distResults.forEach {
+        val prefix = "bin/${it.builder.targetOs.dirName}/${it.arch.dirName}/"
+        out.dir(it.outDir.resolve("bin"), prefix, fileFilter = { _, relPath ->
+          relPath != "brokenPlugins.db" &&
+          !(relPath.startsWith(executableName) && relPath.endsWith(".exe")) &&
+          relPath != "${executableName}.bat" &&
+          relPath != executableName &&
+          relPath != "${executableName}.sh" &&
+          relPath != "idea.properties" &&
+          !relPath.endsWith(".vmoptions") &&
+          !relPath.startsWith("repair") &&
+          !relPath.startsWith("restart")
+        }, entryCustomizer)
       }
 
       val zipFileUniqueGuard = HashMap<String, DistFileContent>()
 
-      out.dir(startDir = distAllDir, prefix = "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
-      if (runtimeModuleRepositoryPath != null) {
-        out.entry(MODULE_DESCRIPTORS_JAR_PATH, runtimeModuleRepositoryPath)
-      }
+      out.dir(context.paths.distAllDir, prefix = "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer)
 
-      for (macDistDir in arrayOf(macX64DistDir, macArm64DistDir)) {
-        out.dir(macDistDir, "", fileFilter = { _, relPath ->
-          commonFilter.invoke(relPath) &&
+      distResults.forEach {
+        out.dir(it.outDir, prefix = "", fileFilter = { file, relPath ->
+          !relPath.startsWith("bin/") &&
+          !relPath.startsWith("help/") &&
+          relPath != MODULE_DESCRIPTORS_JAR_PATH &&
+          relPath != PLUGIN_CLASSPATH &&
+          !relPath.startsWith("bin/remote-dev-server") &&
+          !relPath.startsWith("license/remote-dev-server") &&
+          !relPath.startsWith("plugins/remote-dev-server") &&
           !relPath.startsWith("MacOS/") &&
           !relPath.startsWith("Resources/") &&
           !relPath.startsWith("Info.plist") &&
           !relPath.startsWith("Helpers/") &&
-          filterFileIfAlreadyInZip(relativePath = relPath, file = macArm64DistDir.resolve(relPath), zipFiles = zipFileUniqueGuard)
-        }, entryCustomizer = entryCustomizer)
+          !relPath.startsWith("lib/build-marker") &&
+          filterFileIfAlreadyInZip(relPath, file, zipFileUniqueGuard)
+        }, entryCustomizer)
       }
 
-      out.dir(linuxX64DistDir, "", fileFilter = { _, relPath ->
-        commonFilter.invoke(relPath) &&
-        filterFileIfAlreadyInZip(relPath, linuxX64DistDir.resolve(relPath), zipFileUniqueGuard)
-      }, entryCustomizer = entryCustomizer)
-
-      out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relPath ->
-        commonFilter.invoke(relPath) &&
-        !(relPath.startsWith("bin/${executableName}") && relPath.endsWith(".exe")) &&
-        filterFileIfAlreadyInZip(relativePath = relPath, file = winX64DistDir.resolve(relPath), zipFiles = zipFileUniqueGuard)
-      }, entryCustomizer = entryCustomizer)
-
+      val distFiles = context.getDistFiles(os = null, arch = null)
       for (distFile in distFiles) {
         // Linux and Windows: we don't add specific dist dirs for ARM, so, copy dist files explicitly
         // macOS: we don't copy dist files to avoid extra copy operation
@@ -1064,6 +999,16 @@ private fun crossPlatformZip(
             is InMemoryDistFileContent -> out.entry(distFile.relativePath, content.data)
           }
         }
+      }
+
+      for ((p, f) in extraFiles) {
+        out.entry(p, f)
+      }
+
+      out.entry(PRODUCT_INFO_FILE_NAME, productJson.encodeToByteArray())
+
+      if (runtimeModuleRepositoryPath != null) {
+        out.entry(MODULE_DESCRIPTORS_JAR_PATH, runtimeModuleRepositoryPath)
       }
     }
   }

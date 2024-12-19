@@ -148,8 +148,8 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
   }
 }
 
-internal fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
-  entry("$zipPath/${file.fileName}", file)
+internal fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String, unixMode: Int = -1) {
+  entry("$zipPath/${file.fileName}", file, unixMode)
 }
 
 /**

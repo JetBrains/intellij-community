@@ -228,18 +228,15 @@ public final class PathManager {
       if (binDirs.contains(dir) || !Files.isDirectory(dir)) {
         continue;
       }
-
       binDirs.add(dir);
       dir = dir.resolve(osSuffix);
       if (Files.isDirectory(dir)) {
         binDirs.add(dir);
-        if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
-          String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
-          if (arch != null) {
-            dir = dir.resolve(arch);
-            if (Files.isDirectory(dir)) {
-              binDirs.add(dir);
-            }
+        String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
+        if (arch != null) {
+          dir = dir.resolve(arch);
+          if (Files.isDirectory(dir)) {
+            binDirs.add(dir);
           }
         }
       }
