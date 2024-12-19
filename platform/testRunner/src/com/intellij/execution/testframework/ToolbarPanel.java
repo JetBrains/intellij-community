@@ -152,6 +152,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     moreGroup.addSeparator();
     moreGroup.add(secondaryGroup);
 
+    final var ex = ActionManager.getInstance().getActionOrStub("ToolbarPanel.MoreActions");
+    if (ex != null) { moreGroup.add(ex); }
+
     actionsToMerge = actionGroup.getChildActionsOrStubs();
     additionalActionsToMerge = moreGroup.getChildActionsOrStubs();
 

@@ -181,6 +181,8 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
+    <group id="ToolbarPanel.MoreActions" searchable="false"/>
+
     <!--region TouchBar -->
     <group id="TouchBarDebug">
       <reference ref="Rerun"/>

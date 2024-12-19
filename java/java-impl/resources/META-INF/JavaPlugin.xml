@@ -2806,6 +2806,10 @@
 
     <action id="DownloadJdkAction" class="com.intellij.ide.actions.DownloadJdkAction" icon="AllIcons.Actions.Download"/>
     <action id="AddJdkAction" class="com.intellij.ide.actions.AddJdkAction" icon="AllIcons.Nodes.PpJdk"/>
+
+    <action id="JavaAutoRunToggleFloatingToolbarAction" class="com.intellij.execution.testDiscovery.JavaAutoRunToggleFloatingToolbarAction">
+      <add-to-group group-id="ToolbarPanel.MoreActions" anchor="last"/>
+    </action>
   </actions>
 
   <actions resource-bundle="messages.JavaBundle">
