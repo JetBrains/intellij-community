@@ -32,7 +32,7 @@ public final class ClassLoadingUtils {
       ClassType loaderClass = (ClassType)process.findClass(context, "java.security.SecureClassLoader", context.getClassLoader());
       Method ctorMethod = DebuggerUtils.findMethod(loaderClass, JVMNameUtil.CONSTRUCTOR_NAME, "(Ljava/lang/ClassLoader;)V");
       return context.computeAndKeep(() -> (ClassLoaderReference)((DebugProcessImpl)process)
-        .newInstance(context, loaderClass, ctorMethod, Collections.singletonList(context.getClassLoader()),
+        .newInstance(context, loaderClass, Objects.requireNonNull(ctorMethod), Collections.singletonList(context.getClassLoader()),
                      MethodImpl.SKIP_ASSIGNABLE_CHECK, true));
     }
     catch (VMDisconnectedException e) {
@@ -55,7 +55,7 @@ public final class ClassLoadingUtils {
       StringReference nameString = DebuggerUtilsEx.mirrorOfString(name, context);
       ArrayReference byteArray = DebuggerUtilsEx.mirrorOfByteArray(bytes, context);
       try {
-        ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,
+        ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, Objects.requireNonNull(defineMethod),
                                                          Arrays.asList(nameString,
                                                                        byteArray,
                                                                        proxy.mirrorOf(0),
