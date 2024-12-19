@@ -884,27 +884,24 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         val endOffset = DeferredOffset()
         for (entry in expr.entries) {
-            if (entry.isElse) {
-                processExpression(entry.expression)
-                addInstruction(GotoInstruction(endOffset))
-            } else {
+            val skipBranch = DeferredOffset()
+            if (entry.elseKeyword == null) {
                 val branchStart = DeferredOffset()
                 for (condition in entry.conditions) {
                     processWhenCondition(dfVar, kotlinType, condition)
                     addInstruction(ConditionalGotoInstruction(branchStart, DfTypes.TRUE))
                 }
-                val skipBranch = DeferredOffset()
                 addInstruction(GotoInstruction(skipBranch))
                 setOffset(branchStart)
-                val guard = entry.guard
-                if (guard != null) {
-                    processExpression(guard.getExpression())
-                    addInstruction(ConditionalGotoInstruction(skipBranch, DfTypes.FALSE))
-                }
-                processExpression(entry.expression)
-                addInstruction(GotoInstruction(endOffset))
-                setOffset(skipBranch)
             }
+            val guard = entry.guard
+            if (guard != null) {
+                processExpression(guard.getExpression())
+                addInstruction(ConditionalGotoInstruction(skipBranch, DfTypes.FALSE))
+            }
+            processExpression(entry.expression)
+            addInstruction(GotoInstruction(endOffset))
+            setOffset(skipBranch)
         }
         pushUnknown()
         setOffset(endOffset)
