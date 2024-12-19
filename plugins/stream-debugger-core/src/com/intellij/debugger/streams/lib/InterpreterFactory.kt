@@ -2,11 +2,12 @@
 package com.intellij.debugger.streams.lib
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter
+import com.intellij.debugger.streams.wrapper.StreamCallType
 import com.intellij.openapi.util.NlsSafe
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface InterpreterFactory {
-  fun getInterpreter(@NlsSafe callName: String): CallTraceInterpreter
+  fun getInterpreter(@NlsSafe callName: String, callType: StreamCallType): CallTraceInterpreter
 }

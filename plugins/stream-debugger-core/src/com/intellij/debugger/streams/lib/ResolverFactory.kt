@@ -2,11 +2,12 @@
 package com.intellij.debugger.streams.lib
 
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
+import com.intellij.debugger.streams.wrapper.StreamCallType
 import com.intellij.openapi.util.NlsSafe
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface ResolverFactory {
-  fun getResolver(@NlsSafe callName: String): ValuesOrderResolver
+  fun getResolver(@NlsSafe callName: String, callType: StreamCallType): ValuesOrderResolver
 }

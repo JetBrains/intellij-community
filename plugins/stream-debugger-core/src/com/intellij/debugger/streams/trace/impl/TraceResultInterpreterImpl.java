@@ -42,7 +42,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     for (int i = 0; i < callCount; i++) {
       final StreamCall call = chain.getCall(i);
       final Value trace = info.getValue(i);
-      final CallTraceInterpreter interpreter = myInterpreterFactory.getInterpreter(call.getName());
+      final CallTraceInterpreter interpreter = myInterpreterFactory.getInterpreter(call.getName(), call.getType());
 
       final TraceInfo traceInfo = trace == null ? ValuesOrderInfo.empty(call) : interpreter.resolve(call, trace);
       result.add(traceInfo);

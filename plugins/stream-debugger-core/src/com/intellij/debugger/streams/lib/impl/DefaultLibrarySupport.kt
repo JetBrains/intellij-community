@@ -15,6 +15,7 @@ import com.intellij.debugger.streams.trace.impl.handler.unified.PeekTraceHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.TerminatorTraceHandler
 import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.wrapper.StreamCallType
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
 class DefaultLibrarySupport : LibrarySupport {
@@ -29,13 +30,13 @@ class DefaultLibrarySupport : LibrarySupport {
   }
 
   override val interpreterFactory: InterpreterFactory = object : InterpreterFactory {
-    override fun getInterpreter(callName: String): CallTraceInterpreter {
+    override fun getInterpreter(callName: String, callType: StreamCallType): CallTraceInterpreter {
       return SimplePeekCallTraceInterpreter()
     }
   }
 
   override val resolverFactory: ResolverFactory = object : ResolverFactory {
-    override fun getResolver(callName: String): ValuesOrderResolver {
+    override fun getResolver(callName: String, callType: StreamCallType): ValuesOrderResolver {
       return EmptyResolver()
     }
   }

@@ -58,7 +58,7 @@ public class TracingResultImpl implements TracingResult {
     assert myTrace.size() == mySourceChain.length();
 
     List<ValuesOrderResolver.Result> resolvedTraces =
-      ContainerUtil.map(myTrace, x -> resolverFactory.getResolver(x.getCall().getName()).resolve(x));
+      ContainerUtil.map(myTrace, x -> resolverFactory.getResolver(x.getCall().getName(), x.getCall().getType()).resolve(x));
 
     final TraceInfo firstCallTrace = myTrace.get(0);
     final List<IntermediateStreamCall> intermediateCalls = mySourceChain.getIntermediateCalls();

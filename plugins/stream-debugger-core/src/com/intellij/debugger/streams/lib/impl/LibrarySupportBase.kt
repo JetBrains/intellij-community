@@ -8,6 +8,7 @@ import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.wrapper.StreamCallType
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
 /**
@@ -39,18 +40,18 @@ abstract class LibrarySupportBase(private val compatibleLibrary: LibrarySupport 
   }
 
   final override val interpreterFactory: InterpreterFactory = object : InterpreterFactory {
-    override fun getInterpreter(callName: String): CallTraceInterpreter {
-      val operation = findOperationByName(callName)
+    override fun getInterpreter(callName: String, callType: StreamCallType): CallTraceInterpreter {
+      val operation = findOperation(callName, callType)
       return operation?.traceInterpreter
-             ?: compatibleLibrary.interpreterFactory.getInterpreter(callName)
+             ?: compatibleLibrary.interpreterFactory.getInterpreter(callName, callType)
     }
   }
 
   final override val resolverFactory: ResolverFactory = object : ResolverFactory {
-    override fun getResolver(callName: String): ValuesOrderResolver {
-      val operation = findOperationByName(callName)
+    override fun getResolver(callName: String, callType: StreamCallType): ValuesOrderResolver {
+      val operation = findOperation(callName, callType)
       return operation?.valuesOrderResolver
-             ?: compatibleLibrary.resolverFactory.getResolver(callName)
+             ?: compatibleLibrary.resolverFactory.getResolver(callName, callType)
     }
   }
 
@@ -62,7 +63,11 @@ abstract class LibrarySupportBase(private val compatibleLibrary: LibrarySupport 
     operations.forEach { mySupportedTerminalOperations[it.name] = it }
   }
 
-  private fun findOperationByName(name: String): Operation? =
-    mySupportedIntermediateOperations[name] ?: mySupportedTerminalOperations[name]
-
+  private fun findOperation(name: String, callType: StreamCallType): Operation? {
+    return when (callType) {
+      StreamCallType.INTERMEDIATE -> mySupportedIntermediateOperations[name]
+      StreamCallType.TERMINATOR -> mySupportedTerminalOperations[name]
+      else -> error("Unsupported call type: $callType for call: $name")
+    }
+  }
 }
