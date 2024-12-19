@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl
+package com.intellij.ui.mac
 
 import com.intellij.openapi.diagnostic.logger
 import com.sun.jna.Library
@@ -42,7 +42,7 @@ private interface DarwinPThread : Library {
   fun pthread_set_qos_class_self_np(qosClass: Int, relPriority: Int): Int
 }
 
-internal fun setUserInteractiveQosClassForCurrentThread() {
+fun setUserInteractiveQosClassForCurrentThread() {
   runCatching {
     val qos = QosClass.UserInteractive
     val ret = DarwinPThread.instance.pthread_set_qos_class_self_np(qos.priority, 0)

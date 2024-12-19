@@ -13,6 +13,7 @@ import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.application.setUserInteractiveQosForEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
@@ -21,6 +22,7 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.isWindowIconAlreadyExternallySet
+import com.intellij.ui.mac.setUserInteractiveQosClassForCurrentThread
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.StartupUiUtil
@@ -34,6 +36,7 @@ import java.awt.dnd.DragSource
 import java.lang.invoke.MethodHandles
 import javax.swing.JOptionPane
 import javax.swing.RepaintManager
+import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
@@ -178,6 +181,14 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
   if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
     span("repaint manager set") {
       RepaintManager.setCurrentManager(AssertiveRepaintManager())
+    }
+  }
+
+  span("set QoS for EDT") {
+    if (SystemInfoRt.isMac && setUserInteractiveQosForEdt) {
+      SwingUtilities.invokeLater {
+        setUserInteractiveQosClassForCurrentThread()
+      }
     }
   }
 }

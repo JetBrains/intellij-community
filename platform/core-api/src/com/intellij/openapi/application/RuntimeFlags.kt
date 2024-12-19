@@ -58,3 +58,15 @@ val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid
  */
 @get:ApiStatus.Internal
 val reportInvokeLaterWithoutModality: Boolean = System.getProperty("ijpl.report.invoke.without.modal", "false").toBoolean()
+
+
+/**
+ * A flag that determines whether to apply user-interactive QoS (Quality of Service) settings for the Event Dispatch Thread (EDT).
+ *
+ * This property is internally managed and its value is configured via the system property `ide.set.qos.for.edt`.
+ * By default, the property is set to `true`.
+ *
+ * This configuration may influence the prioritization of tasks executed on the EDT.
+ */
+@get:ApiStatus.Internal
+val setUserInteractiveQosForEdt: Boolean = System.getProperty("ide.set.qos.for.edt", "true").toBoolean()

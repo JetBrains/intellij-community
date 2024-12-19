@@ -41,11 +41,6 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
   }
 
   override suspend fun execute() {
-    if (SystemInfoRt.isMac) {
-      withContext(Dispatchers.EDT) {
-        setUserInteractiveQosClassForCurrentThread()
-      }
-    }
     val propertyManager = serviceAsync<PropertiesComponent>()
     if (!propertyManager.getBoolean("PyCharm.InitialConfiguration")) {
       propertyManager.setValue("PyCharm.InitialConfiguration", "true")
