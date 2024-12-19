@@ -504,6 +504,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
       PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpr.getQualifierExpression());
       if (!(qualifier instanceof PsiReferenceExpression qualifierReferenceExpr)) return null;
 
+      if (methodCallExpr.getArgumentList().isEmpty()) return null;
       PsiExpression theOnlyArgument = PsiUtil.skipParenthesizedExprDown(methodCallExpr.getArgumentList().getExpressions()[0]);
       if (theOnlyArgument == null) return null;
       PsiType exprType = theOnlyArgument.getType();

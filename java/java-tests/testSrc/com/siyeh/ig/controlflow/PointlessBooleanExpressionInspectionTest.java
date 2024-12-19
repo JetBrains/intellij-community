@@ -55,6 +55,10 @@ public class PointlessBooleanExpressionInspectionTest extends LightJavaInspectio
     doTest();
   }
 
+  public void testRegression() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
