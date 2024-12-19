@@ -176,7 +176,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
   @NotNull
   private static String getTokenText(IElementType tokenType, CharSequence sequence, int start, int end) {
     return tokenType instanceof TokenWrapper
-           ? ((TokenWrapper)tokenType).getValue()
+           ? ((TokenWrapper)tokenType).getText()
            : StringUtil.replace(sequence.subSequence(start, end).toString(), "\n", "\\n");
   }
 

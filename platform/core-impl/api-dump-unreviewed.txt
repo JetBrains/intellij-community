@@ -635,6 +635,7 @@ c:com.intellij.lang.TokenWrapper
 - com.intellij.psi.tree.IElementType
 - <init>(com.intellij.psi.tree.IElementType,java.lang.CharSequence):V
 - getDelegate():com.intellij.psi.tree.IElementType
+- getText():java.lang.String
 - getValue():java.lang.String
 f:com.intellij.lang.WhitespacesBinders
 - sf:DEFAULT_LEFT_BINDER:com.intellij.lang.WhitespacesAndCommentsBinder

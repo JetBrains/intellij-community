@@ -499,7 +499,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     public final @NotNull CharSequence getText() {
       if (getTokenType() instanceof TokenWrapper) {
-        return ((TokenWrapper)getTokenType()).getValue();
+        return ((TokenWrapper)getTokenType()).getText();
       }
 
       return getBuilder().myText.subSequence(getStartOffsetInBuilder(), getEndOffsetInBuilder());
@@ -841,7 +841,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     if (eof()) return null;
     IElementType type = getTokenType();
     if (type instanceof TokenWrapper) {
-      return ((TokenWrapper)type).getValue();
+      return ((TokenWrapper)type).getText();
     }
     return myText.subSequence(myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1]).toString();
   }
@@ -1415,7 +1415,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         Token token = (Token)newNode;
 
         if (oldNode instanceof ForeignLeafPsiElement) {
-          return type instanceof ForeignLeafType && ((ForeignLeafType)type).getValue().equals(oldNode.getText())
+          return type instanceof ForeignLeafType && ((ForeignLeafType)type).getText().equals(oldNode.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
         }
@@ -1499,7 +1499,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (isForeign1 != isForeign2) return false;
 
         if (isForeign1) {
-          return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());
+          return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getText());
         }
 
         return ((LeafElement)n1).textMatches(((Token)n2).getText());

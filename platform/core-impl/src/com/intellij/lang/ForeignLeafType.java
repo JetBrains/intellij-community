@@ -16,7 +16,7 @@ public class ForeignLeafType extends TokenWrapper implements ILeafElementType {
   }
 
   @Override
-  public @NotNull ASTNode createLeafNode(CharSequence leafText) {
-    return new ForeignLeafPsiElement(this, getValue());
+  public @NotNull ASTNode createLeafNode(@NotNull CharSequence leafText) {
+    return new ForeignLeafPsiElement(this, getText());
   }
 }
