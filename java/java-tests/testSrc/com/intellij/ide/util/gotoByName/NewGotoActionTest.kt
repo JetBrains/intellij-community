@@ -5,24 +5,24 @@ package com.intellij.ide.util.gotoByName
 //import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereItemDataLocalProvider
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionHelperMock
-import com.intellij.platform.searchEverywhere.ActionSearchParams
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
-import com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
-import com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderMock
+import com.intellij.platform.searchEverywhere.SeActionParams
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeTextSearchParams
+import com.intellij.platform.searchEverywhere.mocks.SeItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
 
 class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
-  private val defaultProvider: SearchEverywhereItemsProvider get() = SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5)
+  private val defaultProvider: SeItemsProvider get() = SeItemsProviderMock(delayMillis = 1000, delayStep = 5)
 
   fun `test empty`() {}
 
   @Suppress("unused")
   fun `mock test simple search`() {
     runBlocking {
-      val params = ActionSearchParams("apply patch", true)
+      val params = SeActionParams("apply patch", true)
 
-      SearchEverywhereActionsProvider(project, null, null).getItems(params).collect {
+      SeActionsProvider(project, null, null).getItems(params).collect {
         println(it.presentation().text)
       }
     }
@@ -31,7 +31,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test mocked provider`() {
     runBlocking {
-      val params = SearchEverywhereTextSearchParams("it")
+      val params = SeTextSearchParams("it")
 
       defaultProvider.getItems(params).collect {
         println(it.presentation().text)

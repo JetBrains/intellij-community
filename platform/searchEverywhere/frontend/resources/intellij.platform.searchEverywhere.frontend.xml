@@ -5,15 +5,15 @@
   </dependencies>
   <actions>
     <action id="SearchEverywhereActionsInitiatorAction"
-            class="com.intellij.platform.searchEverywhere.frontend.actions.SearchEverywhereActionsInitiatorAction"
+            class="com.intellij.platform.searchEverywhere.frontend.actions.SeActionsInitiatorAction"
             text="Search Actions in SE 2.0"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockAlphaLocal"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockBetaLocal"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockCharlieRemote"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockDeltaMixed"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereFilesTabProvider"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockAlphaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockBetaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockCharlieRemote"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockDeltaMixed"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeFilesTabProvider"/>
   </extensions>
 </idea-plugin>
