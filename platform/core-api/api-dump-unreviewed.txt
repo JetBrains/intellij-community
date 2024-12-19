@@ -1888,11 +1888,11 @@ f:com.intellij.openapi.fileTypes.CharsetUtil
 com.intellij.openapi.fileTypes.DirectoryFileType
 - com.intellij.openapi.fileTypes.FileType
 com.intellij.openapi.fileTypes.FileType
-- com.intellij.openapi.options.Scheme
 - sf:EMPTY_ARRAY:com.intellij.openapi.fileTypes.FileType[]
 - getCharset(com.intellij.openapi.vfs.VirtualFile,B[]):java.lang.String
 - a:getDefaultExtension():java.lang.String
 - a:getDescription():java.lang.String
+- getDisplayName():java.lang.String
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
 - a:isBinary():Z

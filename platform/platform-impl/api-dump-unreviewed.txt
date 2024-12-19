@@ -8940,7 +8940,6 @@ c:com.intellij.openapi.fileTypes.impl.AbstractFileType
 - com.intellij.openapi.fileTypes.UserFileType
 - com.intellij.openapi.fileTypes.ex.ExternalizableFileType
 - com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType
-- com.intellij.openapi.options.ExternalizableScheme
 - <init>(com.intellij.ide.highlighter.custom.SyntaxTable):V
 - clone():com.intellij.openapi.fileTypes.impl.AbstractFileType
 - copyFrom(com.intellij.openapi.fileTypes.UserFileType):V

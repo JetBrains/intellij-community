@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,14 +25,17 @@ import javax.swing.*;
  * @see com.intellij.openapi.fileTypes.FileTypes
  * @see INativeFileType
  */
-public interface FileType extends Scheme {
+public interface FileType {
   FileType[] EMPTY_ARRAY = new FileType[0];
 
   /**
    * Returns the name of the file type. The name must be unique among all file types registered in the system.
    */
-  @Override
   @NonNls @NotNull String getName();
+
+  default @NotNull @Nls String getDisplayName() {
+    return getName(); //NON-NLS
+  }
 
   /**
    * Returns the user-readable description of the file type.
