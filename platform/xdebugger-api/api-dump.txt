@@ -470,6 +470,7 @@ a:com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback
 - com.intellij.xdebugger.frame.XValueCallback
 - a:evaluated(com.intellij.xdebugger.frame.XValue):V
+- invalidExpression(java.lang.String):V
 com.intellij.xdebugger.evaluation.XInstanceEvaluator
 - a:evaluate(com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback,com.intellij.xdebugger.frame.XStackFrame):V
 c:com.intellij.xdebugger.frame.ImmediateFullValueEvaluator

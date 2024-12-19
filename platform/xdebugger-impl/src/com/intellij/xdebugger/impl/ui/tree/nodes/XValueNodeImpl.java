@@ -28,6 +28,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XRendererDecoratorPresentation;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +182,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (markers != null) {
       ValueMarkup markup = markers.getMarkup(getValueContainer());
       if (markup != null) {
-        myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+        XCustomizableTextRenderer renderer = createTextRenderer(myText, myValuePresentation);
+        SimpleTextAttributes attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor());
+        renderer.renderRaw("[" + markup.getText() + "] ", attributes);
       }
     }
     if (myValuePresentation.isShowName()) {
@@ -192,9 +195,19 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
+      XCustomizableTextRenderer renderer = createTextRenderer(myText, myValuePresentation);
       SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
-      XValuePresentationUtil.renderName(myName, MAX_NAME_LENGTH, s -> myText.append(s, attributes));
+      XValuePresentationUtil.renderName(myName, MAX_NAME_LENGTH, s -> renderer.renderRaw(s, attributes));
     }
+  }
+
+  private static @NotNull XCustomizableTextRenderer createTextRenderer(ColoredTextContainer text,
+                                                                       XValuePresentation valuePresentation) {
+    XCustomizableTextRenderer renderer = new XValueTextRendererImpl(text);
+    if (valuePresentation instanceof XRendererDecoratorPresentation decoratorPresentation) {
+      renderer = decoratorPresentation.decorate(renderer);
+    }
+    return renderer;
   }
 
   public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text) {
@@ -202,14 +215,18 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text, boolean appendSeparator) {
+    XCustomizableTextRenderer renderer = createTextRenderer(text, valuePresenter);
     if (appendSeparator) {
-      XValuePresentationUtil.appendSeparator(text, valuePresenter.getSeparator());
+      String separator = valuePresenter.getSeparator();
+      if (StringUtil.isNotEmpty(separator)) {
+        renderer.renderRaw(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     }
     String type = valuePresenter.getType();
     if (type != null) {
-      text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
+      renderer.renderRaw("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-    valuePresenter.renderValue(new XValueTextRendererImpl(text));
+    valuePresenter.renderValue(renderer);
   }
 
   @Override

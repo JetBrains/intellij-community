@@ -1739,6 +1739,7 @@ a:com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererBase
 - renderStringValue(java.lang.String):V
 - f:renderValue(java.lang.String,com.intellij.openapi.editor.colors.TextAttributesKey):V
 c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl
+- com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererBase
 - <init>(com.intellij.ui.ColoredTextContainer):V
 - renderComment(java.lang.String):V

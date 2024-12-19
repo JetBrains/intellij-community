@@ -3,6 +3,7 @@ package com.intellij.xdebugger.evaluation;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XExpression;
@@ -94,5 +95,14 @@ public abstract class XDebuggerEvaluator {
 
   public interface XEvaluationCallback extends XValueCallback {
     void evaluated(@NotNull XValue result);
+
+    /**
+     * Indicates that the evaluation failed due to invalid expression in current context.
+     * <p>
+     * For example, a watch that is not valid in the current context.
+     */
+    default void invalidExpression(@NlsContexts.DialogMessage @NotNull String error) {
+      errorOccurred(error);
+    }
   }
 }

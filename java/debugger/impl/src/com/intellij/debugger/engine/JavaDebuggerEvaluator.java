@@ -136,7 +136,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
             descriptor.setContext(evalContext);
             EvaluateException exception = descriptor.getEvaluateException();
             if (exception != null && descriptor.getValue() == null) {
-              callback.errorOccurred(exception.getMessage(), descriptor);
+              callback.invalidExpression(exception.getMessage(), descriptor);
               return;
             }
             callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));

@@ -3,6 +3,8 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -16,6 +18,7 @@ import com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch;
 import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XRendererDecoratorPresentation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,6 +188,82 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
         myNode.setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, new XErrorValuePresentation(errorMessage), false);
+      }
+
+      @Override
+      public void invalidExpression(@NotNull String errorMessage) {
+        // show as error for evaluation result nodes
+        if (myNode instanceof WatchesRootNode.ResultNode) {
+          errorOccurred(errorMessage);
+          return;
+        }
+        myNode.setPresentation(AllIcons.Debugger.Db_watch, new GrayedPresentation(errorMessage), false);
+      }
+    }
+
+    private static class GrayedPresentation extends XValuePresentation implements XRendererDecoratorPresentation {
+      private final @NotNull String myErrorMessage;
+
+      private GrayedPresentation(@NotNull String errorMessage) { myErrorMessage = errorMessage; }
+
+      @Override
+      public void renderValue(@NotNull XValueTextRenderer renderer) {
+        renderer.renderComment(myErrorMessage);
+      }
+
+      @Override
+      public @NotNull XCustomizableTextRenderer decorate(@NotNull XCustomizableTextRenderer renderer) {
+        return new XCustomizableTextRenderer() {
+          @Override
+          public void renderComment(@NotNull String comment) {
+            renderer.renderComment(comment);
+          }
+
+          @Override
+          public void renderValue(@NotNull String value) {
+            renderComment(value);
+          }
+
+          @Override
+          public void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength) {
+            renderComment(value);
+          }
+
+          @Override
+          public void renderSpecialSymbol(@NotNull String symbol) {
+            renderComment(symbol);
+          }
+
+          @Override
+          public void renderError(@NotNull String error) {
+            renderComment(error);
+          }
+
+          @Override
+          public void renderRaw(@NotNull String text, @NotNull SimpleTextAttributes attributes) {
+            renderComment(text);
+          }
+
+          @Override
+          public void renderKeywordValue(@NotNull String value) {
+            renderComment(value);
+          }
+
+          @Override
+          public void renderNumericValue(@NotNull String value) {
+            renderComment(value);
+          }
+
+          @Override
+          public void renderStringValue(@NotNull String value) {
+            renderComment(value);
+          }
+
+          @Override
+          public void renderValue(@NotNull String value, @NotNull TextAttributesKey key) {
+            renderComment(value);
+          }
+        };
       }
     }
 

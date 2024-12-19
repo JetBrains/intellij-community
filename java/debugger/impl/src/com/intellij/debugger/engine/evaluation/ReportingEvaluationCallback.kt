@@ -33,6 +33,15 @@ class ReportingEvaluationCallback(
     errorOccurred(errorMessage)
   }
 
+  override fun invalidExpression(error: @NlsContexts.DialogMessage String) {
+    delegate.invalidExpression(error)
+  }
+
+  fun invalidExpression(error: @NlsContexts.DialogMessage String, descriptor: EvaluationDescriptor?) {
+    descriptor.logEvaluationResult(success = false)
+    invalidExpression(error)
+  }
+
   private fun EvaluationDescriptor?.logEvaluationResult(success: Boolean) {
     val evaluator = this?.getUserData(EvaluationDescriptor.EXPRESSION_EVALUATOR_KEY)
     JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(

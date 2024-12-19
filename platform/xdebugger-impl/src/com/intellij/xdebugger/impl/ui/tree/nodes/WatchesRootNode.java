@@ -173,7 +173,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
   }
 
-  private static class ResultNode extends WatchNodeImpl {
+  static class ResultNode extends WatchNodeImpl {
     ResultNode(@NotNull XDebuggerTree tree,
                @NotNull WatchesRootNode parent,
                @NotNull XExpression expression,
