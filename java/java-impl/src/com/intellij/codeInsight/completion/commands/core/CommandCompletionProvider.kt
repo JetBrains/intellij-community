@@ -110,8 +110,12 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                               parameters.offset,
                               parameters.originalFile) { commands ->
       withPrefixMatcher.addAllElements(commands.map { command ->
-        val i18nName = command.i18nName.replace("_", "").replace("...", "")
-        val tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " ($i18nName)"
+        val i18nName = command.i18nName.replace("_", "").replace("...", "").replace("…", "")
+        val additionalInfo = command.additionalInfo ?: ""
+        var tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " $i18nName"
+        if (additionalInfo.isNotEmpty()) {
+          tailText+= " ($additionalInfo)"
+        }
         var element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name)
                                                                       .withLookupString(i18nName)
                                                                       .withTypeText(tailText)

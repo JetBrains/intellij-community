@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiComment
@@ -22,6 +23,15 @@ abstract class AbstractActionCompletionCommand(
   override val priority: Int? = null,
 ) : ApplicableCompletionCommand(), DumbAware {
   private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
+
+  override val additionalInfo: String?
+    get() {
+      val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(actionId)
+      if (shortcutText.isNotEmpty()) {
+        return shortcutText
+      }
+      return null
+    }
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     val action = action ?: return false

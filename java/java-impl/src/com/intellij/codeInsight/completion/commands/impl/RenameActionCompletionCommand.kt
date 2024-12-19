@@ -3,8 +3,14 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiFile
 
 class RenameActionCompletionCommand : AbstractActionCompletionCommand(IdeActions.ACTION_RENAME,
                                                                       "rename",
                                                                       ActionsBundle.message("action.RenameElement.text"),
-                                                                      null)
+                                                                      null) {
+  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
+    return super.isApplicable(offset, psiFile, editor)
+  }
+}

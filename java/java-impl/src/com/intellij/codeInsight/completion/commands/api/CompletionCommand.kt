@@ -47,6 +47,7 @@ abstract class CompletionCommand {
    * can be left null, in which case a default priority will be assumed.
    */
   open val priority: Int? = null
+  open val additionalInfo: String? = null
   open val highlightInfo: HighlightInfoLookup? = null
 
   /**
