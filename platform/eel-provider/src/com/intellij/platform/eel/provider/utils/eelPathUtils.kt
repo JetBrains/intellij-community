@@ -58,7 +58,12 @@ object EelPathUtils {
   fun getUriLocalToEel(path: Path): URI = runBlockingMaybeCancellable {
     val eel = path.getEelApi()
     val eelPath = eel.mapper.getOriginalPath(path)
-    URI.create("file:$eelPath")
+    if (eelPath == null) {
+      // there is not mapping by Eel, hence the path may be considered local
+      return@runBlockingMaybeCancellable path.toUri()
+    }
+    val root = eelPath.root.toString().replace('\\', '/')
+    URI.create("file://$root${eelPath.parts.joinToString("/")}")
   }
 
   @RequiresBackgroundThread
