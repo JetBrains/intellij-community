@@ -74,6 +74,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   final override fun getStorageScheme() = if (isDirectoryBased) StorageScheme.DIRECTORY_BASED else StorageScheme.DEFAULT
 
   final override val storageManager: StateStorageManagerImpl = ProjectStateStorageManager(project)
+  @Volatile
+  final override var isStoreInitialized: Boolean = false
+    private set
 
   private val isDirectoryBased: Boolean
     get() = dotIdea != null
@@ -97,6 +100,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   }
 
   final override fun setPath(file: Path, template: Project?) {
+    LOG.info("Project store initialization started for path: $file and template: $template")
     dirOrFile = file
 
     val storageManager = storageManager
@@ -157,13 +161,13 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       projectIdManager.id = projectWorkspaceId
     }
 
-    if (isUnitTestMode) {
-      return
+    if (!isUnitTestMode) {
+      val productWorkspaceFile = PathManager.getConfigDir().resolve("workspace/$projectWorkspaceId.xml")
+      macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
+      storageManager.setMacros(macros)
     }
-
-    val productWorkspaceFile = PathManager.getConfigDir().resolve("workspace/$projectWorkspaceId.xml")
-    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
-    storageManager.setMacros(macros)
+    isStoreInitialized = true
+    LOG.info("Project store initialized with paths: $macros")
   }
 
   private fun loadProjectFromTemplate(defaultProject: Project) {

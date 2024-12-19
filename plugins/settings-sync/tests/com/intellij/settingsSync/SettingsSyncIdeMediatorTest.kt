@@ -13,7 +13,10 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -46,6 +49,7 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = TODO("Not yet implemented")
+      override val isStoreInitialized: Boolean = true
 
       override fun setPath(path: Path) {
         TODO("Not yet implemented")
@@ -72,6 +76,7 @@ true
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = ApplicationManager.getApplication().stateStore.storageManager
+      override val isStoreInitialized: Boolean = true
 
       override fun setPath(path: Path) {
         TODO("Not yet implemented")
@@ -123,6 +128,7 @@ true
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = ApplicationManager.getApplication().stateStore.storageManager
+      override val isStoreInitialized: Boolean = true
 
       override fun setPath(path: Path) {
         TODO("Not yet implemented")

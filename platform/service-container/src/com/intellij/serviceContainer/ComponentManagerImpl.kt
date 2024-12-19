@@ -9,6 +9,7 @@ import com.intellij.codeWithMe.ClientIdContextElementPrecursor
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.concurrency.withThreadLocal
+import com.intellij.configurationStore.ProjectIdManager
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
@@ -646,11 +647,8 @@ abstract class ComponentManagerImpl(
         (component is PersistentStateComponent<*> ||
          component is SettingsSavingComponent ||
          component is com.intellij.openapi.util.JDOMExternalizable)) {
-      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
-        if (!getApplication()!!.isUnitTestMode) {
-          throw IllegalStateException("You cannot get $component before component store is initialized")
-        }
-        return
+      check(canBeInitOutOfOrder(component) || componentStore.isStoreInitialized || getApplication()!!.isUnitTestMode) {
+        "You cannot get $component before component store is initialized"
       }
 
       componentStore.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
@@ -659,6 +657,10 @@ abstract class ComponentManagerImpl(
 
   protected open fun isPreInitialized(service: Any): Boolean {
     return service is PathMacroManager || service is IComponentStore || service is MessageBusFactory
+  }
+
+  private fun canBeInitOutOfOrder(service: Any): Boolean {
+    return service is ProjectIdManager
   }
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor

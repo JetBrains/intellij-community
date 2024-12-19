@@ -2,7 +2,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
-import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
@@ -39,6 +38,10 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   override val storageManager: StateStorageManagerImpl =
     ApplicationStateStorageManager(pathMacroManager = PathMacroManager.getInstance(app), controller = app.getService(SettingsController::class.java))
 
+  @Volatile
+  final override var isStoreInitialized: Boolean = false
+    private set
+
   override val allowSavingWithoutModifications: Boolean
     get() = true
 
@@ -58,10 +61,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
       Macro(ROOT_CONFIG, path),
       Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("app-cache.xml"))
     ))
-
-    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
-      LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
-    }
+    isStoreInitialized = true
   }
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {

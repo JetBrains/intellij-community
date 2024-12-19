@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
 @Internal
-internal interface ProjectIdManager {
+interface ProjectIdManager {
   companion object {
     fun getInstance(project: Project): ProjectIdManager = project.service()
   }

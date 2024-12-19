@@ -500,6 +500,7 @@ private class ControllerBackedTestComponentStore(
     get() = ApplicationManager.getApplication() as ComponentManagerImpl
 
   override val storageManager = ApplicationStateStorageManager(pathMacroManager = null, controller = controller)
+  override val isStoreInitialized: Boolean = true
 
   init {
     setPath(testAppConfigPath)

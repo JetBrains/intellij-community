@@ -647,6 +647,7 @@ class ApplicationStoreTest {
       get() = ApplicationManager.getApplication() as ComponentManagerImpl
 
     override val storageManager = ApplicationStateStorageManager(pathMacroManager = null, service<SettingsController>())
+    override val isStoreInitialized: Boolean = true
 
     init {
       setPath(testAppConfigPath)

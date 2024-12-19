@@ -43,6 +43,7 @@ class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled:
 private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = TODO("not implemented")
+  override val isStoreInitialized: Boolean = true
 
   override fun setPath(path: Path) {
   }

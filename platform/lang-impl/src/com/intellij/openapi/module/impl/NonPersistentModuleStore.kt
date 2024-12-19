@@ -15,6 +15,7 @@ import java.nio.file.Path
 @ApiStatus.Internal
 internal class NonPersistentModuleStore : ModuleStore {
   override val storageManager: StateStorageManager = NonPersistentStateStorageManager
+  override val isStoreInitialized: Boolean = true
   override fun setPath(path: Path) {
   }
 
