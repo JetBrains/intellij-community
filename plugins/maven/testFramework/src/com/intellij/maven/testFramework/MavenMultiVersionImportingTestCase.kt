@@ -340,7 +340,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       return mavenVersionsToRun.map { arrayOf<String>(it) }
     }
 
-    protected fun getActualVersion(version: String): String {
+    internal fun getActualVersion(version: String): String {
       if (version == "bundled") {
         return MavenDistributionsCache.resolveEmbeddedMavenHome().version!!
       }

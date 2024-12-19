@@ -326,24 +326,14 @@ abstract class MavenMultiVersionImportingTestCaseLegacy : MavenImportingTestCase
   }
 
   companion object {
-    val MAVEN_VERSIONS: Array<String> = arrayOf<String>("bundled", "4.0.0-rc-2")
-
     @Parameterized.Parameters(name = "with Maven-{0}")
     @JvmStatic
     fun getMavenVersions(): List<Array<String>> {
-      val mavenVersionsString = System.getProperty("maven.versions.to.run")
-      var mavenVersionsToRun: Array<String> = MAVEN_VERSIONS
-      if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
-        mavenVersionsToRun = mavenVersionsString.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-      }
-      return mavenVersionsToRun.map { arrayOf<String>(it) }
+      return MavenMultiVersionImportingTestCase.getMavenVersions()
     }
 
     protected fun getActualVersion(version: String): String {
-      if (version == "bundled") {
-        return MavenDistributionsCache.resolveEmbeddedMavenHome().version!!
-      }
-      return version
+      return MavenMultiVersionImportingTestCase.getActualVersion(version)
     }
   }
 
