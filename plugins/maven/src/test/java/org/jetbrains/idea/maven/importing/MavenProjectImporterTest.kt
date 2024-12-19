@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.ModuleManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
-class MavenProjectImporterTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun `test maven import modules properly named`() = runBlocking {

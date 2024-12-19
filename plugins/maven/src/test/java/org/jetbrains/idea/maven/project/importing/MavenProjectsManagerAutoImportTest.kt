@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeAction
@@ -9,21 +9,24 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
+import java.nio.file.Paths
 
-class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCaseLegacy() {
-  
+class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() {
+
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)
@@ -35,8 +38,10 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCaseLeg
     waitForImportWithinTimeout {
       updateSettingsXml("<localRepository>\${env.$envVar}/tmpRepo</localRepository>")
     }
-    val repo = File("$temp/tmpRepo").getCanonicalFile()
-    assertEquals(repo.path, mavenGeneralSettings.getEffectiveRepositoryPath().toString())
+    val repoPath = Path.of(temp, "tmpRepo")
+    repoPath.createDirectories()
+    val repo = repoPath.toRealPath().toCanonicalPath()
+    assertEquals(repo, mavenGeneralSettings.effectiveRepositoryPath.toCanonicalPath())
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -50,7 +55,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCaseLeg
                     </dependencies>
                     """.trimIndent())
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       "jar://" + FileUtil.toSystemIndependentName(repo.path) + "/junit/junit/4.0/junit-4.0.jar!/")
+                       "jar://$repo/junit/junit/4.0/junit-4.0.jar!/")
   }
 
   @Test
@@ -201,7 +206,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCaseLeg
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
     waitForImportWithinTimeout {
-      mavenGeneralSettings.setUserSettingsFile(File(dir, "settings.xml").path)
+      mavenGeneralSettings.setUserSettingsFile(Paths.get(dir.toString(), "settings.xml").toString())
     }
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
@@ -214,22 +219,22 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCaseLeg
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    val repo1 = File(dir, "localRepo1")
+    val repo1 = Path.of(dir.toString(), "localRepo1")
     waitForImportWithinTimeout {
       updateSettingsXml("""
                       <localRepository>
-                      ${repo1.path}</localRepository>
+                      ${repo1.toString()}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo1, mavenGeneralSettings.getEffectiveRepositoryPath().toFile())
-    val repo2 = File(dir, "localRepo2")
+    assertEquals(repo1, mavenGeneralSettings.effectiveRepositoryPath)
+    val repo2 = Path.of(dir.toString(), "localRepo2")
     waitForImportWithinTimeout {
       updateSettingsXml("""
                       <localRepository>
-                      ${repo2.path}</localRepository>
+                      ${repo2.toString()}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo2, mavenGeneralSettings.getEffectiveRepositoryPath().toFile())
+    assertEquals(repo2, mavenGeneralSettings.effectiveRepositoryPath)
   }
 
   @Test

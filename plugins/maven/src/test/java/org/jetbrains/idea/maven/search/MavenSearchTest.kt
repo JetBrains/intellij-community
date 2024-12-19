@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.search
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -18,7 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Test
 
-class MavenSearchTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenSearchTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun `test searching POM files by module name`() = runBlocking {
     createProjectPom("""<groupId>test</groupId>

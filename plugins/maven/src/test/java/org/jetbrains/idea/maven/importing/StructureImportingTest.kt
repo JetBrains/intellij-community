@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -10,10 +10,11 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
 
-class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
+class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testInheritProjectJdkForModules() = runBlocking {
     importProjectAsync("""
@@ -91,8 +92,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
 
     createProjectSubDirs("m1/src/main/java",
                          "m2/src/main/java",
-                         "m3/src/main/jva",
-                         "m4/src/main/java")
+                         "m3/src/main/java")
 
     importProjectAsync()
     assertModules("project", "m1", "m2", "m3", "m4")
@@ -167,7 +167,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
     val anotherContentRoot = createProjectSubFile("m1/user-content")
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
-    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath, anotherContentRoot.getPath())
+    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath.toString(), anotherContentRoot.getPath())
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -177,7 +177,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
 
     importProjectAsync()
     assertModules("project", userModuleWithConflictingRoot.getName())
-    assertContentRoots("project", projectPath)
+    assertContentRoots("project", projectPath.toString())
     assertContentRoots(userModuleWithConflictingRoot.getName(), anotherContentRoot.getPath())
   }
 
@@ -186,7 +186,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
     val userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
-    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath)
+    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath.toString())
 
     val userModuleWithUniqueRoot = createModule("userModuleWithUniqueRoot")
     assertContentRoots(userModuleWithUniqueRoot.getName(), "$projectPath/userModuleWithUniqueRoot")
@@ -199,7 +199,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
 
     importProjectAsync()
     assertModules("project", userModuleWithUniqueRoot.getName())
-    assertContentRoots("project", projectPath)
+    assertContentRoots("project", projectPath.toString())
     assertContentRoots(userModuleWithUniqueRoot.getName(), "$projectPath/userModuleWithUniqueRoot")
   }
 
@@ -640,10 +640,10 @@ class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   @Test
   fun testParentInRemoteRepository() = runBlocking {
     val pathToJUnit = "asm/asm-parent/3.0"
-    val parentDir = File(repositoryPath, pathToJUnit)
+    val parentDir = Paths.get(repositoryPath, pathToJUnit)
 
     removeFromLocalRepository(pathToJUnit)
-    assertFalse(parentDir.exists())
+    assertFalse(Files.exists(parentDir))
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -659,10 +659,10 @@ class StructureImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
     importProjectAsync()
     assertModules("project")
 
-    assertTrue(parentDir.exists())
+    assertTrue(Files.exists(parentDir))
 
     assertEquals("asm-parent", projectsTree.rootProjects[0].parentId!!.artifactId)
-    assertTrue(File(parentDir, "asm-parent-3.0.pom").exists())
+    assertTrue(Files.exists(parentDir.resolve("asm-parent-3.0.pom")))
   }
 
   @Test

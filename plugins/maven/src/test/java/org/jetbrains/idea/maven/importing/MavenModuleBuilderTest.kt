@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -26,9 +26,8 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.junit.Test
-import kotlin.io.path.exists
 
-class MavenModuleBuilderTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myFixture: MavenProjectJDKTestFixture
   private lateinit var myBuilder: MavenJavaModuleBuilder
 
@@ -41,7 +40,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCaseLegacy() {
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable { myFixture.setUp() })
     })
 
-    setModuleNameAndRoot("module", projectPath)
+    setModuleNameAndRoot("module", projectPath.toString())
   }
 
   public override fun tearDown() {
@@ -114,8 +113,8 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCaseLegacy() {
     assertEquals(1, projects.size)
     val project = projects[0]
     assertEquals(id, project.mavenId)
-    assertTrue(projectRoot.toNioPath().resolve("src/main/java/org/foo/App.java").exists())
-    assertTrue(projectRoot.toNioPath().resolve("src/test/java/org/foo/AppTest.java").exists())
+    assertTrue(java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/main/java/org/foo/App.java")))
+    assertTrue(java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/test/java/org/foo/AppTest.java")))
 
     assertSources("module", "src/main/java")
     assertTestSources("module", "src/test/java")
@@ -125,8 +124,8 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCaseLegacy() {
     object : WaitFor(10000) {
       override fun condition(): Boolean {
         val p = groupId.split('.').joinToString("/")
-        return projectRoot.toNioPath().resolve("src/main/java/$p/App.java").exists()
-               && projectRoot.toNioPath().resolve("src/test/java/$p/AppTest.java").exists()
+        return java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/main/java/$p/App.java"))
+               && java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/test/java/$p/AppTest.java"))
       }
     }
   }

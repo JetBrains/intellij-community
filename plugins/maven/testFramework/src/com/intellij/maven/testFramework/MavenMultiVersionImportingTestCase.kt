@@ -207,7 +207,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
 
   protected fun assertRelativeContentRoots(moduleName: String, vararg expectedRelativeRoots: String?) {
     val expectedRoots = expectedRelativeRoots
-      .map { root -> projectPath.resolve(if ("" == root) "" else "/$root").toCanonicalPath() }
+      .map { root -> projectPath.resolve(root).toCanonicalPath() }
       .toTypedArray<String>()
     assertContentRoots(moduleName, *expectedRoots)
   }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.writeAction
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
-class InvalidProjectImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
+class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSystemDependencyWithoutPath() = runBlocking {
@@ -832,7 +832,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
 
   @Test
   fun testDoNotReportResolvedPlugins() = runBlocking {
-    val helper = MavenCustomRepositoryHelper(dir, "plugins")
+    val helper = MavenCustomRepositoryHelper(dir.toFile(), "plugins")
 
     repositoryPath = helper.getTestDataPath("plugins")
 
