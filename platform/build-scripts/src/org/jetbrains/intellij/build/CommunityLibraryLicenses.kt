@@ -780,7 +780,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("Kotlin POKO Compiler", libraryName = "kotlinc.poko-compiler-plugin", url = "https://github.com/drewhamilton/Poko")
+    LibraryLicense("Kotlin POKO Compiler", libraryName = "poko-compiler-plugin", url = "https://github.com/drewhamilton/Poko")
       .apache("https://github.com/drewhamilton/Poko/blob/main/LICENSE"),
 
     LibraryLicense("Kotlin reflection library", libraryName = "kotlin-reflect", url = "https://github.com/JetBrains/kotlin")

@@ -43,7 +43,6 @@
         <entry key="kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-platform-interface" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.compose-compiler-plugin" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.poko-compiler-plugin" value="kotlin.util.compiler-classpath" />
       </map>
     </option>
   </component>
