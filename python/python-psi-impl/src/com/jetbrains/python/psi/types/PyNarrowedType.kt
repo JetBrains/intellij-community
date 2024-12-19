@@ -40,27 +40,29 @@ class PyNarrowedType private constructor(
 
   override fun toString(): String = "PyNarrowedType: ${narrowedType?.name ?: "Any"}"
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is PyNarrowedType) return false
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (javaClass != o?.javaClass) return false
+    if (!super.equals(o)) return false
 
-    if (qname != other.qname) return false
-    if (original != other.original) return false
-    if (negated != other.negated) return false
-    if (typeIs != other.typeIs) return false
-    if (narrowedType != other.narrowedType) return false
-    if (pyClass != other.pyClass) return false
+    o as PyNarrowedType
+
+    if (negated != o.negated) return false
+    if (typeIs != o.typeIs) return false
+    if (qname != o.qname) return false
+    if (original != o.original) return false
+    if (narrowedType != o.narrowedType) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = qname?.hashCode() ?: 0
-    result = 31 * result + (original?.hashCode() ?: 0)
+    var result = super.hashCode()
     result = 31 * result + negated.hashCode()
     result = 31 * result + typeIs.hashCode()
+    result = 31 * result + (qname?.hashCode() ?: 0)
+    result = 31 * result + (original?.hashCode() ?: 0)
     result = 31 * result + (narrowedType?.hashCode() ?: 0)
-    result = 31 * result + pyClass.hashCode()
     return result
   }
 
