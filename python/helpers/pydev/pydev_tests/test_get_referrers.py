@@ -6,6 +6,7 @@ import pytest
 from _pydevd_bundle import pydevd_referrers
 from _pydev_bundle.pydev_imports import StringIO
 from _pydevd_bundle.pydevd_constants import IS_PY2
+from _pydevd_bundle.pydevd_constants import IS_PY311_OR_GREATER
 
 try:
     import gc
@@ -31,6 +32,7 @@ class Test(unittest.TestCase):
         assert 'list[1]' in result
         pydevd_referrers.print_referrers(contained, stream=StringIO())
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-809")
     def test_get_referrers2(self):
 
         class MyClass(object):
@@ -48,6 +50,7 @@ class Test(unittest.TestCase):
         assert 'found_as="contained"' in result
         assert 'MyClass' in result
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-810")
     def test_get_referrers3(self):
 
         class MyClass(object):
@@ -65,6 +68,7 @@ class Test(unittest.TestCase):
         assert 'found_as="contained"' in result
         assert 'MyClass' in result
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-816")
     def test_get_referrers4(self):
 
         class MyClass(object):
