@@ -22,12 +22,14 @@ import org.gradle.launcher.configuration.BuildLayoutResult
 import org.gradle.launcher.daemon.configuration.DaemonParameters
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
 
 // Constructors have changed for different versions of Gradle, need to use the correct version by reflection
 @ApiStatus.Internal
 fun getDaemonParameters(layout: BuildLayoutParameters): DaemonParameters {
   try {
     return when {
+      GradleVersionUtil.isCurrentGradleAtLeast("8.12") -> daemonParameters8Dot12(layout)
       GradleVersionUtil.isCurrentGradleAtLeast("6.6") -> daemonParameters6Dot6(layout)
       GradleVersionUtil.isCurrentGradleAtLeast("6.4") -> daemonParameters6Dot4(layout)
       GradleVersionUtil.isCurrentGradleAtLeast("6.3") -> daemonParameters6Dot3(layout)
@@ -39,6 +41,29 @@ fun getDaemonParameters(layout: BuildLayoutParameters): DaemonParameters {
   catch (e: ReflectiveOperationException) {
     throw RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e)
   }
+}
+
+/**
+ * DaemonParameters(File (gradleUserHomeDir), FileCollectionFactory) with DefaultFileCollectionFactory using
+ * DefaultFileCollectionFactory(
+ *  PathToFileResolver,
+ *  TaskDependencyFactory,
+ *  DirectoryFileTreeFactory,
+ *  Factory<PatternSet>,
+ *  PropertyHost,
+ *  FileSystem)
+ * using IdentityFileResolver()
+ */
+private fun daemonParameters8Dot12(layout: BuildLayoutParameters): DaemonParameters {
+  val patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE)
+  val identityFileResolver = IdentityFileResolver::class.java.getConstructor().newInstance()
+  val collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory)
+
+  val daemonParametersConstructor = DaemonParameters::class.java.getConstructor(
+    File::class.java,
+    FileCollectionFactory::class.java
+  )
+  return daemonParametersConstructor.newInstance(layout.gradleUserHomeDir, collectionFactory)
 }
 
 /**
