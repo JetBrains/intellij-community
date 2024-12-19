@@ -2444,6 +2444,18 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-77601
+  public void testSingleParamSpecParameterizationIsEqual() {
+    doTestByText("""
+                   from typing import Generic, ParamSpec
+                   P = ParamSpec("P")
+                   class Method(Generic[P]): ...
+                   
+                   # Method[str, int, bool] is equal to Method[[str, int, bool]] in when ParamSpec is one and only type parameter
+                   c: type[Method[str, int, bool]] = Method[[str, int, bool]]
+                   """);
+  }
+
   // PY-23067
   public void testFunctoolsWrapsMultiFile() {
     doMultiFileTest();

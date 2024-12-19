@@ -6223,6 +6223,20 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-77601
+  public void testParamSpecCorrectlyParameterizedWhenItIsOnlyGenericParam() {
+    doTest("(str, int, bool) -> int", """
+      from typing import ParamSpec, Callable, Generic
+      
+      P = ParamSpec("P")
+      
+      class MyClass(Generic[P]):
+          def call(self) -> Callable[P, int]: ...
+      c = MyClass[str, int, bool]()
+      expr = c.call()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
