@@ -50,6 +50,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.abstract.class"), JavaHighlightingColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.interface"), JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.enum"), JavaHighlightingColors.ENUM_NAME_ATTRIBUTES),
+    new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.record"), JavaHighlightingColors.RECORD_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.java.attribute.descriptor.local.variable"), JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.reassigned.local.variable"), JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.reassigned.parameter"), JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES),
@@ -111,6 +112,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
     ourTags.put("abstractClass", JavaHighlightingColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
     ourTags.put("interface", JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES);
     ourTags.put("enum", JavaHighlightingColors.ENUM_NAME_ATTRIBUTES);
+    ourTags.put("record", JavaHighlightingColors.RECORD_NAME_ATTRIBUTES);
     ourTags.put("annotationName", JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES);
     ourTags.put("annotationAttributeName", JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
     ourTags.put("javadocTagValue", JavaHighlightingColors.DOC_COMMENT_TAG_VALUE);
@@ -143,6 +145,11 @@ public abstract class AbstractBasicJavaColorSettingsPage
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
+
+  /**
+   * Note: this method is overridden in {@link JavaColorSettingsPage}.
+   * Any changes you make here, you will probably want to do there as well.
+   */
   @Override
   @NotNull
   public String getDemoText() {
@@ -183,6 +190,8 @@ public abstract class AbstractBasicJavaColorSettingsPage
           int <static_final>CONSTANT</static_final> = 2;
           void <methodDeclaration>method</methodDeclaration>();
         }
+        @interface <annotationName>AnnotationType</annotationName> {}
+        record <record>Point</record>(int x, int y) {}
         abstract class <abstractClass>SomeAbstractClass</abstractClass> {
         }""";
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.editor;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
@@ -148,6 +148,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #000000;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
+        RECORD_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic; }
         STATIC_FINAL_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic;  font-weight: bold; }
@@ -206,6 +207,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #a9b7c6;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
+        RECORD_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }
         STATIC_FINAL_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }

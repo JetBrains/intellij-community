@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
@@ -248,6 +248,7 @@ public final class HighlightNamesUtil {
       if (aClass.isAnnotationType()) return JavaHighlightInfoTypes.ANNOTATION_NAME;
       if (aClass.isInterface()) return JavaHighlightInfoTypes.INTERFACE_NAME;
       if (aClass.isEnum()) return JavaHighlightInfoTypes.ENUM_NAME;
+      if (aClass.isRecord()) return JavaHighlightInfoTypes.RECORD_NAME;
       if (aClass instanceof PsiTypeParameter) return JavaHighlightInfoTypes.TYPE_PARAMETER_NAME;
       PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME;
@@ -379,6 +380,7 @@ public final class HighlightNamesUtil {
   static HighlightInfo highlightKeyword(@NotNull PsiKeyword keyword) {
     return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create();
   }
+
   static HighlightInfo highlightClassKeyword(@NotNull PsiKeyword keyword) {
     return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD_CLASS_FILE).range(keyword).create();
   }
