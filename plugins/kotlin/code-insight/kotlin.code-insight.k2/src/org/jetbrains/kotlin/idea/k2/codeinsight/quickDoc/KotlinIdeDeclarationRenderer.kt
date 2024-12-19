@@ -282,7 +282,7 @@ internal class KotlinIdeDeclarationRenderer(
                     printer {
                         " ".separated(
                             {
-                                if (symbol is KaNamedClassSymbol && symbol.isLocal) {
+                                if (symbol !is KaTypeParameterSymbol && symbol is KaNamedSymbol && symbol.visibility == KaSymbolVisibility.LOCAL) {
                                     printer.append(highlight("local") { asKeyword })
                                 }
                             },
@@ -475,11 +475,6 @@ internal class KotlinIdeDeclarationRenderer(
                         {
                             if (symbol is KaValueParameterSymbol && symbol == rootSymbol && callableSymbol == symbol) {
                                 printer.append(highlight("value-parameter") { asKeyword })
-                            }
-                        },
-                        {
-                            if (callableSymbol.visibility == KaSymbolVisibility.LOCAL) {
-                                printer.append(highlight("local") { asKeyword })
                             }
                         },
                         {
