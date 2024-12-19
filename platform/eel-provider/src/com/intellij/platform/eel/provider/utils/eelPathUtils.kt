@@ -52,9 +52,21 @@ object EelPathUtils {
     }
   }
 
+  @JvmStatic
+  fun renderAsEelPath(path: Path): String {
+    if (isPathLocal(path)) {
+      return path.toString()
+    }
+    return runBlockingMaybeCancellable {
+      val eel = path.getEelApi()
+      val eelPath = eel.mapper.getOriginalPath(path) ?: return@runBlockingMaybeCancellable path.toString()
+      eelPath.toString()
+    }
+  }
+
   /**
    * ```kotlin
-   * getUriLocalToEel(Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user\\dir")).toString() = "file:/home/user/dir"
+   * getUriLocalToEel(Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user\\dir")).toString() = "file://home/user/dir"
    * ```
    */
   @JvmStatic

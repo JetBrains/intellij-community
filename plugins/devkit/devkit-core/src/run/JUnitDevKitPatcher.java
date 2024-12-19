@@ -24,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -77,11 +78,11 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       String basePath = project.getBasePath();
       if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
         assert basePath != null;
-        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, Path.of(basePath, "system/test").toAbsolutePath().toString());
+        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "system/test").toAbsolutePath()));
       }
       if (!vm.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
         assert basePath != null;
-        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, Path.of(basePath, "config/test").toAbsolutePath().toString());
+        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "config/test").toAbsolutePath()));
       }
 
       appendAddOpensWhenNeeded(project, jdk, vm);
