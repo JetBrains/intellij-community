@@ -140,27 +140,28 @@ public final class TimedZipHandler extends ZipHandlerBase {
         synchronized (handlersLRUCache) {
           handlersLRUCache.putAndMoveToFirst(TimedZipHandler.this, invalidationRequest);
         }
-
-        //if already too many cached entries -> invalidate (close) the oldest (least-recently-used):
-        for (int i = 0; i < LRU_CACHE_SIZE; i++) {
-          //^^^ loop iterations must be limited because it could be too many handlers are in use and can't be closed right now
-          TimedZipHandler leastUsedHandler;
-          synchronized (handlersLRUCache) {
-            if (handlersLRUCache.size() <= LRU_CACHE_SIZE) {
-              break;
-            }
-
-            leastUsedHandler = handlersLRUCache.lastKey();
-            invalidationRequest = handlersLRUCache.removeLast();
-          }
-
-          if (leastUsedHandler != null) {
-            leastUsedHandler.handle.invalidateZipReference(invalidationRequest);
-          }
-        }
       }
       finally {
         lock.unlock();
+      }
+
+      //if already too many cached entries -> invalidate (close) the oldest (least-recently-used):
+      for (int i = 0; i < LRU_CACHE_SIZE; i++) {
+        //^^^ loop iterations must be limited because it could be too many handlers are in use thus can't be closed right now
+        TimedZipHandler leastUsedHandler;
+        ScheduledFuture<?> invalidationRequest;
+        synchronized (handlersLRUCache) {
+          if (handlersLRUCache.size() <= LRU_CACHE_SIZE) {
+            break;
+          }
+
+          leastUsedHandler = handlersLRUCache.lastKey();
+          invalidationRequest = handlersLRUCache.removeLast();
+        }
+
+        if (leastUsedHandler != null) {
+          leastUsedHandler.handle.invalidateZipReference(invalidationRequest);
+        }
       }
     }
 
