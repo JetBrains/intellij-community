@@ -225,7 +225,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class E(Generic[T], Iterable[T]):
                        pass
 
-                   class F(B[D], Iterable[D]):
+                   class F(B[D], Iterable[<warning descr="Invalid type argument">D</warning>]):
                        pass
                       \s
                    class G(Iterable[T]):
@@ -1983,6 +1983,39 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    c2 = Clazz[<warning descr="Passed type arguments do not math type parameters [T1, T2, *Ts, T3] of class 'Clazz'">int, str</warning>]()
                    c3 = Clazz[int, str, bool]()
                    c4 = Clazz[int, str, bool, float]()
+                   """);
+  }
+
+  // PY-75759
+  public void testAllowedTypeArguments() {
+    doTestByText("""
+                   from typing import Literal, TypeAlias
+                   
+                   class Clazz[T1, T2 = int]: ...
+                   
+                   var = 1
+                   myInt = int
+                   type myIntOrStr = int | str
+                   myIntAlias: TypeAlias = int
+                   
+                   class A:...
+                   
+                   c1 = Clazz[<warning descr="Invalid type argument">print()</warning>, int]()
+                   c2 = Clazz[int, <warning descr="Invalid type argument">print()</warning>]()
+                   c3 = Clazz[<warning descr="Invalid type argument">1</warning>]
+                   c4 = Clazz["int", "str"]
+                   c5 = Clazz[dict[int, str]]
+                   c7 = Clazz[<warning descr="Invalid type argument">True</warning>]
+                   c8 = Clazz[<warning descr="Invalid type argument">list or set</warning>]
+                   c9 = Clazz[Literal[3]]
+                   c10 = Clazz[<warning descr="Invalid type argument">var</warning>]
+                   c11 = Clazz[myInt]
+                   c12 = Clazz[myIntOrStr]
+                   c13 = Clazz[myIntAlias]
+                   c14 = Clazz[A]
+                   c15 = Clazz[<warning descr="Invalid type argument">{"a": "b"}</warning>]
+                   c16 = Clazz[<warning descr="Invalid type argument">(lambda: int)()</warning>]
+                   c17 = Clazz[<warning descr="Invalid type argument">(int, str)</warning>]
                    """);
   }
 
