@@ -230,7 +230,8 @@ public class PyTypeCheckerInspection extends PyInspection {
         String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
         registerProblem(value, descriptor ?
-                               PyPsiBundle.message("INSP.type.checker.expected.type.from.dunder.set.got.type.instead", actualName, expectedName) :
+                               PyPsiBundle.message("INSP.type.checker.expected.type.from.dunder.set.got.type.instead",
+                                                   expectedName, actualName) :
                                PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
     }
