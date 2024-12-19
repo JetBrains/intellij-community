@@ -121,6 +121,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Deque<VirtualMachineData> myStashedVirtualMachines = new LinkedList<>();
 
   private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
+  protected final CheckedDisposable disposable = Disposer.newCheckedDisposable();
   protected final DisposableWrapperList<DebugProcessListener> myDebugProcessListeners = new DisposableWrapperList<>(); // propagate exceptions from listeners
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
@@ -151,7 +152,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
-  protected final CheckedDisposable disposable = Disposer.newCheckedDisposable();
   private final SingleEdtTaskScheduler statusUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, disposable);
@@ -823,7 +823,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void addDebugProcessListener(DebugProcessListener listener) {
-    myDebugProcessListeners.add(listener);
+    myDebugProcessListeners.add(listener, disposable);
   }
 
   @Override
