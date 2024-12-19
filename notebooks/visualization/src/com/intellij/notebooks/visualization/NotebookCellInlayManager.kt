@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL
 import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
@@ -150,26 +151,29 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun updateUI(events: List<EditorCellEvent>) {
-    update { ctx ->
+    update {
       for (event in events) {
         when (event) {
           is CellCreated -> {
             val cell = event.cell
-            cell.visible.afterChange { visible ->
-              if (visible) {
-                createCellViewIfNecessary(cell, ctx)
-              }
-              else {
-                disposeCellView(cell)
-              }
+            cell.visible.bind(cell) { visible ->
+              updateCellVisibility(cell, visible)
             }
-            createCellViewIfNecessary(cell, ctx)
           }
           is CellRemoved -> {
             disposeCellView(event.cell)
           }
         }
       }
+    }
+  }
+
+  private fun updateCellVisibility(cell: EditorCell, visible: Boolean) = update { ctx ->
+    if (visible) {
+      createCellViewIfNecessary(cell, ctx)
+    }
+    else {
+      disposeCellView(cell)
     }
   }
 
