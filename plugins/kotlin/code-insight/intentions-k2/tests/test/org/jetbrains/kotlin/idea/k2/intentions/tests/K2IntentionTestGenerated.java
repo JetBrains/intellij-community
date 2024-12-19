@@ -8425,7 +8425,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertObjectLiteralToClass")
+    public static class ConvertObjectLiteralToClass extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inClass.kt")
+        public void testInClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inClass.kt");
+        }
+
+        @TestMetadata("inClassHasMethodReference.kt")
+        public void testInClassHasMethodReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inClassHasMethodReference.kt");
+        }
+
+        @TestMetadata("inClassHasPropertyReference.kt")
+        public void testInClassHasPropertyReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inClassHasPropertyReference.kt");
+        }
+
+        @TestMetadata("inFunction.kt")
+        public void testInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inFunction.kt");
+        }
+
+        @TestMetadata("objectLiteralNoCapture.kt")
+        public void testObjectLiteralNoCapture() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralNoCapture.kt");
+        }
+
+        @TestMetadata("objectLiteralNoSupers.kt")
+        public void testObjectLiteralNoSupers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralNoSupers.kt");
+        }
+
+        @TestMetadata("objectLiteralWithCapture.kt")
+        public void testObjectLiteralWithCapture() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralWithCapture.kt");
+        }
+    }
 
 
 

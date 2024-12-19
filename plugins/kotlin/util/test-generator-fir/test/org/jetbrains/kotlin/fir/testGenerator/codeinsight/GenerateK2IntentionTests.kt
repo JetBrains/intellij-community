@@ -106,7 +106,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertSecondaryConstructorToPrimary", pattern = pattern, isIgnored = true)
             model("${idea}intentions/expandBooleanExpression", pattern = pattern, isIgnored = true)
             model("${idea}intentions/destructuringVariables", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertObjectLiteralToClass", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertObjectLiteralToClass", pattern = pattern)
             model("${idea}intentions/toOrdinaryStringLiteral", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLineCommentToBlockComment", pattern = pattern, isIgnored = true)
             model("${idea}intentions/declarations/convertMemberToExtension", pattern = pattern)

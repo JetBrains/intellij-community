@@ -482,6 +482,27 @@ class KotlinNameSuggester(
             }
         }
 
+        fun suggestTypeAliasNameByPsi(typeElement: KtTypeElement, validator: (String) -> Boolean): String {
+            fun KtTypeElement.render(): String {
+                return when (this) {
+                    is KtNullableType -> "Nullable${innerType?.render() ?: ""}"
+                    is KtFunctionType -> {
+                        val arguments = listOfNotNull(receiverTypeReference) + parameters.mapNotNull { it.typeReference }
+                        val argText = arguments.joinToString(separator = "") { it.typeElement?.render() ?: "" }
+                        val returnText = returnTypeReference?.typeElement?.render() ?: "Unit"
+                        "${argText}To$returnText"
+                    }
+                    is KtUserType -> {
+                        val argText = typeArguments.joinToString(separator = "") { it.typeReference?.typeElement?.render() ?: "" }
+                        "$argText${referenceExpression?.text ?: ""}"
+                    }
+                    else -> text.capitalizeAsciiOnly()
+                }
+            }
+
+            return suggestNameByName(typeElement.render(), validator)
+        }
+
         /**
          * Decapitalizes the passed [name] if [mustStartWithLowerCase] is `true`, checks whether the result is a valid identifier,
          * validates it using [validator], and improves it by adding a numeric suffix in case of conflicts.

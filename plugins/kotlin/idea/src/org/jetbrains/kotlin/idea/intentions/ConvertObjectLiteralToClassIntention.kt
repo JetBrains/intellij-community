@@ -8,11 +8,11 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -36,9 +36,9 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
     KtObjectLiteralExpression::class.java,
     KotlinBundle.lazyMessage("convert.object.literal.to.class")
 ) {
-    override fun applicabilityRange(element: KtObjectLiteralExpression) = element.objectDeclaration.getObjectKeyword()?.textRange
+    override fun applicabilityRange(element: KtObjectLiteralExpression): TextRange? = element.objectDeclaration.getObjectKeyword()?.textRange
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     private fun doApply(editor: Editor, element: KtObjectLiteralExpression, targetParent: KtElement) {
         val project = element.project
@@ -47,9 +47,11 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
 
         val validator: (String) -> Boolean = { scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
         val classNames = element.objectDeclaration.superTypeListEntries
-            .mapNotNull { it.typeReference?.typeElement?.let { Fe10KotlinNameSuggester.suggestTypeAliasNameByPsi(it, validator) } }
-            .takeIf { it.isNotEmpty() }
-            ?: listOf(KotlinNameSuggester.suggestNameByName("O", validator))
+            .mapNotNull {
+                it.typeReference?.typeElement?.let { typeElement ->
+                KotlinNameSuggester.suggestTypeAliasNameByPsi(typeElement, validator) }
+            }
+            .takeIf { it.isNotEmpty() } ?: listOf(KotlinNameSuggester.suggestNameByName("O", validator))
 
         val className = classNames.first()
         val psiFactory = KtPsiFactory(element.project)
