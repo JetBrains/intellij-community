@@ -516,16 +516,17 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                          boolean keepResult,
                                          String... additionalClassesToLoad) throws EvaluateException {
     ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
-    if (helperClass != null) {
-      Method method = findMethod(helperClass, methodName, null);
-      if (method != null) {
-        DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-        ThrowableComputable<Value, EvaluateException> invoker =
-          () -> debugProcess.invokeMethod(evaluationContext, helperClass, method, arguments, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
-        return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
-      }
+    if (helperClass == null) {
+      throw new HelperNotAvailableException("Unable to load helper class " + cls.getName());
     }
-    return null;
+    Method method = findMethod(helperClass, methodName, null);
+    if (method == null) {
+      throw new HelperNotAvailableException("Unable to find helper class " + cls.getName() + " method " + methodName);
+    }
+    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+    ThrowableComputable<Value, EvaluateException> invoker =
+      () -> debugProcess.invokeMethod(evaluationContext, helperClass, method, arguments, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
+    return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
   }
 
   public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,
@@ -538,21 +539,28 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   @Nullable
   public static String getExceptionText(EvaluationContextImpl evaluationContext, @NotNull ObjectReference exceptionObject)
     throws EvaluateException {
-    Value value = invokeHelperMethod(evaluationContext,
-                                     ExceptionDebugHelper.class,
-                                     "getThrowableText",
-                                     Collections.singletonList(exceptionObject));
-    return value != null ? ((StringReference)value).value() : null;
+    try {
+      Value value = invokeHelperMethod(evaluationContext,
+                                 ExceptionDebugHelper.class,
+                                 "getThrowableText",
+                                 Collections.singletonList(exceptionObject));
+      return ((StringReference)value).value();
+    }
+    catch (HelperNotAvailableException e) {
+      LOG.error(e);
+    }
+    // fallback to slow impl
+    return MethodInvokeUtils.getExceptionTextViaArray(evaluationContext, exceptionObject);
   }
 
   @Nullable
-  public static Value invokeThrowableGetStackTrace(@NotNull ObjectReference exceptionObj,
+  public static ArrayReference invokeThrowableGetStackTrace(@NotNull ObjectReference exceptionObj,
                                                    @NotNull EvaluationContextImpl evaluationContext,
                                                    boolean keepResult) throws EvaluateException {
     if (instanceOf(exceptionObj.type(), "java.lang.Throwable")) {
       Method method = findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
       DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-      ThrowableComputable<Value, EvaluateException> invoker = () -> debugProcess.invokeInstanceMethod(
+      ThrowableComputable<ArrayReference, EvaluateException> invoker = () -> (ArrayReference)debugProcess.invokeInstanceMethod(
         evaluationContext, exceptionObj, Objects.requireNonNull(method), Collections.emptyList(), 0, true);
       return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
     }

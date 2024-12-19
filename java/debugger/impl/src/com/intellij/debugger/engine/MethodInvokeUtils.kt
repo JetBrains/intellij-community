@@ -24,20 +24,39 @@ object MethodInvokeUtils {
   fun getHelperExceptionStackTrace(evaluationContext: EvaluationContextImpl, e: Exception): String? {
     if (e !is EvaluateException) return null
     val exceptionFromTargetVM = e.exceptionFromTargetVM ?: return null
-    val stackTraceArray = DebuggerUtilsImpl.invokeThrowableGetStackTrace(exceptionFromTargetVM, evaluationContext, true)
-    if (stackTraceArray !is ArrayReference) return null
-    val values = stackTraceArray.values
-    if (values.isEmpty()) return null
+    val values = DebuggerUtilsImpl.invokeThrowableGetStackTrace(exceptionFromTargetVM, evaluationContext, true)?.values
+    if (values.isNullOrEmpty()) return null
     // drop user frames
     val currentStackDepth = DebugProcessImpl.getEvaluationThread(evaluationContext).frameCount()
     val keepLines = if (values.size <= currentStackDepth) values.size else values.size - currentStackDepth
-    val stackTraceString =
-      DebuggerUtils.getValueAsString(evaluationContext, exceptionFromTargetVM) + "\n" +
-      values.asSequence().take(keepLines).map { DebuggerUtils.getValueAsString(evaluationContext, it) }.joinToString(prefix = "\tat ", separator = "\n")
+    val stackTraceString = getExceptionTextFromStackTraceValues(evaluationContext, exceptionFromTargetVM, values, keepLines)
     if (values.size <= currentStackDepth) {
       logger<MethodInvokeUtils>().error("Invalid helper stack (expected currentStackDepth = ${currentStackDepth}) : ${stackTraceString}")
     }
     return stackTraceString
+  }
+
+  /**
+   * Slow implementation and does not include async stack trace, but does not use helpers
+   */
+  @JvmStatic
+  fun getExceptionTextViaArray(evaluationContext: EvaluationContextImpl, exceptionObject: ObjectReference): String? {
+    val values = DebuggerUtilsImpl.invokeThrowableGetStackTrace(exceptionObject, evaluationContext, true)?.values
+    if (values.isNullOrEmpty()) return null
+    return getExceptionTextFromStackTraceValues(evaluationContext, exceptionObject, values)
+  }
+
+  private fun getExceptionTextFromStackTraceValues(
+    evaluationContext: EvaluationContextImpl,
+    exceptionObject: ObjectReference,
+    stackTraceValues: List<Value>,
+    keepLines: Int = Int.MAX_VALUE,
+  ): String? {
+    return DebuggerUtils.getValueAsString(evaluationContext, exceptionObject) + "\n" +
+           stackTraceValues.asSequence()
+             .take(keepLines)
+             .map { "\tat ${DebuggerUtils.getValueAsString(evaluationContext, it)}" }
+             .joinToString(separator = "\n", postfix = "\n")
   }
 }
 
