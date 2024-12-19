@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -215,8 +216,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends MCIntention {
     final String variableName =
       createVariableName(variableNameRoot, iteratedValue);
     final Project project = context.getProject();
-    final PsiType iteratedValueType = iteratedValue.getType();
+    PsiType iteratedValueType = iteratedValue.getType();
     assert iteratedValueType != null;
+    iteratedValueType = PsiTypesUtil.removeExternalAnnotations(iteratedValueType);
     final PsiElementFactory elementFactory =
       JavaPsiFacade.getElementFactory(project);
     final PsiDeclarationStatement declarationStatement =
