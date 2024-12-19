@@ -191,6 +191,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    performShowUsagesAction(e);
+  }
+
+  @ApiStatus.Internal
+  public static void performShowUsagesAction(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 

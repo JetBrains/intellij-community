@@ -29,6 +29,9 @@ public abstract class ActionGroup extends AnAction {
     }
   };
 
+  @ApiStatus.Internal
+  public static final DataKey<ActionGroup> CONTEXT_ACTION_GROUP_KEY = DataKey.create("context.action.group");
+
   private boolean mySearchable = true;
   private Set<AnAction> mySecondaryActions;
 
