@@ -1083,16 +1083,6 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingTypedDictArguments();
   }
 
-  // PY-36008
-  public void testTypedDictNameKeyword() {
-    doTestTypingTypedDictArguments();
-  }
-
-  // PY-36008
-  public void testTypedDictFieldsKeyword() {
-    doTestTypingTypedDictArguments();
-  }
-
   // PY-41305
   public void testDecoratorQualifiedNames() {
     final PyFile file = getTestFile();

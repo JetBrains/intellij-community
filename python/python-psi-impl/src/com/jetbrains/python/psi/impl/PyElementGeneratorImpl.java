@@ -384,6 +384,11 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
     return createFromText(LanguageLevel.PYTHON30, PySingleStarParameter.class, "def foo(*): pass", new int[]{0, 3, 1});
   }
 
+  @Override
+  public @NotNull PySlashParameter createSlashParameter() {
+    return createFromText(LanguageLevel.PYTHON30, PySlashParameter.class, "def foo(/): pass", new int[]{0, 3, 1});
+  }
+
   private static class CommasOnly extends NotNullPredicate<LeafPsiElement> {
     @Override
     protected boolean applyNotNull(@NotNull final LeafPsiElement input) {

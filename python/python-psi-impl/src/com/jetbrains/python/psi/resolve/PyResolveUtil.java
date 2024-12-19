@@ -365,7 +365,13 @@ public final class PyResolveUtil {
 
     // Point = namedtuple(typename="Point", ...)
 
-    final PyExpression expression = PyPsiUtils.flattenParens(callExpression.getArgument(index, keyword, PyExpression.class));
+    PyExpression argument = callExpression.getArgument(index, keyword, PyExpression.class);
+    return resolveStrArgument(argument);
+  }
+
+  @Nullable
+  public static String resolveStrArgument(@Nullable PyExpression argument) {
+    final PyExpression expression = PyPsiUtils.flattenParens(argument);
 
     if (expression instanceof PyReferenceExpression) {
       return PyPsiUtils.strValue(fullResolveLocally((PyReferenceExpression)expression));

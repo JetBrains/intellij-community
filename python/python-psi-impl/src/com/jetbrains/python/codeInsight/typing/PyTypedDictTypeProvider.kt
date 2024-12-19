@@ -16,8 +16,6 @@ import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
 import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
 import com.jetbrains.python.psi.types.*
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import java.util.*
 import java.util.stream.Collectors
@@ -116,22 +114,27 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
 
       if (isTypedDict(referenceExpression, context)) {
-        val parameters = mutableListOf<PyCallableParameter>()
-
         val builtinCache = PyBuiltinCache.getInstance(referenceExpression)
         val languageLevel = LanguageLevel.forElement(referenceExpression)
         val generator = PyElementGenerator.getInstance(referenceExpression.project)
 
-        parameters.add(PyCallableParameterImpl.nonPsi(TYPED_DICT_NAME_PARAMETER, builtinCache.getStringType(languageLevel)))
-        val dictClassType = builtinCache.dictType
-        parameters.add(PyCallableParameterImpl.nonPsi(TYPED_DICT_FIELDS_PARAMETER,
-                                                      if (dictClassType != null) PyCollectionTypeImpl(dictClassType.pyClass, false,
-                                                                                                      listOf(builtinCache.strType, null))
-                                                      else null))
-        parameters.add(
+        val dictType = builtinCache.dictType
+        val strToTypeDictType = if (dictType != null) {
+          PyCollectionTypeImpl(dictType.pyClass, false, listOf(builtinCache.strType, builtinCache.typeType))
+        }
+        else {
+          null
+        }
+
+        val parameters = listOf(
+          PyCallableParameterImpl.nonPsi("typename", builtinCache.getStringType(languageLevel)),
+          PyCallableParameterImpl.nonPsi("fields", strToTypeDictType),
+          PyCallableParameterImpl.psi(generator.createSingleStarParameter()),
+          PyCallableParameterImpl.psi(generator.createSlashParameter()),
           PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER,
                                          builtinCache.boolType,
-                                         generator.createExpressionFromText(languageLevel, PyNames.TRUE)))
+                                         generator.createExpressionFromText(languageLevel, PyNames.TRUE))
+        )
 
         return PyCallableTypeImpl(parameters, null)
       }

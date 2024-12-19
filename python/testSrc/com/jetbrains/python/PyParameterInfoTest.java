@@ -1035,8 +1035,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testDefiningTypedDictTypeAlternativeSyntax() {
     final Map<String, PsiElement> test = loadTest(1);
 
-    feignCtrlP(test.get("<arg1>").getTextOffset()).check("name: str, fields: dict[str, Any], total: bool = True",
-                                                         new String[]{"name: str, "},
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check("typename: str, fields: dict[str, type], *, /, total: bool = True",
+                                                         new String[]{"typename: str, "},
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 

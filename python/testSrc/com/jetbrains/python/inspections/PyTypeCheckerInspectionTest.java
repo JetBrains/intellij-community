@@ -1001,6 +1001,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                    Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)
                    movie = {'name': 'Blade Runner', <warning descr="Extra key 'director' for TypedDict 'Movie'">'director': 'Ridley Scott'</warning>} # type: Movie
                    """);
+    doTestByText("""
+                   from typing import TypedDict
+                   BadTD = TypedDict('BadTD', unknown_param=True)
+                   td = {<warning descr="Extra key 'v' for TypedDict 'BadTD'">'v': 1</warning>} # type: BadTD
+                   """);
   }
 
   // PY-36008
@@ -1106,8 +1111,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON36,
       () -> doTestByText("""
                            from typing import TypedDict
-                           Movie = TypedDict(<warning descr="Expected type 'str', got 'int' instead">3</warning>, <warning descr="Expected type 'Dict[str, Any]', got 'List[int]' instead">[1, 2, 3]</warning>)
-                           Movie = TypedDict('Movie', {})"""));
+                           Movie = TypedDict(<warning descr="Expected type 'str', got 'int' instead">3</warning>, <warning descr="Expected type 'Dict[str, type]', got 'List[int]' instead">[1, 2, 3]</warning>)
+                           Movie = TypedDict('Movie', {})
+                           Movie = TypedDict('Movie', {'name': str})"""));
   }
 
   // PY-36008

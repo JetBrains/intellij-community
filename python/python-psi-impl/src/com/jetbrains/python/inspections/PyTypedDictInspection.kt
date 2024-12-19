@@ -18,8 +18,6 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.*
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 
 class PyTypedDictInspection : PyInspection() {
@@ -60,7 +58,7 @@ class PyTypedDictInspection : PyInspection() {
     override fun visitPyTargetExpression(node: PyTargetExpression) {
       val value = node.findAssignedValue()
       if (value is PyCallExpression && value.callee != null && PyTypedDictTypeProvider.isTypedDict(value.callee!!, myTypeEvalContext)) {
-        val typedDictName = value.getArgument(0, TYPED_DICT_NAME_PARAMETER, PyExpression::class.java)
+        val typedDictName = PyPsiUtils.flattenParens(value.arguments.firstOrNull())
         if (typedDictName is PyStringLiteralExpression && node.name != typedDictName.stringValue) {
           registerProblem(typedDictName, PyPsiBundle.message("INSP.typeddict.first.argument.has.to.match.variable.name"))
         }
@@ -89,24 +87,26 @@ class PyTypedDictInspection : PyInspection() {
           }
         }
       }
-      else if (node.callExpression != null) {
+      else {
         val callExpression = node.callExpression
-        val callee = callExpression!!.callee
-        if (callee != null && PyTypedDictTypeProvider.isTypedDict(callee, myTypeEvalContext)) {
-          val fields = callExpression.getArgument(1, TYPED_DICT_FIELDS_PARAMETER, PyExpression::class.java)
-          if (fields !is PyDictLiteralExpression) {
-            return
-          }
+        if (callExpression != null) {
+          val callee = callExpression.callee
+          if (callee != null && PyTypedDictTypeProvider.isTypedDict(callee, myTypeEvalContext)) {
+            val fields = PyPsiUtils.flattenParens(callExpression.arguments.getOrNull(1))
+            if (fields !is PyDictLiteralExpression) {
+              return
+            }
 
-          fields.elements.forEach {
-            if (it !is PyKeyValueExpression) return
+            fields.elements.forEach {
+              if (it !is PyKeyValueExpression) return
 
-            checkValueIsAType(it.value, it.value?.text)
-          }
+              checkValueIsAType(it.value, it.value?.text)
+            }
 
-          val totalityArgument = callExpression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER)
-          if (totalityArgument != null) {
-            checkValidTotality(totalityArgument)
+            val totalityArgument = callExpression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER)
+            if (totalityArgument != null) {
+              checkValidTotality(totalityArgument)
+            }
           }
         }
       }

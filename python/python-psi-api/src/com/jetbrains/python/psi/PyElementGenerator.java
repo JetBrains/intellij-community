@@ -157,4 +157,7 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
 
   @NotNull
   public abstract PySingleStarParameter createSingleStarParameter();
+
+  @NotNull
+  public abstract PySlashParameter createSlashParameter();
 }

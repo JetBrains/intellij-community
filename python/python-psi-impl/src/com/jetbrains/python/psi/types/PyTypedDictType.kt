@@ -143,9 +143,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
   companion object {
 
-    const val TYPED_DICT_NAME_PARAMETER = "name"
-    const val TYPED_DICT_FIELDS_PARAMETER = "fields"
-    const val TYPED_DICT_TOTAL_PARAMETER = "total"
+    const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
 
     fun createFromKeysToValueTypes(anchor: PsiElement,
                                    keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>): PyTypedDictType? {
