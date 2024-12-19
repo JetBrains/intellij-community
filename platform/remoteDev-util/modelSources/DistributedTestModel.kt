@@ -48,8 +48,6 @@ object DistributedTestModel : Ext(TestRoot) {
     field("message", string.nullable)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
     field("cause", RdTestSessionExceptionCause.nullable)
-    field("productVersion", string.nullable)
-    field("productCode", string.nullable)
   }
 
 
@@ -85,6 +83,12 @@ object DistributedTestModel : Ext(TestRoot) {
     call("makeScreenshot", string, bool).async
     call("isResponding", void, bool).async
     call("projectsAreInitialised", void, bool).async
+    call("getProductCodeAndVersion", void, RdProductInfo).async
+  }
+
+  private val RdProductInfo = structdef {
+    field("productCode", string)
+    field("productVersion", string)
   }
 
   init {

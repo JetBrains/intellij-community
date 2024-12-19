@@ -30,6 +30,7 @@ import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
+import com.intellij.remoteDev.tests.modelGenerated.RdProductInfo
 import com.intellij.remoteDev.tests.modelGenerated.RdProductType
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
@@ -251,6 +252,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         session.isResponding.setSuspend(sessionBgtDispatcher) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
+        }
+
+        session.getProductCodeAndVersion.setSuspend(sessionBgtDispatcher) { _, _ ->
+          val productVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode()
+          val productCode = ApplicationInfo.getInstance().build.productCode
+          RdProductInfo(productCode = productCode, productVersion = productVersion)
         }
 
         session.visibleFrameNames.setSuspend(sessionBgtDispatcher) { _, _ ->
