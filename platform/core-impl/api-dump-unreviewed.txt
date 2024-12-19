@@ -3399,7 +3399,6 @@ f:com.intellij.psi.impl.source.tree.LightTreeUtil
 - s:processLeavesAtOffsets(I[],com.intellij.lang.LighterAST,java.util.function.BiConsumer):V
 - s:requiredChildOfType(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.tree.IElementType):com.intellij.lang.LighterASTNode
 - s:requiredChildOfType(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.tree.TokenSet):com.intellij.lang.LighterASTNode
-- s:toBuffer(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,java.lang.StringBuilder,com.intellij.psi.tree.TokenSet):V
 - s:toFilteredString(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.tree.TokenSet):java.lang.String
 c:com.intellij.psi.impl.source.tree.OwnBufferLeafPsiElement
 - com.intellij.psi.impl.source.tree.LeafElement
