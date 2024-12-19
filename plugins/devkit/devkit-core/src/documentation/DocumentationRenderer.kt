@@ -325,7 +325,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendAttributeRequirement(attribute.requirement)
     appendParagraphSeparator()
     attribute.defaultValue?.trim()?.let {
-      append("Default value: `$it`")
+      append("Default value: $it")
     }
     return this
   }
