@@ -22,5 +22,5 @@ interface MarkdownCompatibilityChecker {
 }
 
 class DefaultMarkdownCompatibilityChecker : MarkdownCompatibilityChecker {
-  override fun isSupportedLanguage(language: Language) = language == MarkdownLanguage.INSTANCE
+  override fun isSupportedLanguage(language: Language): Boolean = language == MarkdownLanguage.INSTANCE
 }
