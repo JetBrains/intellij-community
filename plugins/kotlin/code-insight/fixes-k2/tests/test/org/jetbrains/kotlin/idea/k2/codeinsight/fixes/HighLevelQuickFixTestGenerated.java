@@ -5349,6 +5349,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/definitelyNonNullableTypes/changePrimaryConstructorParameterType.kt");
         }
 
+        @TestMetadata("changePrimaryConstructorParameterType2.kt")
+        public void testChangePrimaryConstructorParameterType2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/definitelyNonNullableTypes/changePrimaryConstructorParameterType2.kt");
+        }
+
         @TestMetadata("changeVariableType1.kt")
         public void testChangeVariableType1() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType1.kt");

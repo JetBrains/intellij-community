@@ -63,65 +63,62 @@ object ChangeParameterTypeFixFactory {
 
         val isPrimaryConstructorParameter = functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary
 
-        val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
-        val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
-        val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
-
         return listOf(
-            ChangeParameterTypeFix(
-                parameter,
-                typePresentation,
-                typeFQNPresentation,
-                isPrimaryConstructorParameter,
-                functionName
-            )
+            createChangeParameterTypeFix(parameter, targetType, isPrimaryConstructorParameter, functionName)
         )
     }
 
     context(KaSession)
-    @OptIn(KaExperimentalApi::class)
-    private fun createTypeMismatchFixesForDefinitelyNonNullable(psi: PsiElement, targetType: KaType): List<KotlinQuickFixAction<*>> {
-        if (targetType !is KaDefinitelyNotNullType) return emptyList()
-
+    private fun createTypeMismatchFixesForDefinitelyNonNullable(
+        psi: PsiElement,
+        targetType: KaDefinitelyNotNullType
+    ): List<KotlinQuickFixAction<*>> {
         val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
 
-        val isPrimaryConstructorParameter: Boolean
-
-        val referencedSymbol = valueArgument.argumentExpression?.mainReference?.resolveToSymbol()
-        val parameter = referencedSymbol?.psi as? KtParameter ?: return emptyList()
-        val functionSymbol: KaFunctionSymbol
-
-        when (referencedSymbol) {
-            is KaPropertySymbol -> { // Might be a constructor parameter
-                val probableConstructorParameterPsi = referencedSymbol.psi as? KtParameter
-                val matchingValueParameterSymbol = probableConstructorParameterPsi?.symbol
-                functionSymbol = matchingValueParameterSymbol?.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
-                isPrimaryConstructorParameter = functionSymbol is KaConstructorSymbol && functionSymbol.isPrimary
-            }
-
-            is KaValueParameterSymbol -> {
-                functionSymbol = referencedSymbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
-                isPrimaryConstructorParameter = false
-            }
-
-            else -> {
-                return emptyList()
+        val referencedSymbol = valueArgument.getArgumentExpression()?.mainReference?.resolveToSymbol()?.let { symbol ->
+            if (symbol is KaPropertySymbol) {
+                getValueParameterSymbolForPropertySymbol(symbol)
+            } else {
+                symbol
             }
         }
-        val functionName = getDeclarationName(functionSymbol) ?: return emptyList()
+        if (referencedSymbol !is KaValueParameterSymbol) return emptyList()
 
+        val containingFunctionSymbol = referencedSymbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
+        val isPrimaryConstructorParameter = containingFunctionSymbol is KaConstructorSymbol && containingFunctionSymbol.isPrimary
+
+        val parameter = referencedSymbol.psi as? KtParameter ?: return emptyList()
+        val functionName = getDeclarationName(containingFunctionSymbol) ?: return emptyList()
+
+        return listOf(
+            createChangeParameterTypeFix(parameter, targetType, isPrimaryConstructorParameter, functionName)
+        )
+    }
+
+    context(KaSession)
+    private fun getValueParameterSymbolForPropertySymbol(propertySymbol: KaPropertySymbol): KaValueParameterSymbol? {
+        val probableConstructorParameterPsi = propertySymbol.psi as? KtParameter
+        return probableConstructorParameterPsi?.symbol as? KaValueParameterSymbol
+    }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun createChangeParameterTypeFix(
+        parameter: KtParameter,
+        targetType: KaType,
+        isPrimaryConstructorParameter: Boolean,
+        functionName: String
+    ): ChangeParameterTypeFix {
         val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
         val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
         val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
 
-        return listOf(
-            ChangeParameterTypeFix(
-                parameter,
-                typePresentation,
-                typeFQNPresentation,
-                isPrimaryConstructorParameter,
-                functionName
-            )
+        return ChangeParameterTypeFix(
+            parameter,
+            typePresentation,
+            typeFQNPresentation,
+            isPrimaryConstructorParameter,
+            functionName
         )
     }
 }
