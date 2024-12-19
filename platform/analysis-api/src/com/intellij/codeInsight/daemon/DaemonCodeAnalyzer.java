@@ -27,6 +27,7 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void settingsChanged();
 
+  @ApiStatus.Internal
   public abstract void setUpdateByTimerEnabled(boolean value);
 
   public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
@@ -35,6 +36,8 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void setImportHintsEnabled(@NotNull PsiFile file, boolean value);
 
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public abstract void resetImportHintsEnabledForProject();
 
   public abstract void setHighlightingEnabled(@NotNull PsiFile file, boolean value);
