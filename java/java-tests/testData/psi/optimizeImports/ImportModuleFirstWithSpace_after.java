@@ -3,8 +3,8 @@ package main;
 import module java.base;
 
 import aaa.AAA;
-import aaa.BBB;
-import aaa.CCC;
+import bbb.BBB;
+import ccc.CCC;
 
 public class Main {
   void usage() {

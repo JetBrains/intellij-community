@@ -1,12 +1,9 @@
 package main;
 
-import module java.base;
-
 import aaa.AAA;
-import ccc.CCC;
 import bbb.BBB;
-
-import java.util.ArrayList;
+import ccc.CCC;
+import module java.base;
 
 public class Main {
   void usage() {

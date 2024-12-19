@@ -3,8 +3,8 @@ package main;
 import module java.base;
 
 import aaa.AAA;
-import aaa.CCC;
-import aaa.BBB;
+import ccc.CCC;
+import bbb.BBB;
 
 import java.util.ArrayList;
 

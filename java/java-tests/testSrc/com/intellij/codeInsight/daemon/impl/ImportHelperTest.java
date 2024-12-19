@@ -203,6 +203,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
           JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
           javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
           PackageEntryTable table = new PackageEntryTable();
+          table.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
           table.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
           table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
           table.addEntry(new PackageEntry(false, "javax", true));

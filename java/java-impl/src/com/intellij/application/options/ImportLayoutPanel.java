@@ -40,8 +40,6 @@ public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
   @Nullable private final JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst;
-  @Nullable private final JBCheckBox myCbModuleImportFirst;
-  @Nullable private final JBCheckBox myCbSpaceBetweenModuleAndOther;
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -61,16 +59,6 @@ public abstract class ImportLayoutPanel extends JPanel {
   @Nullable
   public JBCheckBox getCbLayoutOnDemandImportsFromSamePackageFirst() {
     return myCbLayoutOnDemandImportsFromSamePackageFirst;
-  }
-
-  @Nullable
-  public JBCheckBox getCbModuleImportFirst() {
-    return myCbModuleImportFirst;
-  }
-
-  @Nullable
-  public JBCheckBox getCbSpaceBetweenModuleAndOther() {
-    return myCbSpaceBetweenModuleAndOther;
   }
 
   public ImportLayoutPanel(boolean showLayoutOnDemandImportFromSamePackageFirstCheckbox, boolean supportModuleImport) {
@@ -119,7 +107,10 @@ public abstract class ImportLayoutPanel extends JPanel {
       .setRemoveActionUpdater(e -> {
         int selectedImport = myImportLayoutTable.getSelectedRow();
         PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
-        return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
+        return entry != null &&
+               entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY &&
+               entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY &&
+               entry != PackageEntry.ALL_MODULE_IMPORTS;
       })
       .setButtonComparator(JavaBundle.message("button.add"),
                            IdeBundle.message("action.remove"),
@@ -133,13 +124,8 @@ public abstract class ImportLayoutPanel extends JPanel {
       ? new JBCheckBox(JavaBundle.message("import.layout.on.demand.import.from.same.package.first"))
       : null;
 
-    myCbModuleImportFirst = supportModuleImport ? new JBCheckBox(JavaBundle.message("import.layout.module.import.first")) : null;
-    myCbSpaceBetweenModuleAndOther =
-      supportModuleImport ? new JBCheckBox(JavaBundle.message("import.layout.space.between.module.import.other")) : null;
     List<@Nullable JBCheckBox> additionalCheckBoxes = new ArrayList<>();
     additionalCheckBoxes.add(myCbLayoutOnDemandImportsFromSamePackageFirst);
-    additionalCheckBoxes.add(myCbModuleImportFirst);
-    additionalCheckBoxes.add(myCbSpaceBetweenModuleAndOther);
     final ImportLayoutPanelUI UI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately,
                                                            additionalCheckBoxes,
                                                            importLayoutPanel);
@@ -198,7 +184,9 @@ public abstract class ImportLayoutPanel extends JPanel {
       return;
     }
     PackageEntry entry = myImportLayoutList.getEntryAt(selected);
-    if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY) {
+    if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY ||
+        entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY ||
+        entry == PackageEntry.ALL_MODULE_IMPORTS) {
       return;
     }
     TableUtil.stopEditing(myImportLayoutTable);
@@ -251,14 +239,6 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public boolean isLayoutOnDemandImportsFromSamePackageFirst() {
     return myCbLayoutOnDemandImportsFromSamePackageFirst != null && myCbLayoutOnDemandImportsFromSamePackageFirst.isSelected();
-  }
-
-  public boolean isModuleImportFirst() {
-    return myCbModuleImportFirst != null && myCbModuleImportFirst.isSelected();
-  }
-
-  public boolean isSpaceBetweenModuleAndOther() {
-    return myCbSpaceBetweenModuleAndOther != null && myCbSpaceBetweenModuleAndOther.isSelected();
   }
 
   public static JBTable createTableForPackageEntries(final PackageEntryTable packageTable, final ImportLayoutPanel panel) {
@@ -395,6 +375,9 @@ public abstract class ImportLayoutPanel extends JPanel {
 
           if (entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
             append(JavaBundle.message("import.layout.panel.all.other.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+          else if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
+            append(JavaBundle.message("import.layout.panel.module.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
             append(entry.getPackageName() + ".*", SimpleTextAttributes.REGULAR_ATTRIBUTES);

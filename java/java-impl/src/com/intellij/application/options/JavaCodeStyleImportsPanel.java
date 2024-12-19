@@ -63,8 +63,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     if(cbPreserveModuleImports!=null) javaSettings.setPreserveModuleImports(cbPreserveModuleImports.isSelected());
     javaSettings.setDoNotImportInner(getInnerClassesNames());
     javaSettings.setLayoutOnDemandImportFromSamePackageFirst(myImportLayoutPanel.isLayoutOnDemandImportsFromSamePackageFirst());
-    javaSettings.setModuleImportFirst(myImportLayoutPanel.isModuleImportFirst());
-    javaSettings.setSpaceBetweenModuleAndOtherImports(myImportLayoutPanel.isSpaceBetweenModuleAndOther());
   }
 
   @Override
@@ -81,12 +79,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
     if (cbLayoutOnDemandImportsFromSamePackageFirst != null) cbLayoutOnDemandImportsFromSamePackageFirst.setSelected(javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
-
-    JBCheckBox cbModuleImportFirst = myImportLayoutPanel.getCbModuleImportFirst();
-    if (cbModuleImportFirst != null) cbModuleImportFirst.setSelected(javaSettings.isModuleImportFirst());
-
-    JBCheckBox cbSpaceBetweenModuleAndOther = myImportLayoutPanel.getCbSpaceBetweenModuleAndOther();
-    if (cbSpaceBetweenModuleAndOther != null) cbSpaceBetweenModuleAndOther.setSelected(javaSettings.isSpaceBetweenModuleAndOtherImports());
   }
 
   @Override
@@ -101,12 +93,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
     if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
-
-    JBCheckBox cbModuleImportFirst = myImportLayoutPanel.getCbModuleImportFirst();
-    if (cbModuleImportFirst != null) isModified |= isModified(cbModuleImportFirst, javaSettings.isModuleImportFirst());
-
-    JBCheckBox cbSpaceBetweenModuleAndOther = myImportLayoutPanel.getCbSpaceBetweenModuleAndOther();
-    if (cbSpaceBetweenModuleAndOther != null) isModified |= isModified(cbSpaceBetweenModuleAndOther, javaSettings.isSpaceBetweenModuleAndOtherImports());
     return isModified;
   }
 

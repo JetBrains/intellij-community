@@ -106,6 +106,7 @@
       "generate_use_type_annotation_before_type": true,
       "if_brace_force": "never",
       "imports_layout": [
+        "@*",
         "*",
         "|",
         "javax.**",
@@ -147,7 +148,6 @@
       "method_parameters_right_paren_on_new_line": false,
       "method_parameters_wrap": "normal",
       "modifier_list_wrap": false,
-      "module_import_first": true,
       "multi_catch_types_wrap": "normal",
       "names_count_to_use_import_on_demand": 3,
       "new_line_after_lparen_in_annotation": false,
@@ -224,7 +224,6 @@
       "space_before_while_keyword": true,
       "space_before_while_left_brace": true,
       "space_before_while_parentheses": true,
-      "space_between_module_and_other_imports": false,
       "space_inside_one_line_enum_braces": false,
       "space_within_empty_array_initializer_braces": false,
       "space_within_empty_method_call_parentheses": false,

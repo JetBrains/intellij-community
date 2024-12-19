@@ -60,14 +60,12 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     super.setUp();
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     boolean preserveModuleImports = javaSettings.isPreserveModuleImports();
-    boolean moduleImportFirst = javaSettings.isModuleImportFirst();
-    boolean spaceBetweenModuleAndOtherImports = javaSettings.isSpaceBetweenModuleAndOtherImports();
+    PackageEntryTable table = javaSettings.IMPORT_LAYOUT_TABLE;
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         javaSettings.setPreserveModuleImports(preserveModuleImports);
-        javaSettings.setModuleImportFirst(moduleImportFirst);
-        javaSettings.setSpaceBetweenModuleAndOtherImports(spaceBetweenModuleAndOtherImports);
+        javaSettings.IMPORT_LAYOUT_TABLE = table;
       }
     });
     myFixture.enableInspections(new UnusedDeclarationInspection());
@@ -514,6 +512,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       settings -> {
         JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
         javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+        javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
         javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
         javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
         javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
@@ -541,15 +540,42 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
 
-  public void testImportModuleFirstWithoutSpace() {
+  public void testImportModuleLastWithoutSpace() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
       myFixture.addClass("package aaa; public class AAA {}");
       myFixture.addClass("package bbb; public class BBB {}");
       myFixture.addClass("package ccc; public class CCC {}");
       JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+
       javaSettings.setPreserveModuleImports(true);
-      javaSettings.setModuleImportFirst(true);
-      javaSettings.setSpaceBetweenModuleAndOtherImports(false);
+      doTest();
+    });
+  }
+
+  public void testImportModuleInTheMiddleWithoutSpace() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package bbb; public class BBB {}");
+      myFixture.addClass("package ccc; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "aaa", false));
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "bbb", false));
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+
+
+      javaSettings.setPreserveModuleImports(true);
       doTest();
     });
   }
@@ -561,8 +587,14 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       myFixture.addClass("package aaa; public class CCC {}");
       JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
       javaSettings.setPreserveModuleImports(true);
-      javaSettings.setModuleImportFirst(true);
-      javaSettings.setSpaceBetweenModuleAndOtherImports(true);
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+
       doTest();
     });
   }

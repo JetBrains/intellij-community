@@ -110,13 +110,19 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
       if ("package".equals(name)) {
         String packageName = e.getAttributeValue("name");
         boolean isStatic = Boolean.parseBoolean(e.getAttributeValue("static"));
+        boolean isModule = Boolean.parseBoolean(e.getAttributeValue("module"));
         boolean withSubpackages = Boolean.parseBoolean(e.getAttributeValue("withSubpackages"));
         if (packageName == null) {
           throw new InvalidDataException();
         }
         PackageEntry entry;
         if (packageName.isEmpty()) {
-          entry = isStatic ? PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY : PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
+          if (isModule) {
+            entry = PackageEntry.ALL_MODULE_IMPORTS;
+          }
+          else {
+            entry = isStatic ? PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY : PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
+          }
         }
         else {
           entry = new PackageEntry(isStatic, packageName, withSubpackages);
@@ -142,9 +148,14 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
         @NonNls Element element = new Element("package");
         parentNode.addContent(element);
         String packageName = entry.getPackageName();
-        element.setAttribute("name", entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY ? "": packageName);
+        element.setAttribute("name", entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY ||
+                                     entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY ||
+                                     entry == PackageEntry.ALL_MODULE_IMPORTS ? "": packageName);
         element.setAttribute("withSubpackages", entry.isWithSubpackages() ? "true" : "false");
         element.setAttribute("static", entry.isStatic() ? "true" : "false");
+        if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
+          element.setAttribute("module", "true");
+        }
       }
     }
   }

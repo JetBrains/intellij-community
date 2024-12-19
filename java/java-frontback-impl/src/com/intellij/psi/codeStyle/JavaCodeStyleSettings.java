@@ -10,6 +10,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -171,8 +172,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   // Imports
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
   public boolean LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
-  public boolean MODULE_IMPORT_FIRST = true;
-  public boolean SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS = false;
   public boolean PRESERVE_MODULE_IMPORTS = true;
   public boolean USE_FQ_CLASS_NAMES;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
@@ -298,25 +297,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     return LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST;
   }
 
-  public boolean isModuleImportFirst() {
-    return MODULE_IMPORT_FIRST;
-  }
-
-  public boolean isSpaceBetweenModuleAndOtherImports() {
-    return SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS;
-  }
-
-
   public void setLayoutOnDemandImportFromSamePackageFirst(boolean value) {
     this.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = value;
-  }
-
-  public void setModuleImportFirst(boolean value) {
-    this.MODULE_IMPORT_FIRST = value;
-  }
-
-  public void setSpaceBetweenModuleAndOtherImports(boolean value) {
-    SPACE_BETWEEN_MODULE_AND_OTHER_IMPORTS = value;
   }
 
   @Override
@@ -394,6 +376,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
@@ -470,6 +453,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     readExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
     myOldVersion = myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
     myIsInitialized = true;
+    PackageEntry[] entries = IMPORT_LAYOUT_TABLE.getEntries();
+    if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
+      IMPORT_LAYOUT_TABLE.setEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
+    }
   }
 
   @Override

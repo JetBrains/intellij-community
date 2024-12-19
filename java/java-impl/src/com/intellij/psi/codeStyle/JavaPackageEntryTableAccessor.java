@@ -15,6 +15,7 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
 
   public static final char BLANK_LINE_CHAR = '|';
   public static final String STATIC_PREFIX = "$";
+  public static final String MODULE_PREFIX = "@";
 
   public JavaPackageEntryTableAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
@@ -35,9 +36,14 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
       else {
         boolean isStatic = false;
         boolean isWithSubpackages = false;
+        boolean isModule = false;
         if (parseStr.startsWith(STATIC_PREFIX)) {
           parseStr = parseStr.substring(STATIC_PREFIX.length()).trim();
           isStatic = true;
+        }
+        if (parseStr.startsWith(MODULE_PREFIX)) {
+          parseStr = parseStr.substring(MODULE_PREFIX.length()).trim();
+          isModule = true;
         }
         parseStr = parseStr.trim();
         if (parseStr.endsWith("**")) {
@@ -45,7 +51,12 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
           parseStr = parseStr.substring(0, parseStr.length() - 1);
         }
         if ("*".equals(parseStr)) {
-          entryTable.addEntry(isStatic ? PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY : PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+          if (isModule) {
+            entryTable.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+          }
+          else {
+            entryTable.addEntry(isStatic ? PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY : PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+          }
         }
         else {
           entryTable.addEntry(new PackageEntry(isStatic, parseStr, isWithSubpackages));
@@ -65,7 +76,10 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
       else {
         StringBuilder entryBuilder = new StringBuilder();
         if (entry.isStatic()) {
-          entryBuilder.append("$");
+          entryBuilder.append(STATIC_PREFIX);
+        }
+        if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
+          entryBuilder.append(MODULE_PREFIX);
         }
         if (entry.isSpecial()) {
           entryBuilder.append("*");

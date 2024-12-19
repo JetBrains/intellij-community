@@ -1108,8 +1108,8 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
       myFixture.addClass("package a; public class List {}");
 
       myFixture.configureByText("Test.java", """
-        import a.*;
         import module java.base;
+        import a.*;
         class Test{
           void main(){
             java.util.L<caret>ist x;
@@ -1119,8 +1119,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
 
       reimportClass();
       myFixture.checkResult("""
-                              import a.*;
                               import module java.base;
+                              import a.*;
+
                               import java.util.List;
                               
                               class Test{

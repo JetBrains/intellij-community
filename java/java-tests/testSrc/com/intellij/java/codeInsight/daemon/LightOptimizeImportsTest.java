@@ -84,6 +84,8 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = false;
     javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "aaa", true));
@@ -135,7 +137,8 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.configureByText(JavaFileType.INSTANCE, text);
 
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
-    javaSettings.IMPORT_LAYOUT_TABLE.insertEntryAt(new PackageEntry(false, "bbb", false), 1);
+    //1 is module import
+    javaSettings.IMPORT_LAYOUT_TABLE.insertEntryAt(new PackageEntry(false, "bbb", false), 1 + 1);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
     @Language("JAVA") String result = """
