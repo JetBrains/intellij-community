@@ -1,0 +1,6 @@
+<module version="4">
+  <!-- this iml file only declares additional module elements, but not the module itself, becuase there is no NewModuleRootManager -->
+  <component name="FacetManager">
+    <facet type="mock" name="MyFacet" />
+  </component>
+</module>
