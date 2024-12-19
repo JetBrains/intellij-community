@@ -1381,7 +1381,6 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of all the elements from the collections stored in the list merged together
-   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull @Unmodifiable Iterable<? extends Collection<? extends T>> list) {
@@ -1446,7 +1445,6 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of {@code list1} and {@code list2} added together.
-   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<? extends T> list1, @NotNull List<? extends T> list2) {
@@ -1474,6 +1472,23 @@ public final class ContainerUtil {
       @Override
       public int size() {
         return size;
+      }
+
+      /**
+       * Returns an iterator over the <em>actual elements</em> in this list based on the underlying lists.
+       *
+       * @implNote
+       * This implementation replaces the straightforward implementation based on index operations.
+       * Those fail badly, if the underlying lists change since creation of this concatenated list:
+       * either by an {@link IndexOutOfBoundsException} if any list shrinks unexpectedly,
+       * or by missing all elements added later on.
+       *
+       * @return Returns an iterator over the <em>actual elements</em> of both lists.
+       */
+      @Override
+      @NotNull
+      public Iterator<T> iterator() {
+        return concat(list1, (Iterable<? extends T>)list2).iterator();
       }
     };
   }
@@ -1566,7 +1581,6 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of the lists added together
-   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @SafeVarargs
   @Contract(pure = true)
@@ -1608,7 +1622,6 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of the lists added together
-   * The lists are assumed to be not modified during iteration of the resulting collection, otherwise the iteration order or its consistency are not guaranteed.
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<List<? extends T>> lists) {
