@@ -769,11 +769,6 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
                 runTest("../../idea/tests/testData/editor/quickDoc/misc/classes/FaceModifierC.kt");
             }
 
-            @TestMetadata("FaceModifierContainerA.kt")
-            public void testFaceModifierContainerA() throws Exception {
-                runTest("../../idea/tests/testData/editor/quickDoc/misc/classes/FaceModifierContainerA.kt");
-            }
-
             @TestMetadata("FaceModifierD.kt")
             public void testFaceModifierD() throws Exception {
                 runTest("../../idea/tests/testData/editor/quickDoc/misc/classes/FaceModifierD.kt");
@@ -1496,11 +1491,6 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             @TestMetadata("ObjectC.kt")
             public void testObjectC() throws Exception {
                 runTest("../../idea/tests/testData/editor/quickDoc/misc/objects/ObjectC.kt");
-            }
-
-            @TestMetadata("ObjectContainerA.kt")
-            public void testObjectContainerA() throws Exception {
-                runTest("../../idea/tests/testData/editor/quickDoc/misc/objects/ObjectContainerA.kt");
             }
 
             @TestMetadata("ObjectD.kt")
