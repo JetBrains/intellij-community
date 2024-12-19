@@ -3,12 +3,12 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.URI
@@ -41,7 +41,10 @@ object EelPathUtils {
 
   @JvmStatic
   fun createTemporaryFile(project: Project?, prefix: String = "", suffix: String = ""): Path {
-    val projectFilePath = project?.projectFilePath ?: return Files.createTempFile(prefix, suffix)
+    if (project == null || isProjectLocal(project)) {
+      return Files.createTempFile(prefix, suffix)
+    }
+    val projectFilePath = project.projectFilePath ?: return Files.createTempFile(prefix, suffix)
     return runBlockingMaybeCancellable {
       val eel = Path.of(projectFilePath).getEelApi()
       val file = eel.fs.createTemporaryFile(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).build()).getOrThrowFileSystemException()
@@ -58,12 +61,12 @@ object EelPathUtils {
   fun getUriLocalToEel(path: Path): URI = runBlockingMaybeCancellable {
     val eel = path.getEelApi()
     val eelPath = eel.mapper.getOriginalPath(path)
-    if (eelPath == null) {
+    if (eelPath == null || eel is LocalEelApi) {
       // there is not mapping by Eel, hence the path may be considered local
       return@runBlockingMaybeCancellable path.toUri()
     }
     val root = eelPath.root.toString().replace('\\', '/')
-    URI.create("file://$root${eelPath.parts.joinToString("/")}")
+    URI.create("file:/$root${eelPath.parts.joinToString("/")}")
   }
 
   @RequiresBackgroundThread
