@@ -28,6 +28,7 @@ public final class JavaHighlightInfoTypes {
   public final static HighlightInfoType LOCAL_VARIABLE = createSymbolTypeInfo(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
   public final static HighlightInfoType INSTANCE_FIELD = createSymbolTypeInfo(JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
   public final static HighlightInfoType INSTANCE_FINAL_FIELD = createSymbolTypeInfo(JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
+  public final static HighlightInfoType RECORD_COMPONENT = createSymbolTypeInfo(JavaHighlightingColors.RECORD_COMPONENT_ATTRIBUTES);
   public final static HighlightInfoType STATIC_FIELD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES);
   public final static HighlightInfoType STATIC_FIELD_IMPORTED = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES);
   public final static HighlightInfoType STATIC_FINAL_FIELD = createSymbolTypeInfo(JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES);

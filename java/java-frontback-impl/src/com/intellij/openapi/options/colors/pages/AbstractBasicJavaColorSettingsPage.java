@@ -57,6 +57,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.implicit.anonymous.parameter"), JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.instance.field"), JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.instance.final.field"), JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.record.component"), JavaHighlightingColors.RECORD_COMPONENT_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.static.field"), JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.static.imported.field"), JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES),
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.static.final.field"), JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES),
@@ -117,6 +118,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
     ourTags.put("annotationAttributeName", JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
     ourTags.put("javadocTagValue", JavaHighlightingColors.DOC_COMMENT_TAG_VALUE);
     ourTags.put("instanceFinalField", JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
+    ourTags.put("recordComponent", JavaHighlightingColors.RECORD_COMPONENT_ATTRIBUTES);
     ourTags.put("staticallyConstImported", JavaHighlightingColors.STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES);
     ourTags.put("staticallyImported", JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES);
     ourTags.put("static_imported_method", JavaHighlightingColors.STATIC_METHOD_CALL_IMPORTED_ATTRIBUTES);
@@ -191,7 +193,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
           void <methodDeclaration>method</methodDeclaration>();
         }
         @interface <annotationName>AnnotationType</annotationName> {}
-        record <record>Point</record>(int x, int y) {}
+        record <record>Point</record>(int <recordComponent>x</recordComponent>, int <recordComponent>y</recordComponent>) {}
         abstract class <abstractClass>SomeAbstractClass</abstractClass> {
         }""";
   }

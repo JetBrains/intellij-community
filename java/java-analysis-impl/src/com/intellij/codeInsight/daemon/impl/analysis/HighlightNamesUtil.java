@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -206,7 +207,7 @@ public final class HighlightNamesUtil {
       return isStaticallyImported ? JavaHighlightInfoTypes.STATIC_METHOD_CALL_IMPORTED : JavaHighlightInfoTypes.STATIC_METHOD;
     }
     if (isInheritedMethod) return JavaHighlightInfoTypes.INHERITED_METHOD;
-    if(method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return JavaHighlightInfoTypes.ABSTRACT_METHOD;
     }
     return JavaHighlightInfoTypes.METHOD_CALL;
@@ -217,6 +218,9 @@ public final class HighlightNamesUtil {
     if (var instanceof PsiLocalVariable
         || var instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiForeachStatement) {
       return JavaHighlightInfoTypes.LOCAL_VARIABLE;
+    }
+    if (var instanceof PsiRecordComponent || var instanceof LightRecordField) {
+      return JavaHighlightInfoTypes.RECORD_COMPONENT;
     }
     if (var instanceof PsiField) {
       if (var.hasModifierProperty(PsiModifier.STATIC)) {
@@ -233,8 +237,9 @@ public final class HighlightNamesUtil {
       }
     }
     if (var instanceof PsiParameter parameter) {
-      return parameter.getDeclarationScope() instanceof PsiLambdaExpression ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
-                                                                            : JavaHighlightInfoTypes.PARAMETER;
+      return parameter.getDeclarationScope() instanceof PsiLambdaExpression
+             ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
+             : JavaHighlightInfoTypes.PARAMETER;
     }
     return null;
   }

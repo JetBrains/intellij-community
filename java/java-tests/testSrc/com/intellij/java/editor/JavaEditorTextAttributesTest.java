@@ -148,6 +148,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #000000;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
+        RECORD_COMPONENT_ATTRIBUTES { color: #660e7a;  font-style: normal;  font-weight: bold; }
         RECORD_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic; }
@@ -207,6 +208,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #a9b7c6;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
+        RECORD_COMPONENT_ATTRIBUTES { color: #9876aa;  font-style: normal; }
         RECORD_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }

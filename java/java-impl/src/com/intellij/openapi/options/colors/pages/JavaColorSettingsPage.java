@@ -85,7 +85,7 @@ public final class JavaColorSettingsPage extends AbstractBasicJavaColorSettingsP
           void <methodDeclaration>method</methodDeclaration>();
         }
         @interface <annotationName>AnnotationType</annotationName> {}
-        record <record>Point</record>(int x, int y) {}
+        record <record>Point</record>(int <recordComponent>x</recordComponent>, int <recordComponent>y</recordComponent>) {}
         abstract class <abstractClass>SomeAbstractClass</abstractClass> {
           protected int <field>instanceField</field> = <staticallyImported>staticField</staticallyImported>;
         }""";
