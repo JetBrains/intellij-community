@@ -1149,15 +1149,15 @@ public class UsageViewImpl implements UsageViewEx {
           myTree.expandPath(treePath);
         }
       }
+      myTree.getSelectionModel().clearSelection();
+      for (UsageState usageState : states) {
+        usageState.restore();
+      }
     }
     finally {
       if (myTree instanceof Tree jbTree) {
         jbTree.resumeExpandCollapseAccessibilityAnnouncements();
       }
-    }
-    myTree.getSelectionModel().clearSelection();
-    for (UsageState usageState : states) {
-      usageState.restore();
     }
   }
 
