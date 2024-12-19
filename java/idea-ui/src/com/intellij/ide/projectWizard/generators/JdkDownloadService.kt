@@ -97,13 +97,18 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     coroutineScope.launch(Dispatchers.EDT) {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
         val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
-        if (selectedFile != null) {
-          jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile) { downloadTask ->
-            scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, onInstalledSdk)
-          }
-        } else {
+        if (selectedFile == null) {
           Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
+          sdkDownloadedFuture.complete(false)
+          return@withBackgroundProgress
         }
+        val downloadTask = jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile)
+        if (downloadTask == null) {
+          // The error was handled inside the JdkDownloader.prepareDownloadTask function
+          sdkDownloadedFuture.complete(false)
+          return@withBackgroundProgress
+        }
+        scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, onInstalledSdk)
       }
     }
 
