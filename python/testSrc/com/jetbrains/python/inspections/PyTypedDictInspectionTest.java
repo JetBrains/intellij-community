@@ -196,8 +196,13 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   }
 
   public void testIncorrectTypedDictArguments() {
-    doTestByText("from typing import TypedDict\n" +
-                 "c = TypedDict(\"c\", [1, 2, 3])");
+    doTestByText("""
+                   from typing import TypedDict
+                   BadTD1 = TypedDict("BadTD1", <warning descr="Expected dictionary literal">[1, 2, 3]</warning>)
+                   
+                   fields = {"v": int}
+                   BadTD2 = TypedDict("BadTD2", <warning descr="Expected dictionary literal">fields</warning>)
+                   """);
   }
 
   public void testTypedDictNonStringKey() {

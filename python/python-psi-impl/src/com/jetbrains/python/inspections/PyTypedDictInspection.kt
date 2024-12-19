@@ -92,8 +92,10 @@ class PyTypedDictInspection : PyInspection() {
         if (callExpression != null) {
           val callee = callExpression.callee
           if (callee != null && PyTypedDictTypeProvider.isTypedDict(callee, myTypeEvalContext)) {
-            val fields = PyPsiUtils.flattenParens(callExpression.arguments.getOrNull(1))
+            val argument1 = callExpression.arguments.getOrNull(1)
+            val fields = PyPsiUtils.flattenParens(argument1)
             if (fields !is PyDictLiteralExpression) {
+              registerProblem(argument1, PyPsiBundle.message("INSP.typeddict.expected.a.dictionary.literal"))
               return
             }
 
