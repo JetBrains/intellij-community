@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ConstPropertyName")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
@@ -90,10 +88,12 @@ fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiC
   }
 }
 
-fun ZipArchiveOutputStream.dir(startDir: Path,
-                               prefix: String,
-                               fileFilter: ((sourceFile: Path, relativePath: String) -> Boolean)? = null,
-                               entryCustomizer: ((entry: ZipArchiveEntry, sourceFile: Path, relativePath: String) -> Unit)? = null) {
+fun ZipArchiveOutputStream.dir(
+  startDir: Path,
+  prefix: String,
+  fileFilter: ((sourceFile: Path, relativePath: String) -> Boolean)? = null,
+  entryCustomizer: ((entry: ZipArchiveEntry, sourceFile: Path, relativePath: String) -> Unit)? = null,
+) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
@@ -104,7 +104,7 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
     val dirStream = try {
       Files.newDirectoryStream(dir)
     }
-    catch (e: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       continue
     }
 

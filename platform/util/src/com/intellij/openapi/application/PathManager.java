@@ -106,6 +106,7 @@ public final class PathManager {
         }
       }
       else if (insideIde) {
+        //noinspection TestOnlyProblems
         result = getHomePathFor(PathManager.class);
         if (result == null) {
           String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure product-info.json is present in the installation directory.";
@@ -991,7 +992,7 @@ public final class PathManager {
   }
 
   /**
-   * Returns map of IntelliJ modules to jar absolute paths, e.g.:
+   * Returns a map of IntelliJ modules to .jar absolute paths, e.g.:
    * "production/intellij.platform.util" => ".../production/intellij.platform.util/$hash.jar"
    */
   @ApiStatus.Internal
