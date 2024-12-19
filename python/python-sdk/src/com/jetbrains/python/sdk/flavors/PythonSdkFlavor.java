@@ -48,6 +48,12 @@ import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutio
 public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
   /**
+   * <code>
+   *   Python 3.11
+   * </code>
+   */
+  private static final String PYTHON_VERSION_STRING_PREFIX = "Python ";
+  /**
    * To prevent log pollution and slowness, we cache every {@link #isFileExecutable(String, TargetEnvironmentConfiguration)} call
    * and only log it once
    */
@@ -58,6 +64,12 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
 
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
+  /**
+   * <code>
+   *   python --version
+   * </code>
+   */
+  public static final String PYTHON_VERSION_ARG = "--version";
 
 
   /**
@@ -324,19 +336,31 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return Files.exists(path) && Files.isExecutable(path);
   }
 
+  /**
+   * @deprecated use {@link #getVersionStringStatic(String)}
+   * @param sdkHome
+   * @return
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
   @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public String getVersionString(@Nullable String sdkHome) {
+    return getVersionStringStatic(sdkHome);
+  }
+
+  @Nullable
+  @RequiresBackgroundThread(generateAssertion = false) //because of process output
+  public static String getVersionStringStatic(@Nullable String sdkHome) {
     if (sdkHome == null) {
       return null;
     }
     final String runDirectory = new File(sdkHome).getParent();
-    final ProcessOutput processOutput = PySdkUtil.getProcessOutput(runDirectory, new String[]{sdkHome, getVersionOption()}, 10000);
+    final ProcessOutput processOutput = PySdkUtil.getProcessOutput(runDirectory, new String[]{sdkHome, PYTHON_VERSION_ARG}, 10000);
     return getVersionStringFromOutput(processOutput);
   }
 
   @Nullable
-  public String getVersionStringFromOutput(@NotNull ProcessOutput processOutput) {
+  public static String getVersionStringFromOutput(@NotNull ProcessOutput processOutput) {
     if (processOutput.getExitCode() != 0) {
       String errors = processOutput.getStderr();
       if (StringUtil.isEmpty(errors)) {
@@ -353,12 +377,16 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   @Nullable
-  public String getVersionStringFromOutput(@NotNull String output) {
+  public static String getVersionStringFromOutput(@NotNull String output) {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
+  /**
+   * @deprecated use {@link #PYTHON_VERSION_ARG}
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull String getVersionOption() {
-    return "-V";
+    return PYTHON_VERSION_ARG;
   }
 
   public @NotNull Collection<String> getExtraDebugOptions() {
@@ -382,13 +410,26 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
 
   @NotNull
   public LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
-    return getLanguageLevelFromVersionString(sdk.getVersionString());
+    return getLanguageLevelFromVersionStringStatic(sdk.getVersionString());
   }
 
   @NotNull
   @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public LanguageLevel getLanguageLevel(@NotNull String sdkHome) {
-    return getLanguageLevelFromVersionString(getVersionString(sdkHome));
+    return getLanguageLevelFromVersionStringStatic(getVersionString(sdkHome));
+  }
+
+
+  /**
+   * Returns wrong language level when argument is null which isn't probably what you except.
+   * Be sure to check argument for null
+   *
+   * @deprecated use {@link #getLanguageLevelFromVersionStringStatic(String)}
+   */
+  @Deprecated(forRemoval = true)
+  @NotNull
+  public LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
+    return getLanguageLevelFromVersionStringStatic(version);
   }
 
   /**
@@ -396,10 +437,9 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * Be sure to check argument for null
    */
   @NotNull
-  public LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
-    final String prefix = getName() + " ";
-    if (version != null && version.startsWith(prefix)) {
-      return LanguageLevel.fromPythonVersion(version.substring(prefix.length()));
+  public static LanguageLevel getLanguageLevelFromVersionStringStatic(@Nullable String version) {
+    if (version != null && version.startsWith(PYTHON_VERSION_STRING_PREFIX)) {
+      return LanguageLevel.fromPythonVersion(version.substring(PYTHON_VERSION_STRING_PREFIX.length()));
     }
     return LanguageLevel.getDefault();
   }

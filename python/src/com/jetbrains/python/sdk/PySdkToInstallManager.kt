@@ -73,7 +73,7 @@ object PySdkToInstallManager {
       }
       .filter {
         val detectedLevel = PythonSdkFlavor.getFlavor(it)?.let { flavor ->
-          flavor.getLanguageLevelFromVersionString(flavor.getVersionString(it.homePath!!))
+          PythonSdkFlavor.getLanguageLevelFromVersionStringStatic(PythonSdkFlavor.getVersionStringStatic(it.homePath!!))
         }
         languageLevel?.equals(detectedLevel) ?: true
       }

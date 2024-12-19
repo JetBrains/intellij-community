@@ -32,5 +32,6 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
 </module>

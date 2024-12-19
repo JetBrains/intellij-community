@@ -47,7 +47,7 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String? = null) {
                        ?: error("No python in $path")
           val flavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(binary.toString())
                        ?: error("Unknown flavor: $binary")
-          flavor.getVersionString(binary.toString())?.let { path to flavor.getLanguageLevelFromVersionString(it) }
+          flavor.getVersionString(binary.toString())?.let { path to PythonSdkFlavor.getLanguageLevelFromVersionStringStatic(it) }
           ?: error("Can't get language level for $flavor , $binary")
         }
         .sortedByDescending { (_, languageLevel) -> languageLevel }

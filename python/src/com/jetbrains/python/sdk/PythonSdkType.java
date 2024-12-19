@@ -476,7 +476,7 @@ public final class PythonSdkType extends SdkType {
       return null;
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
-    return flavor != null ? flavor.getVersionString(sdkHome) : null;
+    return flavor != null ? PythonSdkFlavor.getVersionStringStatic(sdkHome) : null;
   }
 
   @Override

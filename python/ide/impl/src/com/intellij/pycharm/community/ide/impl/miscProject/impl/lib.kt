@@ -333,7 +333,7 @@ private suspend fun filterLatestUsablePython(flavorsToPythons: List<Pair<PythonS
   for ((flavor, paths) in flavorsToPythons) {
     for (pythonPath in paths) {
       val versionString = validatePythonAndGetVersion(pythonPath, flavor) ?: continue
-      val languageLevel = flavor.getLanguageLevelFromVersionString(versionString)
+      val languageLevel =PythonSdkFlavor.getLanguageLevelFromVersionStringStatic(versionString)
 
       // Highest possible, no need to search further
       if (languageLevel == LanguageLevel.getLatest()) {
@@ -375,7 +375,7 @@ private suspend fun validatePythonAndGetVersion(pythonBinary: PythonBinary, flav
       fileLogger.warn("$pythonBinary didn't return in $timeout, skipping")
     }
     0 -> {
-      return@withContext flavor.getVersionString(pythonBinary.pathString)
+      return@withContext PythonSdkFlavor.getVersionStringStatic(pythonBinary.pathString)
     }
     else -> {
       fileLogger.warn("$pythonBinary exited with code ${exitCode}, skipping")

@@ -53,7 +53,7 @@ public class PySdkFlavorTest extends PyTestCase {
 
   @NotNull
   private Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
-    final String versionString = flavor.getVersionStringFromOutput(versionOutput);
+    final String versionString = PythonSdkFlavor.getVersionStringFromOutput(versionOutput);
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk("Test", PythonSdkType.getInstance());
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath("/path/to/sdk");
