@@ -541,7 +541,7 @@ public class Maven40ProjectResolver {
   }
 
   @NotNull
-  private List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files,
+  private List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Set<File> files,
                                                                 MavenSession session) {
     ProjectBuilder builder = myEmbedder.getComponent(ProjectBuilder.class);
 
@@ -554,25 +554,19 @@ public class Maven40ProjectResolver {
     projectBuildingRequest.setInactiveProfileIds(request.getInactiveProfiles());
     projectBuildingRequest.setResolveDependencies(false);
 
-    if (files.size() == 1) {
-      buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
+    // org.apache.maven.project.collector.MultiModuleCollectionStrategy.collectProjects
+    buildSinglePom(builder, buildingResults, projectBuildingRequest, request.getPom());
+
+    Set<File> processedFiles = new HashSet<>();
+    for (ProjectBuildingResult buildingResult : buildingResults) {
+      processedFiles.add(buildingResult.getPomFile());
     }
-    else {
-      try {
-        buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
-      }
-      catch (ProjectBuildingException e) {
-        MavenServerGlobals.getLogger().warn("Retrieving building results from exception: ", e);
-        for (ProjectBuildingResult result : e.getResults()) {
-          if (result.getProject() != null) {
-            buildingResults.add(result);
-          }
-          else {
-            buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
-          }
-        }
-      }
+    Set<File> nonProcessedFiles = new HashSet<>(files);
+    nonProcessedFiles.removeAll(processedFiles);
+    for (File file : nonProcessedFiles) {
+      buildSinglePom(builder, buildingResults, projectBuildingRequest, file);
     }
+
     return buildingResults;
   }
 
@@ -581,8 +575,8 @@ public class Maven40ProjectResolver {
                                      ProjectBuildingRequest projectBuildingRequest,
                                      File pomFile) {
     try {
-      ProjectBuildingResult build = builder.build(Collections.singletonList(pomFile), false, projectBuildingRequest).get(0);
-      buildingResults.add(build);
+      List<ProjectBuildingResult> build = builder.build(Collections.singletonList(pomFile), true, projectBuildingRequest);
+      buildingResults.addAll(build);
     }
     catch (ProjectBuildingException e) {
       Maven40ResolverUtil.handleProjectBuildingException(buildingResults, e);
