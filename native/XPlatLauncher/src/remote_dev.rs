@@ -541,8 +541,20 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
     }
 
     let mut provided_libs = BTreeSet::new();
+    let filter_extensions = vec![
+        "hmac".to_string()
+    ];
+
     for f in fs::read_dir(libs_dir)? {
-        let file_name = f?.file_name();
+        let entry = f?;
+        let file_name = entry.file_name();
+        let file_extension = entry.path().extension().map(|ext| ext.to_string_lossy().to_string());
+
+        if file_extension.is_some_and(|ext| filter_extensions.contains(&ext)) {
+            debug!("Filter the file by extension '{file_name:?}'");
+            continue;
+        }
+
         if !provided_libs.insert(file_name.clone()) {
             bail!("Two files with the same name '{file_name:?}' in {libs_dir:?}")
         }
