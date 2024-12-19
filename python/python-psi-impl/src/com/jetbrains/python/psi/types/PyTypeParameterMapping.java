@@ -171,6 +171,23 @@ public final class PyTypeParameterMapping {
         rightMappedTypes.add(Couple.of(rightmostExpected, rightmostActual));
       }
     }
+    // [**P] <- [int, str, bool] is equal to [**P] <- [[int, str, bool]]
+    if (expectedTypesDeque.size() == 1 && actualTypesDeque.size() >= 1
+        && expectedTypesDeque.peekFirst() instanceof PyParamSpecType
+        && !(actualTypesDeque.peekFirst() instanceof PyCallableParameterListType)) {
+      List<PyType> callableParamListTypes = new ArrayList<>();
+
+      while (actualTypesDeque.size() != 0) {
+        PyType actualType = actualTypesDeque.peekFirst();
+        callableParamListTypes.add(actualType);
+        actualTypesDeque.removeFirst();
+      }
+
+      PyCallableParameterListType type =
+        new PyCallableParameterListTypeImpl(ContainerUtil.map(callableParamListTypes, PyCallableParameterImpl::nonPsi));
+      leftMappedTypes.add(Couple.of(expectedTypesDeque.peekFirst(), type));
+      expectedTypesDeque.removeFirst();
+    }
 
     // [T1, T2] <- [*tuple[T3, ...]]
     if (expectedTypesDeque.size() != 0 && actualTypesDeque.size() != 0

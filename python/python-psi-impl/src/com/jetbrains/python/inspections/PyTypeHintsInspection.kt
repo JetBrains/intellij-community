@@ -890,13 +890,6 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
       }
-
-      val promotedCallableParameterListType = promoteTypeArgumentListToCallableParameterListIfNeeded(typeArgumentTypes, node)
-      if (promotedCallableParameterListType != null) {
-        typeArgumentTypes.clear()
-        typeArgumentTypes.add(promotedCallableParameterListType)
-      }
-
       checkGenericTypeParameterization(node, genericDefinitionType, typeArgumentTypes)
     }
 

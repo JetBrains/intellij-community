@@ -1846,36 +1846,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     else if (indexExpr != null) {
       types.add(Ref.deref(getType(indexExpr, context)));
     }
-    PyCallableParameterListType promoted = promoteToCallableParameterListTypeIfNeeded(expression, types, context);
-    if (promoted != null) {
-      return List.of(promoted);
-    }
     return types;
   }
 
-  @Nullable
-  private static PyCallableParameterListType promoteToCallableParameterListTypeIfNeeded(@NotNull PySubscriptionExpression subscriptionExpression,
-                                                                                        @NotNull List<PyType> typeArgumentTypes,
-                                                                                        @NotNull Context context) {
-    if (typeArgumentTypes.size() == 1 && typeArgumentTypes.get(0) instanceof PyCallableParameterListType) return null;
-
-    PyType operandType = Ref.deref(getType(subscriptionExpression.getOperand(), context));
-    if (operandType instanceof PyClassType classType) {
-      PyCollectionType genericDefinitionType = PyTypeChecker.findGenericDefinitionType(classType.getPyClass(), context.myContext);
-      if (genericDefinitionType != null) {
-        // Class with a single ParamSpec type parameter can be parameterized as both Class[int, str, bool] and Class[[int, str, bool]]
-        if (genericDefinitionType.getElementTypes().size() == 1
-            && genericDefinitionType.getElementTypes().get(0) instanceof PyParamSpecType) {
-          return new PyCallableParameterListTypeImpl(ContainerUtil.map(typeArgumentTypes, PyCallableParameterImpl::nonPsi));
-        }
-      }
-    }
-    return null;
-  }
-
   private static @Nullable PyCollectionType parameterizeClassDefaultAware(@NotNull PyClass pyClass,
-                                                                          @NotNull List<PyType> actualTypeParams,
-                                                                          @NotNull Context context) {
+                                                                @NotNull List<PyType> actualTypeParams,
+                                                                @NotNull Context context) {
     PyCollectionType genericDefinitionType =
       doPreventingRecursion(pyClass, false, () -> PyTypeChecker.findGenericDefinitionType(pyClass, context.getTypeContext()));
     if (genericDefinitionType != null && ContainerUtil.exists(genericDefinitionType.getElementTypes(),
