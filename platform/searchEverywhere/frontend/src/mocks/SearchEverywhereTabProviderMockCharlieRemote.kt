@@ -9,9 +9,9 @@ import com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider
 import fleet.kernel.DurableRef
 
 class SearchEverywhereTabProviderMockCharlieRemote : SearchEverywhereTabProvider {
-  override fun getTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab =
-    SearchEverywhereTabMock(project,
-                            sessionRef,
-                            "Charlie-Remote",
-                            listOf(SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_MockBackend")))
+  override suspend fun getTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab =
+    SearchEverywhereTabMock.create(project,
+                                   sessionRef,
+                                   "Charlie-Remote",
+                                   listOf(SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_MockBackend")))
 }

@@ -7,14 +7,21 @@ import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereTabHelper
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 
-class SearchEverywhereTabMock(project: Project,
-                              sessionRef: DurableRef<SearchEverywhereSessionEntity>,
-                              override val name: String,
-                              providerIds: List<SearchEverywhereProviderId>): SearchEverywhereTab {
+class SearchEverywhereTabMock(override val name: String,
+                              private val helper: SearchEverywhereTabHelper): SearchEverywhereTab {
   override val shortName: String = name
-
-  private val helper = SearchEverywhereTabHelper(project, sessionRef, providerIds)
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> =
     helper.getItems(params)
+
+  companion object {
+    suspend fun create(project: Project,
+                       sessionRef: DurableRef<SearchEverywhereSessionEntity>,
+                       name: String,
+                       providerIds: List<SearchEverywhereProviderId>,
+                       forceRemote: Boolean = false): SearchEverywhereTabMock {
+      val helper = SearchEverywhereTabHelper.create(project, sessionRef, providerIds, forceRemote)
+      return SearchEverywhereTabMock(name, helper)
+    }
+  }
 }

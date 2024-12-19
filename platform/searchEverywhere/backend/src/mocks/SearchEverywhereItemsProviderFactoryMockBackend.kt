@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.mocks
 
+import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProviderFactory
 import com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderMock
 
 class SearchEverywhereItemsProviderFactoryMockBackend: SearchEverywhereItemsProviderFactory {
-  override fun getItemsProvider(): SearchEverywhereItemsProvider =
+  override fun getItemsProvider(project: Project): SearchEverywhereItemsProvider =
     SearchEverywhereItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 300, delayStep = 5)
 
   companion object {

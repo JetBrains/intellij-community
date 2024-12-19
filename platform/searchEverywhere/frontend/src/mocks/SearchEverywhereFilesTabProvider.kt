@@ -6,13 +6,13 @@ import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
 import com.intellij.platform.searchEverywhere.SearchEverywhereSessionEntity
 import com.intellij.platform.searchEverywhere.SearchEverywhereTab
 import com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider
-import com.intellij.platform.searchEverywhere.mocks.SearchEverywhereItemsProviderFactoryMockAlphaLocal
 import fleet.kernel.DurableRef
 
-class SearchEverywhereTabProviderMockAlphaLocal : SearchEverywhereTabProvider {
+class SearchEverywhereFilesTabProvider : SearchEverywhereTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab =
     SearchEverywhereTabMock.create(project,
                                    sessionRef,
-                                   "AlphaLocal",
-                                   listOf(SearchEverywhereProviderId(SearchEverywhereItemsProviderFactoryMockAlphaLocal.ID)))
+                                   "Files",
+                                   listOf(SearchEverywhereProviderId("com.intellij.FileSearchEverywhereItemProvider")),
+                                   true)
 }

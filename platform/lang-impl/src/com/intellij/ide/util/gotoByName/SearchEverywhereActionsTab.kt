@@ -10,11 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SearchEverywhereActionsTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab {
-  private val helper = SearchEverywhereTabHelper(project,
-                                                 sessionRef,
-                                                 listOf(SearchEverywhereProviderId("com.intellij.ActionsItemsProvider")))
-
+class SearchEverywhereActionsTab private constructor(private val helper: SearchEverywhereTabHelper): SearchEverywhereTab {
   override val name: String
     get() = LangBundle.message("tab.title.actions")
 
@@ -22,5 +18,15 @@ class SearchEverywhereActionsTab(project: Project, sessionRef: DurableRef<Search
     get() = name
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> = helper.getItems(params)
+
+  companion object {
+    suspend fun create(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereActionsTab {
+      val helper = SearchEverywhereTabHelper.create(project,
+                                                    sessionRef,
+                                                    listOf(SearchEverywhereProviderId("com.intellij.ActionsItemsProvider")),
+                                                    false)
+      return SearchEverywhereActionsTab(helper)
+    }
+  }
 }
 

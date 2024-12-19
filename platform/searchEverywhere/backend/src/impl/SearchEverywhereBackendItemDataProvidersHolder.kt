@@ -8,16 +8,14 @@ import com.jetbrains.rhizomedb.*
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SearchEverywhereBackendItemDataProvidersHolder(val providers: Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider>)
-
 class SearchEverywhereBackendItemDataProvidersHolderEntity(override val eid: EID) : Entity {
-  val holder: SearchEverywhereBackendItemDataProvidersHolder?
-    get() = this[Holder] as? SearchEverywhereBackendItemDataProvidersHolder
+  val providers: Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider>
+    get() = this[Providers]
 
   companion object : EntityType<SearchEverywhereBackendItemDataProvidersHolderEntity>(SearchEverywhereBackendItemDataProvidersHolderEntity::class.java.name, "com.intellij", {
     SearchEverywhereBackendItemDataProvidersHolderEntity(it)
   }) {
-    internal val Holder = SearchEverywhereBackendItemDataProvidersHolderEntity.requiredTransient<Any>("holder")
+    internal val Providers = SearchEverywhereBackendItemDataProvidersHolderEntity.requiredTransient<Map<SearchEverywhereProviderId, SearchEverywhereItemDataProvider>>("providers")
     internal val Session = SearchEverywhereBackendItemDataProvidersHolderEntity.requiredRef<SearchEverywhereSessionEntity>("session", RefFlags.CASCADE_DELETE_BY)
   }
 }

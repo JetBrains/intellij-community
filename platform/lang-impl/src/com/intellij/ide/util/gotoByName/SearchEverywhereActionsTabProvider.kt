@@ -10,5 +10,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SearchEverywhereActionsTabProvider : SearchEverywhereTabProvider {
-  override fun getTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab = SearchEverywhereActionsTab(project, sessionRef)
+  override suspend fun getTab(project: Project, sessionRef: DurableRef<SearchEverywhereSessionEntity>): SearchEverywhereTab = SearchEverywhereActionsTab.create(project, sessionRef)
 }

@@ -2,11 +2,12 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface SearchEverywhereItemsProviderFactory {
-  fun getItemsProvider(): SearchEverywhereItemsProvider
+  fun getItemsProvider(project: Project): SearchEverywhereItemsProvider
 
   companion object {
     @ApiStatus.Internal

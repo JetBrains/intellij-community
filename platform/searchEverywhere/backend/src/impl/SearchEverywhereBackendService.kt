@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBackendItemDataProvidersHolderEntity.Companion.Holder
+import com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SearchEverywhereBackendItemDataProvidersHolderEntity.Companion.Session
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereItemEntity
 import com.jetbrains.rhizomedb.EID
@@ -38,14 +38,13 @@ class SearchEverywhereBackendService(val project: Project) {
 
           holderEntities.ifEmpty {
             val providers = SearchEverywhereItemsProviderFactory.EP_NAME.extensionList.associate { factory ->
-              val provider = factory.getItemsProvider()
+              val provider = factory.getItemsProvider(project)
               val id = SearchEverywhereProviderId(provider.id)
               id to SearchEverywhereItemDataBackendProvider(id, provider)
             }
-            val holder = SearchEverywhereBackendItemDataProvidersHolder(providers)
 
             SearchEverywhereBackendItemDataProvidersHolderEntity.new {
-              it[Holder] = holder
+              it[Providers] = providers
               it[Session] = session
             }
 
@@ -54,8 +53,8 @@ class SearchEverywhereBackendService(val project: Project) {
         }
       }
 
-      existingHolderEntities.first().holder
-    }?.providers ?: emptyMap()
+      existingHolderEntities.first().providers
+    } ?: emptyMap()
 
   suspend fun itemSelected(itemId: EID) {
     val item = withKernel {

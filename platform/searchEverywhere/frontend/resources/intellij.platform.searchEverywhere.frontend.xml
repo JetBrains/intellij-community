@@ -14,5 +14,6 @@
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockBetaLocal"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockCharlieRemote"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereTabProviderMockDeltaMixed"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SearchEverywhereFilesTabProvider"/>
   </extensions>
 </idea-plugin>
