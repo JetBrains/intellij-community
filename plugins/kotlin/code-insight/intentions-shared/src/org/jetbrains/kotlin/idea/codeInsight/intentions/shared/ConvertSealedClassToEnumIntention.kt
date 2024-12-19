@@ -1,39 +1,32 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.liftToExpect
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
  * Tests:
@@ -46,49 +39,31 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  *  - [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.Other.testConvertActualSealedClassToEnum]
  *  - [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.Other.testConvertExpectSealedClassToEnum]
  */
-internal class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
-    KtClass::class.java,
-    KotlinBundle.lazyMessage("convert.to.enum.class")
-) {
-    override fun startInWriteAction(): Boolean = false
+internal class ConvertSealedClassToEnumIntention : PsiBasedModCommandAction<KtClass>(KtClass::class.java) {
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("convert.to.enum.class")
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun applicabilityRange(element: KtClass): TextRange? {
-        val nameIdentifier = element.nameIdentifier ?: return null
-        val sealedKeyword = element.modifierList?.getModifier(KtTokens.SEALED_KEYWORD) ?: return null
+    override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean =
+        element is KtBlockExpression
 
-        allowAnalysisOnEdt {
-            analyze(element) {
-                val symbol = element.symbol as? KaClassSymbol ?: return null
-                val superTypesNotAny = symbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }.filter { superClassSymbol ->
-                    superClassSymbol.classId != StandardClassIds.Any
-                }
-                if (superTypesNotAny.isNotEmpty()) return null
-                return TextRange(sealedKeyword.startOffset, nameIdentifier.endOffset)
+    override fun isElementApplicable(element: KtClass, context: ActionContext): Boolean {
+        val nameIdentifier = element.nameIdentifier ?: return false
+        val sealedKeyword = element.modifierList?.getModifier(KtTokens.SEALED_KEYWORD) ?: return false
+        val range = TextRange(sealedKeyword.startOffset, nameIdentifier.endOffset)
+        if (!range.containsOffset(context.offset)) return false
+
+        analyze(element) {
+            val symbol = element.symbol as? KaClassSymbol ?: return false
+            val superTypesNotAny = symbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }.filter { superClassSymbol ->
+                superClassSymbol.classId != StandardClassIds.Any
             }
+            return superTypesNotAny.isEmpty()
         }
     }
 
-    override fun applyTo(element: KtClass, editor: Editor?) {
-        val project = element.project
+    override fun perform(context: ActionContext, element: KtClass): ModCommand {
         val klass = liftToExpect(element) as? KtClass ?: element
-
-        val searchAction = {
-            HierarchySearchRequest(klass, klass.useScope, false).searchInheritors().mapNotNull { it.unwrapped }
-        }
-        val subclasses: List<PsiElement> = if (element.isPhysical) {
-            project.runSynchronouslyWithProgress(KotlinBundle.message("searching.inheritors"), true, searchAction) ?: return
-        } else {
-            searchAction().map { subClass ->
-                // search finds physical elements
-                try {
-                    PsiTreeUtil.findSameElementInCopy(subClass, klass.containingFile)
-                } catch (_: IllegalStateException) {
-                    return
-                }
-            }
-        }
-
+        val subclasses = HierarchySearchRequest(klass, klass.useScope, false).searchInheritors().mapNotNull { it.unwrapped }
         val subclassesByContainer: Map<KtClass?, List<PsiElement>> = subclasses.sortedBy { it.textOffset }.groupBy {
             if (it !is KtObjectDeclaration) return@groupBy null
             if (it.superTypeListEntries.size != 1) return@groupBy null
@@ -99,38 +74,36 @@ internal class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<K
 
         val inconvertibleSubclasses: List<PsiElement> = subclassesByContainer[null] ?: emptyList()
         if (inconvertibleSubclasses.isNotEmpty()) {
-            return showError(
+            return errorCommand(
                 KotlinBundle.message("all.inheritors.must.be.nested.objects.of.the.class.itself.and.may.not.inherit.from.other.classes.or.interfaces"),
                 inconvertibleSubclasses,
-                project,
-                editor
             )
         }
 
         @Suppress("UNCHECKED_CAST")
         val nonSealedClasses = (subclassesByContainer.keys as Set<KtClass>).filter { !it.isSealed() }
         if (nonSealedClasses.isNotEmpty()) {
-            return showError(
+            return errorCommand(
                 KotlinBundle.message("all.expected.and.actual.classes.must.be.sealed.classes"),
                 nonSealedClasses,
-                project,
-                editor
             )
         }
 
-        runWriteAction {
+        return ModCommand.psiUpdate(element) { e, updater ->
             if (subclassesByContainer.isNotEmpty()) {
-                subclassesByContainer.forEach { (currentClass, currentSubclasses) ->
-                    processClass(currentClass!!, currentSubclasses, project)
+                for ((currentClass, currentSubclasses) in subclassesByContainer) {
+                    val writableClass = updater.getWritable(currentClass) ?: continue
+                    val writableSubclasses = currentSubclasses.mapNotNull { updater.getWritable(it) }
+                    processClass(writableClass, writableSubclasses, e.project)
                 }
             } else {
-                processClass(klass, emptyList(), project)
+                val writableClass = updater.getWritable(klass) ?: return@psiUpdate
+                processClass(writableClass, emptyList(), e.project)
             }
         }
     }
 
-    private fun showError(@Nls message: String, elements: List<PsiElement>, project: Project, editor: Editor?) {
-        if (elements.firstOrNull()?.isPhysical == false) return
+    private fun errorCommand(@Nls message: String, elements: List<PsiElement>): ModCommand {
         val elementDescriptions = elements.map {
             ElementDescriptionUtil.getElementDescription(it, RefactoringDescriptionLocation.WITHOUT_PARENT)
         }
@@ -142,7 +115,7 @@ internal class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<K
             elementDescriptions.sorted().joinTo(this)
         }
 
-        return CommonRefactoringUtil.showErrorHint(project, editor, errorText, text, null)
+        return ModCommand.error(errorText)
     }
 
     private fun processClass(klass: KtClass, subclasses: List<PsiElement>, project: Project) {

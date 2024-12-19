@@ -9,6 +9,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.modcommand.ModDisplayMessage
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
@@ -244,8 +245,14 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                                 modCommandAction.perform(actionContext)
                             }
                         }
-                        project.executeCommand(intentionAction.text, null) {
-                            ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+
+                        if (command is ModDisplayMessage) {
+                            TestCase.assertEquals("Failure message mismatch.", shouldFailString, command.messageText().replace('\n', ' '))
+                            return
+                        } else {
+                            project.executeCommand(intentionAction.text, null) {
+                                ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+                            }
                         }
                     }
                 }
