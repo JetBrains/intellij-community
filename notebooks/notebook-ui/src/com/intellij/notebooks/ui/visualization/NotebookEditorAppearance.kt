@@ -19,7 +19,9 @@ interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEdit
     val NOTEBOOK_APPEARANCE_KEY: Key<NotebookEditorAppearance?> = Key.create<NotebookEditorAppearance>(NotebookEditorAppearance::class.java.name)
     val CODE_CELL_BACKGROUND: ColorKey = ColorKey.createColorKey("JUPYTER.CODE_CELL_BACKGROUND")
     val EDITOR_BACKGROUND: ColorKey = ColorKey.createColorKey("JUPYTER.EDITOR_BACKGROUND")
-    val EDITOR_CARET_ROW_BACKGROUND: ColorKey = ColorKey.createColorKey("JUPYTER.EDITOR_CARET_ROW_BACKGROUND")
+    internal val CELL_STRIPE_HOVERED_COLOR_OLD: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR")
+    internal val CELL_STRIPE_SELECTED_COLOR_OLD: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR")
+    val CARET_ROW_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CARET_ROW_COLOR")
     val CELL_STRIPE_HOVERED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_HOVERED_COLOR")
     val CELL_STRIPE_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_SELECTED_COLOR")
   }
@@ -62,7 +64,7 @@ interface NotebookEditorAppearanceColors {
 
   val editorBackgroundColor: ObservableProperty<Color>
 
-  val caretRowBackgroundColor: ObservableProperty<Color>
+  val caretRowBackgroundColor: ObservableProperty<Color?>
 
   val codeCellBackgroundColor: ObservableProperty<Color>
 

@@ -28,20 +28,28 @@ open class DefaultNotebookEditorAppearance(private val editor: Editor) : Noteboo
     .transform { it.getColor(NotebookEditorAppearance.EDITOR_BACKGROUND) ?: it.defaultBackground }
     .distinct()
 
-  override val caretRowBackgroundColor: ObservableProperty<Color> = colorsScheme
-    .transform { it.getColor(NotebookEditorAppearance.EDITOR_CARET_ROW_BACKGROUND) ?: codeCellBackgroundColor.get().brighter() }
+  override val caretRowBackgroundColor: ObservableProperty<Color?> = colorsScheme
+    .transform { it.getColor(NotebookEditorAppearance.CARET_ROW_COLOR) ?: it.getColor(EditorColors.CARET_ROW_COLOR) }
     .distinct()
 
   override val codeCellBackgroundColor: ObservableProperty<Color> = colorsScheme
-    .transform { it.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND) ?: it.defaultBackground.brighter() }
+    .transform { it.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND) ?: it.defaultBackground }
     .distinct()
 
   override val cellStripeSelectedColor: ObservableProperty<Color> = colorsScheme
-    .transform { it.getColor(NotebookEditorAppearance.CELL_STRIPE_SELECTED_COLOR) ?: JBColor.BLUE }
+    .transform {
+      it.getColor(NotebookEditorAppearance.CELL_STRIPE_SELECTED_COLOR_OLD)
+      ?: it.getColor(NotebookEditorAppearance.CELL_STRIPE_SELECTED_COLOR)
+      ?: JBColor.BLUE
+    }
     .distinct()
 
   override val cellStripeHoveredColor: ObservableProperty<Color> = colorsScheme
-    .transform { it.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR) ?: JBColor.GRAY }
+    .transform {
+      it.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR_OLD)
+      ?: it.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR)
+      ?: JBColor.GRAY
+    }
     .distinct()
 
   init {
