@@ -32,7 +32,7 @@ public abstract class IndexStorageLockingBase {
    * If true, index lookups may throw {@linkplain ProcessCanceledException} if job/indicator is cancelled.
    * Since not all code is ready for PCE from index lookup, this is currently under a feature-flag
    */
-  public static final boolean MAKE_INDEX_LOOKUP_CANCELLABLE = getBooleanProperty("intellij.index.cancellable-lookup", false);
+  public static final boolean MAKE_INDEX_LOOKUP_CANCELLABLE = getBooleanProperty("intellij.index.cancellable-lookup", true);
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
