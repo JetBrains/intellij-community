@@ -241,18 +241,12 @@ object ChangeTypeQuickFixFactories {
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
 
-            val fixes = mutableListOf<ModCommandAction>()
-            if (expression is KtReferenceExpression) {
-                val property = expression.mainReference.resolve() as? KtProperty
-                if (property != null) {
-                    fixes.addAll(registerVariableTypeFixes(property, actualType, expectedType))
-                } else {
-                    fixes.addAll(registerExpressionTypeFixes(expression, expectedType, actualType))
-                }
+            val property = (expression as? KtReferenceExpression)?.mainReference?.resolve() as? KtProperty
+            if (property != null) {
+                registerVariableTypeFixes(property, actualType, expectedType)
             } else {
-                fixes.addAll(registerExpressionTypeFixes(expression, expectedType, actualType))
+                registerExpressionTypeFixes(expression, expectedType, actualType)
             }
-            fixes
         }
 
     @OptIn(KaExperimentalApi::class)
