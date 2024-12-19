@@ -150,8 +150,8 @@ public class XValueHint extends AbstractValueHint {
     }, 200, TimeUnit.MILLISECONDS);
 
     XEvaluationCallbackBase callback = new MyEvaluationCallback(showEvaluating);
-    if (myElement != null && myEvaluator instanceof XDebuggerPsiEvaluator) {
-      ((XDebuggerPsiEvaluator)myEvaluator).evaluate(myElement, callback);
+    if (myElement != null && myEvaluator instanceof XDebuggerPsiEvaluator xDebuggerPsiEvaluator) {
+      xDebuggerPsiEvaluator.evaluate(myElement, callback);
     }
     else {
       myEvaluator.evaluate(myExpression, callback, myExpressionPosition);

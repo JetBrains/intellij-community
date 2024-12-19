@@ -39,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
+import java.util.Objects;
+
 public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebuggerPsiEvaluator {
   private final DebugProcessImpl myDebugProcess;
   private final JavaStackFrame myStackFrame;
@@ -59,10 +61,49 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
   public void evaluate(@NotNull final XExpression expression,
                        @NotNull final XEvaluationCallback baseCallback,
                        @Nullable XSourcePosition expressionPosition) {
+    evaluate(baseCallback, (DebuggerContextImpl debuggerContext, EvaluationContextImpl evalContext) -> {
+      TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
+      NodeManagerImpl nodeManager = Objects.requireNonNull(myDebugProcess.getXdebugProcess()).getNodeManager();
+      return nodeManager.getWatchItemDescriptor(null, text, null);
+    });
+  }
+
+  @Override
+  public void evaluate(@NotNull PsiElement element, @NotNull XEvaluationCallback baseCallback) {
+    evaluate(baseCallback, (DebuggerContextImpl debuggerContext, EvaluationContextImpl evalContext) -> {
+      Project project = myDebugProcess.getProject();
+      Ref<TextWithImportsImpl> text = new Ref<>();
+      ExpressionEvaluator evaluator = ReadAction.compute(() -> {
+        text.set(new TextWithImportsImpl(element));
+        CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
+        try {
+          return factory.getEvaluatorBuilder().build(element, ContextUtil.getSourcePosition(evalContext));
+        }
+        catch (UnsupportedExpressionException ex) {
+          PsiElement context = PositionUtil.getContextElement(debuggerContext);
+          ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, context, e ->
+            factory.createPsiCodeFragment(text.get(), context, project));
+          if (eval != null) {
+            return eval;
+          }
+          throw ex;
+        }
+      });
+      return new WatchItemDescriptor(project, text.get()) {
+        @Override
+        protected @NotNull ExpressionEvaluator getEvaluator(EvaluationContextImpl evaluationContext) {
+          return evaluator;
+        }
+      };
+    });
+  }
+
+  private void evaluate(@NotNull XEvaluationCallback baseCallback,
+                        @NotNull DescriptorProducer descriptorSupplier) {
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext(),
                                                                               myStackFrame.getStackFrameProxy().threadProxy()) {
       @Override
-      public Priority getPriority() {
+      public @NotNull Priority getPriority() {
         return Priority.NORMAL;
       }
 
@@ -81,95 +122,31 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
             callback.errorOccurred(JavaDebuggerBundle.message("error.no.debug.process"), descriptor);
             return;
           }
-          TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
-          NodeManagerImpl nodeManager = process.getNodeManager();
-          descriptor = nodeManager.getWatchItemDescriptor(null, text, null);
-          EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext()).createEvaluationContext();
+          DebuggerContextImpl debuggerContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext());
+          EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
           if (evalContext == null) {
             callback.errorOccurred(JavaDebuggerBundle.message("error.context.not.available"), descriptor);
             return;
           }
           XEvaluationOrigin.setOrigin(evalContext, origin);
-          descriptor.setContext(evalContext);
-          EvaluateException exception = descriptor.getEvaluateException();
-          if (exception != null && descriptor.getValue() == null) {
-            callback.errorOccurred(exception.getMessage(), descriptor);
-            return;
+
+          try {
+            descriptor = descriptorSupplier.produce(debuggerContext, evalContext);
+            descriptor.setContext(evalContext);
+            EvaluateException exception = descriptor.getEvaluateException();
+            if (exception != null && descriptor.getValue() == null) {
+              callback.errorOccurred(exception.getMessage(), descriptor);
+              return;
+            }
+            callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
           }
-          callback.evaluated(JavaValue.create(null, descriptor, evalContext, nodeManager, true));
+          catch (EvaluateException e) {
+            callback.errorOccurred(e.getMessage(), descriptor);
+          }
         }
         catch (Throwable e) {
           callback.errorOccurred(JavaDebuggerBundle.message("error.internal"), descriptor);
           throw e;
-        }
-      }
-    });
-  }
-
-  @Override
-  public void evaluate(@NotNull PsiElement element, @NotNull XEvaluationCallback baseCallback) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext(),
-                                                                              myStackFrame.getStackFrameProxy().threadProxy()) {
-
-      @Override
-      public Priority getPriority() {
-        return Priority.NORMAL;
-      }
-
-      @Override
-      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        XEvaluationOrigin origin = getOrigin(baseCallback);
-        ReportingEvaluationCallback callback = new ReportingEvaluationCallback(myDebugProcess.getProject(), baseCallback, origin);
-        if (DebuggerUIUtil.isObsolete(callback)) {
-          return;
-        }
-
-        WatchItemDescriptor descriptor = null;
-
-        JavaDebugProcess process = myDebugProcess.getXdebugProcess();
-        if (process == null) {
-          callback.errorOccurred(JavaDebuggerBundle.message("error.no.debug.process"), descriptor);
-          return;
-        }
-
-        DebuggerContextImpl debuggerContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext());
-        EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
-        if (evalContext == null) {
-          callback.errorOccurred(JavaDebuggerBundle.message("error.context.not.available"), descriptor);
-          return;
-        }
-        XEvaluationOrigin.setOrigin(evalContext, origin);
-
-        try {
-          Project project = myDebugProcess.getProject();
-          Ref<TextWithImportsImpl> text = new Ref<>();
-          ExpressionEvaluator evaluator = ReadAction.compute(() -> {
-            text.set(new TextWithImportsImpl(element));
-            CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
-            try {
-              return factory.getEvaluatorBuilder().build(element, ContextUtil.getSourcePosition(evalContext));
-            }
-            catch (UnsupportedExpressionException ex) {
-              PsiElement context = PositionUtil.getContextElement(debuggerContext);
-              ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, context, e ->
-                factory.createPsiCodeFragment(text.get(), context, project));
-              if (eval != null) {
-                return eval;
-              }
-              throw ex;
-            }
-          });
-          descriptor = new WatchItemDescriptor(project, text.get()) {
-            @Override
-            protected @NotNull ExpressionEvaluator getEvaluator(EvaluationContextImpl evaluationContext) {
-              return evaluator;
-            }
-          };
-          descriptor.setContext(evalContext);
-          callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
-        }
-        catch (EvaluateException e) {
-          callback.errorOccurred(e.getMessage(), descriptor);
         }
       }
     });
@@ -213,5 +190,10 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
       return range.length > 1 ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
     }
     return super.getEvaluationMode(text, startOffset, endOffset, null);
+  }
+
+  @FunctionalInterface
+  private interface DescriptorProducer {
+    WatchItemDescriptor produce(DebuggerContextImpl debuggerContext, EvaluationContextImpl evalContext) throws EvaluateException;
   }
 }
