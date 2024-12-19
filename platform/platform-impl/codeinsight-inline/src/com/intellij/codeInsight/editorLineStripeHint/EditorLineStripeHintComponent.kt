@@ -66,8 +66,9 @@ open class EditorLineStripeHintComponent(
     ApplicationManager.getApplication().runReadAction {
       val lineStripeY = getLineStripeY()
       val startPositionOfEolStripe = (width / 3) * 2
-      setBounds((editor.contentComponent.visibleRect.x + width * (1 - stripeVisibleWidthRatio)).toInt(), lineStripeY,
-                (width * stripeVisibleWidthRatio).toInt(), editor.lineHeight)
+      val stripeVisibleWidth = getStripeVisibleWidth()
+      val widthLeft = editor.scrollingModel.visibleArea.width - stripeVisibleWidth
+      setBounds(editor.contentComponent.visibleRect.x + widthLeft, lineStripeY, stripeVisibleWidth, editor.lineHeight)
       for (comp in components) {
         if (comp is PhantomInlayComponent) {
           comp.reposition()
@@ -105,7 +106,7 @@ open class EditorLineStripeHintComponent(
       null
     }
 
-  open val stripeVisibleWidthRatio: Double = 0.5
+  open fun getStripeVisibleWidth(): Int = editor.scrollingModel.visibleArea.width / 2
 
   open fun getLineStripeY(): Int = editor.visualPositionToXY(editor.caretModel.visualPosition).y
 
