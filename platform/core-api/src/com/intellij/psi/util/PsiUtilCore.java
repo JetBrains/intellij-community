@@ -524,7 +524,17 @@ public class PsiUtilCore {
   public static @NotNull PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiManager psiManager = PsiManager.getInstance(project);
     PsiFile psi = psiManager.findFile(file);
-    if (psi != null) return psi;
+    if (psi == null) {
+      logFileIsNotFound(file, psiManager, project);
+      throw new AssertionError();
+    }
+
+    return psi;
+  }
+
+  private static void logFileIsNotFound(@NotNull VirtualFile file,
+                                        @NotNull PsiManager psiManager,
+                                        @NotNull Project project) {
     FileType fileType = file.getFileType();
     FileViewProvider viewProvider = psiManager.findViewProvider(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -557,7 +567,6 @@ public class PsiUtilCore {
       }
     }
     LOG.error("no PSI for file '" + file.getName() + "'", new Attachment(file.getPresentableUrl(), sb.toString()));
-    throw new AssertionError();
   }
 
 
