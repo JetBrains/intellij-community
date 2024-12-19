@@ -53,7 +53,7 @@ userDataMap = {}
 
 [[<test>[]]test]
 --
-RangeHighlighter: (0,4); layer:5999; tooltip: null : BOXED
-RangeHighlighter: (0,4); layer:5999; tooltip: null : ROUNDED_BOX
-RangeHighlighter: (4,8); layer:5999; tooltip: null : BOXED
+highlighter: (0,4); layer: 5999 : BOXED
+highlighter: (0,4); layer: 5999 : ROUNDED_BOX
+highlighter: (4,8); layer: 5999 : BOXED
 ------------

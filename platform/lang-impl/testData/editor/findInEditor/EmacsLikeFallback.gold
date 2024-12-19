@@ -26,9 +26,9 @@ userDataMap = {}
 [[<a>]]
 [a]b
 --
-RangeHighlighter: (0,1); layer:5999; tooltip: null : BOXED
-RangeHighlighter: (0,1); layer:5999; tooltip: null : ROUNDED_BOX
-RangeHighlighter: (2,3); layer:5999; tooltip: null : BOXED
+highlighter: (0,1); layer: 5999 : BOXED
+highlighter: (0,1); layer: 5999 : ROUNDED_BOX
+highlighter: (2,3); layer: 5999 : BOXED
 ------------
 --- FIND MODEL ---
 myStringToFind = 'ab'
@@ -58,8 +58,8 @@ userDataMap = {}
 a
 [[<ab>]]
 --
-RangeHighlighter: (2,4); layer:5999; tooltip: null : BOXED
-RangeHighlighter: (2,4); layer:5999; tooltip: null : ROUNDED_BOX
+highlighter: (2,4); layer: 5999 : BOXED
+highlighter: (2,4); layer: 5999 : ROUNDED_BOX
 ------------
 --- FIND MODEL ---
 myStringToFind = 'a'
@@ -89,7 +89,7 @@ userDataMap = {}
 [[<a>]]
 [a]b
 --
-RangeHighlighter: (0,1); layer:5999; tooltip: null : BOXED
-RangeHighlighter: (0,1); layer:5999; tooltip: null : ROUNDED_BOX
-RangeHighlighter: (2,3); layer:5999; tooltip: null : BOXED
+highlighter: (0,1); layer: 5999 : BOXED
+highlighter: (0,1); layer: 5999 : ROUNDED_BOX
+highlighter: (2,3); layer: 5999 : BOXED
 ------------
