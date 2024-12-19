@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.internal.statistic.utils.hasStandardExceptionPrefix
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
@@ -23,6 +24,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.BitUtil
 import com.sun.jdi.*
+import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
@@ -178,7 +180,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         codeFragment.project,
                         errorType,
                         compiledData.compilerType,
-                        context.evaluationContext.origin
+                        context.evaluationContext.origin,
+                        extractStandardExceptionFromInvocation(cause),
                     )
                 }
 
@@ -190,6 +193,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             }
             throw e
         }
+    }
+
+    private fun extractStandardExceptionFromInvocation(cause: Throwable?): String? {
+        return (cause as? InvocationException)?.exception()?.type()?.name()
+            ?.takeIf { hasStandardExceptionPrefix(it) }
     }
 
     private fun checkCauseOfEvaluateException(cause: Throwable, hasCast: Boolean): StatisticsEvaluationResult {

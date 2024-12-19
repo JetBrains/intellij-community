@@ -25,6 +25,8 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector"/>
+    <statistics.validation.customValidationRule
+            implementation="org.jetbrains.kotlin.idea.debugger.evaluate.StandardExceptionNameRuleValidator"/>
     <internal.statistic.libraryUsageImportProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.K2MetricsFUSCollector"/>
   </extensions>
