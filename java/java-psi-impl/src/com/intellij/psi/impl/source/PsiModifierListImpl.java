@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.CheckUtil;
@@ -109,11 +110,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     Set<String> implicitModifiers = new HashSet<>();
     PsiElement parent = getParent();
     if (parent instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)parent;
       PsiElement grandParent = parent.getContext();
       if (grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
         Collections.addAll(implicitModifiers, PUBLIC, STATIC);
       }
-      if (((PsiClass)parent).isInterface()) {
+      if (aClass.isInterface()) {
         implicitModifiers.add(ABSTRACT);
 
         // nested or local interface is implicitly static
@@ -126,19 +128,21 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(FINAL);
         }
       }
-      if (((PsiClass)parent).isRecord()) {
+      if (aClass.isRecord()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
         }
         implicitModifiers.add(FINAL);
       }
-      if (((PsiClass)parent).isEnum()) {
+      if (aClass.isEnum()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
         }
-        List<PsiField> fields = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnFields()
-                                                                     : Arrays.asList(((PsiClass)parent).getFields());
-        boolean hasSubClass = ContainerUtil.find(fields, field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) != null;
+        List<PsiField> fields = parent instanceof PsiExtensibleClass
+                                ? ((PsiExtensibleClass)parent).getOwnFields()
+                                : Arrays.asList(aClass.getFields());
+        Condition<PsiField> condition = field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null;
+        boolean hasSubClass = ContainerUtil.find(fields, condition) != null;
         if (hasSubClass) {
           implicitModifiers.add(SEALED);
         }
@@ -146,8 +150,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(FINAL);
         }
 
-        List<PsiMethod> methods = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnMethods()
-                                                                       : Arrays.asList(((PsiClass)parent).getMethods());
+        List<PsiMethod> methods = parent instanceof PsiExtensibleClass
+                                  ? ((PsiExtensibleClass)parent).getOwnMethods()
+                                  : Arrays.asList(aClass.getMethods());
         for (PsiMethod method : methods) {
           if (method.hasModifierProperty(ABSTRACT)) {
             implicitModifiers.add(ABSTRACT);
