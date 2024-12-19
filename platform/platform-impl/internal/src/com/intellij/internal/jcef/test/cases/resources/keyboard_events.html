@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyboard Events Logger</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f1f1f1;
+    }
+    .log {
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 20px 0;
+      height: 300px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+    }
+    .btn-clear {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    .btn-clear:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+<h1>Keyboard Events Logger</h1>
+<p>Press any key on your keyboard and the events will be logged below:</p>
+<button class="btn-clear" id="clearButton">Clear</button>
+<div class="log" id="log"></div>
+
+<script>
+  document.addEventListener('keydown', logEvent, false);
+  document.addEventListener('keyup', logEvent, false);
+  document.addEventListener('keypress', logEvent, false);
+
+  function logEvent(event) {
+    const logDiv = document.getElementById('log');
+    const message = `Type: ${event.type}, Key: ${event.key}, Code: ${event.code}, Timestamp: ${event.timeStamp}\n`;
+    logDiv.textContent += message;
+  }
+
+  document.getElementById('clearButton').addEventListener('click', function() {
+    document.getElementById('log').textContent = '';
+  });
+</script>
+</body>
+</html>
