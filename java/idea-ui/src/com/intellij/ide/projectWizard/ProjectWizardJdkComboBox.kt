@@ -569,7 +569,7 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
 
   val jdkInstaller = JdkInstaller.getInstance()
   val request = JdkInstallRequestInfo(item, jdkInstaller.defaultInstallDir(item, eel))
-  val task = JdkDownloaderBase.newDownloadTask(item, request, null)
+  val task = JdkDownloadTask(item, request, null)
 
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     val task = DownloadJdk(task)

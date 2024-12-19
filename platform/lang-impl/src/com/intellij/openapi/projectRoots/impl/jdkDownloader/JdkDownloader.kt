@@ -61,7 +61,7 @@ data class JdkInstallRequestInfo(override val item: JdkItem,
 }
 
 @Internal
-class JdkDownloader : SdkDownload, JdkDownloaderBase {
+class JdkDownloader : SdkDownload {
   override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
     if (!Registry.`is`("jdk.downloader")) return false
     if (ApplicationManager.getApplication().isUnitTestMode) return false
@@ -212,7 +212,7 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
       return
     }
 
-    sdkCreatedCallback.accept(JdkDownloaderBase.newDownloadTask(jdkItem, request, project))
+    sdkCreatedCallback.accept(JdkDownloadTask(jdkItem, request, project))
   }
 
   private inline fun <T : Any?> computeInBackground(project: Project?,
@@ -254,15 +254,6 @@ internal fun selectJdkAndPath(
   if (project?.isDisposed == true) return null
 
   return JdkDownloadDialog(project, parentComponent, sdkTypeId, mergedModel, okActionText, text).selectJdkAndPath()
-}
-
-@Internal
-interface JdkDownloaderBase {
-  companion object {
-    fun newDownloadTask(item: JdkItem, request: JdkInstallRequest, project: Project?): SdkDownloadTask {
-      return JdkDownloadTask(item, request, project)
-    }
-  }
 }
 
 @Internal
