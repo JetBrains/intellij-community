@@ -39,13 +39,13 @@ def setup_tf_tensor_with_nones():
 # 1
 def test_tensor_1d_number():
     tensor = tf.constant([1, 2, 3])
-    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/' + test_data_directory + '/tensorflow_1d_number.txt')
+    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/tensorflow_1d_number.txt')
 
 
 # 2
 def test_tensor_2d_simple():
     tensor = tf.constant([[True, False, True], [True, True, False]])
-    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/' + test_data_directory + '/tensorflow_2d_simple.txt')
+    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/tensorflow_2d_simple.txt')
 
 
 # 3
@@ -53,14 +53,14 @@ def test_tensor_2d_number():
     tensor = tf.constant([[1, 2, 3],
                           [4, 5, 6],
                           [7, 8, 9]])
-    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/' + test_data_directory + '/tensorflow_2d_number.txt')
+    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/tensorflow_2d_number.txt')
 
 
 # 4
 def test_tensor_with_dtype():
     tensor = tf.constant([["Let's", "Say", "Hello", "World"],
                           ["Let's", "Say", "Hello", "World"]], dtype=tf.string)
-    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/' + test_data_directory + '/tensorflow_with_dtype.txt')
+    __check_info_tf_tensor(tensor, 'test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/tensorflow_with_dtype.txt')
 
 
 # 5
@@ -103,7 +103,7 @@ def test_get_data_float_values_2f(setup_tf_tensor_with_floats):
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/numpy_based_without_pandas/' + test_data_directory + '/get_data_float_values_2f.txt'
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_2f.txt'
     )
 
 
@@ -114,7 +114,7 @@ def test_get_data_float_values_2f(setup_tf_tensor_with_floats):
 # #
 # #     __read_expected_from_file_and_compare_with_actual(
 # #         actual=actual,
-# #         expected_file='test_data/numpy_based_with_pandas/' + test_data_directory + '/get_data_float_values_12f.txt'
+# #         expected_file='test_data/numpy_based_with_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_12f.txt'
 # #     )
 
 
@@ -125,7 +125,7 @@ def test_get_data_float_values_2e(setup_tf_tensor_with_floats):
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/numpy_based_without_pandas/' + test_data_directory + '/get_data_float_values_2e.txt'
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_2e.txt'
     )
 
 
@@ -136,7 +136,7 @@ def test_get_data_float_values_d(setup_tf_tensor_with_floats):
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/numpy_based_without_pandas/' + test_data_directory + '/get_data_float_values_d.txt'
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_d.txt'
     )
 
 
@@ -147,7 +147,7 @@ def test_get_data_float_values_d_garbage(setup_tf_tensor_with_floats):
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/numpy_based_without_pandas/' + test_data_directory + '/get_data_float_values_d_garbage.txt'
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_d_garbage.txt'
     )
 
 
@@ -158,7 +158,7 @@ def test_get_data_none_values_2e(setup_tf_tensor_with_nones):
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/numpy_based_without_pandas/' + test_data_directory + '/get_data_none_values_2e.txt'
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_none_values_2e.txt'
     )
 
 
@@ -177,7 +177,7 @@ def test_get_data_none_values_2e(setup_tf_tensor_with_nones):
 #
 #     __read_expected_from_file_and_compare_with_actual(
 #         actual=displayed_html.data,
-#         expected_file='test_data/numpy_based_without_pandas/' + test_data_directory + '/display_data_html_float_values.txt'
+#         expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/display_data_html_float_values.txt'
 #     )
 
 
@@ -197,7 +197,7 @@ def test_get_data_none_values_2e(setup_tf_tensor_with_nones):
 #
 #     __read_expected_from_file_and_compare_with_actual(
 #         actual=displayed_html.data,
-#         expected_file='test_data/numpy_based_without_pandas/' + test_data_directory + '/display_data_html_none_values.txt'
+#         expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/display_data_html_none_values.txt'
 #     )
 
 
