@@ -2763,6 +2763,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/jvmMultiModule/inlineInternalWithDefaultParams.kt");
             }
 
+            @TestMetadata("inlineWithAnonymousObjectsRegeneration.kt")
+            public void testInlineWithAnonymousObjectsRegeneration() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/inlineWithAnonymousObjectsRegeneration.kt");
+            }
+
             @TestMetadata("internalMembersInInlinedLambda.kt")
             public void testInternalMembersInInlinedLambda() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/internalMembersInInlinedLambda.kt");
