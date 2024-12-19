@@ -20,7 +20,7 @@ abstract class BaseDistinctObservableProperty<T, P : ObservableProperty<T>>(
 
   init {
     origin.afterChange {
-      if (value == UNDEFINED || !equality(value!!, it)) {
+      if (value == UNDEFINED || !equality(value, it)) {
         value = it
         fireChangeEvent(it)
       }
