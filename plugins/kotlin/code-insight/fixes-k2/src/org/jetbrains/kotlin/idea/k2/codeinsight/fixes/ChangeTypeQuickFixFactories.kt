@@ -53,6 +53,7 @@ object ChangeTypeQuickFixFactories {
         override fun getFamilyName(): String = KotlinBundle.message("fix.change.return.type.family")
         override fun getPresentation(context: ActionContext, element: E): Presentation =
             Presentation.of(getActionName(element, targetType, typeInfo))
+
         override fun invoke(context: ActionContext, element: E, updater: ModPsiUpdater) =
             updateType(element, typeInfo, context.project)
     }
@@ -117,7 +118,8 @@ object ChangeTypeQuickFixFactories {
         val property = this as? KtProperty
         val returnTypes = buildList {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
-                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }?.takeUnless { it is KaErrorType }
+                (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }
+                    ?.takeUnless { it is KaErrorType }
             })
             if (!candidateType.isUnitType) {
                 add(candidateType)
@@ -166,7 +168,13 @@ object ChangeTypeQuickFixFactories {
                 ?: return@ModCommandBased emptyList()
 
             val withNullability = diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE)
-            listOf(UpdateTypeQuickFix(declaration, TargetType.ENCLOSING_DECLARATION, createTypeInfo(declaration.returnType(withNullability))))
+            listOf(
+                UpdateTypeQuickFix(
+                    declaration,
+                    TargetType.ENCLOSING_DECLARATION,
+                    createTypeInfo(declaration.returnType(withNullability))
+                )
+            )
         }
 
     val initializerTypeMismatch =
@@ -287,7 +295,8 @@ object ChangeTypeQuickFixFactories {
             buildList {
                 add(UpdateTypeQuickFix(entryWithWrongType, TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
 
-                val classSymbol = (diagnostic.psi.expressionType as? KaClassType)?.symbol as? KaDeclarationContainerSymbol ?: return@buildList
+                val classSymbol =
+                    (diagnostic.psi.expressionType as? KaClassType)?.symbol as? KaDeclarationContainerSymbol ?: return@buildList
                 val componentFunction = classSymbol.memberScope
                     .callables(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration
@@ -361,10 +370,12 @@ object ChangeTypeQuickFixFactories {
                 "fix.change.return.type.presentation.base",
                 declaration.presentationForQuickfix ?: return null
             )
+
             TargetType.ENCLOSING_DECLARATION -> KotlinBundle.message(
                 "fix.change.return.type.presentation.enclosing",
                 declaration.presentationForQuickfix ?: return KotlinBundle.message("fix.change.return.type.presentation.enclosing.function")
             )
+
             TargetType.CALLED_FUNCTION -> {
                 val presentation =
                     declaration.presentationForQuickfix
@@ -374,6 +385,7 @@ object ChangeTypeQuickFixFactories {
                     else -> KotlinBundle.message("fix.change.return.type.presentation.called", presentation)
                 }
             }
+
             TargetType.VARIABLE -> {
                 val containerName = declaration.parentOfType<KtClassOrObject>()?.nameAsName?.takeUnless { it.isSpecial }?.asString()
                 return "'${containerName?.let { "$containerName." } ?: ""}${declaration.name}'"
