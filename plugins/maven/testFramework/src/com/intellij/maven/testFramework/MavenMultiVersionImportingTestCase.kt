@@ -17,6 +17,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -91,7 +92,9 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       MavenDistributionsCache.resolveEmbeddedMavenHome()
       return
     }
-    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion)
+    val actualMavenVersion = getActualVersion(myMavenVersion!!)
+    MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
+    myWrapperTestFixture = MavenWrapperTestFixture(project, actualMavenVersion)
     myWrapperTestFixture!!.setUp()
   }
 
@@ -327,7 +330,8 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   companion object {
-    val MAVEN_VERSIONS: Array<String> = arrayOf<String>("bundled", "4.0.0-rc-2")
+    val MAVEN_4_VERSION = "4.0.0-rc-2"
+    val MAVEN_VERSIONS: Array<String> = arrayOf<String>("bundled", "4")
 
     @Parameterized.Parameters(name = "with Maven-{0}")
     @JvmStatic
@@ -343,6 +347,9 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     internal fun getActualVersion(version: String): String {
       if (version == "bundled") {
         return MavenDistributionsCache.resolveEmbeddedMavenHome().version!!
+      }
+      if (version == "4") {
+        return MAVEN_4_VERSION
       }
       return version
     }

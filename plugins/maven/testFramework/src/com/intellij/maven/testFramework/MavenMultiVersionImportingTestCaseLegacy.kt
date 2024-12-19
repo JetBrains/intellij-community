@@ -16,6 +16,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -90,7 +91,9 @@ abstract class MavenMultiVersionImportingTestCaseLegacy : MavenImportingTestCase
       MavenDistributionsCache.resolveEmbeddedMavenHome()
       return
     }
-    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion)
+    val actualMavenVersion = getActualVersion(myMavenVersion!!)
+    MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
+    myWrapperTestFixture = MavenWrapperTestFixture(project, actualMavenVersion)
     myWrapperTestFixture!!.setUp()
   }
 
