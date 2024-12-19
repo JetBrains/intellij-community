@@ -29,12 +29,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.util.OptionalUtil.*;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OBJECTS;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 import static com.intellij.psi.JavaTokenType.*;
 
@@ -137,14 +137,14 @@ public final class BoolUtils {
     }
   }
 
-  private static final List<PredicatedReplacement> ourReplacements = new ArrayList<>();
-
-  static {
-    ourReplacements.add(new PredicatedReplacement("isPresent", OPTIONAL_IS_EMPTY));
-    ourReplacements.add(new PredicatedReplacement("isEmpty", OPTIONAL_IS_PRESENT.withLanguageLevelAtLeast(LanguageLevel.JDK_11)));
-    ourReplacements.add(new PredicatedReplacement("noneMatch", STREAM_ANY_MATCH));
-    ourReplacements.add(new PredicatedReplacement("anyMatch", STREAM_NONE_MATCH));
-  }
+  private static final List<PredicatedReplacement> ourReplacements = List.of(
+    new PredicatedReplacement("isPresent", OPTIONAL_IS_EMPTY),
+    new PredicatedReplacement("isEmpty", OPTIONAL_IS_PRESENT.withLanguageLevelAtLeast(LanguageLevel.JDK_11)),
+    new PredicatedReplacement("nonNull", CallMatcher.staticCall(JAVA_UTIL_OBJECTS, "isNull")),
+    new PredicatedReplacement("isNull", CallMatcher.staticCall(JAVA_UTIL_OBJECTS, "nonNull")),
+    new PredicatedReplacement("noneMatch", STREAM_ANY_MATCH),
+    new PredicatedReplacement("anyMatch", STREAM_NONE_MATCH)
+  );
 
   private static String findSmartMethodNegation(PsiExpression expression) {
     if (!(expression instanceof PsiMethodCallExpression call)) return null;
