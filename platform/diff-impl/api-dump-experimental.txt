@@ -104,9 +104,7 @@ f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - f:getMaxBlockCountInMemory():I
 - f:getPreloadedBlocksCount():I
 - f:isEnabled():Z
-- f:resetBadge():V
 - f:setCombinedDiffEnabled(Z):V
-- f:showBadge():Z
 *f:com.intellij.diff.tools.combined.CombinedDiffUIState
 - <init>():V
 - f:getDiffInfoStateFlow():kotlinx.coroutines.flow.StateFlow
