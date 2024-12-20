@@ -7,9 +7,7 @@ import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
@@ -24,20 +22,18 @@ private object PauseListener : DebuggerManagerListener {
 
   override fun sessionAttached(session: DebuggerSession?) {
     if (session == null) return
-    val disposable = Disposer.newDisposable()
-    sessions[session] = SessionThreadsData(disposable)
+    sessions[session] = SessionThreadsData()
     session.process.addDebugProcessListener(object : DebugProcessListener {
       override fun paused(suspendContext: SuspendContext) {
         val context = suspendContext as? SuspendContextImpl ?: return
         getSessionData(context.debugProcess.session)?.resetNonCancellableSection(context)
       }
-    }, disposable)
+    })
   }
 
   override fun sessionDetached(session: DebuggerSession?) {
     if (session == null) return
-    val sessionData = sessions.remove(session) ?: return
-    Disposer.dispose(sessionData.disposable)
+    sessions.remove(session)
   }
 
   fun getSessionData(session: DebuggerSession): SessionThreadsData? = sessions[session]
@@ -64,7 +60,7 @@ private data class ThreadState(val reference: ObjectReference, var state: Boolea
 /**
  * Manages cancellability state of the IDE threads within a single debugger session.
  */
-private class SessionThreadsData(val disposable: Disposable) {
+private class SessionThreadsData() {
   private val threadStates = hashMapOf<ThreadReferenceProxyImpl, ThreadState?>()
   private var isIdeRuntime = false
 
