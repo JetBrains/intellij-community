@@ -2,9 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -22,30 +20,26 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class JdkDownloadService(private val project: Project, private val coroutineScope: CoroutineScope) {
+
   @RequiresEdt
   fun setupInstallableSdk(downloadTask: SdkDownloadTask): Sdk {
     val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
-    val sdk = AtomicReference<Sdk>()
-
-    model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) {
-      sdk.set(it)
-      ApplicationManager.getApplication().runWriteAction {
+    return model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) {
+      application.runWriteAction {
         ProjectJdkTable.getInstance().addJdk(it)
       }
     }
-
-    return sdk.get()
   }
 
   fun downloadSdk(sdk: Sdk) {
@@ -58,31 +52,26 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
-  private fun scheduleSetupInstallableSdk(project: Project,
-                                          downloadTask: SdkDownloadTask,
-                                          sdkDownloadedFuture: CompletableFuture<Boolean>,
-                                          setSdk: (Sdk?) -> Unit) {
-    val sdkReference = AtomicReference<Sdk?>()
+  private fun scheduleSetupInstallableSdk(
+    project: Project,
+    downloadTask: SdkDownloadTask,
+    sdkDownloadedFuture: CompletableFuture<Boolean>,
+    setSdk: (Sdk?) -> Unit,
+  ) {
     val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
     coroutineScope.launch(Dispatchers.EDT) {
-      writeAction {
-        model.setupInstallableSdk(JavaSdkImpl.getInstance(), downloadTask) { sdk ->
+      val sdk = model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) { sdk ->
+        application.runWriteAction {
           ProjectJdkTable.getInstance().addJdk(sdk)
           setSdk(sdk)
-          sdkReference.set(sdk)
         }
       }
+      model.downloadSdk(sdk)
       val tracker = SdkDownloadTracker.getInstance()
-      val sdk = sdkReference.get()
-      if (null != sdk) {
-        val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
-          sdkDownloadedFuture.complete(it)
-        }
-        if (!registered) {
-          sdkDownloadedFuture.complete(false)
-        }
+      val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
+        sdkDownloadedFuture.complete(it)
       }
-      else {
+      if (!registered) {
         sdkDownloadedFuture.complete(false)
       }
     }
