@@ -905,8 +905,6 @@ private fun crossPlatformZip(
 
       // for the `bin/` directory layout, see `PathManager.getBinDirectories(Path)`
 
-      out.entryToDir(winX64DistDir.resolve("bin/brokenPlugins.db"), "bin")
-
       out.entryToDir(winX64DistDir.resolve("bin/${executableName}.bat"), "bin")
       out.entryToDir(linuxX64DistDir.resolve("bin/${executableName}.sh"), "bin", executableFileUnixMode)
 
