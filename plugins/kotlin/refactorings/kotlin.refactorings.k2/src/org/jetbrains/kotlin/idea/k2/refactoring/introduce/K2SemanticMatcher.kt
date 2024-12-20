@@ -33,6 +33,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.utils.addToStdlib.zipWithNulls
 
+/**
+ * For the K1 Mode-specific version of this functionality, see [org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier].
+ */
 object K2SemanticMatcher {
     context(KaSession)
     fun findMatches(patternElement: KtElement, scopeElement: KtElement): List<KtElement> {

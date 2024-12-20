@@ -47,6 +47,9 @@ class UnifierParameter(
     val expectedType: KotlinType?
 )
 
+/**
+ * For the K2 Mode-specific version of this functionality, see [org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher].  
+ */
 class KotlinPsiUnifier(
     parameters: Collection<UnifierParameter> = Collections.emptySet(),
     val allowWeakMatches: Boolean = false
