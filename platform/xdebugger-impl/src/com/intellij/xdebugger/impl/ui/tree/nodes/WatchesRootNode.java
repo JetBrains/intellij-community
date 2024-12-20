@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -183,14 +183,11 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
   public void addResultNode(@Nullable XStackFrame stackFrame, @NotNull XExpression expression) {
     WatchNodeImpl message = new ResultNode(myTree, this, expression, stackFrame);
-    if (ContainerUtil.getFirstItem(myChildren) instanceof ResultNode) {
-      myChildren.set(0, message);
-      message.fireNodeStructureChanged();
+    if (ContainerUtil.getFirstItem(myChildren) instanceof ResultNode currentResultNode) {
+      removeChildNode(currentResultNode);
     }
-    else {
-      myChildren.add(0, message);
-      fireNodeInserted(0);
-    }
+    myChildren.add(0, message);
+    fireNodeInserted(0);
     TreeUtil.selectNode(myTree, message);
   }
 
