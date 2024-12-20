@@ -1048,18 +1048,15 @@ internal fun consumeUnrelatedEvent(modalComponent: Component?, event: AWTEvent):
 }
 
 private object SequencedEventNestedFieldHolder {
-  private val DISPOSE_METHOD: MethodHandle
 
-  @JvmField
-  val SEQUENCED_EVENT_CLASS: Class<*> = SequencedEventNestedFieldHolder::class.java.classLoader.loadClass("java.awt.SequencedEvent")
+  private val SEQUENCED_EVENT_CLASS: Class<*> = javaClass.classLoader.loadClass("java.awt.SequencedEvent")
 
-  fun invokeDispose(event: AWTEvent) {
+  private val DISPOSE_METHOD: MethodHandle = MethodHandles
+    .privateLookupIn(SEQUENCED_EVENT_CLASS, MethodHandles.lookup())
+    .findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE))
+
+  private fun invokeDispose(event: AWTEvent) {
     DISPOSE_METHOD.invoke(event)
-  }
-
-  init {
-    DISPOSE_METHOD = MethodHandles.privateLookupIn(SEQUENCED_EVENT_CLASS, MethodHandles.lookup())
-      .findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE))
   }
 
   private var currentSequencedEvent: AWTEvent? = null
@@ -1067,8 +1064,8 @@ private object SequencedEventNestedFieldHolder {
   // Fixes IDEA-218430: nested sequence events cause deadlock
   fun fixNestedSequenceEvent(e: AWTEvent) {
     if (e.javaClass == SEQUENCED_EVENT_CLASS) {
-      if (currentSequencedEvent != null) {
-        val sequenceEventToDispose = currentSequencedEvent!!
+      val sequenceEventToDispose = currentSequencedEvent
+      if (sequenceEventToDispose != null) {
         currentSequencedEvent = null // Set to null BEFORE dispose b/c `dispose` can dispatch events internally
         invokeDispose(sequenceEventToDispose)
       }
