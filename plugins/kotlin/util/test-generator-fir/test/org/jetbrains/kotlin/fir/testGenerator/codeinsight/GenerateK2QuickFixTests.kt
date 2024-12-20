@@ -168,6 +168,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/redundantLateinit", pattern = pattern)
             model("$idea/quickfix/redundantModalityModifier", pattern = pattern)
             model("$idea/quickfix/redundantSuspend", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/runBlockingInSuspendFunction", pattern = pattern)
             model("$idea/quickfix/redundantVisibilityModifier", pattern = pattern)
             model("$idea/quickfix/removeAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeArgument", pattern = pattern)

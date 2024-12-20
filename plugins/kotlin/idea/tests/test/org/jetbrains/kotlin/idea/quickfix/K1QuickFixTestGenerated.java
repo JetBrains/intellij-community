@@ -15699,6 +15699,50 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/runBlockingInSuspendFunction")
+    public static class RunBlockingInSuspendFunction extends AbstractK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("noContextNoReturnsMultipleStatements.kt")
+        public void testNoContextNoReturnsMultipleStatements() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/noContextNoReturnsMultipleStatements.kt");
+        }
+
+        @TestMetadata("noContextNoReturnsOneStatement.kt")
+        public void testNoContextNoReturnsOneStatement() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/noContextNoReturnsOneStatement.kt");
+        }
+
+        @TestMetadata("noContextWithReturns.kt")
+        public void testNoContextWithReturns() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/noContextWithReturns.kt");
+        }
+
+        @TestMetadata("variableInitializer.kt")
+        public void testVariableInitializer() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/variableInitializer.kt");
+        }
+
+        @TestMetadata("withContextNoReturns.kt")
+        public void testWithContextNoReturns() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/withContextNoReturns.kt");
+        }
+
+        @TestMetadata("withContextWithReturns.kt")
+        public void testWithContextWithReturns() throws Exception {
+            runTest("testData/quickfix/runBlockingInSuspendFunction/withContextWithReturns.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/simplifyComparison")
     public static class SimplifyComparison extends AbstractK1QuickFixTest {
         @java.lang.Override

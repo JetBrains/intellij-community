@@ -1,0 +1,31 @@
+<html>
+<body>
+Reports <code>runBlocking</code> calls inside <code>suspend</code> functions.
+<p>Using <code>runBlocking</code> within a <code>suspend</code> function negates the suspension mechanism, blocking the calling thread, and
+    undermines the core purpose of asynchronous programming.
+<p>The quick-fix automatically replaces the <code>runBlocking</code> with one of the following options, depending on the context:</p>
+<ul>
+    <li>A <code>run</code> call.</li>
+    <li>A <code>withContext</code> call for cases where a specific <code>CoroutineContext</code> is provided.</li>
+    <li>Inline wrapped code.</li>
+</ul>
+<p>Example:</p>
+<pre><code>
+suspend fun something() {
+  runBlocking {
+    code() // The thread is blocked here
+  }
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+suspend fun something() {
+  runBlocking {
+    code() // Runs asynchronously
+  }
+}
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2025.1</small></p>
+</body>
+</html>

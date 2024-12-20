@@ -112,6 +112,9 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinxCoroutines: File by lazy {
         PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlinx.coroutines.CoroutineScope"))!!.toFile()
     }
+    @JvmStatic val coroutineContext: File by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlin.coroutines.CoroutineContext"))!!.toFile()
+    }
 
     /**
      * @throws org.jetbrains.kotlin.konan.target.TargetSupportException on access from an inappropriate host.

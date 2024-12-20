@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -48,6 +47,8 @@ import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.coroutineContext
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.kotlinxCoroutines
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -301,6 +302,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "ENABLE_MULTIPLATFORM") ->
                     KotlinProjectDescriptorWithFacet.KOTLIN_STABLE_WITH_MULTIPLATFORM
+
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_COROUTINES") ->
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor(listOf(kotlinxCoroutines, coroutineContext), emptyList())
 
                 else -> getDefaultProjectDescriptor()
             }

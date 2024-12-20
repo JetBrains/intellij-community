@@ -11162,6 +11162,50 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction")
+    public static class RunBlockingInSuspendFunction extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("noContextNoReturnsMultipleStatements.kt")
+        public void testNoContextNoReturnsMultipleStatements() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/noContextNoReturnsMultipleStatements.kt");
+        }
+
+        @TestMetadata("noContextNoReturnsOneStatement.kt")
+        public void testNoContextNoReturnsOneStatement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/noContextNoReturnsOneStatement.kt");
+        }
+
+        @TestMetadata("noContextWithReturns.kt")
+        public void testNoContextWithReturns() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/noContextWithReturns.kt");
+        }
+
+        @TestMetadata("variableInitializer.kt")
+        public void testVariableInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/variableInitializer.kt");
+        }
+
+        @TestMetadata("withContextNoReturns.kt")
+        public void testWithContextNoReturns() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/withContextNoReturns.kt");
+        }
+
+        @TestMetadata("withContextWithReturns.kt")
+        public void testWithContextWithReturns() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/runBlockingInSuspendFunction/withContextWithReturns.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/redundantVisibilityModifier")
     public static class RedundantVisibilityModifier extends AbstractHighLevelQuickFixTest {
         @java.lang.Override
