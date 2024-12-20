@@ -41,6 +41,10 @@
             implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinStatisticsStartupActivity"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinResolutionScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinResolveScopeEnlargerBridge"/>
+  </extensions>
+
   <projectListeners>
     <listener
             class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$ModuleStateModificationListener"
