@@ -4,7 +4,7 @@ package com.intellij.platform.ide.progress
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.platform.ide.progress.suspender.TaskSuspendable
+import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
 import fleet.kernel.*
 import org.jetbrains.annotations.ApiStatus
@@ -45,7 +45,7 @@ object TaskManager {
    */
   suspend fun pauseTask(taskInfoEntity: TaskInfoEntity, reason: @ProgressText String? = null, source: TaskStatus.Source): Unit = withKernel {
     tryWithEntities(taskInfoEntity) {
-      if (taskInfoEntity.suspendable is TaskSuspendable.NonSuspendable) {
+      if (taskInfoEntity.suspendable is TaskSuspension.NonSuspendable) {
         LOG.error("Task ${taskInfoEntity.eid} is not suspendable")
         return@tryWithEntities
       }

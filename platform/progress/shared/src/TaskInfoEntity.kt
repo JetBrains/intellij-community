@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
-import com.intellij.platform.ide.progress.suspender.TaskSuspendable
+import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.asProject
 import com.intellij.platform.project.asProjectOrNull
@@ -47,10 +47,10 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
    *
    * Possible values are:
    *
-   * - [TaskSuspendable.NonSuspendable]: The task cannot be suspended, and no pause button should be displayed in the UI.
-   * - [TaskSuspendable.Suspendable]: The task can be suspended, and a pause button should be displayed
+   * - [TaskSuspension.NonSuspendable]: The task cannot be suspended, and no pause button should be displayed in the UI.
+   * - [TaskSuspension.Suspendable]: The task can be suspended, and a pause button should be displayed
    */
-  val suspendable: TaskSuspendable by TaskSuspendableType
+  val suspendable: TaskSuspension by TaskSuspendableType
 
   /**
    * Represents the current progress state of the task.
@@ -90,7 +90,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
   ) {
     val TitleType: Required<String> = requiredValue("title", String.serializer())
     val TaskCancellationType: Required<TaskCancellation> = requiredValue("taskCancellation", TaskCancellation.serializer())
-    val TaskSuspendableType: Required<TaskSuspendable> = requiredValue("isSuspendable", TaskSuspendable.serializer())
+    val TaskSuspendableType: Required<TaskSuspension> = requiredValue("isSuspendable", TaskSuspension.serializer())
     val ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
     val TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
     val ProjectEntityType: Optional<ProjectEntity> = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)

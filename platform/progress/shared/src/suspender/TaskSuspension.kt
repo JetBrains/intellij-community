@@ -10,13 +10,13 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @Serializable
-sealed interface TaskSuspendable {
+sealed interface TaskSuspension {
 
   /**
    * This object indicates that a task cannot be paused.
    */
   @Serializable
-  object NonSuspendable : TaskSuspendable
+  object NonSuspendable : TaskSuspension
 
   /**
    * Represents a suspendable task, which can be paused and resumed.
@@ -25,5 +25,5 @@ sealed interface TaskSuspendable {
    *                       which is displayed in the progress bar.
    */
   @Serializable
-  data class Suspendable(@NlsContexts.ProgressText val suspendText: String) : TaskSuspendable
+  data class Suspendable(@NlsContexts.ProgressText val suspendText: String) : TaskSuspension
 }

@@ -31,7 +31,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
-import com.intellij.platform.ide.progress.suspender.TaskSuspendable
+import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElementKey
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
@@ -129,10 +129,10 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
-  private fun TaskSuspender?.getSuspendableInfo(): TaskSuspendable {
+  private fun TaskSuspender?.getSuspendableInfo(): TaskSuspension {
     return when (this) {
-      is TaskSuspenderImpl -> TaskSuspendable.Suspendable(defaultSuspendedReason)
-      else -> TaskSuspendable.NonSuspendable
+      is TaskSuspenderImpl -> TaskSuspension.Suspendable(defaultSuspendedReason)
+      else -> TaskSuspension.NonSuspendable
     }
   }
 
