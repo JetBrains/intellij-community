@@ -3,6 +3,7 @@ package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -116,11 +117,15 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       if (classIdentifier == null) return;
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
-      if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST || 
+      if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
           myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly()) {
-        if (!ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) return;
+        if (!ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()){
+          registerError(classIdentifier, ProblemHighlightType.INFORMATION, isOnTheFly(), aClass);
+        }
       }
-      registerError(classIdentifier, isOnTheFly(), aClass);
+      else {
+        registerError(classIdentifier, isOnTheFly(), aClass);
+      }
     }
   }
 
