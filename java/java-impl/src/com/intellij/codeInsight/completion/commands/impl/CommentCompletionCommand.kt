@@ -20,8 +20,7 @@ class CommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineC
         val document = editor.document
         val lineNumber = document.getLineNumber(offset)
         val lineStartOffset = document.getLineStartOffset(lineNumber)
-        val lineEndOffset = document.getLineEndOffset(lineNumber)
-        caret.setSelection(lineStartOffset, lineEndOffset)
+        caret.setSelection(lineStartOffset, offset)
       }
     }
     super.execute(offset, psiFile, editor)

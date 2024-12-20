@@ -112,7 +112,7 @@ abstract class ApplicableCompletionCommand : CompletionCommand() {
  * @param context An optional [PsiElement] representing the context; can be null.
  * @return A [DataContext] instance containing the provided context information.
  */
-internal fun dataContext(
+internal fun getDataContext(
   psiFile: PsiFile,
   editor: Editor,
   context: PsiElement?,

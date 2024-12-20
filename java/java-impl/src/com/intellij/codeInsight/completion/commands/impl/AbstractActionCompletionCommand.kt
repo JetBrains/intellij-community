@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
-import com.intellij.codeInsight.completion.commands.api.dataContext
+import com.intellij.codeInsight.completion.commands.api.getDataContext
 import com.intellij.codeInsight.completion.commands.api.getTargetContext
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
@@ -40,10 +40,12 @@ abstract class AbstractActionCompletionCommand(
     if (editor == null) return false
     if (!DumbService.getInstance(psiFile.project).isUsableInCurrentContext(action)) return false
     val context = getTargetContext(offset, editor)
-    val dataContext = dataContext(psiFile, editor, context)
+    val dataContext = getDataContext(psiFile, editor, context)
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ActionUiKind.NONE, null)
-    ActionUtil.performDumbAwareUpdate(action, event, true)
+    if (ActionUtil.performDumbAwareUpdate(action, event, false)) {
+      return false
+    }
     return event.presentation.isEnabled && event.presentation.isVisible
   }
 

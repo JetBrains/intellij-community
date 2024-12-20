@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
-import com.intellij.codeInsight.completion.commands.api.dataContext
+import com.intellij.codeInsight.completion.commands.api.getDataContext
 import com.intellij.codeInsight.completion.commands.api.getTargetContext
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.GutterIntentionAction
@@ -56,7 +56,7 @@ class SimpleRunMarkerCommandProvider : CommandProvider {
       val dumbService = DumbService.getInstance(project)
       val group = DefaultActionGroup(ArrayList<AnAction?>(LinkedHashSet<AnAction?>(myGuttersRaw)))
       val context = getTargetContext(offset, editor)
-      val dataContext = dataContext(psiFile, editor, context)
+      val dataContext = getDataContext(psiFile, editor, context)
       val actionEvent = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
       actionEvent.updateSession = UpdateSession.EMPTY
       Utils.initUpdateSession(actionEvent)

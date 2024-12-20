@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
-import com.intellij.codeInsight.completion.commands.api.dataContext
+import com.intellij.codeInsight.completion.commands.api.getDataContext
 import com.intellij.codeInsight.completion.commands.api.getTargetContext
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -31,7 +31,7 @@ class GenerateCommandProvider : CommandProvider, DumbAware {
     if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = psiFile.findElementAt(offset)
     val context = getTargetContext(offset, editor)
-    val dataContext = dataContext(psiFile, editor, context)
+    val dataContext = getDataContext(psiFile, editor, context)
     val actionEvent = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
     actionEvent.updateSession = UpdateSession.EMPTY
     Utils.initUpdateSession(actionEvent)
