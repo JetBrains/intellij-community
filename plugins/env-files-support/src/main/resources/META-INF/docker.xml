@@ -1,0 +1,9 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerfileKeyGotoHandler"/>
+  </extensions>
+</idea-plugin>
