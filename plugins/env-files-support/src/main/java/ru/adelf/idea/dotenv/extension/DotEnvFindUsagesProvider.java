@@ -1,26 +1,27 @@
 package ru.adelf.idea.dotenv.extension;
 
-import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvBundle;
-import ru.adelf.idea.dotenv.grammars.DotEnvLexerAdapter;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
-import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 
 public class DotEnvFindUsagesProvider implements FindUsagesProvider {
     @Nullable
     @Override
     public WordsScanner getWordsScanner() {
+        throw new UnsupportedOperationException("Not yet implemented");
+        /*
+         TODO commented out because `DefaultWordsScanner` requires intellij.platform.indexing.impl dependency
+              but this class is unused
         return new DefaultWordsScanner(new DotEnvLexerAdapter(),
                 TokenSet.create(DotEnvTypes.PROPERTY),
                 TokenSet.create(DotEnvTypes.COMMENT),
                 TokenSet.EMPTY);
+        */
     }
 
     @Override

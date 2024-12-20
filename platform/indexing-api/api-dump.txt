@@ -91,14 +91,6 @@ e:com.intellij.find.FindModel$SearchContext
 - sf:IN_STRING_LITERALS:com.intellij.find.FindModel$SearchContext
 - s:valueOf(java.lang.String):com.intellij.find.FindModel$SearchContext
 - s:values():com.intellij.find.FindModel$SearchContext[]
-c:com.intellij.lang.cacheBuilder.DefaultWordsScanner
-- com.intellij.lang.cacheBuilder.VersionedWordsScanner
-- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
-- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
-- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
-- processWords(java.lang.CharSequence,com.intellij.util.Processor):V
-- setMayHaveFileRefsInLiterals(Z):V
-- s:stripWords(com.intellij.util.Processor,java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind,com.intellij.lang.cacheBuilder.WordOccurrence,Z):Z
 c:com.intellij.lang.cacheBuilder.SimpleWordsScanner
 - com.intellij.lang.cacheBuilder.VersionedWordsScanner
 - <init>():V

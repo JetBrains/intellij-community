@@ -13360,6 +13360,10 @@ f:com.intellij.largeFilesEditor.search.SearchResult
 com.intellij.largeFilesEditor.search.searchTask.FileDataProviderForSearch
 - a:getName():java.lang.String
 - a:getPagesAmount():J
+f:com.intellij.lexer.LexerUtil
+- s:getRootLexer(com.intellij.lexer.Lexer):com.intellij.lexer.Lexer
+- s:getTokenText(com.intellij.lexer.Lexer):java.lang.CharSequence
+- s:internToken(com.intellij.lexer.Lexer,com.intellij.util.CharTable):java.lang.CharSequence
 f:com.intellij.lexer.PrefixSuffixStripperLexer
 - com.intellij.lexer.LexerBase
 - <init>(java.lang.String,com.intellij.psi.tree.IElementType,java.lang.String,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):V

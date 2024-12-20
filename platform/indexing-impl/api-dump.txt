@@ -24,6 +24,14 @@ f:com.intellij.ide.todo.TodoFilter
 - removeTodoPattern(com.intellij.psi.search.TodoPattern):V
 - setName(java.lang.String):V
 - writeExternal(org.jdom.Element,com.intellij.psi.search.TodoPattern[]):V
+c:com.intellij.lang.cacheBuilder.DefaultWordsScanner
+- com.intellij.lang.cacheBuilder.VersionedWordsScanner
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
+- processWords(java.lang.CharSequence,com.intellij.util.Processor):V
+- setMayHaveFileRefsInLiterals(Z):V
+- s:stripWords(com.intellij.util.Processor,java.lang.CharSequence,I,I,com.intellij.lang.cacheBuilder.WordOccurrence$Kind,com.intellij.lang.cacheBuilder.WordOccurrence,Z):Z
 a:com.intellij.psi.impl.cache.impl.BaseFilterLexer
 - com.intellij.lexer.DelegateLexer
 - com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor
