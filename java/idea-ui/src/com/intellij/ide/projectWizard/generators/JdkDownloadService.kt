@@ -43,11 +43,10 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   }
 
   fun downloadSdk(sdk: Sdk) {
-    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
-
     coroutineScope.launch(Dispatchers.EDT) {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
-        model.downloadSdk(sdk)
+        val tracker = SdkDownloadTracker.getInstance()
+        tracker.startSdkDownloadIfNeeded(sdk)
       }
     }
   }
@@ -66,8 +65,8 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
           setSdk(sdk)
         }
       }
-      model.downloadSdk(sdk)
       val tracker = SdkDownloadTracker.getInstance()
+      tracker.startSdkDownloadIfNeeded(sdk)
       val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
         sdkDownloadedFuture.complete(it)
       }
