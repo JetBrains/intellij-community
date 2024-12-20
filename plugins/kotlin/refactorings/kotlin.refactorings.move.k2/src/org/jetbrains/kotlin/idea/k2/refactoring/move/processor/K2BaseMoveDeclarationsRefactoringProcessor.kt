@@ -48,7 +48,7 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
 
     protected open fun getUsages(moveDescriptor: K2MoveDescriptor): List<UsageInfo> {
         return moveDescriptor.source.elements
-            .flatMap { it.withChildDeclarations() }
+            .filterIsInstance<KtNamedDeclaration>()
             .flatMap { elem ->
                 // We filter out constructors because calling bindTo on these references will break for light classes.
                 if (elem is KtPrimaryConstructor || elem is KtSecondaryConstructor) return@flatMap emptyList()

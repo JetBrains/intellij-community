@@ -563,6 +563,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithJavaAnnotation/moveClassWithJavaAnnotation.test");
         }
 
+        @TestMetadata("kotlin/moveClassWithJavaReference/moveClassWithJavaReference.test")
+        public void testKotlin_moveClassWithJavaReference_MoveClassWithJavaReference() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithJavaReference/moveClassWithJavaReference.test");
+        }
+
         @TestMetadata("kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test")
         public void testKotlin_moveClassWithLongFunction_MoveClassWithLongFunction() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");

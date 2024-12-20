@@ -280,6 +280,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassWithJavaAnnotation/moveClassWithJavaAnnotation.test");
     }
 
+    @TestMetadata("kotlin/moveClassWithJavaReference/moveClassWithJavaReference.test")
+    public void testKotlin_moveClassWithJavaReference_MoveClassWithJavaReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassWithJavaReference/moveClassWithJavaReference.test");
+    }
+
     @TestMetadata("kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test")
     public void testKotlin_moveClassWithLongFunction_MoveClassWithLongFunction() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");
