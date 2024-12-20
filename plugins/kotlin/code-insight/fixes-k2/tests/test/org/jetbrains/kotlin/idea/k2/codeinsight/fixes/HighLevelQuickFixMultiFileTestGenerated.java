@@ -1215,4 +1215,33 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/superTypeCall.before.Main.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor")
+    public static class OverriddenJavaAccessor extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("getterWithDifferentType.test")
+        public void testGetterWithDifferentType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/getterWithDifferentType.test");
+        }
+
+        @TestMetadata("notAGetterSignature.test")
+        public void testNotAGetterSignature() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/notAGetterSignature.test");
+        }
+
+        @TestMetadata("simpleGetter.test")
+        public void testSimpleGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/simpleGetter.test");
+        }
+    }
 }

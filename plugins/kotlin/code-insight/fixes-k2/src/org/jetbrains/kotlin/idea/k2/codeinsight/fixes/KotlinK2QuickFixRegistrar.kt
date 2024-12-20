@@ -512,6 +512,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(UnsupportedFeatureFixFactory.unsupportedFeature)
 
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
+        registerFactory(OverrideAccessorFunctionFixFactory.nothingToOverrideFixFactory)
 
         registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
 

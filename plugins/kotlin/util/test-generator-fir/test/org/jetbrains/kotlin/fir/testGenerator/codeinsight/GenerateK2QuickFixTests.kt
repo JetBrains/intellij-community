@@ -258,6 +258,12 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 pattern = pattern,
                 testMethodName = testMethodName,
             )
+            model(
+                "$idea/quickfix/override/overriddenJavaAccessor",
+                pattern = pattern,
+                isRecursive = false,
+                testMethodName = testMethodName,
+            )
         }
 
         testClass<AbstractHighLevelQuickFixMultiModuleTest> {

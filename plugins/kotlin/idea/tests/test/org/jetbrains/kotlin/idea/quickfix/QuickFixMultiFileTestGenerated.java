@@ -2633,6 +2633,35 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/override/overriddenJavaAccessor")
+        public static class OverriddenJavaAccessor extends AbstractQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("getterWithDifferentType.test")
+            public void testGetterWithDifferentType() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/getterWithDifferentType.test");
+            }
+
+            @TestMetadata("notAGetterSignature.test")
+            public void testNotAGetterSignature() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/notAGetterSignature.test");
+            }
+
+            @TestMetadata("simpleGetter.test")
+            public void testSimpleGetter() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/simpleGetter.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/override/wrongNullabilityForJavaOverride")
         public static class WrongNullabilityForJavaOverride extends AbstractQuickFixMultiFileTest {
             @java.lang.Override
