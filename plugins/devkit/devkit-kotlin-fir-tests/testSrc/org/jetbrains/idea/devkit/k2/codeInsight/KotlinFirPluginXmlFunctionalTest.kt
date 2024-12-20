@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.codeInsight
 
 import com.intellij.codeInspection.LocalInspectionEP
@@ -7,8 +8,6 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.IntelliJProjectUtil
-import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -53,7 +52,7 @@ class KotlinFirPluginXmlFunctionalTest : JavaCodeInsightFixtureTestCase(), Expec
     //moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable::class.java))
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP::class.java))
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP::class.java))
-      .resolveSibling("intellij.platform.resources").toString());
+      .resolveSibling("intellij.platform.resources").toString())
     moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable::class.java))
     moduleBuilder.addLibrary("platform-ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP::class.java))
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AdvancedSettings::class.java))

@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.devkit" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.devkit.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
