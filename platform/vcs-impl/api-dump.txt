@@ -57,6 +57,12 @@ f:com.intellij.ide.actions.StartUseVcsDialog
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
 - getPreferredFocusedComponent():javax.swing.JComponent
 - getVcs():com.intellij.openapi.vcs.AbstractVcs
+com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider
+- sf:Companion:com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider$Companion
+- a:canApply(com.intellij.openapi.vcs.changes.ContentRevision):Z
+- a:getMetadata(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ContentRevision,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers
 - sf:INSTANCE:com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers
 - sf:createDiffTitleDetails(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String,Z):com.intellij.diff.impl.DiffEditorTitleDetails

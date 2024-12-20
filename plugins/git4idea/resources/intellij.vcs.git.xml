@@ -856,6 +856,8 @@
     <searchScopesProvider implementation="git4idea.search.GitSearchScopeProvider"/>
     <projectService serviceInterface="com.intellij.vcs.log.ui.table.links.CommitLinksProvider"
                     serviceImplementation="git4idea.log.GitCommitLinkProvider"/>
+
+    <vcs.diffRevisionMetadataProvider implementation="git4idea.diff.GitDiffRevisionMetadataProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

@@ -250,5 +250,9 @@
     <extensionPoint name="vcs.shelveSilentlyGotItTooltipProvider"
                     interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyGotItTooltipProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.diffRevisionMetadataProvider"
+                    interface="com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -63,8 +63,13 @@ object DiffTitleWithDetailsCustomizers {
     title: @NlsContexts.Label String?,
     displayPath: Boolean,
   ): DiffEditorTitleDetails {
-    val revisionLabel = title?.let { DiffEditorTitleDetails.RevisionLabelProvider(it, copiable = false) } ?: DiffEditorTitleDetails.RevisionLabelProvider(
-      ChangeDiffRequestProducer.getRevisionTitleOrEmpty(revision), copiable = true)
+    val revisionLabel = if (revision != null && project != null) {
+      ContentRevisionLabel.createProvider(project, revision, title)
+    } else if (title != null) {
+      DiffEditorTitleDetails.RevisionLabelProvider(title, copiable = false)
+    } else {
+      DiffEditorTitleDetails.RevisionLabelProvider(ChangeDiffRequestProducer.getRevisionTitleOrEmpty(revision), copiable = true)
+    }
 
     val pathLabel = if (revision != null && displayPath) DiffEditorTitleDetails.getFilePathLabel(project, revision.file) else null
 
