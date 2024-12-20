@@ -27,7 +27,7 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun checkDownloadedPlugins() {
-    val basePath = Path.of(dir.path, "testData", "local1").toString()
+    val basePath = Path.of(dir.toString(), "testData", "local1").toString()
     val basePluginsPath = Path.of(basePath, *DEFAULT_PLUGIN_GROUP_ID.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
     try {
       val pluginFolders = Files.list(basePluginsPath).map { obj: Path -> obj.fileName }.map { obj: Path -> obj.toString() }.collect(

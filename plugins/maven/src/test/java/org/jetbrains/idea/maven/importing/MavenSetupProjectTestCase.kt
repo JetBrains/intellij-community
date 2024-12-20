@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.application.EDT
@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
-abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCaseLegacy() {
+abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
   fun generateProject(id: String): ProjectInfo {
     val name = "${System.currentTimeMillis()}-$id-$name"
     createProjectSubFile("$name-external-module/pom.xml", MavenBuildFileBuilder("$name-external-module").generate())

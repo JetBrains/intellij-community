@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,7 +9,7 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 
-abstract class AbstractMavenStaticSyncTest : MavenMultiVersionImportingTestCaseLegacy() {
+abstract class AbstractMavenStaticSyncTest : MavenMultiVersionImportingTestCase() {
 
   private lateinit var noRealMaven: RealMavenPreventionFixture
   override fun setUp() {

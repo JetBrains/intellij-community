@@ -26,7 +26,7 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, getTestRootDisposable())
+    myIndicesFixture = MavenIndicesTestFixture(dir, project, getTestRootDisposable())
     myIndicesFixture!!.setUp()
   }
 

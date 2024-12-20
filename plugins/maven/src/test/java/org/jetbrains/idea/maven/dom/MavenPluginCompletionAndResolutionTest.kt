@@ -10,7 +10,7 @@ import org.junit.Test
 
 class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable,"plugins")
+    return MavenIndicesTestFixture(dir, project, testRootDisposable,"plugins")
   }
   override fun setUp() = runBlocking {
     super.setUp()

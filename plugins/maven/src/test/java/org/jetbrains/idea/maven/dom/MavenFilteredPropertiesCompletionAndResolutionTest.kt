@@ -325,7 +325,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                         foo=${"$"}{xxx}
                                         foo2=@xxx@
                                         """.trimIndent())
-    val filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1")
+    val filter = updateProjectSubFile("filters/filter.properties", "xx<caret>x=1")
 
     val foo = readAction { MavenDomUtil.findPropertyValue(project, f, "foo") }
     assertNotNull(foo)

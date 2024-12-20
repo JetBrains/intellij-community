@@ -1807,7 +1807,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     finally {
       embeddersManager.releaseInTests()
     }
-    val f = dir.toPath().resolve("tree.dat")
+    val f = dir.resolve("tree.dat")
     tree.save(f)
     val read = MavenProjectsTree.read(project, f)
     val roots = read!!.rootProjects

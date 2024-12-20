@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.RunAll
 import org.jetbrains.kotlin.config.ResourceKotlinRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinMavenImportingTestCase : MavenMultiVersionImportingTestCaseLegacy(),
+abstract class KotlinMavenImportingTestCase : MavenMultiVersionImportingTestCase(),
                                               ExpectedPluginModeProvider {
 
     private var sdkCreationChecker: KotlinSdkCreationChecker? = null

@@ -456,7 +456,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
   @Test
   fun testResolveLATESTDependency() = runBlocking {
-    val helper = MavenCustomRepositoryHelper(dir, "local1")
+    val helper = MavenCustomRepositoryHelper(dir.toFile(), "local1")
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
 

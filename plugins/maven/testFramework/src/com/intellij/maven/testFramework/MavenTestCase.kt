@@ -525,6 +525,14 @@ abstract class MavenTestCase : UsefulTestCase() {
     return file
   }
 
+  protected fun updateProjectSubFile(relativePath: String, content: String): VirtualFile {
+    val f = projectPath.resolve(relativePath)
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+    setFileContent(file, content)
+    refreshFiles(listOf(file))
+    return file
+  }
+
   protected fun refreshFiles(files: List<VirtualFile>) {
     val relativePaths = files.map { dir.relativize(it.path.toNioPathOrNull()!!) }
     MavenLog.LOG.warn("Refreshing files: $relativePaths")

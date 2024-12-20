@@ -58,7 +58,7 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Function
 
-abstract class MavenDomTestCase : MavenMultiVersionImportingTestCaseLegacy() {
+abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   private var myFixture: CodeInsightTestFixture? = null
   private val myConfigTimestamps: MutableMap<VirtualFile, Long> = HashMap()
   private var myOriginalAutoCompletion = false

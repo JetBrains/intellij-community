@@ -9,7 +9,7 @@ import org.junit.Test
 
 class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable,"plugins")
+    return MavenIndicesTestFixture(dir, project, testRootDisposable,"plugins")
   }
 
   override fun importProjectOnSetup(): Boolean {
