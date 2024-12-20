@@ -2,6 +2,9 @@ package com.intellij.driver.sdk.ui
 
 import java.awt.Component
 
+/**
+ * See [com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator]
+ */
 class QueryBuilder {
   fun byAccessibleName(name: String) = byAttribute("accessiblename", name)
 
