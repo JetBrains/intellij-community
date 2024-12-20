@@ -68,7 +68,7 @@ internal object TerminalSessionTestUtil {
     return TerminalOutputModelImpl(editor, maxLength)
   }
 
-  suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
+  suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange> = emptyList()) {
     writeAction {
       updateContent(absoluteLineIndex, text, styles)
     }

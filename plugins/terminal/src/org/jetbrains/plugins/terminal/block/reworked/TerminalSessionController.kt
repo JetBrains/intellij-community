@@ -18,6 +18,7 @@ internal class TerminalSessionController(
   private val sessionModel: TerminalSessionModel,
   private val outputModel: TerminalOutputModel,
   private val alternateBufferModel: TerminalOutputModel,
+  private val blocksModel: TerminalBlocksModel,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -59,16 +60,22 @@ internal class TerminalSessionController(
       TerminalShellIntegrationInitializedEvent -> {
         // TODO
       }
+      TerminalPromptStartedEvent -> {
+        withContext(Dispatchers.EDT) {
+          blocksModel.promptStarted(outputModel.cursorOffsetState.value)
+        }
+      }
+      TerminalPromptFinishedEvent -> {
+        withContext(Dispatchers.EDT) {
+          blocksModel.promptFinished(outputModel.cursorOffsetState.value)
+        }
+      }
       is TerminalCommandStartedEvent -> {
-        // TODO
+        withContext(Dispatchers.EDT) {
+          blocksModel.commandStarted(outputModel.cursorOffsetState.value)
+        }
       }
       is TerminalCommandFinishedEvent -> {
-        // TODO
-      }
-      is TerminalPromptStartedEvent -> {
-        // TODO
-      }
-      is TerminalPromptFinishedEvent -> {
         // TODO
       }
     }

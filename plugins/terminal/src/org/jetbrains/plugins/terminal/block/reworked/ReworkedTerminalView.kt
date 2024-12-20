@@ -111,7 +111,16 @@ internal class ReworkedTerminalView(
       coroutineScope.childScope("TerminalAlternateBufferModel")
     )
 
-    controller = TerminalSessionController(sessionModel, outputModel, alternateBufferModel, settings, coroutineScope.childScope("TerminalSessionController"))
+    val blocksModel = TerminalBlocksModelImpl(outputModel)
+
+    controller = TerminalSessionController(
+      sessionModel,
+      outputModel,
+      alternateBufferModel,
+      blocksModel,
+      settings,
+      coroutineScope.childScope("TerminalSessionController")
+    )
 
     terminalPanel = TerminalPanel(initialContent = outputModel.editor)
 
