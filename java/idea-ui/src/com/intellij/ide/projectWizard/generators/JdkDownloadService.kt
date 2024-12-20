@@ -50,6 +50,20 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
+  private fun createDownloadTask(sdkDownloadTask: JdkDownloadTask): SdkDownloadTask? {
+    val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
+    if (selectedFile == null) {
+      Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
+      return null
+    }
+
+    val downloadRequest = LOG.runAndLogException {
+      JdkInstaller.getInstance().prepareJdkInstallation(sdkDownloadTask.jdkItem, selectedFile)
+    } ?: return null
+
+    return JdkDownloadTask(sdkDownloadTask.jdkItem, downloadRequest, project)
+  }
+
   @RequiresWriteLock
   private fun createDownloadSdkInternal(downloadTask: SdkDownloadTask): Sdk {
     val sdkType = JavaSdk.getInstance()
@@ -64,24 +78,12 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     val sdkDownloadedFuture = CompletableFuture<Boolean>()
 
     coroutineScope.launch(Dispatchers.EDT) {
-      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
-
-        val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
-        if (selectedFile == null) {
-          Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
+      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.jdkItem.suggestedSdkName)) {
+        val downloadTask = createDownloadTask(sdkDownloadTask)
+        if (downloadTask == null) {
           sdkDownloadedFuture.complete(false)
           return@withBackgroundProgress
         }
-
-        val downloadRequest = LOG.runAndLogException {
-          JdkInstaller.getInstance().prepareJdkInstallation(sdkDownloadTask.jdkItem, selectedFile)
-        }
-        if (downloadRequest == null) {
-          sdkDownloadedFuture.complete(false)
-          return@withBackgroundProgress
-        }
-
-        val downloadTask = JdkDownloadTask(sdkDownloadTask.jdkItem, downloadRequest, project)
 
         val sdk = writeAction {
           createDownloadSdkInternal(downloadTask)
