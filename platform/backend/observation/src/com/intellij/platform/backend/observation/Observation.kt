@@ -3,7 +3,9 @@ package com.intellij.platform.backend.observation
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.Observation.awaitConfiguration
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 object Observation {
@@ -32,26 +34,29 @@ object Observation {
    *         `false`, otherwise
    */
   suspend fun awaitConfiguration(project: Project, messageCallback: ((String) -> Unit)? = null): Boolean {
-    var isModificationOccurred = false
-    val extensionTrackers = collectTrackersFromExtensions(project)
-    outer@ while (true) {
-      // we need to reassemble all available trackers on each iteration of the outer loop,
-      // since any change in the state of the system may result in a new set of available trackers
-      val keyTrackers = collectTrackersFromKeys(project)
-      inner@ for (tracker in keyTrackers + extensionTrackers) {
-        val isInProgress = tracker.isInProgress()
-        if (!isInProgress) {
-          continue@inner
+    // https://youtrack.jetbrains.com/issue/IJPL-159642
+    return withContext(Dispatchers.IO) {
+      var isModificationOccurred = false
+      val extensionTrackers = collectTrackersFromExtensions(project)
+      outer@ while (true) {
+        // we need to reassemble all available trackers on each iteration of the outer loop,
+        // since any change in the state of the system may result in a new set of available trackers
+        val keyTrackers = collectTrackersFromKeys(project)
+        inner@ for (tracker in keyTrackers + extensionTrackers) {
+          val isInProgress = tracker.isInProgress()
+          if (!isInProgress) {
+            continue@inner
+          }
+          messageCallback?.invoke("'${tracker.name}' is in progress...")
+          tracker.awaitConfiguration()
+          messageCallback?.invoke("'${tracker.name}' is completed.")
+          isModificationOccurred = true
+          continue@outer
         }
-        messageCallback?.invoke("'${tracker.name}' is in progress...")
-        tracker.awaitConfiguration()
-        messageCallback?.invoke("'${tracker.name}' is completed.")
-        isModificationOccurred = true
-        continue@outer
+        break
       }
-      break
+      return@withContext isModificationOccurred
     }
-    return isModificationOccurred
   }
 
   /**
