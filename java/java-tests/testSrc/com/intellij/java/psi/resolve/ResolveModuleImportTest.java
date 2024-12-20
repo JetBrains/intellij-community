@@ -381,6 +381,43 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     });
   }
 
+  public void testOptimizeImportWithSimilarNames() {
+    addCode("module-info.java", """
+    module my.source.moduleB {
+      exports my.source.moduleB;
+    }
+    """, M2);
+    addCode("my/source/moduleB/Imported1.java", """
+    package my.source.moduleB;
+    public class Imported1 {}
+    """, M2);
+    addCode("module-info.java", """
+    module my.source.moduleB1 {
+      exports my.source.moduleB1;
+    }
+    """, M4);
+    addCode("my/source/moduleB1/Imported2.java", """
+    package my.source.moduleB1;
+    public class Imported2 {}
+    """, M4);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      String fileName = getTestName(false) + ".java";
+      try {
+        PsiFile file = myFixture.configureByFile(fileName);
+
+        JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        myFixture.checkResultByFile(getTestName(false) + "_after" + ".java");
+        PsiTestUtil.checkFileStructure(file);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
+  }
+
   private void prepareAmbiguousModuleTests() {
     addCode("module-info.java", """
     module my.source.moduleB {

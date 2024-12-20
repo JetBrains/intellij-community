@@ -64,7 +64,7 @@ public final class ImportHelper {
 
   /**
    * @deprecated Use {@link #ImportHelper(JavaCodeStyleSettings)} instead. The instance of JavaCodeStyleSettings
-   *             can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
+   * can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
    */
   @Deprecated(forRemoval = true)
   public ImportHelper(@NotNull CodeStyleSettings settings) {
@@ -162,15 +162,15 @@ public final class ImportHelper {
   /**
    * Collects the names of classes that are imported by modules specified implicitly in the given Java file and in import list.
    *
-   * @param file the Java file for which imported class names are being collected.
+   * @param file       the Java file for which imported class names are being collected.
    * @param statements a list of import module statements that specify the modules from which classes are imported.
-   * @param list a list of import objects representing the imports from which class names need to be collected.
+   * @param list       a list of import objects representing the imports from which class names need to be collected.
    * @return a map of class names and used module imports.
    */
   @NotNull
   private static Map<String, PsiImportModuleStatement> collectNamesImportedByModules(@NotNull PsiJavaFile file,
-                                                           @NotNull List<PsiImportModuleStatement> statements,
-                                                           @NotNull List<Import> list) {
+                                                                                     @NotNull List<PsiImportModuleStatement> statements,
+                                                                                     @NotNull List<Import> list) {
     List<PsiImportStatementBase> implicitImports = ImportsUtil.getAllImplicitImports(file);
     List<PsiImportModuleStatement> moduleImports =
       new ArrayList<>(ContainerUtil.filterIsInstance(implicitImports, PsiImportModuleStatement.class));
@@ -200,7 +200,7 @@ public final class ImportHelper {
   /**
    * Collects the module import statements from the specified Java file, considering the code style settings, to insert in the new import list
    *
-   * @param file the Java file from which module import statements are collected.
+   * @param file     the Java file from which module import statements are collected.
    * @param settings the code style settings that determine whether module imports should be preserved.
    * @return a list of module import statements present in the Java file.
    */
@@ -217,7 +217,7 @@ public final class ImportHelper {
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand,
                                             @NotNull Map<String, PsiImportModuleStatement> moduleStatementMap) {
     Object2IntMap<String> packageToCountMap = new Object2IntOpenHashMap<>();
-    Object2IntMap <String> classToCountMap = new Object2IntOpenHashMap<>();
+    Object2IntMap<String> classToCountMap = new Object2IntOpenHashMap<>();
     for (Import anImport : resultList) {
       if (!anImport.isStatic() && moduleStatementMap.containsKey(anImport.name)) continue;
       String packageOrClassName = StringUtil.getPackageName(anImport.name());
@@ -238,7 +238,8 @@ public final class ImportHelper {
     });
   }
 
-  private record SortedImportItems(@NotNull List<Import> imports, int moduleIndex) { }
+  private record SortedImportItems(@NotNull List<Import> imports, int moduleIndex) {
+  }
 
   public static @NotNull List<Import> sortItemsAccordingToSettings(@NotNull List<Import> imports,
                                                                    @NotNull JavaCodeStyleSettings settings) {
@@ -345,8 +346,12 @@ public final class ImportHelper {
 
     return namesToUseSingle;
   }
-  private static boolean checkMemberAccessibility(@NotNull PsiMember member, @NotNull PsiResolveHelper resolveHelper, @NotNull PsiFile psiFile,
-                                                  @NotNull PsiClass aClass, @NotNull @NlsSafe String prefix) {
+
+  private static boolean checkMemberAccessibility(@NotNull PsiMember member,
+                                                  @NotNull PsiResolveHelper resolveHelper,
+                                                  @NotNull PsiFile psiFile,
+                                                  @NotNull PsiClass aClass,
+                                                  @NotNull @NlsSafe String prefix) {
     if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, psiFile, null)) {
       PsiClass containingClass = member.getContainingClass();
       if (containingClass == null) return false;
@@ -505,22 +510,27 @@ public final class ImportHelper {
           appendImportStatement(name, isStatic, buffer);
         }
       }
-      else if (!implicitlyImported && !importedPackagesOrClasses.contains(packageOrClassName) && !moduleStatementMap.containsKey(name)) {
-        appendImportStatement(name, isStatic, buffer);
-      }
-      else if (!implicitlyImported && !importedPackagesOrClasses.contains(packageOrClassName) && moduleStatementMap.containsKey(name)) {
-        usedModuleImports.add(moduleStatementMap.get(name));
+      else if (!implicitlyImported && !importedPackagesOrClasses.contains(packageOrClassName)) {
+        if (!moduleStatementMap.containsKey(name)) {
+          appendImportStatement(name, isStatic, buffer);
+        }
+        else {
+          usedModuleImports.add(moduleStatementMap.get(name));
+        }
       }
     }
 
     StringBuilder moduleStatements = new StringBuilder();
-    for (String importModuleStatement : usedModuleImports.stream()
-      .map(m->m.getText())
-      .sorted(Comparator.naturalOrder())
-      .toList()) {
-      moduleStatements.append(importModuleStatement).append("\n");
-    }
-
+    usedModuleImports.stream()
+      .sorted(Comparator.comparing(m -> {
+        PsiJavaModuleReferenceElement reference = m.getModuleReference();
+        if (reference == null) return "";
+        return reference.getText();
+      }))
+      .map(m -> m.getText())
+      .forEach(importModuleStatement -> {
+        moduleStatements.append(importModuleStatement).append("\n");
+      });
     if (!moduleStatements.isEmpty()) {
       if (indexModuleString != -1) {
         buffer.insert(indexModuleString, moduleStatements);
@@ -541,6 +551,7 @@ public final class ImportHelper {
 
   /**
    * Adds import if it is needed.
+   *
    * @return false when the FQN has to be used in code (e.g. when conflicting imports already exist)
    */
   public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
@@ -624,7 +635,8 @@ public final class ImportHelper {
     try {
       PsiImportList importList = file.getImportList();
       assert importList != null : file;
-      PsiImportStatement statement = useOnDemand ? factory.createImportStatementOnDemand(packageName) : factory.createImportStatement(refClass);
+      PsiImportStatement statement =
+        useOnDemand ? factory.createImportStatementOnDemand(packageName) : factory.createImportStatement(refClass);
       importList.add(statement);
       if (useOnDemand) {
         for (PsiJavaCodeReferenceElement ref : importRefs) {
@@ -829,7 +841,7 @@ public final class ImportHelper {
   /**
    * Checks if the class with the given fully qualified name is already imported in the specified Java file.
    *
-   * @param file the Java file to check for the import.
+   * @param file               the Java file to check for the import.
    * @param fullyQualifiedName the fully qualified name of the class to check.
    * @return true if the class is already imported, false otherwise.
    */
@@ -978,7 +990,9 @@ public final class ImportHelper {
                           mySettings.IMPORT_LAYOUT_TABLE.getEntries());
   }
 
-  public static boolean hasConflictingOnStaticDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
+  public static boolean hasConflictingOnStaticDemandImport(@NotNull PsiJavaFile file,
+                                                           @NotNull PsiClass psiClass,
+                                                           @NotNull String referenceName) {
     Collection<Import> resultList = collectNamesToImport(file, new ArrayList<>());
     String qualifiedName = psiClass.getQualifiedName();
     for (Import anImport : resultList) {
@@ -1222,5 +1236,6 @@ public final class ImportHelper {
    * @param isStatic whether it should be imported statically.
    */
   @ApiStatus.Internal
-  public record Import(@NotNull String name, boolean isStatic) {}
+  public record Import(@NotNull String name, boolean isStatic) {
+  }
 }
