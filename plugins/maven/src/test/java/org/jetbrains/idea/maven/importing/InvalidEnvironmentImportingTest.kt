@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -18,7 +18,7 @@ import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 
-class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
+class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
