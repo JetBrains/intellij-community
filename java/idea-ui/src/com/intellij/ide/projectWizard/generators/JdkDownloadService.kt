@@ -5,18 +5,18 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
@@ -60,13 +60,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     return sdk
   }
 
-  fun scheduleDownloadJdk(
-    sdkDownloadTask: JdkDownloadTask,
-    onSdkCreated: suspend (Sdk) -> Unit = {},
-  ): CompletableFuture<Boolean> {
-    val jdkDownloader = (SdkDownload.EP_NAME.findFirstSafe { it is JdkDownloader } as? JdkDownloader)
-                        ?: return CompletableFuture.completedFuture(false)
-
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onSdkCreated: suspend (Sdk) -> Unit = {}, ): CompletableFuture<Boolean> {
     val sdkDownloadedFuture = CompletableFuture<Boolean>()
 
     coroutineScope.launch(Dispatchers.EDT) {
@@ -79,16 +73,20 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
           return@withBackgroundProgress
         }
 
-        val downloadTask = jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile)
-        if (downloadTask == null) {
-          // The error was handled inside the JdkDownloader.prepareDownloadTask function
+        val downloadRequest = LOG.runAndLogException {
+          JdkInstaller.getInstance().prepareJdkInstallation(sdkDownloadTask.jdkItem, selectedFile)
+        }
+        if (downloadRequest == null) {
           sdkDownloadedFuture.complete(false)
           return@withBackgroundProgress
         }
 
+        val downloadTask = JdkDownloadTask(sdkDownloadTask.jdkItem, downloadRequest, project)
+
         val sdk = writeAction {
           createDownloadSdkInternal(downloadTask)
         }
+
         onSdkCreated(sdk)
 
         val tracker = SdkDownloadTracker.getInstance()
@@ -125,5 +123,9 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     return scheduleDownloadJdk(sdkDownloadTask) { sdk ->
       ModuleRootModificationUtil.setModuleSdk(module, sdk)
     }
+  }
+
+  companion object {
+    private val LOG = logger<JdkDownloadService>()
   }
 }
