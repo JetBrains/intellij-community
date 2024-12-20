@@ -3,6 +3,8 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.commands.api.dataContext
+import com.intellij.codeInsight.completion.commands.api.getTargetContext
 import com.intellij.icons.AllIcons
 import com.intellij.lang.ContextAwareActionHandler
 import com.intellij.openapi.actionSystem.ActionPlaces

@@ -1498,6 +1498,7 @@
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.ExtensionPointCommandProvider" />
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.DirectIntentionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.GenerateCommandProvider" />
+    <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.SimpleRunMarkerCommandProvider" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToDeclarationCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.RenameActionCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.OptimizeImportCompletionCommand" />

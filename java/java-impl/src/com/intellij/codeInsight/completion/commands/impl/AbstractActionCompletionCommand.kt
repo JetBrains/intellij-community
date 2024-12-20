@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.commands.api.dataContext
+import com.intellij.codeInsight.completion.commands.api.getTargetContext
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil

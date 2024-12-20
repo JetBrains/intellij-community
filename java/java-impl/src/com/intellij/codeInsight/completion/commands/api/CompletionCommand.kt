@@ -100,49 +100,49 @@ abstract class ApplicableCompletionCommand : CompletionCommand() {
    */
   @RequiresReadLock
   abstract fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean
+}
 
-  /**
-   * Constructs a [DataContext] instance using the specified parameters, including the PSI file,
-   * editor, and optionally a context element. The resulting data context is populated with
-   * relevant keys and values to be used within the context of the provided elements.
-   *
-   * @param psiFile The [PsiFile] associated with the current context.
-   * @param editor The [Editor] instance corresponding to the current context.
-   * @param context An optional [PsiElement] representing the context; can be null.
-   * @return A [DataContext] instance containing the provided context information.
-   */
-  internal fun dataContext(
-    psiFile: PsiFile,
-    editor: Editor,
-    context: PsiElement?,
-  ): DataContext {
-    val dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, psiFile.project)
-      .add(CommonDataKeys.EDITOR, editor)
-      .add(CommonDataKeys.PSI_ELEMENT, context)
-      .add(CommonDataKeys.PSI_FILE, psiFile)
-      .add(LangDataKeys.CONTEXT_LANGUAGES, arrayOf(psiFile.language))
-      .build()
-    return dataContext
+/**
+ * Constructs a [DataContext] instance using the specified parameters, including the PSI file,
+ * editor, and optionally a context element. The resulting data context is populated with
+ * relevant keys and values to be used within the context of the provided elements.
+ *
+ * @param psiFile The [PsiFile] associated with the current context.
+ * @param editor The [Editor] instance corresponding to the current context.
+ * @param context An optional [PsiElement] representing the context; can be null.
+ * @return A [DataContext] instance containing the provided context information.
+ */
+internal fun dataContext(
+  psiFile: PsiFile,
+  editor: Editor,
+  context: PsiElement?,
+): DataContext {
+  val dataContext = SimpleDataContext.builder()
+    .add(CommonDataKeys.PROJECT, psiFile.project)
+    .add(CommonDataKeys.EDITOR, editor)
+    .add(CommonDataKeys.PSI_ELEMENT, context)
+    .add(CommonDataKeys.PSI_FILE, psiFile)
+    .add(LangDataKeys.CONTEXT_LANGUAGES, arrayOf(psiFile.language))
+    .build()
+  return dataContext
+}
+
+/**
+ * Retrieves the PSI element located at the specified offset within the editor's context.
+ * This method attempts to find a target PSI element based on the editor's state and the offset,
+ * allowing interaction with the underlying code structure.
+ *
+ * @param offset The offset in the editor's document where the target element is to be located.
+ * @param editor The editor instance in which the method searches for the target element.
+ * @return The PSI element found at the specified offset, or null if no suitable element is found
+ *         or if the index is not ready.
+ */
+internal fun getTargetContext(offset: Int, editor: Editor): PsiElement? {
+  try {
+    val util = TargetElementUtil.getInstance()
+    return util.findTargetElement(editor, util.getReferenceSearchFlags(), offset)
   }
-
-  /**
-   * Retrieves the PSI element located at the specified offset within the editor's context.
-   * This method attempts to find a target PSI element based on the editor's state and the offset,
-   * allowing interaction with the underlying code structure.
-   *
-   * @param offset The offset in the editor's document where the target element is to be located.
-   * @param editor The editor instance in which the method searches for the target element.
-   * @return The PSI element found at the specified offset, or null if no suitable element is found
-   *         or if the index is not ready.
-   */
-  internal fun getTargetContext(offset: Int, editor: Editor): PsiElement? {
-    try {
-      val util = TargetElementUtil.getInstance()
-      return util.findTargetElement(editor, util.getReferenceSearchFlags(), offset)
-    }
-    catch (_: IndexNotReadyException) {
-      return null
-    }
+  catch (_: IndexNotReadyException) {
+    return null
   }
 }

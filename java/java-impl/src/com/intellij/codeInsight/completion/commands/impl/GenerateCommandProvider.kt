@@ -3,10 +3,11 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
+import com.intellij.codeInsight.completion.commands.api.dataContext
+import com.intellij.codeInsight.completion.commands.api.getTargetContext
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
@@ -29,11 +30,8 @@ class GenerateCommandProvider : CommandProvider, DumbAware {
   ): List<CompletionCommand> {
     if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = psiFile.findElementAt(offset)
-    val dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
-      .add(CommonDataKeys.EDITOR, editor)
-      .add(CommonDataKeys.PSI_ELEMENT, element)
-      .build()
+    val context = getTargetContext(offset, editor)
+    val dataContext = dataContext(psiFile, editor, context)
     val actionEvent = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
     actionEvent.updateSession = UpdateSession.EMPTY
     Utils.initUpdateSession(actionEvent)
@@ -44,7 +42,7 @@ class GenerateCommandProvider : CommandProvider, DumbAware {
     val dumbService = DumbService.getInstance(project)
     val activeActions = from(session.expandedChildren(ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE) as ActionGroup))
       .filter { dumbService.isUsableInCurrentContext(it) }
-      .filter { o: AnAction? -> o !is Separator && session.presentation(o!!).isEnabledAndVisible }
+      .filter { o: AnAction? -> o !is Separator && o != null && session.presentation(o).isEnabledAndVisible }
     for (action in activeActions) {
       if (action is BaseGenerateAction) {
         generateActions.add(action)

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescrip
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.IntentionsInfo
 import com.intellij.codeInsight.daemon.impl.quickfix.ExpensivePsiIntentionAction
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
@@ -52,6 +53,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.job
+import java.util.function.Predicate
 
 class DirectIntentionCommandProvider : CommandProvider {
   override fun getCommands(
@@ -250,6 +252,7 @@ class DirectIntentionCommandProvider : CommandProvider {
     originalFile: PsiFile,
   ): Deferred<List<CompletionCommand>> = async {
     return@async readAction {
+
       val availableIntentions = IntentionManager.getInstance().getAvailableIntentions(mutableListOf(originalFile.language.id))
       val actionsToShow = IntentionsInfo()
       for (action in availableIntentions) {
@@ -260,12 +263,17 @@ class DirectIntentionCommandProvider : CommandProvider {
       val dumbService = DumbService.getInstance(originalFile.project)
       val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
       var toRemove = mutableListOf<IntentionActionDescriptor>()
+      val filter = Predicate { action: IntentionAction? ->
+        IntentionActionFilter.EXTENSION_POINT_NAME.extensionList.all { f: IntentionActionFilter -> action != null && f.accept(action, psiFile, editor.caretModel.offset) }
+      }
+
       for (intention in actionsToShow.intentionsToShow) {
         try {
           ProgressManager.checkCanceled()
           if (!dumbService.isUsableInCurrentContext(intention) ||
               !intention.action.isAvailable(originalFile.project, editor, psiFile) &&
-              intention.action.familyName !in ("AI Actions…")) {
+              intention.action.familyName !in ("AI Actions…") ||
+              !filter.test(intention.action)) {
             toRemove.add(intention)
           }
         }
