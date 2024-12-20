@@ -1,0 +1,11 @@
+/.idea/
+/out/
+/dotenv.jar
+/idea-flex.skeleton
+/jflex-1.7.0.jar
+/src/main/gen/ru/adelf/idea/dotenv/grammars/_DotEnvLexer.java~
+/build/
+/.gradle/
+/*.iml
+/*.ipr
+/*.iws
