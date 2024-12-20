@@ -10,10 +10,15 @@ internal class PythonTestCoverageProcessor(
   private val coverageInfo: Map<String, Number>
 
   init {
-    val jsonString = File(coverageFilePath).readText(Charsets.UTF_8)
-    // Parse the JSON string
-    val parsedJson = JsonUtil.nextAny(JsonReaderEx(jsonString)) as Map<*, *>
-    coverageInfo = parsedJson["totals"] as? Map<String, Number> ?: emptyMap()
+    val coverageFile = File(coverageFilePath)
+    if (!coverageFile.exists()) {
+      coverageInfo = mapOf()
+    } else {
+      val jsonString = coverageFile.readText(Charsets.UTF_8)
+      // Parse the JSON string
+      val parsedJson = JsonUtil.nextAny(JsonReaderEx(jsonString)) as Map<*, *>
+      coverageInfo = parsedJson["totals"] as? Map<String, Number> ?: emptyMap()
+    }
   }
 
   fun getLineCoverage(): Double = (coverageInfo["percent_covered"]?.toDouble() ?: 0.0) / 100
