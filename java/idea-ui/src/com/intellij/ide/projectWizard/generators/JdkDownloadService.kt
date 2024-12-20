@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -55,16 +56,16 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     project: Project,
     downloadTask: SdkDownloadTask,
     sdkDownloadedFuture: CompletableFuture<Boolean>,
-    setSdk: (Sdk?) -> Unit,
+    onSdkCreated: suspend (Sdk) -> Unit,
   ) {
     val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
     coroutineScope.launch(Dispatchers.EDT) {
       val sdk = model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) { sdk ->
         application.runWriteAction {
           ProjectJdkTable.getInstance().addJdk(sdk)
-          setSdk(sdk)
         }
       }
+      onSdkCreated(sdk)
       val tracker = SdkDownloadTracker.getInstance()
       tracker.startSdkDownloadIfNeeded(sdk)
       val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
@@ -76,7 +77,10 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
-  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onInstalledSdk: (Sdk?) -> Unit = {}): CompletableFuture<Boolean> {
+  fun scheduleDownloadJdk(
+    sdkDownloadTask: JdkDownloadTask,
+    onSdkCreated: suspend (Sdk) -> Unit = {},
+  ): CompletableFuture<Boolean> {
     val jdkDownloader = (SdkDownload.EP_NAME.findFirstSafe { it is JdkDownloader } as? JdkDownloader)
                         ?: return CompletableFuture.completedFuture(false)
 
@@ -96,7 +100,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
           sdkDownloadedFuture.complete(false)
           return@withBackgroundProgress
         }
-        scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, onInstalledSdk)
+        scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, onSdkCreated)
       }
     }
 
@@ -105,7 +109,9 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
   fun scheduleDownloadJdkForNewProject(sdkDownloadTask: JdkDownloadTask): CompletableFuture<Boolean> {
     return scheduleDownloadJdk(sdkDownloadTask) {
-      ProjectRootManager.getInstance(project).projectSdk = it
+      writeAction {
+        ProjectRootManager.getInstance(project).projectSdk = it
+      }
     }
   }
 
