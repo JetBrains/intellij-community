@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.turboComplete" scope="TEST" />
     <orderEntry type="module" module-name="intellij.turboComplete.languages.kotlin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
   </component>
 </module>
