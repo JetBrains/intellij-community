@@ -22,7 +22,15 @@ object DummyJBAccountInfoService : JBAccountInfoService {
   }
 
   override fun startLoginSession(loginMode: JBAccountInfoService.LoginMode, authProviderId: String?, clientMetadata: Map<String, String>): JBAccountInfoService.LoginSession {
-    TODO("Not yet implemented")
+    return object : JBAccountInfoService.LoginSession {
+      override fun close() {
+
+      }
+
+      override fun onCompleted(): CompletableFuture<JBAccountInfoService.LoginResult> {
+        return CompletableFuture.completedFuture(JBAccountInfoService.LoginResult.LoginSuccessful(dummyUserData))
+      }
+    }
   }
 
   override fun getAvailableLicenses(productCode: String): CompletableFuture<JBAccountInfoService.LicenseListResult> {

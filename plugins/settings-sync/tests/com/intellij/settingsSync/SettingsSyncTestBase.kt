@@ -55,7 +55,7 @@ internal abstract class SettingsSyncTestBase {
       TODO("Implement with real server via TestRemoteCommunicator()")
     }
     else {
-      MockRemoteCommunicator().apply {this.isConnected = true  }
+      MockRemoteCommunicator("mockUser").apply {this.isConnected = true  }
     }
     val providerEP = SettingsSyncCommunicatorProvider.PROVIDER_EP.point
     if (providerEP.extensions.size > 0) {

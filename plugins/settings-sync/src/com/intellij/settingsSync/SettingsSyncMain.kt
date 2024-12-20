@@ -59,7 +59,10 @@ class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
       ideMediator: SettingsSyncIdeMediator,
     ): SettingsSyncControls {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
-                                       RemoteCommunicatorHolder.getAuthService()::getUserData,
+                                       {
+                                         val userId = RemoteCommunicatorHolder.getRemoteCommunicator()?.userId ?: return@GitSettingsLog null
+                                         RemoteCommunicatorHolder.getAuthService()?.getUserData(userId)
+                                       },
                                        initialSnapshotProvider = { currentSnapshot ->
                                          ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot)
                                        })

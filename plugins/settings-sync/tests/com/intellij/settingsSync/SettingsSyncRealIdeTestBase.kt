@@ -167,7 +167,7 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
         tempDir.resolve("storage").toPath(),
         tempDir.resolve("config").toPath(),
         parentDisposable,
-        { SettingsSyncUserData.EMPTY },
+        { SettingsSyncUserData("empty", "dummy") },
         initialSnapshotProvider = {
           SettingsSnapshot(
             SettingsSnapshot.MetaInfo(Instant.now(), null, true),

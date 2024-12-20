@@ -19,6 +19,19 @@ const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 interface SettingsSyncRemoteCommunicator {
 
   /**
+   * userId used within the communicator
+   */
+  val userId: String
+
+
+  /**
+   * Indicates whether the communicator is temporary (i.e. used to check a remote state before enabling)
+   * and shouldn't update configuration values
+   */
+  fun setTemporary(isTemporary: Boolean)
+
+
+  /**
    * checks the current state of the user's data in the cloud.
    */
   @RequiresBackgroundThread

@@ -5,7 +5,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.settingsSync.communicator.SettingsSyncUserData
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.junit.Assert
+import java.awt.Component
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -14,9 +17,10 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.Icon
 import kotlin.isInitialized
 
-internal class MockRemoteCommunicator : AbstractServerCommunicator() {
+internal class MockRemoteCommunicator(override val userId: String) : AbstractServerCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
   private val versionIdStorage = mutableMapOf<String, String>()
   private val LOG = logger<MockRemoteCommunicator>()
@@ -43,11 +47,11 @@ internal class MockRemoteCommunicator : AbstractServerCommunicator() {
     return e.message ?: "unknown error"
   }
 
-  override fun readFileInternal(snapshotFilePath: String): Pair<InputStream?, String?> {
+  override fun readFileInternal(filePath: String): Pair<InputStream?, String?> {
     checkConnected()
-    val version = filesAndVersions[snapshotFilePath] ?: throw IOException("file $snapshotFilePath is not found")
-    versionIdStorage.put(snapshotFilePath, version.versionId)
-    LOG.warn("Put version '${version.versionId}' for file $snapshotFilePath (after read)")
+    val version = filesAndVersions[filePath] ?: throw IOException("file $filePath is not found")
+    versionIdStorage.put(filePath, version.versionId)
+    LOG.warn("Put version '${version.versionId}' for file $filePath (after read)")
     return Pair(ByteArrayInputStream(version.content), version.versionId)
   }
 
@@ -150,7 +154,7 @@ internal class MockCommunicatorProvider (
   override val providerCode: String
     get() = "MOCK"
 
-  override fun createCommunicator(): SettingsSyncRemoteCommunicator? = remoteCommunicator
+  override fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator? = remoteCommunicator
 }
 
 internal class MockAuthService (
@@ -158,21 +162,21 @@ internal class MockAuthService (
 ): SettingsSyncAuthService {
   override val providerCode: String
     get() = "MOCK"
+  override val providerName: String
+    get() = TODO("Not yet implemented")
+  override val icon: Icon?
+    get() = TODO("Not yet implemented")
 
-  override fun login() {
-    // do nothing
+  override suspend fun login(parentComponent: Component?) : SettingsSyncUserData? {
+    return null
   }
 
-  override fun isLoggedIn(): Boolean {
-    return true
-  }
-
-  override fun getUserData(): SettingsSyncUserData {
+  override fun getUserData(userId: String): SettingsSyncUserData {
     return userData
   }
 
-  override fun isLoginAvailable(): Boolean {
-    return true
+  override fun getAvailableUserAccounts(): List<SettingsSyncUserData> {
+    TODO("Not yet implemented")
   }
 
 }

@@ -1,6 +1,9 @@
 package com.intellij.settingsSync.auth
 
 import com.intellij.settingsSync.communicator.SettingsSyncUserData
+import kotlinx.coroutines.Deferred
+import java.awt.Component
+import javax.swing.Icon
 
 interface SettingsSyncAuthService {
   /**
@@ -10,22 +13,25 @@ interface SettingsSyncAuthService {
   val providerCode: String
 
   /**
-   * Starts the login procedure
+   * Free-form name of the provider
    */
-  fun login()
+  val providerName: String
 
   /**
-   * Whether the user has logged in
+   * provider icon
    */
-  fun isLoggedIn(): Boolean
+  val icon: Icon?
 
   /**
+   * Starts the login procedure (if necessary) and returns the Deferred of the logged-in user
+   */
+  suspend fun login(parentComponent: Component?) : SettingsSyncUserData?
+
+  /**
+   * Data of the current user. If there's no user, return null
    * This data is used for in the local git repo as well as UI (if necessary)
    */
-  fun getUserData(): SettingsSyncUserData
+  fun getUserData(userId: String): SettingsSyncUserData?
 
-  /**
-   * Indicates if it's currently possible to log in (i.e. all necessary plugins are present and enabled, etc), given the current state of IDE.
-   */
-  fun isLoginAvailable(): Boolean
+  fun getAvailableUserAccounts(): List<SettingsSyncUserData>
 }

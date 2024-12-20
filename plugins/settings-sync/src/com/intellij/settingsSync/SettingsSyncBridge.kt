@@ -34,7 +34,7 @@ class SettingsSyncBridge(
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent.StandardEvent>()
 
   private val remoteCommunicator: SettingsSyncRemoteCommunicator
-    get() = RemoteCommunicatorHolder.getRemoteCommunicator()
+    get() = RemoteCommunicatorHolder.getRemoteCommunicator() ?: DummyCommunicator
 
   @Volatile
   private var queueJob: Job? = null
@@ -73,6 +73,7 @@ class SettingsSyncBridge(
               }
             }
             while (!locked)
+            LOG.info("Lock obtained for exclusive event")
             processExclusiveEvent(event)
           }
           catch (th: Throwable) {
@@ -83,6 +84,7 @@ class SettingsSyncBridge(
               if (!eventsLock.compareAndSet(true, false)) {
                 LOG.error("eventsLock already unlocked by someone else!!!")
               }
+              LOG.info("Lock released for exclusive event")
             }
             pendingExclusiveEvents.remove(event)
           }
@@ -563,10 +565,53 @@ class SettingsSyncBridge(
     }
   }
 
+
+
   @TestOnly
   internal fun stop() {
     stopSyncingAndRollback(null, null)
   }
+
+  private object DummyCommunicator : SettingsSyncRemoteCommunicator {
+    override val userId: String
+      get() = ""
+
+    override fun setTemporary(isTemporary: Boolean) {
+      // do nothing
+    }
+
+    override fun checkServerState(): ServerState {
+      val errorMsg = "Cannot check server state - no communicator provided"
+      LOG.info(errorMsg)
+      return ServerState.Error(errorMsg)
+    }
+
+    override fun receiveUpdates(): UpdateResult {
+      val errorMsg = "Cannot received updates - no communicator provided"
+      LOG.info(errorMsg)
+      return UpdateResult.Error(errorMsg)
+    }
+
+    override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
+      val errorMsg = "Cannot push - no communicator provided"
+      LOG.info(errorMsg)
+      return SettingsSyncPushResult.Error(errorMsg)
+    }
+
+    override fun createFile(filePath: String, content: String) {
+      LOG.info("Cannot create file '$filePath' - no communicator provided")
+    }
+
+    override fun deleteFile(filePath: String) {
+      LOG.info("Cannot delete file '$filePath' - no communicator provided")
+    }
+
+    override fun isFileExists(filePath: String): Boolean {
+      LOG.info("Cannot check if file '$filePath' exists - no communicator provided")
+      return false;
+    }
+  }
+
 
   companion object {
     private val LOG = logger<SettingsSyncBridge>()

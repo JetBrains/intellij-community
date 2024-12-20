@@ -1,30 +1,30 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.configurationStore.saveSettings
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 import com.intellij.util.EventDispatcher
-import kotlinx.coroutines.*
 import java.util.*
 
-internal class SettingsSyncEnabler {
+class SettingsSyncEnabler {
+  companion object {
+    private val logger = logger<SettingsSyncEnabler>()
+  }
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
+
 
   object State {
     val CANCELLED = UpdateResult.Error("Cancelled")
   }
 
-  fun checkServerState() {
+  fun checkServerStateAsync() {
     eventDispatcher.multicaster.serverStateCheckStarted()
-    val communicator = RemoteCommunicatorHolder.getRemoteCommunicator()
+    val communicator = RemoteCommunicatorHolder.getRemoteCommunicator() ?: run {
+      logger.info("communicator doesn't exist, skipping check")
+      return
+    }
     object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.check.server.data.progress"), true) {
       private lateinit var updateResult: UpdateResult
 
@@ -42,6 +42,14 @@ internal class SettingsSyncEnabler {
     }.queue()
   }
 
+  fun getServerState() : UpdateResult {
+    val communicator = RemoteCommunicatorHolder.getRemoteCommunicator() ?: run {
+      logger.info("communicator doesn't exist, skipping check")
+      return State.CANCELLED
+    }
+    return communicator.receiveUpdates()
+  }
+
 
   fun getSettingsFromServer(syncSettings: SettingsSyncState? = null) {
     eventDispatcher.multicaster.updateFromServerStarted()
@@ -50,7 +58,12 @@ internal class SettingsSyncEnabler {
       private lateinit var updateResult: UpdateResult
 
       override fun run(indicator: ProgressIndicator) {
-        val result = RemoteCommunicatorHolder.getRemoteCommunicator().receiveUpdates()
+        val remoteCommunicator = RemoteCommunicatorHolder.getRemoteCommunicator() ?: run {
+          logger.info("communicator doesn't exist, cannot get settings from server")
+          updateResult = UpdateResult.Error("No remote communicator")
+          return
+        }
+        val result = remoteCommunicator.receiveUpdates()
         updateResult = result
         if (result is UpdateResult.Success) {
           val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId, syncSettings)

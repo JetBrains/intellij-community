@@ -1,95 +1,90 @@
 package com.intellij.settingsSync.communicator
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.settingsSync.ServerState
-import com.intellij.settingsSync.SettingsSnapshot
-import com.intellij.settingsSync.SettingsSyncPushResult
-import com.intellij.settingsSync.SettingsSyncRemoteCommunicator
-import com.intellij.settingsSync.UpdateResult
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.settingsSync.*
+import com.intellij.util.resettableLazy
+import org.jetbrains.annotations.ApiStatus
 
-object RemoteCommunicatorHolder {
+@ApiStatus.Internal
+object RemoteCommunicatorHolder : SettingsSyncEventListener {
+  private val logger = logger<RemoteCommunicatorHolder>()
+  const val DEFAULT_PROVIDER_CODE = "jba"
+  const val DEFAULT_USER_ID = "jba"
 
-  private val communicatorInternalLazy = SynchronizedClearableLazy<SettingsSyncRemoteCommunicator> {
-    getCurrentCommunicator().also {
-      logger<RemoteCommunicatorHolder>().warn("Initializing remote communicator: $it")
+  // pair userId:remoteCommunicator
+  private val communicatorLazy = resettableLazy {
+    createRemoteCommunicator()
+  }
+
+  fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator? = communicatorLazy.value ?: createRemoteCommunicator()
+
+  fun getAuthService() = getCurrentProvider()?.authService
+
+  fun isAvailable() = communicatorLazy.value != null
+
+  fun invalidateCommunicator() = communicatorLazy.reset().also {
+    logger.warn("Invalidating remote communicator")
+  }
+
+  fun getCurrentUserData() : SettingsSyncUserData? {
+    val userId = SettingsSyncLocalSettings.getInstance().userId ?: run {
+      logger.warn("No current userId. Returning null user data")
+      return null
     }
+    val provider: SettingsSyncCommunicatorProvider = getCurrentProvider() ?: run {
+      logger.warn("No active provider. Returning null user data")
+      return null
+    }
+    return provider.authService.getUserData(userId)
   }
 
-  fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = communicatorInternalLazy.value
-  fun getAuthService() = getProvider().authService
-  fun isAvailable() = communicatorInternalLazy.isInitialized()
-  fun invalidateCommunicator() = communicatorInternalLazy.drop().also {
-    logger<RemoteCommunicatorHolder>().warn("Invalidating remote communicator: $it")
+  override fun loginStateChanged() {
   }
 
+  fun createRemoteCommunicator(provider: SettingsSyncCommunicatorProvider, userId: String): SettingsSyncRemoteCommunicator? {
+    return provider.createCommunicator(userId)
+  }
 
-  private fun getProvider() : SettingsSyncCommunicatorProvider {
+  private fun createRemoteCommunicator(): SettingsSyncRemoteCommunicator? {
+    val provider: SettingsSyncCommunicatorProvider = getCurrentProvider() ?: run {
+      logger.warn("Attempting to create remote communicator without active provider")
+      return null
+    }
+    val userId = SettingsSyncLocalSettings.getInstance().userId ?: run {
+      logger.warn("Empty current userId. Communicator will not be created.")
+      return null
+    }
+
+    val currentUserData = provider.authService.getUserData(userId) ?: run {
+      logger.warn("Empty current user data. Communicator will not be created.")
+      return null
+    }
+    val communicator: SettingsSyncRemoteCommunicator = provider.createCommunicator(currentUserData.id) ?: run {
+      logger.warn("Provider '${provider.providerCode}' returned empty communicator")
+      return null
+    }
+    return communicator
+  }
+
+  fun getAvailableProviders(): List<SettingsSyncCommunicatorProvider> {
     val extensionList = SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList
-    return extensionList.firstOrNull() ?: DummyProvider
+    return extensionList
   }
 
-  private fun getCurrentCommunicator() : SettingsSyncRemoteCommunicator {
-    return getProvider().createCommunicator() ?: DummyCommunicator
+  fun getDefaultProvider(): SettingsSyncCommunicatorProvider {
+    return getProvider(DEFAULT_PROVIDER_CODE)!!
   }
 
-  internal object DummyProvider: SettingsSyncCommunicatorProvider {
-    override val providerCode: String
-      get() = "dummy"
-    override val authService: SettingsSyncAuthService
-      get() = DummyAuthProvider
-
-    override fun createCommunicator(): SettingsSyncRemoteCommunicator? {
-      return DummyCommunicator
-    }
-
+  fun getProvider(providerCode: String): SettingsSyncCommunicatorProvider? {
+    return getAvailableProviders().find { it.providerCode == providerCode }
   }
 
-  internal object DummyAuthProvider: SettingsSyncAuthService {
-    override val providerCode: String
-      get() = "dummy"
-
-    override fun login() {
-      TODO("Not yet implemented")
-    }
-
-    override fun isLoggedIn(): Boolean {
-      return false
-    }
-
-    override fun getUserData(): SettingsSyncUserData {
-      return SettingsSyncUserData.EMPTY
-    }
-
-    override fun isLoginAvailable(): Boolean {
-      return true
-    }
+  fun getAvailableUserAccounts(): List<SettingsSyncUserData> {
+    return getAvailableProviders().flatMap { it.authService.getAvailableUserAccounts() }
   }
 
-  internal object DummyCommunicator: SettingsSyncRemoteCommunicator {
-    override fun checkServerState(): ServerState {
-      TODO("Not yet implemented")
-    }
-
-    override fun receiveUpdates(): UpdateResult {
-      TODO("Not yet implemented")
-    }
-
-    override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
-      TODO("Not yet implemented")
-    }
-
-    override fun createFile(filePath: String, content: String) {
-      TODO("Not yet implemented")
-    }
-
-    override fun deleteFile(filePath: String) {
-      TODO("Not yet implemented")
-    }
-
-    override fun isFileExists(filePath: String): Boolean {
-      TODO("Not yet implemented")
-    }
+  private fun getCurrentProvider(): SettingsSyncCommunicatorProvider? {
+    val providerCode = SettingsSyncLocalSettings.getInstance().providerCode ?: return null
+    return getProvider(providerCode)
   }
 }

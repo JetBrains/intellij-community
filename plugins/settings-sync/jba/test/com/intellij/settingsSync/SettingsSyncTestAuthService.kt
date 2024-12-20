@@ -4,18 +4,23 @@ import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.jba.auth.DummyJBAccountInfoService
 import com.intellij.ui.JBAccountInfoService
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import java.awt.Component
+import javax.swing.Icon
 
 internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
-  override fun isLoggedIn(): Boolean {
-    return true
-  }
 
-  override fun getUserData(): SettingsSyncUserData {
+  override fun getUserData(userId: String): SettingsSyncUserData {
     val id = System.getenv("SETTINGS_SYNC_TEST_ID")
     val loginName = "testLogin"
     val email = "testEmail@example.com"
     val presentableName = "presentableName"
     return SettingsSyncUserData(loginName, email)
+  }
+
+  override fun getAvailableUserAccounts(): List<SettingsSyncUserData> {
+    TODO("Not yet implemented")
   }
 
   fun getAccountInfoService(): JBAccountInfoService {
@@ -27,11 +32,12 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
 
   override val providerCode: String
     get() = TODO("Not yet implemented")
+  override val providerName: String
+    get() = TODO("Not yet implemented")
+  override val icon: Icon?
+    get() = TODO("Not yet implemented")
 
-  override fun login() {
-  }
-
-  override fun isLoginAvailable(): Boolean {
-    return false
+  override suspend fun login(parentComponent: Component?) : SettingsSyncUserData? {
+    return null
   }
 }

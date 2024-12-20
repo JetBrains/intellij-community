@@ -3,6 +3,7 @@ package com.intellij.settingsSync.config
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.*
@@ -32,17 +33,41 @@ internal object SettingsSyncPanelFactory {
     syncSettings: SettingsSyncState,
     syncScopeSettings: SettingsSyncLocalState,
   ): DialogPanel {
-    val categoriesPanel = createSyncCategoriesPanel(syncLabel, syncSettings)
-    val syncScopePanel = createSyncScopePanel(syncScopeSettings)
+    return SettingsSyncPanelHolder().createCombinedSyncSettingsPanel(syncLabel, syncSettings, syncScopeSettings)
+  }
+}
+internal class SettingsSyncPanelHolder() {
+  private lateinit var panel : DialogPanel
+  private var isCrossIdeSyncEnabled = false
 
-    return panel {
+  fun setSyncSettings(syncSettings: SettingsSyncState?) {
+    val notNullState = syncSettings ?: SettingsSyncStateHolder()
+    SyncCategoryHolder.updateState(notNullState)
+  }
+
+  fun setSyncScopeSettings(settings: SettingsSyncLocalState?) {
+    isCrossIdeSyncEnabled = settings?.isCrossIdeSyncEnabled ?: false
+  }
+
+  fun createCombinedSyncSettingsPanel(
+    syncLabel: @Nls String,
+    syncSettings: SettingsSyncState?,
+    syncScopeSettings: SettingsSyncLocalState?,
+  ): DialogPanel {
+    setSyncSettings(syncSettings)
+    setSyncScopeSettings(syncScopeSettings)
+    val categoriesPanel = createSyncCategoriesPanel(syncLabel)
+    val syncScopePanel = createSyncScopePanel()
+
+    panel = panel {
       row {
         cell(categoriesPanel)
           .onApply(categoriesPanel::apply)
           .onReset(categoriesPanel::reset)
-          .onIsModified(categoriesPanel::isModified)
+          .onIsModified {
+            categoriesPanel.isModified()
+          }
       }
-
       row {
         cell(syncScopePanel)
           .onApply(syncScopePanel::apply)
@@ -50,14 +75,23 @@ internal object SettingsSyncPanelFactory {
           .onIsModified(syncScopePanel::isModified)
       }
       onApply {
-        SettingsSyncLocalSettings.getInstance().applyFromState(syncScopeSettings)
-        SettingsSyncSettings.getInstance().applyFromState(syncSettings)
+        // do nothing, handled by descendants
       }
+      onIsModified {
+        categoriesPanel.isModified() || syncScopePanel.isModified()
+      }
+
     }
+    return panel
   }
 
-  private fun createSyncScopePanel(state: SettingsSyncLocalState): DialogPanel {
+  private fun createSyncScopePanel(): DialogPanel {
     return panel {
+      onApply {
+        SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = isCrossIdeSyncEnabled
+        SettingsSyncEvents.getInstance().fireSettingsChanged(
+          SyncSettingsEvent.CrossIdeSyncStateChanged(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled))
+      }
       row {
         topGap(TopGap.MEDIUM)
         label(message("settings.cross.product.sync"))
@@ -70,27 +104,41 @@ internal object SettingsSyncPanelFactory {
         row {
           radioButton(message("settings.cross.product.sync.choice.all.products"), true)
         }
-      }.bind(state::isCrossIdeSyncEnabled)
+      }.bind(::isCrossIdeSyncEnabled)
     }
   }
 
-  private fun createSyncCategoriesPanel(syncLabel: @Nls String, state: SettingsSyncState): DialogPanel {
+  private fun createSyncCategoriesPanel(syncLabel: @Nls String): DialogPanel {
     return panel {
+      onApply {
+        SettingsSyncSettings.getInstance().updateCategories(
+          SyncCategoryHolder.disabledCategories,
+          SyncCategoryHolder.disabledSubcategories
+        )
+        SettingsSyncEvents.getInstance().fireCategoriesChanged()
+      }
       row {
         label(syncLabel)
       }
-      val categoryHolders = SyncCategoryHolder.createAllForState(state)
-      for (holder in categoryHolders) {
+      for (holder in SyncCategoryHolder.allHolders) {
         indent {
           row {
             if (holder.secondaryGroup == null) {
-              checkBox(
+              val checkBox = checkBox(
                 holder.name
               )
+              checkBox
                 .bindSelected(holder::isSynchronized)
-                .onReset { holder.reset() }
-                .onApply { holder.apply() }
-                .onIsModified { holder.isModified() }
+                .onReset {
+                  holder.reset()
+                  checkBox.component.isSelected = holder.isSynchronized
+                }
+                .onApply {
+                  holder.apply()
+                }
+                .onIsModified {
+                  holder.isModified()
+                }
                 .enabled(isModifiable(holder))
               comment(holder.description)
             }
@@ -113,8 +161,12 @@ internal object SettingsSyncPanelFactory {
                 topCheckBox.state = getGroupState(holder)
                 holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
               }
-              cell(subcategoryLink)
+              val subcategoryLinkCell = cell(subcategoryLink)
+              subcategoryLinkCell
                 .visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
+                .onReset {
+                  subcategoryLinkCell.visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
+                }
               topCheckBox.addActionListener {
                 holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
                 holder.secondaryGroup!!.getDescriptors().forEach {
@@ -123,7 +175,6 @@ internal object SettingsSyncPanelFactory {
                 subcategoryLink.isEnabled = holder.secondaryGroup!!.isComplete() || holder.isSynchronized
               }
             }
-
           }
         }
       }

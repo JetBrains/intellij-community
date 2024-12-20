@@ -59,5 +59,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
   </component>
 </module>

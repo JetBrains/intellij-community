@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.migration.migrateIfNeeded
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -45,6 +46,9 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationAc
         }
       }
     }
+
+    setProviderCodeAndUserId()
+
     serviceAsync<SettingsSyncEvents>().addListener(settingsSyncEventListener)
 
     if (isSettingsSyncEnabledInSettings()) {
@@ -70,17 +74,28 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationAc
       }
     }
   }
-}
 
-private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
-  LOG.info("Initializing settings sync. Mode: $initMode")
-  val settingsSyncMain = serviceAsync<SettingsSyncMain>()
-  blockingContext {
-    settingsSyncMain.controls.bridge.initialize(initMode)
-    val settingsSyncEvents = SettingsSyncEvents.getInstance()
-    settingsSyncEvents.addListener(settingsSyncEventListener)
-    settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
-    LocalHostNameProvider.initialize()
+  private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
+    LOG.info("Initializing settings sync. Mode: $initMode")
+    val settingsSyncMain = serviceAsync<SettingsSyncMain>()
+    blockingContext {
+      settingsSyncMain.controls.bridge.initialize(initMode)
+      val settingsSyncEvents = SettingsSyncEvents.getInstance()
+      settingsSyncEvents.addListener(settingsSyncEventListener)
+      settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+      LocalHostNameProvider.initialize()
+    }
+  }
+
+  private fun setProviderCodeAndUserId() {
+    if (!SettingsSyncSettings.getInstance().syncEnabled)
+      return
+    if (SettingsSyncLocalSettings.getInstance().providerCode.isNullOrBlank()) {
+      SettingsSyncLocalSettings.getInstance().providerCode = RemoteCommunicatorHolder.DEFAULT_PROVIDER_CODE
+    }
+    if (SettingsSyncLocalSettings.getInstance().userId.isNullOrBlank()) {
+      SettingsSyncLocalSettings.getInstance().userId = RemoteCommunicatorHolder.DEFAULT_USER_ID
+    }
   }
 }
 

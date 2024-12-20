@@ -1,449 +1,576 @@
 package com.intellij.settingsSync.config
 
+
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.InstalledPluginsState
-import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.ide.plugins.PluginStateManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.impl.stores.stateStore
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.util.and
+import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
-import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.*
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
-//import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.communicator.SettingsSyncCommunicatorProvider
+import com.intellij.settingsSync.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.config.SettingsSyncEnabler.State
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
-import com.intellij.ui.components.ActionLink
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.and
-import com.intellij.ui.layout.not
+import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.groupedTextListCellRenderer
 import com.intellij.util.text.DateFormatUtil
-import org.jetbrains.annotations.Nls
+import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.awt.event.ItemEvent
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JLabel
+import javax.swing.*
 
-internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")),
-                                          SettingsSyncEnabler.Listener,
-                                          SettingsSyncStatusTracker.Listener {
+internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
+                                                                          SettingsSyncEnabler.Listener,
+                                                                          SettingsSyncStatusTracker.Listener {
+  companion object {
+    private val LOG = logger<SettingsSyncConfigurable>()
+  }
 
   private lateinit var configPanel: DialogPanel
-  private lateinit var enableButton: Cell<JButton>
+  private lateinit var enableButton: JButton
   private lateinit var statusLabel: JLabel
-
-  @Volatile
-  private var marketplacePluginInstalled = false
+  private lateinit var userDropDownLink: DropDownLink<UserProviderHolder?>
+  private lateinit var syncTypeLabel: JEditorPane
 
   private val syncEnabler = SettingsSyncEnabler()
-  private val MARKETPLACE_PLUGIN_ID = PluginId.getId("com.intellij.marketplace")
-
+  private val enabledStatus = AtomicBooleanProperty(false)
+  private val enableSyncOption = AtomicProperty<InitSyncType>(InitSyncType.GET_FROM_SERVER)
+  private val disableSyncOption = AtomicProperty<Int>(DisableSyncType.DISABLE)
+  private val remoteSettingsExist = AtomicBooleanProperty(false)
+  private val wasUsedBefore = AtomicBooleanProperty(SettingsSyncLocalSettings.getInstance().userId != null)
+  private val userAccountsList = arrayListOf<UserProviderHolder>()
+  private val syncPanelHolder = SettingsSyncPanelHolder()
+  private val hasMultipleProviders = AtomicBooleanProperty(RemoteCommunicatorHolder.getAvailableProviders().size > 1)
 
   init {
     syncEnabler.addListener(this)
     SettingsSyncStatusTracker.getInstance().addListener(this)
   }
 
-  inner class LoggedInPredicate : ComponentPredicate() {
-    override fun addListener(listener: (Boolean) -> Unit) =
-      SettingsSyncEvents.getInstance().addListener(
-        object : SettingsSyncEventListener {
-          override fun loginStateChanged() {
-            listener(invoke())
-          }
-        },
-        disposable!!)
-
-    override fun invoke() = RemoteCommunicatorHolder.getAuthService().isLoggedIn()
-  }
-
-  inner class EnabledPredicate : ComponentPredicate() {
-    override fun addListener(listener: (Boolean) -> Unit) {
-      SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
-        override fun enabledStateChanged(syncEnabled: Boolean) {
-          listener(invoke())
-          configPanel.reset()
-        }
-      }, disposable!!)
-    }
-
-    override fun invoke() = SettingsSyncSettings.getInstance().syncEnabled
-
-  }
-
-  inner class SyncEnablerRunning : ComponentPredicate() {
-    private var isRunning = false
-
-    override fun addListener(listener: (Boolean) -> Unit) {
-      syncEnabler.addListener(object : SettingsSyncEnabler.Listener {
-        override fun serverRequestStarted() {
-          updateRunning(listener, true)
-        }
-
-        override fun serverRequestFinished() {
-          updateRunning(listener, false)
-        }
-      })
-    }
-
-    private fun updateRunning(listener: (Boolean) -> Unit, isRunning: Boolean) {
-      this.isRunning = isRunning
-      listener(invoke())
-    }
-
-    override fun invoke(): Boolean = isRunning
-  }
-
-  inner class AuthServiceRestartPredicate : ComponentPredicate() {
-    init {
-      marketplacePluginInstalled = InstalledPluginsState.getInstance().wasInstalled(MARKETPLACE_PLUGIN_ID)
-    }
-
-    override fun addListener(listener: (Boolean) -> Unit) {
-      PluginStateManager.addStateListener { descriptor ->
-        if (descriptor.pluginId == MARKETPLACE_PLUGIN_ID) {
-          // InstalledPluginsState.getInstance().wasInstalled(MARKETPLACE_PLUGIN_ID) is still false at that time,
-          // so we just cache the value
-          marketplacePluginInstalled = true
-          listener(marketplacePluginInstalled)
-        }
-      }
-    }
-
-    override fun invoke(): Boolean {
-      return marketplacePluginInstalled
-    }
-  }
-
   override fun createPanel(): DialogPanel {
-    val syncConfigPanel = SettingsSyncPanelFactory.createCombinedSyncSettingsPanel(
-      message("configurable.what.to.sync.label"),
-      SettingsSyncSettings.getInstance(),
-      SettingsSyncLocalSettings.getInstance(),
-    )
-    val authService = RemoteCommunicatorHolder.getAuthService()
-    val authAvailable = authService.isLoginAvailable()
+    val syncConfigPanel = syncPanelHolder.createCombinedSyncSettingsPanel(message("configurable.what.to.sync.label"),
+                                                                          SettingsSyncSettings.getInstance(),
+                                                                          SettingsSyncLocalSettings.getInstance())
+
     configPanel = panel {
-      val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
-      if (settingsRepositoryIsEnabled()) {
-        row {
-          label(message("settings.warning.sync.cannot.be.enabled.label")).applyToComponent {
-            icon = AllIcons.General.Warning
+      enabledStatus.set(SettingsSyncSettings.getInstance().syncEnabled)
+      var userProviderHolder: UserProviderHolder? = null
+      if (SettingsSyncLocalSettings.getInstance().userId != null && SettingsSyncLocalSettings.getInstance().providerCode != null) {
+        val authService = RemoteCommunicatorHolder.getProvider(SettingsSyncLocalSettings.getInstance().providerCode!!)?.authService
+        if (authService != null) {
+          authService.getAvailableUserAccounts().find {
+            it.id == SettingsSyncLocalSettings.getInstance().userId
+          }?.apply {
+            userProviderHolder = toUserProviderHolder(authService.providerName)
           }
-          bottomGap(BottomGap.MEDIUM)
         }
       }
 
-      // authService is not available without restart
-      if (authAvailable) {
-        row {
-          val statusCell = label("")
-          statusCell
-            .visibleIf(LoggedInPredicate())
-            .enabled(!settingsRepositoryIsEnabled())
-          statusLabel = statusCell.component
-          updateStatusInfo()
-          label(message("sync.status.login.message"))
-            .visibleIf(LoggedInPredicate().not())
-            .enabled(!settingsRepositoryIsEnabled())
-        }
-        row {
-          button(message("config.button.login")) {
-            authService.login()
-          }.visibleIf(LoggedInPredicate().not())
-            .enabled(!settingsRepositoryIsEnabled())
-          enableButton = button(message("config.button.enable")) {
-            syncEnabler.checkServerState()
-          }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
-            .enabledIf(SyncEnablerRunning().not())
-            .enabled(!settingsRepositoryIsEnabled())
-
-          button(message("config.button.disable")) {
-            LoggedInPredicate().and(EnabledPredicate())
-            disableSync()
-          }.visibleIf(isSyncEnabled)
-          bottomGap(BottomGap.MEDIUM)
-        }
+      updateUserAccountsList()
+      enabledStatus.afterChange {
+        syncStatusChanged()
       }
-      else {
-        val authServiceRestartPredicate = AuthServiceRestartPredicate()
-        row {
-          label(message("sync.status.login.not.available")).gap(RightGap.SMALL)
-          @Suppress("DialogTitleCapitalization", "HardCodedStringLiteral")
-          link("JetBrains Marketplace Licensing Support") {
-            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
-            val pluginManager = settings?.find("preferences.pluginManager")
-            if (pluginManager is PluginManagerConfigurable) {
-              settings.select(pluginManager).doWhenDone {
-                pluginManager.openMarketplaceTab("/organization:JetBrains Marketplace Licensing")
+
+      row {
+        label(message("settings.sync.info.message"))
+      }.visibleIf(enabledStatus.not())
+
+      row {
+        label(message("settings.sync.select.provider.message"))
+      }.visibleIf(enabledStatus.not())
+
+      row {
+        val availableProviders = RemoteCommunicatorHolder.getAvailableProviders()
+        availableProviders.forEach { provider ->
+          button(provider.authService.providerName) {
+            login(provider, syncConfigPanel)
+          }.applyToComponent {
+            icon = provider.authService.icon
+          }
+        }
+      }.visibleIf(wasUsedBefore.not().and(hasMultipleProviders))
+
+      row {
+        val defaultProvider = RemoteCommunicatorHolder.getDefaultProvider()
+        button(message("config.button.login")) {
+          login(defaultProvider, syncConfigPanel)
+        }
+      }.visibleIf(wasUsedBefore.not().and(hasMultipleProviders.not()))
+
+      row {
+        val label = label("").applyToComponent {
+          iconTextGap = 6
+        }.gap(RightGap.SMALL)
+        statusLabel = label.component
+        cell(object: DropDownLink<UserProviderHolder?>(userProviderHolder, userAccountsList) {
+          override fun createRenderer(): ListCellRenderer<in UserProviderHolder?> {
+            return groupedTextListCellRenderer({
+                                                 if (it == UserProviderHolder.addAccount) {
+                                                   message("enable.sync.add.account")
+                                                 } else {
+                                                   it.toString()
+                                                 }
+
+                                               }, {
+                                                 it?.separatorString
+            })
+          }
+        }).onChangedContext { component, context ->
+          val event = context.event
+          if (event is ItemEvent && event.item == UserProviderHolder.addAccount) {
+            val syncTypeDialog = AddAccountDialog(configPanel)
+            if (syncTypeDialog.showAndGet()) {
+              val providerCode = syncTypeDialog.providerCode
+              val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: return@onChangedContext
+              component.selectedItem = null
+              component.text = ""
+              login(provider, syncConfigPanel)
+            }
+          } else {
+            component.text = component.selectedItem.toString()
+          }
+        }.apply {
+          userDropDownLink = this.component
+        }
+
+      }.visibleIf(wasUsedBefore)
+
+      row {
+        val enableButtonCell = button(message("config.button.enable")) {
+          if (!enabledStatus.get()) {
+            runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("enable.sync.check.server.data.progress")) {
+              val (userId, userData, providerCode, providerName) = userDropDownLink.selectedItem ?: run {
+                LOG.warn("No selected user")
+                return@runWithModalProgressBlocking
+              }
+              val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: run {
+                LOG.warn("Provider '$providerName' ($providerCode) is not available")
+                return@runWithModalProgressBlocking
+              }
+              val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId) ?: run {
+                LOG.warn("Cannot create remote communicator of type '$providerName' ($providerCode)")
+                return@runWithModalProgressBlocking
+              }
+              if (checkServerState(syncPanelHolder, remoteCommunicator)) {
+                enabledStatus.set(true)
+                syncStatusChanged()
               }
             }
+          } else {
+            val syncDisableOption = showDisableSyncDialog()
+            if (syncDisableOption != DisableSyncType.DONT_DISABLE) {
+              enabledStatus.set(false)
+              disableSyncOption.set(syncDisableOption)
+              syncStatusChanged()
+            }
           }
-        }.visibleIf(authServiceRestartPredicate.not())
-        row {
-          label(message("sync.status.restart.required", ApplicationNamesInfo.getInstance().fullProductName))
-        }.visibleIf(authServiceRestartPredicate)
-        row {
-          button(message("sync.status.restart.ide.button")) {
-            val app = ApplicationManager.getApplication() as ApplicationEx
-            app.restart(true)
-          }
-        }.visibleIf(authServiceRestartPredicate)
-      }
-      row {
-        comment(message("settings.sync.info.message"), 80)
-          .visibleIf(isSyncEnabled.not())
-      }
-
-      row {
-        cell(syncConfigPanel)
-          .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
-          .onApply {
-            syncConfigPanel.apply()
-
-            SettingsSyncEvents.getInstance().fireCategoriesChanged()
-            SettingsSyncEvents.getInstance().fireSettingsChanged(
-              SyncSettingsEvent.CrossIdeSyncStateChanged(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled))
-          }
-          .onReset(syncConfigPanel::reset)
-          .onIsModified(syncConfigPanel::isModified)
-      }
-    }
-    SettingsSyncEvents.getInstance().addListener(
-      object : SettingsSyncEventListener {
-        override fun loginStateChanged() {
-          if (RemoteCommunicatorHolder.getAuthService().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
-            syncEnabler.checkServerState()
-          }
-          reset()
         }
-      },
-      disposable!!
-    )
+        enableButton = enableButtonCell.component
+      }.visibleIf(wasUsedBefore)
+
+
+      // settings to sync
+      group(message("enable.dialog.select.what.to.sync")) {
+        row {
+          icon(AllIcons.General.BalloonWarning).applyToComponent {
+            isOpaque = true
+            background = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND
+            border = JBUI.Borders.compound(
+              JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, 1, 1, 1, 0),
+              JBUI.Borders.empty(8)
+            )
+            verticalAlignment = SwingConstants.TOP
+          }.align(AlignY.FILL)
+          text("",
+               action = {
+                 val syncTypeDialog = ChangeSyncTypeDialog(configPanel, enableSyncOption.get())
+                 if (syncTypeDialog.showAndGet()) {
+                   enableSyncOption.set(syncTypeDialog.option)
+                 }
+               }).applyToComponent {
+            isOpaque = true
+            background = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND
+            border = JBUI.Borders.compound(
+              JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, 1, 0, 1, 1),
+              JBUI.Borders.empty(8)
+            )
+          }.align(AlignX.FILL).resizableColumn().also {
+            syncTypeLabel = it.component
+            enableSyncOption.afterChange {
+              updateSyncOptionText()
+            }
+          }
+          cell()
+        }.layout(RowLayout.PARENT_GRID).topGap(TopGap.SMALL)
+          .visibleIf(remoteSettingsExist)
+
+        row {
+          cell(syncConfigPanel)
+            .onReset(syncConfigPanel::reset)
+            .onIsModified{
+              enabledStatus.get() != SettingsSyncSettings.getInstance().syncEnabled || syncConfigPanel.isModified()
+            }
+            .onApply {
+              with(SettingsSyncLocalSettings.getInstance()) {
+                userId = userDropDownLink.selectedItem?.userId
+                providerCode = userDropDownLink.selectedItem?.providerCode
+              }
+              if (enabledStatus.get()) {
+                syncConfigPanel.apply()
+              }
+              if (SettingsSyncSettings.getInstance().syncEnabled != enabledStatus.get()) {
+                if (enabledStatus.get()) {
+                  SettingsSyncSettings.getInstance().syncEnabled = enabledStatus.get()
+                  if (enableSyncOption.get() == InitSyncType.GET_FROM_SERVER) {
+                    syncEnabler.getSettingsFromServer()
+                  }
+                  else {
+                    syncEnabler.pushSettingsToServer()
+                  }
+                } else {
+                  when (disableSyncOption.get()) {
+                    DisableSyncType.DISABLE_AND_REMOVE_DATA -> {
+                      disableAndRemoveData()
+                      SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
+                        SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+                    }
+                    DisableSyncType.DISABLE -> {
+                      SettingsSyncSettings.getInstance().syncEnabled = false
+                      syncStatusChanged()
+                      SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
+                    }
+                    else -> {
+                      SettingsSyncSettings.getInstance().syncEnabled = false
+                      syncStatusChanged()
+                      SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
+                    }
+                  }
+                  SettingsSyncSettings.getInstance().syncEnabled = enabledStatus.get()
+                }
+              }
+            }
+        }.topGap(TopGap.SMALL)
+      }.visibleIf(enabledStatus)
+
+      // apply necessary changes
+    }
+    syncStatusChanged()
     return configPanel
   }
 
-  private fun settingsRepositoryIsEnabled(): Boolean {
-    return !SettingsSyncSettings.getInstance().syncEnabled &&
-           (ApplicationManager.getApplication().stateStore.storageManager).streamProvider.let { it.enabled && it.isExclusive }
-  }
-
-  override fun serverStateCheckFinished(state: UpdateResult) {
-    when (state) {
-      NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(null, null)
-      is Success -> showEnableSyncDialog(
-          state.settingsSnapshot.getState(),
-          SettingsSyncLocalStateHolder(state.isCrossIdeSyncEnabled),
-      )
-      is Error -> {
-        if (state != SettingsSyncEnabler.State.CANCELLED) {
-          showError(message("notification.title.update.error"), state.message)
-        }
-      }
-    }
-  }
-
-  override fun updateFromServerFinished(result: UpdateResult) {
-    when (result) {
-      is Success -> {
-        reset()
-        SettingsSyncSettings.getInstance().syncEnabled = true
-      }
-      NoFileOnServer, FileDeletedFromServer -> {
-        showError(message("notification.title.update.error"), message("notification.title.update.no.such.file"))
-      }
-      is Error -> {
-        showError(message("notification.title.update.error"), result.message)
-      }
-    }
-    updateStatusInfo()
-  }
-
-  private fun showEnableSyncDialog(remoteSettings: SettingsSyncState?, remoteSyncScopeSettings: SettingsSyncLocalStateHolder?) {
-    val dialog = EnableSettingsSyncDialog(configPanel, remoteSettings, remoteSyncScopeSettings)
-
-    dialog.show()
-
-    val dialogResult = dialog.getResult()
-
-    if (dialogResult != null) {
-      when (dialogResult) {
-        EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> {
-          syncEnabler.getSettingsFromServer(dialog.syncSettings)
-
-          SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
-        }
-
-        EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
-          SettingsSyncSettings.getInstance().syncEnabled = true
-
-          syncEnabler.pushSettingsToServer()
-
-          if (remoteSettings != null) {
-            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL)
-          }
-          else {
-            SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL_WAS_ONLY_WAY)
-          }
-        }
-      }
-    }
-    else {
-      SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.CANCELED)
-    }
-
-    reset()
-    configPanel.reset()
-  }
-
-  companion object DisableResult {
-    const val RESULT_CANCEL = 0
-    const val RESULT_REMOVE_DATA_AND_DISABLE = 1
-    const val RESULT_DISABLE = 2
-  }
-
-  private fun disableSync() {
+  private fun showDisableSyncDialog(): Int {
     @Suppress("DialogTitleCapitalization")
-    val result = Messages.showCheckboxMessageDialog( // TODO<rv>: Use AlertMessage instead
-      message("disable.dialog.text"),
+    val providerName = userDropDownLink.selectedItem?.providerName ?: ""
+    return Messages.showCheckboxMessageDialog( // TODO<rv>: Use AlertMessage instead
+      message("disable.dialog.text", providerName),
       message("disable.dialog.title"),
       arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
-      message("disable.dialog.remove.data.box"),
+      message("disable.dialog.remove.data.box", providerName),
       false,
       1,
       1,
       Messages.getInformationIcon()
     ) { index: Int, checkbox: JCheckBox ->
       if (index == 1) {
-        if (checkbox.isSelected) RESULT_REMOVE_DATA_AND_DISABLE else RESULT_DISABLE
+        if (checkbox.isSelected) DisableSyncType.DISABLE_AND_REMOVE_DATA else DisableSyncType.DISABLE
       }
       else {
-        RESULT_CANCEL
-      }
-    }
-
-    when (result) {
-      RESULT_DISABLE -> {
-        SettingsSyncSettings.getInstance().syncEnabled = false
-        updateStatusInfo()
-        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
-      }
-      RESULT_REMOVE_DATA_AND_DISABLE -> {
-        disableAndRemoveData()
-        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
-          SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
-      }
-      RESULT_CANCEL -> {
-        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.CANCEL)
+        0
       }
     }
   }
 
   private fun disableAndRemoveData() {
-    val modality = ModalityState.current();
+    runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("disable.remove.data.title"), TaskCancellation.cancellable()) {
+      val cdl = CountDownLatch(1)
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData { result ->
+        cdl.countDown()
 
-    object : Task.Modal(null, message("disable.remove.data.title"), false) {
-      override fun run(indicator: ProgressIndicator) {
-        val cdl = CountDownLatch(1)
-        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData { result ->
-          cdl.countDown()
-
-          when (result) {
-            is DeleteServerDataResult.Error -> {
-              runInEdt {
-                showError(message("disable.remove.data.failure"), result.error)
-              }
-            }
-            DeleteServerDataResult.Success -> {
-              runInEdt(modality) {
-                updateStatusInfo()
-              }
-            }
+        when (result) {
+          is DeleteServerDataResult.Error -> {
+            val messageBuilder = StringBuilder()
+            messageBuilder.append(message("sync.status.failed"))
+            statusLabel.icon = AllIcons.General.Error
+            messageBuilder.append(' ').append("${message("disable.remove.data.failure")}: ${result.error}")
+            @Suppress("HardCodedStringLiteral")
+            statusLabel.text = messageBuilder.toString()
           }
-        })
-
-        cdl.await(1, TimeUnit.MINUTES)
-      }
-    }.queue()
-  }
-
-  private fun showError(message: @Nls String, details: @Nls String) {
-    val messageBuilder = StringBuilder()
-    messageBuilder.append(message("sync.status.failed"))
-    statusLabel.icon = AllIcons.General.Error
-    messageBuilder.append(' ').append("$message: $details")
-    @Suppress("HardCodedStringLiteral")
-    statusLabel.text = messageBuilder.toString()
-  }
-
-  private fun updateStatusInfo() {
-    if (::statusLabel.isInitialized) {
-      val messageBuilder = StringBuilder()
-      statusLabel.icon = null
-      if (SettingsSyncSettings.getInstance().syncEnabled) {
-        val statusTracker = SettingsSyncStatusTracker.getInstance()
-        if (statusTracker.isSyncSuccessful()) {
-          messageBuilder
-            .append(message("sync.status.enabled"))
-          if (statusTracker.isSynced()) {
-            messageBuilder
-              .append(". ")
-              .append(message("sync.status.last.sync.message", getReadableSyncTime(), getUserName()))
+          DeleteServerDataResult.Success -> {
+            syncStatusChanged()
           }
         }
-        else {
-          messageBuilder.append(message("sync.status.failed"))
-          statusLabel.icon = AllIcons.General.Error
-          messageBuilder.append(' ').append(statusTracker.getErrorMessage())
-        }
-      }
-      else {
-        messageBuilder.append(message("sync.status.disabled"))
-      }
-      @Suppress("HardCodedStringLiteral") // The above strings are localized
-      statusLabel.text = messageBuilder.toString()
+      })
+      cdl.await(1, TimeUnit.MINUTES)
     }
   }
 
-  private fun getReadableSyncTime(): String {
-    return DateFormatUtil.formatPrettyDateTime(SettingsSyncStatusTracker.getInstance().getLastSyncTime()).lowercase()
+  private fun updateSyncOptionText() {
+    val message = if (enableSyncOption.get() == InitSyncType.GET_FROM_SERVER) {
+      message("enable.dialog.get.settings.from.account.text")
+    } else if (enableSyncOption.get() == InitSyncType.PUSH_LOCAL) {
+      message("enable.dialog.sync.local.settings.text")
+    } else {
+      ""
+    }
+    syncTypeLabel.text ="<div>$message</div> <div style='margin-top: 5px'><a>${message("enable.dialog.change")}</a></div>"
   }
 
-  private fun getUserName(): String {
-    return RemoteCommunicatorHolder.getAuthService().getUserData().name ?: "?"
+
+  private fun updateUserAccountsList() {
+    userAccountsList.clear()
+    val providersMap = RemoteCommunicatorHolder.getAvailableProviders().map { it.providerCode to it }.toMap()
+    providersMap.forEach { providerId, communicator ->
+      val authService = communicator.authService
+      val providerName = authService.providerName
+      authService.getAvailableUserAccounts().forEachIndexed { idx, account ->
+        val separatorString = if (idx == 0)
+          providerName
+        else
+          null
+        userAccountsList.add(account.toUserProviderHolder(providerName, separatorString))
+      }
+    }
+    if (hasMultipleProviders.get()) {
+      userAccountsList.add(UserProviderHolder.addAccount)
+    }
   }
+
+  private fun login(
+    provider: SettingsSyncCommunicatorProvider,
+    syncConfigPanel: DialogPanel,
+  ) {
+    coroutineScope.launch(ModalityState.current().asContextElement()) {
+      try {
+        val userData = provider.authService.login(syncConfigPanel)
+        if (userData != null) {
+          withContext(Dispatchers.EDT) {
+            updateUserAccountsList()
+            val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id) ?: return@withContext
+            if (checkServerState(syncPanelHolder, remoteCommunicator)) {
+              SettingsSyncEvents.getInstance().fireLoginStateChanged()
+              userDropDownLink.selectedItem = UserProviderHolder(userData.id, userData, provider.authService.providerCode,
+                                                                 provider.authService.providerName, null)
+              userDropDownLink.text
+              enabledStatus.set(true)
+              wasUsedBefore.set(true)
+              syncStatusChanged()
+              syncConfigPanel.reset()
+            }
+          }
+        }
+        else {
+          LOG.info("Received empty user data from login")
+        }
+      }
+      catch (ex: CancellationException) {
+        LOG.info("Login procedure was cancelled")
+        if (LOG.isDebugEnabled) {
+          LOG.info("Login procedure was cancelled", ex)
+        }
+      }
+      catch (ex: Throwable) {
+        LOG.warn("Error during login", ex)
+      }
+      syncConfigPanel.requestFocusInWindow()
+    }
+  }
+
+  private fun SettingsSyncUserData.toUserProviderHolder(providerName: String, separatorString: String? = null) =
+    UserProviderHolder(id, this, providerCode, providerName, separatorString)
 
   override fun syncStatusChanged() {
-    updateStatusInfo()
+    if (::statusLabel.isInitialized) {
+      if (enabledStatus.get()) {
+        val messageBuilder = StringBuilder()
+        if (SettingsSyncSettings.getInstance().syncEnabled) {
+          val statusTracker = SettingsSyncStatusTracker.getInstance()
+          if (statusTracker.isSyncSuccessful()) {
+            statusLabel.icon = icons.SettingsSyncIcons.StatusEnabled
+            if (statusTracker.isSynced()) {
+              messageBuilder.append(message("sync.status.last.sync.message", getReadableSyncTime()))
+            } else {
+              messageBuilder.append(message("sync.status.enabled"))
+            }
+          }
+          else {
+            messageBuilder.append(message("sync.status.failed"))
+            statusLabel.icon = AllIcons.General.Error
+            messageBuilder.append(' ').append(statusTracker.getErrorMessage())
+          }
+        }
+        else {
+          statusLabel.icon = icons.SettingsSyncIcons.StatusNotRun
+          messageBuilder.append(message("sync.status.enabled"))
+        }
+        @Suppress("HardCodedStringLiteral") // The above strings are localized
+        statusLabel.text = messageBuilder.toString()
+        enableButton.text = message("config.button.disable")
+      }
+      else {
+        statusLabel.icon = icons.SettingsSyncIcons.StatusDisabled
+        statusLabel.text = message("sync.status.disabled.message")
+        enableButton.text = message("config.button.enable")
+      }
+    }
   }
 
-  override fun disposeUIResources() {
-    super.disposeUIResources()
-    SettingsSyncStatusTracker.getInstance().removeListener(this)
+  private fun getReadableSyncTime(): String =
+    DateFormatUtil.formatPrettyDateTime(SettingsSyncStatusTracker.getInstance().getLastSyncTime())
+
+
+  private fun checkServerState(syncPanelHolder: SettingsSyncPanelHolder, communicator: SettingsSyncRemoteCommunicator) : Boolean {
+    communicator.setTemporary(true)
+    val updateResult = try {
+      communicator.receiveUpdates()
+    }
+    catch (ex: Exception) {
+      LOG.warn(ex.message)
+      State.CANCELLED
+    }
+    when (updateResult) {
+      NoFileOnServer, FileDeletedFromServer -> {
+        syncPanelHolder.setSyncSettings(null)
+        syncPanelHolder.setSyncScopeSettings(null)
+        enableSyncOption.set(InitSyncType.PUSH_LOCAL)
+        remoteSettingsExist.set(false)
+        return true
+      }
+      is Success -> {
+        syncPanelHolder.setSyncSettings(updateResult.settingsSnapshot.getState())
+        syncPanelHolder.setSyncScopeSettings(SettingsSyncLocalStateHolder(updateResult.isCrossIdeSyncEnabled))
+        enableSyncOption.set(InitSyncType.GET_FROM_SERVER)
+        remoteSettingsExist.set(true)
+        return true
+      }
+      is Error -> {
+        if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
+          //showError(message("notification.title.update.error"), state.message)
+          return false
+        }
+      }
+    }
+    return false
   }
 
-  override fun getHelpTopic(): String = "cloud-config.plugin-dialog"
+  private data class UserProviderHolder(
+    val userId: String,
+    val userData: SettingsSyncUserData,
+    val providerCode: String,
+    val providerName: String,
+    val separatorString: String?, // separator value, set only for the first account in the list
+  ) {
+    companion object{
+      val addAccount = UserProviderHolder(
+        "<ADDACCOUNT>", SettingsSyncUserData("<ADDACCOUNT>", ""), "",
+        "", "")
+    }
+
+    override fun toString(): String {
+      return userData.printableName ?: userData.email ?: userData.name ?: userData.id
+    }
+  }
+
+  private enum class InitSyncType {
+    PUSH_LOCAL,
+    GET_FROM_SERVER
+  }
+
+  private sealed class DisableSyncType{
+    companion object{
+      const val DISABLE = 1
+      const val DISABLE_AND_REMOVE_DATA = 2
+      const val DONT_DISABLE = 0
+    }
+  }
+
+
+  private class ChangeSyncTypeDialog(parent: JComponent, var option: InitSyncType) : DialogWrapper(parent, false) {
+
+    init {
+      title = message("title.settings.sync")
+      init()
+    }
+
+    override fun createCenterPanel(): JComponent {
+      return panel {
+        row {
+          icon(AllIcons.General.QuestionDialog).align(AlignY.TOP)
+          panel {
+            row {
+              text(message("enable.dialog.source.option.title")).bold()
+            }
+            row {
+              text(message("enable.dialog.source.option.text"), 50)
+            }
+            buttonsGroup ("", false) {
+              row {
+                radioButton(message("enable.dialog.get.settings.from.account.option"), InitSyncType.GET_FROM_SERVER)
+              }
+              row {
+                radioButton(message("enable.dialog.sync.local.settings.option"), InitSyncType.PUSH_LOCAL)
+              }
+            }.bind(::option)
+          }
+        }
+      }
+    }
+
+    override fun createActions(): Array<Action> =
+      arrayOf(cancelAction, okAction)
+  }
+
+  private class AddAccountDialog(parent: JComponent) : DialogWrapper(parent, false) {
+
+    var providerCode: String = ""
+
+    init {
+      title = message("title.settings.sync")
+      init()
+    }
+
+    override fun createCenterPanel(): JComponent {
+      return panel {
+        row {
+          icon(AllIcons.General.QuestionDialog).align(AlignY.TOP)
+          panel {
+            row {
+              text(message("enable.sync.choose.data.provider.title")).bold()
+            }
+            buttonsGroup (message("enable.sync.choose.data.provider.text"), false) {
+              val availableProviders = RemoteCommunicatorHolder.getAvailableProviders()
+              row {
+                for (provider in availableProviders) {
+                  radioButton(provider.authService.providerName, provider.providerCode)
+                }
+              }
+            }.bind(::providerCode)
+          }
+        }
+      }
+    }
+  }
 }
 
-class SettingsSyncConfigurableProvider : ConfigurableProvider() {
-  override fun createConfigurable(): Configurable = SettingsSyncConfigurable()
+class SettingsSyncConfigurableProvider(private val coroutineScope: CoroutineScope) : ConfigurableProvider() {
+  override fun createConfigurable(): Configurable = SettingsSyncConfigurable(coroutineScope)
 }
