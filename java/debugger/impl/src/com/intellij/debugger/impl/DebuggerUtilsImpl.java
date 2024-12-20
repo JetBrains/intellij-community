@@ -485,8 +485,10 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                                   @NotNull ClassType type,
                                                   @NotNull String methodName,
                                                   @Nullable String signature) throws EvaluateException {
-    Method method = findMethodOrLogError(type, methodName, signature);
-    if (method == null) return null;
+    Method method = findMethod(type, methodName, signature);
+    if (method == null) {
+      throw new MethodNotFoundException("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
+    }
     return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, type, method, Collections.emptyList());
   }
 
@@ -496,19 +498,21 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                                    @Nullable String signature,
                                                    @NotNull List<Value> arguments) throws EvaluateException {
     ReferenceType type = value.referenceType();
-    Method method = findMethodOrLogError(type, methodName, signature);
-    if (method == null) return null;
+    Method method = findMethod(type, methodName, signature);
+    if (method == null) {
+      throw new MethodNotFoundException("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
+    }
     return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, value, method, arguments);
   }
 
-  private static @Nullable Method findMethodOrLogError(ReferenceType type, @NotNull String methodName, @Nullable String signature) {
-    Method method = findMethod(type, methodName, signature);
-    if (method == null) {
-      LOG.error("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
-    }
-    return method;
-  }
-
+  /**
+   * Invokes a specified helper method from a given class
+   *
+   * @return the result of the invoked helper method as a {@link Value} object
+   * @throws HelperClassNotAvailableException if the helper class cannot be loaded
+   * @throws MethodNotFoundException if the method is not found in the helper class
+   * @throws EvaluateException any other exception during the evaluation
+   */
   public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,
                                          Class<?> cls,
                                          String methodName,
@@ -517,11 +521,11 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                          String... additionalClassesToLoad) throws EvaluateException {
     ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
     if (helperClass == null) {
-      throw new HelperNotAvailableException("Unable to load helper class " + cls.getName());
+      throw new HelperClassNotAvailableException("Unable to load helper class " + cls.getName());
     }
     Method method = findMethod(helperClass, methodName, null);
     if (method == null) {
-      throw new HelperNotAvailableException("Unable to find helper class " + cls.getName() + " method " + methodName);
+      throw new MethodNotFoundException("Unable to find helper class " + cls.getName() + " method " + methodName);
     }
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
     ThrowableComputable<Value, EvaluateException> invoker =
@@ -529,6 +533,14 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
   }
 
+  /**
+   * Invokes a specified helper method from a given class
+   *
+   * @return the result of the invoked helper method as a {@link Value} object
+   * @throws HelperClassNotAvailableException if the helper class cannot be loaded
+   * @throws MethodNotFoundException if the method is not found in the helper class
+   * @throws EvaluateException any other exception during the evaluation
+   */
   public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,
                                          Class<?> cls,
                                          String methodName,
@@ -546,7 +558,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
                                  Collections.singletonList(exceptionObject));
       return ((StringReference)value).value();
     }
-    catch (HelperNotAvailableException e) {
+    catch (HelperClassNotAvailableException | MethodNotFoundException e) {
       LOG.error(e);
     }
     // fallback to slow impl

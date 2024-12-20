@@ -1,23 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl
 
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.provider.getEelApi
 import com.sun.jdi.InternalException
 import com.sun.jdi.ObjectCollectedException
 import com.sun.jdi.VMDisconnectedException
-import java.net.URI
-import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.io.path.createFile
+
+/**
+ * This exception is thrown when a required helper class is not available during an evaluation process.
+ */
+class HelperClassNotAvailableException(message: String) : EvaluateException(message)
+
+/**
+ * Exception thrown when a specified method cannot be found during evaluation.
+ */
+class MethodNotFoundException(message: String) : EvaluateException(message)
 
 internal inline fun <T, E : Exception> suppressExceptions(
   defaultValue: T?,
