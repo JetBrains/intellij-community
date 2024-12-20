@@ -106,7 +106,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val eventsPosted = AtomicLong()
   private val eventsReturned = AtomicLong()
 
-  private var isInInputEvent = false
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
     private set
 
@@ -289,8 +288,6 @@ class IdeEventQueue private constructor() : EventQueue() {
         disableAltGrUnsupportedOnMac(event)
       }
 
-      val wasInputEvent = isInInputEvent
-      isInInputEvent = isInputEvent(event)
       val oldEvent = trueCurrentEvent
       trueCurrentEvent = event
       val finalEvent = event
@@ -319,7 +316,6 @@ class IdeEventQueue private constructor() : EventQueue() {
             processException(t)
           }
           finally {
-            isInInputEvent = wasInputEvent
             trueCurrentEvent = oldEvent
             if (currentSequencedEvent === finalEvent) {
               currentSequencedEvent = null
