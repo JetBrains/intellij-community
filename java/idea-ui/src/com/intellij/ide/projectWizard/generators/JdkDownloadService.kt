@@ -60,28 +60,6 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     return sdk
   }
 
-  private fun scheduleSetupInstallableSdk(
-    project: Project,
-    downloadTask: SdkDownloadTask,
-    sdkDownloadedFuture: CompletableFuture<Boolean>,
-    onSdkCreated: suspend (Sdk) -> Unit,
-  ) {
-    coroutineScope.launch(Dispatchers.EDT) {
-      val sdk = writeAction {
-        createDownloadSdkInternal(downloadTask)
-      }
-      onSdkCreated(sdk)
-      val tracker = SdkDownloadTracker.getInstance()
-      tracker.startSdkDownloadIfNeeded(sdk)
-      val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
-        sdkDownloadedFuture.complete(it)
-      }
-      if (!registered) {
-        sdkDownloadedFuture.complete(false)
-      }
-    }
-  }
-
   fun scheduleDownloadJdk(
     sdkDownloadTask: JdkDownloadTask,
     onSdkCreated: suspend (Sdk) -> Unit = {},
@@ -93,19 +71,34 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
     coroutineScope.launch(Dispatchers.EDT) {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
+
         val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
         if (selectedFile == null) {
           Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
           sdkDownloadedFuture.complete(false)
           return@withBackgroundProgress
         }
+
         val downloadTask = jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile)
         if (downloadTask == null) {
           // The error was handled inside the JdkDownloader.prepareDownloadTask function
           sdkDownloadedFuture.complete(false)
           return@withBackgroundProgress
         }
-        scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, onSdkCreated)
+
+        val sdk = writeAction {
+          createDownloadSdkInternal(downloadTask)
+        }
+        onSdkCreated(sdk)
+
+        val tracker = SdkDownloadTracker.getInstance()
+        tracker.startSdkDownloadIfNeeded(sdk)
+        val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
+          sdkDownloadedFuture.complete(it)
+        }
+        if (!registered) {
+          sdkDownloadedFuture.complete(false)
+        }
       }
     }
 
