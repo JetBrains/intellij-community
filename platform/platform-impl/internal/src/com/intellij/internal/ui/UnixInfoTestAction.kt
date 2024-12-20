@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
@@ -33,22 +34,22 @@ import kotlin.reflect.KFunction0
 import kotlin.reflect.KProperty0
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class X11UiTestAction : DumbAwareAction() {
+internal class UnixInfoTestAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = StartupUiUtil.isXToolkit()
+    e.presentation.isEnabledAndVisible = SystemInfoRt.isXWindow
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    FullScreenTestDialog(e.project, templatePresentation.text).show()
+    UnixInfoDialog(e.project, templatePresentation.text).show()
   }
 }
 
 private val UPDATE_INTERVAL = 500.milliseconds
 
-private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
+private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   private lateinit var lbIsInFullScreenMode: JLabel
@@ -73,7 +74,7 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
     }
 
     return panel {
-      group("SystemInfo") {
+      group("SystemInfo class") {
         properties(listOf(
           SystemInfo::isLinux,
           SystemInfo::isFreeBSD,
@@ -88,57 +89,65 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
           SystemInfo::isI3))
       }
 
-      group("StartupUiUtil") {
+      group("StartupUiUtil class") {
         properties(listOf(
           StartupUiUtil::isWaylandToolkit,
           StartupUiUtil::isXToolkit,
+          StartupUiUtil::isLWCToolkit,
         ))
       }
 
-      group("X11UiUtil Values") {
-        row("isInitialized:") {
-          label(X11UiUtil.isInitialized().toString())
-        }
-        row("isFullScreenSupported:") {
-          label(X11UiUtil.isFullScreenSupported().toString())
-        }
-        row("isInFullScreenMode:") {
-          lbIsInFullScreenMode = label("").component
+      group("X11UiUtil class") {
+        if (StartupUiUtil.isXToolkit()) {
+          row("isInitialized:") {
+            label(X11UiUtil.isInitialized().toString())
+          }
+          row("isFullScreenSupported:") {
+            label(X11UiUtil.isFullScreenSupported().toString())
+          }
+          row("isInFullScreenMode:") {
+            lbIsInFullScreenMode = label("").component
 
-          button("Toggle") {
-            getFrame()?.let {
-              val value = X11UiUtil.isInFullScreenMode(it)
-              X11UiUtil.setFullScreenMode(it, !value)
+            button("Toggle") {
+              getFrame()?.let {
+                val value = X11UiUtil.isInFullScreenMode(it)
+                X11UiUtil.setFullScreenMode(it, !value)
+              }
             }
           }
-        }
-        row("isMaximizedVert:") {
-          lbIsMaximizedVert = label("").component
+          row("isMaximizedVert:") {
+            lbIsMaximizedVert = label("").component
 
-          button("Set BOTH maximized") {
-            getFrame()?.let {
-              X11UiUtil.setMaximized(it, true)
+            button("Set BOTH maximized") {
+              getFrame()?.let {
+                X11UiUtil.setMaximized(it, true)
+              }
             }
           }
-        }
-        row("isMaximizedHorz:") {
-          lbIsMaximizedHorz = label("").component
+          row("isMaximizedHorz:") {
+            lbIsMaximizedHorz = label("").component
 
-          button("Reset BOTH maximized") {
-            getFrame()?.let {
-              X11UiUtil.setMaximized(it, false)
+            button("Reset BOTH maximized") {
+              getFrame()?.let {
+                X11UiUtil.setMaximized(it, false)
+              }
             }
           }
-        }
-        row("isTileWM:") {
-          label(X11UiUtil.isTileWM().toString())
-          contextHelp(X11UiUtil.TILE_WM.sorted().joinToString("<br>"), "Known Tile WMs")
-        }
-        row("isWSL:") {
-          label(X11UiUtil.isWSL().toString())
-            .comment("Used WSL_DISTRO_NAME env variable. Value: ${System.getenv("WSL_DISTRO_NAME") ?: ""}")
+          row("isTileWM:") {
+            label(X11UiUtil.isTileWM().toString())
+            contextHelp(X11UiUtil.TILE_WM.sorted().joinToString("<br>"), "Known Tile WMs")
+          }
+          row("isWSL:") {
+            label(X11UiUtil.isWSL().toString())
+              .comment("Used `WSL_DISTRO_NAME` env variable. Value: ${System.getenv("WSL_DISTRO_NAME") ?: ""}")
+          }
+        } else {
+          row {
+            label("Available for isXToolkit only")
+          }
         }
       }
+
 
       group("IdeFrame") {
         row("isInFullScreen:") {
@@ -170,10 +179,12 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
       group("Misc Values") {
         row("Current desktop:") {
           label(System.getenv("XDG_CURRENT_DESKTOP") ?: "")
-            .comment("Used XDG_CURRENT_DESKTOP env variable")
+            .comment("Used `XDG_CURRENT_DESKTOP` env variable")
         }
         row("Theme:") {
-          val label = label("").component
+          val label = label("")
+            .comment("Obtained by `gsettings get org.gnome.desktop.interface gtk-theme` command")
+            .component
           scope.launch {
             val theme = X11UiUtil.getTheme()
             withContext(Dispatchers.EDT) {
@@ -182,7 +193,9 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
           }
         }
         row("Icon theme:") {
-          val label = label("").component
+          val label = label("")
+            .comment("Obtained by `gsettings get org.gnome.desktop.interface icon-theme` command")
+            .component
           scope.launch {
             val theme = X11UiUtil.getIconTheme()
             withContext(Dispatchers.EDT) {
@@ -198,7 +211,7 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
           scope.launch {
             val config = X11UiUtil.getWindowButtonsConfig()
             withContext(Dispatchers.EDT) {
-              label.comment?.text = "Parsed from gsettings value: $config"
+              label.comment?.text = "Obtained by `gsettings get org.gnome.desktop.wm.preferences button-layout` command<br>Value: $config"
             }
           }
           WindowButtonsConfiguration.getInstance()?.state?.let {

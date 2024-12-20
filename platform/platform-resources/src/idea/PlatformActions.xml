@@ -1371,7 +1371,7 @@
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction"/>
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction"/>
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction"/>
-        <action id="X11UiTestAction" internal="true" class="com.intellij.internal.ui.X11UiTestAction"/>
+        <action id="UnixInfoTest" internal="true" class="com.intellij.internal.ui.UnixInfoTestAction"/>
         <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction"/>
         <action id="TreeExpandAll" internal="true" class="com.intellij.internal.tree.ExpandAll"/>
         <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction">
