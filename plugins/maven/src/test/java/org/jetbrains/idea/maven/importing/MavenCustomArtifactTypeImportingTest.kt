@@ -4,14 +4,14 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.OutputBuildEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
-class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase() {
 
 /*  private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String

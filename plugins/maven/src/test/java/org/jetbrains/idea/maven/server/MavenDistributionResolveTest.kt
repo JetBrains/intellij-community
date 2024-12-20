@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.server
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
@@ -19,7 +19,7 @@ import java.net.InetSocketAddress
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.absolutePathString
 
-class MavenDistributionResolveTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   private val myEvents: MutableList<Pair<BuildEvent, Throwable>> = ArrayList()
   private lateinit var mySyncViewManager: SyncViewManager
 

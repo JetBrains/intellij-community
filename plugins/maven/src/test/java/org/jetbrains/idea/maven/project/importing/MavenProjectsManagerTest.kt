@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DeleteAction
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -36,7 +36,7 @@ import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension
 import org.junit.Test
 
-class MavenProjectsManagerTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   
   override fun setUp() {
     super.setUp()

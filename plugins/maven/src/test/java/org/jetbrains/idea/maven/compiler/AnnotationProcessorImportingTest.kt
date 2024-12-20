@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -29,7 +29,7 @@ import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUt
 import org.junit.Assert
 import org.junit.Test
 
-class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCaseLegacy() {
+class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testImportAnnotationProcessorProfiles() = runBlocking {
     createModulePom("module1", """

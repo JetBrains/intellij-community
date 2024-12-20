@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.roots.ProjectRootManager
@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
-class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
   
   fun testDontExcludeTargetTest() = runBlocking {
     MavenProjectsManager.getInstance(project).importingSettings.isExcludeTargetFolder = false

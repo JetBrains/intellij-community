@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.navigator.structure
 
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
-class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   private var myNavigator: MavenProjectsNavigator? = null
   private var myStructure: MavenProjectsStructure? = null
 

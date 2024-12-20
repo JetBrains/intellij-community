@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.execution
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Test
 import java.util.function.Consumer
 
-class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   private var myDataContext: DataContext? = null
   private var myProvider: MavenRunAnythingProvider? = null
 
