@@ -13,6 +13,7 @@
                              bundle="messages.DevKitDebuggerBundle"
                              key="configurable.name.ide.debugger"
                              provider="org.jetbrains.idea.devkit.debugger.settings.DevKitDebuggerConfigurableProvider"/>
+    <debugger.steppingListener implementation="org.jetbrains.idea.devkit.debugger.SteppingStartListener"/>
   </extensions>
   <actions>
     <action id="DevKit.Debugger.Disable.IDE.State"
@@ -22,10 +23,6 @@
       <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
     </action>
   </actions>
-  <applicationListeners>
-    <listener class="org.jetbrains.idea.devkit.debugger.SteppingStartListener"
-              topic="com.intellij.debugger.engine.SteppingListener"/>
-  </applicationListeners>
   <projectListeners>
     <listener class="org.jetbrains.idea.devkit.debugger.PauseListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>

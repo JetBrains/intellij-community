@@ -104,7 +104,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2160,8 +2159,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     protected void beforeSteppingAction(SuspendContextImpl context) {
       if (context != null) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(SteppingListener.TOPIC)
-          .beforeSteppingStarted(context, getSteppingAction());
+        SteppingListener.notifySteppingStarted(context, getSteppingAction());
       }
     }
 

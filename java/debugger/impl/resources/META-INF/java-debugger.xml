@@ -81,6 +81,8 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.debugger.extraDebugNodesProvider"
                     interface="com.intellij.debugger.ui.tree.ExtraDebugNodesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.steppingListener"
+                    interface="com.intellij.debugger.engine.SteppingListener" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -173,6 +175,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.ui.breakpoints.JavaBreakpointsUsageCollector"/>
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
+    <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
   </extensions>
 
   <actions>
@@ -398,9 +401,4 @@
     <action id="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction"
             class="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction" internal="true"/>
   </actions>
-
-  <applicationListeners>
-    <listener class="com.intellij.debugger.engine.CancelingSteppingListener"
-              topic="com.intellij.debugger.engine.SteppingListener"/>
-  </applicationListeners>
 </idea-plugin>
