@@ -81,3 +81,6 @@ record ExtendsRecordExplicitly() <error descr="'extends' not allowed on record">
 record AbstractMethod() {
   <error descr="Abstract method in non-abstract class">abstract</error> void f();
 }
+record MethodWithoutBody() {
+  <error descr="Method body expected">void x();</error>
+}

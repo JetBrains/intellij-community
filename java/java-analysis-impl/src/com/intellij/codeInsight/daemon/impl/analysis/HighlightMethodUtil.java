@@ -1300,12 +1300,14 @@ public final class HighlightMethodUtil {
       int start = method.getModifierList().getTextRange().getStartOffset();
       int end = Math.max(start, method.getTextRange().getEndOffset());
 
-      String description = JavaErrorBundle.message("missing.method.body");
+      boolean abstractAllowed = !aClass.isRecord() && !method.isConstructor() && !(aClass instanceof PsiAnonymousClass);
+      String description = abstractAllowed
+                           ? JavaErrorBundle.message("missing.method.body.or.declare.abstract")
+                           : JavaErrorBundle.message("missing.method.body");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description);
       IntentionAction action = QuickFixFactory.getInstance().createAddMethodBodyFix(method);
       errorResult.registerFix(action, null, null, null, null);
-      if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null &&
-          !(aClass instanceof PsiAnonymousClass)) {
+      if (abstractAllowed && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null) {
         final List<IntentionAction> actions =
           JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, true));
         QuickFixAction.registerQuickFixActions(errorResult, null, actions);
