@@ -277,8 +277,6 @@ open class AddInterpreterState(propertyGraph: PropertyGraph) {
    * Use [PythonAddInterpreterModel.getBaseCondaOrError]
    */
   val baseCondaEnv: ObservableMutableProperty<PyCondaEnv?> = propertyGraph.property(null)
-
-
 }
 
 class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(propertyGraph) {
