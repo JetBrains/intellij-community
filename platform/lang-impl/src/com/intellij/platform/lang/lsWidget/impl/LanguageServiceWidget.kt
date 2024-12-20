@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
@@ -46,8 +45,6 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (!Registry.`is`("language.service.status.bar.widget")) return WidgetState.HIDDEN
-
     // If there are more than maxIconsInStatusBar services, then not all icons show up in the status bar.
     // Sorting helps to make sure that icons with an error marker go first.
     val allItems = LanguageServiceWidgetItemsProvider.EP_NAME.extensionList

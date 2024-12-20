@@ -1393,9 +1393,6 @@
     <statusBarWidgetFactory id="LanguageServiceStatusBarWidget"
                             implementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetFactory"
                             order="after Position, after AIAssistant, before LineSeparator"/>
-    <registryKey key="language.service.status.bar.widget"
-                 description="Show Language Services status bar widget"
-                 defaultValue="true"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lang.lsWidget.impl.fus.LanguageServiceWidgetUsagesCollector"/>
     <applicationService serviceInterface="com.intellij.platform.lang.lsWidget.internal.LanguageServiceWidgetActionsService"
                         serviceImplementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetActionsServiceImpl"/>
