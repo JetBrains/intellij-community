@@ -79,7 +79,7 @@ class SettingsSyncPromotion : SettingsDialogListener {
 
     SettingsSyncEvents.Companion.getInstance().addListener(object : SettingsSyncEventListener {
       override fun loginStateChanged() {
-        if (RemoteCommunicatorHolder.getAuthService().isLoggedIn()) {
+        if (RemoteCommunicatorHolder.getCurrentUserData() != null) {
           SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(SettingsSyncEventsStatistics.PromotionInSettingsEvent.LOGGED_IN)
         }
       }

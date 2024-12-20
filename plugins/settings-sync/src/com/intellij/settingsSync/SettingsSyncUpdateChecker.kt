@@ -15,7 +15,11 @@ class SettingsSyncUpdateChecker() {
 
   @RequiresBackgroundThread
   fun scheduleUpdateFromServer() : UpdateResult {
-    val updateResult = RemoteCommunicatorHolder.getRemoteCommunicator().receiveUpdates()
+    val updateResult = RemoteCommunicatorHolder.getRemoteCommunicator()?.receiveUpdates() ?: run {
+      val errorMsg = "Cannot get update from server - no communicator provider"
+      LOG.info(errorMsg)
+      return UpdateResult.Error(errorMsg)
+    }
     when(updateResult) {
       is UpdateResult.Success -> {
         val snapshot = updateResult.settingsSnapshot

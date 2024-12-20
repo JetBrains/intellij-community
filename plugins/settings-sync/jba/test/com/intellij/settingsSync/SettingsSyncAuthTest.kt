@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.CloudConfigServerCommunicator
 import com.intellij.settingsSync.jba.CloudConfigVersionContext
@@ -72,11 +73,14 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
 
     communicator.checkServerState()
     verify(authServiceSpy, times(1)).invalidateJBA("OLD-ID-TOKEN")
-    assertFalse(authServiceSpy.isLoggedIn())
+
+    TODO("assertFalse(authServiceSpy.isLoggedIn())")
 
     // User updates JBA details
     `when`(accountInfoService.idToken).thenReturn("NEW-ID-TOKEN")
-    authServiceSpy.login()
+    runBlockingCancellable {
+      authServiceSpy.login(null)
+    }
 
     // Check that userId was updated in communicator
     communicator.checkServerState()
@@ -115,7 +119,7 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     }
 
     communicator.checkServerState()
-    assertFalse(authServiceSpy.isLoggedIn())
+    TODO("assertFalse(authServiceSpy.isLoggedIn())")
     assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
   }
 }

@@ -919,6 +919,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-sync/intellij.settingsSync.iml" filepath="$PROJECT_DIR$/plugins/settings-sync/intellij.settingsSync.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/settings-sync/fileSystem/intellij.settingsSync.fileSystem.iml" filepath="$PROJECT_DIR$/plugins/settings-sync/fileSystem/intellij.settingsSync.fileSystem.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-sync/git/intellij.settingsSync.git.iml" filepath="$PROJECT_DIR$/plugins/settings-sync/git/intellij.settingsSync.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-sync/jba/intellij.settingsSync.jba.iml" filepath="$PROJECT_DIR$/plugins/settings-sync/jba/intellij.settingsSync.jba.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/intellij.sh.iml" filepath="$PROJECT_DIR$/plugins/sh/intellij.sh.iml" />

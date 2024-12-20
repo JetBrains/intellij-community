@@ -12,6 +12,7 @@
   <content>
     <module name="intellij.settingsSync.git"/>
     <module name="intellij.settingsSync.jba"/>
+    <!--<module name="intellij.settingsSync.fileSystem"/>-->
   </content>
 
   <depends>com.intellij.modules.platform</depends>

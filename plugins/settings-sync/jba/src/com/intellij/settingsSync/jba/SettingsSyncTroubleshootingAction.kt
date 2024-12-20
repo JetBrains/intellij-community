@@ -64,7 +64,12 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val remoteCommunicator = RemoteCommunicatorHolder.getRemoteCommunicator()
+    val remoteCommunicator = RemoteCommunicatorHolder.getRemoteCommunicator() ?: run {
+      Messages.showErrorDialog(e.project,
+                               "No remote communicator available",
+                               SettingsSyncBundle.message("troubleshooting.dialog.title"))
+      return
+    }
     if (remoteCommunicator !is CloudConfigServerCommunicator) {
       Messages.showErrorDialog(e.project,
                                SettingsSyncBundle.message("troubleshooting.dialog.error.wrong.configuration", remoteCommunicator::class),
@@ -147,7 +152,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
                                       val remoteCommunicator: CloudConfigServerCommunicator,
                                       val rootNode: TreeNode.Branch) : DialogWrapper(project, true) {
 
-    val userData = RemoteCommunicatorHolder.getAuthService().getUserData()
+    val userData = RemoteCommunicatorHolder.getCurrentUserData()
 
     init {
       title = SettingsSyncBundle.message("troubleshooting.dialog.title")
@@ -273,7 +278,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       if (showHistoryButton) {
         actionButton(object : DumbAwareAction(AllIcons.Vcs.History) {
           override fun actionPerformed(e: AnActionEvent) {
-            showHistoryDialog(project, remoteCommunicator, version.filePath, userData.name!!)
+            showHistoryDialog(project, remoteCommunicator, version.filePath, userData?.name ?: "Unknown")
           }
         })
       }

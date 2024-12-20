@@ -56,8 +56,8 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null,
   }
 
   @Throws(IOException::class)
-  override fun readFileInternal(snapshotFilePath: String): Pair<InputStream?, String?> {
-    return clientVersionContext.doWithVersion(snapshotFilePath, null) { filePath ->
+  override fun readFileInternal(filePath: String): Pair<InputStream?, String?> {
+    return clientVersionContext.doWithVersion(filePath, null) { filePath ->
       try {
         val stream = client.read(filePath)
 
@@ -121,6 +121,9 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null,
   override fun deleteFileInternal(filePath: String) {
     client.delete(filePath)
   }
+
+  override val userId: String
+    get() = "jba"
 
 
   override fun writeFileInternal(filePath: String, versionId: String?, content: InputStream) : String? {

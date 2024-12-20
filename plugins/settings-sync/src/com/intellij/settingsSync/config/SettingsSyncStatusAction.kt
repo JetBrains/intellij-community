@@ -21,7 +21,7 @@ private enum class SyncStatus {ON, OFF, FAILED}
 
 private fun getStatus() : SyncStatus {
   if (SettingsSyncSettings.getInstance().syncEnabled &&
-      RemoteCommunicatorHolder.getAuthService().isLoggedIn()) {
+      RemoteCommunicatorHolder.getCurrentUserData() != null) {
     return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
     else SyncStatus.FAILED
   }
