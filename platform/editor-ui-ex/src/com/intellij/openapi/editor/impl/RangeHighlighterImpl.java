@@ -156,7 +156,9 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
 
   @Override
   public void setVisibleIfFolded(boolean value) {
-    putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+    if (isVisibleIfFolded() != value) {
+      putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+    }
   }
 
   @Override
@@ -357,7 +359,8 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     }
   }
 
-  private void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+  @Override
+  public void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
       // under IN_BATCH_CHANGE_MASK, do not fire events, just add flags above
       int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;

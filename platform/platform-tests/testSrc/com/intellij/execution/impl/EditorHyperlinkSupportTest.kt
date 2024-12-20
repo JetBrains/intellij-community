@@ -70,11 +70,11 @@ class EditorHyperlinkSupportTest : BasePlatformTestCase() {
     assertEquals(expectedLinksRanges, collectAllHyperlinks().map { it.textRange })
 
     val customLinkStartOffset = document.getLineStartOffset(1)
-    val customHyperlink = editor.getMarkupModel().addRangeHighlighterAndChangeAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES,
+    val customHyperlink = editor.getMarkupModel().addRangeHighlighter(CodeInsightColors.HYPERLINK_ATTRIBUTES,
                                                                                          customLinkStartOffset,
                                                                                          customLinkStartOffset + customLinkText.length,
                                                                                          HighlighterLayer.HYPERLINK,
-                                                                                         HighlighterTargetArea.EXACT_RANGE, false) {}
+                                                                                         HighlighterTargetArea.EXACT_RANGE)
     val hyperlinks = collectAllHyperlinks()
     assertEquals(expectedLinksRanges, hyperlinks.map { it.textRange })
 
