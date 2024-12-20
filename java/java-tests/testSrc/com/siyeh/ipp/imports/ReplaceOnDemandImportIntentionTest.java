@@ -15,6 +15,7 @@ public class ReplaceOnDemandImportIntentionTest extends IPPTestCase {
 
   public void testStaticImport() { doTest(); }
   public void testModuleImport() { doTest(); }
+  public void testModuleImportImplicitImport() { doTest(); }
 
   @Override
   protected String getIntentionName() {
