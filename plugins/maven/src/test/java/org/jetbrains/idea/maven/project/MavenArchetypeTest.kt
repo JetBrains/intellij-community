@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.junit.Test
 import java.nio.file.Path
 
-class MavenArchetypeTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenArchetypeTest : MavenMultiVersionImportingTestCase() {
   private var myManager: MavenEmbeddersManager? = null
 
   override fun setUp() {
@@ -36,7 +36,7 @@ class MavenArchetypeTest : MavenMultiVersionImportingTestCaseLegacy() {
   fun testInnerArchetypes() {
     assumeVersion("bundled")
 
-    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.toString())
     val archetypes = embedder.getInnerArchetypes(Path.of("/non-existing-path"))
     TestCase.assertEquals(0, archetypes.size) // at least, there were no errors
   }
@@ -45,7 +45,7 @@ class MavenArchetypeTest : MavenMultiVersionImportingTestCaseLegacy() {
   fun testRemoteArchetypes() {
     assumeVersion("bundled")
 
-    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.toString())
     val archetypes = embedder.getRemoteArchetypes("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/")
     val filtered = archetypes
       .filter { archetype: MavenArchetype? ->
@@ -60,7 +60,7 @@ class MavenArchetypeTest : MavenMultiVersionImportingTestCaseLegacy() {
   fun testResolveAndGetArchetypeDescriptor() {
     assumeVersion("bundled")
 
-    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.toString())
     val descriptorMap = embedder.resolveAndGetArchetypeDescriptor(
       "org.apache.maven.archetypes",
       "maven-archetype-archetype",

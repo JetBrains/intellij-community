@@ -786,6 +786,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
+  protected fun getRelativePath(base: Path, path: String) : String {
+    return base.relativize(Path.of(path)).toString()
+  }
+
   companion object {
     val preimportTestMode: Boolean = java.lang.Boolean.getBoolean("MAVEN_TEST_PREIMPORT")
 

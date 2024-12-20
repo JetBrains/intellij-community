@@ -1,13 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,17 +17,17 @@ import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
-import java.io.File
+import java.nio.file.Files.createDirectories
+import java.nio.file.Path.of
 
-class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
   private lateinit var myAnotherProjectRoot: VirtualFile
 
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
-    val projectDir = File(dir, "anotherProject")
-    projectDir.mkdirs()
-    myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)!!
+    val projectDir = createDirectories(of(dir.toString(), "anotherProject"))
+    myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)!!
   }
 
   @Test
@@ -68,7 +67,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCaseLegacy() 
 
     assertUnorderedElementsAreEqual(
       allConnectors.first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(dir, File(it))
+        getRelativePath(dir, it)
       },
       listOf("project", "anotherProject")
     )
@@ -111,7 +110,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCaseLegacy() 
 
     assertUnorderedElementsAreEqual(
       MavenServerManager.getInstance().getAllConnectors().map {
-        FileUtil.getRelativePath(dir, File(it.multimoduleDirectories.first()))
+        getRelativePath(dir, it.multimoduleDirectories.first())
       },
       listOf("project", "anotherProject")
     )
@@ -159,7 +158,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCaseLegacy() 
 
       assertContainsElements(
         MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
-          FileUtil.getRelativePath(dir, File(it))
+          getRelativePath(dir, it)
         },
         listOf("project", "anotherProject")
       )
@@ -194,7 +193,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCaseLegacy() 
 
     assertUnorderedElementsAreEqual(
       MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(dir, File(it))
+        getRelativePath(dir, it)
       }.map { it?.replace("\\", "/") },
       listOf("project/parent", "project/m1")
     )
