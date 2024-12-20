@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="Python" implementationClass="ru.adelf.idea.dotenv.python.PythonEnvCompletionProvider"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.python.PythonEnvCompletionProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.python.PythonEnvironmentVariablesUsagesProvider"/>
+  </extensions>
+</idea-plugin>
