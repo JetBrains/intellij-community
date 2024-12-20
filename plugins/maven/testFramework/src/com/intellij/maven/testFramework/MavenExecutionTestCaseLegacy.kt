@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
 import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
@@ -6,7 +6,8 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 
-abstract class MavenExecutionTestCase : MavenMultiVersionImportingTestCase() {
+@Deprecated("Use 'MavenExecutionTestCase'")
+abstract class MavenExecutionTestCaseLegacy : MavenMultiVersionImportingTestCaseLegacy() {
   private lateinit var myFixture: MavenProjectJDKTestFixture
 
   public override fun setUp() {

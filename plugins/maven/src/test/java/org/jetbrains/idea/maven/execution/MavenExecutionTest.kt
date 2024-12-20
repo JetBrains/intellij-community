@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.maven.testFramework.MavenExecutionTestCase
+import com.intellij.maven.testFramework.MavenExecutionTestCaseLegacy
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.Disposer
@@ -34,7 +34,7 @@ import java.io.File
 import java.io.IOException
 import javax.swing.SwingUtilities
 
-class MavenExecutionTest : MavenExecutionTestCase() {
+class MavenExecutionTest : MavenExecutionTestCaseLegacy() {
   
   @Test
   fun testExternalExecutor() = runBlocking {
