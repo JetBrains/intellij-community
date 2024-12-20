@@ -20,15 +20,17 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.resume
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -44,8 +46,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   fun downloadSdk(sdk: Sdk) {
     coroutineScope.launch(Dispatchers.EDT) {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
-        val tracker = SdkDownloadTracker.getInstance()
-        tracker.startSdkDownloadIfNeeded(sdk)
+        downloadSdkInternal(sdk)
       }
     }
   }
@@ -74,16 +75,29 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     return sdk
   }
 
-  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onSdkCreated: suspend (Sdk) -> Unit = {}, ): CompletableFuture<Boolean> {
-    val sdkDownloadedFuture = CompletableFuture<Boolean>()
-
-    coroutineScope.launch(Dispatchers.EDT) {
-      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.jdkItem.suggestedSdkName)) {
-        val downloadTask = createDownloadTask(sdkDownloadTask)
-        if (downloadTask == null) {
-          sdkDownloadedFuture.complete(false)
-          return@withBackgroundProgress
+  private suspend fun downloadSdkInternal(sdk: Sdk): Boolean {
+    return coroutineScope {
+      Disposer.newDisposable("The JdkDownloader#downloadSdk lifecycle").use { disposable ->
+        val tracker = SdkDownloadTracker.getInstance()
+        tracker.startSdkDownloadIfNeeded(sdk)
+        suspendCancellableCoroutine { continuation ->
+          val registered = tracker.tryRegisterDownloadingListener(sdk, disposable, null) {
+            continuation.resume(it)
+          }
+          if (!registered) {
+            continuation.resume(false)
+          }
         }
+      }
+    }
+  }
+
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onSdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
+    return coroutineScope.async(Dispatchers.EDT) {
+      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.jdkItem.suggestedSdkName)) {
+
+        val downloadTask = createDownloadTask(sdkDownloadTask)
+                           ?: return@withBackgroundProgress false
 
         val sdk = writeAction {
           createDownloadSdkInternal(downloadTask)
@@ -91,18 +105,9 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
         onSdkCreated(sdk)
 
-        val tracker = SdkDownloadTracker.getInstance()
-        tracker.startSdkDownloadIfNeeded(sdk)
-        val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
-          sdkDownloadedFuture.complete(it)
-        }
-        if (!registered) {
-          sdkDownloadedFuture.complete(false)
-        }
+        downloadSdkInternal(sdk)
       }
-    }
-
-    return sdkDownloadedFuture
+    }.asCompletableFuture()
   }
 
   fun scheduleDownloadJdkForNewProject(sdkDownloadTask: JdkDownloadTask): CompletableFuture<Boolean> {
@@ -116,7 +121,8 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module, isCreatingNewProject: Boolean): CompletableFuture<Boolean> {
     return if (isCreatingNewProject) {
       scheduleDownloadJdkForNewProject(sdkDownloadTask)
-    } else {
+    }
+    else {
       scheduleDownloadJdk(sdkDownloadTask, module)
     }
   }
