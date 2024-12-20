@@ -73,15 +73,45 @@ fun KtWhenCondition.generateNewConditionWithSubject(subject: KtExpression?, isNu
  *
  * // After:
  *  n == 0 || n == 3 ..
+ *
+ *  If a guard condition is present, it will be combined with the last condition with the '&&' operation.
+ *  This will be done regardless of the number of entry conditions.
+ *  Even though it's not correct to use `when` guards with multiple conditions in one branch, transforming it in user code is sensible.
+ *  It preserves the intended meaning and makes the code correct.
+ *
+ *  For example:
+ *  ```
+ *  when (foo) {
+ *      is String,
+ *      is Int if foo > 0 -> ..
+ *  }
+ *  ```
+ *  transforms nicely into
+ *  ```
+ *  if (foo is String || foo is Int && foo > 0) ..
+ *  ```
  */
-fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenCondition>, subject: KtExpression?, isNullableSubject: Boolean) =
-    when (conditions.size) {
+fun KtPsiFactory.combineWhenConditions(entry: KtWhenEntry, subject: KtExpression?, isNullableSubject: Boolean): KtExpression? {
+    val conditions = entry.conditions
+    val combinedConditionsWithSubject = when (conditions.size) {
         0 -> null
         1 -> conditions[0].generateNewConditionWithSubject(subject, isNullableSubject)
         else -> buildExpression {
             appendExpressions(conditions.map { it.generateNewConditionWithSubject(subject, isNullableSubject) }, separator = "||")
         }
     }
+    return handleWhenGuard(combinedConditionsWithSubject, entry)
+}
+
+private fun KtPsiFactory.handleWhenGuard(ktExpression: KtExpression?, entry: KtWhenEntry): KtExpression? {
+    val guardExpression = entry.guard?.getExpression()
+    if (ktExpression == null) return guardExpression
+    if (guardExpression == null) return ktExpression
+
+    val needParentheses = guardExpression is KtBinaryExpression && guardExpression.operationToken == KtTokens.OROR
+    val preparedGuard = if (needParentheses) createExpression("(${guardExpression.text})") else guardExpression
+    return createExpression("${ktExpression.text} && ${preparedGuard.text}")
+}
 
 /**
  * Returns a new [KtWhenExpression] with introduced subject in brackets.

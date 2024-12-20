@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// IGNORE_K1
+
+private fun test(s: Any) {
+    if (s is String || s is Int && s > 5) { println("1") }
+    else { println("2") }
+}

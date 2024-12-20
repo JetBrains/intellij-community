@@ -5949,6 +5949,31 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithEqualityTests.kt");
         }
 
+        @TestMetadata("whenWithGuardIncorrectTwoConditions.kt")
+        public void testWhenWithGuardIncorrectTwoConditions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardIncorrectTwoConditions.kt");
+        }
+
+        @TestMetadata("whenWithGuardNoParentheses.kt")
+        public void testWhenWithGuardNoParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardNoParentheses.kt");
+        }
+
+        @TestMetadata("whenWithGuardOrOrNoParentheses.kt")
+        public void testWhenWithGuardOrOrNoParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardOrOrNoParentheses.kt");
+        }
+
+        @TestMetadata("whenWithGuardOrOrParentheses.kt")
+        public void testWhenWithGuardOrOrParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardOrOrParentheses.kt");
+        }
+
+        @TestMetadata("whenWithGuardParentheses.kt")
+        public void testWhenWithGuardParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardParentheses.kt");
+        }
+
         @TestMetadata("whenWithGuards.kt")
         public void testWhenWithGuards() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuards.kt");
@@ -5967,6 +5992,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("whenWithMultipleConditionTypes.kt")
         public void testWhenWithMultipleConditionTypes() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithMultipleConditionTypes.kt");
+        }
+
+        @TestMetadata("whenWithMultipleGuards.kt")
+        public void testWhenWithMultipleGuards() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithMultipleGuards.kt");
         }
 
         @TestMetadata("whenWithNegativePatterns.kt")
