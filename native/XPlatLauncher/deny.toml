@@ -4,6 +4,9 @@ exclude = ["cargo-deny", "cargo-about"]
 
 [advisories]
 version = 2
+ignore = [
+    { id = "RUSTSEC-2024-0421", reason = "waiting for 'reqwest'" },
+]
 
 [licenses]
 version = 2
