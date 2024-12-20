@@ -353,7 +353,7 @@ public class HighlightInfo implements Segment {
 
   public void setHighlighter(@NotNull RangeHighlighterEx highlighter) {
     if (this.highlighter != null) {
-      throw new IllegalStateException("Cannot set highlighter to " + highlighter+ " because it already set: "+this.highlighter);
+      throw new IllegalStateException("Cannot set highlighter to " + highlighter+ " because it already set: "+this.highlighter+". Maybe this HighlightInfo was (incorrectly) stored and reused?");
     }
     this.highlighter = highlighter;
   }
