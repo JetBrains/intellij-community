@@ -14,6 +14,8 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.buildData.productInfo.CustomPropertyNames
+import com.intellij.platform.ide.productInfo.IdeProductInfo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
@@ -75,6 +77,9 @@ internal object ITNProxy {
     template["app.build.date.release"] = appInfo.majorReleaseBuildDate.time.time.toString()
     template["app.product.code"] = build.productCode
     template["app.build.number"] = buildNumberWithAllDetails
+    IdeProductInfo.getInstance().currentProductInfo.customProperties
+      .find { it.key == CustomPropertyNames.GIT_REVISION }
+      ?.let { template["app.source.revision"] = it.value }
     template
   }
 
