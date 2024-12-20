@@ -238,7 +238,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   protected CommitChangeListDialog(@NotNull CommitChangeListDialogWorkflow workflow) {
-    super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
+    super(workflow.getProject(), true, IdeModalityType.IDE);
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     Disposer.register(getDisposable(), this);

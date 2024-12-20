@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -75,7 +75,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
                        @NotNull Collection<? extends Repository> allRepos,
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
-    super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
+    super(project, true, IdeModalityType.IDE);
     myProject = project;
     myController =
       new PushController(project, this, allRepos, selectedRepositories, currentRepo,

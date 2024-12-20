@@ -18,7 +18,6 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -170,9 +169,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     if (!headless) {
       Dialog.ModalityType modalityType = DialogWrapper.IdeModalityType.IDE.toAwtModality();
-      if (Registry.is("ide.perProjectModality", false)) {
-        modalityType = ideModalityType.toAwtModality();
-      }
       myDialog.setModalityType(modalityType);
     }
   }
@@ -431,18 +427,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
-    boolean perProjectModality = changeModalityState &&
-                                 project != null &&
-                                 !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED &&
-                                 Registry.is("ide.perProjectModality", false);
     if (changeModalityState) {
       commandProcessor.enterModal();
-      if (perProjectModality) {
-        LaterInvocator.enterModal(project, myDialog.getWindow());
-      }
-      else {
-        LaterInvocator.enterModal(myDialog);
-      }
+      LaterInvocator.enterModal(myDialog);
     }
 
     if (appStarted) {
@@ -473,12 +460,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     finally {
       if (changeModalityState) {
         commandProcessor.leaveModal();
-        if (perProjectModality) {
-          LaterInvocator.leaveModal(project, myDialog.getWindow());
-        }
-        else {
-          LaterInvocator.leaveModal(myDialog);
-        }
+        LaterInvocator.leaveModal(myDialog);
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(() -> result.complete(null));

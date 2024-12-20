@@ -11,9 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.IDE
-import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.PROJECT
 import com.intellij.openapi.ui.Messages.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
@@ -40,7 +38,7 @@ import kotlin.math.min
 private val LOG = logger<GitConfigureRemotesDialog>()
 
 class GitConfigureRemotesDialog(val project: Project, val repositories: Collection<GitRepository>) :
-    DialogWrapper(project, true, getModalityType()) {
+    DialogWrapper(project, true, IDE) {
 
   private val git = Git.getInstance()
 
@@ -331,5 +329,3 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
     }
   })
 }
-
-private fun getModalityType() = if (Registry.`is`("ide.perProjectModality")) PROJECT else IDE

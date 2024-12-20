@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -131,10 +131,6 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
     frame.addWindowListener(windowListener)
     executeOnDispose {
       frame.removeWindowListener(windowListener)
-    }
-
-    if (Registry.`is`("ide.perProjectModality", false)) {
-      frame.isAlwaysOnTop = true
     }
 
     if (isCloseOnEsc) {

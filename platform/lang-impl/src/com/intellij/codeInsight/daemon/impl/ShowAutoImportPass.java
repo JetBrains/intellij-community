@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
@@ -158,12 +157,6 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
            (ApplicationManager.getApplication().isUnitTestMode() ||
             DaemonListeners.canChangeFileSilently(psiFile, isInContent, extensionsAllowToChangeFileSilently)) &&
-           isInModelessContext(psiFile.getProject());
-  }
-
-  private static boolean isInModelessContext(@NotNull Project project) {
-    return Registry.is("ide.perProjectModality") ?
-           !LaterInvocator.isInModalContextForProject(project) :
            !LaterInvocator.isInModalContext();
   }
 
