@@ -65,12 +65,12 @@ class EditorActionAvailabilityHint @JvmOverloads constructor(val actionId: Strin
  * See the last parameter of [com.intellij.openapi.editor.ex.MarkupModelEx.addRangeHighlighterAndChangeAttributes]
  */
 @Experimental
-fun RangeMarker.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
-  this as UserDataHolderEx? ?: run {
+fun UserDataHolder.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
+  this as UserDataHolder? ?: run {
     logger.error("Attempt to register ${EditorActionAvailabilityHint::class.simpleName} on ${RangeMarker::class.simpleName} which is not ${UserDataHolderEx::class.simpleName} ")
     return
   }
-  this.addActionAvailabilityHintImpl(*hints)
+  addActionAvailabilityHintImpl(*hints)
 }
 
 /**
@@ -81,11 +81,11 @@ fun RangeMarker.addActionAvailabilityHint(vararg hints: EditorActionAvailability
  */
 @Experimental
 fun Inlay<*>.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
-  this as UserDataHolderEx? ?: run {
+  this as UserDataHolder? ?: run {
     logger.error("Attempt to register ${EditorActionAvailabilityHint::class.simpleName} on ${Inlay::class.simpleName} which is not ${UserDataHolderEx::class.simpleName} ")
     return
   }
-  this.addActionAvailabilityHintImpl(*hints)
+  addActionAvailabilityHintImpl(*hints)
 }
 
 @Experimental
@@ -154,7 +154,7 @@ private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String,
   return null
 }
 
-private fun UserDataHolderEx.addActionAvailabilityHintImpl(vararg newHints: EditorActionAvailabilityHint) {
+private fun UserDataHolder.addActionAvailabilityHintImpl(vararg newHints: EditorActionAvailabilityHint) {
   var hints = ConcurrencyUtil.computeIfAbsent(this, hintsKey) { ContainerUtil.createConcurrentList() }
   for (newHint in newHints) {
     val existingHint = hints.find { it.actionId == newHint.actionId }

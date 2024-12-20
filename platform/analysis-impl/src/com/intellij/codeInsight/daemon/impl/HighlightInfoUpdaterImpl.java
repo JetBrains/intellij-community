@@ -1225,22 +1225,21 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
-
-      range2markerCache.put(finalInfoRange, finalHighlighter);
       newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
     };
     if (LOG.isDebugEnabled()) {
       LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + currentProgressInfo());
     }
+    RangeHighlighterEx highlighter;
     if (recycled == null) {
       // create new
       if (isFileLevel) {
-        RangeHighlighterEx highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, null, markup);
+        highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, null, markup);
         ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, highlighter);
       }
       else {
         //assertNoInfoInMarkup(newInfo, markup, recycler, invalidElementRecycler);
-        markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
+        highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                       HighlighterTargetArea.EXACT_RANGE, false,
                                                       changeAttributes);
       }
@@ -1248,17 +1247,18 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     else {
       // recycle
       HighlightInfo info = recycled.info();
-      RangeHighlighterEx highlighter = info.getHighlighter();
+      highlighter = info.getHighlighter();
       if (isFileLevel) {
-        RangeHighlighterEx highlighterToUse =
-          createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup);
-        ((HighlightingSessionImpl)session).replaceFileLevelHighlight(info, newInfo, highlighterToUse);
+        highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup);
+        ((HighlightingSessionImpl)session).replaceFileLevelHighlight(info, newInfo, highlighter);
       }
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
       }
       assert info.getGroup() == HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP: info;
     }
+    newInfo.setHighlighter(highlighter);
+    range2markerCache.put(finalInfoRange, highlighter);
   }
 
   @NotNull
@@ -1272,7 +1272,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     // for the condition `existing.equalsByActualOffset(info)` above work correctly,
     // create a fake whole-file highlighter which will track the document size changes
     // and which will make possible to calculate correct `info.getActualEndOffset()`
-    info.setHighlighter(highlighter);
+    //info.setHighlighter(highlighter);
     info.setGroup(group);
     return highlighter;
   }

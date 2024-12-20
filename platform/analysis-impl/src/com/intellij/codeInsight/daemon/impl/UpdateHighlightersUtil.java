@@ -298,12 +298,10 @@ public final class UpdateHighlightersUtil {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
       finalHighlighter.setTextAttributesKey(textAttributesKey);
 
-      if (infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme)) ||
-              infoAttributes == TextAttributes.ERASE_MARKER) {
+      if (infoAttributes != null) {
         finalHighlighter.setTextAttributes(infoAttributes);
       }
 
-      info.setHighlighter(finalHighlighter);
       finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 
       Color infoErrorStripeColor = info.getErrorStripeMarkColor(psiFile, colorsScheme);
@@ -312,14 +310,10 @@ public final class UpdateHighlightersUtil {
       if (infoErrorStripeColor != null && !infoErrorStripeColor.equals(attributesErrorStripeColor)) {
         finalHighlighter.setErrorStripeMarkColor(infoErrorStripeColor);
       }
-
-      if (info != finalHighlighter.getErrorStripeTooltip()) {
-        finalHighlighter.setErrorStripeTooltip(info);
-      }
+      finalHighlighter.setErrorStripeTooltip(info);
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
-      range2markerCache.put(finalInfoRange, finalHighlighter);
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
@@ -334,6 +328,8 @@ public final class UpdateHighlightersUtil {
     else {
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
+    info.setHighlighter(highlighter);
+    range2markerCache.put(finalInfoRange, highlighter);
 
     if (infoAttributes != null) {
       boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes(colorsScheme));

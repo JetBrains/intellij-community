@@ -5,6 +5,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -145,11 +146,12 @@ public final class ConsoleTokenUtil {
         prevMarker.dispose();
       }
     }
+    TextAttributesKey key = contentType.getAttributesKey();
     model.addRangeHighlighterAndChangeAttributes(
-      contentType.getAttributesKey(), startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
+      key, startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
       rm -> {
         // fallback for contentTypes that provides only attributes
-        if (rm.getTextAttributesKey() == null) {
+        if (key == null) {
           rm.setTextAttributes(contentType.getAttributes());
         }
         saveTokenType(rm, contentType);

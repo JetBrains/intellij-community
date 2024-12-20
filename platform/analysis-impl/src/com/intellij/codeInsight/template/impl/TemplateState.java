@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
@@ -1136,25 +1137,29 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     int start = getSegments().getSegmentStart(segmentNumber);
     int end = getSegments().getSegmentEnd(segmentNumber);
     MarkupModelEx markupModel = (MarkupModelEx)getEditor().getMarkupModel();
-    return markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1,
-                                                              HighlighterTargetArea.EXACT_RANGE, false, segmentHighlighter -> {
-        segmentHighlighter.setGreedyToLeft(true);
-        segmentHighlighter.setGreedyToRight(true);
+    RangeHighlighterEx highlighter =
+      markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1,
+                                                         HighlighterTargetArea.EXACT_RANGE, false, segmentHighlighter -> {
+          segmentHighlighter.setGreedyToLeft(true);
+          segmentHighlighter.setGreedyToRight(true);
 
-        EditorColorsScheme scheme = getEditor().getColorsScheme();
-        TextAttributes attributes = segmentHighlighter.getTextAttributes(scheme);
-        if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
-          TextAttributes clone = attributes.clone();
-          clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
-          clone.setBackgroundColor(scheme.getDefaultBackground());
-          segmentHighlighter.setTextAttributes(clone);
-        }
-        EditorActionAvailabilityHintKt.addActionAvailabilityHint(segmentHighlighter,
-                                                                 new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                 new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                                 new EditorActionAvailabilityHint("EditorEscape", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
-        segmentHighlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
-      });
+          EditorColorsScheme scheme = getEditor().getColorsScheme();
+
+          TextAttributes attributes = scheme.getAttributes(attributesKey);
+          if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
+            TextAttributes clone = attributes.clone();
+            clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
+            clone.setBackgroundColor(scheme.getDefaultBackground());
+            segmentHighlighter.setTextAttributes(clone);
+          }
+        });
+    EditorActionAvailabilityHintKt.addActionAvailabilityHint(highlighter,
+                                                             new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint("EditorEscape", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+    highlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
+
+    return highlighter;
   }
 
   private boolean mightStopAtVariable(@Nullable Variable var, int segmentNumber) {

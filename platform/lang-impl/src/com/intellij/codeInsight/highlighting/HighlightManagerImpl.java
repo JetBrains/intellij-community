@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -165,24 +166,24 @@ public final class HighlightManagerImpl extends HighlightManager {
                                              @Nullable Collection<? super RangeHighlighter> outHighlighters,
                                              @Nullable Color scrollMarkColor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
-                                                       HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
+    RangeHighlighterEx result = markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER, HighlighterTargetArea.EXACT_RANGE, false,
+           highlighter -> {
 
-        addEditorHighlighterWithHideFlags(editor, highlighter, flags);
+             addEditorHighlighterWithHideFlags(editor, highlighter, flags);
 
-        highlighter.setVisibleIfFolded(true);
-        if (outHighlighters != null) {
-          outHighlighters.add(highlighter);
-        }
+             highlighter.setVisibleIfFolded(true);
 
-        if (forcedAttributes != null) {
-          highlighter.setTextAttributes(forcedAttributes);
-        }
+             if (forcedAttributes != null) {
+               highlighter.setTextAttributes(forcedAttributes);
+             }
 
-        if (scrollMarkColor != null) {
-          highlighter.setErrorStripeMarkColor(scrollMarkColor);
-        }
-      });
+             if (scrollMarkColor != null) {
+               highlighter.setErrorStripeMarkColor(scrollMarkColor);
+             }
+           });
+    if (outHighlighters != null) {
+      outHighlighters.add(result);
+    }
   }
 
   @ApiStatus.Internal
