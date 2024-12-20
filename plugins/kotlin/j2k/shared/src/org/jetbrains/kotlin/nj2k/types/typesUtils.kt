@@ -210,11 +210,17 @@ fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLE
 
 fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
 
-fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
+fun JKJavaPrimitiveType.isInt(): Boolean = jvmPrimitiveType == JvmPrimitiveType.INT
+
+fun JKJavaPrimitiveType.isLong(): Boolean = jvmPrimitiveType == JvmPrimitiveType.LONG
 
 fun JKJavaPrimitiveType.isByte(): Boolean = this == JKJavaPrimitiveType.BYTE
 
 fun JKJavaPrimitiveType.isShort(): Boolean = this == JKJavaPrimitiveType.SHORT
+
+fun JKJavaPrimitiveType.isFloat(): Boolean = this == JKJavaPrimitiveType.FLOAT
+
+fun JKJavaPrimitiveType.isDouble(): Boolean = this == JKJavaPrimitiveType.DOUBLE
 
 fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
     this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE
