@@ -68,7 +68,7 @@ public class PropertiesAnnotator implements Annotator, DumbAware {
         .withFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property)).create();
     }
 
-    highlightTokens(keyNode, holder, new PropertiesHighlighter());
+    highlightTokens(keyNode, holder, new PropertiesHighlighterImpl());
     ASTNode valueNode = ((PropertyImpl)property).getValueNode();
     if (valueNode != null) {
       highlightTokens(valueNode, holder, new PropertiesValueHighlighter());

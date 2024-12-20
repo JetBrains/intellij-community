@@ -60,7 +60,7 @@
 
     <enterHandlerDelegate implementation="com.intellij.lang.properties.EnterInPropertiesFileHandler" id="EnterInPropertiesFileHandler"/>
 
-    <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighter"/>
+    <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighterImpl"/>
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
     <automaticRenamerFactory implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>

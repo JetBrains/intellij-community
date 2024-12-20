@@ -49,7 +49,7 @@ final class PropertiesColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    return new PropertiesHighlighter();
+    return new PropertiesHighlighterImpl();
   }
 
   @Override

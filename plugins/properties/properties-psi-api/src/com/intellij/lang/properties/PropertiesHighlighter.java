@@ -3,14 +3,12 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -18,24 +16,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class PropertiesHighlighter extends SyntaxHighlighterBase {
-  @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
-    return new PropertiesHighlightingLexer();
-  }
-
-  @Override
-  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
-    final PropertiesComponent type = PropertiesComponent.getByTokenType(tokenType);
-
-    TextAttributesKey key = null;
-    if (type != null) {
-      key = type.getTextAttributesKey();
-    }
-
-    return SyntaxHighlighterBase.pack(key);
-  }
+public abstract class PropertiesHighlighter extends SyntaxHighlighterBase {
 
   public enum PropertiesComponent {
     PROPERTY_KEY(
