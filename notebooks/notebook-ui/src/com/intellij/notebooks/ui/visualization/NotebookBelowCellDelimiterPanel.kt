@@ -5,8 +5,7 @@ import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isD
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
@@ -84,15 +83,8 @@ class NotebookBelowCellDelimiterPanel(
   }
 
   private fun createAddTagButton(): JComponent? {
-    val actionGroup = ActionManager.getInstance().getAction("NotebookBelowCellPanelRightGroup") as DefaultActionGroup
-    if(actionGroup.childrenCount == 0) return null
-    val toolbar = ActionManager.getInstance().createActionToolbar("NotebookBelowCellDelimiterPanel",actionGroup, true).apply {
-      (this as? ActionToolbarImpl)?.minimumButtonSize = JBUI.size(18, 18)
-      targetComponent = this@NotebookBelowCellDelimiterPanel
-      component.border = BorderFactory.createEmptyBorder()
-    }
-
-    return toolbar.component
+    val action = ActionManager.getInstance().getAction("JupyterCellAddTagInlayAction")
+    return ActionButton(action, null, "NotebookTagsPanel", JBUI.size(18, 18))
   }
 
   private fun getExecutionCountLabelText(executionCount: Int?) = when {
