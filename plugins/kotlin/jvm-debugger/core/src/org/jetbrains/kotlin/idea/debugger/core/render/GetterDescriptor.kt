@@ -34,7 +34,7 @@ class GetterDescriptor(
 
     init {
         OnDemandRenderer.ON_DEMAND_CALCULATED.set(this, false)
-        val returnTypeName = type?.name()
+        val returnTypeName = getter.returnTypeName()
         setOnDemandPresentationProvider { node ->
             node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.variables.property.get")))
             node.setPresentation(IconManager.getInstance().getPlatformIcon(PlatformIcons.Property), XRegularValuePresentation("", returnTypeName, " "), false)
