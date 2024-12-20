@@ -935,6 +935,14 @@ private fun crossPlatformZip(
 
       out.dir(context.paths.distAllDir, prefix = "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer)
 
+      // not extracted into product properties because it (hopefully) will become obsolete soon
+      val productFilter = when {
+        context.applicationInfo.fullProductName.contains("Rider") -> { dist, _, relPath ->
+          !relPath.startsWith("tools/") || dist.builder.targetOs == OsFamily.WINDOWS && dist.arch == JvmArchitecture.x64
+        }
+        else -> { _: DistributionForOsTaskResult, _: Path, _: String -> true }
+      }
+
       distResults.forEach {
         out.dir(it.outDir, prefix = "", fileFilter = { file, relPath ->
           !relPath.startsWith("bin/") &&
@@ -949,6 +957,7 @@ private fun crossPlatformZip(
           !relPath.startsWith("Info.plist") &&
           !relPath.startsWith("Helpers/") &&
           !relPath.startsWith("lib/build-marker") &&
+          productFilter(it, file, relPath) &&
           filterFileIfAlreadyInZip(relPath, file, zipFileUniqueGuard)
         }, entryCustomizer)
       }
