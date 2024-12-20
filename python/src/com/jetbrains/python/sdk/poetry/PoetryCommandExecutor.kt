@@ -154,9 +154,9 @@ internal fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe 
   }
 }
 
-internal suspend fun detectPoetryEnvs(module: Module?, existingSdkPaths: Set<String>, projectPath: @SystemIndependent @NonNls String?): List<PyDetectedSdk> {
+internal suspend fun detectPoetryEnvs(module: Module?, existingSdkPaths: Set<String>?, projectPath: @SystemIndependent @NonNls String?): List<PyDetectedSdk> {
   val path = module?.basePath?.let { Path.of(it) } ?: projectPath?.let { Path.of(it) } ?: return emptyList()
-  return getPoetryEnvs(path).filter { existingSdkPaths.contains(getPythonExecutable(it)) }.map { PyDetectedSdk(getPythonExecutable(it)) }
+  return getPoetryEnvs(path).filter { existingSdkPaths?.contains(getPythonExecutable(it)) != false }.map { PyDetectedSdk(getPythonExecutable(it)) }
 }
 
 internal suspend fun getPoetryVersion(): String? = runPoetry(null, "--version").getOrNull()?.split(' ')?.lastOrNull()
