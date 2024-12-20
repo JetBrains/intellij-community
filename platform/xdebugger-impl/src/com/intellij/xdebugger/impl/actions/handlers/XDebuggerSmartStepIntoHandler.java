@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -236,19 +237,32 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     // for the remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
     // that will be restored on the client and used to alternate actions availability
     // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
-    ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0, editor.getDocument().getTextLength(),
-                                                                                    HighlighterLayer.LAST, HighlighterTargetArea.EXACT_RANGE, false, h -> {
-      // this hints should be added in this lambda in order to be serialized by RD markup machinery
-      EditorActionAvailabilityHintKt.addActionAvailabilityHint(h,
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
-      data.myActionHintSyntheticHighlighter = h;
-    });
+    RangeHighlighterEx highlighter =
+      ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0,
+                                                                                      editor.getDocument().getTextLength(),
+                                                                                      HighlighterLayer.LAST,
+                                                                                      HighlighterTargetArea.EXACT_RANGE, false, h -> {
+        });
+    // this hints should be added in this lambda in order to be serialized by RD markup machinery
+    EditorActionAvailabilityHintKt.addActionAvailabilityHint(highlighter,
+                                                             new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER,
+                                                                                              EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB,
+                                                                                              EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE,
+                                                                                              EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP,
+                                                                                              EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint(
+                                                               IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN,
+                                                               EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint(
+                                                               IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT,
+                                                               EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint(
+                                                               IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT,
+                                                               EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+    data.myActionHintSyntheticHighlighter = highlighter;
 
     session.updateExecutionPosition();
     if (AppMode.isRemoteDevHost()) {
