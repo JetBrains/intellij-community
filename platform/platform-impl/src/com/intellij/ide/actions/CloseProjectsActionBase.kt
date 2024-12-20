@@ -3,15 +3,16 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.ui.ComponentUtil
 
 /**
  * @author Konstantin Bulenkov
@@ -22,7 +23,7 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val currentProject = e.getData(CommonDataKeys.PROJECT) ?: return
+    val currentProject = getProjectEvenIfNotInitialized(e) ?: return
     ProjectManager.getInstance().openProjects
       .filter { canClose(it, currentProject) }
       .forEach {
@@ -42,8 +43,13 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
+    val project = getProjectEvenIfNotInitialized(e)
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault && shouldShow(e)
+  }
+
+  private fun getProjectEvenIfNotInitialized(e: AnActionEvent): Project? {
+    return e.project ?: ProjectFrameHelper.getFrameHelper(
+      ComponentUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)))?.project
   }
 
   protected abstract fun shouldShow(e: AnActionEvent): Boolean
