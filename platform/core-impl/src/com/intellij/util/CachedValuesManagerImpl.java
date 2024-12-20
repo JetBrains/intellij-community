@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.*;
@@ -84,7 +85,20 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
 
   private <T> CachedValue<T> saveInUserData(@NotNull UserDataHolder dataHolder, @NotNull Key<CachedValue<T>> key, CachedValue<T> value) {
     trackKeyHolder(dataHolder, key);
-    return ConcurrencyUtil.computeIfAbsent(dataHolder, key, () -> value);
+
+    if (dataHolder instanceof UserDataHolderEx) {
+      return ((UserDataHolderEx)dataHolder).putUserDataIfAbsent(key, value);
+    }
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (dataHolder) {
+      CachedValue<T> existing = dataHolder.getUserData(key);
+      if (existing != null) {
+        return existing;
+      }
+      dataHolder.putUserData(key, value);
+      return value;
+    }
   }
 
   @Override

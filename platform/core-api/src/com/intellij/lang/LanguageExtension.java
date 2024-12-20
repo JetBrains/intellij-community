@@ -4,7 +4,6 @@ package com.intellij.lang;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import kotlinx.collections.immutable.PersistentList;
@@ -108,7 +107,13 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
    *  @see #allForLanguageOrAny(Language)
    */
   public @NotNull List<T> allForLanguage(@NotNull Language language) {
-    return ConcurrencyUtil.computeIfAbsent(language, allCacheKey, () -> collectAllForLanguage(language));
+    List<T> cached = language.getUserData(allCacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    PersistentList<T> result = collectAllForLanguage(language);
+    return language.putUserDataIfAbsent(allCacheKey, result);
   }
 
   private @NotNull PersistentList<T> collectAllForLanguage(@NotNull Language language) {

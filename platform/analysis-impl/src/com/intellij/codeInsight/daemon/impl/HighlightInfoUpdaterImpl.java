@@ -177,7 +177,8 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
 
   @NotNull
   private Map<PsiFile, Map<Object, ToolHighlights>> getOrCreateHostMap(@NotNull Document hostDocument) {
-    return ConcurrencyUtil.computeIfAbsent(hostDocument, VISITED_PSI_ELEMENTS, () -> {
+    Map<PsiFile, Map<Object, ToolHighlights>> data = hostDocument.getUserData(VISITED_PSI_ELEMENTS);
+    if (data == null) {
       HashingStrategy<PsiFile> strategy = new HashingStrategy<>() {
         @Override
         public int hashCode(PsiFile file) {
@@ -202,8 +203,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           return o1 == o2;
         }
       };
-      return CollectionFactory.createSoftMap(strategy, psiFileEvictionListener);
-    });
+      data = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, CollectionFactory.createSoftMap(strategy, psiFileEvictionListener));
+    }
+    return data;
   }
 
   private static void invokeProcessQueueToTriggerEvictedListener(@NotNull Map<? extends PsiElement, ?> map) {

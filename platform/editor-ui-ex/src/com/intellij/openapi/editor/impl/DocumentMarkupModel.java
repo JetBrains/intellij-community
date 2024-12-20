@@ -99,7 +99,12 @@ public final class DocumentMarkupModel {
   }
 
   private static @NotNull ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {
-    return ConcurrencyUtil.computeIfAbsent(document, MARKUP_MODEL_MAP_KEY, () -> new ConcurrentHashMap<>());
+    ConcurrentMap<Project, MarkupModelImpl> markupModelMap = document.getUserData(MARKUP_MODEL_MAP_KEY);
+    if (markupModelMap == null) {
+      ConcurrentMap<Project, MarkupModelImpl> newMap = new ConcurrentHashMap<>();
+      markupModelMap = ((UserDataHolderEx)document).putUserDataIfAbsent(MARKUP_MODEL_MAP_KEY, newMap);
+    }
+    return markupModelMap;
   }
 
   static void removeMarkupModel(@NotNull Document document, @NotNull Project project) {

@@ -5,7 +5,6 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,7 +30,10 @@ final class PerIndexDocumentVersionMap {
 
   private static final Key<List<IdVersionInfo>> KEY = Key.create("UnsavedDocIdVersionInfo");
   long set(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
-    List<IdVersionInfo> list = ConcurrencyUtil.computeIfAbsent(document, KEY, () -> new ArrayList<>());
+    List<IdVersionInfo> list = document.getUserData(KEY);
+    if (list == null) {
+      list = ((UserDataHolderEx)document).putUserDataIfAbsent(KEY, new ArrayList<>());
+    }
 
     synchronized (list) {
       for (IdVersionInfo info : list) {
