@@ -109,8 +109,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
     private set
 
-  private var currentSequencedEvent: AWTEvent? = null
-
   @Volatile
   private var lastActiveTime = System.nanoTime()
   private var lastEventTime = System.currentTimeMillis()
@@ -247,7 +245,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     try {
       performanceWatcher?.edtEventStarted()
       eventWatcher?.edtEventStarted(event, startedAt)
-      fixNestedSequenceEvent(event)
+      SequencedEventNestedFieldHolder.fixNestedSequenceEvent(event)
       // Add code below if you need
 
       // Update EDT if it changes (might happen after Application disposal)
@@ -317,9 +315,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           }
           finally {
             trueCurrentEvent = oldEvent
-            if (currentSequencedEvent === finalEvent) {
-              currentSequencedEvent = null
-            }
+            SequencedEventNestedFieldHolder.eventDispatched(finalEvent)
             runCustomProcessors(finalEvent, postProcessors)
             if (finalEvent is KeyEvent) {
               maybeReady()
@@ -361,18 +357,6 @@ class IdeEventQueue private constructor() : EventQueue() {
       catch (t: Throwable) {
         processException(t)
       }
-    }
-  }
-
-  // Fixes IDEA-218430: nested sequence events cause deadlock
-  private fun fixNestedSequenceEvent(e: AWTEvent) {
-    if (e.javaClass == SequencedEventNestedFieldHolder.SEQUENCED_EVENT_CLASS) {
-      if (currentSequencedEvent != null) {
-        val sequenceEventToDispose = currentSequencedEvent!!
-        currentSequencedEvent = null // Set to null BEFORE dispose b/c `dispose` can dispatch events internally
-        SequencedEventNestedFieldHolder.invokeDispose(sequenceEventToDispose)
-      }
-      currentSequencedEvent = e
     }
   }
 
@@ -1076,6 +1060,26 @@ private object SequencedEventNestedFieldHolder {
   init {
     DISPOSE_METHOD = MethodHandles.privateLookupIn(SEQUENCED_EVENT_CLASS, MethodHandles.lookup())
       .findVirtual(SEQUENCED_EVENT_CLASS, "dispose", MethodType.methodType(Void.TYPE))
+  }
+
+  private var currentSequencedEvent: AWTEvent? = null
+
+  // Fixes IDEA-218430: nested sequence events cause deadlock
+  fun fixNestedSequenceEvent(e: AWTEvent) {
+    if (e.javaClass == SEQUENCED_EVENT_CLASS) {
+      if (currentSequencedEvent != null) {
+        val sequenceEventToDispose = currentSequencedEvent!!
+        currentSequencedEvent = null // Set to null BEFORE dispose b/c `dispose` can dispatch events internally
+        invokeDispose(sequenceEventToDispose)
+      }
+      currentSequencedEvent = e
+    }
+  }
+
+  fun eventDispatched(e: AWTEvent) {
+    if (currentSequencedEvent === e) {
+      currentSequencedEvent = null
+    }
   }
 }
 
