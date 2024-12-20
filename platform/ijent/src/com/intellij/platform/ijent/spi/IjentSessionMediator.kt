@@ -217,7 +217,7 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
   val (rawRemoteDateTime, level, message) =
     ijentLogMessageRegex.matchEntire(line)?.destructured
     ?: run {
-      LOG.debug { "$ijentLabel log: $line" }
+      LOG.info("$ijentLabel log: $line")
       return
     }
 
