@@ -204,3 +204,24 @@ class Demo {
     return LIST_TWO;
   }
 }
+record Data1(Collection<String> <warning descr="Implicit assignment and return of Collection<String> record component 'strings'">strings</warning>) {}
+record Data2(Collection<String> <warning descr="Implicit assignment of Collection<String> record component 'strings'">strings</warning>) {
+  @Override
+  public Collection<String> strings() {
+    return <warning descr="Return of Collection<String> field 'strings'">strings</warning>;
+  }
+}
+record Data3(Collection<String> <warning descr="Implicit return of Collection<String> record component 'strings'">strings</warning>) {
+  Data3(Collection<String> strings) {
+      this.strings = <warning descr="Assignment to Collection<String> field 'strings' from parameter 'strings'">strings</warning>;
+  }
+}
+record Data4(Collection<String> strings) {
+  Data4(Collection<String> strings) {
+      this.strings = <warning descr="Assignment to Collection<String> field 'strings' from parameter 'strings'">strings</warning>;
+  }
+  @Override
+  public Collection<String> strings() {
+    return <warning descr="Return of Collection<String> field 'strings'">strings</warning>;
+  }
+}
