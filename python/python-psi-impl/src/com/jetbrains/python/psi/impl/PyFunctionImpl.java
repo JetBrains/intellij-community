@@ -24,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.PyRaiseInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -37,13 +38,11 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -389,12 +388,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (instruction instanceof CallInstruction ci && ci.isNoReturnCall(context)) {
         return ControlFlowUtil.Operation.CONTINUE;
       }
+      if (instruction instanceof PyRaiseInstruction) {
+        return ControlFlowUtil.Operation.CONTINUE;
+      }
       final PsiElement element = instruction.getElement();
       if (!(element instanceof PyStatement statement)) {
         return ControlFlowUtil.Operation.NEXT;
-      }
-      if (element instanceof PyRaiseStatement || element instanceof PyAssertStatement) {
-        return ControlFlowUtil.Operation.CONTINUE;
       }
       returnPoints.add(statement);
       return ControlFlowUtil.Operation.CONTINUE;

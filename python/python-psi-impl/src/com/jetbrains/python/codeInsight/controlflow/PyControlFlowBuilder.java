@@ -560,7 +560,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyRaiseStatement(final @NotNull PyRaiseStatement node) {
-    myBuilder.startNode(node);
+    myBuilder.addNodeAndCheckPending(new PyRaiseInstruction(myBuilder, node));
     final PyExpression[] expressions = node.getExpressions();
     for (PyExpression expression : expressions) {
       expression.accept(this);
@@ -834,7 +834,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     TransparentInstruction trueNode = addTransparentInstruction();
     TransparentInstruction falseNode = addTransparentInstruction();
     visitCondition(args[0], trueNode, falseNode);
-    myBuilder.addPendingEdge(null, falseNode);
+
+    PyRaiseInstruction raiseInstruction = new PyRaiseInstruction(myBuilder, null);
+    myBuilder.instructions.add(raiseInstruction);
+    myBuilder.addEdge(falseNode, raiseInstruction);
+
+    myBuilder.addPendingEdge(null, raiseInstruction);
     myBuilder.prevInstruction = trueNode;
   }
 
