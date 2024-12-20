@@ -7,15 +7,15 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,11 +36,8 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
   @RequiresEdt
   fun setupInstallableSdk(downloadTask: SdkDownloadTask): Sdk {
-    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
-    return model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) {
-      application.runWriteAction {
-        ProjectJdkTable.getInstance().addJdk(it)
-      }
+    return application.runWriteAction<Sdk> {
+      createDownloadSdkInternal(downloadTask)
     }
   }
 
@@ -52,18 +50,25 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
+  @RequiresWriteLock
+  private fun createDownloadSdkInternal(downloadTask: SdkDownloadTask): Sdk {
+    val sdkType = JavaSdk.getInstance()
+    val sdkTable = ProjectJdkTable.getInstance()
+    val sdks = sdkTable.allJdks.asList()
+    val sdk = ProjectSdksModel.createDownloadSdkInternal(sdkType, downloadTask, sdks)
+    sdkTable.addJdk(sdk)
+    return sdk
+  }
+
   private fun scheduleSetupInstallableSdk(
     project: Project,
     downloadTask: SdkDownloadTask,
     sdkDownloadedFuture: CompletableFuture<Boolean>,
     onSdkCreated: suspend (Sdk) -> Unit,
   ) {
-    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
     coroutineScope.launch(Dispatchers.EDT) {
-      val sdk = model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) { sdk ->
-        application.runWriteAction {
-          ProjectJdkTable.getInstance().addJdk(sdk)
-        }
+      val sdk = writeAction {
+        createDownloadSdkInternal(downloadTask)
       }
       onSdkCreated(sdk)
       val tracker = SdkDownloadTracker.getInstance()

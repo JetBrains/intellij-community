@@ -534,30 +534,49 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   @RequiresEdt
-  public void setupInstallableSdk(@NotNull SdkType type,
-                                  @NotNull SdkDownloadTask item,
-                                  @Nullable java.util.function.Consumer<? super Sdk> callback) {
-    final Sdk incompleteSdk = createIncompleteSdk(type, item, callback);
+  public void setupInstallableSdk(
+    @NotNull SdkType type,
+    @NotNull SdkDownloadTask downloadTask,
+    @Nullable java.util.function.Consumer<? super Sdk> callback
+  ) {
+    final Sdk incompleteSdk = createIncompleteSdk(type, downloadTask, callback);
     downloadSdk(incompleteSdk);
   }
 
-  public @NotNull Sdk createIncompleteSdk(@NotNull SdkType type,
-                                          @NotNull SdkDownloadTask item,
-                                          java.util.function.@Nullable Consumer<? super Sdk> callback) {
+  @RequiresEdt
+  @ApiStatus.Internal
+  public static @NotNull Sdk createDownloadSdkInternal(
+    @NotNull SdkType type,
+    @NotNull SdkDownloadTask downloadTask,
+    @NotNull Collection<? extends Sdk> sdks
+  ) {
     // we do not ask the SdkType to set up the SDK for us, instead, we return an incomplete SDK to the
     // model with an expectation it would be updated later on
-    String suggestedName = item.getSuggestedSdkName();
-    String homeDir = FileUtil.toSystemIndependentName(item.getPlannedHomeDir());
+    String suggestedName = downloadTask.getSuggestedSdkName();
+    String homeDir = FileUtil.toSystemIndependentName(downloadTask.getPlannedHomeDir());
     if (WslPath.isWslUncPath(homeDir)) {
       suggestedName += " (WSL)";
     }
 
+    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, sdks);
+    Sdk downloadSdk = createSdkInternal(type, newSdkName, homeDir);
+
     SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
-    var tempSdk = createSdk(type, suggestedName, homeDir);
-    tracker.registerSdkDownload(tempSdk, item);
+    tracker.registerSdkDownload(downloadSdk, downloadTask);
+
+    return downloadSdk;
+  }
+
+  public @NotNull Sdk createIncompleteSdk(
+    @NotNull SdkType type,
+    @NotNull SdkDownloadTask downloadTask,
+    java.util.function.@Nullable Consumer<? super Sdk> callback
+  ) {
+    Sdk tempSdk = createDownloadSdkInternal(type, downloadTask, myProjectSdks.values());
 
     AtomicReference<Sdk> sdk = new AtomicReference<>();
     doAdd(tempSdk, (editableSdk) -> {
+      SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
       tracker.registerEditableSdk(tempSdk, editableSdk);
       tracker.tryRegisterSdkDownloadFailureHandler(editableSdk, () -> removeSdk(editableSdk));
       sdk.set(editableSdk);
