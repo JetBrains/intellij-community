@@ -52,6 +52,14 @@ open class DefaultNotebookEditorAppearance(private val editor: Editor) : Noteboo
     }
     .distinct()
 
+  override val cellPopupToolbarBorderColor: ObservableProperty<Color> = colorsScheme
+    .transform {
+      it.getColor(NotebookEditorAppearance.CELL_TOOLBAR_BORDER_COLOR_OLD)
+      ?: it.getColor(NotebookEditorAppearance.CELL_TOOLBAR_BORDER_COLOR)
+      ?: JBColor.GRAY
+    }
+    .distinct()
+
   init {
     service<NotebookEditorAppearanceManager>().addEditorColorsListener(editor.disposable) {
       colorsScheme.set(editor.colorsScheme)

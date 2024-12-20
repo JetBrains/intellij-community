@@ -21,9 +21,11 @@ interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEdit
     val EDITOR_BACKGROUND: ColorKey = ColorKey.createColorKey("JUPYTER.EDITOR_BACKGROUND")
     internal val CELL_STRIPE_HOVERED_COLOR_OLD: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR")
     internal val CELL_STRIPE_SELECTED_COLOR_OLD: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR")
+    internal val CELL_TOOLBAR_BORDER_COLOR_OLD: ColorKey = ColorKey.createColorKey("JUPYTER.SAUSAGE_BUTTON_BORDER_COLOR")
     val CARET_ROW_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CARET_ROW_COLOR")
     val CELL_STRIPE_HOVERED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_HOVERED_COLOR")
     val CELL_STRIPE_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_SELECTED_COLOR")
+    val CELL_TOOLBAR_BORDER_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_TOOLBAR_BORDER_COLOR")
   }
 }
 
@@ -71,6 +73,8 @@ interface NotebookEditorAppearanceColors {
   val cellStripeHoveredColor: ObservableProperty<Color>
 
   val cellStripeSelectedColor: ObservableProperty<Color>
+
+  val cellPopupToolbarBorderColor: ObservableProperty<Color>
 
   // TODO Sort everything lexicographically.
 
