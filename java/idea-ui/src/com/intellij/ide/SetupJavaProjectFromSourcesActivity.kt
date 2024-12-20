@@ -45,6 +45,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import javax.swing.event.HyperlinkEvent
 
@@ -74,22 +75,27 @@ private class SetupJavaProjectFromSourcesActivity : ProjectActivity {
 
     // todo get current project structure, and later setup from sources only if it wasn't manually changed by the user
 
-    val title = JavaUiBundle.message("task.searching.for.project.sources")
+    detectJavaProjectStructure(project, projectDir)
+  }
+}
 
-    withBackgroundProgress(project, title) {
-      val importers = searchImporters(projectDir)
-      if (!importers.isEmpty) {
-        withContext(Dispatchers.EDT) {
-          setCompilerOutputPath(project, "${projectDir.path}/out")
-        }
-                
-        blockingContext {
-          showNotificationToImport(project, projectDir, importers)
-        }
+@ApiStatus.Internal
+suspend fun detectJavaProjectStructure(project: Project, projectDir: VirtualFile, setupFromSources: Boolean = true) {
+  val title = JavaUiBundle.message("task.searching.for.project.sources")
+
+  withBackgroundProgress(project, title) {
+    val importers = searchImporters(projectDir)
+    if (!importers.isEmpty) {
+      withContext(Dispatchers.EDT) {
+        setCompilerOutputPath(project, "${projectDir.path}/out")
       }
-      else {
-        setupFromSources(project = project, projectDir = projectDir)
+
+      blockingContext {
+        showNotificationToImport(project, projectDir, importers)
       }
+    }
+    else if (setupFromSources){
+      setupFromSources(project = project, projectDir = projectDir)
     }
   }
 }
