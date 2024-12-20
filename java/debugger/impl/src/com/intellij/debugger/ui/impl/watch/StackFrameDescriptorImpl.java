@@ -82,9 +82,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
   }
 
-  private static CompletableFuture<SourcePosition> getSourcePositionAsync(@NotNull StackFrameProxyImpl frame) {
+  private static CompletableFuture<SourcePosition> getSourcePositionAsync(@NotNull Location location, @NotNull StackFrameProxyImpl frame) {
     try {
-      Location location = frame.location();
       CompoundPositionManager positionManager = frame.getVirtualMachine().getDebugProcess().getPositionManager();
       return positionManager.getSourcePositionFuture(location);
     }
@@ -95,9 +94,12 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
                                                                         @NotNull MethodsTracker tracker) {
-    return frame.locationAsync()
+    CompletableFuture<Location> locationAsync = frame.locationAsync();
+    CompletableFuture<SourcePosition> positionAsync =
+      locationAsync.thenCompose(location -> DebuggerUtilsAsync.reschedule(getSourcePositionAsync(location, frame)));
+    return locationAsync
       .thenCompose(DebuggerUtilsAsync::method)
-      .thenCombine(DebuggerUtilsAsync.reschedule(getSourcePositionAsync(frame)), (method, position) -> {
+      .thenCombine(positionAsync, (method, position) -> {
         DebuggerManagerThreadImpl.assertIsManagerThread();
         return new StackFrameDescriptorImpl(frame, true, method, tracker, position);
       })
