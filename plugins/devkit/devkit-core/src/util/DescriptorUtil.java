@@ -15,6 +15,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
@@ -25,6 +26,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.productModules.ProductModulesElement;
+import org.jetbrains.idea.devkit.dom.templates.TemplateSet;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.util.ArrayList;
@@ -101,8 +103,16 @@ public final class DescriptorUtil {
   }
 
   public static boolean isProductModulesXml(@Nullable PsiFile file) {
+    return isDomXml(file, ProductModulesElement.class);
+  }
+
+  public static boolean isTemplatesXml(@Nullable PsiFile file) {
+    return isDomXml(file, TemplateSet.class);
+  }
+
+  private static boolean isDomXml(PsiFile file, Class<? extends DomElement> domElementClass) {
     if (!(file instanceof XmlFile xmlFile)) return false;
-    return DomManager.getDomManager(file.getProject()).getFileElement(xmlFile, ProductModulesElement.class) != null;
+    return DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, domElementClass) != null;
   }
 
   @NotNull

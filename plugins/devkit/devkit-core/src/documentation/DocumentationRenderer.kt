@@ -320,7 +320,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendLine("<hr/>")
     appendDeprecation(attribute.deprecatedSince, attribute.deprecationNote)
     appendSinceUntil(attribute.since, attribute.until)
-    attribute.description?.trim()?.let { append(it) }
+    attribute.description?.trim()?.let { append("$it\n") }
     appendParagraphSeparator()
     appendAttributeRequirement(attribute.requirement)
     appendParagraphSeparator()
