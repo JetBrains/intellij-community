@@ -393,7 +393,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (!(element instanceof PyStatement statement)) {
         return ControlFlowUtil.Operation.NEXT;
       }
-      if (element instanceof PyRaiseStatement) {
+      if (element instanceof PyRaiseStatement || element instanceof PyAssertStatement) {
         return ControlFlowUtil.Operation.CONTINUE;
       }
       returnPoints.add(statement);

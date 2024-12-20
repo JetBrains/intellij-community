@@ -55,3 +55,7 @@ def m(x) -> None:
 def n() -> Generator[int, Any, str]:
     yield 13
     return 42
+
+def o(val) -> int:
+    assert val is int
+    return val
