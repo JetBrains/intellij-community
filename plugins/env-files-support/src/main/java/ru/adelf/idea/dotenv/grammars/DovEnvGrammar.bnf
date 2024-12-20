@@ -1,0 +1,27 @@
+{
+  parserClass="ru.adelf.idea.dotenv.parser.DotEnvParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="DotEnv"
+  psiImplClassSuffix="Impl"
+  psiPackage="ru.adelf.idea.dotenv.psi"
+  psiImplPackage="ru.adelf.idea.dotenv.psi.impl"
+
+  elementTypeHolderClass="ru.adelf.idea.dotenv.psi.DotEnvTypes"
+  elementTypeClass="ru.adelf.idea.dotenv.psi.DotEnvElementType"
+  tokenTypeClass="ru.adelf.idea.dotenv.psi.DotEnvTokenType"
+
+  psiImplUtilClass="ru.adelf.idea.dotenv.psi.DotEnvPsiUtil"
+}
+
+dotEnvFile ::= item_*
+
+private item_ ::= (EXPORT? property|COMMENT|CRLF)
+
+key ::= KEY_CHARS
+
+value ::= VALUE_CHARS+ | QUOTE VALUE_CHARS* QUOTE?
+
+property ::= (key SEPARATOR value? COMMENT?) | key COMMENT? {mixin="ru.adelf.idea.dotenv.psi.DotEnvNamedElementImpl"
+    implements="ru.adelf.idea.dotenv.psi.DotEnvNamedElement" methods=[getKeyText getValueText getName setName getNameIdentifier]}
