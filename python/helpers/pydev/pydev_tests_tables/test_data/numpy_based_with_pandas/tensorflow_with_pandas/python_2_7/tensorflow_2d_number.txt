@@ -1,7 +1,0 @@
-<class 'tensorflow.python.framework.ops.EagerTensor'>
-__pydev_val__
-(3, 3)
-__pydev_val__
-None
-__pydev_val__
-int64__pydev_table_column_type_val__int32__pydev_table_column_type_val__int32__pydev_table_column_type_val__int32
