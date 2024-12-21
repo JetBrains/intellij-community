@@ -907,6 +907,7 @@
     <internalFileTemplate name="Enum"/>
     <internalFileTemplate name="Record"/>
     <internalFileTemplate name="AnnotationType" subject="@interface"/>
+    <internalFileTemplate name="Exception"/>
     <internalFileTemplate name="package-info"/>
     <internalFileTemplate name="module-info"/>
 
