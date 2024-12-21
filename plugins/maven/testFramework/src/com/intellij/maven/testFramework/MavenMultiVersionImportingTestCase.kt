@@ -28,6 +28,12 @@ import org.junit.runners.Parameterized
 import java.util.*
 import kotlin.math.min
 
+private const val MAVEN_4_VERSION = "4.0.0-rc-2"
+private val MAVEN_VERSIONS: Array<String> = arrayOf<String>(
+  "bundled",
+  "4"
+)
+
 /**
  * This test case uses the NIO API for handling file operations.
  *
@@ -350,9 +356,6 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   companion object {
-    val MAVEN_4_VERSION = "4.0.0-rc-2"
-    val MAVEN_VERSIONS: Array<String> = arrayOf<String>("bundled", "4")
-
     @Parameterized.Parameters(name = "with Maven-{0}")
     @JvmStatic
     fun getMavenVersions(): List<Array<String>> {

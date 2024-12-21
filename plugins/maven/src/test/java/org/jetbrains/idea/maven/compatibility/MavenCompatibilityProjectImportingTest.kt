@@ -18,6 +18,46 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
+private val MAVEN_VERSIONS = listOf(
+  arrayOf("4.0.0-rc-2"),
+  arrayOf("3.9.9"),
+  arrayOf("3.9.8"),
+  arrayOf("3.9.7"),
+  arrayOf("3.9.6"),
+  arrayOf("3.9.5"),
+  arrayOf("3.9.4"),
+  arrayOf("3.9.3"),
+  arrayOf("3.9.2"),
+  arrayOf("3.9.1"),
+  arrayOf("3.9.0"),
+  arrayOf("3.8.8"),
+  arrayOf("3.8.7"),
+  arrayOf("3.8.6"),
+  arrayOf("3.8.5"),
+  arrayOf("3.8.4"),
+  arrayOf("3.8.3"),
+  arrayOf("3.8.2"),
+  arrayOf("3.8.1"),
+  arrayOf("3.8.1"),
+  arrayOf("3.6.3"),
+  arrayOf("3.6.2"),
+  arrayOf("3.6.1"),
+  arrayOf("3.6.0"),
+  arrayOf("3.5.4"),
+  arrayOf("3.5.3"),
+  arrayOf("3.5.2"),
+  arrayOf("3.5.0"),
+  arrayOf("3.3.9"),
+  arrayOf("3.3.3"),
+  arrayOf("3.3.1"),
+  arrayOf("3.2.5"),
+  arrayOf("3.2.3"),
+  arrayOf("3.2.2"),
+  arrayOf("3.2.1"),
+  arrayOf("3.1.1"),
+  arrayOf("3.1.0")
+)
+
 @RunWith(Parameterized::class)
 class MavenCompatibilityProjectImportingTest : MavenImportingTestCaseLegacy() {
   protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
@@ -380,44 +420,8 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCaseLegacy() {
     @JvmStatic
     @get:Parameterized.Parameters(name = "with Maven-{0}")
     val mavenVersions: List<Array<String>>
-      get() = listOf(
-        arrayOf("4.0.0-rc-2"),
-        arrayOf("3.9.9"),
-        arrayOf("3.9.8"),
-        arrayOf("3.9.7"),
-        arrayOf("3.9.6"),
-        arrayOf("3.9.5"),
-        arrayOf("3.9.4"),
-        arrayOf("3.9.3"),
-        arrayOf("3.9.2"),
-        arrayOf("3.9.1"),
-        arrayOf("3.9.0"),
-        arrayOf("3.8.8"),
-        arrayOf("3.8.7"),
-        arrayOf("3.8.6"),
-        arrayOf("3.8.5"),
-        arrayOf("3.8.4"),
-        arrayOf("3.8.3"),
-        arrayOf("3.8.2"),
-        arrayOf("3.8.1"),
-        arrayOf("3.8.1"),
-        arrayOf("3.6.3"),
-        arrayOf("3.6.2"),
-        arrayOf("3.6.1"),
-        arrayOf("3.6.0"),
-        arrayOf("3.5.4"),
-        arrayOf("3.5.3"),
-        arrayOf("3.5.2"),
-        arrayOf("3.5.0"),
-        arrayOf("3.3.9"),
-        arrayOf("3.3.3"),
-        arrayOf("3.3.1"),
-        arrayOf("3.2.5"),
-        arrayOf("3.2.3"),
-        arrayOf("3.2.2"),
-        arrayOf("3.2.1"),
-        arrayOf("3.1.1"),
-        arrayOf("3.1.0")
-      )
+      get() {
+        return MAVEN_VERSIONS
+      }
   }
 }
