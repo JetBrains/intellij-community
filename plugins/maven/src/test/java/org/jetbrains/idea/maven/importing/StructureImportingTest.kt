@@ -805,6 +805,67 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  fun testFileProfileActivationInParentPom2() = runBlocking {
+    assumeMaven4()
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                         <profiles>
+                           <profile>
+                             <id>xxx</id>
+                             <dependencies>
+                               <dependency>
+                                 <groupId>junit</groupId>
+                                 <artifactId>junit</artifactId>
+                                 <version>4.0</version>
+                               </dependency>
+                             </dependencies>
+                             <activation>
+                               <file>
+                                 <exists>src/io.properties</exists>
+                               </file>
+                             </activation>
+                           </profile>
+                         </profiles>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """.trimIndent())
+
+    val m1 =createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      """.trimIndent())
+
+    val m2 = createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      """.trimIndent())
+    createProjectSubFile("m2/src/io.properties", "")
+
+    importProjectAsync()
+
+    val m1Project = projectsManager.findProject(m1)!!
+    assertSameElements("m1 enabled profiles", m1Project.activatedProfilesIds.enabledProfiles, emptyList())
+
+    val m2Project = projectsManager.findProject(m2)!!
+    assertSameElements("m2 enabled profiles", m2Project.activatedProfilesIds.enabledProfiles, listOf("xxx"))
+  }
+
+  @Test
   fun testProjectWithProfiles() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
