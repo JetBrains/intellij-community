@@ -50,6 +50,7 @@ class BuiltInServer private constructor(
       if (java.lang.Boolean.parseBoolean(System.getProperty("io.netty.random.id", "true"))) {
         System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e")
         System.setProperty("io.netty.processId", Random.nextInt(65535).toString())
+        System.setProperty("io.netty.allocator.type", "pooled")
       }
 
       System.setProperty("io.netty.serviceThreadPrefix", "Netty ")

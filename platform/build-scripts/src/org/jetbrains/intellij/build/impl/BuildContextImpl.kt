@@ -339,6 +339,7 @@ class BuildContextImpl internal constructor(
     // require bundled JNA dispatcher lib
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
+    jvmArgs.add("-Dio.netty.allocator.type=pooled")
 
     if (useModularLoader || generateRuntimeModuleRepository) {
       jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_JAR_PATH}".let { if (isScript) '"' + it + '"' else it })
