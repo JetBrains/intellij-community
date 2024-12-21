@@ -17,15 +17,17 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.List;
+import org.eclipse.sisu.Priority;
 
 @Named
 @Singleton
+@Priority(10)
 public class Maven40PluginDependenciesResolver implements PluginDependenciesResolver {
   private final PluginDependenciesResolver delegate;
 
   @Inject
-  public Maven40PluginDependenciesResolver(List<PluginDependenciesResolver> allResolvers) {
-    this.delegate = findDefaultResolver(allResolvers);
+  public Maven40PluginDependenciesResolver(DefaultPluginDependenciesResolver delegate) {
+    this.delegate = delegate;
   }
 
   private static PluginDependenciesResolver findDefaultResolver(List<PluginDependenciesResolver> allResolvers) {

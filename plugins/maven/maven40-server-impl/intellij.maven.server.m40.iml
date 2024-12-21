@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.maven.server.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="org.apache.maven:maven-embedder:4.0.0-rc-1" type="repository">
+      <library name="org.apache.maven:maven-embedder:4.0.0-rc-2" type="repository">
         <properties maven-id="org.apache.maven:maven-embedder:4.0.0-rc-2">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-2/maven-embedder-4.0.0-rc-2.jar">
@@ -319,6 +319,24 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/com/google/inject/guice/6.0.0/guice-6.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="org.eclipse.sisu:eclipse.sisu.inject:0.9.0.M3" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.eclipse.sisu:org.eclipse.sisu.inject:0.9.0.M3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3.jar">
+              <sha256sum>15335c4dcf082f599fb8eddcfb58d6a7e9a9c97de2883c257089a479b9b24522</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
