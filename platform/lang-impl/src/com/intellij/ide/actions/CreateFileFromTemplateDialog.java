@@ -142,9 +142,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
                                             @NotNull FileCreator<T> fileCreator,
                                             Consumer<? super T> elementConsumer) {
       CreateWithTemplatesDialogPanel contentPanel = new CreateWithTemplatesDialogPanel(selectedItem, myTemplatesList);
-      if (myKindSelector != null) {
-        contentPanel.setTemplateSelectorMatcher(myKindSelector);
-      }
       ElementCreator elementCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
@@ -169,6 +166,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         JTextField textField = contentPanel.getTextField();
         textField.setText(myDefaultText);
         textField.selectAll();
+      }
+
+      if (myKindSelector != null) {
+        contentPanel.setTemplateSelectorMatcher(myKindSelector);
       }
 
       contentPanel.setApplyAction(e -> {
