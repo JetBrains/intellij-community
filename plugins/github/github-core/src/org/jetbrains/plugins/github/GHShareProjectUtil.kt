@@ -50,7 +50,14 @@ import java.io.IOException
 object GHShareProjectUtil {
   private val LOG = GithubUtil.LOG
 
-  // get gitRepository
+  @JvmStatic
+  fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
+    val gitRepository = GithubGitHelper.findGitRepository(project, file)
+    val root = gitRepository?.root ?: project.baseDir
+    shareProjectOnGithub(project, gitRepository, root, project.name)
+  }
+
+    // get gitRepository
   // check for existing git repo
   // check available repos and privateRepo access (net)
   // Show dialog (window)
@@ -59,11 +66,11 @@ object GHShareProjectUtil {
   // add GitHub as a remote host
   // make first commit
   // push everything (net)
-  @JvmStatic
-  fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
+  fun shareProjectOnGithub(project: Project,
+                           gitRepository: GitRepository?,
+                           root: VirtualFile,
+                           projectName: @NlsSafe String) {
     FileDocumentManager.getInstance().saveAllDocuments()
-
-    val gitRepository = GithubGitHelper.findGitRepository(project, file)
     val possibleRemotes = gitRepository
       ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
       ?.map { it.remote.url }.orEmpty()
@@ -114,7 +121,8 @@ object GHShareProjectUtil {
 
     val shareDialog = GithubShareDialog(project,
                                         gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
-                                        accountInformationLoader)
+                                        accountInformationLoader,
+                                        projectName)
     DialogManager.show(shareDialog)
     if (!shareDialog.isOK) {
       return
@@ -141,7 +149,6 @@ object GHShareProjectUtil {
           .execute(indicator, GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
         LOG.info("Successfully created GitHub repository")
 
-        val root = gitRepository?.root ?: project.baseDir
         // creating empty git repo if git is not initialized
         LOG.info("Binding local project with GitHub")
         if (gitRepository == null) {

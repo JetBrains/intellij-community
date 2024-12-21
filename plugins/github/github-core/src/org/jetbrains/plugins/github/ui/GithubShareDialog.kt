@@ -23,14 +23,17 @@ import java.awt.Component
 import java.util.regex.Pattern
 
 
-class GithubShareDialog(private val project: Project,
-                        existingRemotes: Set<String>,
-                        private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>)
+class GithubShareDialog(
+  private val project: Project,
+  existingRemotes: Set<String>,
+  private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>,
+  projectName: @NlsSafe String
+)
   : DialogWrapper(project) {
 
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
-  private val repositoryTextField = JBTextField(project.name)
+  private val repositoryTextField = JBTextField(projectName)
   private val privateCheckBox = JBCheckBox(message("share.dialog.private"), true)
 
   @NlsSafe
