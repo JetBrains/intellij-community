@@ -16,6 +16,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.idea.AppMode.isDevServer
 import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -1064,7 +1065,12 @@ abstract class ComponentManagerImpl(
             LOG.error(PluginException(message, plugin.pluginId))
           }
           else if (!isKnown || !impl.startsWith("com.intellij.")) {
-            LOG.warn(message)
+            if (ApplicationManager.getApplication().isUnitTestMode
+                || PluginManagerCore.isRunningFromSources()
+                || isDevServer()) {
+              // logged only during development, let's not spam users
+              LOG.warn(message)
+            }
           }
         }
 
