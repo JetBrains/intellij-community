@@ -336,5 +336,7 @@
                     serviceImplementation="com.intellij.lang.OuterModelsModificationTrackerManagerImpl"/>
     <optionController implementation="com.intellij.codeInspection.ex.EntryPointsManagerBase$Provider"/>
     <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
+
+    <lang.jvm.annotations.marker.suppressor implementation="com.intellij.java.JavaNonCodeAnnotationsMarkerSuppressor"/>
   </extensions>
 </idea-plugin>
