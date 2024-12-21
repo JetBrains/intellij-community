@@ -2143,7 +2143,7 @@ open class FileEditorManagerImpl(
     windowAdded: suspend () -> Unit,
   ) {
     if (items.isEmpty()) {
-      LOG.warn("no files to reopen")
+      LOG.info("no files to reopen")
       return
     }
 
