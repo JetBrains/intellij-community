@@ -16,7 +16,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.idea.AppMode.isDevServer
 import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -862,8 +861,8 @@ abstract class ComponentManagerImpl(
           // => but [parentDisposable] is [UsefulTestCase.getTestRootDisposable] which might be disposed after the fixture.
           //
           // This indicates a problem with scoping.
-          // The [parentDisposable] should be disposed on the same level as the code which replaces the service, i.e.,
-          // if the service is registered in a [setUp] method before a test,
+          // The [parentDisposable] should be disposed on the same level as the code which replaces the service.
+          // If the service is registered in a [setUp] method before a test,
           // then the [parentDisposable] should be disposed in [tearDown] right after the test.
           // In other words, it's generally incorrect to use [UsefulTestCase.getTestRootDisposable]
           // as a [parentDisposable] for the replacement service.
@@ -1065,9 +1064,8 @@ abstract class ComponentManagerImpl(
             LOG.error(PluginException(message, plugin.pluginId))
           }
           else if (!isKnown || !impl.startsWith("com.intellij.")) {
-            if (ApplicationManager.getApplication().isUnitTestMode
-                || PluginManagerCore.isRunningFromSources()
-                || isDevServer()) {
+            val application = ApplicationManager.getApplication()
+            if (application == null || application.isUnitTestMode || application.isInternal) {
               // logged only during development, let's not spam users
               LOG.warn(message)
             }

@@ -12,7 +12,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -89,8 +88,12 @@ open class Alarm @Internal constructor(
 
   @Deprecated("Please use flow or at least pass coroutineScope")
   constructor() : this(threadToUse = ThreadToUse.SWING_THREAD, parentDisposable = null, activationComponent = null) {
-    val stackFrames = StackWalker.getInstance().walk { stream -> stream.asSequence().drop(1).firstOrNull()?.toString() }
-    LOG.warn("Do not create alarm without coroutineScope: $stackFrames")
+    val application = ApplicationManager.getApplication()
+    if (application == null || application.isUnitTestMode || application.isInternal) {
+      val stackFrames = StackWalker.getInstance().walk { stream -> stream.asSequence().drop(1).firstOrNull()?.toString() } ?: ""
+      // logged only during development, let's not spam users
+      LOG.warn("Do not create alarm without coroutineScope: $stackFrames")
+    }
   }
 
   @Internal
