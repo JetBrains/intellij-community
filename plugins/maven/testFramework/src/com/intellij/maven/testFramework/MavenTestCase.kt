@@ -27,6 +27,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -795,7 +796,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun getRelativePath(base: Path, path: String) : String {
-    return base.relativize(Path.of(path)).toString()
+    return base.relativize(Path.of(path)).toCanonicalPath().toString()
   }
 
   companion object {

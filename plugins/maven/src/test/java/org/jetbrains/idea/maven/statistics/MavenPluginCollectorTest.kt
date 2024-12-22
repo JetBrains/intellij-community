@@ -4,11 +4,11 @@ package org.jetbrains.idea.maven.statistics
 import com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.maven.testFramework.MavenImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenImportingTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class MavenPluginCollectorTest : MavenImportingTestCaseLegacy() {
+class MavenPluginCollectorTest : MavenImportingTestCase() {
 
   override fun runInDispatchThread(): Boolean = false
 

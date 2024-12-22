@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.Assume
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.nio.file.Path
 import java.util.*
 import kotlin.math.min
 
@@ -244,6 +245,10 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       actual.add(e.getUrl())
     }
     assertUnorderedPathsAreEqual(actual, expectedRoots.map { VfsUtilCore.pathToUrl(it) })
+  }
+
+  protected fun assertContentRoots(moduleName: String, vararg expectedRoots: Path) {
+    assertContentRoots(moduleName, *expectedRoots.map { it.toString() }.toTypedArray())
   }
 
   protected fun assertGeneratedSources(moduleName: String, vararg expectedSources: String) {

@@ -1,15 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
+import java.nio.file.Paths
 
-class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)
@@ -128,7 +128,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCaseLe
   }
 
   private suspend fun deleteSettingsXmlAndWaitForImport() {
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(dir, "settings.xml"))!!
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(dir.toString(), "settings.xml"))!!
     waitForImportWithinTimeout {
       writeAction {
         f.delete(this)

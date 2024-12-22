@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -13,9 +13,9 @@ import com.intellij.util.io.zipFile
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.Test
-import java.io.File
+import java.nio.file.Paths
 
-class ReimportingTest : MavenMultiVersionImportingTestCaseLegacy() {
+class ReimportingTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() = runBlocking {
     super.setUp()
     createProjectPom("""
@@ -247,7 +247,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCaseLegacy() {
   fun testMoveModuleWithSystemScopedDependency() = runBlocking {
     zipFile {
       file("a.txt")
-    }.generate(File(projectPath, "lib.jar"))
+    }.generate(Paths.get(projectPath.toString(), "lib.jar").toFile())
     updateModulePom("m1", generatePomWithSystemDependency("../lib.jar"))
     importProjectAsync()
 

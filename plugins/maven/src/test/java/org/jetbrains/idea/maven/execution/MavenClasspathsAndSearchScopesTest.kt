@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -28,13 +28,15 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.CommonProcessors.CollectProcessor
 import com.intellij.util.PathsList
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase.Companion.createEmptyJar
 import org.junit.Test
 import java.io.File
 import java.io.IOException
+import java.nio.file.Paths
 
-class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() {
   private enum class Type {
     PRODUCTION, TESTS
   }
@@ -1187,7 +1189,7 @@ $scope</scope>
   private suspend fun checkDirIndexTestModulesWithCompileOrRuntimeScope(modules: List<Module>) {
     assertEquals(6, modules.size)
     val index = ProjectFileIndex.getInstance(project)
-    val m3JavaDir = VfsUtil.findFileByIoFile(File(projectPath, "m3/src/main/java"), true)
+    val m3JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m3/src/main/java"), true)
     assertNotNull(m3JavaDir)
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
     val orderEntries = readAction { index.getOrderEntriesForFile(m3JavaDir!!) }
@@ -1200,7 +1202,7 @@ $scope</scope>
     val m3E2 = orderEntries[2]
     UsefulTestCase.assertInstanceOf(m3E2, ModuleSourceOrderEntry::class.java)
 
-    val m6javaDir = VfsUtil.findFileByIoFile(File(projectPath, "m6/src/main/java"), true)
+    val m6javaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
     // Should be m1 -> m6, m2 -> m6, m5 -> m6, m6 -> source
     val m6OrderEntries = readAction { index.getOrderEntriesForFile(m6javaDir!!) }
@@ -1235,7 +1237,7 @@ $scope</scope>
     val modules = setupDirIndexTestModulesWithScope("test")
     assertEquals(6, modules.size)
     val index = ProjectFileIndex.getInstance(project)
-    val m3JavaDir = VfsUtil.findFileByIoFile(File(projectPath, "m3/src/main/java"), true)
+    val m3JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m3/src/main/java"), true)
     assertNotNull(m3JavaDir)
     // Should be no transitive deps: m2 -> m3, m3 -> source, and m4 -> m3
     val orderEntries = readAction { index.getOrderEntriesForFile(m3JavaDir!!) }
@@ -1248,7 +1250,7 @@ $scope</scope>
     val m3E1 = orderEntries[1]
     UsefulTestCase.assertInstanceOf(m3E1, ModuleSourceOrderEntry::class.java)
 
-    val m6javaDir = VfsUtil.findFileByIoFile(File(projectPath, "m6/src/main/java"), true)
+    val m6javaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
     // Still has some transitive deps because m5 -> m6 is hardcoded to be compile scope
     // m2 -> m6, m5 -> m6, m6 -> source
@@ -1291,10 +1293,10 @@ $scope</scope>
       ModuleRootModificationUtil.addDependency(nonMavenM2, modules[0], DependencyScope.COMPILE, true)
       createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
                            "nonMavenM2/src/main/java", "nonMavenM2/src/test/java")
-      val nonMavenM1JavaDir = VfsUtil.findFileByIoFile(File(projectPath, "nonMavenM1/src/main/java"), true)
+      val nonMavenM1JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "nonMavenM1/src/main/java"), true)
       assertNotNull(nonMavenM1JavaDir)
       PsiTestUtil.addSourceContentToRoots(nonMavenM1, nonMavenM1JavaDir!!)
-      val nonMavenM2JavaDir = VfsUtil.findFileByIoFile(File(projectPath, "nonMavenM2/src/main/java"), true)
+      val nonMavenM2JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "nonMavenM2/src/main/java"), true)
       assertNotNull(nonMavenM2JavaDir)
       PsiTestUtil.addSourceContentToRoots(nonMavenM2, nonMavenM2JavaDir!!)
     }
@@ -1304,7 +1306,7 @@ $scope</scope>
     assertModuleModuleDeps("m1", "m2", "m3", "m5", "m6")
 
     val index = ProjectFileIndex.getInstance(project)
-    val m3JavaDir = VfsUtil.findFileByIoFile(File(projectPath, "m3/src/main/java"), true)
+    val m3JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m3/src/main/java"), true)
     assertNotNull(m3JavaDir)
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
     // It doesn't trace back to nonMavenM1 and nonMavenM2.
@@ -1314,7 +1316,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(ownerModules, listOf(modules[0], modules[1], modules[2], modules[3]))
     assertOrderedElementsAreEqual(depModules, listOf(modules[2], modules[2], null, modules[2]))
 
-    val m6javaDir = VfsUtil.findFileByIoFile(File(projectPath, "m6/src/main/java"), true)
+    val m6javaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
     // Should be m1 -> m6, m2 -> m6, m5 -> m6, m6 -> source
     val m6OrderEntries = readAction { index.getOrderEntriesForFile(m6javaDir!!) }
@@ -1323,7 +1325,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(m6OwnerModules, listOf(modules[0], modules[1], modules[4], modules[5]))
     assertOrderedElementsAreEqual(m6DepModules, listOf(modules[5], modules[5], modules[5], null))
 
-    val nonMavenM2JavaDir = VfsUtil.findFileByIoFile(File(projectPath, "nonMavenM2/src/main/java"), true)
+    val nonMavenM2JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "nonMavenM2/src/main/java"), true)
     assertNotNull(nonMavenM2JavaDir)
     // Should be nonMavenM1 -> nonMavenM2, nonMavenM2 -> source
     val nonMavenM2JavaOrderEntries = readAction { index.getOrderEntriesForFile(nonMavenM2JavaDir!!) }
@@ -1470,10 +1472,10 @@ $scope</scope>
   }
 
   private fun createRepositoryFile(filePath: String) {
-    val f = File(projectPath, "repo/$filePath")
-    f.parentFile.mkdirs()
+    val f = Paths.get(projectPath.toString(), "repo/$filePath")
+    f.parent.createDirectories()
 
-    createEmptyJar(f.parent, f.name)
+    createEmptyJar(f.parent.toString(), f.fileName.toString())
     repositoryPath = createProjectSubDir("repo").path
   }
 

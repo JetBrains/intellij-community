@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -54,6 +55,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -157,11 +159,15 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected val projectsTree: MavenProjectsTree
     get() = projectsManager.getProjectsTree()
 
-  protected fun assertModuleOutput(moduleName: String, output: String?, testOutput: String?) {
+  protected fun assertModuleOutput(moduleName: String, output: String, testOutput: String) {
     val e = getCompilerExtension(moduleName)
     assertFalse(e!!.isCompilerOutputPathInherited())
-    assertEquals(output, getAbsolutePath(e.getCompilerOutputUrl()))
-    assertEquals(testOutput, getAbsolutePath(e.getCompilerOutputUrlForTests()))
+    assertEquals(getAbsolutePath(output), getAbsolutePath(e.getCompilerOutputUrl()))
+    assertEquals(getAbsolutePath(testOutput), getAbsolutePath(e.getCompilerOutputUrlForTests()))
+  }
+
+  protected fun assertModuleOutput(moduleName: String, output: Path, testOutput: Path) {
+    assertModuleOutput(moduleName, output.toString(), testOutput.toString())
   }
 
   protected val projectsManager: MavenProjectsManager
