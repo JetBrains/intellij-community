@@ -27,12 +27,15 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.Processor
+import com.intellij.util.application
 import com.intellij.util.io.createParentDirectories
 import kotlinx.serialization.Serializable
+import org.apache.commons.compress.utils.TimeUtils
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
 fun Path.resolveRel(pathInProject: String): Path {
@@ -107,8 +110,8 @@ class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
 
     override fun handle(project: Project, args: ReplaceSelectedTextArgs): Response {
         var response: Response? = null
-        val lock = CountDownLatch(1)
-        runInEdt {
+
+        application.invokeAndWait {
             runWriteCommandAction(project, "Replace Selected Text", null, {
                 val editor = getInstance(project).selectedTextEditor
                 val document = editor?.document
@@ -120,13 +123,11 @@ class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
                 } else {
                     response = Response(error = "no text selected")
                 }
-                lock.countDown()
             })
         }
-        lock.await()
+
         return response ?: Response(error = "unknown error")
-    }
-}
+    }}
 
 @Serializable
 data class ReplaceCurrentFileTextArgs(val text: String)
@@ -145,8 +146,7 @@ class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>()
 
     override fun handle(project: Project, args: ReplaceCurrentFileTextArgs): Response {
         var response: Response? = null
-        val lock = CountDownLatch(1)
-        runInEdt {
+        application.invokeAndWait {
             runWriteCommandAction(project, "Replace File Text", null, {
                 val editor = getInstance(project).selectedTextEditor
                 val document = editor?.document
@@ -158,7 +158,6 @@ class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>()
                 }
             })
         }
-        lock.await()
         return response ?: Response(error = "unknown error")
     }
 }
