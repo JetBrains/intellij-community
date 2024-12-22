@@ -5,6 +5,7 @@ import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiElement;
@@ -16,6 +17,7 @@ import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -83,7 +85,11 @@ public abstract class StubProcessingHelperBase {
       return Collections.singletonList(((PsiFileWithStubSupport)psiFile).getStubbedSpine());
     }
 
-    return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider()), t -> ((PsiFileImpl)t.second).getStubbedSpine());
+    List<Pair<IStubFileElementType<?>, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider());
+    return ContainerUtil.map(roots, pair -> {
+      PsiFileImpl root = (PsiFileImpl)pair.second;
+      return root.getStubbedSpine();
+    });
   }
 
   private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement,
