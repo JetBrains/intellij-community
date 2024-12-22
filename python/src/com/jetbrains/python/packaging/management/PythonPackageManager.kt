@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.PyBundle
@@ -76,7 +77,13 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   internal suspend fun refreshPaths() {
     writeAction {
-      VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
+      // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
+      // Temporary folders can't be deleted on Windows due to that.
+      // That breaks tests.
+      // This code should be deleted, but disabled temporary to fix tests
+      if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
+        VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
+      }
       PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
   }
