@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -29,10 +29,9 @@ import java.util.stream.Stream
 @ApiStatus.Experimental
 @Suppress("DEPRECATION")
 interface MavenWorkspaceConfigurator {
-
   companion object {
     @JvmField
-    val EXTENSION_POINT_NAME: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName.create("org.jetbrains.idea.maven.importing.workspaceConfigurator")
+    val EXTENSION_POINT_NAME: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName("org.jetbrains.idea.maven.importing.workspaceConfigurator")
   }
 
   /**
@@ -200,6 +199,4 @@ fun <M> MavenWorkspaceConfigurator.MavenProjectWithModules<M>.hasChanges(): Bool
 
 
 @ApiStatus.Experimental
-interface MavenStaticSyncAware {
-  
-}
+interface MavenStaticSyncAware
