@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.createFunctionType
 
-class K1CodeFragmentParameterInfo(
+internal class K1CodeFragmentParameterInfo(
     val smartParameters: List<SmartCodeFragmentParameter>,
     override val crossingBounds: Set<Dumb>
 ) : CodeFragmentParameterInfo {
@@ -53,7 +53,7 @@ class K1CodeFragmentParameterInfo(
     The purpose of this class is to figure out what parameters the received code fragment captures.
     It handles both directly mentioned names such as local variables or parameters and implicit values (dispatch/extension receivers).
  */
-class CodeFragmentParameterAnalyzer(
+internal class CodeFragmentParameterAnalyzer(
     private val context: ExecutionContext,
     private val codeFragment: KtCodeFragment,
     private val bindingContext: BindingContext

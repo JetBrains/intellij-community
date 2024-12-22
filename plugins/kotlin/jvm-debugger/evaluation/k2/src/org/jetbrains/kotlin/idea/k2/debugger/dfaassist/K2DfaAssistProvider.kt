@@ -49,7 +49,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
-class K2DfaAssistProvider : DfaAssistProvider {
+private class K2DfaAssistProvider : DfaAssistProvider {
     override fun locationMatches(element: PsiElement, location: Location): Boolean {
         val jdiClassName = location.method().declaringType().name()
         val file = element.containingFile

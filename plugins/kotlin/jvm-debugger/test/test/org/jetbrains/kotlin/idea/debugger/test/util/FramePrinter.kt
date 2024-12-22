@@ -1,14 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.JavaStackFrame
-import com.intellij.debugger.engine.SourcePositionProvider
-import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
-import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.impl.watch.*
 import com.intellij.debugger.ui.tree.*
@@ -30,7 +26,7 @@ import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.TimeUnit
 
-class FramePrinter(private val suspendContext: SuspendContextImpl) {
+internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
     fun print(frame: XStackFrame): String {
         return buildString { appendRecursively(frame, 0) }
     }

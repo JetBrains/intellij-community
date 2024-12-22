@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.psi.impl;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -11,13 +11,9 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Vitaliy.Bibaev
- */
-public class DebuggerPositionResolverImpl implements DebuggerPositionResolver {
-  @Nullable
+public final class DebuggerPositionResolverImpl implements DebuggerPositionResolver {
   @Override
-  public PsiElement getNearestElementToBreakpoint(@NotNull XDebugSession session) {
+  public @Nullable PsiElement getNearestElementToBreakpoint(@NotNull XDebugSession session) {
     final XSourcePosition position = session.getCurrentPosition();
     if (position == null) return null;
 

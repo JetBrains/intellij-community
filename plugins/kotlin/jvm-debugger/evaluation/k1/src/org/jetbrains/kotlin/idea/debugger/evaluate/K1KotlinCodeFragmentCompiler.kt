@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import java.util.*
 
-class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
+private class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     override fun compileCodeFragment(
       context: ExecutionContext,
       codeFragment: KtCodeFragment

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.dev.psiViewer.debug
 
 import com.intellij.debugger.engine.DebuggerUtils
@@ -27,7 +27,7 @@ private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
 private const val PSI_ELEMENT = "com.intellij.psi.PsiElement"
 private const val GET_NAME = "getName"
 
-class PsiViewerDebugAction : DebuggerTreeAction() {
+internal class PsiViewerDebugAction : DebuggerTreeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {

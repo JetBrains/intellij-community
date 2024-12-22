@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift.lesson.run
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -21,8 +21,7 @@ import training.statistic.LessonStartingWay
 import training.ui.LearningUiManager
 import training.util.isToStringContains
 
-class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
-
+internal class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   override val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   private val demoClassName = "Sample"

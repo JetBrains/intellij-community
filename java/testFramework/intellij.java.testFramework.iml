@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="module" module-name="intellij.java.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
