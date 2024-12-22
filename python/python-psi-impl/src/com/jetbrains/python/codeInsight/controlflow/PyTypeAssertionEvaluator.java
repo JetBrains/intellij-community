@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyEvaluator;
@@ -78,6 +79,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyExpression lhs = node.getLeftExpression();
     final PyExpression rhs = node.getRightExpression();
 
+    boolean isOperator = node.isOperator(PyNames.IS);
+    boolean isNotOperator = node.isOperator("isnot");
     if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression ||
         lhs instanceof PyReferenceExpression && rhs instanceof PyNoneLiteralExpression ||
         lhs instanceof PyNoneLiteralExpression && rhs instanceof PyReferenceExpression) {
@@ -87,12 +90,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (leftIsNone ^ rightIsNone) {
         final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
 
-        if (node.isOperator(PyNames.IS)) {
+        if (isOperator) {
           pushAssertion(target, myPositive, false, context -> PyNoneType.INSTANCE, null);
           return;
         }
 
-        if (node.isOperator("isnot")) {
+        if (isNotOperator) {
           pushAssertion(target, !myPositive, false, context -> PyNoneType.INSTANCE, null);
           return;
         }
@@ -106,12 +109,24 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       return;
     }
 
-    if (node.isOperator(PyNames.IS) && (leftValue == Boolean.FALSE || rightValue == Boolean.FALSE) ||
-        node.isOperator("isnot") && (leftValue == Boolean.TRUE || rightValue == Boolean.TRUE)) {
+    if (isOperator && (leftValue == Boolean.FALSE || rightValue == Boolean.FALSE) ||
+        isNotOperator && (leftValue == Boolean.TRUE || rightValue == Boolean.TRUE)) {
       myPositive = !myPositive;
       super.visitPyBinaryExpression(node);
       myPositive = !myPositive;
       return;
+    }
+
+    if (isOperator || isNotOperator) {
+      if (lhs instanceof PyReferenceExpression target && rhs instanceof PyReferenceExpression) {
+        pushAssertion(target, isOperator == myPositive, false, context -> {
+          PyType rhsType = context.getType(rhs);
+          boolean isEnumMember = rhsType instanceof PyLiteralType literalType &&
+                                 PyStdlibTypeProvider.isCustomEnum(literalType.getPyClass(), context);
+          return isEnumMember ? rhsType : null;
+        }, null);
+        return;
+      }
     }
 
     super.visitPyBinaryExpression(node);

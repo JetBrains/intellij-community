@@ -550,6 +550,46 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testIsEnumMember() {
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+             
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+             
+             def foo(v: object):
+                 if v is Answer.Yes or v is Answer.No:
+                     expr = v
+             """);
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+             
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+
+             def foo(v: object):
+                 if v is not Answer.Yes and v is not Answer.No:
+                     raise ValueError("Invalid value")
+                 expr = v
+             """);
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+             
+             def foo(v: object):
+                 assert v is Answer.Yes or v is Answer.No
+                 expr = v
+             """);
+  }
+
   // PY-21083
   public void testFloatFromhex() {
     doTest("float",
