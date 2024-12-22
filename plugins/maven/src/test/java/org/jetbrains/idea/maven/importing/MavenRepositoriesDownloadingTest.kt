@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.util.registry.Registry
 import junit.framework.TestCase
@@ -21,7 +21,7 @@ import java.net.URL
 import java.util.stream.Collectors
 
 
-class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
@@ -84,10 +84,10 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
        """.trimIndent())
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
+    assertTrue(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
 
   }
 
@@ -108,10 +108,10 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     mavenImporterSettings.isDownloadSourcesAutomatically = true
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
+    assertTrue(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isFile)
   }
 
   @Test
@@ -130,9 +130,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
        """.trimIndent())
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pomPlugins())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
 
@@ -161,9 +161,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
 
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pom())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
   @Test
@@ -191,7 +191,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
 
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     createProjectPom(pom())
     doImportProjectsAsync(listOf(projectPom), false)
     TestCase.assertEquals(1, projectsManager.rootProjects.size)
@@ -268,7 +268,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
 
     Registry.get("maven.server.debug").setValue(false)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     val embedderWrapper = MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.toNioPath().toString())
     val embedder = embedderWrapper.getEmbedder()
     assertTrue("Embedder should be remote object: got class ${embedder.javaClass.name}", embedder.javaClass.name.contains("\$Proxy"))
@@ -311,7 +311,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
     }
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
   private fun doLastUpdatedTest(updateSnapshots: Boolean, pomContent: String, checks: () -> Unit) = runBlocking {
@@ -336,7 +336,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCaseLegac
       "#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice\n" +
       "${myUrl.replace(":", "\\:")}/.error=\n" +
       "${myUrl.replace(":", "\\:")}/.lastUpdated=${System.currentTimeMillis()}\n"
-    val dir = helper.getTestData("local1/org/mytest/myartifact/1.0")
+    val dir = helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0")
     dir.mkdirs()
 
     File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)

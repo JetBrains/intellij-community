@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
+import java.nio.file.Files
 
-class MavenJDOMUtilTest : MavenTestCaseLegacy() {
+class MavenJDOMUtilTest : MavenTestCase() {
   fun testReadingValuesWithComments() = runBlocking {
     assertEquals("aaa", readValue("<root><foo>aaa<!--a--></foo></root>", "foo"))
     assertEquals("aaa", readValue("""
@@ -39,7 +40,15 @@ class MavenJDOMUtilTest : MavenTestCaseLegacy() {
   }
 
   private suspend fun readValue(xml: String, valuePath: String): String? {
-    val f = createProjectSubFile("foo.xml", xml)
+    val fileName = "foo.xml"
+    val filePath = projectPath.resolve(fileName)
+    val f = if (!Files.exists(filePath)) {
+      createProjectSubFile(fileName, xml)
+    }
+    else {
+      updateProjectSubFile(fileName, xml)
+    }
+
     refreshFiles(listOf(f))
 
     val el = MavenJDOMUtil.read(f, object : MavenJDOMUtil.ErrorHandler {

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.RunAll
@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.junit.Test
 import java.util.zip.ZipOutputStream
 
-class MavenWrapperConfigurationTest : MavenImportingTestCaseLegacy() {
+class MavenWrapperConfigurationTest : MavenImportingTestCase() {
 
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private val httpServerFixtureForWrapper = MavenHttpRepositoryServerFixture()
@@ -93,9 +93,9 @@ class MavenWrapperConfigurationTest : MavenImportingTestCaseLegacy() {
 
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync()
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
   private fun repackCurrentMavenAndStartWrapper(@Language(value = "XML", prefix = "<settings>",

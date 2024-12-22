@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.model.RepositoryKind
 
-class MavenGavIndicesTest : MavenTestCaseLegacy() {
+class MavenGavIndicesTest : MavenTestCase() {
 
   fun testUpdateGavIndex() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")

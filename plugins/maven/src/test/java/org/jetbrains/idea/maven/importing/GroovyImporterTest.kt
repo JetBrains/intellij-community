@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.OrderRootType
@@ -13,15 +13,15 @@ import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.junit.Test
 import java.io.File
-import java.util.*
+import java.nio.file.Paths
 
-class GroovyImporterTest : MavenMultiVersionImportingTestCaseLegacy() {
+class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
   private var repoPath: String? = null
 
   
   override fun setUp() {
     super.setUp()
-    repoPath = File(dir, "repo").path
+    repoPath = Paths.get(dir.toString(), "repo").toString()
     repositoryPath = repoPath
   }
 
@@ -75,8 +75,8 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCaseLegacy() {
     assertTrue("unexpected groovy libs configuration: " + libraries.size, libraries.size > 0)
     val library = libraries[0]
     assertUnorderedPathsAreEqual(
-      Arrays.asList(*library.getUrls(OrderRootType.CLASSES)),
-      Arrays.asList("jar://" + repositoryPath + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
+      listOf(*library.getUrls(OrderRootType.CLASSES)),
+      listOf("jar://$repositoryPath/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
   }
 
   @Test
@@ -468,9 +468,6 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCaseLegacy() {
 
   @Test
   fun testDoNotAddGroovySpecificGeneratedSources() = runBlocking {
-    if (!true) {
-      createStdProjectFolders()
-    }
     createProjectSubDirs("target/generated-sources/xxx/yyy",
                          "target/generated-sources/groovy-stubs/main/foo",
                          "target/generated-sources/groovy-stubs/test/bar")

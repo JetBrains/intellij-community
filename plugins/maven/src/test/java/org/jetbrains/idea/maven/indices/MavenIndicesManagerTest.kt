@@ -69,7 +69,7 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
 
   @Test
   fun testAddingFilesToIndex() {
-    val localRepo = myIndicesFixture!!.repositoryHelper.getTestData("local2")
+    val localRepo = myIndicesFixture!!.repositoryHelper.getTestDataLegacy("local2")
 
     MavenProjectsManager.getInstance(project).getGeneralSettings().setLocalRepository(localRepo.path)
     myIndicesFixture!!.indicesManager.scheduleUpdateIndicesListAndWait()
@@ -78,10 +78,10 @@ class MavenIndicesManagerTest : MavenIndicesTestCase() {
     assertTrue(localIndex.getArtifactIds("junit").isEmpty())
 
     //copy junit to repository
-    val artifactDir = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit")
+    val artifactDir = myIndicesFixture!!.repositoryHelper.getTestDataLegacy("local1/junit")
     FileUtil.copyDir(artifactDir, localRepo)
 
-    val artifactFile = myIndicesFixture!!.repositoryHelper.getTestData("local2/junit/junit/4.0/junit-4.0.pom")
+    val artifactFile = myIndicesFixture!!.repositoryHelper.getTestDataLegacy("local2/junit/junit/4.0/junit-4.0.pom")
 
     val latch = CountDownLatch(1)
     val addedFiles: MutableSet<File?> = ConcurrentHashMap.newKeySet<File?>()

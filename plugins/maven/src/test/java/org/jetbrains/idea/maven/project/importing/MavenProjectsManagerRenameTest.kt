@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
   
   @Test
   fun `rename compound module`() = runBlocking {

@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.execution.rmi.RemoteProcessSupport
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.ThrowableComputable
@@ -17,7 +17,7 @@ import java.io.File
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 
-class MavenServerManagerTest : MavenTestCaseLegacy() {
+class MavenServerManagerTest : MavenTestCase() {
   fun testInitializingDoesntTakeReadAction() = runBlocking {
     //make sure all components are initialized to prevent deadlocks
     ensureConnected(MavenServerManager.getInstance().getConnector(project, projectRoot.path))

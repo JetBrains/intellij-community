@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 
-class FileFinderTest : MavenTestCaseLegacy() {
+class FileFinderTest : MavenTestCase() {
 
   private val pomContent = """
                   <project xmlns="http://maven.apache.org/POM/4.0.0" 

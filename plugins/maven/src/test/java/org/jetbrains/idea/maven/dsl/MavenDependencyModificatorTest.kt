@@ -2,12 +2,12 @@
 package org.jetbrains.idea.maven.dsl
 
 import com.intellij.buildsystem.model.DeclaredDependency
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class MavenDependencyModificatorTest : MavenTestCaseLegacy() {
+class MavenDependencyModificatorTest : MavenTestCase() {
 
   @Test
   fun testShouldReturnDependencyDirectlyDeclared() = runBlocking {

@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 
-class MavenEmbeddersManagerTest : MavenTestCaseLegacy() {
+class MavenEmbeddersManagerTest : MavenTestCase() {
   private var myManager: MavenEmbeddersManager? = null
 
   override fun setUp() {
@@ -42,52 +42,52 @@ class MavenEmbeddersManagerTest : MavenTestCaseLegacy() {
   }
 
   fun testBasics() {
-    val one = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
-    val two = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.toString())
+    val two = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
 
     assertNotSame(one, two)
   }
 
   fun testForSameId() {
-    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
-    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
+    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
 
     assertNotSame(one1, one2)
 
     myManager!!.release(one1)
 
-    val one3 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one3 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
 
     assertSame(one1, one3)
   }
 
   fun testCachingOnlyOne() {
-    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
-    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
+    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
 
     assertNotSame(one1, one2)
 
     myManager!!.release(one1)
     myManager!!.release(one2)
 
-    val one11 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
-    val one22 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one11 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
+    val one22 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
 
     assertSame(one1, one11)
     assertNotSame(one2, one22)
   }
 
   fun testResettingAllCachedAndInUse() {
-    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
-    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
+    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.toString())
 
     myManager!!.release(one1)
     myManager!!.reset()
 
     myManager!!.release(one2)
 
-    val one11 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
-    val one22 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val one11 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.toString())
+    val one22 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.toString())
 
     assertNotSame(one1, one11)
     assertNotSame(one2, one22)

@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
 
-class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestCaseLegacy() {
+class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()
@@ -37,7 +36,7 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
                        "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
 
     waitForImportWithinTimeout {
-      repositoryPath = File(dir, "__repo").path
+      repositoryPath = dir.resolve("__repo").toString()
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
@@ -72,7 +71,7 @@ class DependenciesImportingExternalChangesTest : MavenMultiVersionImportingTestC
                        "jar://" + repositoryPath + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
 
     waitForImportWithinTimeout {
-      repositoryPath = File(dir, "__repo").path
+      repositoryPath = dir.resolve("__repo").toString()
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
 

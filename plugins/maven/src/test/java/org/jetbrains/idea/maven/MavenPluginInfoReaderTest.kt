@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.maven
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenPluginInfo
 import java.nio.file.Path
 
-class MavenPluginInfoReaderTest : MavenTestCaseLegacy() {
+class MavenPluginInfoReaderTest : MavenTestCase() {
   override fun runInDispatchThread() = false
 
   private var p: MavenPluginInfo? = null

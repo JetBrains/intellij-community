@@ -21,7 +21,7 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testParentRelativePathOutsideProjectRoot() = runBlocking {
-    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
+    val file = myIndicesFixture!!.repositoryHelper.getTestDataLegacy("local1/org/example/example/1.0/example-1.0.pom")
 
 
     val relativePathUnixSeparator =
@@ -53,7 +53,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
   @Test
   fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking {
-    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/pom.xml")
+    val file = myIndicesFixture!!.repositoryHelper.getTestDataLegacy("local1/org/example/example/1.0/pom.xml")
 
     val parentFile = file.getParentFile()
 

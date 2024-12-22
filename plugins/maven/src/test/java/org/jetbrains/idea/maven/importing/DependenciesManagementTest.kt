@@ -15,17 +15,16 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
 
-class DependenciesManagementTest : MavenMultiVersionImportingTestCaseLegacy() {
+class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testImportingDependencies() = runBlocking {
     if (!hasMavenInstallation()) return@runBlocking
 
-    repositoryPath = File(dir, "/repo").path
+    repositoryPath = dir.resolve("repo").toString()
     updateSettingsXml("""
                       <localRepository>
                       ${repositoryPath}</localRepository>
@@ -80,7 +79,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCaseLegacy() {
   fun testImportingNotInstalledDependencies() = runBlocking {
     if (ignore()) return@runBlocking
 
-    repositoryPath = File(dir, "/repo").path
+    repositoryPath = dir.resolve("repo").toString()
     updateSettingsXml("""
   <localRepository>
   ${repositoryPath}</localRepository>

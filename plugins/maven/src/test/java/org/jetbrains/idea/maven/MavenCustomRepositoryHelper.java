@@ -86,12 +86,17 @@ public class MavenCustomRepositoryHelper {
   }
 
   public String getTestDataPath(String relativePath) {
-    String path = getTestData(relativePath).getPath();
+    String path = getTestDataLegacy(relativePath).getPath();
     return FileUtil.toSystemIndependentName(path);
   }
 
-  public File getTestData(String relativePath) {
-    return myWorkingData.resolve(relativePath).toFile();
+  public Path getTestData(String relativePath) {
+    return myWorkingData.resolve(relativePath);
+  }
+
+  @Deprecated
+  public File getTestDataLegacy(String relativePath) {
+    return getTestData(relativePath).toFile();
   }
 
   public void delete(String relativePath) {

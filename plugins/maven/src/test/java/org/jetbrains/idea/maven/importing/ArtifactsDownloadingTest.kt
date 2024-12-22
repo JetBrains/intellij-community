@@ -186,7 +186,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   @Test
   @Throws(Exception::class)
   fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
-    val remoteRepo = FileUtil.toSystemIndependentName(dir.path + "/repo")
+    val remoteRepo = FileUtil.toSystemIndependentName(dir.resolve("repo").toString())
     updateSettingsXmlFully("""<settings>
 <mirrors>
   <mirror>

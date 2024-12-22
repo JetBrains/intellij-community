@@ -15,17 +15,18 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
+import java.nio.file.Paths
 
-class MavenPropertyResolverTest : MavenMultiVersionImportingTestCaseLegacy() {
+class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testResolvingProjectAttributes() = runBlocking {
     importProjectAsync("""
@@ -84,9 +85,9 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCaseLegacy() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(File(projectPath, "target").path,
+    assertEquals(Paths.get(projectPath.toString(), "target").toString(),
                  resolve("\${project.build.directory}", projectPom))
-    assertEquals(File(projectPath, "src/main/java").path,
+    assertEquals(Paths.get(projectPath.toString(), "src/main/java").toString(),
                  resolve("\${project.build.sourceDirectory}", projectPom))
   }
 
@@ -228,9 +229,9 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCaseLegacy() {
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(projectPath, resolve("\${basedir}", projectPom))
-    assertEquals(projectPath, resolve("\${project.basedir}", projectPom))
-    assertEquals(projectPath, resolve("\${pom.basedir}", projectPom))
+    assertEquals(projectPath.toCanonicalPath().toString(), resolve("\${basedir}", projectPom))
+    assertEquals(projectPath.toCanonicalPath().toString(), resolve("\${project.basedir}", projectPom))
+    assertEquals(projectPath.toCanonicalPath().toString(), resolve("\${pom.basedir}", projectPom))
   }
 
   @Test
