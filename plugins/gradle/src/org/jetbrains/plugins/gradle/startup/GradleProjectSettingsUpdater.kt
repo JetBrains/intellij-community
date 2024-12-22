@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater.Util
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
@@ -116,47 +117,53 @@ internal class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
 
     if (manager !is GradleManager) return
     for (projectSettings in settings) {
-      if (projectSettings !is GradleProjectSettings) continue
-      if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) continue
-      val statusFuture = Util.updateGradleJvm(project, projectSettings)
-      statusFuture.thenAccept {
-        if (it.updated && it.sdkName != null) notifyGradleJvmChangeInfo(project, projectSettings, it.sdkName, it.sdk)
-      }
-    }
-  }
-
-
-  private fun notifyGradleJvmChangeInfo(
-    project: Project,
-    projectSettings: GradleProjectSettings,
-    gradleJvm: String,
-    sdk: Sdk?
-  ) {
-    if (sdk == null) return
-    val versionString = sdk.versionString ?: return
-    val homePath = sdk.homePath ?: return
-    val externalProjectPath = projectSettings.externalProjectPath ?: return
-
-    val presentablePath = SdkListPresenter.presentDetectedSdkPath(homePath)
-    val notificationTitle = GradleBundle.message("gradle.notifications.java.home.change.title")
-    val notificationContent = GradleBundle.message("gradle.notifications.java.home.change.content", gradleJvm, versionString,
-                                                   presentablePath)
-    val notification = GradleNotification.gradleNotificationGroup.createNotification(notificationTitle, notificationContent, INFORMATION)
-    notification.setDisplayId(GradleNotificationIdsHolder.jvmConfigured)
-    notification.addAction(NotificationAction.createSimple(GradleBundle.message("gradle.open.gradle.settings")) {
-      showGradleProjectSettings(project, externalProjectPath)
-    })
-    notification.notify(project)
-  }
-
-  private fun showGradleProjectSettings(project: Project, externalProjectPath: String) {
-    val manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID)
-    val configurable = (manager as ExternalSystemConfigurableAware).getConfigurable(project)
-    if (configurable is AbstractExternalSystemConfigurable<*, *, *>) {
-      val settingsUtil = ShowSettingsUtil.getInstance()
-      settingsUtil.editConfigurable(project, configurable) {
-        configurable.selectProject(externalProjectPath)
+      if (projectSettings is GradleProjectSettings) {
+        fixGradleJvm(project, projectSettings)
       }
     }
   }
 }
+
+fun fixGradleJvm(project: Project, projectSettings: GradleProjectSettings) {
+  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return
+  val statusFuture = Util.updateGradleJvm(project, projectSettings)
+  statusFuture.thenAccept {
+    if (it.updated && it.sdkName != null) notifyGradleJvmChangeInfo(project, projectSettings, it.sdkName, it.sdk)
+  }
+}
+
+private fun notifyGradleJvmChangeInfo(
+  project: Project,
+  projectSettings: GradleProjectSettings,
+  gradleJvm: String,
+  sdk: Sdk?
+) {
+  if (sdk == null) return
+  val versionString = sdk.versionString ?: return
+  val homePath = sdk.homePath ?: return
+  val externalProjectPath = projectSettings.externalProjectPath ?: return
+
+  val presentablePath = SdkListPresenter.presentDetectedSdkPath(homePath)
+  val notificationTitle = GradleBundle.message("gradle.notifications.java.home.change.title")
+  val notificationContent = GradleBundle.message("gradle.notifications.java.home.change.content", gradleJvm, versionString,
+                                                 presentablePath)
+  val notification = GradleNotification.gradleNotificationGroup.createNotification(notificationTitle, notificationContent, INFORMATION)
+  notification.setDisplayId(GradleNotificationIdsHolder.jvmConfigured)
+  notification.addAction(NotificationAction.createSimple(GradleBundle.message("gradle.open.gradle.settings")) {
+    showGradleProjectSettings(project, externalProjectPath)
+  })
+  notification.notify(project)
+}
+
+private fun showGradleProjectSettings(project: Project, externalProjectPath: String) {
+  val manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID)
+  val configurable = (manager as ExternalSystemConfigurableAware).getConfigurable(project)
+  if (configurable is AbstractExternalSystemConfigurable<*, *, *>) {
+    val settingsUtil = ShowSettingsUtil.getInstance()
+    settingsUtil.editConfigurable(project, configurable) {
+      configurable.selectProject(externalProjectPath)
+    }
+  }
+}
+
+
