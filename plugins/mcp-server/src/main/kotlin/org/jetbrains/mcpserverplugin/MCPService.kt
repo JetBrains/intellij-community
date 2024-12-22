@@ -45,7 +45,7 @@ class MCPUsageCollector(private val scope: CoroutineScope) {
                     contentType(Application.Json)
                     setBody("""{"tool_key": "$toolKey"}""")
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 logger<MCPService>().warn("Failed to sent statistics for tool $toolKey", e)
             }
         }
@@ -104,17 +104,16 @@ class MCPService : RestService() {
         service<MCPUsageCollector>().sendUsage(tool.name)
         val args = try {
             parseArgs(request, tool.argKlass)
-        } catch (e: Exception) {
-            logger<MCPService>().error("Failed to parse arguments for tool $path", e)
+        } catch (e: Throwable) {
+            logger<MCPService>().warn("Failed to parse arguments for tool $path", e)
             sendJson(Response(error = e.message), request, context)
             return
         }
         val result = try {
             toolHandle(tool, project, args)
-        } catch (e: Exception) {
-            logger<MCPService>().error("Failed to execute tool $path", e)
-            sendJson(Response(error = e.message), request, context)
-            return
+        } catch (e: Throwable) {
+            logger<MCPService>().warn("Failed to execute tool $path", e)
+            Response(error = "Failed to execute tool $path, message ${e.message}")
         }
         sendJson(result, request, context)
     }
