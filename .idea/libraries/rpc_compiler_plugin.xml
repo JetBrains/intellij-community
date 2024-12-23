@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="rpc-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.fleet:rpc-compiler-plugin:2.1.0-0.1">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fleet:rpc-compiler-plugin:2.1.0-0.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.0-0.1/rpc-compiler-plugin-2.1.0-0.1.jar">
-          <sha256sum>6193a83ff9db0277a782de336a1621971fec3baac624b2c7c9af13083d748788</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.0-0.4/rpc-compiler-plugin-2.1.0-0.4.jar">
+          <sha256sum>bcb58ab899c0ecc22848ed6c07b3ece3ca9bca1af80db404fdefe850b5fca4a3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.0-0.1/rpc-compiler-plugin-2.1.0-0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.0-0.4/rpc-compiler-plugin-2.1.0-0.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.0-0.1/rpc-compiler-plugin-2.1.0-0.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.0-0.4/rpc-compiler-plugin-2.1.0-0.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
