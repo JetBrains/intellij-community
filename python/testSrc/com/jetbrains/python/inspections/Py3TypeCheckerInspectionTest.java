@@ -1278,21 +1278,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     ));
   }
 
-  public void testTypedDictConsistencyWithDict() {
-    doTestByText(
-      """
-        from typing import TypedDict
-
-        class A(TypedDict):
-            x: int
-
-        def f(a: A, d: dict[str, int]):
-            val1: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'A' instead">a</warning>
-            val2: A = d
-        """
-    );
-  }
-
   public void testTypedDictsReadonlyConsistency() {
     doTestByText("""
                    from typing import TypedDict, Required, NotRequired, ReadOnly

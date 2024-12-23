@@ -71,3 +71,11 @@ class B3(TypedDict):
     y: str
 a: A3 = B3(x = '', y = '')
 b: B3 = <warning descr="Expected type 'B3', got 'A3' instead">A3(x = '')</warning>
+
+
+class A4(TypedDict):
+    x: int
+
+def f3(a: A4, d: dict[str, int]):
+    val1: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'A4' instead">a</warning>
+    val2: A4 = d
