@@ -27,20 +27,20 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   private @Nullable KeyHashLog<Key> myKeyHashToVirtualFileMapping;
 
   @TestOnly
-  public VfsAwareMapIndexStorage(Path storageFile,
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
-                                 final int cacheSize,
-                                 final boolean readOnly
+                                 int cacheSize,
+                                 boolean readOnly
   ) throws IOException {
     super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly, false, null);
     myBuildKeyHashToVirtualFileMapping = false;
   }
 
-  public VfsAwareMapIndexStorage(Path storageFile,
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
-                                 final int cacheSize,
+                                 int cacheSize,
                                  boolean keyIsUniqueForIndexedFile,
                                  boolean buildKeyHashToVirtualFileMapping,
                                  boolean enableWal) throws IOException {
@@ -49,10 +49,11 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
           valueExternalizer,
           cacheSize,
           keyIsUniqueForIndexedFile,
-          false,
-          false,
+          /* initialize: */ false,
+          /* readOnly: */   false,
           enableWal,
-          null);
+          /*inputRemapping: */null
+    );
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
