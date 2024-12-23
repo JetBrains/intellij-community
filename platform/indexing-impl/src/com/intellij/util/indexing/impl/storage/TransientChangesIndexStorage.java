@@ -144,7 +144,7 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter)
+  public boolean processKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter)
     throws StorageException {
     Set<Key> stopList = new HashSet<>();
 

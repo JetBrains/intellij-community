@@ -92,7 +92,7 @@ class ShardedIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor,
-                             GlobalSearchScope scope,
+                             @NotNull GlobalSearchScope scope,
                              @Nullable IdFilter idFilter) throws StorageException {
     for (VfsAwareIndexStorage<K, V> shard : shards) {
       boolean shouldContinue = shard.processKeys(processor, scope, idFilter);

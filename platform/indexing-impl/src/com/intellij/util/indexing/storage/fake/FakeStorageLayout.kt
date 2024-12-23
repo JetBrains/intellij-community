@@ -55,12 +55,12 @@ internal class FakeStorageLayout<K, V>(private val extension: FileBasedIndexExte
     return MapForwardIndexAccessor(defaultMapExternalizerFor(extension))
   }
 
-  override fun clearIndexData() {}
+  override fun clearIndexData() = Unit
 }
 
 internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
 
-  override fun processKeys(processor: Processor<in K>, scope: GlobalSearchScope?, idFilter: IdFilter?): Boolean = true
+  override fun processKeys(processor: Processor<in K>, scope: GlobalSearchScope, idFilter: IdFilter?): Boolean = true
 
   override fun <E : Exception?> read(key: K?, processor: ValueContainerProcessor<V?, E?>): Boolean {
     return processor.process(ValueContainer.emptyContainer())

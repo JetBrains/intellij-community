@@ -33,7 +33,7 @@ public final class InMemoryIndexStorage<K, V> extends IndexStorageLockingBase im
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor,
-                             GlobalSearchScope scope,
+                             @NotNull GlobalSearchScope scope,
                              @Nullable IdFilter idFilter) {
     return withReadLock(() -> ContainerUtil.and(inMemoryStorage.keySet(), processor::process));
   }

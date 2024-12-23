@@ -101,7 +101,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
 
   @Override
   public boolean processKeys(@NotNull Processor<? super Key> processor,
-                             GlobalSearchScope scope,
+                             @NotNull GlobalSearchScope scope,
                              @Nullable IdFilter idFilter)
     throws StorageException {
     return withReadLock(() -> {

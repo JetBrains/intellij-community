@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 @Internal
 public interface VfsAwareIndexStorage<Key, Value> extends IndexStorage<Key, Value>, MeasurableIndexStore {
 
-  boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
+  boolean processKeys(@NotNull Processor<? super Key> processor,
+                      @NotNull GlobalSearchScope scope,
+                      @Nullable IdFilter idFilter) throws StorageException;
 
 }
