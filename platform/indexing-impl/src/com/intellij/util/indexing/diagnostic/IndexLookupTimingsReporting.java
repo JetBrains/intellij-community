@@ -145,7 +145,7 @@ public final class IndexLookupTimingsReporting {
   /**
    * Individual lookups
    */
-  private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 2);
+  private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 3);
 
   /**
    * Averages/percentiles over lookups in a time window
@@ -215,6 +215,7 @@ public final class IndexLookupTimingsReporting {
       FIELD_INDEX_ID,
 
       FIELD_LOOKUP_FAILED,
+      FIELD_LOOKUP_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MS,          //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
       FIELD_UP_TO_DATE_CHECK_DURATION_MS,
@@ -230,6 +231,7 @@ public final class IndexLookupTimingsReporting {
       FIELD_INDEX_ID,
 
       FIELD_LOOKUP_FAILED,
+      FIELD_LOOKUP_CANCELLED,
 
       //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time) + (STUB_TREE_DESERIALIZING_DURATION)
       FIELD_LOOKUP_DURATION_MS,
@@ -246,6 +248,7 @@ public final class IndexLookupTimingsReporting {
       FIELD_INDEX_ID,
 
       FIELD_LOOKUP_FAILED,
+      FIELD_LOOKUP_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MS,       //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
       FIELD_UP_TO_DATE_CHECK_DURATION_MS,
@@ -321,6 +324,7 @@ public final class IndexLookupTimingsReporting {
                                            final @Nullable T parentTrace) {
         this.indexId = indexId;
         this.lookupFailed = false;
+        this.lookupCancelled = false;
         this.totalKeysIndexed = -1;
         this.lookupResultSize = -1;
 
@@ -546,6 +550,7 @@ public final class IndexLookupTimingsReporting {
           .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
           .startSpan();
         lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        //TODO RC: supply .lookupCancelled
         try (Scope scope = lookupSpan.makeCurrent()) {
           OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
             .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
@@ -623,6 +628,7 @@ public final class IndexLookupTimingsReporting {
 
           FIELD_LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
+          FIELD_LOOKUP_CANCELLED.with(lookupCancelled),
           FIELD_LOOKUP_FAILED.with(lookupFailed),
 
           FIELD_LOOKUP_KEYS_OP.with(lookupOperation),
@@ -644,6 +650,7 @@ public final class IndexLookupTimingsReporting {
           .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
           .startSpan();
         lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        //TODO RC: supply .lookupCancelled
         try (Scope scope = lookupSpan.makeCurrent()) {
           if (indexValidationFinishedAtMs > 0) {
             OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
@@ -741,6 +748,7 @@ public final class IndexLookupTimingsReporting {
 
           FIELD_LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
+          FIELD_LOOKUP_CANCELLED.with(lookupCancelled),
           FIELD_LOOKUP_FAILED.with(lookupFailed),
 
           FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed),
@@ -757,6 +765,7 @@ public final class IndexLookupTimingsReporting {
           .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
           .startSpan();
         lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        //TODO RC: supply .lookupCancelled
         try (Scope scope = lookupSpan.makeCurrent()) {
           if (indexValidationFinishedAtMs > 0) {
             OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
