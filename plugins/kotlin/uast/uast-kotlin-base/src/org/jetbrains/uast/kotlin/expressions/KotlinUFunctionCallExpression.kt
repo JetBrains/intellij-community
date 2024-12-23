@@ -307,11 +307,7 @@ class KotlinUFunctionCallExpression(
                 callableDeclaration.containingClass
             }
                 ?: return null
-        val containingUClass = getContainingUClass()
-        if (implicitReceiver is PsiClass && implicitReceiver == containingUClass?.javaPsi) {
-            // Implicit `this`
-            return KotlinUImplicitThis(implicitReceiver, receiverType, this)
-        }
+
         // Lambda receiver
         var enclosingLambda = this.getParentOfType<ULambdaExpression>()
         while (enclosingLambda != null) {
@@ -332,6 +328,12 @@ class KotlinUFunctionCallExpression(
                 return KotlinUImplicitLambdaReceiver(lambdaReceiver, receiverType, this)
             }
             enclosingLambda = enclosingLambda.getParentOfType<ULambdaExpression>()
+        }
+
+        val containingUClass = getContainingUClass()
+        if (implicitReceiver is PsiClass && implicitReceiver == containingUClass?.javaPsi) {
+            // Implicit `this`
+            return KotlinUImplicitThis(implicitReceiver, receiverType, this)
         }
 
         return null
