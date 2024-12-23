@@ -974,21 +974,6 @@ class PyTypeHintsInspection : PyInspection() {
       return PyCallableParameterListTypeImpl(argumentTypes.map(PyCallableParameterImpl::nonPsi))
     }
 
-    private fun promoteTypeArgumentListToCallableParameterListIfNeeded(typeArgumentTypes: List<PyType?>,
-                                                                     node: PySubscriptionExpression): PyCallableParameterListType? {
-      if (typeArgumentTypes.size == 1 && typeArgumentTypes[0] is PyCallableParameterListType) return null
-
-      val type = myTypeEvalContext.getType(node)
-      if (type is PyClassType) {
-        val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(type.pyClass, myTypeEvalContext) ?: return null
-        val typeParameters = genericDefinitionType.elementTypes
-        if (typeParameters.size == 1 && typeParameters[0] is PyParamSpecType) {
-          return PyCallableParameterListTypeImpl(typeArgumentTypes.map(PyCallableParameterImpl::nonPsi))
-        }
-      }
-      return null
-    }
-
     private fun checkCallableParameters(index: PyExpression) {
 
       if (index !is PyTupleExpression) {
