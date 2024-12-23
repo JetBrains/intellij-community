@@ -100,6 +100,7 @@ f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - a:goPrevDiff():V
 *f:com.intellij.diff.tools.combined.CombinedDiffRegistry
 - sf:INSTANCE:com.intellij.diff.tools.combined.CombinedDiffRegistry
+- f:addStateListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
 - f:getFilesLimit():I
 - f:getMaxBlockCountInMemory():I
 - f:getPreloadedBlocksCount():I
