@@ -53,10 +53,6 @@ fun move(container: PsiElement, statements: Array<PsiElement>, generateDefaultIn
                             container, dummyFirstStatement, generateDefaultInitializers, resultStatements, propertiesDeclarations, property
                         )
                     }
-                    //declareOut(
-                    //    psiFactory,
-                    //    container, dummyFirstStatement, generateDefaultInitializers, resultStatements, propertiesDeclarations, property
-                    //)
                 } else {
                     val newStatement = container.addBefore(statement, dummyFirstStatement)
                     container.addAfter(psiFactory.createNewLine(), newStatement)
