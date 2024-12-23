@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.jcef.menu.CefContextMenuRunner;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefFocusHandler;
 import org.cef.handler.CefFocusHandlerAdapter;
@@ -86,6 +87,24 @@ public class JBCefBrowser extends JBCefBrowserBase {
         return false;
       }
     }, myCefBrowser);
+
+    if (isOffScreenRendering()) {
+      CefContextMenuRunner contextMenuRunner = new CefContextMenuRunner();
+      myCefClient.addContextMenuHandler(contextMenuRunner, myCefBrowser);
+
+      myCefBrowser.getUIComponent().addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+            myCefBrowser.setFocus(true);
+        }
+        @Override
+        public void focusLost(FocusEvent e) {
+          if (!contextMenuRunner.isShowing())  {
+            myCefBrowser.setFocus(false);
+          }
+        }
+      });
+    }
   }
 
   private static final @NotNull List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =

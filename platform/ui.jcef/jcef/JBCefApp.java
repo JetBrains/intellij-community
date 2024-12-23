@@ -121,15 +121,16 @@ public final class JBCefApp {
     }
 
     Boolean result = null;
-    try {
-      // Temporary use reflection to avoid jcef-version increment
-      Method m = CefApp.class.getMethod("isRemoteEnabled");
-      result = (boolean)m.invoke(CefApp.class);
-    } catch (Throwable e) {
-      LOG.warn(e);
-    }
+    IS_REMOTE_ENABLED = CefApp.isRemoteEnabled();
+    //try {
+    //  // Temporary use reflection to avoid jcef-version increment
+    //  Method m = CefApp.class.getMethod("isRemoteEnabled");
+    //  result = (boolean)m.invoke(CefApp.class);
+    //} catch (Throwable e) {
+    //  LOG.warn(e);
+    //}
 
-    IS_REMOTE_ENABLED = result != null && result;
+    //IS_REMOTE_ENABLED = result != null && result;
   }
 
   private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {

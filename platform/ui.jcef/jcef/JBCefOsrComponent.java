@@ -69,16 +69,6 @@ class JBCefOsrComponent extends JPanel {
     setFocusable(true);
     setRequestFocusEnabled(true);
     setFocusTraversalKeysEnabled(false);
-    addFocusListener(new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myBrowser.setFocus(true);
-      }
-      @Override
-      public void focusLost(FocusEvent e) {
-        myBrowser.setFocus(false);
-      }
-    });
 
     addInputMethodListener(myInputMethodAdapter);
 
