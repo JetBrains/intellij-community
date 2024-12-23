@@ -291,6 +291,14 @@ class KotlinUFunctionCallExpression(
         // Bail out for non-instance functions
         if (isStatic || callableDeclaration !is PsiMethod) return null
 
+        val containingUMethod = getContainingUMethod()
+        val extensionReceiver = containingUMethod?.uastParameters?.firstOrNull() as? KotlinReceiverUParameter
+        // Extension receiver of the containing method
+        if (extensionReceiver != null && extensionReceiver.javaPsi.type == receiverType) {
+            // Implicit $this$extension
+            return KotlinUImplicitExtensionReceiver(extensionReceiver, receiverType, this)
+        }
+
         val implicitReceiver =
             if (baseResolveProviderService.isResolvedToExtension(sourcePsi)) {
                 // Extension receiver of PsiParameter
@@ -345,6 +353,28 @@ class KotlinUFunctionCallExpression(
 
         override val javaPsi: PsiElement?
             get() = implicitReceiver
+    }
+
+    private class KotlinUImplicitExtensionReceiver(
+        val extensionReceiver: KotlinReceiverUParameter,
+        val receiverType: PsiType?,
+        uasParent: UElement,
+    ) : KotlinAbstractUExpression(uasParent), UThisExpression {
+        override val label: String?
+            get() = null
+
+        override val labelIdentifier: UIdentifier?
+            get() = null
+
+        override fun getExpressionType() = receiverType
+
+        override fun resolve(): PsiElement? = extensionReceiver.javaPsi
+
+        override val sourcePsi: PsiElement?
+            get() = null
+
+        override val javaPsi: PsiElement?
+            get() = extensionReceiver.javaPsi
     }
 
     private class KotlinUImplicitLambdaReceiver(
