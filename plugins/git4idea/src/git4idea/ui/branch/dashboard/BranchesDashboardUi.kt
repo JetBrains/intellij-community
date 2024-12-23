@@ -37,6 +37,7 @@ import com.intellij.vcs.log.impl.VcsLogContentProvider
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -362,19 +363,19 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 }
 
 @ApiStatus.Internal
-val SHOW_GIT_BRANCHES_LOG_PROPERTY =
+val SHOW_GIT_BRANCHES_LOG_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
   object : VcsLogProjectTabsProperties.CustomBooleanTabProperty("Show.Git.Branches") {
     override fun defaultValue(logId: String) = logId == VcsLogContentProvider.MAIN_LOG_ID
   }
 
 @ApiStatus.Internal
-val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY =
+val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
   object : VcsLogApplicationSettings.CustomBooleanProperty("Change.Log.Filter.on.Branch.Selection") {
     override fun defaultValue() = false
   }
 
 @ApiStatus.Internal
-val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY =
+val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
   object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
     override fun defaultValue() = false
   }
