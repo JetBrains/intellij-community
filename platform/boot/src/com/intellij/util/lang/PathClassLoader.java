@@ -69,10 +69,10 @@ public final class PathClassLoader extends UrlClassLoader {
   // for java.system.class.loader
   @SuppressWarnings("unused")
   public PathClassLoader(@NotNull ClassLoader parent) {
-    super(UrlClassLoader.createDefaultBuilderForJdk(parent), RESOURCE_FILE_FACTORY, isParallelCapable);
+    super(createDefaultBuilderForJdk(parent), RESOURCE_FILE_FACTORY, isParallelCapable);
 
     transformer = null;
-    UrlClassLoader.registerInClassLoaderValueMap(parent, this);
+    registerInClassLoaderValueMap(parent, this);
   }
 
   @Override

@@ -29,5 +29,4 @@ const val IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS = "com.intellij.platform.
 
 val MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS: List<String> = listOf(
   "-Djava.nio.file.spi.DefaultFileSystemProvider=$IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS",
-  "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
 )

@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
@@ -63,22 +62,6 @@ object IjentWslNioFsVmOptionsSetter {
 
       if (actualValue != "") {
         changedOptions += prefix to ""
-      }
-    }
-
-    run {
-      val prefix = "-Djava.security.manager="
-      val actualValue = getOptionByPrefix(prefix)
-
-      if (isEnabled) {
-        if (actualValue != CoreBootstrapSecurityManager::class.java.name) {
-          changedOptions += prefix to CoreBootstrapSecurityManager::class.java.name
-        }
-      }
-      else {
-        // It's not always possible to remove a VM Option (if an option is defined in a product-level vmoptions file).
-        // However, CoreBootstrapSecurityManager does nothing potentially harmful.
-        // The option is kept as is.
       }
     }
 

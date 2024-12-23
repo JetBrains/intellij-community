@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import java.nio.file.FileSystems;
@@ -13,7 +13,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see CoreRoutingFileSystemProvider
  * @see MultiRoutingFileSystemProvider
  * @see FileSystems#getDefault()
+ * @deprecated <a href="https://bugs.openjdk.org/browse/JDK-8338411">Security Manager has been disabled in java 24</a>
  */
+@Deprecated(forRemoval = true)
 public class CoreBootstrapSecurityManager extends SecurityManager {
   private final AtomicBoolean initialised = new AtomicBoolean(false);
 

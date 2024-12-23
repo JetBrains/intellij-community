@@ -23,7 +23,6 @@ class IjentWslNioFsVmOptionsSetterTest {
     val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf(
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
-      "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
       "-Dwsl.use.remote.agent.for.nio.filesystem=true",
     )
   }
@@ -33,7 +32,6 @@ class IjentWslNioFsVmOptionsSetterTest {
     val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = false, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf(
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
-      "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
       "-Dwsl.use.remote.agent.for.nio.filesystem=true",
       "-Xbootclasspath/a:out/tests/classes/production/intellij.platform.core.nio.fs",
     )
@@ -50,7 +48,6 @@ class IjentWslNioFsVmOptionsSetterTest {
     val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
       -Didea.force.default.filesystem=true
       -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-      -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
       -Dwsl.use.remote.agent.for.nio.filesystem=false
     """.trimIndent()))
 
@@ -64,7 +61,6 @@ class IjentWslNioFsVmOptionsSetterTest {
   fun `disable when enabling options set`() {
     val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
       -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-      -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
       -Dwsl.use.remote.agent.for.nio.filesystem=true
     """.trimIndent()))
 
@@ -79,7 +75,6 @@ class IjentWslNioFsVmOptionsSetterTest {
     val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
         -Didea.force.default.filesystem=false
         -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-        -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
         -Dwsl.use.remote.agent.for.nio.filesystem=true
       """.trimIndent()))
 
@@ -101,7 +96,6 @@ class IjentWslNioFsVmOptionsSetterTest {
   fun `enabled by default but disabled locally with enabling options in distribution vm options file`() {
     val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = true, vmOptionsReader("""
       -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-      -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
     """.trimIndent()))
 
     changedOptions shouldMatch listOf(
