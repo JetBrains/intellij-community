@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -62,6 +63,7 @@ public abstract class WslDistributionManager implements Disposable {
    * on a pooled thread and outside the read action as it runs a process under the hood.
    * @see #getInstalledDistributionsFuture
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
     if (!isAvailable()) return List.of();
     CachedDistributions cachedDistributions = myInstalledDistributions;

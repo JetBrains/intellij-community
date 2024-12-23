@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -35,7 +36,6 @@ import java.io.BufferedReader
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
-import kotlin.io.path.isSameFileAs
 
 /**
  * This service, along with listeners inside it, enables and disables access to WSL drives through IJent.
@@ -86,7 +86,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   // TODO Move to ijent.impl?
   internal class WslEelProvider : EelProvider {
     override suspend fun getEelApi(path: Path): EelApi? {
-      val distribution = WslDistributionManager.getInstance().installedDistributions.firstOrNull { distro -> distro.getUNCRootPath().toString().compareTo(path.root.toString(), true) == 0 }
+      val distribution = withContext(Dispatchers.IO) { WslDistributionManager.getInstance().installedDistributions }.firstOrNull { distro -> distro.getUNCRootPath().toString().compareTo(path.root.toString(), true) == 0 }
       if (distribution == null) {
         return null
       }
