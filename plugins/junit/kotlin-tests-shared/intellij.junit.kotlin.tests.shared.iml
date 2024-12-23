@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.junit.testFramework" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" exported="" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.java.tests" exported="" scope="TEST" />
   </component>
 </module>
