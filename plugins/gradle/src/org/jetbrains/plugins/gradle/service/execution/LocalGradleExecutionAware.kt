@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
@@ -145,7 +144,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       LOG.warn("Gradle JVM ($gradleJvm) isn't resolved: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    val homePath = sdkInfo.homePath?.toNioPathOrNull() ?: run {
+    val homePath = sdkInfo.homePath?.let { Path.of(it) } ?: run {
       LOG.warn("No Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }

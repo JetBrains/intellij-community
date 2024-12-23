@@ -5,11 +5,11 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.eel.EelTargetEnvironmentRequest
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.toNioPath
 import com.intellij.util.PathMapper
+import java.nio.file.Path
 
 class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnvironmentConfigurationProvider {
 
@@ -25,12 +25,12 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnviron
     override fun isEmpty(): Boolean = false
 
     override fun canReplaceLocal(localPath: String): Boolean {
-      val nio = localPath.toNioPathOrNull() ?: return false
+      val nio = Path.of(localPath)
       return eel.mapper.getOriginalPath(nio) != null
     }
 
     override fun convertToLocal(remotePath: String): String {
-      val nio = remotePath.toNioPathOrNull() ?: throw IllegalArgumentException("Unable to map path $remotePath")
+      val nio = Path.of(remotePath)
       val eelPath = eel.fs.getPath(nio.toCanonicalPath())
       return eelPath.toNioPath(eel).toCanonicalPath()
     }
@@ -40,7 +40,7 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnviron
     }
 
     override fun convertToRemote(localPath: String): String {
-      val nioPath = localPath.toNioPathOrNull() ?: throw IllegalArgumentException("Unable to map path $localPath")
+      val nioPath = Path.of(localPath)
       return eel.mapper.getOriginalPath(nioPath).toString()
     }
 

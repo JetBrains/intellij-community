@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -98,10 +97,7 @@ public final class GradleUtil {
     if (gradleProjectPath == null) {
       return null;
     }
-    Path projectPath = NioPathUtil.toNioPathOrNull(gradleProjectPath);
-    if (projectPath == null) {
-      return null;
-    }
+    Path projectPath = Path.of(gradleProjectPath);
     return getWrapperConfiguration(projectPath);
   }
 
@@ -275,10 +271,7 @@ public final class GradleUtil {
     if (gradleProjectPath == null) {
       return null;
     }
-    Path nioProjectPath = NioPathUtil.toNioPathOrNull(gradleProjectPath);
-    if (nioProjectPath == null) {
-      return null;
-    }
+    Path nioProjectPath = Path.of(gradleProjectPath);
     return findDefaultWrapperPropertiesFile(nioProjectPath);
   }
 

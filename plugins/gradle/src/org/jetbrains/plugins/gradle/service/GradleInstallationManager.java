@@ -114,19 +114,18 @@ public class GradleInstallationManager implements Disposable {
           buildLayoutParameters = gradleExecutionAware.getDefaultBuildLayoutParameters(project);
         }
         else {
-          Path nioProjectPath = NioPathUtil.toNioPathOrNull(projectPath);
-          if (nioProjectPath == null) {
-            buildLayoutParameters = gradleExecutionAware.getDefaultBuildLayoutParameters(project);
-          }
-          else {
-            buildLayoutParameters = gradleExecutionAware.getBuildLayoutParameters(project, nioProjectPath);
-          }
+          buildLayoutParameters = gradleExecutionAware.getBuildLayoutParameters(project, Path.of(projectPath));
         }
         if (buildLayoutParameters != null) {
           return buildLayoutParameters;
         }
       }
-      return new LocalGradleExecutionAware().getBuildLayoutParameters(project, NioPathUtil.toNioPathOrNull(projectPath));
+      if (projectPath != null) {
+        return new LocalGradleExecutionAware().getBuildLayoutParameters(project, Path.of(projectPath));
+      }
+      else {
+        return new LocalGradleExecutionAware().getDefaultBuildLayoutParameters(project);
+      }
     });
   }
 

@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.VisibleForTesting
@@ -125,7 +124,7 @@ class GradleDownloadSourceAction(
     if (gradleUserHome == null) {
       return null
     }
-    val filePath = rootFiles[0].path.toNioPathOrNull() ?: return null
+    val filePath = Path.of(rootFiles[0].path)
     if (!filePath.startsWith(gradleUserHome)) {
       return null
     }

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.execution.wsl
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.text.nullize
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.resolvedPromise
@@ -31,7 +30,7 @@ internal class WslBuildLayoutParameters(private val wslDistribution: WSLDistribu
     if (distributionType == DistributionType.LOCAL) return gradleProjectSettings.gradleHome?.let {
       wslDistribution.getTargetValueForRemotePath(it)
     }
-    val gradleUserHome = GradleLocalSettings.getInstance(project).getGradleHome(projectPath)?.toNioPathOrNull() ?: return null
+    val gradleUserHome = GradleLocalSettings.getInstance(project).getGradleHome(projectPath)?.let { Path.of(it) } ?: return null
     return wslDistribution.getTargetValueForLocalPath(gradleUserHome)
   }
 
@@ -65,7 +64,7 @@ internal class WslBuildLayoutParameters(private val wslDistribution: WSLDistribu
 
   private fun findGradleUserHomeDir(wslDistribution: WSLDistribution): TargetValue<Path> {
     if (projectPath != null) {
-      val serviceDirectoryPath = GradleSettings.getInstance(project).serviceDirectoryPath?.toNioPathOrNull()
+      val serviceDirectoryPath = GradleSettings.getInstance(project).serviceDirectoryPath?.let { Path.of(it) }
       if (serviceDirectoryPath != null) return wslDistribution.getTargetValueForLocalPath(serviceDirectoryPath)
     }
     val gradleUserHome = wslDistribution.getEnvironmentVariable("GRADLE_USER_HOME").nullize(true)
@@ -73,12 +72,12 @@ internal class WslBuildLayoutParameters(private val wslDistribution: WSLDistribu
   }
 
   private fun WSLDistribution.getTargetValueForLocalPath(windowsPath: Path): TargetValue<Path> {
-    val wslPath = getWslPath(windowsPath)?.toNioPathOrNull() ?: windowsPath
+    val wslPath = getWslPath(windowsPath)?.let { Path.of(it) } ?: windowsPath
     return TargetValue.create(windowsPath, resolvedPromise(wslPath))
   }
 
   private fun WSLDistribution.getTargetValueForRemotePath(wslPath: String): TargetValue<Path> {
-    val windowsPath = getWindowsPath(wslPath).toNioPathOrNull()
-    return TargetValue.create(windowsPath!!, resolvedPromise(wslPath.toNioPathOrNull()))
+    val windowsPath = Path.of(getWindowsPath(wslPath))
+    return TargetValue.create(windowsPath, resolvedPromise(Path.of(wslPath)))
   }
 }
