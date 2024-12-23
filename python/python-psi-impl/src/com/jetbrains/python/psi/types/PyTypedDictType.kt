@@ -174,10 +174,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                    context: TypeEvalContext,
                    value: PyExpression?): TypeCheckingResult? {
       if (!actual.isInferred()) {
-        val match = checkStructuralCompatibility(expected, actual, context)
-        if (match != null) {
-          return match
-        }
+        return TypeCheckingResult(checkStructuralCompatibility(expected, actual, context))
       }
       if (expected !is PyTypedDictType) return null
 
@@ -286,21 +283,17 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      */
     private fun checkStructuralCompatibility(expected: PyType?,
                                              actual: PyTypedDictType,
-                                             context: TypeEvalContext): TypeCheckingResult? {
+                                             context: TypeEvalContext): Boolean {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
         val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
         val elementTypes = expected.elementTypes
-        return TypeCheckingResult(elementTypes.size == 2
-                                  && builtinCache.strType == elementTypes[0]
-                                  && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name))
+        return elementTypes.size == 2
+               && builtinCache.strType == elementTypes[0]
+               && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name)
       }
 
       if (expected !is PyTypedDictType) {
-        // A TypedDict isn’t assignable to any Dict[...] type
-        if (expected is PyClassType && expected.classQName == PyNames.DICT) {
-          return TypeCheckingResult(false)
-        }
-        return null
+        return false
       }
 
       for ((expectedKey, expectedField) in expected.fields) {
@@ -309,30 +302,30 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         }
         val actualField = actual.fields[expectedKey]
         if (actualField == null) {
-          return TypeCheckingResult(false)
+          return false
         }
         if (!strictUnionMatch(expectedField.type, actualField.type, context)) {
-          return TypeCheckingResult(false)
+          return false
         }
         if (!expectedField.isReadOnly) {
           if (!(strictUnionMatch(actualField.type, expectedField.type, context) && !actualField.isReadOnly)) {
-            return TypeCheckingResult(false)
+            return false
           }
         }
         if (expectedField.isRequired) {
           if (!actualField.isRequired) {
-            return TypeCheckingResult(false)
+            return false
           }
         }
         else {
           if (!expectedField.isReadOnly) {
             if (actualField.isRequired) {
-              return TypeCheckingResult(false)
+              return false
             }
           }
         }
       }
-      return TypeCheckingResult(true)
+      return true
     }
   }
 
