@@ -10,6 +10,8 @@ import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.layout.ViewContext;
@@ -69,11 +71,24 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private volatile AbstractState myState = NotRunState.getInstance();
   private Long myDuration = null; // duration is unknown
   /**
-   * Represents the start time of node which is used to calculate the duration if the user interrupted the tests execution
+   * Represents the start time of node based on calls
+   * This information can be used to customize output
    * @see SMTestProxy#setStarted()
+   * @see SMTestProxy#setSuiteStarted()
    * @see SMTestProxy#setTerminated(long)
    */
-  private Long myStartTime = null;
+  @ApiStatus.Experimental
+  @Nullable
+  volatile Long myStartTime = null;
+  /**
+   * Represents the end time of node based on calls
+   * This information can be used to customize output
+   * @see SMTestProxy#setFinished() ()
+   * @see SMTestProxy#setTerminated(long)
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  volatile Long myEndTime = null;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
   private boolean myHasPassedTests = false;
@@ -404,12 +419,31 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myState = new SuiteInProgressState(this);
     } else {
       myState = TestInProgressState.TEST;
+    }
+    if (myStartTime == null) {
       myStartTime = System.currentTimeMillis();
     }
     myState = !myIsSuite ? TestInProgressState.TEST : new SuiteInProgressState(this);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Nullable
+  public Long getStartTime() {
+    return myStartTime;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Nullable
+  public Long getEndTime() {
+    return myEndTime;
+  }
+
   public void setSuiteStarted() {
+    if (myStartTime == null) {
+      myStartTime = System.currentTimeMillis();
+    }
     myState = new SuiteInProgressState(this);
     if (!myIsSuite) {
       myIsSuite = true;
@@ -441,6 +475,20 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return myDuration;
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Nullable
+  @Override
+  public Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
+    if (testConsoleProperties instanceof SMTRunnerTestTreeViewProvider provider) {
+      SMTRunnerTestTreeView view = provider.createSMTRunnerTestTreeView();
+      if (view instanceof SMTRunnerTestTreeViewProvider.CustomizedDurationProvider customizedDurationProvider) {
+        return customizedDurationProvider.getCustomizedDuration(this);
+      }
+    }
+    return myDuration;
+  }
+
   @Nullable
   @Override
   public String getDurationString(TestConsoleProperties consoleProperties) {
@@ -454,7 +502,9 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     };
   }
 
-  private boolean isSubjectToHide(TestConsoleProperties consoleProperties) {
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public boolean isSubjectToHide(TestConsoleProperties consoleProperties) {
     return TestConsoleProperties.HIDE_PASSED_TESTS.value(consoleProperties) && getParent() != null && !isDefect();
   }
 
@@ -477,7 +527,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   @NotNull
-  protected TestDurationStrategy getDurationStrategy() {
+  public TestDurationStrategy getDurationStrategy() {
     final TestDurationStrategy strategy = myDurationStrategyCached;
     if (strategy != null) {
       return strategy;
@@ -531,7 +581,9 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       // has been already fired
       return;
     }
-
+    if (myEndTime == null) {
+      myEndTime = System.currentTimeMillis();
+    }
     if (!isSuite()) {
       // if isn't in other finished state (ignored, failed or passed)
       myState = TestPassedState.INSTANCE;
@@ -837,9 +889,13 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     if (myState.isFinal()) {
       return;
     }
+    if (myEndTime != null) {
+      myEndTime = endTime;
+    }
     myState = TerminatedState.INSTANCE;
-    if (!myIsSuite && myStartTime != null) {
-      setDuration(endTime - myStartTime);
+    Long startTime = myStartTime;
+    if (!myIsSuite && startTime != null) {
+      setDuration(endTime - startTime);
     } else if (!myIsSuite) {
       setDuration(0);
     }
@@ -1138,6 +1194,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       if (!getChildren().isEmpty()) {
         getChildren().clear();
       }
+      myStartTime = null;
+      myEndTime = null;
       clear();
     }
 

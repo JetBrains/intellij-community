@@ -162,7 +162,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @ApiStatus.Internal
   @Override
   protected JComponent createTestTreeView() {
-    myTreeView = new SMTRunnerTestTreeView();
+    if (myProperties instanceof SMTRunnerTestTreeViewProvider provider) {
+      myTreeView = provider.createSMTRunnerTestTreeView();
+    }
+    else {
+      myTreeView = new SMTRunnerTestTreeView();
+    }
 
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);

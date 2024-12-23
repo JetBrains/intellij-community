@@ -71,7 +71,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       }
 
       if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(myConsoleProperties)) {
-        myDurationText = testProxy.getDurationString(myConsoleProperties);
+        myDurationText = getDurationText(testProxy, myConsoleProperties);
         if (myDurationText != null) {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
@@ -88,6 +88,13 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     final @NlsSafe String text = node.toString();
     //no icon
     append(text != null ? text : SPACE_STRING, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Nullable
+  public String getDurationText(@NotNull SMTestProxy testProxy, @NotNull TestConsoleProperties consoleProperties) {
+    return testProxy.getDurationString(myConsoleProperties);
   }
 
   @NotNull

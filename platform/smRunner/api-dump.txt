@@ -340,7 +340,7 @@ c:com.intellij.execution.testframework.sm.runner.SMTestProxy
 - getDiffViewerProvider():com.intellij.execution.testframework.stacktrace.DiffHyperlink
 - getDiffViewerProviders():java.util.List
 - getDuration():java.lang.Long
-- p:getDurationStrategy():com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy
+- getDurationStrategy():com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy
 - getDurationString(com.intellij.execution.testframework.TestConsoleProperties):java.lang.String
 - getErrorMessage():java.lang.String
 - getLocation(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.Location

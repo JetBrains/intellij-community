@@ -5,13 +5,18 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
+import com.intellij.execution.testframework.JavaSMTRunnerTestTreeView;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
@@ -24,10 +29,13 @@ import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
 import java.io.File;
 
+import static com.intellij.execution.testframework.JavaAwareTestConsoleProperties.SHOW_LIVE_TIME;
+import static com.intellij.execution.testframework.JavaAwareTestConsoleProperties.USE_OVERALL_TIME;
+
 /**
  * @author Vladislav.Soroka
  */
-public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
+public class GradleConsoleProperties extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider {
   public static final BooleanProperty SHOW_INTERNAL_TEST_NODES = new BooleanProperty("showInternalTestNodes", false);
   public static final SMTestLocator GRADLE_TEST_LOCATOR = JavaTestLocator.INSTANCE;
 
@@ -58,6 +66,15 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
   @Override
   public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) {
     super.appendAdditionalActions(actionGroup, parent, target);
+    if (Registry.is("java.test.enable.tree.live.time")) {
+      actionGroup.addSeparator();
+      DumbAwareToggleBooleanProperty property =
+        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.overall.time"), null, null, target, USE_OVERALL_TIME);
+      actionGroup.add(property);
+      DumbAwareToggleBooleanProperty liveProperty =
+        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.live.time"), null, null, target, SHOW_LIVE_TIME);
+      actionGroup.add(liveProperty);
+    }
     actionGroup.add(Separator.getInstance());
     actionGroup.add(createShowInternalNodesAction(target));
   }
@@ -85,5 +102,10 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
     setIfUndefined(SHOW_INTERNAL_TEST_NODES, false);
     String desc = GradleBundle.message("gradle.test.show.internal.nodes.action.text");
     return new DumbAwareToggleBooleanProperty(text, desc, null, target, SHOW_INTERNAL_TEST_NODES);
+  }
+
+  @Override
+  public @NotNull SMTRunnerTestTreeView createSMTRunnerTestTreeView() {
+    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView(this) : new SMTRunnerTestTreeView();
   }
 }

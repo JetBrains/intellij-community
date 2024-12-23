@@ -61,6 +61,7 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
   public void appendAdditionalActions(DefaultActionGroup actionGroup,
                                       JComponent parent, TestConsoleProperties target) {
     super.appendAdditionalActions(actionGroup, parent, target);
+    actionGroup.addSeparator();
     actionGroup.add(createIncludeNonStartedInRerun(target));
   }
 

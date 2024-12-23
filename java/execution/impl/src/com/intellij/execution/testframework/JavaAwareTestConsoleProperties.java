@@ -14,6 +14,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -24,15 +28,23 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.config.BooleanProperty;
+import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.Collection;
 import java.util.Iterator;
 
-public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
+public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters>
+  extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider {
+
+  public static final BooleanProperty USE_OVERALL_TIME = new BooleanProperty("useOverallTime", false);
+  public static final BooleanProperty SHOW_LIVE_TIME = new BooleanProperty("liveTime", true);
+
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
     super(configuration, testFrameworkName, executor);
     setPrintTestingStartedTime(false);
@@ -77,7 +89,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     final String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName == null) return null;
     PsiMethod containingMethod = null;
-    for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
+    for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final PsiMethod psiMethod = iterator.next().getPsiElement();
       if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod;
     }
@@ -103,7 +115,8 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
           return new OpenFileDescriptor(containingClass.getProject(), psiFile.getVirtualFile(), lineNumber, 0);
         }
       }
-      catch (NumberFormatException ignored) { }
+      catch (NumberFormatException ignored) {
+      }
     }
     return null;
   }
@@ -121,5 +134,24 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Override
   public boolean isEditable() {
     return Registry.is("editable.java.test.console");
+  }
+
+  @Override
+  public @NotNull SMTRunnerTestTreeView createSMTRunnerTestTreeView() {
+    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView(this) : new SMTRunnerTestTreeView();
+  }
+
+  @Override
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) {
+    super.appendAdditionalActions(actionGroup, parent, target);
+    if (Registry.is("java.test.enable.tree.live.time")) {
+      actionGroup.addSeparator();
+      DumbAwareToggleBooleanProperty property =
+        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.overall.time"), null, null, target, USE_OVERALL_TIME);
+      actionGroup.add(property);
+      DumbAwareToggleBooleanProperty liveProperty =
+        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.live.time"), null, null, target, SHOW_LIVE_TIME);
+      actionGroup.add(liveProperty);
+    }
   }
 }

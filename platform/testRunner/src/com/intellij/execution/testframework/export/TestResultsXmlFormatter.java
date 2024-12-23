@@ -61,8 +61,12 @@ public final class TestResultsXmlFormatter {
   private final AbstractTestProxy myTestRoot;
   private final boolean myHidePassedConfig;
   private final ExecutionTarget myExecutionTarget;
+  private final TestConsoleProperties myTestConsoleProperties;
 
-  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, TestConsoleProperties properties, ContentHandler resultHandler)
+  public static void execute(AbstractTestProxy root,
+                             RunConfiguration runtimeConfiguration,
+                             TestConsoleProperties properties,
+                             ContentHandler resultHandler)
     throws SAXException {
     new TestResultsXmlFormatter(root, runtimeConfiguration, properties, resultHandler).execute();
   }
@@ -76,6 +80,7 @@ public final class TestResultsXmlFormatter {
     myResultHandler = resultHandler;
     myHidePassedConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
     myExecutionTarget = properties.getExecutionTarget();
+    myTestConsoleProperties = properties;
   }
 
   private void execute() throws SAXException {
@@ -98,7 +103,7 @@ public final class TestResultsXmlFormatter {
     String footerText = ExecutionBundle.message("export.test.results.footer", ApplicationNamesInfo.getInstance().getFullProductName(),
                                                 new SimpleDateFormat().format(new Date()));
     runAttrs.put(ATTR_FOORTER_TEXT, footerText);
-    Long duration = myTestRoot.getDuration();
+    Long duration = myTestRoot.getCustomizedDuration(myTestConsoleProperties);
     if (duration != null) {
       runAttrs.put(ATTR_DURATION, String.valueOf(duration));
     }
@@ -122,7 +127,8 @@ public final class TestResultsXmlFormatter {
       }
       config.addContent(RunManagerImpl.getInstanceImpl(myRuntimeConfiguration.getProject()).writeBeforeRunTasks(myRuntimeConfiguration));
     }
-    catch (WriteExternalException ignore) {}
+    catch (WriteExternalException ignore) {
+    }
     processJDomElement(config);
 
     if (myTestRoot instanceof TestProxyRoot) {
@@ -179,7 +185,7 @@ public final class TestResultsXmlFormatter {
     Map<String, String> attrs = new HashMap<>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
-    Long duration = node.getDuration();
+    Long duration = node.getCustomizedDuration(myTestConsoleProperties);
     if (duration != null) {
       attrs.put(ATTR_DURATION, String.valueOf(duration));
     }
