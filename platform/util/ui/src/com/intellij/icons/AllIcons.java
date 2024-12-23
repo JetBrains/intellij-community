@@ -1180,7 +1180,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Liquibase = load("providers/liquibase.svg", -1061466874, 0);
     /** 16x16 */ public static final @NotNull Icon Mariadb = load("providers/mariadb.svg", -66597132, 2);
     /** 16x16 */ public static final @NotNull Icon Microsoft = load("providers/microsoft.svg", 1693855115, 0);
-    /** 16x17 */ public static final @NotNull Icon MimerSQL = load("providers/mimerSQL.svg", 311540927, 2);
+    /** 16x16 */ public static final @NotNull Icon MimerSQL = load("providers/mimerSQL.svg", -1251881855, 0);
     /** 16x16 */ public static final @NotNull Icon MongoDB = load("providers/mongoDB.svg", -1469680525, 0);
     /** 16x16 */ public static final @NotNull Icon Mysql = load("providers/mysql.svg", -717100114, 2);
     /** 16x16 */ public static final @NotNull Icon Netezza = load("providers/netezza.svg", 1267154425, 2);
