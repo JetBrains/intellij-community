@@ -47,17 +47,22 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   }
 
   fun downloadSdk(sdk: Sdk) {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
         downloadSdkInternal(sdk)
       }
     }
   }
 
-  private fun createDownloadTask(jdkItem: JdkItem, jdkHome: Path): SdkDownloadTask? {
+  private suspend fun createDownloadTask(jdkItem: JdkItem, jdkHome: Path): SdkDownloadTask? {
     val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(jdkHome.toString())
     if (selectedFile == null) {
-      Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
+      withContext(Dispatchers.EDT) {
+        Messages.showErrorDialog(project,
+                                 JavaUiBundle.message("jdk.download.error.message", error),
+                                 JavaUiBundle.message("jdk.download.error.title")
+        )
+      }
       return null
     }
 
@@ -78,7 +83,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   }
 
   private suspend fun downloadSdkInternal(sdk: Sdk): Boolean {
-    return coroutineScope {
+    return withContext(Dispatchers.EDT) {
       Disposer.newDisposable("The JdkDownloader#downloadSdk lifecycle").use { disposable ->
         val tracker = SdkDownloadTracker.getInstance()
         tracker.startSdkDownloadIfNeeded(sdk)
@@ -95,7 +100,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   }
 
   fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onJdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
-    return coroutineScope.async(Dispatchers.EDT) {
+    return coroutineScope.async {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
 
         val downloadTask = createDownloadTask(sdkDownloadTask.jdkItem, sdkDownloadTask.request.installDir)
