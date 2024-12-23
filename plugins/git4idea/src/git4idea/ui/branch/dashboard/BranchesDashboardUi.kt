@@ -3,7 +3,6 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.icons.AllIcons
-import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -207,7 +206,6 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   private fun createToolbarGroup(): DefaultActionGroup {
-    val commonActionsManager = CommonActionsManager.getInstance()
     val actionManager = ActionManager.getInstance()
 
     val diffAction = ShowBranchDiffAction()
@@ -217,9 +215,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val showMyBranchesAction = ShowMyBranchesAction()
     val newBranchAction = actionManager.getAction("Git.New.Branch.In.Log")
     val updateSelectedAction = UpdateSelectedBranchAction()
-    val defaultTreeExpander = DefaultTreeExpander(filteringTree.component)
-    val expandAllAction = commonActionsManager.createExpandAllHeaderAction(defaultTreeExpander, branchesTreePanel)
-    val collapseAllAction = commonActionsManager.createCollapseAllHeaderAction(defaultTreeExpander, branchesTreePanel)
+    val expandAllAction = actionManager.getAction(IdeActions.ACTION_EXPAND_ALL).apply {
+      registerCustomShortcutSet(branchesTreePanel, this@BranchesDashboardUi)
+    }
+    val collapseAllAction = actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL).apply {
+      registerCustomShortcutSet(branchesTreePanel, this@BranchesDashboardUi)
+    }
     val hideBranchesAction = actionManager.getAction("Git.Log.Hide.Branches")
     val settings = actionManager.getAction("Git.Log.Branches.Settings")
 
@@ -277,6 +278,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     override fun uiDataSnapshot(sink: DataSink) {
       snapshotSelectionActionsKeys(sink, filteringTree.component.selectionPaths)
 
+      sink[PlatformDataKeys.TREE_EXPANDER] = DefaultTreeExpander(filteringTree.component)
       sink[BRANCHES_UI_CONTROLLER] = uiController
       sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = logUi.properties
       sink[QuickActionProvider.KEY] = this
