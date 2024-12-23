@@ -3,15 +3,25 @@ package com.intellij.platform.eel.impl.utils
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.ResultErrImpl
+import com.intellij.platform.eel.provider.ResultOkImpl
+import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.utils.asEelChannel
+import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.ByteArrayOutputStream
+import java.nio.file.Path
+import kotlin.io.path.pathString
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 /**
  * Function that awaits the completion of an [EelProcess] and retrieves its execution result,
@@ -86,5 +96,30 @@ suspend fun EelApiBase.where(exe: String): EelPath? {
   }
   else {
     return fs.getPath(result.stdout.trim(), null)
+  }
+}
+
+/**
+ * Given [this] is a binary, executes it with [args] and returns either [EelExecApi.ExecuteProcessError] (couldn't execute) or
+ * [ProcessOutput] as a result of the execution.
+ * If [timeout] elapsed then return value is an error with `null`.
+ * ```kotlin
+ * withTimeout(10.seconds) {python.exec("-v")}.getOr{return it}
+ * ```
+ */
+@Internal
+@ApiStatus.Experimental
+suspend fun Path.exec(vararg args: String, timeout: Duration = Int.MAX_VALUE.days): EelResult<ProcessOutput, EelExecApi.ExecuteProcessError?> {
+
+  val process = getEelApi().exec.executeProcess(pathString, *args).getOr { return it }
+  val output = withTimeoutOrNull(timeout) {
+    process.awaitProcessResult()
+  }
+  return if (output != null) {
+    ResultOkImpl(output)
+  }
+  else {
+    process.kill()
+    ResultErrImpl(null)
   }
 }
