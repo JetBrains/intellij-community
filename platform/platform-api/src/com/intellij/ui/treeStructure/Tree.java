@@ -1506,8 +1506,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
             markPathExpanded(path);
             fireTreeExpanded(path);
             var parent = path.getParentPath();
-            // Limit expanded roots to 10 to prevent too many announcements and performance issues caused by it.
-            if (expandRoots.size() <= 10 && (parent == null || !toExpand.contains(parent))) {
+            // Limit expanded roots to 5 to prevent too many announcements and performance issues caused by it.
+            if (expandRoots.size() < 5 && (parent == null || !toExpand.contains(parent))) {
               expandRoots.add(path);
             }
           }
