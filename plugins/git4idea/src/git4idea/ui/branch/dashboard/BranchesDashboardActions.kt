@@ -24,14 +24,9 @@ import com.intellij.vcs.log.util.VcsLogUtil.HEAD
 import git4idea.GitRemoteBranch
 import git4idea.actions.GitFetch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
-import git4idea.branch.GitBranchType
-import git4idea.branch.GitBranchUtil
-import git4idea.branch.GitBrancher
-import git4idea.branch.GitRefType
-import git4idea.branch.IncomingOutgoingState
+import git4idea.branch.*
 import git4idea.commands.Git
 import git4idea.config.GitVcsSettings
-import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
@@ -43,7 +38,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.*
 import org.jetbrains.annotations.Nls
-import java.util.Locale
+import java.util.*
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -444,20 +439,24 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class FetchAction(private val ui: BranchesDashboardUi) : GitFetch() {
+  class FetchAction : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
-      super.update(e)
+      val controller = e.getData(BRANCHES_UI_CONTROLLER)
+      if (controller == null) {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+
+      GitFetch.performUpdate(e)
       e.presentation.text = message("action.Git.Fetch.title")
       e.presentation.icon = AllIcons.Vcs.Fetch
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      ui.startLoadingBranches()
-      super.actionPerformed(e)
-    }
-
-    override fun onFetchFinished(project: Project, result: GitFetchResult) {
-      ui.stopLoadingBranches()
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
+      controller.launchFetch()
     }
   }
 

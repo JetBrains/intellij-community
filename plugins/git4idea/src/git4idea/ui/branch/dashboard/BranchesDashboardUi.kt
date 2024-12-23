@@ -213,7 +213,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val diffAction = ShowBranchDiffAction()
     val deleteAction = DeleteBranchAction()
     val toggleFavoriteAction = ToggleFavoriteAction()
-    val fetchAction = FetchAction(this)
+    val fetchAction = FetchAction()
     val showMyBranchesAction = ShowMyBranchesAction()
     val newBranchAction = actionManager.getAction("Git.New.Branch.In.Log")
     val updateSelectedAction = UpdateSelectedBranchAction()

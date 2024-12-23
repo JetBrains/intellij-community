@@ -21,6 +21,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import git4idea.GitLocalBranch
+import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.i18n.GitBundle.message
@@ -123,6 +124,21 @@ internal class BranchesDashboardController(
     return result
   }
 
+  private fun startLoadingBranches() {
+    ui.startLoadingBranches()
+  }
+
+  private fun stopLoadingBranches() {
+    ui.stopLoadingBranches()
+  }
+
+  fun launchFetch() {
+    startLoadingBranches()
+    GitFetch.performFetch(project) {
+      stopLoadingBranches()
+    }
+  }
+
   fun reloadBranches(): Boolean {
     val forceReload = ui.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
     val changed = reloadBranches(forceReload)
@@ -138,7 +154,7 @@ internal class BranchesDashboardController(
   }
 
   private fun reloadBranches(force: Boolean): Boolean {
-    ui.startLoadingBranches()
+    startLoadingBranches()
 
     val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project, rootsToFilter)
     val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project, rootsToFilter)
@@ -148,7 +164,7 @@ internal class BranchesDashboardController(
     val reloadedRemote = updateIfChanged(refs.remoteBranches, newRemoteBranches, force)
     val reloadedTags = updateIfChanged(refs.tags, newTags, force)
 
-    ui.stopLoadingBranches()
+    stopLoadingBranches()
 
     return reloadedLocal || reloadedRemote || reloadedTags
   }
@@ -188,7 +204,7 @@ internal class BranchesDashboardController(
     VcsProjectLog.runWhenLogIsReady(project) {
       val allBranches = refs.localBranches + refs.remoteBranches
       val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
-      ui.startLoadingBranches()
+      startLoadingBranches()
       calculateMyBranchesInBackground(
         run = { indicator ->
           BranchesDashboardUtil.checkIsMyBranchesSynchronously(VcsProjectLog.getInstance(project), branchesToCheck, indicator)
@@ -199,7 +215,7 @@ internal class BranchesDashboardController(
           ui.refreshTree()
         },
         onFinished = {
-          ui.stopLoadingBranches()
+          stopLoadingBranches()
         })
     }
   }
