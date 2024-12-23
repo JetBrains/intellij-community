@@ -27,6 +27,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.types.Variance
 
 object ChangeParameterTypeFixFactory {
@@ -50,13 +52,14 @@ object ChangeParameterTypeFixFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createTypeMismatchFixes(psi: PsiElement, targetType: KaType): List<KotlinQuickFixAction<*>> {
-        val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
+        val valueArgument = getValueArgument(psi) ?: return emptyList()
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
-        val paramSymbol = memberCall.argumentMapping[valueArgument.getArgumentExpression()]
+        val paramSymbol =
+            memberCall.argumentMapping[valueArgument.getArgumentExpression()] ?: memberCall.argumentMapping[psi as? KtExpression]
         val parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
 
         val functionName = getDeclarationName(functionLikeSymbol) ?: return emptyList()
@@ -73,9 +76,10 @@ object ChangeParameterTypeFixFactory {
         psi: PsiElement,
         targetType: KaDefinitelyNotNullType
     ): List<KotlinQuickFixAction<*>> {
-        val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
+        val valueArgument = getValueArgument(psi) ?: return emptyList()
 
-        val referencedSymbol = valueArgument.getArgumentExpression()?.mainReference?.resolveToSymbol()?.let { symbol ->
+        val argumentExpression = valueArgument.getArgumentExpression()?.let { KtPsiUtil.deparenthesize(it) } ?: return emptyList()
+        val referencedSymbol = argumentExpression.mainReference?.resolveToSymbol()?.let { symbol ->
             if (symbol is KaPropertySymbol) {
                 getValueParameterSymbolForPropertySymbol(symbol)
             } else {
@@ -93,6 +97,16 @@ object ChangeParameterTypeFixFactory {
         return listOf(
             createChangeParameterTypeFix(parameter, targetType, isPrimaryConstructorParameter, functionName)
         )
+    }
+
+    private fun getValueArgument(psi: PsiElement): KtValueArgument? {
+        val psiParent = psi.parent
+        val neededParent = if (psiParent is KtParenthesizedExpression) {
+            psiParent.parent
+        } else {
+            psiParent
+        }
+        return neededParent as? KtValueArgument
     }
 
     context(KaSession)

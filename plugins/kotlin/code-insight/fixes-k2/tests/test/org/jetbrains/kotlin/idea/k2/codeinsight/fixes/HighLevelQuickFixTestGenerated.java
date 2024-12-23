@@ -4826,6 +4826,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5k2.kt");
         }
 
+        @TestMetadata("changeFunctionParameterTypeParenthesis.kt")
+        public void testChangeFunctionParameterTypeParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesis.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterTypeParenthesisK2.kt")
+        public void testChangeFunctionParameterTypeParenthesisK2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesisK2.kt");
+        }
+
         @TestMetadata("changeFunctionParameterTypeWithComment.kt")
         public void testChangeFunctionParameterTypeWithComment() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeWithComment.kt");
@@ -5342,6 +5352,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("changeFunctionParameterType2.kt")
         public void testChangeFunctionParameterType2() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeFunctionParameterType2.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterTypeParenthesis.kt")
+        public void testChangeFunctionParameterTypeParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeFunctionParameterTypeParenthesis.kt");
         }
 
         @TestMetadata("changePrimaryConstructorParameterType.kt")

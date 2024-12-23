@@ -18431,6 +18431,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeFunctionParameterType2.kt");
             }
 
+            @TestMetadata("changeFunctionParameterTypeParenthesis.kt")
+            public void testChangeFunctionParameterTypeParenthesis() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeFunctionParameterTypeParenthesis.kt");
+            }
+
             @TestMetadata("changePrimaryConstructorParameterType.kt")
             public void testChangePrimaryConstructorParameterType() throws Exception {
                 runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changePrimaryConstructorParameterType.kt");
@@ -18934,6 +18939,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("changeFunctionParameterType5k2.kt")
             public void testChangeFunctionParameterType5k2() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5k2.kt");
+            }
+
+            @TestMetadata("changeFunctionParameterTypeParenthesis.kt")
+            public void testChangeFunctionParameterTypeParenthesis() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesis.kt");
+            }
+
+            @TestMetadata("changeFunctionParameterTypeParenthesisK2.kt")
+            public void testChangeFunctionParameterTypeParenthesisK2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesisK2.kt");
             }
 
             @TestMetadata("changeFunctionParameterTypeWithComment.kt")
