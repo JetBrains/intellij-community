@@ -1169,6 +1169,12 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
   }
 
+  /**
+   * Configuration name is either configuration type ID or session name.
+   * <p/>
+   * Configuration type ID is the preferred way to reuse watches within the same configuration type,
+   * e.g., in different test run configurations.
+   */
   private @NotNull String computeConfigurationName() {
     if (myEnvironment != null) {
       RunProfile profile = myEnvironment.getRunProfile();

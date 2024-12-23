@@ -146,13 +146,6 @@ f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 - f:reshowInlayRunToCursor(com.intellij.openapi.editor.Editor):V
 f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener$Companion
 - f:isInlayRunToCursorEnabled():Z
-f:com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch
-- com.intellij.xdebugger.impl.XWatch
-- <init>(com.intellij.xdebugger.XExpression):V
-- getCanBePaused():Z
-- getExpression():com.intellij.xdebugger.XExpression
-- isPaused():Z
-- setPaused(Z):V
 a:com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 - com.intellij.xdebugger.XDebugProcessStarter
 - <init>():V
@@ -214,13 +207,6 @@ com.intellij.xdebugger.impl.XWatch
 - a:getExpression():com.intellij.xdebugger.XExpression
 - a:isPaused():Z
 - a:setPaused(Z):V
-f:com.intellij.xdebugger.impl.XWatchImpl
-- com.intellij.xdebugger.impl.XWatch
-- <init>(com.intellij.xdebugger.XExpression):V
-- getCanBePaused():Z
-- getExpression():com.intellij.xdebugger.XExpression
-- isPaused():Z
-- setPaused(Z):V
 c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
 - com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 - <init>():V

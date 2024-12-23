@@ -35,7 +35,9 @@ import java.util.stream.Stream;
 @ApiStatus.Internal
 public final class XDebuggerWatchesManager {
   /**
-   * Maps run configuration to a list of watches.
+   * Maps configuration name to a list of watches.
+   *
+   * @see XDebugSessionImpl#computeConfigurationName()
    */
   private final Map<String, List<XWatch>> watches = new ConcurrentHashMap<>();
   /**

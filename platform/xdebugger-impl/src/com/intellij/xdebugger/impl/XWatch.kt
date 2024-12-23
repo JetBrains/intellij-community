@@ -8,7 +8,7 @@ import com.intellij.xdebugger.XExpression
  *
  * This entity is used through the whole session and can be used between sessions via serialization performed by [XDebuggerWatchesManager].
  */
-interface XWatch {
+sealed interface XWatch {
   val expression: XExpression
   val canBePaused: Boolean
 
@@ -18,7 +18,7 @@ interface XWatch {
 /**
  * A watch whose evaluation can be paused due to improper context or side effects.
  */
-class XWatchImpl(override val expression: XExpression) : XWatch {
+internal class XWatchImpl(override val expression: XExpression) : XWatch {
   override val canBePaused: Boolean get() = true
   override var isPaused: Boolean = false
 }
@@ -28,9 +28,9 @@ class XWatchImpl(override val expression: XExpression) : XWatch {
  *
  * For example, evaluation result, inline watches.
  */
-class XAlwaysEvaluatedWatch(override val expression: XExpression) : XWatch {
+internal class XAlwaysEvaluatedWatch(override val expression: XExpression) : XWatch {
   override val canBePaused: Boolean get() = false
   override var isPaused: Boolean
     get() = false
-    set(value) = error("isPaused is not modifiable for AlwaysEvaluatedWatch")
+    set(_) = error("isPaused is not modifiable for AlwaysEvaluatedWatch")
 }
