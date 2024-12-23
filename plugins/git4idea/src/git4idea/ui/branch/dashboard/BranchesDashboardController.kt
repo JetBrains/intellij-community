@@ -57,15 +57,21 @@ internal class BranchesDashboardController(
     Disposer.register(ui, this)
     project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
       override fun branchFavoriteSettingsChanged() {
-        updateBranchesIsFavoriteState()
+        runInEdt {
+          updateBranchesIsFavoriteState()
+        }
       }
 
       override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
-        toggleGrouping(key, state)
+        runInEdt {
+          ui.toggleGrouping(key, state)
+        }
       }
 
       override fun showTagsSettingsChanged(state: Boolean) {
-        ui.updateBranchesTree(false)
+        runInEdt {
+          ui.updateBranchesTree(false)
+        }
       }
     })
     project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
@@ -90,10 +96,6 @@ internal class BranchesDashboardController(
 
   fun navigateLogToRef(selection: BranchNodeDescriptor.LogNavigatable) {
     ui.navigateToSelection(selection, true)
-  }
-
-  fun toggleGrouping(key: GroupingKey, state: Boolean) {
-    ui.toggleGrouping(key, state)
   }
 
   fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
