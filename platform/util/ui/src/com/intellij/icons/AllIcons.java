@@ -957,7 +957,12 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JavaModule = load("expui/nodes/moduleJava.svg", "nodes/javaModule.svg", 2003423238, 0);
 
     public static final class Jsf {
-      /** 16x16 */ public static final @NotNull Icon Renderer = load("nodes/jsf/renderer.svg", -2079549057, 0);
+
+      /** @deprecated to be removed (Use AllIcons.Actions.Edit instead) */
+      @SuppressWarnings("unused")
+      @Deprecated
+      @ScheduledForRemoval
+      public static final @NotNull Icon Renderer = load("nodes/jsf/renderer.svg", 0, 0);
     }
 
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/nodes/junitTestMark.svg", "nodes/junitTestMark.svg", -1344036663, 0);
