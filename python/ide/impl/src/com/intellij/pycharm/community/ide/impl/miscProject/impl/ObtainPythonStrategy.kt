@@ -18,9 +18,9 @@ sealed interface ObtainPythonStrategy {
   /**
    * Only use [pythons] provided explicitly
    */
-  data class UseThesePythons(val pythons: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>) : ObtainPythonStrategy {
+  data class UseThesePythons(val pythons: Collection<Path>) : ObtainPythonStrategy {
     init {
-      assert(pythons.flatMap { it.second }.isNotEmpty()) { "When provided explicitly, pythons can't be empty" }
+      assert(pythons.isNotEmpty()) { "When provided explicitly, pythons can't be empty" }
     }
   }
 }

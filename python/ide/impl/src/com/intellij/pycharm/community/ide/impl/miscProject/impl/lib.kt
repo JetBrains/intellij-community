@@ -57,7 +57,8 @@ internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemPropertie
 internal val miscProjectEnabled: Lazy<Boolean> = lazy { ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(PyMiscProjectExperimentOption::class.java) }
 
 /**
- * Creates project in [projectPath] in modal window. Once created, uses [scopeProvider] to get scope
+ * Creates a project in [projectPath] in a modal window.
+ * Once created, uses [scopeProvider] to get scope
  * to launch [miscFileType] generation in background, returns it as a job.
  *
  * Pythons are obtained with [obtainPythonStrategy]
@@ -93,8 +94,8 @@ private suspend fun openFile(project: Project, file: Path): PsiFile {
   val vfsFile = withContext(Dispatchers.IO) {
     VfsUtil.findFile(file, true) ?: error("Can't find VFS $file")
   }
-  // `navigate` throws `AssertionError` from time to time due to platform API bug.
-  // We "fix" it by means of retries
+  // `Navigate` throws `AssertionError` from time to time due to a platform API bug.
+  // We "fix" it by retries
   return callWithRetry {
     withContext(Dispatchers.EDT) {
       val psiFile = readAction { PsiManager.getInstance(project).findFile(vfsFile) } ?: error("Can't find PSI for $vfsFile")
@@ -136,8 +137,8 @@ private suspend fun generateFile(where: Path, templateFileName: TemplateFileName
 }
 
 /**
- * Creates project with 1 module in [projectPath] and sdk using the highest python.
- * Pythons are searched in system ([findPythonsOnSystem]) or provided explicitly (depends on [obtainPythonStrategy]).
+ * Creates a project with one module in [projectPath] and sdk using the highest python.
+ * Pythons are searched in a system ([findPythonsOnSystem]) or provided explicitly (depends on [obtainPythonStrategy]).
  * In former case if no python were found, we [installLatestPython] (not in a latter case, though).
  */
 private suspend fun createProjectAndSdk(
@@ -147,7 +148,7 @@ private suspend fun createProjectAndSdk(
   val projectPathVfs = createProjectDir(projectPath).getOr { return it }
   val venvDirPath = projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
-  // Find venv in project
+  // Find venv in a project
   var venvPython: PythonBinary? = findExistingVenv(venvDirPath)
 
   if (venvPython == null) {
@@ -225,7 +226,7 @@ private suspend fun getSystemPython(obtainPythonStrategy: ObtainPythonStrategy):
             return Result.Failure(LocalizedErrorString(
               PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", exception.toString())))
           }
-          // Find latest python again, after installation
+          // Find the latest python again, after installation
           systemPythonBinary = filterLatestUsablePython(findPythonsOnSystem())
         }
       }
@@ -266,7 +267,7 @@ private suspend fun getSdk(pythonPath: PythonBinary, project: Project): Sdk =
 
 
 /**
- * Creating project != creating directory for it, but we need directory to create template file
+ * Creating a project != creating a directory for it, but we need a directory to create a template file
  */
 private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, LocalizedErrorString> = withContext(Dispatchers.IO) {
   try {
@@ -297,15 +298,12 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
 /**
  * Looks for system pythons. Returns flavor and all its pythons.
  */
-fun findPythonsOnSystem(): List<Pair<PythonSdkFlavor<*>, Collection<Path>>> =
+private fun findPythonsOnSystem(): Collection<PythonBinary> =
   // TODO: PythonInterpreterService: detect valid system pythons
   PythonSdkFlavor.getApplicableFlavors(false) //system=platform dependent (exclude venv)
-    .map { flavor ->
+    .flatMap { flavor ->
       flavor.dropCaches()
-      flavor to flavor.suggestLocalHomePaths(null, null)
-    }
-    .filter { (_, pythons) ->
-      pythons.isNotEmpty() // No need to have flavors without pythons
+      flavor.suggestLocalHomePaths(null, null)
     }
 
 suspend fun installLatestPython(): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
@@ -317,23 +315,21 @@ suspend fun installLatestPython(): kotlin.Result<Unit> = withContext(Dispatchers
 }
 
 /**
- * Looks for the latest python among [flavorsToPythons]: each flavour might have 1 or more pythons.
+ * Looks for the latest python among [pythons]: each flavor might have one or more pythons.
  * Broken pythons are filtered out. If `null` is returned, no python found, you probably need to [installLatestPython]
  */
-private suspend fun filterLatestUsablePython(flavorsToPythons: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>): PythonBinary? {
+private suspend fun filterLatestUsablePython(pythons: Collection<Path>): PythonBinary? {
   var current: Pair<LanguageLevel, Path>? = null
-  for ((_, paths) in flavorsToPythons) {
-    for (pythonPath in paths) {
-      val languageLevel = pythonPath.validatePythonAndGetVersion() ?: continue
+  for (pythonPath in pythons) {
+    val languageLevel = pythonPath.validatePythonAndGetVersion() ?: continue
 
-      // Highest possible, no need to search further
-      if (languageLevel == LanguageLevel.getLatest()) {
-        return pythonPath
-      }
-      if (current == null || current.first < languageLevel) {
-        // More recent Python found!
-        current = Pair(languageLevel, pythonPath)
-      }
+    // Highest possible, no need to search further
+    if (languageLevel == LanguageLevel.getLatest()) {
+      return pythonPath
+    }
+    if (current == null || current.first < languageLevel) {
+      // More recent Python found!
+      current = Pair(languageLevel, pythonPath)
     }
   }
 
