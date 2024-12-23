@@ -57,7 +57,10 @@ class ModuleStoreTest {
   fun `set option`() = runBlocking {
     val moduleFile = tempDirManager.createVirtualFile("test.iml", """
         <?xml version="1.0" encoding="UTF-8"?>
-        <module type="JAVA_MODULE" foo="bar" version="4" />""".trimIndent())
+        <module type="JAVA_MODULE" foo="bar" version="4">
+            <component name="NewModuleRootManager" />
+        </module>
+        """.trimIndent())
 
     projectRule.loadModule(moduleFile).useAndDispose {
       assertThat(getOptionValue("foo")).isEqualTo("bar")
