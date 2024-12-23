@@ -4542,6 +4542,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/callWithTypeArgsInAnnotationEntry.kt");
                     }
 
+                    @TestMetadata("classWithLowerCase.kt")
+                    public void testClassWithLowerCase() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createClass/callExpression/classWithLowerCase.kt");
+                    }
+
                     @TestMetadata("createNestedClass.kt")
                     public void testCreateNestedClass() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createClass/callExpression/createNestedClass.kt");

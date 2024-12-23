@@ -73,20 +73,27 @@ object K2CreateClassFromUsageBuilder {
                     val isAnnotation = kind == ClassKind.ANNOTATION_CLASS
                     val paramListRendered = renderParamList(isAnnotation, refExpr)
                     val open = isInsideExtendsList(refExpr)
-                    CreateKotlinClassAction(
-                        refExpr.createSmartPointer(),
-                        kind,
-                        applicableParents,
-                        inner,
-                        open,
-                        refExpr.getReferencedName(),
-                        superClassName,
-                        paramListRendered.renderedParamList,
-                        paramListRendered.candidateList,
-                        returnTypeString,
-                        paramListRendered.primaryConstructorVisibilityModifier
-                    )
-                } else {
+                    val name = refExpr.getReferencedName()
+                    if (kind == ClassKind.ANNOTATION_CLASS || name.checkClassName()) {
+                        CreateKotlinClassAction(
+                            refExpr.createSmartPointer(),
+                            kind,
+                            applicableParents,
+                            inner,
+                            open,
+                            name,
+                            superClassName,
+                            paramListRendered.renderedParamList,
+                            paramListRendered.candidateList,
+                            returnTypeString,
+                            paramListRendered.primaryConstructorVisibilityModifier
+                        )
+                    }
+                    else {
+                        null
+                    }
+                }
+                else {
                     null
                 }
             }
