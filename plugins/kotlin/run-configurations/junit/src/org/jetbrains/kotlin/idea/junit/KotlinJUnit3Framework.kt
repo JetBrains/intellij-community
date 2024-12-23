@@ -198,6 +198,12 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             else -> checkTestClass == YES
         }
 
+    override fun isTestClass(clazz: PsiClass, canBePotential: Boolean): Boolean =
+        when (val checkTestClass = checkTestClass(clazz)) {
+            UNSURE -> super.isTestClass(clazz, canBePotential)
+            else -> checkTestClass == YES
+        }
+
     override fun findSetUpMethod(clazz: PsiElement): PsiElement? =
         when (checkTestClass(clazz)) {
             UNSURE -> super.findSetUpMethod(clazz)

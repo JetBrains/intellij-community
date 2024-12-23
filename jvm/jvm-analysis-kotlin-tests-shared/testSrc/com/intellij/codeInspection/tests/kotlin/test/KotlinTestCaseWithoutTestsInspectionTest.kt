@@ -59,6 +59,49 @@ abstract class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsIn
     """.trimIndent())
   }
 
+  fun `test case with test in sealed parent class in JUnit 3`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      sealed class SomeParentClass(val name: String) : junit.framework.TestCase() {
+        fun testInParent() { }
+      }
+      
+      class SomeTestClass : SomeParentClass("") { }
+    """.trimIndent())
+  }
+
+  fun `test case with test in sealed parent class in JUnit 4`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      sealed class SomeParentClass(val name: String) {
+        @org.junit.Test
+        fun testInParent() { }
+      }
+      
+      class SomeTestClass : SomeParentClass("") { }
+    """.trimIndent())
+  }
+
+  fun `test case with test in sealed parent class in JUnit 5`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      sealed class SomeParentClass(val name: String) {
+        @org.junit.jupiter.api.Test
+        fun testInParent() { }
+      }
+      
+      class SomeTestClass : SomeParentClass("") { }
+    """.trimIndent())
+  }
+
+  fun `test case with nested class without test methods in JUnit 5`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> {
+        @org.junit.jupiter.api.Nested
+        inner class <warning descr="Test class 'Inner' has no tests">Inner</warning> {
+          private fun test1() { }
+        }
+      }
+    """.trimIndent())
+  }
+
   fun `test case with single ignored test in TestNG`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class SomeTest {
@@ -80,14 +123,14 @@ abstract class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsIn
     """.trimIndent(), "SomeTest")
   }
 
-  fun `test case with nested class without test methods in JUnit 5`() {
+  fun `test case with test in sealed parent class in TestNG`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
-      class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> {
-        @org.junit.jupiter.api.Nested
-        inner class <warning descr="Test class 'Inner' has no tests">Inner</warning> {
-          private fun test1() { }
-        }
+      sealed class SomeParentClass(val name: String) {
+        @org.testng.annotations.Test
+        fun testInParent() { }
       }
+      
+      class SomeTestClass : SomeParentClass("") { }
     """.trimIndent())
   }
 }
