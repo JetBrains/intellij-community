@@ -222,7 +222,6 @@ internal abstract class FilteringBranchesTreeBase(
 internal class FilteringBranchesTree(
   project: Project,
   val component: BranchesTreeComponent,
-  private val uiController: BranchesDashboardController,
   place: @NonNls String,
   private val disposable: Disposable
 ) : FilteringBranchesTreeBase(component, project) {
@@ -244,7 +243,6 @@ internal class FilteringBranchesTree(
 
   fun toggleGrouping(key: GroupingKey, state: Boolean) {
     groupingConfig[key] = state
-    refreshTree()
   }
 
   fun isGroupingEnabled(key: GroupingKey) = groupingConfig[key] == true
@@ -302,12 +300,11 @@ internal class FilteringBranchesTree(
     }
   }
 
-  fun update(initial: Boolean) {
-    val branchesReloaded = uiController.reloadBranches()
+  fun update(initial: Boolean, repaint: Boolean) {
     runPreservingTreeState(initial) {
       searchModel.updateStructure()
     }
-    if (branchesReloaded) {
+    if (repaint) {
       tree.revalidate()
       tree.repaint()
     }
@@ -342,16 +339,12 @@ internal class FilteringBranchesTree(
     }
   }
 
-  fun refreshTree() {
+  fun refreshTree(refs: RefsCollection, showOnlyMy: Boolean) {
     runPreservingTreeState(false) {
       tree.selectionModel.clearSelection()
-      refreshNodeDescriptorsModel()
+      refreshNodeDescriptorsModel(refs, showOnlyMy)
       searchModel.updateStructure()
     }
-  }
-
-  fun refreshNodeDescriptorsModel() {
-    refreshNodeDescriptorsModel(uiController.refs, uiController.showOnlyMy, )
   }
 }
 

@@ -71,7 +71,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val tree = BranchesTreeComponent(project).apply {
     accessibleContext.accessibleName = message("git.log.branches.tree.accessible.name")
   }
-  private val filteringTree = FilteringBranchesTree(project, tree, uiController, place = VCS_LOG_BRANCHES_PLACE, disposable = this)
+  private val filteringTree = FilteringBranchesTree(project, tree, place = VCS_LOG_BRANCHES_PLACE, disposable = this)
   private val branchViewSplitter = BranchViewSplitter()
   private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(filteringTree.component, true)
@@ -130,6 +130,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   internal fun toggleGrouping(key: GroupingKey, state: Boolean) {
     filteringTree.toggleGrouping(key, state)
+    refreshTree()
   }
 
   internal fun isGroupingEnabled(key: GroupingKey) = filteringTree.isGroupingEnabled(key)
@@ -296,16 +297,17 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   fun updateBranchesTree(initial: Boolean) {
     if (showBranches) {
-      filteringTree.update(initial)
+      val branchesReloaded = uiController.reloadBranches()
+      filteringTree.update(initial, branchesReloaded)
     }
   }
 
   fun refreshTree() {
-    filteringTree.refreshTree()
+    filteringTree.refreshTree(uiController.refs, uiController.showOnlyMy)
   }
 
   fun refreshTreeModel() {
-    filteringTree.refreshNodeDescriptorsModel()
+    filteringTree.refreshNodeDescriptorsModel(uiController.refs, uiController.showOnlyMy)
   }
 
   fun startLoadingBranches() {
