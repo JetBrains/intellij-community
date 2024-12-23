@@ -831,6 +831,10 @@ public final class org/jetbrains/jewel/foundation/modifier/BorderKt {
 	public static synthetic fun border-QWjY48E$default (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FJLandroidx/compose/ui/graphics/Shape;FILjava/lang/Object;)Landroidx/compose/ui/Modifier;
 }
 
+public final class org/jetbrains/jewel/foundation/modifier/ModifierExtensionsKt {
+	public static final fun thenIf (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+}
+
 public final class org/jetbrains/jewel/foundation/modifier/OnHoverModifierKt {
 	public static final fun onHover (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 }
@@ -1019,4 +1023,3 @@ public final class org/jetbrains/jewel/foundation/util/JewelLogger$Companion {
 	public final fun getInstance (Ljava/lang/Class;)Lorg/jetbrains/jewel/foundation/util/JewelLogger;
 	public final fun getInstance (Ljava/lang/String;)Lorg/jetbrains/jewel/foundation/util/JewelLogger;
 }
-
