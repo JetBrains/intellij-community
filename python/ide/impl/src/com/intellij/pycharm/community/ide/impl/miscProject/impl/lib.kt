@@ -2,7 +2,6 @@
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -36,14 +35,9 @@ import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStra
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.UseThesePythons
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.awaitExit
-import com.jetbrains.python.LocalizedErrorString
-import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.Result
-import com.jetbrains.python.mapResult
+import com.jetbrains.python.*
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkToInstallManager
-import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.createSdk
 import com.jetbrains.python.sdk.add.v2.createVirtualenv
@@ -55,9 +49,7 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
-import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 private val logger = fileLogger()
 
@@ -194,7 +186,7 @@ private suspend fun findExistingVenv(
     logger.warn("No flavor found for $pythonPath")
     return@withContext null
   }
-  if (validatePythonAndGetVersion(pythonPath, flavor) == null) {
+  if (pythonPath.validatePythonAndGetVersion() == null) {
     logger.warn("No version string. python seems to be broken: $pythonPath")
     return@withContext null
   }
@@ -330,10 +322,9 @@ suspend fun installLatestPython(): kotlin.Result<Unit> = withContext(Dispatchers
  */
 private suspend fun filterLatestUsablePython(flavorsToPythons: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>): PythonBinary? {
   var current: Pair<LanguageLevel, Path>? = null
-  for ((flavor, paths) in flavorsToPythons) {
+  for ((_, paths) in flavorsToPythons) {
     for (pythonPath in paths) {
-      val versionString = validatePythonAndGetVersion(pythonPath, flavor) ?: continue
-      val languageLevel =PythonSdkFlavor.getLanguageLevelFromVersionStringStatic(versionString)
+      val languageLevel = pythonPath.validatePythonAndGetVersion() ?: continue
 
       // Highest possible, no need to search further
       if (languageLevel == LanguageLevel.getLatest()) {
@@ -347,45 +338,4 @@ private suspend fun filterLatestUsablePython(flavorsToPythons: List<Pair<PythonS
   }
 
   return current?.second
-}
-
-// TODO: PythonInterpreterService: validate system python
-/**
- * Ensures that [pythonBinary] is executable and returns its version. `null` if python is broken (reports error to logs).
- *
- * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
- * As we need workable pythons, we validate it by executing
- */
-private suspend fun validatePythonAndGetVersion(pythonBinary: PythonBinary, flavor: PythonSdkFlavor<*>): String? = withContext(Dispatchers.IO) {
-  val fileLogger = fileLogger()
-  val process =
-    try {
-      GeneralCommandLine(pythonBinary.toString(), "-c", "print(1)").createProcess()
-    }
-    catch (e: ExecutionException) {
-      fileLogger.warn("$pythonBinary can't be executed, skipping", e)
-      return@withContext null
-    }
-  val timeout = 5.seconds
-  val exitCode = withTimeoutOrNull(timeout) {
-    process.awaitExit()
-  }
-  when (exitCode) {
-    null -> {
-      fileLogger.warn("$pythonBinary didn't return in $timeout, skipping")
-    }
-    0 -> {
-      return@withContext PythonSdkFlavor.getVersionStringStatic(pythonBinary.pathString)
-    }
-    else -> {
-      fileLogger.warn("$pythonBinary exited with code ${exitCode}, skipping")
-    }
-  }
-  process.destroyForcibly()
-  if (withTimeoutOrNull(500.milliseconds) {
-      process.awaitExit()
-    } == null) {
-    fileLogger.warn("Process $process still running, might be leaked")
-  }
-  return@withContext null
 }
