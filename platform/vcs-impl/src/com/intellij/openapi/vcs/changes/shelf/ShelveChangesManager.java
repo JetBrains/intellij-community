@@ -407,7 +407,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         changeList.markToDelete(markToBeDeleted);
 
         if (Registry.is("llm.vcs.shelve.title.generation")) {
-          suggestBetterName(new ShelveTitlePatch(Files.readString(patchFile), patches.size()), name -> renameChangeList(changeList, name));
+          if (ShelveTitleProvider.hasDefaultName(commitMessage)) {
+            suggestBetterName(new ShelveTitlePatch(Files.readString(patchFile), patches.size()), name -> renameChangeList(changeList, name));
+          }
         }
 
         changeList.setName(schemePatchDir.getFileName().toString());
