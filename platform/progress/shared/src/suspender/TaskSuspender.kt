@@ -4,15 +4,22 @@ package com.intellij.platform.ide.progress.suspender
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus.NonExtendable
+import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Interface for suspending and resuming running tasks.
  * To assign suspender to a task use [withBackgroundProgress]
  */
-@NonExtendable
-interface TaskSuspender {
+sealed interface TaskSuspender {
 
+  /**
+   * Represents the current state of the task suspender as a flow of [TaskSuspenderState] objects.
+   * This state is exposed as a flow to allow observing updates to the suspender's state over time.
+   *
+   * This property is intended for internal use only.
+   */
+  @get:ApiStatus.Internal
   val state: Flow<TaskSuspenderState>
 
   /**
@@ -48,3 +55,18 @@ interface TaskSuspender {
     }
   }
 }
+
+/**
+ * Converts this instance to a CoroutineContext element.
+ *
+ * This function is useful for integrating existing types or values
+ * into coroutine-based APIs by converting them to coroutine context elements.
+ *
+ * @return a CoroutineContext element representing this instance.
+ */
+fun TaskSuspender.asContextElement(): CoroutineContext {
+  return when (this) {
+    is TaskSuspenderImpl -> this.getCoroutineContext()
+  }
+}
+

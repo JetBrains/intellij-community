@@ -53,7 +53,6 @@ class TaskSuspenderImpl(
    * @param coroutineScope The [CoroutineScope] in which the suspender should be executed.
    * It determines the lifecycle and context of the task.
    */
-  @Internal
   fun attachTask(coroutineScope: CoroutineScope) {
     synchronized(attachTaskLock) {
       if (attachedTasks.getAndIncrement() > 0) return
@@ -78,7 +77,6 @@ class TaskSuspenderImpl(
    *
    * NOTE: This method is intended to be used only by internal implementation of [com.intellij.platform.ide.progress.TaskSupport]
    */
-  @Internal
   fun detachTask() {
     synchronized(attachTaskLock) {
       // The subscription should be stopped only when there are no active tasks attached to the same suspender,

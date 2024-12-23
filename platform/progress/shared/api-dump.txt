@@ -35,7 +35,6 @@ f:com.intellij.platform.ide.progress.TasksKt
 - sf:withModalProgress(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.platform.ide.progress.suspender.TaskSuspender
 - sf:Companion:com.intellij.platform.ide.progress.suspender.TaskSuspender$Companion
-- a:getState():kotlinx.coroutines.flow.Flow
 - a:isPaused():Z
 - a:pause(java.lang.String):V
 - bs:pause$default(com.intellij.platform.ide.progress.suspender.TaskSuspender,java.lang.String,I,java.lang.Object):V
@@ -43,7 +42,7 @@ com.intellij.platform.ide.progress.suspender.TaskSuspender
 - s:suspendable(java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
 f:com.intellij.platform.ide.progress.suspender.TaskSuspender$Companion
 - f:suspendable(java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
-f:com.intellij.platform.ide.progress.suspender.TaskSuspenderContextElementKt
+f:com.intellij.platform.ide.progress.suspender.TaskSuspenderKt
 - sf:asContextElement(com.intellij.platform.ide.progress.suspender.TaskSuspender):kotlin.coroutines.CoroutineContext
 a:com.intellij.platform.ide.progress.suspender.TaskSuspenderState
 f:com.intellij.platform.ide.progress.suspender.TaskSuspenderState$Active
