@@ -105,7 +105,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             if (objects.flatMap { it.declarations }.filterIsInstance<KtNamedFunction>().any { it.name == "suite" }) {
                 return UNSURE // suites don't need to extend TestClass
             }
-            if (declaration is KtObjectDeclaration) return NO // private constructor can't be instantiated
+            if (declaration is KtObjectDeclaration || declaration.primaryConstructor?.isPrivate() == true) return NO
             val superTypeListEntries = declaration.superTypeListEntries
             for (superTypeEntry in superTypeListEntries) {
                 if (superTypeEntry is KtSuperTypeCallEntry) {
