@@ -31,7 +31,7 @@ class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: Kt
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = dfType
 
-    override fun equals(other: Any?): Boolean = other is KtThisDescriptor && other.dfType == dfType
+    override fun equals(other: Any?): Boolean = other === this || other is KtThisDescriptor && other.dfType == dfType
 
     override fun hashCode(): Int = dfType.hashCode()
 

@@ -69,7 +69,11 @@ class KtVariableDescriptor(
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = type
 
-    override fun equals(other: Any?): Boolean = other is KtVariableDescriptor && other.pointer.pointsToTheSameSymbolAs(pointer)
+    override fun equals(other: Any?): Boolean =
+        other === this ||
+                other is KtVariableDescriptor &&
+                other.hash == hash &&
+                other.pointer.pointsToTheSameSymbolAs(pointer)
 
     override fun hashCode(): Int = hash
 
@@ -105,8 +109,13 @@ class KtVariableDescriptor(
         context(KaSession)
         internal fun KaVariableSymbol.variableDescriptor(): KtVariableDescriptor {
             val type = this.returnType
-            return KtVariableDescriptor(useSiteModule, this.createPointer(), type.toDfType(), this.name.hashCode(),
-                                        ((type as? KaClassType)?.symbol as? KaNamedClassSymbol)?.isInline == true)
+            return KtVariableDescriptor(
+                module = useSiteModule,
+                pointer = this.createPointer(),
+                type = type.toDfType(),
+                hash = callableId?.hashCode() ?: name.hashCode(),
+                inline = ((type as? KaClassType)?.symbol as? KaNamedClassSymbol)?.isInline == true,
+            )
         }
 
         private fun getVariablesChangedInNestedFunctions(parent: KtElement): Set<KtVariableDescriptor> =
@@ -228,7 +237,7 @@ class KtVariableDescriptor(
 class KtLambdaThisVariableDescriptor(val lambda: KtFunctionLiteral, val type: DfType) : JvmVariableDescriptor() {
     override fun getDfType(qualifier: DfaVariableValue?): DfType = type
     override fun isStable(): Boolean = true
-    override fun equals(other: Any?): Boolean = other is KtLambdaThisVariableDescriptor && other.lambda == lambda
+    override fun equals(other: Any?): Boolean = other === this || other is KtLambdaThisVariableDescriptor && other.lambda == lambda
     override fun hashCode(): Int = lambda.hashCode()
     override fun toString(): String = "this@${lambda.name}"
     override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
