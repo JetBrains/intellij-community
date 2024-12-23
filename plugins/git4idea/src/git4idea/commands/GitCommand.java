@@ -35,7 +35,7 @@ public final class GitCommand {
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
   public static final GitCommand CLONE = read("clone"); // write, but can't interfere with any other command => should be treated as read
   public static final GitCommand DIFF = read("diff");
-  public static final GitCommand FETCH = read("fetch");  // fetch is a read-command, because it doesn't modify the index
+  public static final GitCommand FETCH = read("fetch"); // fetch is a read-command, because it doesn't modify the index
   public static final GitCommand INIT = write("init");
   public static final GitCommand LOG = read("log");
   public static final GitCommand SHORTLOG = read("shortlog");
@@ -46,7 +46,7 @@ public final class GitCommand {
   public static final GitCommand MERGE_BASE = read("merge-base");
   public static final GitCommand MV = write("mv");
   public static final GitCommand PULL = write("pull");
-  public static final GitCommand PUSH = write("push");
+  public static final GitCommand PUSH = read("push"); // push is a read-command, because it doesn't modify the index. We still benefit from COMMIT & Co being write-commands, preventing HEAD from moving.
   public static final GitCommand REBASE = write("rebase");
   public static final GitCommand REMOTE = read("remote");
   public static final GitCommand RESET = write("reset");
