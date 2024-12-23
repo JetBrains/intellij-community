@@ -190,7 +190,7 @@ class IjentWslNioFileSystemProvider(
                 )
               else null
 
-            return IjentWslNioPath(getFileSystem(wslId), originalPath, dosAttributes)
+            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPath(), dosAttributes)
           }
 
           override fun remove() {
