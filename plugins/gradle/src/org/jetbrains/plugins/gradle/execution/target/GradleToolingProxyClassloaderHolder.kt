@@ -6,10 +6,10 @@ import org.gradle.tooling.BuildAction
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_PROXY_CLASSES
 
+private val DEFAULT_TOOLING_EXTENSION_CLASSLOADERS = GRADLE_TOOLING_EXTENSION_PROXY_CLASSES.map { it.classLoader }.toSet()
+
 @ApiStatus.Internal
-internal class GradleToolingProxyClassloaderHolder(
-  private val toolingProxyClassloaders: Set<ClassLoader> = getDefaultToolingProxyClassloaders(),
-) {
+internal class GradleToolingProxyClassloaderHolder {
 
   private val buildActionClassloaders = LinkedHashSet<ClassLoader>()
 
@@ -22,12 +22,6 @@ internal class GradleToolingProxyClassloaderHolder(
   }
 
   fun getClassloaders(): Collection<ClassLoader> {
-    return toolingProxyClassloaders + buildActionClassloaders
-  }
-
-  private companion object {
-    fun getDefaultToolingProxyClassloaders(): Set<ClassLoader> {
-      return GRADLE_TOOLING_EXTENSION_PROXY_CLASSES.map { it.classLoader }.toSet()
-    }
+    return DEFAULT_TOOLING_EXTENSION_CLASSLOADERS + buildActionClassloaders
   }
 }
