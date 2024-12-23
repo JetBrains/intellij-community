@@ -644,7 +644,7 @@ class JarPackager private constructor(
 }
 
 private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
-  if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
+  if (fileName.endsWith("-rt.jar") || (fileName.contains("-agent") && !fileName.contains("ideformer"))) {
     return true
   }
 
