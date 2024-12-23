@@ -75,7 +75,7 @@ b: B3 = <warning descr="Expected type 'B3', got 'A3' instead">A3(x = '')</warnin
 
 class A4(TypedDict):
     x: int
-
-def f3(a: A4, d: dict[str, int]):
-    val1: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'A4' instead">a</warning>
-    val2: A4 = d
+def f3(a: A4):
+    v: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'A4' instead">a</warning>
+def f4(d: dict[str, int]):
+    v: A4 = <warning descr="Expected type 'A4', got 'dict[str, int]' instead">d</warning>

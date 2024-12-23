@@ -446,6 +446,10 @@ public final class PyTypeChecker {
       return Optional.of(actual instanceof PyLiteralType && PyLiteralType.Companion.match((PyLiteralType)expected, (PyLiteralType)actual));
     }
 
+    if (expected instanceof PyTypedDictType && !(actual instanceof PyTypedDictType)) {
+      return Optional.of(false);
+    }
+
     if (actual instanceof PyTypedDictType) {
       final PyTypedDictType.TypeCheckingResult matchResult = PyTypedDictType.Companion.checkTypes(expected, (PyTypedDictType)actual, context, null);
       if (matchResult != null) return Optional.of(matchResult.getMatch());
