@@ -387,6 +387,17 @@ sealed class K2MoveRenameUsageInfo(
             return preProcessUsages(allUsages)
         }
 
+        private fun Map<PsiFile, Map<PsiElement, PsiNamedElement>>.mergedWith(
+            other: Map<PsiFile, Map<PsiElement, PsiNamedElement>>
+        ): Map<PsiFile, Map<PsiElement, PsiNamedElement>> {
+            val result = this.mapValues { it.value.toMutableMap() }.toMutableMap()
+            for ((key, value) in other) {
+                val collection = result.getOrPut(key) { mutableMapOf() }
+                collection.putAll(value)
+            }
+            return result
+        }
+
         fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>, fromCopy: Boolean = false) {
             val externalUsages = externalUsagesSorted(usages)
             val internalUsages = restoreInternalUsagesSorted(oldToNewMap, fromCopy)
@@ -397,10 +408,10 @@ sealed class K2MoveRenameUsageInfo(
             try {
                 progress.text = KotlinBundle.message("retargeting.usages.progress")
                 // Retarget external usages before internal usages to make sure imports in moved files are properly updated
-                val retargetedUsages = retargetMoveUsages(externalUsages, oldToNewMap, externalUsages.size + internalUsages.size) +
-                        retargetMoveUsages(internalUsages, oldToNewMap, externalUsages.size + internalUsages.size)
+                val retargetedExternalUsages = retargetMoveUsages(externalUsages, oldToNewMap, externalUsages.size + internalUsages.size)
+                val retargetedInternalUsages = retargetMoveUsages(internalUsages, oldToNewMap, externalUsages.size + internalUsages.size)
                 progress.text = KotlinBundle.message("shortening.usages.progress")
-                shortenUsages(retargetedUsages)
+                shortenUsages(retargetedExternalUsages.mergedWith(retargetedInternalUsages))
             } finally {
                 oldToNewMap.values.forEach { decl -> if (decl is KtElement) unMarkAllUsages(decl) }
                 progress.popState()
