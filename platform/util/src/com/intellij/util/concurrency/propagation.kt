@@ -126,10 +126,16 @@ data class ChildContext internal constructor(
     return object : AccessToken() {
       override fun finish() {
         installToken.finish()
-        for (elem in ijElements.reversed()) {
-          elem.afterChildCompleted(context)
+        ijElements.reversed().forEachGuaranteed {
+          it.afterChildCompleted(context)
         }
       }
+    }
+  }
+
+  fun cancelAllIntelliJElements() {
+    ijElements.forEachGuaranteed {
+      it.childCanceled(context)
     }
   }
 }
@@ -369,7 +375,7 @@ private fun <T> cleanupIfExpired(expiredCondition: Condition<in T>, childContext
     if (expired) {
       // Cancel to avoid a hanging child job which will prevent completion of the parent one.
       childJob?.cancel(null)
-      childContext.applyContextActions(false).finish()
+      childContext.cancelAllIntelliJElements()
       true
     }
     else {
@@ -385,11 +391,12 @@ internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
   }
   val callable = captureClientIdInCallable(c)
   val childContext = createChildContext(c.toString())
-  val wrappedCallable = ContextCallable(false, childContext, callable)
+  val executionTracker = AtomicBoolean(false)
+  val wrappedCallable = ContextCallable(false, childContext, callable, executionTracker)
   val cont = childContext.continuation
   if (cont != null) {
     val childJob = cont.context.job
-    return CancellationFutureTask(childJob, wrappedCallable)
+    return CancellationFutureTask(childJob, wrappedCallable, executionTracker, childContext)
   }
   else {
     return FutureTask(wrappedCallable)
@@ -410,10 +417,7 @@ internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callab
   val callable = captureClientIdInCallable(c)
   val childContext = createChildContext("$c (scheduled: $ns)")
   val cancellationTracker = AtomicBoolean(false)
-  val wrappedCallable = ContextCallable(false, childContext, Callable<V> {
-    cancellationTracker.takeOrThrowCancellationException()
-    callable.call()
-  })
+  val wrappedCallable = ContextCallable(false, childContext, callable, cancellationTracker)
 
   val cont = childContext.continuation
   return CancellationScheduledFutureTask(wrapper, childContext, cont?.context?.job, cancellationTracker, wrappedCallable, ns)
@@ -445,12 +449,6 @@ internal fun capturePropagationContext(
     capturedRunnable2 to null
   }
   return CancellationScheduledFutureTask<Void>(wrapper, childContext, job, finalCapturedRunnable, ns, period)
-}
-
-private fun AtomicBoolean.takeOrThrowCancellationException() {
-  if (getAndSet(true)) {
-    throw ProcessCanceledException()
-  }
 }
 
 @ApiStatus.Internal

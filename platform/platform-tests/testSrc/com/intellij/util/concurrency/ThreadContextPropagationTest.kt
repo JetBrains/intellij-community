@@ -341,11 +341,18 @@ class ThreadContextPropagationTest {
     assertTrue(tracker.get())
   }
 
+  class MyCancellableIjElement(val eventTracker: AtomicBoolean) : IntelliJContextElement, AbstractCoroutineContextElement(MyIjElement) {
+    companion object Key : CoroutineContext.Key<MyIjElement>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+    override fun childCanceled(context: CoroutineContext) = eventTracker.set(true)
+  }
+
   @Test
   fun `cancellation of scheduled task triggers cleanup events`() = timeoutRunBlocking {
     val service = AppExecutorUtil.createBoundedScheduledExecutorService("Test service", 1);
     val tracker = AtomicBoolean(false)
-    withContext(MyIjElement(tracker)) {
+    withContext(MyCancellableIjElement(tracker)) {
       val future = service.schedule(Callable<Unit> { Assertions.fail() }, 10, TimeUnit.SECONDS) // should never be executed
       future.cancel(false)
     }
@@ -353,10 +360,10 @@ class ThreadContextPropagationTest {
   }
 
   @Test
-  fun `cancellation of invokeLater triggers cleanup events`() = timeoutRunBlocking {
+  fun `expiration of invokeLater triggers cleanup events`() = timeoutRunBlocking {
     val tracker = AtomicBoolean(false)
     val expiration = AtomicBoolean(false)
-    withContext(Dispatchers.EDT + MyIjElement(tracker)) {
+    withContext(Dispatchers.EDT + MyCancellableIjElement(tracker)) {
       @Suppress("ForbiddenInSuspectContextMethod")
       application.invokeLater({ Assertions.fail() }, { expiration.get() })
       expiration.set(true)

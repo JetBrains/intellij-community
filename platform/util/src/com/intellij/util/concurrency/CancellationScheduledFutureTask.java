@@ -45,9 +45,7 @@ final class CancellationScheduledFutureTask<V> extends SchedulingWrapper.MySched
       myJob.cancel(null);
     }
     if (!myExecutionTracker.getAndSet(true)) {
-      // todo: do we really need to trigger beforeChildStarted here?
-      //noinspection resource
-      myChildContext.applyContextActions(false).finish();
+      myChildContext.cancelAllIntelliJElements();
     }
     return result;
   }
