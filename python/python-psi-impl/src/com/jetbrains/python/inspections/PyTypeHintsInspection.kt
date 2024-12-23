@@ -1121,9 +1121,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (collectionType.pyClass.qualifiedName == PyNames.TUPLE) return
 
       if (typeArguments.isNotEmpty()) {
-        val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(collectionType.pyClass, myTypeEvalContext) ?: return
-        val typeParameters = genericDefinitionType.elementTypes
-
+        val typeParameters = collectionType.elementTypes
         val mapping = PyTypeParameterMapping.mapByShape(typeParameters,
                                                         typeArguments,
                                                         PyTypeParameterMapping.Option.USE_DEFAULTS)
@@ -1135,7 +1133,7 @@ class PyTypeHintsInspection : PyInspection() {
           registerProblem(node.indexExpression,
                           PyPsiBundle.message("INSP.type.hints.type.arguments.do.not.match.type.parameters",
                                               typeParameterListRepresentation,
-                                              genericDefinitionType.pyClass.name), ProblemHighlightType.WARNING)
+                                              collectionType.pyClass.name), ProblemHighlightType.WARNING)
         }
       }
     }
