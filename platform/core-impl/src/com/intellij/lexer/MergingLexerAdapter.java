@@ -22,7 +22,7 @@ public class MergingLexerAdapter extends MergingLexerAdapterBase {
   private final TokenSet myTokenSet;
   private final MergeFunction myMergeFunction = new MyMergeFunction();
 
-  public MergingLexerAdapter(final Lexer original, final TokenSet tokensToMerge){
+  public MergingLexerAdapter(Lexer original, TokenSet tokensToMerge){
     super(original);
     myTokenSet = tokensToMerge;
   }
@@ -34,13 +34,13 @@ public class MergingLexerAdapter extends MergingLexerAdapterBase {
 
   private class MyMergeFunction implements MergeFunction {
       @Override
-      public IElementType merge(final IElementType type, final Lexer originalLexer) {
+      public IElementType merge(IElementType type, Lexer originalLexer) {
         if (!myTokenSet.contains(type)) {
           return type;
         }
 
         while (true) {
-          final IElementType tokenType = originalLexer.getTokenType();
+          IElementType tokenType = originalLexer.getTokenType();
           if (tokenType != type) break;
           originalLexer.advance();
         }
