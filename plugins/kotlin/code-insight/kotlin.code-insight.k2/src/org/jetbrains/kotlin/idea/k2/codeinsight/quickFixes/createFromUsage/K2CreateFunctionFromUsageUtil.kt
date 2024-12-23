@@ -20,10 +20,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -41,11 +39,13 @@ import org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.renderer.render
 
 object K2CreateFunctionFromUsageUtil {
     fun PsiElement.isPartOfImportDirectiveOrAnnotation(): Boolean = PsiTreeUtil.getParentOfType(
@@ -237,6 +237,31 @@ object K2CreateFunctionFromUsageUtil {
         // Listing variances will cause a syntax error.
         typeProjectionRenderer = KaTypeProjectionRenderer.WITHOUT_VARIANCE
         functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+        // qualified names except starting with "kotlin."
+        classIdRenderer = object: KaClassTypeQualifierRenderer {
+                override fun renderClassTypeQualifier(
+                    analysisSession: KaSession,
+                    type: KaType,
+                    qualifiers: List<KaClassTypeQualifier>,
+                    typeRenderer: KaTypeRenderer,
+                    printer: PrettyPrinter,
+                ) {
+                    printer {
+                        ".".separated(
+                            {
+                                if (type is KaClassType && type.classId.packageFqName != CallableId.PACKAGE_FQ_NAME_FOR_LOCAL && type.classId.packageFqName.asString() != "kotlin") {
+                                    append(type.classId.packageFqName.render())
+                                }
+                            },
+                            {
+                                WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS
+                                    .renderClassTypeQualifier(analysisSession, type, qualifiers, typeRenderer, printer)
+                            },
+                        )
+                    }
+                }
+            }
+
     }
 
     context (KaSession)

@@ -96,42 +96,43 @@ internal class CreateKotlinCallableAction(
     override fun getText(): String = myText
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        if (callableDefinitionAsString != null) {
-            val callableInfo = NewCallableInfo(
-                callableDefinitionAsString,
-                parameterCandidates,
-                candidatesOfRenderedReturnType,
-                containerClassFqName,
-                isForCompanion,
-                listOf(), listOf()
-            )
-
-            val call = call
-            require(call != null)
-            val createKotlinCallablePsiEditor = CreateKotlinCallablePsiEditor(
-                project, callableInfo,
-            )
-            val function = KtPsiFactory(project).createFunction(
-                callableInfo.definitionAsString
-            )
-            val passedContainerElement = pointerToContainer.element ?: return
-            val anchor = call
-            val shouldComputeContainerFromAnchor =
-                if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
-                else passedContainerElement.getContainer() == anchor.getContainer()
-            val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
-                anchor.getExtractionContainers().firstOrNull() ?:return
-            } else {
-                passedContainerElement
-            }
-            createKotlinCallablePsiEditor.showEditor(
-                function,
-                call,
-                isExtension,
-                requestTargetClassPointer?.element,
-                insertContainer,
-            )
+        if (callableDefinitionAsString == null) {
+            return
         }
+        val callableInfo = NewCallableInfo(
+            callableDefinitionAsString,
+            parameterCandidates,
+            candidatesOfRenderedReturnType,
+            containerClassFqName,
+            isForCompanion,
+            listOf(), listOf()
+        )
+
+        val call = call
+        require(call != null)
+        val createKotlinCallablePsiEditor = CreateKotlinCallablePsiEditor(
+            project, callableInfo,
+        )
+        val function = KtPsiFactory(project).createFunction(
+            callableInfo.definitionAsString
+        )
+        val passedContainerElement = pointerToContainer.element ?: return
+        val anchor = call
+        val shouldComputeContainerFromAnchor =
+            if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
+            else passedContainerElement.getContainer() == anchor.getContainer()
+        val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
+            anchor.getExtractionContainers().firstOrNull() ?:return
+        } else {
+            passedContainerElement
+        }
+        createKotlinCallablePsiEditor.showEditor(
+            function,
+            call,
+            isExtension,
+            requestTargetClassPointer?.element,
+            insertContainer,
+        )
     }
 
     private fun getContainer(): KtElement? {
