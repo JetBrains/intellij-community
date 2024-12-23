@@ -786,6 +786,16 @@ public abstract class SurroundWithTestGenerated extends AbstractSurroundWithTest
             runTest("testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOut.kt");
         }
 
+        @TestMetadata("moveDeclarationsOutWithNonDeclarationLastStatement.kt")
+        public void testMoveDeclarationsOutWithNonDeclarationLastStatement() throws Exception {
+            runTest("testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOutWithNonDeclarationLastStatement.kt");
+        }
+
+        @TestMetadata("moveDeclarationsOutWithTreeValueDeclarations.kt")
+        public void testMoveDeclarationsOutWithTreeValueDeclarations() throws Exception {
+            runTest("testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOutWithTreeValueDeclarations.kt");
+        }
+
         @TestMetadata("multiStatement.kt")
         public void testMultiStatement() throws Exception {
             runTest("testData/codeInsight/surroundWith/functionLiteral/multiStatement.kt");
