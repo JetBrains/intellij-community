@@ -9,7 +9,10 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.HelperClassNotAvailableException
+import com.intellij.debugger.impl.MethodNotFoundException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
@@ -259,6 +262,10 @@ internal fun callMethodFromHelper(
 ): Value? {
     try {
         return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args, true, *additionalClassesToLoad)
+    } catch (e: HelperClassNotAvailableException) {
+        fileLogger().warn(e)
+    } catch (e: MethodNotFoundException) {
+        fileLogger().warn(e)
     } catch (e: Exception) {
         val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
         DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
