@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.pom.java.LanguageLevel;
@@ -372,6 +373,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return !allScope.equals(scope) ? allScope : null;
   }
 
+  /**
+   * Searches for rt.jar path preferring the source version to the installation version.
+   */
   public static @NotNull String getIdeaRtPath() {
     if (PluginManagerCore.isRunningFromSources()) {
       Class<?> aClass = CommandLineWrapper.class;
@@ -383,8 +387,8 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
           // prefer dir
           if (url.getProtocol().equals(URLUtil.FILE_PROTOCOL)) {
             String path = URLUtil.urlToFile(url).getPath();
-            String testPath = path.replace('\\', '/');
-            String testResourcePath = resourcePath.replace('\\', '/');
+            String testPath = FileUtil.toSystemIndependentName(path);
+            String testResourcePath = FileUtil.toSystemIndependentName(resourcePath);
             if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
               return path.substring(0, path.length() - resourcePath.length() - 1);
             }

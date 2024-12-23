@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Properties;
 
 public class RemoteConnectionBuilder {
@@ -141,12 +142,26 @@ public class RemoteConnectionBuilder {
   private static void addRtJar(@NotNull PathsList pathsList) {
     if (Registry.is("debugger.add.rt.jar", true)) {
       if (PluginManagerCore.isRunningFromSources()) {
+        // When running from sources, rt.jar from sources should be preferred
         String path = DebuggerUtilsImpl.getIdeaRtPath();
         pathsList.remove(JavaSdkUtil.getIdeaRtJarPath());
         pathsList.addTail(path);
+        LOG.debug("Running from sources IDE, add rt.jar: " + path);
       }
       else {
-        JavaSdkUtil.addRtJar(pathsList);
+        // Works for IDEA/dev build/test configurations
+        boolean isIdeaBuild = ContainerUtil.exists(pathsList.getPathList(), p -> p.contains("intellij.java.rt"));
+        if (isIdeaBuild) {
+          // When building IDEA itself, idea_rt.jar should not be taken from sources,
+          // as IDEA expects to use the matching idea_rt.jar from the installation dir.
+          String path = JavaSdkUtil.getIdeaRtJarPath();
+          pathsList.addFirst(path);
+          LOG.debug("Running IDEA from release IDE, add rt.jar: " + path);
+        }
+        else {
+          JavaSdkUtil.addRtJar(pathsList);
+          LOG.debug("Running from release IDE, add rt.jar");
+        }
       }
     }
   }
