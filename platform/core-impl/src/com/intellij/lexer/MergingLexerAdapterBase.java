@@ -9,7 +9,7 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
   private int myState;
   private int myTokenStart;
 
-  public MergingLexerAdapterBase(final Lexer original){
+  public MergingLexerAdapterBase(final Lexer original) {
     super(original);
   }
 
@@ -24,38 +24,38 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
   }
 
   @Override
-  public int getState(){
+  public int getState() {
     if (myTokenType == null) locateToken();
     return myState;
   }
 
   @Override
-  public IElementType getTokenType(){
+  public IElementType getTokenType() {
     if (myTokenType == null) locateToken();
     return myTokenType;
   }
 
   @Override
-  public int getTokenStart(){
+  public int getTokenStart() {
     if (myTokenType == null) locateToken();
     return myTokenStart;
   }
 
   @Override
-  public int getTokenEnd(){
+  public int getTokenEnd() {
     if (myTokenType == null) locateToken();
     return super.getTokenStart();
   }
 
   @Override
-  public void advance(){
+  public void advance() {
     myTokenType = null;
     myState = 0;
     myTokenStart = 0;
   }
 
-  private void locateToken(){
-    if (myTokenType == null){
+  private void locateToken() {
+    if (myTokenType == null) {
       Lexer orig = getDelegate();
 
       myTokenType = orig.getTokenType();
@@ -91,7 +91,7 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
     return new MyLexerPosition(myTokenStart, myTokenType, getDelegate().getCurrentPosition(), myState);
   }
 
-  private static class MyLexerPosition implements LexerPosition{
+  private static class MyLexerPosition implements LexerPosition {
     private final int myOffset;
     private final IElementType myTokenType;
     private final LexerPosition myOriginalPosition;
@@ -126,5 +126,4 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
       return myOldState;
     }
   }
-
 }
