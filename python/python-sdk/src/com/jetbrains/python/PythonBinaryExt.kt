@@ -4,6 +4,8 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.util.io.awaitExit
+import com.jetbrains.python.PySdkBundle.message
+import com.jetbrains.python.Result.Companion.failure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import kotlinx.coroutines.Dispatchers
@@ -17,21 +19,22 @@ import kotlin.time.Duration.Companion.seconds
 
 // TODO: PythonInterpreterService: validate system python
 /**
- * Ensures that this python is executable and returns its version. `null` if python is broken (reports error to logs).
+ * Ensures that this python is executable and returns its version. Error if python is broken (reports error to logs as well).
  *
  * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
  * As we need workable pythons, we validate it by executing
  */
 @ApiStatus.Internal
-suspend fun PythonBinary.validatePythonAndGetVersion(): LanguageLevel? = withContext(Dispatchers.IO) {
+suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, LocalizedErrorString> = withContext(Dispatchers.IO) {
   val fileLogger = fileLogger()
   val process =
     try {
       GeneralCommandLine(pathString, "-c", "print(1)").createProcess()
     }
     catch (e: ExecutionException) {
-      fileLogger.warn("$this can't be executed, skipping", e)
-      return@withContext null
+      val error = message("python.get.version.error", pathString, e.message)
+      fileLogger.warn(error, e)
+      return@withContext failure(LocalizedErrorString(error))
     }
   val timeout = 5.seconds
   val exitCode = withTimeoutOrNull(timeout) {
@@ -42,13 +45,14 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): LanguageLevel? = withCon
       fileLogger.warn("$this didn't return in $timeout, skipping")
     }
     0 -> {
-      val pythonVersion = PythonSdkFlavor.getVersionStringStatic(pathString) ?: return@withContext null
+      val pythonVersion = PythonSdkFlavor.getVersionStringStatic(pathString)
+                          ?: return@withContext failure(LocalizedErrorString(message("python.get.version.wrong.version", pathString, "")))
       val languageLevel = LanguageLevel.fromPythonVersion(pythonVersion)
       if (languageLevel == null) {
         fileLogger.warn("$pythonVersion is not valid version")
-        return@withContext null
+        return@withContext failure(LocalizedErrorString(message("python.get.version.wrong.version", pathString, "")))
       }
-      return@withContext languageLevel
+      return@withContext Result.success(languageLevel)
     }
     else -> {
       fileLogger.warn("$this exited with code ${exitCode}, skipping")
@@ -60,6 +64,6 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): LanguageLevel? = withCon
     } == null) {
     fileLogger.warn("Process $process still running, might be leaked")
   }
-  return@withContext null
+  return@withContext failure(LocalizedErrorString(message("python.get.version.error", pathString, exitCode)))
 }
 

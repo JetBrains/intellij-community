@@ -187,11 +187,13 @@ private suspend fun findExistingVenv(
     logger.warn("No flavor found for $pythonPath")
     return@withContext null
   }
-  if (pythonPath.validatePythonAndGetVersion() == null) {
-    logger.warn("No version string. python seems to be broken: $pythonPath")
-    return@withContext null
+  return@withContext when (val p = pythonPath.validatePythonAndGetVersion()) {
+    is Result.Success -> pythonPath
+    is Result.Failure -> {
+      logger.warn("No version string. python seems to be broken: $pythonPath. ${p.error}")
+      null
+    }
   }
-  return@withContext pythonPath
 }
 
 private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, projectPath: Path): Result<Unit, LocalizedErrorString> =
@@ -321,7 +323,13 @@ suspend fun installLatestPython(): kotlin.Result<Unit> = withContext(Dispatchers
 private suspend fun filterLatestUsablePython(pythons: Collection<Path>): PythonBinary? {
   var current: Pair<LanguageLevel, Path>? = null
   for (pythonPath in pythons) {
-    val languageLevel = pythonPath.validatePythonAndGetVersion() ?: continue
+    val languageLevel = when (val r = pythonPath.validatePythonAndGetVersion()) {
+      is Result.Failure -> {
+        fileLogger().warn("Skipping python ${r.error}")
+        continue
+      }
+      is Result.Success -> r.result
+    }
 
     // Highest possible, no need to search further
     if (languageLevel == LanguageLevel.getLatest()) {
