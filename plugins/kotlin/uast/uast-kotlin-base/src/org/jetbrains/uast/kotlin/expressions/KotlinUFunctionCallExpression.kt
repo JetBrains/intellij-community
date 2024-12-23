@@ -319,9 +319,13 @@ class KotlinUFunctionCallExpression(
             val lambdaReceiverType = lambdaReceiver?.type as? PsiClassReferenceType
             val receiverTypeMatched = if (implicitReceiver is PsiParameter) {
                 // implicit receiver is an extension receiver, e.g., $this$bar
-                lambdaReceiverType == implicitReceiver.type
+                lambdaReceiverType == implicitReceiver.type ||
+                        lambdaReceiverType?.superTypes?.contains(lambdaReceiverType) == true
             } else {
-                lambdaReceiverType?.resolve() == implicitReceiver
+                lambdaReceiverType?.resolve() == implicitReceiver ||
+                        lambdaReceiverType?.superTypes?.any { superType ->
+                            (superType as? PsiClassReferenceType)?.resolve() == implicitReceiver
+                        } == true
             }
             if (receiverTypeMatched) {
                 // Implicit <this>
