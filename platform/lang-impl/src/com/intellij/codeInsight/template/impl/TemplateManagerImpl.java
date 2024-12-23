@@ -137,7 +137,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
                              final String selectionString,
                              final Template template,
                              boolean inSeparateCommand,
-                             TemplateEditingListener listener,
+                             @Nullable TemplateEditingListener listener,
                              final PairProcessor<? super String, ? super String> processor,
                              final Map<String, String> predefinedVarValues) {
     final TemplateState templateState = initTemplateState(editor);
@@ -177,7 +177,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   }
 
   @Override
-  public void startTemplate(final @NotNull Editor editor, final @NotNull Template template, TemplateEditingListener listener) {
+  public void startTemplate(final @NotNull Editor editor, final @NotNull Template template, @Nullable TemplateEditingListener listener) {
     startTemplate(editor, null, template, true, listener, null, null);
   }
 

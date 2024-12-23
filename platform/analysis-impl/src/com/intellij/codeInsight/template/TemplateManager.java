@@ -31,7 +31,7 @@ public abstract class TemplateManager {
 
   public abstract void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template);
 
-  public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template, TemplateEditingListener listener);
+  public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template, @Nullable TemplateEditingListener listener);
 
   public abstract void startTemplate(final @NotNull Editor editor,
                                      final @NotNull Template template,
@@ -41,7 +41,7 @@ public abstract class TemplateManager {
 
   public abstract void startTemplate(@NotNull Editor editor,
                                      @NotNull Template template,
-                                     TemplateEditingListener listener,
+                                     @Nullable TemplateEditingListener listener,
                                      final PairProcessor<? super String, ? super String> callback);
 
   public abstract boolean startTemplate(@NotNull Editor editor, char shortcutChar);
