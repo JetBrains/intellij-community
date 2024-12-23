@@ -858,13 +858,6 @@ c:com.intellij.lexer.DummyLexer
 c:com.intellij.lexer.EmptyLexer
 - com.intellij.lexer.DummyLexer
 - <init>():V
-com.intellij.lexer.FlexLexer
-- a:advance():com.intellij.psi.tree.IElementType
-- a:getTokenEnd():I
-- a:getTokenStart():I
-- a:reset(java.lang.CharSequence,I,I,I):V
-- a:yybegin(I):V
-- a:yystate():I
 a:com.intellij.lexer.Lexer
 - <init>():V
 - a:advance():V

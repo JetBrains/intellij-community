@@ -808,6 +808,13 @@ c:com.intellij.lexer.FlexAdapter
 - getTokenType():com.intellij.psi.tree.IElementType
 - p:locateToken():V
 - start(java.lang.CharSequence,I,I,I):V
+com.intellij.lexer.FlexLexer
+- a:advance():com.intellij.psi.tree.IElementType
+- a:getTokenEnd():I
+- a:getTokenStart():I
+- a:reset(java.lang.CharSequence,I,I,I):V
+- a:yybegin(I):V
+- a:yystate():I
 c:com.intellij.lexer.LayeredLexer
 - com.intellij.lexer.DelegateLexer
 - sf:ourDisableLayersFlag:java.lang.ThreadLocal
