@@ -21,7 +21,10 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
@@ -306,7 +309,7 @@ class EditorCellView(
           },
           HighlighterTargetArea.LINES_IN_RANGE
         ).apply {
-          customRenderer = NotebookCellHighlighterRenderer
+          setCustomRenderer(NotebookCellHighlighterRenderer)
         }
       }
     }

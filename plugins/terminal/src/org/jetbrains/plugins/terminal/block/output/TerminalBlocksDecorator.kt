@@ -51,7 +51,7 @@ internal class TerminalBlocksDecorator(
                                            HighlighterTargetArea.LINES_IN_RANGE).apply {
       isGreedyToLeft = true
       isGreedyToRight = true
-      customRenderer = TerminalRightAreaRenderer()
+      setCustomRenderer(TerminalRightAreaRenderer())
     }
 
     outputModel.addListener(object : TerminalOutputModelListener {
@@ -215,8 +215,8 @@ internal class TerminalBlocksDecorator(
   private fun setDecorationState(block: CommandBlock, state: BlockDecorationState) {
     val decoration = decorations[block] ?: error("No decoration for block, installDecoration should be called first")
     with(decoration) {
-      backgroundHighlighter.customRenderer = state.backgroundRenderer
-      cornersHighlighter.customRenderer = state.cornersRenderer
+      backgroundHighlighter.setCustomRenderer(state.backgroundRenderer)
+      cornersHighlighter.setCustomRenderer(state.cornersRenderer)
       cornersHighlighter.lineMarkerRenderer = state.leftAreaRenderer
     }
 
