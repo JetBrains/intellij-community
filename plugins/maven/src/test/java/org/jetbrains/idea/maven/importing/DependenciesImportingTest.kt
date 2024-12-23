@@ -1117,7 +1117,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        "jar://$javaHome/$firstJar!/")
   }
 
-  private fun createFile(dir: Path, relativePath: String): VirtualFile {
+  private fun createFileByRelativePath(dir: Path, relativePath: String): VirtualFile {
     val f = dir.resolve(relativePath)
     f.parent.createDirectories()
     f.findOrCreateFile()
@@ -1131,7 +1131,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     val envPath = Paths.get(envDir)
     val relativePath = "testDependencyWithEnvironmentENVProperty/foo.jar"
-    createFile(envPath, relativePath)
+    createFileByRelativePath(envPath, relativePath)
 
     createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>

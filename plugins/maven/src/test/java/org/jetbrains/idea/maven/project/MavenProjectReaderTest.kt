@@ -23,6 +23,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.pathString
 
 class MavenProjectReaderTest : MavenProjectReaderTestCase() {
@@ -585,16 +586,15 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   }
 
   fun testHandlingRecursionProprielyAndDoNotForgetCoClearRecursionGuard() = runBlocking {
-    val repoPath = File(dir, "repository")
-    repositoryPath = repoPath.path
+    val repoPath = dir.resolve("repository")
+    repositoryPath = repoPath.toString()
 
-    val parentFile = File(repoPath, "test/parent/1/parent-1.pom")
-    parentFile.parentFile.mkdirs()
-    FileUtil.writeToFile(parentFile, createPomXml("""
+    val parentFile = repoPath.resolve("test/parent/1/parent-1.pom")
+    createFile(parentFile, createPomXml("""
                                                     <groupId>test</groupId>
                                                     <artifactId>parent</artifactId>
                                                     <version>1</version>
-                                                    """.trimIndent()).toByteArray(StandardCharsets.UTF_8))
+                                                    """.trimIndent()))
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -881,20 +881,18 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   }
 
   fun testExpandingPropertiesFromParentInRepository() = runBlocking {
-    val repoPath = File(dir, "repository")
-    repositoryPath = repoPath.path
+    val repoPath = dir.resolve("repository")
+    repositoryPath = repoPath.toString()
 
-    val parentFile = File(repoPath, "org/test/parent/1/parent-1.pom")
-    parentFile.parentFile.mkdirs()
-    FileUtil.writeToFile(parentFile,
-                         createPomXml("""
+    val parentFile = repoPath.resolve("org/test/parent/1/parent-1.pom")
+    createFile(parentFile, createPomXml("""
                                         <groupId>org.test</groupId>
                                         <artifactId>parent</artifactId>
                                         <version>1</version>
                                         <properties>
                                           <prop>value</prop>
                                         </properties>
-                                        """.trimIndent()).toByteArray(StandardCharsets.UTF_8))
+                                        """.trimIndent()))
 
     createProjectPom("""
                        <parent>

@@ -512,15 +512,26 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
   }
 
+  protected fun createFile(path: Path): VirtualFile {
+    path.parent.createDirectories()
+    path.createFile()
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+  }
+
   protected fun createProjectSubFile(relativePath: String): VirtualFile {
     val f = projectPath.resolve(relativePath)
-    f.parent.createDirectories()
-    f.createFile()
-    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+    return createFile(f)
   }
 
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
+    setFileContent(file, content)
+    refreshFiles(listOf(file))
+    return file
+  }
+
+  protected fun createFile(path: Path, content: String): VirtualFile {
+    val file = createFile(path)
     setFileContent(file, content)
     refreshFiles(listOf(file))
     return file

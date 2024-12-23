@@ -1,28 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.*
 import org.junit.Assert
-import java.io.File
 import java.lang.Boolean
+import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.String
 
-class ArchetypesTest : MavenTestCaseLegacy() {
+class ArchetypesTest : MavenTestCase() {
   
   /**
    * very time consumed test (uses the network and -U maven flag)
    */
   fun ignoreTestGenerating() = runBlocking {
-    val dir = File(dir.path, "generated")
-    dir.mkdirs()
+    val dir = dir.resolve("generated")
+    dir.createDirectories()
 
     val params = MavenRunnerParameters(
-      false, dir.path, null as String?,
+      false, dir.toString(), null as String?,
       mutableListOf("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
       emptyList()
     )
@@ -43,7 +44,7 @@ class ArchetypesTest : MavenTestCaseLegacy() {
 
     val tryAcquire = latch.await(20, TimeUnit.SECONDS)
     assertTrue("Maven execution failed", tryAcquire)
-    assertTrue(File(dir, "bar/pom.xml").exists())
+    assertTrue(Files.exists(dir.resolve("bar/pom.xml")))
   }
 
   fun testVmParametersGenerating() = runBlocking {
