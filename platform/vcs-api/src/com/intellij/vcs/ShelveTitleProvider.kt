@@ -3,6 +3,7 @@ package com.intellij.vcs
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.LocalChangeList.getAllDefaultNames
 import java.awt.Component
 import java.util.function.Consumer
 
@@ -25,6 +26,9 @@ interface ShelveTitleProvider {
     fun showGotItTooltip(project: Project, component: Component) {
       EP_NAME.extensionList.any { it.showTooltipPopup(project, component) }
     }
+
+    @JvmStatic
+    fun hasDefaultName(name: String): Boolean = getAllDefaultNames().contains(name)
   }
 }
 
