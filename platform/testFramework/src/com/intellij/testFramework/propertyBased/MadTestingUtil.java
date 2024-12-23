@@ -272,6 +272,20 @@ public final class MadTestingUtil {
   }
 
   /**
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions on those files (e.g. invoke completion/intentions or random editing).
+   * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
+   */
+  @NotNull
+  public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 @Nullable Predicate<PsiFile> psiFileFilter,
+                                                                 Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
+    return performOnFileContents(fixture, rootPath, fileFilter, psiFileFilter,(env, vFile) ->
+      env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile))))));
+  }
+
+  /**
    * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and invokes {@code action} on those files.
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
    * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
@@ -280,6 +294,22 @@ public final class MadTestingUtil {
   public static Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
                                                                  String rootPath,
                                                                  FileFilter fileFilter,
+                                                                 BiConsumer<? super ImperativeCommand.Environment, ? super VirtualFile> action) {
+
+    return performOnFileContents(fixture, rootPath, fileFilter, null, action);
+  }
+
+  /**
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and invokes {@code action} on those files.
+   * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
+   * @param psiFileFilter can be used to filter based on psi or project structure
+   */
+  @NotNull
+  public static Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
+                                                                 String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 @Nullable Predicate<PsiFile> psiFileFilter,
                                                                  BiConsumer<? super ImperativeCommand.Environment, ? super VirtualFile> action) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> assertNoErrorLoggedIn(env -> new RunAll(
@@ -290,6 +320,9 @@ public final class MadTestingUtil {
         if (psiFile instanceof PsiBinaryFile || psiFile instanceof PsiPlainTextFile) {
           //noinspection UseOfSystemOutOrSystemErr
           System.err.println("Can't check " + vFile + " due to incorrect file type: " + psiFile + " of " + psiFile.getClass());
+          return;
+        }
+        if (psiFileFilter != null && !psiFileFilter.test(psiFile)) {
           return;
         }
         action.accept(env, vFile);
