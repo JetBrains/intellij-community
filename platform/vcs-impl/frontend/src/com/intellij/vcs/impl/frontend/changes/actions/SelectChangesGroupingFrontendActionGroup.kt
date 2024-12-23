@@ -14,9 +14,6 @@ import com.intellij.vcs.impl.frontend.changes.ChangesTree
 import com.intellij.vcs.impl.shared.rhizome.RepositoryCountEntity
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.entity
-import fleet.kernel.rete.each
-import fleet.kernel.rete.filter
-import fleet.kernel.rete.first
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

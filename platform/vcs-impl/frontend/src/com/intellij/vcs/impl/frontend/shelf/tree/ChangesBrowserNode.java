@@ -1,39 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.shelf.tree;
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.util.treeView.FileNameComparator;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.*;
+import com.intellij.vcs.impl.frontend.VcsFrontendBundle;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.util.List;
-import java.util.Objects;
 import java.util.function.ToIntFunction;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
@@ -145,7 +129,11 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return (JBIterable<ChangesBrowserNode<?>>)iterable;
   }
 
-  public void render(@NotNull JTree tree, @NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+  public void render(@NotNull JTree tree,
+                     @NotNull ChangesBrowserNodeRenderer renderer,
+                     boolean selected,
+                     boolean expanded,
+                     boolean hasFocus) {
     render(renderer, selected, expanded, hasFocus);
   }
 
@@ -164,10 +152,10 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     if (dirCount != 0 || count != 0) {
       result = spaceAndThinSpace() +
                (dirCount == 0
-                ? VcsBundle.message("changes.nodetitle.changecount", count)
+                ? VcsFrontendBundle.message("changes.nodetitle.changecount", count)
                 : count == 0
-                  ? VcsBundle.message("changes.nodetitle.directory.changecount", dirCount)
-                  : VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count));
+                  ? VcsFrontendBundle.message("changes.nodetitle.directory.changecount", dirCount)
+                  : VcsFrontendBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count));
     }
 
     return result;
@@ -205,5 +193,4 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
       renderer.append(spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
-
 }

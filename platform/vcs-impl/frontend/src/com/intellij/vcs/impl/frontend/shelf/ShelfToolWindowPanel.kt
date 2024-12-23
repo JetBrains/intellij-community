@@ -6,7 +6,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -16,6 +15,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.impl.frontend.VcsFrontendConfiguration
 import com.intellij.vcs.impl.frontend.changes.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.vcs.impl.frontend.changes.actions.SHOW_DIFF_ACTION_ID
 import com.intellij.vcs.impl.frontend.navigation.FrontendNavigateToSourceAction
@@ -40,7 +40,7 @@ class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: Co
   private val diffEditorPreview = ShelfTreeEditorDiffPreview(tree, cs, project)
   private var splitterPreview: ShelveSplitterDiffPreview? = null
 
-  private val vcsConfiguration = VcsConfiguration.getInstance(project)
+  private val vcsConfiguration = VcsFrontendConfiguration.getInstance(project)
 
   init {
     mainPanelContent.setContent(shelvePanel)
@@ -65,7 +65,7 @@ class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: Co
         if (!isPanelVertical()) {
           cs.launch(Dispatchers.EDT) {
             splitterPreview = ShelveSplitterDiffPreview(splitterComponent)
-            DiffPreview.setPreviewVisible(splitterPreview!!, vcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN)
+            DiffPreview.setPreviewVisible(splitterPreview!!, vcsConfiguration.shelveDetailsPreviewShown)
           }
         }
       }
@@ -121,14 +121,14 @@ class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: Co
   inner class TogglePreviewAction() : ToggleAction() {
 
     override fun isSelected(e: AnActionEvent): Boolean {
-      return vcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN
+      return vcsConfiguration.shelveDetailsPreviewShown
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       val preview = splitterPreview
       if (preview != null) {
         DiffPreview.setPreviewVisible(preview, state)
-        vcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN = state
+        vcsConfiguration.shelveDetailsPreviewShown = state
       }
     }
 

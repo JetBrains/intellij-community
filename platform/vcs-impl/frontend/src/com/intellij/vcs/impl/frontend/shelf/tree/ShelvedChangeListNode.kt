@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.shelf.tree
 
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.vcs.impl.frontend.VcsFrontendBundle
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -14,7 +14,7 @@ class ShelvedChangeListNode(private val changeList: ShelvedChangeListEntity) : E
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     var listName = changeList.description
-    if (listName.isBlank()) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name")
+    if (listName.isBlank()) listName = VcsFrontendBundle.message("changes.nodetitle.empty.changelist.name")
     if (changeList.isRecycled || changeList.isDeleted) {
       renderer.appendTextWithIssueLinks(listName, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES)
     }
