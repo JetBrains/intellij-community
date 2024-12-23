@@ -690,6 +690,16 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   private static volatile FileSystem theFileSystem;
+  /**
+   * This is a workaround to avoid `getSystemClassLoader()` call during the system class loader instantiation.
+   * When system property "java.system.class.loader" is set to UrlClassLoader(or inheritors),
+   * such classloader is being instantiated during `ClassLoader#initSystemClassLoader()` call.
+   * Since UrlClassLoader uses nio in constructor, it triggers default file system initialization
+   * which calls ClassLoader.getSystemClassLoader() and fails because it's not permitted (to avoid recursion issue).
+   * <p>
+   * Also, loading nio classes might not work during `#appendToClassPathForInstrumentation`.
+   * Because for some versions of JBR, it leads to NPE during initialization of ZipFile through FileSystems.getDefault.
+   */
   private static FileSystem getPlatformDefaultFileSystem() {
     if (theFileSystem != null) {
       return theFileSystem;
