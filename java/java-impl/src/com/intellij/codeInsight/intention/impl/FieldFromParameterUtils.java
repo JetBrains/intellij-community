@@ -289,6 +289,12 @@ public final class FieldFromParameterUtils {
         return false;
       }
     }
+    if (method.isConstructor()) {
+      PsiMethodCallExpression chainedCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
+        return false;
+      }
+    }
     return method.getBody() != null &&
            !targetClass.isInterface() &&
            (!targetClass.isRecord() || method.hasModifierProperty(PsiModifier.STATIC)) &&
