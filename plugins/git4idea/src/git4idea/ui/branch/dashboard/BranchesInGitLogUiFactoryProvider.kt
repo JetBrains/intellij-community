@@ -62,7 +62,7 @@ internal class BranchesVcsLogUi(
 ) : VcsLogUiImpl(id, logData, colorManager, uiProperties, refresher, initialFilters) {
 
   private val branchesUi =
-    BranchesDashboardUi(logData.project, this)
+    BranchesDashboardUi(this)
       .also { branchesUi -> Disposer.register(this, branchesUi) }
 
   internal val mainLogComponent: JComponent
@@ -79,5 +79,5 @@ internal class BranchesVcsLogUi(
     focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree
   }
 
-  override fun getMainComponent() = branchesUi.getMainComponent()
+  override fun getMainComponent() = branchesUi.mainComponent
 }

@@ -6,56 +6,65 @@ import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
+import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.with
+import com.intellij.vcs.log.visible.filters.without
+import com.intellij.vcs.ui.ProgressStripe
 import git4idea.GitLocalBranch
 import git4idea.actions.GitFetch
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.*
 import git4idea.ui.branch.GitBranchManager
+import org.jetbrains.annotations.VisibleForTesting
+import javax.swing.event.TreeSelectionListener
+import javax.swing.tree.TreePath
 import kotlin.properties.Delegates
 
-internal class BranchesDashboardController(
-  private val project: Project,
-  private val ui: BranchesDashboardUi,
+internal class BranchesDashboardTreeController(
+  private val logData: VcsLogData,
+  private val logProperties: VcsLogUiProperties,
+  private val logFilterUi: VcsLogFilterUiEx,
+  private val logNavigator: (BranchNodeDescriptor.LogNavigatable, focus: Boolean) -> Unit,
+  private val tree: FilteringBranchesTree,
+  private val branchesProgressStripe: ProgressStripe,
 ) : Disposable, UiDataProvider {
 
-  private val changeListener = DataPackChangeListener { ui.updateBranchesTree(false) }
-  private val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener { rootsToFilter = ui.getRootsToFilter() }
-  private val logUiPropertiesListener = object : VcsLogUiProperties.PropertiesChangeListener {
-    override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
-      if (property == SHOW_GIT_BRANCHES_LOG_PROPERTY) {
-        ui.toggleBranchesPanelVisibility()
-      }
-    }
-  }
+  private val project = logData.project
 
-  val refs = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf <BranchInfo>(), hashSetOf<RefInfo>())
+  private val refs = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf<BranchInfo>(), hashSetOf<RefInfo>())
 
   var showOnlyMy: Boolean by AtomicObservableProperty(false) { old, new -> if (old != new) updateBranchesIsMyState() }
 
   private var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
     if (new != null && old != null && old != new) {
-      ui.updateBranchesTree(false)
+      updateBranchesTree(false)
     }
   }
 
   init {
-    Disposer.register(ui, this)
     project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
       override fun branchFavoriteSettingsChanged() {
         runInEdt {
@@ -65,25 +74,71 @@ internal class BranchesDashboardController(
 
       override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
         runInEdt {
-          ui.toggleGrouping(key, state)
+          tree.toggleGrouping(key, state)
+          refreshTree()
         }
       }
 
       override fun showTagsSettingsChanged(state: Boolean) {
         runInEdt {
-          ui.updateBranchesTree(false)
+          updateBranchesTree(false)
         }
       }
     })
     project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
       runInEdt {
-        ui.updateBranchesTree(false)
+        updateBranchesTree(false)
       }
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
         runInEdt { updateBranchesIncomingOutgoingState() }
       })
+
+    val changeListener = DataPackChangeListener { updateBranchesTree(false) }
+    logData.addDataPackChangeListener(changeListener)
+    Disposer.register(this) {
+      logData.removeDataPackChangeListener(changeListener)
+    }
+
+    val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener {
+      val roots = logData.roots.toSet()
+      rootsToFilter = if (roots.size == 1) {
+        roots
+      }
+      else {
+        VcsLogUtil.getAllVisibleRoots(roots, logFilterUi.filters)
+      }
+    }
+    logFilterUi.addFilterListener(logUiFilterListener)
+
+    val treeSelectionListener = TreeSelectionListener {
+      if (!tree.component.isShowing) return@TreeSelectionListener
+
+      if (logProperties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) {
+        updateLogBranchFilter()
+      }
+      else if (logProperties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY]) {
+        tree.component.getSelection().logNavigatableNodeDescriptor?.let { logNavigatableSelection ->
+          logNavigator(logNavigatableSelection, false)
+        }
+      }
+    }
+    tree.component.addTreeSelectionListener(treeSelectionListener)
+    Disposer.register(this) {
+      tree.component.removeTreeSelectionListener(treeSelectionListener)
+    }
+
+    UiNotifyConnector.installOn(tree.component, object : Activatable {
+      private var initial = true
+
+      override fun showNotify() {
+        updateBranchesTree(initial)
+        initial = false
+      }
+    })
+
+    logUiFilterListener.onFiltersChanged()
   }
 
   override fun dispose() {
@@ -92,19 +147,26 @@ internal class BranchesDashboardController(
   }
 
   fun updateLogBranchFilter() {
-    ui.updateLogBranchFilter()
+    val selectedFilters = tree.component.getSelection().selectedBranchFilters
+    val oldFilters = logFilterUi.filters
+    val newFilters = if (selectedFilters.isNotEmpty()) {
+      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(selectedFilters))
+    }
+    else {
+      oldFilters.without(VcsLogBranchLikeFilter::class.java)
+    }
+    logFilterUi.filters = newFilters
   }
 
   fun navigateLogToRef(selection: BranchNodeDescriptor.LogNavigatable) {
-    ui.navigateToSelection(selection, true)
+    logNavigator(selection, true)
   }
-
   fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
-    val selectedRemotes = ui.getSelection().selectedRemotes
+    val selectedRemotes = tree.component.getSelection().selectedRemotes
     if (selectedRemotes.isEmpty()) return emptyMap()
 
     val result = hashMapOf<GitRepository, MutableSet<GitRemote>>()
-    if (ui.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)) {
+    if (tree.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)) {
       for (selectedRemote in selectedRemotes) {
         val repository = selectedRemote.repository ?: continue
         val remote = repository.remotes.find { it.name == selectedRemote.remoteName } ?: continue
@@ -125,11 +187,13 @@ internal class BranchesDashboardController(
   }
 
   private fun startLoadingBranches() {
-    ui.startLoadingBranches()
+    tree.component.emptyText.text = message("action.Git.Loading.Branches.progress")
+    branchesProgressStripe.startLoading()
   }
 
   private fun stopLoadingBranches() {
-    ui.stopLoadingBranches()
+    tree.component.emptyText.text = StatusText.getDefaultEmptyText()
+    branchesProgressStripe.stopLoading()
   }
 
   fun launchFetch() {
@@ -139,18 +203,24 @@ internal class BranchesDashboardController(
     }
   }
 
-  fun reloadBranches(): Boolean {
-    val forceReload = ui.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
-    val changed = reloadBranches(forceReload)
-    if (!changed) return false
+  private fun refreshTree() {
+    tree.refreshTree(refs, showOnlyMy)
+  }
 
-    if (showOnlyMy) {
-      updateBranchesIsMyState()
+  private fun updateBranchesTree(initial: Boolean) {
+    if (!tree.component.isShowing) return
+
+    val forceReload = tree.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+    val changed = reloadBranches(forceReload)
+    if (changed) {
+      if (showOnlyMy) {
+        updateBranchesIsMyState()
+      }
+      else {
+        tree.refreshNodeDescriptorsModel(refs, showOnlyMy)
+      }
     }
-    else {
-      ui.refreshTreeModel()
-    }
-    return true
+    tree.update(initial, changed)
   }
 
   private fun reloadBranches(force: Boolean): Boolean {
@@ -187,7 +257,7 @@ internal class BranchesDashboardController(
       }
     }
 
-    ui.refreshTree()
+    refreshTree()
   }
 
   private fun updateBranchesIncomingOutgoingState() {
@@ -197,7 +267,7 @@ internal class BranchesDashboardController(
       localBranch.incomingOutgoingState = incomingOutgoing
     }
 
-    ui.refreshTree()
+    refreshTree()
   }
 
   private fun updateBranchesIsMyState() {
@@ -212,7 +282,7 @@ internal class BranchesDashboardController(
         onSuccess = { branches ->
           refs.localBranches.updateUnsureBranchesStateFrom(branches)
           refs.remoteBranches.updateUnsureBranchesStateFrom(branches)
-          ui.refreshTree()
+          refreshTree()
         },
         onFinished = {
           stopLoadingBranches()
@@ -252,28 +322,46 @@ internal class BranchesDashboardController(
     }.queue()
   }
 
-  fun registerDataPackListener(vcsLogData: VcsLogData) {
-    vcsLogData.addDataPackChangeListener(changeListener)
-  }
-
-  fun removeDataPackListener(vcsLogData: VcsLogData) {
-    vcsLogData.removeDataPackChangeListener(changeListener)
-  }
-
-  fun registerLogUiPropertiesListener(vcsLogUiProperties: VcsLogUiProperties) {
-    vcsLogUiProperties.addChangeListener(logUiPropertiesListener)
-  }
-
-  fun removeLogUiPropertiesListener(vcsLogUiProperties: VcsLogUiProperties) {
-    vcsLogUiProperties.removeChangeListener(logUiPropertiesListener)
-  }
-
-  fun registerLogUiFilterListener(logFilterUi: VcsLogFilterUiEx) {
-    logFilterUi.addFilterListener(logUiFilterListener)
-    logUiFilterListener.onFiltersChanged()
-  }
-
   override fun uiDataSnapshot(sink: DataSink) {
     sink[BRANCHES_UI_CONTROLLER] = this
+    snapshotSelectionActionsKeys(sink, tree.component.selectionPaths)
+    sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = logProperties
+  }
+
+  companion object {
+    /**
+     * Note that at the moment [GitBranchActionsDataKeys] are used only for single ref actions.
+     * In other actions [GIT_BRANCHES_TREE_SELECTION] is used
+     *
+     * Also see [git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.createDataContext]
+     */
+    @VisibleForTesting
+    internal fun snapshotSelectionActionsKeys(sink: DataSink, selectionPaths: Array<TreePath>?) {
+      val selection = BranchesTreeSelection(selectionPaths)
+
+      sink[GIT_BRANCHES_TREE_SELECTION] = selection
+      sink[SELECTED_ITEMS] = selectionPaths
+
+      val selectedNode = selection.selectedNodes.singleOrNull() ?: return
+      val selectedDescriptor = selectedNode.getNodeDescriptor()
+      if (selection.headSelected) {
+        sink[GitBranchActionsDataKeys.USE_CURRENT_BRANCH] = true
+      }
+
+      val selectedRef = selectedDescriptor as? BranchNodeDescriptor.Ref ?: return
+
+      when (selectedRef) {
+        is BranchNodeDescriptor.Branch -> {
+          sink[GitBranchActionsDataKeys.BRANCHES] = listOf(selectedRef.branchInfo.branch)
+        }
+        is BranchNodeDescriptor.Tag -> {
+          sink[GitBranchActionsDataKeys.TAGS] = listOf(selectedRef.tagInfo.tag)
+        }
+      }
+
+      val selectedRepositories = BranchesTreeSelection.Companion.getSelectedRepositories(selectedNode)
+      sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = selectedRepositories
+      sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepositories.singleOrNull()
+    }
   }
 }

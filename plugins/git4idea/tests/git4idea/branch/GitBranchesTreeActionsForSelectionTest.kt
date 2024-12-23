@@ -25,8 +25,11 @@ import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
 import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
 import git4idea.repo.GitTagHolder
 import git4idea.test.MockGitRepository
-import git4idea.ui.branch.dashboard.*
+import git4idea.ui.branch.dashboard.BRANCHES_UI_CONTROLLER
+import git4idea.ui.branch.dashboard.BranchNodeDescriptor
+import git4idea.ui.branch.dashboard.BranchesDashboardActions
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchActionsBuilder
+import git4idea.ui.branch.dashboard.BranchesDashboardTreeController
 import org.mockito.Mockito
 import javax.swing.tree.TreePath
 import kotlin.reflect.KClass
@@ -35,7 +38,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
   private lateinit var repo1: MockGitRepository
   private lateinit var repo2: MockGitRepository
 
-  private val branchesUiController = Mockito.mock(BranchesDashboardController::class.java)
+  private val branchesUiController = Mockito.mock(BranchesDashboardTreeController::class.java)
 
   override fun setUp() {
     super.setUp()
@@ -222,7 +225,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     return TestActionEvent.createTestEvent(CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
       sink[PlatformDataKeys.PROJECT] = project
       sink[BRANCHES_UI_CONTROLLER] = branchesUiController
-      BranchesDashboardUi.snapshotSelectionActionsKeys(sink, tree.selectionPaths)
+      BranchesDashboardTreeController.snapshotSelectionActionsKeys(sink, tree.selectionPaths)
     })
   }
 
