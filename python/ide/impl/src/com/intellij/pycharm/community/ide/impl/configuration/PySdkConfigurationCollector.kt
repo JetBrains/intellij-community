@@ -45,8 +45,7 @@ object PySdkConfigurationCollector : CounterUsagesCollector() {
 
   internal fun logPipEnv(project: Project, result: PipEnvResult): Unit = pipenvEvent.log(project, result)
 
-  private val GROUP = EventLogGroup("python.sdk.configuration", 1)
-
+  private val GROUP = EventLogGroup("python.sdk.configuration", 2)
   private enum class DialogResult { OK, CANCELLED, SKIPPED }
 
   private val Boolean.asDialogResult: DialogResult
