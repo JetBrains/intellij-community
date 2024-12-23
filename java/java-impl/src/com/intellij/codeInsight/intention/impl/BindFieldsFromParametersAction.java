@@ -75,6 +75,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
 
   private static boolean isAvailable(@NotNull PsiParameter psiParameter) {
     PsiType type = FieldFromParameterUtils.getSubstitutedType(psiParameter);
+    if (type != null && !type.isAssignableFrom(psiParameter.getType())) return false;
     PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass) &&
            psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
