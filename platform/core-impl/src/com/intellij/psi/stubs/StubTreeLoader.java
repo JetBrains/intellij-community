@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -114,6 +114,7 @@ public abstract class StubTreeLoader {
       msg += ", file.class=" + psiFile.getClass();
       msg += ", file.lang=" + psiFile.getLanguage();
       msg += ", modStamp=" + psiFile.getModificationStamp();
+      msg += ", psi.length=" + psiFile.getTextLength();
 
       if (!compiled) {
         String text = psiFile.getText();
