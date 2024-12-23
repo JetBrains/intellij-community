@@ -519,6 +519,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:InspectionsError:javax.swing.Icon
 - sf:InspectionsErrorEmpty:javax.swing.Icon
 - sf:InspectionsEye:javax.swing.Icon
+- sf:InspectionsGrammar:javax.swing.Icon
 - sf:InspectionsMixed:javax.swing.Icon
 - sf:InspectionsOK:javax.swing.Icon
 - sf:InspectionsOKEmpty:javax.swing.Icon

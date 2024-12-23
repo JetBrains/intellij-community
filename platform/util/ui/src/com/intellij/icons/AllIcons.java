@@ -553,6 +553,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InspectionsError = load("expui/general/inspections/inspectionsError.svg", "general/inspectionsError.svg", -1536825243, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsErrorEmpty = load("expui/general/inspections/inspectionsErrorEmpty.svg", "general/inspectionsErrorEmpty.svg", -1306194391, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsEye = load("expui/general/inspections/inspectionsEye.svg", "general/inspectionsEye.svg", 1945529681, 2);
+    /** 16x16 */ public static final @NotNull Icon InspectionsGrammar = load("expui/general/inspections/inspectionsGrammar.svg", "general/inspectionsGrammar.svg", -2001714586, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("expui/general/inspections/inspectionsMixed.svg", "general/inspectionsMixed.svg", -1563908295, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("expui/general/inspections/inspectionsOK.svg", "general/inspectionsOK.svg", 2050720021, 2);
     /** 16x16 */ public static final @NotNull Icon InspectionsOKEmpty = load("expui/general/inspections/inspectionsOKEmpty.svg", "general/inspectionsOKEmpty.svg", -147695886, 2);
