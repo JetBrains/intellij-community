@@ -1969,6 +1969,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/javaStaticMethods.kt");
             }
 
+            @TestMetadata("jvmNameConstEvaluation.kt")
+            public void testJvmNameConstEvaluation() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/jvmNameConstEvaluation.kt");
+            }
+
             @TestMetadata("kClass.kt")
             public void testKClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/kClass.kt");
