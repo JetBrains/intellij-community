@@ -12,8 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
@@ -29,6 +31,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resume
 
@@ -39,7 +42,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   @RequiresEdt
   fun setupInstallableSdk(downloadTask: SdkDownloadTask): Sdk {
     return application.runWriteAction<Sdk> {
-      createDownloadSdkInternal(downloadTask)
+      createDownloadSdkInternal(JavaSdk.getInstance(), downloadTask)
     }
   }
 
@@ -51,26 +54,25 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
-  private fun createDownloadTask(sdkDownloadTask: JdkDownloadTask): SdkDownloadTask? {
-    val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
+  private fun createDownloadTask(jdkItem: JdkItem, jdkHome: Path): SdkDownloadTask? {
+    val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(jdkHome.toString())
     if (selectedFile == null) {
       Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
       return null
     }
 
     val downloadRequest = LOG.runAndLogException {
-      JdkInstaller.getInstance().prepareJdkInstallation(sdkDownloadTask.jdkItem, selectedFile)
+      JdkInstaller.getInstance().prepareJdkInstallation(jdkItem, selectedFile)
     } ?: return null
 
-    return JdkDownloadTask(sdkDownloadTask.jdkItem, downloadRequest, project)
+    return JdkDownloadTask(jdkItem, downloadRequest, project)
   }
 
   @RequiresWriteLock
-  private fun createDownloadSdkInternal(downloadTask: SdkDownloadTask): Sdk {
-    val sdkType = JavaSdk.getInstance()
+  private fun createDownloadSdkInternal(sdkType: SdkType, sdkDownloadTask: SdkDownloadTask): Sdk {
     val sdkTable = ProjectJdkTable.getInstance()
     val sdks = sdkTable.allJdks.asList()
-    val sdk = ProjectSdksModel.createDownloadSdkInternal(sdkType, downloadTask, sdks)
+    val sdk = ProjectSdksModel.createDownloadSdkInternal(sdkType, sdkDownloadTask, sdks)
     sdkTable.addJdk(sdk)
     return sdk
   }
@@ -92,18 +94,18 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
-  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onSdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onJdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
     return coroutineScope.async(Dispatchers.EDT) {
-      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.jdkItem.suggestedSdkName)) {
+      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
 
-        val downloadTask = createDownloadTask(sdkDownloadTask)
+        val downloadTask = createDownloadTask(sdkDownloadTask.jdkItem, sdkDownloadTask.request.installDir)
                            ?: return@withBackgroundProgress false
 
         val sdk = writeAction {
-          createDownloadSdkInternal(downloadTask)
+          createDownloadSdkInternal(JavaSdk.getInstance(), downloadTask)
         }
 
-        onSdkCreated(sdk)
+        onJdkCreated(sdk)
 
         downloadSdkInternal(sdk)
       }
