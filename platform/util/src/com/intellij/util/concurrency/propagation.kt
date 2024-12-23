@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
+import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -114,14 +115,23 @@ data class ChildContext internal constructor(
 
   @DelicateCoroutinesApi
   fun applyContextActions(installThreadContext: Boolean = true): AccessToken {
+    val alreadyAppliedElements = mutableListOf<IntelliJContextElement>()
+    try {
+      for (elem in ijElements) {
+        elem.beforeChildStarted(context)
+        alreadyAppliedElements.add(elem)
+      }
+    }
+    catch (e: Throwable) {
+      cleanupList(e, alreadyAppliedElements.reversed()) {
+        it.afterChildCompleted(context)
+      }
+    }
     val installToken = if (installThreadContext) {
       installThreadContext(context, replace = false)
     }
     else {
       AccessToken.EMPTY_ACCESS_TOKEN
-    }
-    for (elem in ijElements) {
-      elem.beforeChildStarted(context)
     }
     return object : AccessToken() {
       override fun finish() {
@@ -202,10 +212,27 @@ private fun doCreateChildContext(debugName: @NonNls String, unconditionalCancell
 
 private fun gatherAppliedChildContext(parentContext: CoroutineContext, isStructured: Boolean): Pair<CoroutineContext, List<IntelliJContextElement>> {
   val ijElements = SmartList<IntelliJContextElement>()
-  val newContext = parentContext.fold<CoroutineContext>(EmptyCoroutineContext) { old, elem ->
-    old + produceChildContextElement(parentContext, elem, isStructured, ijElements)
+  try {
+    val newContext = parentContext.fold<CoroutineContext>(EmptyCoroutineContext) { old, elem ->
+      old + produceChildContextElement(parentContext, elem, isStructured, ijElements)
+    }
+    return Pair(newContext, ijElements)
   }
-  return Pair(newContext, ijElements)
+  catch (e: Throwable) {
+    cleanupList(e, ijElements.reversed()) {
+      it.childCanceled(parentContext)
+    }
+  }
+}
+
+private fun <T> cleanupList(original: Throwable, list: List<T>, action: (T) -> Unit): Nothing {
+  try {
+    list.forEachGuaranteed(action)
+  }
+  catch (e: Throwable) {
+    original.addSuppressed(e)
+  }
+  throw original
 }
 
 private fun produceChildContextElement(parentContext: CoroutineContext, element: CoroutineContext.Element, isStructured: Boolean, ijElements: MutableList<IntelliJContextElement>): CoroutineContext {
@@ -251,7 +278,7 @@ internal fun captureRunnableThreadContext(command: Runnable): Runnable {
 internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V> {
   val childContext = createChildContext(callable.toString())
   var callable = captureClientIdInCallable(callable)
-  callable = ContextCallable(true, childContext, callable)
+  callable = ContextCallable(true, childContext, callable, AtomicBoolean(false))
   return callable
 }
 

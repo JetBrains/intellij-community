@@ -371,4 +371,50 @@ class ThreadContextPropagationTest {
     delay(100)
     Assertions.assertTrue(tracker.get())
   }
+
+
+  class MyFaultyIjElement1(val e: Throwable) : IntelliJContextElement, AbstractCoroutineContextElement(MyFaultyIjElement1) {
+    companion object Key : CoroutineContext.Key<MyFaultyIjElement1>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement? = throw e
+  }
+
+  @Test
+  fun `faulty produceChildElement`() = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    val ise = IllegalStateException("Boom")
+    withContext(MyCancellableIjElement(tracker) + MyFaultyIjElement1(ise)) {
+      val exception = Assertions.assertThrows(IllegalStateException::class.java) {
+        application.executeOnPooledThread { Assertions.fail() }
+      }
+      Assertions.assertEquals(ise, exception)
+      Assertions.assertTrue(tracker.get())
+    }
+  }
+
+  class MyFaultyIjElement2(val e: Throwable) : IntelliJContextElement, AbstractCoroutineContextElement(MyFaultyIjElement2) {
+    companion object Key : CoroutineContext.Key<MyFaultyIjElement2>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement? = this
+    override fun beforeChildStarted(context: CoroutineContext) = throw e
+  }
+
+  @Test
+  fun `faulty beforeChildStarted`() = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    val ise = Exception("Boom")
+    val rootJob = Job()
+    try {
+      withContext(MyIjElement(tracker) + MyFaultyIjElement2(ise) + rootJob) {
+        val exception = Assertions.assertThrows(RuntimeException::class.java) {
+          application.invokeAndWait { Assertions.fail() }
+        }
+        Assertions.assertEquals(ise, exception.cause)
+        Assertions.assertTrue(tracker.get())
+      }
+    }
+    catch (e: Throwable) {
+      Assertions.assertEquals(ise.message, e.message)
+    }
+  }
 }
