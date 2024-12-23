@@ -370,7 +370,12 @@ public class Maven40ProjectResolver {
       problems.addAll(myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems));
     }
 
-    Collection<String> activatedProfiles = Maven40ProfileUtil.collectActivatedProfiles(mavenProject);
+    Map<String, List<String>> injectedProfilesMap = mavenProject.getInjectedProfileIds();
+
+    List<String> activatedProfiles = new ArrayList<>();
+    for (List<String> profileList : injectedProfilesMap.values()) {
+      activatedProfiles.addAll(profileList);
+    }
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(interpolatedNativeModel);
     MavenServerExecutionResult.ProjectData data =
