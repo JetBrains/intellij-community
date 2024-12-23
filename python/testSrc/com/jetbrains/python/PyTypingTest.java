@@ -6237,6 +6237,36 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-77601
+  public void testParamSpecNotMappedToSingleTypeWithoutSquareBrackets() {
+    doTest("Any", """
+      from typing import ParamSpec, Callable, Generic, TypeVar
+      
+      P = ParamSpec("P")
+      T = TypeVar("T")
+      
+      class MyClass(Generic[T, P]):
+          def call(self) -> Callable[P, int]: ...
+      c = MyClass[str, int]()
+      expr = c.call()
+      """);
+  }
+
+  // PY-77601
+  public void testParamSpecMappedToSingleTypeWithSquareBrackets() {
+    doTest("(int) -> str", """
+      from typing import ParamSpec, Callable, Generic, TypeVar
+      
+      P = ParamSpec("P")
+      T = TypeVar("T")
+      
+      class MyClass(Generic[T, P]):
+          def call(self) -> Callable[P, T]: ...
+      c = MyClass[str, [int]]()
+      expr = c.call()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

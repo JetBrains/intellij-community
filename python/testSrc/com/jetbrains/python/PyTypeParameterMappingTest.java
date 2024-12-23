@@ -323,7 +323,6 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   }
 
   public void testMappingParamSpecWithIncompatibleTypes() {
-    doNegativeShapeMappingTest("**P", "int");
     doNegativeShapeMappingTest("int", "**P");
 
     doNegativeShapeMappingTest("**P", "*Ts");
@@ -347,6 +346,25 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testParamSpecAfterTypeVarTuple() {
     doTestShapeMappingWithDefaults("*Ts, **P", "int, str, [bool]", """
       *Ts -> *tuple[int, str]
+      **P -> [bool]
+      """);
+  }
+
+  public void testSingleParamSpec() {
+    doTestShapeMappingWithDefaults("**P", "int", """
+      **P -> [int]
+      """);
+    doTestShapeMappingWithDefaults("**P", "[int]", """
+      **P -> [int]
+      """);
+  }
+
+  public void testParamSpecFollowingTypeVar() {
+    doNegativeShapeMappingTest("T, T1, **P", "int, str, bool");
+
+    doTestShapeMappingWithDefaults("T, T1, **P", "int, str, [bool]", """
+      T -> int
+      T1 -> str
       **P -> [bool]
       """);
   }

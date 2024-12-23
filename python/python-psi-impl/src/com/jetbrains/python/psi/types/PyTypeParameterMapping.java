@@ -173,20 +173,26 @@ public final class PyTypeParameterMapping {
     }
     // [**P] <- [int, str, bool] is equal to [**P] <- [[int, str, bool]]
     if (expectedTypesDeque.size() == 1 && actualTypesDeque.size() >= 1
+        && leftMappedTypes.isEmpty()
         && expectedTypesDeque.peekFirst() instanceof PyParamSpecType
         && !(actualTypesDeque.peekFirst() instanceof PyCallableParameterListType)) {
       List<PyType> callableParamListTypes = new ArrayList<>();
 
       while (actualTypesDeque.size() != 0) {
         PyType actualType = actualTypesDeque.peekFirst();
+        if (actualType instanceof PyPositionalVariadicType) {
+          break;
+        }
         callableParamListTypes.add(actualType);
         actualTypesDeque.removeFirst();
       }
 
-      PyCallableParameterListType type =
-        new PyCallableParameterListTypeImpl(ContainerUtil.map(callableParamListTypes, PyCallableParameterImpl::nonPsi));
-      leftMappedTypes.add(Couple.of(expectedTypesDeque.peekFirst(), type));
-      expectedTypesDeque.removeFirst();
+      if (actualTypesDeque.size() == 0) {
+        PyCallableParameterListType type =
+          new PyCallableParameterListTypeImpl(ContainerUtil.map(callableParamListTypes, PyCallableParameterImpl::nonPsi));
+        leftMappedTypes.add(Couple.of(expectedTypesDeque.peekFirst(), type));
+        expectedTypesDeque.removeFirst();
+      }
     }
 
     // [T1, T2] <- [*tuple[T3, ...]]

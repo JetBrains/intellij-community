@@ -2019,6 +2019,22 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-77601, PY-76840
+  public void testParamSpecNotMappedToSingleTypeWithoutSquareBrackets() {
+    doTestByText("""
+                   from typing import Generic, ParamSpec, TypeVar
+                   
+                   T = TypeVar("T")
+                   P1 = ParamSpec("P1")
+                   P2 = ParamSpec("P2")
+                   
+                   class ClassA(Generic[T, P1]): ...
+                   
+                   x: ClassA[<warning descr="Passed type arguments do not math type parameters [T, **P1] of class 'ClassA'">int, int</warning>]
+                   x1: ClassA[int, [int]]
+                   """);
+  }
+
   // TODO remove when PY-77059 is supported
   public void testParameterizedImplicitTypeAlias() {
     doTestByText("""
