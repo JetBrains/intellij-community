@@ -28,7 +28,7 @@ class WindowButtonsConfiguration(private val scope: CoroutineScope) : Persistent
     fun getInstance(): WindowButtonsConfiguration? = if (isSupported()) service<WindowButtonsConfiguration>() else null
 
     private fun isSupported(): Boolean {
-      return SystemInfoRt.isLinux && X11UiUtil.isInitialized()
+      return SystemInfoRt.isLinux
     }
   }
 
@@ -45,8 +45,7 @@ class WindowButtonsConfiguration(private val scope: CoroutineScope) : Persistent
   }
 
   override fun noStateLoaded() {
-    // Load state and wait the result
-    loadStateFromOs()
+    scheduleUpdateFromOs()
   }
 
   fun scheduleUpdateFromOs() {
@@ -54,6 +53,7 @@ class WindowButtonsConfiguration(private val scope: CoroutineScope) : Persistent
       loadStateFromOs()
     }
   }
+
   private fun loadStateFromOs() {
     var windowButtonsState: State? = null
 
