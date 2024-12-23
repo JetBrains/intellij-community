@@ -32,7 +32,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 import javax.swing.JComponent
 
-private val LOG = logger<JdkDownloader>()
+private val LOG = logger<JdkDownload>()
 
 @Internal
 val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.create("jdk-downloader-extension")
@@ -60,7 +60,7 @@ data class JdkInstallRequestInfo(override val item: JdkItem,
 }
 
 @Internal
-class JdkDownloader : SdkDownload {
+class JdkDownload : SdkDownload {
   override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
     if (!Registry.`is`("jdk.downloader")) return false
     if (ApplicationManager.getApplication().isUnitTestMode) return false
