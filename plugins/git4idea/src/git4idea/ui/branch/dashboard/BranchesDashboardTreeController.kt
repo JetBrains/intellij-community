@@ -22,7 +22,6 @@ import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -271,23 +270,21 @@ internal class BranchesDashboardTreeController(
   }
 
   private fun updateBranchesIsMyState() {
-    VcsProjectLog.runWhenLogIsReady(project) {
-      val allBranches = refs.localBranches + refs.remoteBranches
-      val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
-      startLoadingBranches()
-      calculateMyBranchesInBackground(
-        run = { indicator ->
-          BranchesDashboardUtil.checkIsMyBranchesSynchronously(VcsProjectLog.getInstance(project), branchesToCheck, indicator)
-        },
-        onSuccess = { branches ->
-          refs.localBranches.updateUnsureBranchesStateFrom(branches)
-          refs.remoteBranches.updateUnsureBranchesStateFrom(branches)
-          refreshTree()
-        },
-        onFinished = {
-          stopLoadingBranches()
-        })
-    }
+    val allBranches = refs.localBranches + refs.remoteBranches
+    val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
+    startLoadingBranches()
+    calculateMyBranchesInBackground(
+      run = { indicator ->
+        BranchesDashboardUtil.checkIsMyBranchesSynchronously(logData, branchesToCheck, indicator)
+      },
+      onSuccess = { branches ->
+        refs.localBranches.updateUnsureBranchesStateFrom(branches)
+        refs.remoteBranches.updateUnsureBranchesStateFrom(branches)
+        refreshTree()
+      },
+      onFinished = {
+        stopLoadingBranches()
+      })
   }
 
   private fun Collection<BranchInfo>.updateUnsureBranchesStateFrom(updateFromBranches: Collection<BranchInfo>) {
@@ -300,9 +297,11 @@ internal class BranchesDashboardTreeController(
     }
   }
 
-  private fun calculateMyBranchesInBackground(run: (ProgressIndicator) -> Set<BranchInfo>,
-                                              onSuccess: (Set<BranchInfo>) -> Unit,
-                                              onFinished: () -> Unit) {
+  private fun calculateMyBranchesInBackground(
+    run: (ProgressIndicator) -> Set<BranchInfo>,
+    onSuccess: (Set<BranchInfo>) -> Unit,
+    onFinished: () -> Unit,
+  ) {
     var calculatedBranches: Set<BranchInfo>? = null
     object : Task.Backgroundable(project, message("action.Git.Show.My.Branches.description.calculating.branches.progress"), true) {
       override fun run(indicator: ProgressIndicator) {

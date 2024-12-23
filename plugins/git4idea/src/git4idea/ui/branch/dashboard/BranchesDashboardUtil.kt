@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -89,10 +89,12 @@ internal object BranchesDashboardUtil {
     }
   }
 
-  fun checkIsMyBranchesSynchronously(log: VcsProjectLog,
-                                     branchesToCheck: Collection<BranchInfo>,
-                                     indicator: ProgressIndicator): Set<BranchInfo> {
-    val myCommits = findMyCommits(log)
+  fun checkIsMyBranchesSynchronously(
+    logData: VcsLogData,
+    branchesToCheck: Collection<BranchInfo>,
+    indicator: ProgressIndicator,
+  ): Set<BranchInfo> {
+    val myCommits = findMyCommits(logData)
     if (myCommits.isEmpty()) return emptySet()
 
     indicator.isIndeterminate = false
@@ -102,7 +104,7 @@ internal object BranchesDashboardUtil {
 
       for (repo in branch.repositories) {
         indicator.checkCanceled()
-        if (isMyBranch(log, branch.branchName, repo, myCommits)) {
+        if (isMyBranch(logData, branch.branchName, repo, myCommits)) {
           myBranches.add(branch)
         }
       }
@@ -112,18 +114,19 @@ internal object BranchesDashboardUtil {
   }
 
 
-
-  private fun findMyCommits(log: VcsProjectLog): Set<Int> {
-    val filterByMe = VcsLogFilterObject.fromUserNames(listOf(VcsLogFilterObject.ME), log.dataManager!!)
-    return log.dataManager!!.index.dataGetter!!.filter(listOf(filterByMe))
+  private fun findMyCommits(logData: VcsLogData): Set<Int> {
+    val filterByMe = VcsLogFilterObject.fromUserNames(listOf(VcsLogFilterObject.ME), logData)
+    return logData.index.dataGetter!!.filter(listOf(filterByMe))
   }
 
-  private fun isMyBranch(log: VcsProjectLog,
-                         branchName: String,
-                         repo: GitRepository,
-                         myCommits: Set<Int>): Boolean {
+  private fun isMyBranch(
+    logData: VcsLogData,
+    branchName: String,
+    repo: GitRepository,
+    myCommits: Set<Int>,
+  ): Boolean {
     // branch is "my" if all its exclusive commits are made by me
-    val exclusiveCommits = findExclusiveCommits(log, branchName, repo) ?: return false
+    val exclusiveCommits = findExclusiveCommits(logData, branchName, repo) ?: return false
     if (exclusiveCommits.isEmpty()) return false
 
     for (commit in exclusiveCommits) {
@@ -135,12 +138,12 @@ internal object BranchesDashboardUtil {
     return true
   }
 
-  private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: GitRepository): IntSet? {
-    val dataPack = log.dataManager!!.dataPack
+  private fun findExclusiveCommits(logData: VcsLogData, branchName: String, repo: GitRepository): IntSet? {
+    val dataPack = logData.dataPack
 
     val ref = dataPack.findBranch(branchName, repo.root) ?: return null
     if (!ref.type.isBranch) return null
 
-    return dataPack.exclusiveCommits(ref, dataPack.refsModel, log.dataManager!!.storage)
+    return dataPack.exclusiveCommits(ref, dataPack.refsModel, logData.storage)
   }
 }
