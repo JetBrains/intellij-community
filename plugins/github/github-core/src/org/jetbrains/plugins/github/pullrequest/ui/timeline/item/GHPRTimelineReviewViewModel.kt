@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 
 import com.intellij.collaboration.async.launchNow
@@ -13,7 +13,6 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
@@ -47,7 +46,7 @@ interface GHPRTimelineReviewViewModel {
   fun editBody()
 }
 
-class UpdateableGHPRTimelineReviewViewModel internal constructor(
+internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,

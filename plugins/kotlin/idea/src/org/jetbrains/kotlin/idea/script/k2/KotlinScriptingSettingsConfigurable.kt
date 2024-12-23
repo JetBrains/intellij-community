@@ -5,9 +5,7 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.setEmptyState
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.builder.Align
@@ -27,7 +25,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 
-class KotlinScriptingSettingsConfigurable(val project: Project, val coroutineScope: CoroutineScope) : SearchableConfigurable {
+private class KotlinScriptingSettingsConfigurable(val project: Project, val coroutineScope: CoroutineScope) : SearchableConfigurable {
     companion object {
         const val ID: String = "preferences.language.Kotlin.scripting"
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl.vcs
 
 import com.intellij.build.BuildContentManager
@@ -25,7 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CompletableFuture
 
-class UnloadedModulesCompilationCheckinHandler(private val project: Project,
+private class UnloadedModulesCompilationCheckinHandler(private val project: Project,
                                                private val checkinPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent? {

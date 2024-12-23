@@ -122,9 +122,9 @@ internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit
   try {
     runnable()
   }
-  catch (ignored: ProcessCanceledException) {
+  catch (_: ProcessCanceledException) {
   }
-  catch (ignored: CancellationException) {
+  catch (_: CancellationException) {
   }
   catch (e: Throwable) {
     if (asWarning || e is AuthenticationException || e is NoRemoteRepositoryException) {

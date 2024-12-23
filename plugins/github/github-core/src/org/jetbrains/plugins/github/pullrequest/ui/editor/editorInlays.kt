@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import javax.swing.Icon
 
-sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel {
+internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel {
   abstract class Thread<VM : GHPRCompactReviewThreadViewModel>(val vm: VM)
     : GHPREditorMappedComponentModel, Hideable {
     final override val key: Any = vm.id

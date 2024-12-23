@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
-class GHPRTimelineEventComponentFactoryImpl(
+internal class GHPRTimelineEventComponentFactoryImpl(
   private val timelineVm: GHPRTimelineViewModel
 ) : GHPRTimelineEventComponentFactory<GHPRTimelineEvent> {
 

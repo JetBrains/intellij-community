@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.grazie" exported="" />
     <orderEntry type="library" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module-library">
       <library name="org.jetbrains.intellij.deps.languagetool:languagetool-core" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.5.0.12">
@@ -147,7 +147,9 @@
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown.plugin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />

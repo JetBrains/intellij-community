@@ -47,8 +47,7 @@ private val LOG = Logger.getInstance(MavenProjectBuilder::class.java)
  * Use [com.intellij.ide.impl.ProjectUtil.openOrImport] to open (import) a new project.
  */
 @Deprecated("use MavenProjectAsyncBuilder")
-class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProjectBuilderForImport {
-
+internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProjectBuilderForImport {
   private class Parameters {
     var myProjectToUpdate: Project? = null
 

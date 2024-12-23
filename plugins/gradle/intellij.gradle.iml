@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="library" exported="" name="slf4j-api" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />

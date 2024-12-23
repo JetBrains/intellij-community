@@ -23,8 +23,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
 
 // This class is thread safe
-@Internal
-class IndexingProgressReporter {
+internal class IndexingProgressReporter {
   @Volatile
   internal var subTasksCount: Int = 0
   internal val operationName = MutableStateFlow<@ProgressText String?>(null)

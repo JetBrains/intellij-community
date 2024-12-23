@@ -23,7 +23,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import java.util.concurrent.atomic.AtomicInteger
 
-
 internal class CompletionSessionsCounter : LookupManagerListener {
   companion object {
     private const val NOTIFICATION_EXPIRED_KEY = "ml.local.models.training.notification.expired"
@@ -47,7 +46,8 @@ internal class CompletionSessionsCounter : LookupManagerListener {
         isJavaProject = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).any {
           it.type == JAVA_MODULE_ENTITY_TYPE_ID
         }
-      } else if (!isJavaProject) {
+      }
+      else if (!isJavaProject) {
         return
       }
 
@@ -61,24 +61,25 @@ internal class CompletionSessionsCounter : LookupManagerListener {
     }
   }
 
-  private class TrainingNotification(project: Project, language: Language) : Notification(
-    MlLocalModelsBundle.message("ml.local.models.notification.groupId"),
-    MlLocalModelsBundle.message("ml.local.models.notification.title"),
-    MlLocalModelsBundle.message("ml.local.models.notification.content"),
-    NotificationType.INFORMATION
-  ) {
-    init {
-      addAction(object : NotificationAction(MlLocalModelsBundle.message("ml.local.models.notification.ok")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          LocalModelsTraining.train(project, language)
-          notification.expire()
-        }
-      })
-      addAction(object : NotificationAction(MlLocalModelsBundle.message("ml.local.models.notification.cancel")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notification.expire()
-        }
-      })
-    }
+}
+
+private class TrainingNotification(project: Project, language: Language) : Notification(
+  MlLocalModelsBundle.message("ml.local.models.notification.groupId"),
+  MlLocalModelsBundle.message("ml.local.models.notification.title"),
+  MlLocalModelsBundle.message("ml.local.models.notification.content"),
+  NotificationType.INFORMATION
+) {
+  init {
+    addAction(object : NotificationAction(MlLocalModelsBundle.message("ml.local.models.notification.ok")) {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        LocalModelsTraining.train(project, language)
+        notification.expire()
+      }
+    })
+    addAction(object : NotificationAction(MlLocalModelsBundle.message("ml.local.models.notification.cancel")) {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        notification.expire()
+      }
+    })
   }
 }

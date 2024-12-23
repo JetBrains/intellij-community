@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.repo.Repository
@@ -10,11 +10,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesGroupingPolicy
 import com.intellij.openapi.vcs.changes.ui.StaticFilePath
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
-@ApiStatus.Internal
-class RepositoryChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Repository>(model) {
+internal class RepositoryChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Repository>(model) {
   private val repositoryManager = VcsRepositoryManager.getInstance(project)
   private val colorManager = getColorManager(project)
 

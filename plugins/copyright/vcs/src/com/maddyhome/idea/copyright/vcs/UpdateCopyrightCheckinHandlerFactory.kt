@@ -55,7 +55,8 @@ private class UpdateCopyrightCheckinHandler(private val project: Project) : Chec
     return null
   }
 
-  private val settings: UpdateCopyrightCheckinHandlerState get() = UpdateCopyrightCheckinHandlerState.getInstance(project)
+  private val settings: UpdateCopyrightCheckinHandlerState
+    get() = UpdateCopyrightCheckinHandlerState.getInstance(project)
 
   private fun getPsiFiles(files: List<VirtualFile>): Array<PsiFile> {
     val psiFiles = mutableListOf<PsiFile>()

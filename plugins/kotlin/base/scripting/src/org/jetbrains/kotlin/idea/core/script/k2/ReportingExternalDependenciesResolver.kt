@@ -9,7 +9,7 @@ import kotlin.script.experimental.dependencies.ArtifactWithLocation
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
-class ReportingExternalDependenciesResolver(
+internal class ReportingExternalDependenciesResolver(
   private val delegate: ExternalDependenciesResolver,
   private val dependenciesResolutionService: DependencyResolutionService,
 ) : ExternalDependenciesResolver {

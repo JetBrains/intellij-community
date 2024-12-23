@@ -332,6 +332,6 @@ c:com.intellij.util.diff.Diff$ChangeBuilder
 - addChange(I,I):V
 - addEqual(I):V
 - getFirstChange():com.intellij.util.diff.Diff$Change
-c:com.intellij.util.diff.FilesTooBigForDiffException
+f:com.intellij.util.diff.FilesTooBigForDiffException
 - java.lang.Exception
 - <init>():V

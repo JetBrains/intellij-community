@@ -35,7 +35,7 @@ private class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
     }
 }
 
-const val KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME = "kotlin-language-version-configured"
+const val KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME: String = "kotlin-language-version-configured"
 
 @Service(Service.Level.PROJECT)
 class KotlinConfigurationCheckerService(private val project: Project) {

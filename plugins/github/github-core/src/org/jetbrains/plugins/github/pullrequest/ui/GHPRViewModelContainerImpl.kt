@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.collaboration.async.cancelledWith
@@ -39,7 +39,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoView
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
 @ApiStatus.Internal
-interface GHPRViewModelContainer {
+internal interface GHPRViewModelContainer {
   val aiReviewVm: StateFlow<GHPRAIReviewViewModel?>
   val aiSummaryVm: StateFlow<GHPRAISummaryViewModel?>
 

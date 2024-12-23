@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 
 import com.intellij.collaboration.async.mapDataToModel
@@ -70,7 +70,7 @@ interface GHPRTimelineThreadViewModel
 
 private val LOG = logger<UpdateableGHPRTimelineThreadViewModel>()
 
-class UpdateableGHPRTimelineThreadViewModel internal constructor(
+internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
   override val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,

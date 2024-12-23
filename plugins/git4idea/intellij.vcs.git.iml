@@ -82,6 +82,7 @@
     <orderEntry type="library" scope="TEST" name="commons-lang3" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />

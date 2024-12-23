@@ -8,14 +8,10 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.util.getValue
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.getUpdatedStorage
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurations
@@ -27,7 +23,6 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -36,7 +31,7 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
-class GradleScriptModel(
+internal class GradleScriptModel(
     override val virtualFile: VirtualFile,
     val classPath: List<String> = listOf(),
     val sourcePath: List<String> = listOf(),
@@ -44,7 +39,7 @@ class GradleScriptModel(
     val javaHome: String? = null
 ) : BaseScriptModel(virtualFile)
 
-open class GradleScriptConfigurationsSource(override val project: Project) : ScriptConfigurationsSource<GradleScriptModel>(project) {
+internal open class GradleScriptConfigurationsSource(override val project: Project) : ScriptConfigurationsSource<GradleScriptModel>(project) {
     private val gradleEntitySourceFilter: (EntitySource) -> Boolean =
         { entitySource -> entitySource is KotlinGradleScriptModuleEntitySource }
 

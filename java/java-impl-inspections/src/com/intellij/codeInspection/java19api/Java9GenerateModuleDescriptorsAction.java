@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.java19api.DescriptorsGenerator.ModuleFiles;
@@ -41,7 +41,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-public final class Java9GenerateModuleDescriptorsAction extends AnAction {
+final class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(Java9GenerateModuleDescriptorsAction.class);
   private static final String CLASS_FILE_PATTERN = "glob:*" + CommonClassNames.CLASS_FILE_EXTENSION;
 
