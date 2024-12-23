@@ -34,6 +34,7 @@ import kotlin.coroutines.CoroutineContext
  *     installThreadContext(initialContext + childElement) {
  *       // before the execution of a scheduled runnable,
  *       // the created element performs computations
+ *       childElement.beforeChildStarted(currentThreadContext())
  *       try {
  *         runSomething()
  *       } finally {
@@ -42,6 +43,19 @@ import kotlin.coroutines.CoroutineContext
  *         childElement.afterChildCompleted(currentThreadContext())
  *       }
  *     }
+ *   }
+ * }
+ * ```
+ *
+ * If `queueAsyncActivity` gets canceled for some reason, then [childCanceled] will be called, i.e:
+ * ```kotlin
+ * withContext(myIntelliJElement) {
+ *   val initialContext = currentThreadContext()
+ *   // the creation of a child context happens during the queueing
+ *   val childElement = myIntelliJElement.produceChildElement(initialContext, ...)
+ *   platformScheduler.queueAsyncActivity {
+ *     // no `beforeChildStarted` is called here.
+ *     childElement.childCanceled(currentThreadContext())
  *   }
  * }
  * ```
@@ -107,7 +121,8 @@ interface IntelliJContextElement : CoroutineContext.Element {
   }
 
   /**
-   * Called before the child computation is started
+   * Called before the child computation is started.
+   * The platform maintains an invariant that **only one** of [beforeChildStarted] and [childCanceled] will be called.
    *
    * @param context the context of the executing computation
    */
@@ -115,8 +130,15 @@ interface IntelliJContextElement : CoroutineContext.Element {
 
   /**
    * Called when the child computation ends its execution.
+   * [afterChildCompleted] will be called if there was a preceding [beforeChildStarted].
    *
    * @param context the context of the executing computation
    */
   fun afterChildCompleted(context: CoroutineContext) {}
+
+  /**
+   * Called when the child computation was canceled without any attempt to execute it.
+   * The platform maintains an invariant that **only one** of [beforeChildStarted] and [childCanceled] will be called.
+   */
+  fun childCanceled(context: CoroutineContext) {}
 }

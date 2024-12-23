@@ -2,6 +2,7 @@
 - kotlin.coroutines.CoroutineContext$Element
 - afterChildCompleted(kotlin.coroutines.CoroutineContext):V
 - beforeChildStarted(kotlin.coroutines.CoroutineContext):V
+- childCanceled(kotlin.coroutines.CoroutineContext):V
 - produceChildElement(kotlin.coroutines.CoroutineContext,Z):com.intellij.concurrency.IntelliJContextElement
 *f:com.intellij.concurrency.IntelliJContextElement$DefaultImpls
 - s:fold(com.intellij.concurrency.IntelliJContextElement,java.lang.Object,kotlin.jvm.functions.Function2):java.lang.Object
