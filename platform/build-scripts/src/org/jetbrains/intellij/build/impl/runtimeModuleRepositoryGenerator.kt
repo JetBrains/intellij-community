@@ -21,6 +21,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 /**
@@ -244,7 +246,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     return library.getFiles(JpsOrderRootType.COMPILED).size == 1 
   }
   
-  val pathToEntries = entries.groupBy { it.relativePath }
+  val pathToEntries = entries.groupBy { Path(it.relativePath) }
 
   //exclude libraries which may be packed in multiple JARs from consideration, because multiple entries may not indicate that a library is copied to multiple places in such cases,
   //and all resource roots should be kept
@@ -252,17 +254,17 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     .filter { entry -> entry.origin is ProjectLibraryEntry && isPackedIntoSingleJar(entry.origin)
                        || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()
                        || entry.origin is ModuleOutputEntry }
-    .groupBy({ it.origin.getRuntimeModuleId()!! }, { it.relativePath })
+    .groupBy({ it.origin.getRuntimeModuleId()!! }, { Path(it.relativePath) })
 
   suspend fun isIncludedInEmbeddedFrontend(entry: DistributionFileEntry): Boolean {
     return entry is ModuleOutputEntry && context.getFrontendModuleFilter().isModuleIncluded(entry.moduleName)
   }
   
-  suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
-    val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
+  suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<Path>): Path {
+    val mainLocation = paths.singleOrNull { it.parent?.pathString == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
                        paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInEmbeddedFrontend(entry.origin) } == true } ?:
-                       paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend", "frontend-split") }
+                       paths.singleOrNull { it.parent?.name in setOf("client", "frontend", "frontend-split") }
     if (mainLocation != null) {
       return mainLocation
     }
@@ -275,7 +277,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
   for ((moduleId, paths) in moduleIdsToPaths) {
     val distinctPaths = paths.distinct()
     if (distinctPaths.size > 1) {
-      mainPaths[moduleId] = chooseMainLocation(moduleId, distinctPaths)
+      mainPaths[moduleId] = chooseMainLocation(moduleId, distinctPaths).pathString
     }
   }
   return mainPaths
