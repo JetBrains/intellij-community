@@ -20,7 +20,7 @@ import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 
 class RenameActionCompletionCommand : AbstractActionCompletionCommand(IdeActions.ACTION_RENAME,
-                                                                      "rename identifier",
+                                                                      "Rename identifier",
                                                                       ActionsBundle.message("action.RenameElement.text"),
                                                                       null) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
