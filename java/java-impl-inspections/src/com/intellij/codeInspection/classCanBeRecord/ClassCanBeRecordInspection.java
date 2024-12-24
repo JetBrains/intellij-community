@@ -119,13 +119,14 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       if (recordCandidate == null) return;
       if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
           myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly()) {
-        if (!ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()){
-          registerError(classIdentifier, ProblemHighlightType.INFORMATION, isOnTheFly(), aClass);
+        if (!ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) {
+          if (isOnTheFly()) {
+            registerError(classIdentifier, ProblemHighlightType.INFORMATION, true, aClass);
+          }
+          return;
         }
       }
-      else {
-        registerError(classIdentifier, isOnTheFly(), aClass);
-      }
+      registerError(classIdentifier, isOnTheFly(), aClass);
     }
   }
 
