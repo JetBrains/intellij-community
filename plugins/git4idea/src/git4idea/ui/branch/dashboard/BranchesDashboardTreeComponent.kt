@@ -71,12 +71,13 @@ internal object BranchesDashboardTreeComponent {
 
     val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(filteringTree.component, true), parentDisposable)
 
-    val uiController = BranchesDashboardTreeController(
-      logData, logProperties, logFilterUi, logNavigator,
-      filteringTree, progressStripe,
-    ).also {
+    val treeHandler = BranchesDashboardTreeHandler(logData, logFilterUi, filteringTree, progressStripe).also {
       Disposer.register(parentDisposable, it)
     }
+
+    val uiController = BranchesDashboardTreeController(
+      project, logProperties, logFilterUi, logNavigator, filteringTree, treeHandler
+    )
 
     return simplePanel().withBorder(createBorder(SideBorder.LEFT))
       .addToTop(branchesSearchFieldPanel)
