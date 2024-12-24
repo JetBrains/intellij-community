@@ -10,6 +10,9 @@ insert_final_newline = true
 max_line_length = 150
 tab_width = 4
 
+[*.iml]
+insert_final_newline = false
+
 [{*.html,*.js,*.css}]
 indent_size = 2
 
