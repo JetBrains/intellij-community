@@ -237,14 +237,18 @@
                     area="IDEA_PROJECT"
                     dynamic="false"/>
 
-    <extensionPoint name="vcs.shelve.name"
-                    interface="com.intellij.vcs.ShelveTitleProvider"
-                    dynamic="true"/>
-
     <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
     </extensionPoint>
 
     <extensionPoint name="vcs.defaultCommitMessagePolicy" interface="com.intellij.vcs.commit.DefaultCommitMessagePolicy" dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyTitleProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyGotItTooltipProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyGotItTooltipProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

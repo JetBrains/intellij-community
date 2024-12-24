@@ -57,8 +57,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.ShelveTitlePatch;
-import com.intellij.vcs.ShelveTitleProvider;
 import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -69,7 +67,6 @@ import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.*;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -405,13 +402,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         ShelvedChangeList changeList = new ShelvedChangeList(patchFile, commitMessage.replace('\n', ' '), binaryFiles,
                                                              createShelvedChangesFromFilePatches(myProject, patchFile, patches));
         changeList.markToDelete(markToBeDeleted);
-
-        if (Registry.is("llm.vcs.shelve.title.generation")) {
-          if (ShelveTitleProvider.hasDefaultName(commitMessage)) {
-            suggestBetterName(new ShelveTitlePatch(Files.readString(patchFile), patches.size()), name -> renameChangeList(changeList, name));
-          }
-        }
-
         changeList.setName(schemePatchDir.getFileName().toString());
         ProgressManager.checkCanceled();
         schemeManager.addScheme(changeList, false);
@@ -423,14 +413,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private void suggestBetterName(@NotNull ShelveTitlePatch patch, @NotNull Consumer<String> rename) {
-    for (@NotNull ShelveTitleProvider provider : ShelveTitleProvider.Companion.getEP_NAME().getExtensionList()) {
-      if (provider.suggestTitle(myProject, patch, rename)) {
-        return;
-      }
     }
   }
 
@@ -849,7 +831,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     new Task.Backgroundable(myProject, VcsBundle.message("shelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        result.addAll(shelveChangesInSeparatedLists(changes, rollbackChanges));
+        result.addAll(shelveChangesSilentlyInSeparatedLists(changes, rollbackChanges, indicator));
       }
 
       @Override
@@ -861,12 +843,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         }
       }
     }.queue();
-  }
-
-  public void showGotItTooltip(@NotNull Project project, @Nullable Component component) {
-    if (component != null) {
-      ShelveTitleProvider.showGotItTooltip(project, component);
-    }
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
@@ -884,8 +860,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
            ((ChangesViewContentManager)ChangesViewContentManager.getInstance(myProject)).isContentSelected(SHELF);
   }
 
-  private @NotNull List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes,
-                                                                         boolean rollbackChanges) {
+  private @NotNull List<ShelvedChangeList> shelveChangesSilentlyInSeparatedLists(@NotNull Collection<? extends Change> changes,
+                                                                                 boolean rollbackChanges,
+                                                                                 @NotNull ProgressIndicator indicator) {
     List<String> failedChangeLists = new ArrayList<>();
     List<ShelvedChangeList> result = new ArrayList<>();
     List<Change> shelvedChanges = new ArrayList<>();
@@ -919,11 +896,15 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
         if (!changesForChangelist.isEmpty()) {
           try {
-            result.add(createShelfFromChanges(changesForChangelist, list.getName(), false, false));
+            String suggestedTitle = ShelveSilentlyTitleProvider.suggestTitle(myProject, changesForChangelist);
+            result.add(createShelfFromChanges(changesForChangelist,
+                                              suggestedTitle == null ? list.getName() : suggestedTitle,
+                                              false,
+                                              false));
             shelvedChanges.addAll(changesForChangelist);
           }
           catch (Exception e) {
-            ProgressManager.checkCanceled();
+            indicator.checkCanceled();
             LOG.warn(e);
             failedChangeLists.add(list.getName());
           }

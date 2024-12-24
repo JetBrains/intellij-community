@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyGotItTooltipProvider
 import org.jetbrains.annotations.ApiStatus
 
 internal class ShelveSilentlyAction : ShelveSilentlyActionBase(rollbackChanges = true)
@@ -37,8 +38,9 @@ abstract class ShelveSilentlyActionBase(val rollbackChanges: Boolean) : DumbAwar
     val shelveChangesManager = ShelveChangesManager.getInstance(project)
     shelveChangesManager.shelveSilentlyUnderProgress(changes.toList(), rollbackChanges)
 
-    if (Registry.`is`("llm.vcs.shelve.title.generation")) {
-      shelveChangesManager.showGotItTooltip(project, PlatformDataKeys.CONTEXT_COMPONENT.getData(e.dataContext))
+    val contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.dataContext)
+    if (contextComponent != null) {
+      ShelveSilentlyGotItTooltipProvider.showGotItTooltip(project, contextComponent)
     }
   }
 }
