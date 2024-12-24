@@ -3,6 +3,7 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -66,7 +67,8 @@ object EelPathUtils {
 
   /**
    * ```kotlin
-   * getUriLocalToEel(Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user\\dir")).toString() = "file://home/user/dir"
+   * getUriLocalToEel(Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user\\dir")).toString() = "file:/home/user/dir"
+   * getUriLocalToEel(Path.of("C:\\User\\dir\\")).toString() = "file:/C:/user/dir"
    * ```
    */
   @JvmStatic
@@ -78,7 +80,9 @@ object EelPathUtils {
       return@runBlockingMaybeCancellable path.toUri()
     }
     val root = eelPath.root.toString().replace('\\', '/')
-    URI.create("file:/$root${eelPath.parts.joinToString("/")}")
+    // see sun.nio.fs.WindowsUriSupport#toUri(java.lang.String, boolean, boolean)
+    val trailing = if (eel.platform is EelPlatform.Windows) "/" else ""
+    URI("file", null, trailing + root + eelPath.parts.joinToString("/"), null, null)
   }
 
   @RequiresBackgroundThread
