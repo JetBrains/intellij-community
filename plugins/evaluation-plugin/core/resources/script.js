@@ -226,6 +226,8 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
       }
     }
   }
+  else popup.appendChild(document.createElement("DIV"))
+
   addRelevanceModelBlock(popup, lookup, "trigger")
   addRelevanceModelBlock(popup, lookup, "filter")
   addAiaDiagnosticsBlock("Response", "aia_response", popup, lookup)
