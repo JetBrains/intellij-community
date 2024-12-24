@@ -84,7 +84,11 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicat
     { ProgressSuspender.markSuspendable(indicator, suspendableInfo.suspendText) }, indicator)
 
   val suspenderStateChange = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  ProgressSuspenderTracker.getInstance().startTracking(suspender, { suspenderStateChange.tryEmit(Unit) })
+  ProgressSuspenderTracker.getInstance().startTracking(suspender, object : ProgressSuspenderTracker.SuspenderListener {
+    override fun onStateChanged(progressSuspender: ProgressSuspender) {
+      suspenderStateChange.tryEmit(Unit)
+    }
+  })
 
   try {
     launch {

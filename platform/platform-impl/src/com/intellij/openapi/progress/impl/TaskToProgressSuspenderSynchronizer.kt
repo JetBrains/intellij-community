@@ -48,13 +48,13 @@ internal class TaskToProgressSuspenderSynchronizer(
     ProgressSuspenderTracker.getInstance().stopTracking(progressSuspender)
   }
 
-  override fun onStateChanged() {
+  override fun onStateChanged(suspender: ProgressSuspender) {
     synchronized(stateChangedLock) {
       // Don't update taskSuspender if state change was initiated by taskSuspender itself
       if (isStateChangeInProgress.get()) return@synchronized
 
-      if (progressSuspender.isSuspended) {
-        taskSuspender.pause(progressSuspender.suspendedText)
+      if (suspender.isSuspended) {
+        taskSuspender.pause(suspender.suspendedText)
       }
       else {
         taskSuspender.resume()

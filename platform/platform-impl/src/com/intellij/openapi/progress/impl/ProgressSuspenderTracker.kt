@@ -3,11 +3,13 @@ package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.application
 
 @Service
 internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
   private val suspenderTrackers = mutableMapOf<ProgressSuspender, SuspenderListener>()
+  private val indicatorTrackers = mutableMapOf<ProgressIndicator, IndicatorListener>()
 
   init {
     application.messageBus.connect().subscribe(ProgressSuspender.TOPIC, this)
@@ -21,15 +23,41 @@ internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
     suspenderTrackers.remove(progressSuspender)
   }
 
+  fun startTracking(indicator: ProgressIndicator, listener: IndicatorListener) {
+    indicatorTrackers[indicator] = listener
+  }
+
+  fun stopTracking(indicator: ProgressIndicator) {
+    indicatorTrackers.remove(indicator)
+  }
+
   override fun suspendedStatusChanged(suspender: ProgressSuspender) {
-    suspenderTrackers[suspender]?.onStateChanged()
+    suspenderTrackers[suspender]?.onStateChanged(suspender)
+  }
+
+  override fun suspendableProgressAppeared(suspender: ProgressSuspender, progressIndicator: ProgressIndicator) {
+    val listener = indicatorTrackers[progressIndicator] ?: return
+    listener.suspenderAdded(suspender)
+    startTracking(suspender, listener)
+  }
+
+  override fun suspendableProgressRemoved(suspender: ProgressSuspender, progressIndicator: ProgressIndicator) {
+    val listener = indicatorTrackers[progressIndicator] ?: return
+    stopTracking(suspender)
+    listener.suspenderRemoved()
   }
 
   companion object {
     fun getInstance(): ProgressSuspenderTracker = service()
   }
 
-  fun interface SuspenderListener {
-    fun onStateChanged()
+  interface SuspenderListener {
+    fun onStateChanged(suspender: ProgressSuspender)
+  }
+
+  interface IndicatorListener : SuspenderListener {
+    fun suspenderAdded(suspender: ProgressSuspender)
+
+    fun suspenderRemoved()
   }
 }
