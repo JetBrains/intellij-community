@@ -54,6 +54,19 @@ object EelPathUtils {
   }
 
   @JvmStatic
+  fun createTemporaryDirectory(project: Project?, prefix: String = ""): Path {
+    if (project == null || isProjectLocal(project)) {
+      return Files.createTempDirectory(prefix)
+    }
+    val projectFilePath = project.projectFilePath ?: return Files.createTempDirectory(prefix)
+    return runBlockingMaybeCancellable {
+      val eel = Path.of(projectFilePath).getEelApi()
+      val file = eel.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().prefix(prefix).build()).getOrThrowFileSystemException()
+      eel.mapper.toNioPath(file)
+    }
+  }
+
+  @JvmStatic
   fun renderAsEelPath(path: Path): String {
     if (isPathLocal(path)) {
       return path.toString()
