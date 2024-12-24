@@ -35,9 +35,9 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.ui" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="org.jetbrains.compose.ui.ui.test.junit4" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.ui:ui-test-junit4:1.7.1">
