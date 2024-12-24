@@ -118,7 +118,7 @@ def __define_format_function(format):
     if format is None or format == 'null':
         return None
 
-    if format.startswith("%"):
+    if type(format) == str and format.startswith("%"):
         return lambda x: format % x
 
     return None
