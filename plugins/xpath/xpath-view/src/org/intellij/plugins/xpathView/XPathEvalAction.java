@@ -16,6 +16,7 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.find.FindSettings;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
@@ -120,7 +121,7 @@ public class XPathEvalAction extends XPathAction {
   @Override
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
-    event.getPresentation().setIcon(XpathIcons.Xml);
+    event.getPresentation().setIcon(AllIcons.FileTypes.Xml);
   }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -220,7 +221,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
 
       @Override
       public Icon getIcon(int i) {
-        return XpathIcons.Function;
+        return AllIcons.Nodes.Function;
       }
 
       @Override

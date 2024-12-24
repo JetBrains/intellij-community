@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -57,7 +58,7 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
 
   @Override
   public Icon getIcon(boolean open) {
-    return XpathIcons.Function;
+    return AllIcons.Nodes.Function;
   }
 
   @Override
