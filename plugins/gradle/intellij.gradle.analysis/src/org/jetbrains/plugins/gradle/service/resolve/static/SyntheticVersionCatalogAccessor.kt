@@ -18,8 +18,13 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 /**
  * Serves as a client for PSI infrastructure and as a layer over TOML version catalog files at the same time
  */
-class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope, model: GradleVersionCatalogsModel, className: String) :
-  LightClass(JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, scope)!!) {
+class SyntheticVersionCatalogAccessor(
+  project: Project,
+  scope: GlobalSearchScope,
+  model: GradleVersionCatalogsModel,
+  className: String,
+  delegate: PsiClass,
+) : LightClass(delegate) {
 
   private val libraries: Array<PsiMethod> =
     SyntheticAccessorBuilder(project, scope, className, Kind.LIBRARY)
@@ -48,6 +53,17 @@ class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope
   override fun getName(): String = className
 
   companion object {
+
+    fun create(
+      project: Project,
+      scope: GlobalSearchScope,
+      model: GradleVersionCatalogsModel,
+      className: String,
+    ): SyntheticVersionCatalogAccessor? {
+      val delegate = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, scope) ?: return null
+      return SyntheticVersionCatalogAccessor(project, scope, model, className, delegate)
+    }
+
     private enum class Kind(val prefix: String) {
       LIBRARY("Library"), PLUGIN("Plugin"), BUNDLE("Bundle"), VERSION("Version")
     }
