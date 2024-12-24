@@ -67,8 +67,9 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
 
   protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
     if (isDisposed()) {
-      return null;
+      return null;//TODO RC: better throw CancellationException?
     }
+
     if (mySingleEntryIndex) {
       // there is no forward index for SingleEntryFileBasedIndexExtension, so get an entry from inverted index
       // (it _must_ be <=1 entry there, with Key=(Integer)fileId)
@@ -87,11 +88,20 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       });
       return result.get();
     }
-    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
-      ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
+
+    ForwardIndexAccessor<Key, Value> indexAccessor = getForwardIndexAccessor();
+    if (indexAccessor instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
+      ForwardIndex forwardIndex = getForwardIndex();
+      assert forwardIndex != null : "forwardIndex must NOT be null if forwardIndexAccessor(" + forwardIndexAccessor + ") != null";
+      ByteArraySequence serializedInputData = forwardIndex.get(fileId);
       return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
     }
-    getLogger().error("Can't fetch indexed data for index " + indexId().getName());
+
+    //We expect only 2 valid index configurations:
+    // 1. Both forwardIndex and forwardIndexAccessors are NOT null: regular index configuration
+    // 2. Both forwardIndex and forwardIndexAccessors ARE null: single-entry index (=inverted index is used instead of forward)
+    // Both are processed above -> all other combinations are invalid:
+    getLogger().error("Can't fetch indexed data for index=" + indexId() + ", (accessor: " + indexAccessor + ")");
     return null;
   }
 
