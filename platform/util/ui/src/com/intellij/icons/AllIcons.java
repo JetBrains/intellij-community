@@ -742,7 +742,7 @@ public class AllIcons {
 
     /** 16x16 */ public static final @NotNull Icon OutgoingChangesOn = load("ide/outgoingChangesOn.svg", 1711755766, 2);
     /** 16x16 */ public static final @NotNull Icon Pipette = load("expui/image/colorPicker.svg", "ide/pipette.svg", 721447979, 2);
-    /** 16x16 */ public static final @NotNull Icon Pipette_rollover = load("ide/pipette_rollover.svg", 2117061737, 2);
+    /** 16x16 */ public static final @NotNull Icon Pipette_rollover = load("expui/image/colorPickerRollover.svg", "ide/pipette_rollover.svg", 2117061737, 2);
     /** 16x16 */ public static final @NotNull Icon PowerSaveMode = load("expui/general/inspections/inspectionsPowerSaveMode.svg", "ide/powerSaveMode.svg", 2079928345, 2);
     /** 11x11 */ public static final @NotNull Icon Rating = load("ide/rating.svg", -1336366891, 2);
     /** 11x11 */ public static final @NotNull Icon Rating1 = load("ide/rating1.svg", 482124723, 2);
@@ -892,7 +892,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestResourcesRoot = load("expui/nodes/testResourcesRoot.svg", "modules/testResourcesRoot.svg", 779023858, 0);
     /** 16x16 */ public static final @NotNull Icon TestRoot = load("expui/nodes/testRoot.svg", "modules/testRoot.svg", -1260358372, 0);
     /** 16x16 */ public static final @NotNull Icon UnloadedModule = load("expui/nodes/unloadedModule.svg", "modules/unloadedModule.svg", 1516131730, 0);
-    /** 16x16 */ public static final @NotNull Icon UnmarkWebroot = load("modules/unmarkWebroot.svg", -501724615, 0);
+    /** 16x16 */ public static final @NotNull Icon UnmarkWebroot = load("expui/nodes/unmarkWebRoot.svg", "modules/unmarkWebroot.svg", -501724615, 0);
   }
 
   public static final class Nodes {
@@ -1506,7 +1506,7 @@ public class AllIcons {
 
     /** 16x16 */ public static final @NotNull Icon Css_class = load("expui/xml/cssClass.svg", "xml/css_class.svg", -1719682561, 0);
     /** 16x16 */ public static final @NotNull Icon Html5 = load("xml/html5.svg", -770233754, 0);
-    /** 16x16 */ public static final @NotNull Icon Html_id = load("xml/html_id.svg", 86602159, 0);
+    /** 16x16 */ public static final @NotNull Icon Html_id = load("expui/xml/id.svg", "xml/html_id.svg", 86602159, 0);
   }
 
   /** @deprecated use ProductIcons.getInstance().getProductIcon() instead */

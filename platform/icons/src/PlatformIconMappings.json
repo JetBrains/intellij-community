@@ -530,6 +530,7 @@
         "graph/actualZoom.svg"
       ],
       "colorPicker.svg": "ide/pipette.svg",
+      "colorPickerRollover.svg": "ide/pipette_rollover.svg",
       "grid.svg": "graph/grid.svg",
       "zoomIn.svg": "graph/zoomIn.svg",
       "zoomOut.svg": "graph/zoomOut.svg",
@@ -748,7 +749,8 @@
       "staticMark.svg": "nodes/staticMark.svg",
       "symlink.svg": "nodes/symlink.svg",
       "tabAlert.svg": "nodes/tabAlert.svg",
-      "upLevel.svg": "nodes/upLevel.svg"
+      "upLevel.svg": "nodes/upLevel.svg",
+      "unmarkWebRoot.svg": "modules/unmarkWebroot.svg"
     },
     "objectBrowser": {
       "abbreviatePackageNames.svg": "objectBrowser/abbreviatePackageNames.svg",
@@ -976,7 +978,8 @@
       "lock.svg": "ultimate/lock.svg"
     },
     "xml": {
-      "cssClass.svg": "xml/css_class.svg"
+      "cssClass.svg": "xml/css_class.svg",
+      "id.svg": "xml/html_id.svg"
     }
   }
 }
