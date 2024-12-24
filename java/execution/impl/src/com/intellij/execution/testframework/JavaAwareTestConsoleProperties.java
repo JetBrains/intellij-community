@@ -42,7 +42,7 @@ import java.util.Iterator;
 public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters>
   extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider {
 
-  public static final BooleanProperty USE_OVERALL_TIME = new BooleanProperty("useOverallTime", false);
+  public static final BooleanProperty USE_WALL_TIME = new BooleanProperty("useWallTime", false);
   public static final BooleanProperty SHOW_LIVE_TIME = new BooleanProperty("liveTime", true);
 
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
@@ -147,7 +147,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     if (Registry.is("java.test.enable.tree.live.time")) {
       actionGroup.addSeparator();
       DumbAwareToggleBooleanProperty property =
-        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.overall.time"), null, null, target, USE_OVERALL_TIME);
+        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.wall.time"), null, null, target, USE_WALL_TIME);
       actionGroup.add(property);
       DumbAwareToggleBooleanProperty liveProperty =
         new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.live.time"), null, null, target, SHOW_LIVE_TIME);

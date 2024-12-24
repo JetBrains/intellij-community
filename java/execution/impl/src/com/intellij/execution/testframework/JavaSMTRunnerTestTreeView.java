@@ -44,7 +44,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
             !testProxy.isSubjectToHide(consoleProperties) &&
             JavaAwareTestConsoleProperties.SHOW_LIVE_TIME.value(consoleProperties)) {
           Long startedAt;
-          if (testProxy.isSuite() && !JavaAwareTestConsoleProperties.USE_OVERALL_TIME.value(consoleProperties)) {
+          if (testProxy.isSuite() && !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(consoleProperties)) {
             startedAt = getFirstChildStartedAt(testProxy);
           }
           else {
@@ -63,7 +63,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
         if (testProxy.isSuite() &&
             testProxy.isFinal() &&
             !testProxy.isSubjectToHide(consoleProperties) &&
-            JavaAwareTestConsoleProperties.USE_OVERALL_TIME.value(consoleProperties)) {
+            JavaAwareTestConsoleProperties.USE_WALL_TIME.value(consoleProperties)) {
           Long startTime = testProxy.getStartTime();
           Long endTime = testProxy.getEndTime();
           if (startTime != null && endTime != null && startTime < endTime) {
@@ -140,7 +140,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
   @Override
   public Long getCustomizedDuration(@NotNull SMTestProxy proxy) {
     if (!proxy.isSuite() || !proxy.isFinal() || proxy.getDurationStrategy() != TestDurationStrategy.AUTOMATIC ||
-        !JavaAwareTestConsoleProperties.USE_OVERALL_TIME.value(myTestConsoleProperties)) {
+        !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(myTestConsoleProperties)) {
       return proxy.getDuration();
     }
     Long startTime = proxy.getStartTime();
