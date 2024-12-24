@@ -511,6 +511,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
             stringRoot = stringRoot.substring(0, stringRoot.length() - 1);
           }
 
+          if (PathUtilRt.isWindowsUNCRoot(stringRoot, normalizedPath.indexOf('/', 2))) {
+            stringRoot = stringRoot.replace('\\', '/');
+          }
+
           return stringRoot;
         }
       }
