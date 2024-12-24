@@ -43,8 +43,10 @@ import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
+import fleet.kernel.change
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
+import fleet.kernel.shared
 import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -132,6 +134,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   private fun TaskSuspender?.getSuspendableInfo(): TaskSuspension {
     return when (this) {
       is TaskSuspenderImpl -> TaskSuspension.Suspendable(defaultSuspendedReason)
+      is BridgeTaskSuspender -> isSuspendable.value
       else -> TaskSuspension.NonSuspendable
     }
   }
@@ -145,8 +148,26 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     launch {
       withKernel {
         tryWithEntities(taskInfo) {
+          subscribeToTaskSuspensionChanges(taskInfo, taskSuspender)
           subscribeToTaskStatus(taskInfo, taskContext, taskSuspender)
           subscribeToTaskUpdates(taskInfo, pipe)
+        }
+      }
+    }
+  }
+
+  private fun CoroutineScope.subscribeToTaskSuspensionChanges(
+    taskInfo: TaskInfoEntity,
+    taskSuspender: TaskSuspender?,
+  ) {
+    if (taskSuspender !is BridgeTaskSuspender) return
+
+    launch {
+      taskSuspender.isSuspendable.collectLatest { suspension ->
+        change {
+          shared {
+            taskInfo[TaskInfoEntity.TaskSuspendableType] = suspension
+          }
         }
       }
     }

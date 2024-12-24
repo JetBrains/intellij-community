@@ -17,6 +17,7 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
+import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.filter
 import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.CoroutineScope
@@ -70,9 +71,15 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
           task.updates.asValuesFlow()
         )
 
-        markSuspendable(task, indicator)
+        collectSuspendableChanges(task, indicator)
       }
     }
+  }
+}
+
+private suspend fun collectSuspendableChanges(task: TaskInfoEntity, indicator: ProgressIndicator) {
+  task.suspendableState.collectLatest {
+    markSuspendable(task, indicator)
   }
 }
 
