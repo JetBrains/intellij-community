@@ -12,14 +12,21 @@ import java.io.IOException
 
 @ApiStatus.Internal
 class EelLocalExecApi : EelExecApi {
+  private companion object {
+    /**
+     * JVM on all OSes report IO error as `error=(code), (text)`. See `ProcessImpl_md.c` for Unix and Windows.
+     */
+    val errorPattern = Regex(".*error=(-?[0-9]{1,9}),.*")
+  }
+
   override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
     val args = builder.args.toTypedArray()
     val pty = builder.ptyOrStdErrSettings
 
     val process: LocalEelProcess =
       try {
-        // Inherit env vars, because lack of `PATH` might break things
-        var environment = System.getenv().toMutableMap()
+        // Inherit env vars because lack of `PATH` might break things
+        val environment = System.getenv().toMutableMap()
         environment.putAll(builder.env)
         when (val p = pty) {
           is EelExecApi.Pty -> {
@@ -47,7 +54,20 @@ class EelLocalExecApi : EelExecApi {
         }
       }
       catch (e: IOException) {
-        return EelProcessResultImpl.createErrorResult(-1, e.toString())
+        val errorCode = errorPattern.find(e.message ?: e.toString())?.let { result ->
+          if (result.groupValues.size == 2) {
+            try {
+              result.groupValues[1].toInt()
+            }
+            catch (_: NumberFormatException) {
+              null
+            }
+          }
+          else {
+            null
+          }
+        } ?: -3003 // Just a random code which isn't used by any OS and not zero
+        return EelProcessResultImpl.createErrorResult(errorCode, e.toString())
       }
     return EelProcessResultImpl.createOkResult(process)
   }

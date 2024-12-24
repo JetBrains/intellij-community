@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.executeProcess
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -24,6 +25,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.nio.ByteBuffer
 import kotlin.test.assertEquals
@@ -56,6 +58,16 @@ class EelLocalExecApiTest {
     NO_PTY, PTY_SIZE_FROM_START, PTY_RESIZE_LATER
   }
 
+  @Test
+  fun testExitCode(): Unit = timeoutRunBlocking {
+    when (val r = localEel.exec.executeProcess("something that doesn't exist for sure")) {
+      is EelResult.Error ->
+        // **nix: ENOENT 2 No such file or directory
+        // win: ERROR_FILE_NOT_FOUND 2 winerror.h
+        Assertions.assertEquals(2, r.error.errno, "Wrong error code")
+      is EelResult.Ok -> Assertions.fail("Process shouldn't be created ${r.value}")
+    }
+  }
 
   /**
    * Test runs [EelHelper] checking stdin/stdout iteration, exit code, tty and signal/termination handling.
@@ -68,10 +80,10 @@ class EelLocalExecApiTest {
 
     val builder = executor.createBuilderToExecuteMain()
     builder.ptyOrStdErrSettings(when (ptyManagement) {
-                  PTYManagement.NO_PTY -> null
-                  PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
-                  PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
-                })
+                                  PTYManagement.NO_PTY -> null
+                                  PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
+                                  PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
+                                })
     when (val r = localEel.exec.execute(builder.build())) {
       is EelResult.Error -> Assertions.fail(r.error.message)
       is EelResult.Ok -> {
