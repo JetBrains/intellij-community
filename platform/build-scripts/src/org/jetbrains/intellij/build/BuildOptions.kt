@@ -32,9 +32,9 @@ data class BuildOptions(
    * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
    * In the development mode, build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
    *
-   * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity).
+   * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity or GitHub Actions).
    */
-  var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null),
+  var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
   var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
   val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
