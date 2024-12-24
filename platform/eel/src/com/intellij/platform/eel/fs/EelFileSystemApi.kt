@@ -641,6 +641,23 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     /**
      * The created link will be pointing to a location relative to the path of the **link**.
      * Such symbolic links may be safe to copy even between different machines.
+     *
+     * Example:
+     *
+     * Before:
+     * ```sh
+     * /tmp/d$ ls -l
+     * drwxr-xr-x 2 knisht knisht 4096 Dec 24 18:45 d1
+     * ```
+     * After `createSymbolicLink(Relative("./d1/.."), EelPath.parse("/tmp/d/link"))`:
+     * ```sh
+     * /tmp/d$ ls -l
+     * drwxr-xr-x 2 knisht knisht 4096 Dec 24 18:45 d1
+     * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link -> ./d1/..
+     * /tmp/d$ ls -l link2
+     * drwxr-xr-x 2 knisht knisht 4096 Dec 24 18:45 d1
+     * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link -> ./d1/..
+     * ```
      */
     interface Relative : SymbolicLinkTarget {
       val reference: List<String>
