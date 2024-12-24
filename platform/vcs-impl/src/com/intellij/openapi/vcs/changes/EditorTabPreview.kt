@@ -30,7 +30,7 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.Processor
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

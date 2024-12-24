@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
-import com.intellij.vcs.impl.shared.rhizome.RepositoryCountEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.RepositoryCountEntity
 import fleet.kernel.change
 import fleet.kernel.shared
 import kotlinx.coroutines.CoroutineScope

@@ -19,7 +19,7 @@ import com.intellij.platform.lvcs.impl.ActivitySelection
 import com.intellij.platform.lvcs.impl.filePath
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
-import com.intellij.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 import org.jetbrains.annotations.Nls
 
 internal class SingleFileActivityDiffPreview(project: Project, private val model: ActivityViewModel, disposable: Disposable) : EditorTabDiffPreview(project) {
