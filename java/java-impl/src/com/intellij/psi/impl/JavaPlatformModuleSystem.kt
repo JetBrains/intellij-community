@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.JavaModuleSystem.*
@@ -39,6 +40,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -543,7 +545,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     // when null is returned, it was a timeout
     private fun computeModules(sdk: Sdk): List<String>? {
-      val vmPath = JavaSdk.getInstance().getVMExecutablePath(sdk)
+      val vmPath = EelPathUtils.renderAsEelPath(Path.of(JavaSdk.getInstance().getVMExecutablePath(sdk)))
       val generalCommandLine = GeneralCommandLine(vmPath).apply {
         addParameters("--list-modules")
       }
