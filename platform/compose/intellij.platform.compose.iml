@@ -37,6 +37,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
   </component>
 </module>
