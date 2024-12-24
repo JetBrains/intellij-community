@@ -14843,9 +14843,9 @@ c:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 - apply():V
 - apply(com.intellij.openapi.ui.MasterDetailsComponent):V
 - apply(com.intellij.openapi.ui.MasterDetailsComponent,Z):V
-- createAddActions(com.intellij.openapi.actionSystem.DefaultActionGroup,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer,java.util.function.Predicate):V
-- createAddActions(com.intellij.openapi.actionSystem.DefaultActionGroup,javax.swing.JComponent,java.util.function.Consumer,java.util.function.Predicate):V
-- createAddActions(java.util.function.Predicate):java.util.Map
+- createAddActions(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DefaultActionGroup,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer,java.util.function.Predicate):V
+- createAddActions(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DefaultActionGroup,javax.swing.JComponent,java.util.function.Consumer,java.util.function.Predicate):V
+- createAddActions(com.intellij.openapi.project.Project,java.util.function.Predicate):java.util.Map
 - createDownloadActions(java.util.function.Predicate):java.util.Map
 - createIncompleteSdk(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask,java.util.function.Consumer):com.intellij.openapi.projectRoots.Sdk
 - createSdk(com.intellij.openapi.projectRoots.SdkType,java.lang.String):com.intellij.openapi.projectRoots.Sdk

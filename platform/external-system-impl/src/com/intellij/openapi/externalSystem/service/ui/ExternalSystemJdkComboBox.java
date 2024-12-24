@@ -132,7 +132,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
         refreshData(jdkName, wizardContext != null ? wizardContext.getProjectJdk() : null);
       };
       jdksModel.reset(getProject());
-      jdksModel.createAddActions(group, this, selectedJdk, updateTree, creationFilter);
+      jdksModel.createAddActions(myProject, group, this, selectedJdk, updateTree, creationFilter);
 
       if (group.getChildrenCount() == 0) {
         SimpleJavaSdkType javaSdkType = SimpleJavaSdkType.getInstance();

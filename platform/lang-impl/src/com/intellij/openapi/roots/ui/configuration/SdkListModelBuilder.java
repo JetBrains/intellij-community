@@ -329,7 +329,7 @@ public final class SdkListModelBuilder {
 
   public void reloadActions() {
     Map<SdkType, NewSdkAction> downloadActions = mySdkModel.createDownloadActions(mySdkTypeCreationFilter);
-    Map<SdkType, NewSdkAction> addActions = mySdkModel.createAddActions(mySdkTypeCreationFilter);
+    Map<SdkType, NewSdkAction> addActions = mySdkModel.createAddActions(myProject, mySdkTypeCreationFilter);
 
     myDownloadActions = createActions(ActionRole.DOWNLOAD, downloadActions);
     myAddActions = createActions(ActionRole.ADD, addActions);

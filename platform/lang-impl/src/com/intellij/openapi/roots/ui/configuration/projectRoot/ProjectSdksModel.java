@@ -315,11 +315,12 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  public void createAddActions(@NotNull DefaultActionGroup group,
+  public void createAddActions(@Nullable Project project,
+                               @NotNull DefaultActionGroup group,
                                @NotNull JComponent parent,
                                @NotNull java.util.function.Consumer<? super Sdk> updateTree,
                                @Nullable Predicate<? super SdkTypeId> filter) {
-    createAddActions(group, parent, null, updateTree, filter);
+    createAddActions(project, group, parent, null, updateTree, filter);
   }
 
   private static @NotNull List<SdkType> getAddableSdkTypes(@Nullable Predicate<? super SdkTypeId> filter) {
@@ -332,14 +333,15 @@ public class ProjectSdksModel implements SdkModel {
     return result;
   }
 
-  public void createAddActions(@NotNull DefaultActionGroup group,
+  public void createAddActions(@Nullable Project project,
+                               @NotNull DefaultActionGroup group,
                                @NotNull JComponent parent,
                                @Nullable Sdk selectedSdk,
                                @NotNull java.util.function.Consumer<? super Sdk> updateTree,
                                @Nullable Predicate<? super SdkTypeId> filter) {
 
     Map<SdkType, NewSdkAction> downloadActions = createDownloadActions(filter);
-    Map<SdkType, NewSdkAction> defaultAddActions = createAddActions(filter);
+    Map<SdkType, NewSdkAction> defaultAddActions = createAddActions(project, filter);
 
     for (SdkType type : getAddableSdkTypes(filter)) {
       NewSdkAction downloadAction = downloadActions.get(type);
@@ -441,7 +443,7 @@ public class ProjectSdksModel implements SdkModel {
     return false;
   }
 
-  public @NotNull Map<SdkType, NewSdkAction> createAddActions(@Nullable Predicate<? super SdkTypeId> filter) {
+  public @NotNull Map<SdkType, NewSdkAction> createAddActions(@Nullable Project project, @Nullable Predicate<? super SdkTypeId> filter) {
     Map<SdkType, NewSdkAction> result = new LinkedHashMap<>();
     for (final SdkType type : getAddableSdkTypes(filter)) {
       String sdkPresentableName = type.getPresentableName(), text, title, subText;
@@ -466,7 +468,9 @@ public class ProjectSdksModel implements SdkModel {
             type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
           }
           else {
-            SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
+            Path pathToEnvironment = (project == null || project.getProjectFilePath() == null) ?
+                                     Path.of(System.getProperty("user.home")) : Path.of(project.getProjectFilePath());
+            SdkConfigurationUtil.selectSdkHome(type, null, pathToEnvironment, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
           }
         }
       };
