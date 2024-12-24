@@ -547,6 +547,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/libraries/cglib/intellij.libraries.cglib.iml" filepath="$PROJECT_DIR$/platform/libraries/cglib/intellij.libraries.cglib.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/compose-desktop/intellij.libraries.compose.desktop.iml" filepath="$PROJECT_DIR$/libraries/compose-desktop/intellij.libraries.compose.desktop.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/compose-foundation-desktop/intellij.libraries.compose.foundation.desktop.iml" filepath="$PROJECT_DIR$/libraries/compose-foundation-desktop/intellij.libraries.compose.foundation.desktop.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/grpc/intellij.libraries.grpc.iml" filepath="$PROJECT_DIR$/libraries/grpc/intellij.libraries.grpc.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/grpc-netty-shaded/intellij.libraries.grpc.netty.shaded.iml" filepath="$PROJECT_DIR$/libraries/grpc-netty-shaded/intellij.libraries.grpc.netty.shaded.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/junit4/intellij.libraries.junit4.iml" filepath="$PROJECT_DIR$/libraries/junit4/intellij.libraries.junit4.iml" />

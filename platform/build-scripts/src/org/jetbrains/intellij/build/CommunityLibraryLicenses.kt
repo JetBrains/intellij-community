@@ -247,7 +247,7 @@ object CommunityLibraryLicenses {
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
-    LibraryLicense("Compose Multiplatform", libraryName = "org.jetbrains.compose.foundation.foundation.desktop", url = "https://github.com/JetBrains/compose-multiplatform")
+    LibraryLicense("Compose Multiplatform", libraryName = "compose-foundation-desktop", url = "https://github.com/JetBrains/compose-multiplatform")
       .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
       .additionalLibraryNames(
         "org.jetbrains.compose.components.components.resources.desktop",

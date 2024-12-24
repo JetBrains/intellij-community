@@ -350,6 +350,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
   </component>

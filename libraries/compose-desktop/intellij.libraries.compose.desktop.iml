@@ -165,6 +165,5 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.skiko" exported="" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>
