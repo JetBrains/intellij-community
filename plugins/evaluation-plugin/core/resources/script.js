@@ -545,7 +545,7 @@ function invertRows(event, key) {
 
 function updateMultilinePopup(event) {
   if (event.altKey) {
-    showMultilinePrefixAndSuffix(event)
+    showMultilineIsolatedSession(event)
     return
   }
   const target = event.target
@@ -569,8 +569,7 @@ function updateMultilinePopup(event) {
   popup.setAttribute("class", "autocomplete-items")
 
   addMultilineHeaders(popup, showSuggestion)
-  let context = getMultilineContext(sessionDiv)
-  let indent = "prefix" in context ? context.prefix.match(/ *$/)[0].length : 0
+  let indent = 0
   let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"].replace(new RegExp(`^ {${indent}}`, 'gm'), '')
   if (showSuggestion) {
     addMultilineSuggestion(sessionDiv, popup, lookup)
@@ -612,11 +611,9 @@ function addMultilineSuggestion(sessionDiv, popup, lookup) {
 }
 
 function addMultilineAttachments(sessionDiv, popup, expectedText) {
-  const context = getMultilineContext(sessionDiv)
   let attachmentsDiv = document.createElement("DIV")
   attachmentsDiv.setAttribute("class", "attachments")
   let p = document.createElement("pre")
-  p.innerHTML = context.attachments
   attachmentsDiv.appendChild(p)
   popup.appendChild(attachmentsDiv)
 
@@ -625,23 +622,9 @@ function addMultilineAttachments(sessionDiv, popup, expectedText) {
   const pExp = document.createElement("pre")
   pExp.innerHTML = expectedText
 
-  let contextTokens = (context.attachments + "\n" + context.prefix + "\n" + context.suffix).split((/\W+/))
   let expectedTokens = expectedText.split((/\W+/))
-  expectedTokens.forEach((token) => {
-    if (contextTokens.indexOf(token) === -1) {
-      pExp.innerHTML = pExp.innerHTML.replace(new RegExp('\\b' + token + '\\b'), '<span class="missing-context">$&</span>')
-    }
-  })
   expected.appendChild(pExp)
   popup.appendChild(expected)
-}
-
-function getMultilineContext(sessionDiv) {
-  const parts = sessionDiv.id.split(" ")
-  const sessionId = parts[0]
-  const lookupOrder = parts[1]
-  const featuresJson = JSON.parse(pako.ungzip(atob(features[sessionId]), {to: 'string'}))
-  return featuresJson[lookupOrder]["common"].context
 }
 
 function addMultilineExpectedText(popup, expectedText) {
@@ -653,16 +636,13 @@ function addMultilineExpectedText(popup, expectedText) {
   popup.appendChild(expected)
 }
 
-function showMultilinePrefixAndSuffix(event) {
+function showMultilineIsolatedSession(event) {
   if (event.target.classList.contains("session")) {
     const sessionDiv = event.target
     sessionDiv.parentNode.style.display = "none"
     const newCode = document.createElement("pre")
     newCode.setAttribute("class", "code context multiline")
     newCode.style.backgroundColor = "bisque"
-    let context = getMultilineContext(sessionDiv)
-    let prefix = context.prefix
-    let suffix = context.suffix
 
     let prev = sessionDiv.previousSibling
     let offset = ""
@@ -670,9 +650,9 @@ function showMultilinePrefixAndSuffix(event) {
       offset = prev.textContent + offset
       prev = prev.previousSibling
     }
-    let begin = "\n".repeat(offset.split('\n').length - prefix.split('\n').length)
+    let begin = "\n".repeat(offset.split('\n').length)
     let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"]
-    newCode.innerHTML = begin + prefix + "<span style='background-color: white'>" + expectedText +"</span>" + suffix
+    newCode.innerHTML = begin + "<span style='background-color: white'>" + expectedText +"</span>"
     sessionDiv.parentNode.parentNode.prepend(newCode)
   }
   else if (event.target.closest(".code.context") != null) {
