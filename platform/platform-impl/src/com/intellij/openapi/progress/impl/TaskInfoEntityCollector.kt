@@ -4,16 +4,15 @@ package com.intellij.openapi.progress.impl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.platform.ide.progress.TaskInfoEntity
-import com.intellij.platform.ide.progress.TaskManager
-import com.intellij.platform.ide.progress.TaskStatus
-import com.intellij.platform.ide.progress.activeTasks
-import com.intellij.platform.ide.progress.updates
+import com.intellij.platform.ide.progress.*
+import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
 import fleet.kernel.rete.asValuesFlow
@@ -21,6 +20,10 @@ import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
 import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 private val LOG = logger<TaskInfoEntityCollector>()
@@ -58,15 +61,59 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
   cs.launch {
     withKernel {
       tryWithEntities(task) {
-        LOG.trace { "Showing indicator for task: entityId=${task.eid}, title=${task.title}, project=$project"}
+        LOG.trace { "Showing indicator for task: entityId=${task.eid}, title=${task.title}, project=$project" }
+        val indicator = taskCancellingIndicator(this, task)
         showIndicator(
           project,
-          taskCancellingIndicator(this, task),
+          indicator,
           taskInfo(task.title, task.cancellation),
           task.updates.asValuesFlow()
         )
+
+        markSuspendable(task, indicator)
       }
     }
+  }
+}
+
+private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicator: ProgressIndicator) {
+  val suspendableInfo = task.suspendable
+  if (suspendableInfo !is TaskSuspension.Suspendable) return
+
+  val suspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
+    { ProgressSuspender.markSuspendable(indicator, suspendableInfo.suspendText) }, indicator)
+
+  val suspenderStateChange = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  ProgressSuspenderTracker.getInstance().startTracking(suspender, { suspenderStateChange.tryEmit(Unit) })
+
+  try {
+    launch {
+      suspenderStateChange.collectLatest {
+        if (suspender.isSuspended) {
+          TaskManager.pauseTask(task, suspender.suspendedText, TaskStatus.Source.USER)
+        }
+        else {
+          TaskManager.resumeTask(task, TaskStatus.Source.USER)
+        }
+      }
+    }
+
+    launch {
+      task.statuses
+        .filter { it.source == TaskStatus.Source.SYSTEM }
+        .collect { status ->
+          when (status) {
+            is TaskStatus.Paused -> suspender.suspendProcess(status.reason)
+            is TaskStatus.Running -> suspender.resumeProcess()
+            is TaskStatus.Canceled -> { /* do nothing */ }
+          }
+        }
+    }
+
+    awaitCancellation()
+  }
+  finally {
+    ProgressSuspenderTracker.getInstance().stopTracking(suspender)
   }
 }
 

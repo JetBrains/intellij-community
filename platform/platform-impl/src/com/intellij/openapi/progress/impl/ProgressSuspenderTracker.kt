@@ -29,7 +29,7 @@ internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
     fun getInstance(): ProgressSuspenderTracker = service()
   }
 
-  interface SuspenderListener {
+  fun interface SuspenderListener {
     fun onStateChanged()
   }
 }
