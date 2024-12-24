@@ -1,0 +1,31 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.testFramework.junit5.eel.showcase
+
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
+import com.intellij.platform.testFramework.junit5.eel.fixture.projectFixture
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import java.nio.file.Path
+
+@TestApplication
+@Disabled("Depends on IJPL-160621")
+class EelProjectShowcase {
+  val eel = eelFixture(EelPath.OS.UNIX)
+  val project = eel.projectFixture()
+
+  @Test
+  fun `project is located on eel`() {
+    val project = project.get()
+    val eel = eel.get().eelApi
+
+    val pathToProjectFile = Path.of(project.projectFilePath!!)
+
+    Assertions.assertNotNull(eel.mapper.getOriginalPath(pathToProjectFile))
+    Assertions.assertFalse(EelPathUtils.isPathLocal(pathToProjectFile))
+  }
+
+}
