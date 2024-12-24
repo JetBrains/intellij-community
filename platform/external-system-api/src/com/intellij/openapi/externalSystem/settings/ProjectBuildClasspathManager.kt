@@ -14,41 +14,39 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.EDT.*
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+/**
+ * Manages the build classpath for external projects within a specific project context.
+ *
+ * This service provides functionality to read and update the build classpath configurations
+ * for external projects associated with the current IntelliJ project.
+ * To remove outdated information (e.g., a project that is no longer linked to an IntelliJ project), an explicit call to
+ * [removeUnavailableClasspaths] is required.
+ * This will remove any information of unavailable (or not yet available!) projects.
+ * <br>Methods of this service are not thread-safe.
+ * Get- and Set- method calls should be guarded by a lock on the client side.
+ *
+ * @ApiStatus.Internal
+ */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ProjectBuildClasspathManager(val project: Project, val coroutineScope: CoroutineScope) {
 
-  private fun getAvailableProjectsPaths(): List<String> = ExternalSystemApiUtil.getAllManagers()
-    .map { it.localSettingsProvider.`fun`(project) }
-    .flatMap { it.availableProjects.keys }
-    .map { it.path }
-
+  @RequiresBackgroundThread
   fun setProjectBuildClasspathSync(value: Map<String, ExternalProjectBuildClasspathPojo>) {
-    // Android tests' setup undate project build classpath on EDTs
-    if (isCurrentThreadEdt()) {
-      runWriteAction { setProjectBuildClasspathInWriteAction(value) }
-    } else {
-      runBlockingCancellable {
-        setProjectBuildClasspath(value)
-      }
+    runBlockingCancellable {
+      setProjectBuildClasspath(value)
     }
   }
 
   suspend fun setProjectBuildClasspath(value: Map<String, ExternalProjectBuildClasspathPojo>) {
     project.workspaceModel
       .update("AbstractExternalSystemLocalSettings async update") { storage ->
-        updateOrAddValueToStorage(value, storage)
-      }
-  }
-
-  fun setProjectBuildClasspathInWriteAction(value: Map<String, ExternalProjectBuildClasspathPojo>) {
-    project.workspaceModel
-      .updateProjectModel("AbstractExternalSystemLocalSettings explicit update") { storage ->
         updateOrAddValueToStorage(value, storage)
       }
   }
@@ -84,4 +82,9 @@ class ProjectBuildClasspathManager(val project: Project, val coroutineScope: Cor
     val updatedClasspath = currentClasspath.filterKeys { it in availableProjectsPaths }
     setProjectBuildClasspathSync(updatedClasspath)
   }
+
+  private fun getAvailableProjectsPaths(): List<String> = ExternalSystemApiUtil.getAllManagers()
+    .map { it.localSettingsProvider.`fun`(project) }
+    .flatMap { it.availableProjects.keys }
+    .map { it.path }
 }
