@@ -31,7 +31,7 @@ interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 private val LOG by lazy { logger<EelProvider>() }
 
 suspend fun Path.getEelApi(): EelApi {
-  val eels = EP_NAME.extensionList.mapNotNull { it.getEelApi(this) }
+  val eels = EelProvider.EP_NAME.extensionList.mapNotNull { it.getEelApi(this) }
 
   if (eels.size > 1) {
     LOG.error("Multiple EEL providers found for $this: $eels")
@@ -42,7 +42,7 @@ suspend fun Path.getEelApi(): EelApi {
 
 object EelInitialization {
   suspend fun runEelInitialization(project: Project) {
-    val eels = EP_NAME.extensionList
+    val eels = EelProvider.EP_NAME.extensionList
     eels.forEachConcurrent { eelProvider ->
       eelProvider.tryInitialize(project)
     }
@@ -56,7 +56,7 @@ object EelInitialization {
  * The only purpose of that identity is to compare it with other identities, in order to check if two paths belong to the same [EelApi].
  */
 fun Path.getEelDescriptor(): EelDescriptor {
-  val eels = EP_NAME.extensionList.mapNotNull { it.getEelDescriptor(this) }
+  val eels = EelProvider.EP_NAME.extensionList.mapNotNull { it.getEelDescriptor(this) }
 
   if (eels.size > 1) {
     LOG.error("Multiple EEL providers found for $this: $eels")
@@ -88,6 +88,10 @@ fun Path.getEelApiBlocking(): EelApi = runBlockingMaybeCancellable { getEelApi()
 
 @ApiStatus.Internal
 interface EelProvider {
+  companion object {
+    val EP_NAME: ExtensionPointName<EelProvider> = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
+  }
+
   suspend fun getEelApi(path: Path): EelApi?
 
   fun getEelDescriptor(path: Path): EelDescriptor?
@@ -109,5 +113,3 @@ fun EelApi.systemOs(): OS {
     is EelPlatform.Windows -> OS.Windows
   }
 }
-
-private val EP_NAME = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
