@@ -6,6 +6,8 @@ import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.application
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Tests TaskSuspender against old implementation with ProgressIndicators (`rhizome.progress` flag is false)
@@ -174,3 +176,5 @@ class TaskSuspenderTestWithProgressIndicator : TaskSuspenderTest() {
     task.waitAssertCompletedNormally()
   }
 }
+
+private suspend fun letBackgroundThreadsSuspend(): Unit = delay(30.milliseconds)

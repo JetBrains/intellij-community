@@ -31,7 +31,7 @@ import kotlin.coroutines.CoroutineContext
 @Internal
 class TaskSuspenderImpl(
   @ProgressText val defaultSuspendedReason: String,
-  private val coroutineSuspender: CoroutineSuspenderImpl = CoroutineSuspenderImpl(true),
+  @Internal val coroutineSuspender: CoroutineSuspenderImpl = CoroutineSuspenderImpl(true),
 ) : TaskSuspender {
 
   private val _state = MutableStateFlow<TaskSuspenderState>(TaskSuspenderState.Active)

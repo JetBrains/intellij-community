@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -53,7 +54,8 @@ sealed interface CoroutineSuspender {
 
 private val EMPTY_PAUSED_STATE: CoroutineSuspenderState = CoroutineSuspenderState.Paused(emptyArray())
 
-private sealed class CoroutineSuspenderState {
+@ApiStatus.Internal
+sealed class CoroutineSuspenderState {
   object Active : CoroutineSuspenderState()
   class Paused(val continuations: Array<Continuation<Unit>>) : CoroutineSuspenderState()
 }
@@ -74,6 +76,9 @@ class CoroutineSuspenderElement(val coroutineSuspender: CoroutineSuspender) : Ab
 class CoroutineSuspenderImpl(active: Boolean) : CoroutineSuspender {
 
   private val myState = MutableStateFlow(if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE)
+
+  @TestOnly
+  val state: Flow<CoroutineSuspenderState> = myState
 
   val isPaused: Flow<Boolean> = myState.map { it is CoroutineSuspenderState.Paused }
 

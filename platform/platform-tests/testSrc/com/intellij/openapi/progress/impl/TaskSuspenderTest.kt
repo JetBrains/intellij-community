@@ -2,6 +2,8 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.CoroutineSuspender
+import com.intellij.openapi.progress.CoroutineSuspenderImpl
+import com.intellij.openapi.progress.CoroutineSuspenderState
 import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
@@ -10,13 +12,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderElement
+import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
+import com.intellij.platform.ide.progress.suspender.TaskSuspenderState
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
-import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.flow.first
 
 open class TaskSuspenderTest : BasePlatformTestCase() {
 
@@ -37,10 +40,8 @@ open class TaskSuspenderTest : BasePlatformTestCase() {
     val task = startBackgroundTask(project, taskSuspender) { workUntilStopped(mayStop) }
 
     suspendTaskAndRun(taskSuspender) {
+      taskSuspender.waitForTasksToSuspend()
       mayStop.complete(Unit)
-      letBackgroundThreadsSuspend()
-
-      assertFalse(task.isCompleted)
     }
 
     task.waitAssertCompletedNormally()
@@ -58,10 +59,8 @@ open class TaskSuspenderTest : BasePlatformTestCase() {
     }
 
     suspendTaskAndRun(taskSuspender) {
+      taskSuspender.waitForTasksToSuspend()
       mayStop.complete(Unit)
-      letBackgroundThreadsSuspend()
-
-      assertFalse(task.isCompleted)
     }
 
     task.waitAssertCompletedNormally()
@@ -81,9 +80,7 @@ open class TaskSuspenderTest : BasePlatformTestCase() {
 
     suspendTaskAndRun(outerSuspender) {
       mayStop.complete(Unit)
-      letBackgroundThreadsSuspend()
-
-      assertTrue(task.isCompleted)
+      task.waitAssertCompletedNormally()
     }
   }
 
@@ -95,11 +92,8 @@ open class TaskSuspenderTest : BasePlatformTestCase() {
     val task2 = startBackgroundTask(project, taskSuspender) { workUntilStopped(mayStop) }
 
     suspendTaskAndRun(taskSuspender) {
+      taskSuspender.waitForTasksToSuspend(tasksCount = 2)
       mayStop.complete(Unit)
-      letBackgroundThreadsSuspend()
-
-      assertFalse(task1.isCompleted)
-      assertFalse(task2.isCompleted)
     }
 
     task1.waitAssertCompletedNormally()
@@ -117,10 +111,8 @@ open class TaskSuspenderTest : BasePlatformTestCase() {
     }
 
     suspendTaskAndRun(coroutineSuspender) {
+      coroutineSuspender.waitForTasksToSuspend()
       mayStop.complete(Unit)
-      letBackgroundThreadsSuspend()
-
-      assertFalse(task.isCompleted)
     }
 
     task.waitAssertCompletedNormally()
@@ -140,10 +132,8 @@ open class TaskSuspenderTest : BasePlatformTestCase() {
     }
 
     suspendTaskAndRun(taskSuspender) {
+      taskSuspender.waitForTasksToSuspend()
       mayStop.complete(Unit)
-      letBackgroundThreadsSuspend()
-
-      assertFalse(task.isCompleted)
     }
 
     task.waitAssertCompletedNormally()
@@ -153,15 +143,14 @@ open class TaskSuspenderTest : BasePlatformTestCase() {
 
 internal suspend fun suspendTaskAndRun(taskSuspender: TaskSuspender, action: suspend () -> Unit) {
   taskSuspender.pause(reason = "Paused by test")
-  assertTrue(taskSuspender.isPaused())
+  taskSuspender.state.first { it is TaskSuspenderState.Paused }
 
   try {
-    letBackgroundThreadsSuspend()
     action()
   }
   finally {
     taskSuspender.resume()
-    assertFalse(taskSuspender.isPaused())
+    taskSuspender.state.first { it == TaskSuspenderState.Active }
   }
 }
 
@@ -169,7 +158,6 @@ internal suspend fun suspendTaskAndRun(coroutineSuspender: CoroutineSuspender, a
   coroutineSuspender.pause()
 
   try {
-    letBackgroundThreadsSuspend()
     action()
   }
   finally {
@@ -201,7 +189,14 @@ internal suspend fun CoroutineScope.startBackgroundTask(project: Project, taskSu
   return job
 }
 
-internal suspend fun letBackgroundThreadsSuspend(): Unit = delay(30.milliseconds)
+internal suspend fun TaskSuspender.waitForTasksToSuspend(tasksCount: Int = 1) {
+  (this as TaskSuspenderImpl).coroutineSuspender.waitForTasksToSuspend(tasksCount)
+}
+
+internal suspend fun CoroutineSuspender.waitForTasksToSuspend(tasksCount: Int = 1) {
+  val suspender = this as CoroutineSuspenderImpl
+  suspender.state.first { it is CoroutineSuspenderState.Paused && it.continuations.size == tasksCount }
+}
 
 internal suspend fun Job.waitAssertCompletedNormally() {
   join()
