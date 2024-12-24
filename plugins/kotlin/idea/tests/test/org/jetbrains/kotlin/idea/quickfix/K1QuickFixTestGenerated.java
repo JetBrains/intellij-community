@@ -18446,6 +18446,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changePrimaryConstructorParameterType2.kt");
             }
 
+            @TestMetadata("changePrimaryConstructorParameterTypeWhenExplicitThis.kt")
+            public void testChangePrimaryConstructorParameterTypeWhenExplicitThis() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changePrimaryConstructorParameterTypeWhenExplicitThis.kt");
+            }
+
             @TestMetadata("changeVariableType1.kt")
             public void testChangeVariableType1() throws Exception {
                 runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType1.kt");

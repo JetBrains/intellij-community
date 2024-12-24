@@ -79,7 +79,12 @@ object ChangeParameterTypeFixFactory {
         val valueArgument = getValueArgument(psi) ?: return emptyList()
 
         val argumentExpression = valueArgument.getArgumentExpression()?.let { KtPsiUtil.deparenthesize(it) } ?: return emptyList()
-        val referencedSymbol = argumentExpression.mainReference?.resolveToSymbol()?.let { symbol ->
+        val argumentOrSelectorExpression = if (argumentExpression is KtDotQualifiedExpression) {
+            argumentExpression.selectorExpression
+        } else {
+            argumentExpression
+        }
+        val referencedSymbol = argumentOrSelectorExpression?.mainReference?.resolveToSymbol()?.let { symbol ->
             if (symbol is KaPropertySymbol) {
                 getValueParameterSymbolForPropertySymbol(symbol)
             } else {
