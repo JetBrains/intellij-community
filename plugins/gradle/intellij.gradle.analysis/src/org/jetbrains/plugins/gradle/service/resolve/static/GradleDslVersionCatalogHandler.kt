@@ -20,7 +20,7 @@ class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
 
   @Deprecated("Doesn't work for included builds of a composite build", replaceWith = ReplaceWith("getVersionCatalogFiles(module)"))
   override fun getVersionCatalogFiles(project: Project): Map<String, VirtualFile> {
-    return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file } ?: emptyMap()
+    return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file }
   }
 
   override fun getVersionCatalogFiles(module: Module): Map<String, VirtualFile> {
@@ -33,20 +33,21 @@ class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
     val scope = context.resolveScope
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
     val buildModel = getBuildModel(module) ?: return null
-    val versionCatalogModel = buildModel.versionCatalogsModel
-    if (versionCatalogModel.getVersionCatalogModel(catalogName) == null) return null
-    return SyntheticVersionCatalogAccessor.create(project, scope, versionCatalogModel, catalogName)
+    val catalogs = buildModel.versionCatalogsModel
+    val catalogModel = catalogs.getVersionCatalogModel(catalogName) ?: return null
+    return SyntheticVersionCatalogAccessor.create(project, scope, catalogModel, catalogName)
   }
 
   override fun getAccessorsForAllCatalogs(context: PsiElement): Map<String, PsiClass> {
     val project = context.project
     val scope = context.resolveScope
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return emptyMap()
-    val catalogsModel = getBuildModel(module)?.versionCatalogsModel ?: return emptyMap()
+    val catalogs = getBuildModel(module)?.versionCatalogsModel ?: return emptyMap()
     val result = mutableMapOf<String, PsiClass>()
-    catalogsModel.catalogNames().forEach { catalogName ->
-      val accessor = SyntheticVersionCatalogAccessor.create(project, scope, catalogsModel, catalogName)
-      accessor?.let { result.putIfAbsent(catalogName, accessor) }
+    for (catalogName in catalogs.catalogNames()) {
+      val catalogModel = catalogs.getVersionCatalogModel(catalogName) ?: continue
+      val accessor = SyntheticVersionCatalogAccessor.create(project, scope, catalogModel, catalogName) ?: continue
+      result.putIfAbsent(catalogName, accessor)
     }
     return result
   }
