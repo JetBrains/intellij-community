@@ -4,11 +4,21 @@ package com.intellij.internal
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.wm.ex.IdeFrameEx
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.util.coroutines.forEachConcurrent
@@ -16,6 +26,7 @@ import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.platform.util.coroutines.transformConcurrent
 import com.intellij.platform.util.progress.*
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import javax.swing.JComponent
 
@@ -109,6 +120,14 @@ internal class TestCoroutineProgressAction : AnAction() {
                 delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong() + 10) // + epsilon
               }
             }
+          }
+        }
+        row {
+          button("Old Cancellable BG Progress") {
+            cs.oldBGProgress(project, "Old Cancellable BG Progress", cancellable = true)
+          }
+          button("Old Suspendable BG Progress") {
+            cs.oldBGProgress(project, "Old Suspendable BG Progress", suspendable = true)
           }
         }
       }
@@ -283,5 +302,50 @@ internal class TestCoroutineProgressAction : AnAction() {
   private suspend fun randomDelay() {
     checkCanceled()
     delay(100 + (Math.random() * 1000).toLong())
+  }
+
+  @Suppress("UsagesOfObsoleteApi")
+  private fun CoroutineScope.oldBGProgress(project: Project, title: String, cancellable: Boolean = false, suspendable: Boolean = false) {
+    launch {
+      val indicator = ProgressIndicatorBase()
+
+      val taskInfo = object : TaskInfo {
+        override fun getTitle(): String = title
+        override fun isCancellable(): Boolean = cancellable
+        override fun getCancelText(): String? = null
+        override fun getCancelTooltipText(): String? = null
+      }
+
+      if (suspendable) {
+        ProgressManager.getInstance().runProcess({ ProgressSuspender.markSuspendable(indicator, "Suspended by test action") }, indicator)
+      }
+
+      withContext(Dispatchers.EDT) {
+        showProgressIndicator(project, taskInfo, indicator)
+      }
+
+      try {
+        ProgressManager.getInstance().runProcess({ doStuff(indicator) }, indicator)
+      }
+      finally {
+        indicator.finish(taskInfo)
+      }
+    }
+  }
+
+  private fun showProgressIndicator(project: Project, taskInfo: TaskInfo, indicator: ProgressIndicatorEx) {
+    val frameEx: IdeFrameEx = WindowManagerEx.getInstanceEx().findFrameHelper(project) ?: return
+    val statusBar = frameEx.statusBar as? IdeStatusBarImpl ?: return
+    statusBar.addProgress(indicator, taskInfo)
+  }
+
+  private fun doStuff(indicator: ProgressIndicator) {
+    val iterations = 100
+    for (i in 1..iterations) {
+      TimeoutUtil.sleep(100 + (Math.random() * 1000).toLong())
+      indicator.setFraction(i.toDouble() / iterations.toDouble())
+      indicator.setText("Processing $i")
+      ProgressManager.checkCanceled()
+    }
   }
 }
