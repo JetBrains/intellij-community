@@ -11,6 +11,7 @@ RUN apt-get update && \
     unzip \
     libgl1-mesa-glx \
     squashfs-tools \
+    git \
     && rm -rf /var/lib/apt/lists/*
 # Maven cache to reuse
 VOLUME /root/.m2
@@ -29,4 +30,7 @@ RUN docker buildx version
 # Docker daemon socket is expected to be mounted with --volume /var/run/docker.sock:/var/run/docker.sock
 # and the container should be run as the root user to be able to connect to the socket
 VOLUME /var/run/docker.sock
-CMD ["docker system info && ./installers.cmd"]
+# the current repository has to be specified as a safe directory,
+# otherwise git calls will detect dubious ownership (see https://github.com/git/git/blob/master/Documentation/config/safe.txt)
+# due to the container being run as the root user
+CMD ["docker system info && git config --add safe.directory . && ./installers.cmd"]
