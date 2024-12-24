@@ -39,7 +39,11 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, Lo
   return@withContext Result.success(languageLevel)
 }
 
-private suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe String, LocalizedErrorString> {
+/**
+ * Executes [this] with [args], returns either stdout or error (if execution failed or exit code != 0)
+ */
+@ApiStatus.Internal
+suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe String, LocalizedErrorString> {
   val output = exec(*args, timeout = 5.seconds).getOr {
     val text = it.error?.message ?: message("python.get.version.too.long", pathString)
     return failure(LocalizedErrorString(text))
