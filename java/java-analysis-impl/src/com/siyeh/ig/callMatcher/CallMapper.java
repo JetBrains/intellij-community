@@ -21,12 +21,10 @@ import com.intellij.psi.PsiMethodReferenceExpression;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UCallExpression;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -72,6 +70,10 @@ public final class CallMapper<T> {
   @Contract("null -> null")
   public T mapFirst(UCallExpression call) {
     if (call == null) return null;
+    if (!call.isMethodNameOneOf(myMap.keySet())) {
+      return null;
+    }
+
     List<CallHandler<T>> functions = myMap.get(call.getMethodName());
     if (functions == null) return null;
     for (CallHandler<T> function : functions) {
