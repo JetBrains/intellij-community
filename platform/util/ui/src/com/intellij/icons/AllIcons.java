@@ -211,7 +211,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon StepOut = load("expui/run/stepOut.svg", "actions/stepOut.svg", -525700232, 2);
     /** 16x16 */ public static final @NotNull Icon StepOutCodeBlock = load("expui/run/stepOutCodeBlock.svg", "actions/stepOutCodeBlock.svg", 1629750131, 2);
     /** 16x16 */ public static final @NotNull Icon StopAndRestart = load("actions/stopAndRestart.svg", 1639589680, 2);
-    /** 16x16 */ public static final @NotNull Icon StopRefresh = load("actions/stopRefresh.svg", -1056556267, 2);
+    /** 16x16 */ public static final @NotNull Icon StopRefresh = load("expui/actions/stopRefresh.svg", "actions/stopRefresh.svg", -1056556267, 2);
     /** 16x16 */ public static final @NotNull Icon Stub = load("actions/stub.svg", -953319628, 2);
     /** 16x16 */ public static final @NotNull Icon SuggestedRefactoringBulb = load("expui/actions/suggestedRefactoringBulb.svg", "actions/suggestedRefactoringBulb.svg", 1703386418, 2);
     /** 16x16 */ public static final @NotNull Icon Suspend = load("expui/run/stop.svg", "actions/suspend.svg", 43249293, 10);

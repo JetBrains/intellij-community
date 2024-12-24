@@ -47,6 +47,7 @@
       "runAll.svg": "actions/runAll.svg",
       "selectAll.svg": "actions/selectall.svg",
       "shortcutFilter.svg": "actions/shortcutFilter.svg",
+      "stopRefresh.svg": "actions/stopRefresh.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
       "rerunAutomatically.svg": "actions/rerunAutomatically.svg",
