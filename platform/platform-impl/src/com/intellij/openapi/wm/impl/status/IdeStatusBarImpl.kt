@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.openapi.progress.impl.TaskToProgressSuspenderSynchronizer
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -43,7 +45,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -476,7 +480,10 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     coroutineScope.launch {
       val project = project ?: return@launch
 
-      withBackgroundProgress(project, info.title, info.isCancellable) {
+      val cancellation = if (info.isCancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
+      val (taskSuspender, suspenderSynchronizer) = indicator.getSuspender(this)
+
+      withBackgroundProgress(project, info.title, cancellation, taskSuspender) {
         val job1 = launch {
           reportRawProgress { reporter ->
             indicator.addStateDelegate(reporter.toBridgeIndicator())
@@ -503,9 +510,18 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
           indicatorFinished.await()
           job1.cancel()
           job2.cancel()
+          suspenderSynchronizer?.stop()
         }
       }
     }
+  }
+
+  private fun ProgressIndicator.getSuspender(coroutineScope: CoroutineScope): Pair<TaskSuspender?, TaskToProgressSuspenderSynchronizer?> {
+    val progressSuspender = ProgressSuspender.getSuspender(this) ?: return Pair(null, null)
+
+    val taskSuspender = TaskSuspender.suspendable(progressSuspender.suspendedText)
+    val suspenderSynchronizer = TaskToProgressSuspenderSynchronizer(coroutineScope, taskSuspender, progressSuspender)
+    return Pair(taskSuspender, suspenderSynchronizer)
   }
 
   @Suppress("UsagesOfObsoleteApi")
