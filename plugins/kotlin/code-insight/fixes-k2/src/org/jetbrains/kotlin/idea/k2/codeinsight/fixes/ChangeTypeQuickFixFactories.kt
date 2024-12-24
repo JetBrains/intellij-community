@@ -226,11 +226,12 @@ object ChangeTypeQuickFixFactories {
         val expectedTypeFromDeclaration = declaration.returnType
         val expression = declaration.initializer ?: return emptyList()
         return buildList {
-            if (!expectedTypeFromDeclaration.semanticallyEquals(actualType)) {
-                add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(actualType))))
+            val typeToCreateTypeInfoFrom = if (!expectedTypeFromDeclaration.semanticallyEquals(actualType)) {
+                declaration.returnType(actualType)
             } else {
-                add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(expectedTypeFromDiagnostics)))
+                expectedTypeFromDiagnostics
             }
+            add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(typeToCreateTypeInfoFrom)))
             addAll(registerExpressionTypeFixes(expression, expectedTypeFromDeclaration, actualType))
         }
     }

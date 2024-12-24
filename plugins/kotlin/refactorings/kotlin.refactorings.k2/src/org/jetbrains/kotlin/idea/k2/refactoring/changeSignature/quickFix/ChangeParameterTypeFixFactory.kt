@@ -62,13 +62,7 @@ object ChangeParameterTypeFixFactory {
             memberCall.argumentMapping[valueArgument.getArgumentExpression()] ?: memberCall.argumentMapping[psi as? KtExpression]
         val parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
 
-        val functionName = getDeclarationName(functionLikeSymbol) ?: return emptyList()
-
-        val isPrimaryConstructorParameter = functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary
-
-        return listOf(
-            createChangeParameterTypeFix(parameter, targetType, isPrimaryConstructorParameter, functionName)
-        )
+        createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol)?.let { fix -> return listOf(fix) } ?: return emptyList()
     }
 
     context(KaSession)
@@ -94,14 +88,10 @@ object ChangeParameterTypeFixFactory {
         if (referencedSymbol !is KaValueParameterSymbol) return emptyList()
 
         val containingFunctionSymbol = referencedSymbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
-        val isPrimaryConstructorParameter = containingFunctionSymbol is KaConstructorSymbol && containingFunctionSymbol.isPrimary
-
         val parameter = referencedSymbol.psi as? KtParameter ?: return emptyList()
-        val functionName = getDeclarationName(containingFunctionSymbol) ?: return emptyList()
 
-        return listOf(
-            createChangeParameterTypeFix(parameter, targetType, isPrimaryConstructorParameter, functionName)
-        )
+        createChangeParameterTypeFix(parameter, targetType, containingFunctionSymbol)?.let { fix -> return listOf(fix) }
+            ?: return emptyList()
     }
 
     private fun getValueArgument(psi: PsiElement): KtValueArgument? {
@@ -125,9 +115,11 @@ object ChangeParameterTypeFixFactory {
     private fun createChangeParameterTypeFix(
         parameter: KtParameter,
         targetType: KaType,
-        isPrimaryConstructorParameter: Boolean,
-        functionName: String
-    ): ChangeParameterTypeFix {
+        functionLikeSymbol: KaFunctionSymbol
+    ): ChangeParameterTypeFix? {
+        val isPrimaryConstructorParameter = functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary
+        val functionName = getDeclarationName(functionLikeSymbol) ?: return null
+
         val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
         val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
         val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
