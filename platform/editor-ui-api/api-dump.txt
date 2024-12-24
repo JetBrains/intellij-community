@@ -977,6 +977,15 @@ com.intellij.ide.util.treeView.smartTree.TreeModel
 - a:getGroupers():com.intellij.ide.util.treeView.smartTree.Grouper[]
 - a:getRoot():com.intellij.ide.util.treeView.smartTree.TreeElement
 - a:getSorters():com.intellij.ide.util.treeView.smartTree.Sorter[]
+com.intellij.injected.editor.EditorWindow
+- com.intellij.openapi.editor.Editor
+- com.intellij.openapi.util.UserDataHolderEx
+- a:getDelegate():com.intellij.openapi.editor.Editor
+- a:getDocument():com.intellij.injected.editor.DocumentWindow
+- a:getInjectedFile():com.intellij.psi.PsiFile
+- a:hostToInjected(com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
+- a:injectedToHost(com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
+- a:isValid():Z
 com.intellij.injected.editor.InjectedFileChangesHandler
 - com.intellij.openapi.Disposable
 - a:commitToOriginal(com.intellij.openapi.editor.event.DocumentEvent):V

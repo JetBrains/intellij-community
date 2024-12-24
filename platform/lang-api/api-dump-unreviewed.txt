@@ -342,6 +342,16 @@ f:com.intellij.codeInsight.CodeInsightBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.codeInsight.actions.BaseCodeInsightAction
+- com.intellij.codeInsight.actions.CodeInsightAction
+- p:<init>():V
+- p:<init>(Z):V
+- p:getBaseEditor(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor
+- p:getEditor(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,Z):com.intellij.openapi.editor.Editor
+- s:getInjectedEditor(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.Editor
+- s:getInjectedEditor(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,Z):com.intellij.openapi.editor.Editor
+- p:isValidForLookup():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.codeInsight.actions.CodeInsightAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
@@ -2711,6 +2721,14 @@ f:com.intellij.ide.projectView.ProjectViewSelectionTopicKt
 com.intellij.ide.projectView.SelectableTreeStructureProvider
 - com.intellij.ide.projectView.TreeStructureProvider
 - a:getTopLevelElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+Fa:com.intellij.ide.projectView.impl.AbstractUrl
+- a:createPath(com.intellij.openapi.project.Project):java.lang.Object[]
+- createUrl(java.lang.String,java.lang.String,java.lang.String):com.intellij.ide.projectView.impl.AbstractUrl
+- a:createUrlByElement(java.lang.Object):com.intellij.ide.projectView.impl.AbstractUrl
+- equals(java.lang.Object):Z
+- getURL():java.lang.String
+- hashCode():I
+- write(org.jdom.Element):V
 c:com.intellij.ide.todo.TodoPanelSettings
 - areFlattenPackages:Z
 - areModulesShown:Z

@@ -36,9 +36,6 @@ com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - p:replaceSuppressionComments(com.intellij.psi.PsiElement):Z
 - setShouldBeAppliedToInjectionHost(com.intellij.util.ThreeState):V
 - p:setText(java.lang.String):V
-com.intellij.codeInsight.lookup.LookupEx
-- com.intellij.codeInsight.lookup.Lookup
-- *a:setPresentation(com.intellij.codeInsight.lookup.LookupPresentation):V
 a:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper
 - *:isMine(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 - *:processContexts(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters,com.intellij.openapi.vfs.VirtualFile,Z,com.intellij.util.Processor):Z

@@ -1066,39 +1066,6 @@ c:com.intellij.codeInsight.lookup.EqTailType
 - <init>():V
 - p:isSpaceAroundAssignmentOperators(com.intellij.openapi.editor.Editor,I):Z
 - processTail(com.intellij.openapi.editor.Editor,I):I
-a:com.intellij.codeInsight.lookup.LookupArranger
-- com.intellij.codeInsight.lookup.WeighingContext
-- pf:myItems:java.util.List
-- <init>():V
-- addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.LookupElementPresentation):V
-- a:arrangeItems(com.intellij.codeInsight.lookup.Lookup,Z):com.intellij.openapi.util.Pair
-- a:createEmptyCopy():com.intellij.codeInsight.lookup.LookupArranger
-- getMatchingItems():java.util.List
-- p:getPrefixItems(Z):java.util.List
-- getRelevanceObjects(java.lang.Iterable,Z):java.util.Map
-- isCompletion():Z
-- p:isPrefixItem(com.intellij.codeInsight.lookup.LookupElement,Z):Z
-- itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
-- itemPattern(com.intellij.codeInsight.lookup.LookupElement):java.lang.String
-- itemSelected(com.intellij.codeInsight.lookup.LookupElement,C):V
-- prefixChanged(com.intellij.codeInsight.lookup.Lookup):V
-- prefixReplaced(com.intellij.codeInsight.lookup.Lookup,java.lang.String):V
-- prefixTruncated(com.intellij.codeInsight.lookup.LookupEx,I):V
-- registerMatcher(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.PrefixMatcher):V
-- p:retainItems(java.util.Set):java.util.List
-c:com.intellij.codeInsight.lookup.LookupArranger$DefaultArranger
-- com.intellij.codeInsight.lookup.LookupArranger
-- <init>():V
-- arrangeItems(com.intellij.codeInsight.lookup.Lookup,Z):com.intellij.openapi.util.Pair
-- createEmptyCopy():com.intellij.codeInsight.lookup.LookupArranger
-com.intellij.codeInsight.lookup.LookupEx
-- com.intellij.codeInsight.lookup.Lookup
-- a:getComponent():java.awt.Component
-- a:getPresentation():com.intellij.codeInsight.lookup.LookupPresentation
-- a:hideLookup(Z):V
-- a:performGuardedChange(java.lang.Runnable):Z
-- a:setCurrentItem(com.intellij.codeInsight.lookup.LookupElement):V
-- a:showElementActions(java.awt.event.InputEvent):V
 c:com.intellij.codeInsight.lookup.LookupItem
 - com.intellij.codeInsight.lookup.LookupElement
 - java.lang.Comparable
@@ -1145,21 +1112,6 @@ c:com.intellij.codeInsight.lookup.LookupItem
 - setPriority(D):com.intellij.codeInsight.lookup.LookupItem
 - setTailText(java.lang.String,Z):com.intellij.codeInsight.lookup.LookupItem
 - setTailType(com.intellij.codeInsight.TailType):com.intellij.codeInsight.lookup.LookupItem
-a:com.intellij.codeInsight.lookup.LookupManager
-- sf:PROP_ACTIVE_LOOKUP:java.lang.String
-- <init>():V
-- a:addPropertyChangeListener(java.beans.PropertyChangeListener):V
-- a:addPropertyChangeListener(java.beans.PropertyChangeListener,com.intellij.openapi.Disposable):V
-- a:createLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[],java.lang.String,com.intellij.codeInsight.lookup.LookupArranger):com.intellij.codeInsight.lookup.Lookup
-- a:getActiveLookup():com.intellij.codeInsight.lookup.LookupEx
-- s:getActiveLookup(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.lookup.LookupEx
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.lookup.LookupManager
-- a:hideActiveLookup():V
-- s:hideActiveLookup(com.intellij.openapi.project.Project):V
-- a:removePropertyChangeListener(java.beans.PropertyChangeListener):V
-- showLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[]):com.intellij.codeInsight.lookup.LookupEx
-- showLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[],java.lang.String):com.intellij.codeInsight.lookup.LookupEx
-- a:showLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[],java.lang.String,com.intellij.codeInsight.lookup.LookupArranger):com.intellij.codeInsight.lookup.LookupEx
 com.intellij.codeInsight.lookup.LookupValueWithPsiElement
 - a:getElement():com.intellij.psi.PsiElement
 com.intellij.codeInsight.lookup.LookupValueWithUIHint
@@ -3742,6 +3694,50 @@ com.intellij.psi.impl.source.tree.injected.FallbackInjectionPerformer
 - com.intellij.lang.injection.general.LanguageInjectionPerformer
 - s:getInstance():com.intellij.psi.impl.source.tree.injected.FallbackInjectionPerformer
 - a:registerSupportIfNone(com.intellij.psi.PsiElement,com.intellij.lang.injection.general.Injection):V
+f:com.intellij.psi.impl.source.tree.injected.InjectedCaret
+- com.intellij.openapi.editor.Caret
+- clone(Z):com.intellij.openapi.editor.Caret
+- dispose():V
+- getCaretModel():com.intellij.openapi.editor.CaretModel
+- getDelegate():com.intellij.openapi.editor.Caret
+- getEditor():com.intellij.openapi.editor.Editor
+- getLeadSelectionOffset():I
+- getLeadSelectionPosition():com.intellij.openapi.editor.VisualPosition
+- getLogicalPosition():com.intellij.openapi.editor.LogicalPosition
+- getOffset():I
+- getSelectedText():java.lang.String
+- getSelectionEnd():I
+- getSelectionEndPosition():com.intellij.openapi.editor.VisualPosition
+- getSelectionRange():com.intellij.openapi.util.TextRange
+- getSelectionStart():I
+- getSelectionStartPosition():com.intellij.openapi.editor.VisualPosition
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- getVisualAttributes():com.intellij.openapi.editor.CaretVisualAttributes
+- getVisualLineEnd():I
+- getVisualLineStart():I
+- getVisualPosition():com.intellij.openapi.editor.VisualPosition
+- hasSelection():Z
+- isAtBidiRunBoundary():Z
+- isAtRtlLocation():Z
+- isUpToDate():Z
+- isValid():Z
+- moveCaretRelatively(I,I,Z,Z):V
+- moveToLogicalPosition(com.intellij.openapi.editor.LogicalPosition):V
+- moveToOffset(I):V
+- moveToOffset(I,Z):V
+- moveToVisualPosition(com.intellij.openapi.editor.VisualPosition):V
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+- putUserDataIfAbsent(com.intellij.openapi.util.Key,java.lang.Object):java.lang.Object
+- removeSelection():V
+- replace(com.intellij.openapi.util.Key,java.lang.Object,java.lang.Object):Z
+- selectLineAtCaret():V
+- selectWordAtCaret(Z):V
+- setSelection(I,I):V
+- setSelection(I,I,Z):V
+- setSelection(I,com.intellij.openapi.editor.VisualPosition,I):V
+- setSelection(com.intellij.openapi.editor.VisualPosition,I,com.intellij.openapi.editor.VisualPosition,I):V
+- setSelection(com.intellij.openapi.editor.VisualPosition,I,com.intellij.openapi.editor.VisualPosition,I,Z):V
+- setVisualAttributes(com.intellij.openapi.editor.CaretVisualAttributes):V
 com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 - com.intellij.psi.FileViewProvider
 - com.intellij.psi.impl.FreeThreadedFileViewProvider
@@ -3760,9 +3756,28 @@ com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 - rootChangedImpl(com.intellij.psi.PsiFile):V
 - s:same(com.intellij.psi.impl.source.tree.injected.Place,com.intellij.psi.impl.source.tree.injected.Place):Z
 - setShreds(com.intellij.psi.impl.source.tree.injected.Place):Z
-f:com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+f:com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+- sf:FRANKENSTEIN_INJECTION:com.intellij.openapi.util.Key
 - <init>():V
+- s:enumerate(com.intellij.injected.editor.DocumentWindow,com.intellij.psi.PsiFile,com.intellij.psi.PsiLanguageInjectionHost$InjectedPsiVisitor):V
+- s:findElementInInjected(com.intellij.psi.PsiLanguageInjectionHost,I):com.intellij.psi.PsiElement
+- s:findInjectedFile(com.intellij.psi.PsiElement,java.lang.Class):com.intellij.extapi.psi.PsiFileBase
+- s:getCachedInjectedFileWithLanguage(com.intellij.psi.PsiElement,com.intellij.lang.Language):com.intellij.psi.PsiFile
+- s:getCaretForInjectedLanguageNoCommit(com.intellij.openapi.editor.Caret,com.intellij.psi.PsiFile):com.intellij.openapi.editor.Caret
+- s:getDocumentWindow(com.intellij.psi.PsiElement):com.intellij.injected.editor.DocumentWindow
+- s:getEditorForInjectedLanguageNoCommit(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.psi.PsiFile):com.intellij.openapi.editor.Editor
+- s:getEditorForInjectedLanguageNoCommit(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.Editor
+- s:getEditorForInjectedLanguageNoCommit(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I):com.intellij.openapi.editor.Editor
+- s:getInjectedEditorForInjectedFile(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.psi.PsiFile):com.intellij.openapi.editor.Editor
+- s:getInjectedEditorForInjectedFile(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.Editor
+- s:getInjectedStart(java.util.List):I
 - s:getTopLevelEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.Editor
+- s:hostToInjectedUnescaped(com.intellij.injected.editor.DocumentWindow,I):I
+- s:injectReference(com.intellij.lang.injection.MultiHostRegistrar,com.intellij.lang.Language,java.lang.String,java.lang.String,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange):V
+- s:isHighlightInjectionBackground(com.intellij.psi.PsiLanguageInjectionHost):Z
+- s:openEditorFor(com.intellij.psi.PsiFile,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor
+- s:processTokens(com.intellij.psi.PsiFile,java.util.List,java.util.function.BiConsumer):V
+- s:putInjectedFileUserData(com.intellij.psi.PsiElement,com.intellij.lang.Language,com.intellij.openapi.util.Key,java.lang.Object):V
 com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 c:com.intellij.psi.impl.source.tree.injected.Place
 - java.util.AbstractList

@@ -3,6 +3,8 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,4 +17,9 @@ abstract class InjectedEditorWindowTracker {
   abstract void disposeInvalidEditors();
 
   abstract void disposeEditorFor(@NotNull DocumentWindow documentWindow);
+
+  @NotNull
+  abstract Editor createEditor(@NotNull DocumentWindow documentRange,
+                               @NotNull Editor editor,
+                               @NotNull PsiFile injectedFile);
 }

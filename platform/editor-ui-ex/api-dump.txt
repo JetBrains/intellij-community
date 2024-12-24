@@ -37,15 +37,6 @@ c:com.intellij.ide.todo.TodoConfiguration
 - setMultiLine(Z):V
 - setTodoFilters(com.intellij.ide.todo.TodoFilter[]):V
 - setTodoPatterns(com.intellij.psi.search.TodoPattern[]):V
-com.intellij.injected.editor.EditorWindow
-- com.intellij.openapi.editor.Editor
-- com.intellij.openapi.util.UserDataHolderEx
-- a:getDelegate():com.intellij.openapi.editor.Editor
-- a:getDocument():com.intellij.injected.editor.DocumentWindow
-- a:getInjectedFile():com.intellij.psi.PsiFile
-- a:hostToInjected(com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
-- a:injectedToHost(com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
-- a:isValid():Z
 c:com.intellij.injected.editor.MarkupModelWindow
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.editor.ex.MarkupModelEx

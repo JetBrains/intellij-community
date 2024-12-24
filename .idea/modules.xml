@@ -685,6 +685,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-api/testFramework/intellij.platform.externalSystem.testFramework.iml" filepath="$PROJECT_DIR$/platform/external-system-api/testFramework/intellij.platform.externalSystem.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.tests.iml" filepath="$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/feedback/intellij.platform.feedback.iml" filepath="$PROJECT_DIR$/platform/feedback/intellij.platform.feedback.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/foldings/intellij.platform.foldings.iml" filepath="$PROJECT_DIR$/platform/foldings/intellij.platform.foldings.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-frontend/intellij.platform.frontend.iml" filepath="$PROJECT_DIR$/platform/platform-frontend/intellij.platform.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/icons/intellij.platform.icons.iml" filepath="$PROJECT_DIR$/platform/icons/intellij.platform.icons.iml" />
@@ -695,6 +696,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" filepath="$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core/plugins/intellij.platform.ide.core.plugins.iml" filepath="$PROJECT_DIR$/platform/ide-core/plugins/intellij.platform.ide.core.plugins.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/designer/intellij.platform.ide.designer.iml" filepath="$PROJECT_DIR$/platform/platform-impl/designer/intellij.platform.ide.designer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/favoritesTreeView/intellij.platform.ide.favoritesTreeView.iml" filepath="$PROJECT_DIR$/platform/favoritesTreeView/intellij.platform.ide.favoritesTreeView.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/intellij.platform.ide.impl.iml" filepath="$PROJECT_DIR$/platform/platform-impl/intellij.platform.ide.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" filepath="$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" />

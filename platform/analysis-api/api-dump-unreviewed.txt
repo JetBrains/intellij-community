@@ -748,6 +748,31 @@ com.intellij.codeInsight.lookup.Lookup
 - a:itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
 - a:itemPattern(com.intellij.codeInsight.lookup.LookupElement):java.lang.String
 - a:removeLookupListener(com.intellij.codeInsight.lookup.LookupListener):V
+a:com.intellij.codeInsight.lookup.LookupArranger
+- com.intellij.codeInsight.lookup.WeighingContext
+- pf:myItems:java.util.List
+- <init>():V
+- addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.LookupElementPresentation):V
+- a:arrangeItems(com.intellij.codeInsight.lookup.Lookup,Z):com.intellij.openapi.util.Pair
+- a:createEmptyCopy():com.intellij.codeInsight.lookup.LookupArranger
+- getMatchingItems():java.util.List
+- p:getPrefixItems(Z):java.util.List
+- getRelevanceObjects(java.lang.Iterable,Z):java.util.Map
+- isCompletion():Z
+- p:isPrefixItem(com.intellij.codeInsight.lookup.LookupElement,Z):Z
+- itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
+- itemPattern(com.intellij.codeInsight.lookup.LookupElement):java.lang.String
+- itemSelected(com.intellij.codeInsight.lookup.LookupElement,C):V
+- prefixChanged(com.intellij.codeInsight.lookup.Lookup):V
+- prefixReplaced(com.intellij.codeInsight.lookup.Lookup,java.lang.String):V
+- prefixTruncated(com.intellij.codeInsight.lookup.LookupEx,I):V
+- registerMatcher(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.PrefixMatcher):V
+- p:retainItems(java.util.Set):java.util.List
+c:com.intellij.codeInsight.lookup.LookupArranger$DefaultArranger
+- com.intellij.codeInsight.lookup.LookupArranger
+- <init>():V
+- arrangeItems(com.intellij.codeInsight.lookup.Lookup,Z):com.intellij.openapi.util.Pair
+- createEmptyCopy():com.intellij.codeInsight.lookup.LookupArranger
 a:com.intellij.codeInsight.lookup.LookupElement
 - com.intellij.openapi.util.UserDataHolderBase
 - sf:EMPTY_ARRAY:com.intellij.codeInsight.lookup.LookupElement[]
@@ -897,6 +922,14 @@ f:com.intellij.codeInsight.lookup.LookupEvent
 - getLookup():com.intellij.codeInsight.lookup.Lookup
 - isCanceledExplicitly():Z
 - s:isSpecialCompletionChar(C):Z
+com.intellij.codeInsight.lookup.LookupEx
+- com.intellij.codeInsight.lookup.Lookup
+- a:getComponent():java.awt.Component
+- a:getPresentation():com.intellij.codeInsight.lookup.LookupPresentation
+- a:hideLookup(Z):V
+- a:performGuardedChange(java.lang.Runnable):Z
+- a:setCurrentItem(com.intellij.codeInsight.lookup.LookupElement):V
+- a:showElementActions(java.awt.event.InputEvent):V
 e:com.intellij.codeInsight.lookup.LookupFocusDegree
 - java.lang.Enum
 - sf:FOCUSED:com.intellij.codeInsight.lookup.LookupFocusDegree
@@ -914,6 +947,21 @@ com.intellij.codeInsight.lookup.LookupListener
 - lookupCanceled(com.intellij.codeInsight.lookup.LookupEvent):V
 - lookupShown(com.intellij.codeInsight.lookup.LookupEvent):V
 - uiRefreshed():V
+a:com.intellij.codeInsight.lookup.LookupManager
+- sf:PROP_ACTIVE_LOOKUP:java.lang.String
+- <init>():V
+- a:addPropertyChangeListener(java.beans.PropertyChangeListener):V
+- a:addPropertyChangeListener(java.beans.PropertyChangeListener,com.intellij.openapi.Disposable):V
+- a:createLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[],java.lang.String,com.intellij.codeInsight.lookup.LookupArranger):com.intellij.codeInsight.lookup.Lookup
+- a:getActiveLookup():com.intellij.codeInsight.lookup.LookupEx
+- s:getActiveLookup(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.lookup.LookupEx
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.lookup.LookupManager
+- a:hideActiveLookup():V
+- s:hideActiveLookup(com.intellij.openapi.project.Project):V
+- a:removePropertyChangeListener(java.beans.PropertyChangeListener):V
+- showLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[]):com.intellij.codeInsight.lookup.LookupEx
+- showLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[],java.lang.String):com.intellij.codeInsight.lookup.LookupEx
+- a:showLookup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement[],java.lang.String,com.intellij.codeInsight.lookup.LookupArranger):com.intellij.codeInsight.lookup.LookupEx
 a:com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
 - com.intellij.codeInsight.lookup.LookupElementRenderer
 - <init>():V
@@ -3445,6 +3493,10 @@ a:com.intellij.psi.file.FileLookupInfoProvider
 - <init>():V
 - a:getFileTypes():com.intellij.openapi.fileTypes.FileType[]
 - a:getLookupInfo(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.util.Pair
+f:com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+- <init>():V
+- s:getEditorForInjectedLanguageNoCommit(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.Editor
+- s:getTopLevelEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.Editor
 a:com.intellij.psi.injection.Injectable
 - java.lang.Comparable
 - <init>():V

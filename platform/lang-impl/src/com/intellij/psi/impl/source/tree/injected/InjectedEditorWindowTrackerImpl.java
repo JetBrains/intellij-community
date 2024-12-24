@@ -4,7 +4,7 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
@@ -18,9 +18,12 @@ final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker 
   private final Collection<EditorWindowImpl> allEditors = new UnsafeWeakList<>(); // guarded by allEditors
 
   @NotNull
-  Editor createEditor(final @NotNull DocumentWindowImpl documentRange,
-                      final @NotNull EditorImpl editor,
+  @Override
+  Editor createEditor(final @NotNull DocumentWindow documentRange,
+                      final @NotNull Editor editor,
                       final @NotNull PsiFile injectedFile) {
+    var documentRangeImpl = (DocumentWindowImpl)documentRange;
+    var editorImpl = (EditorImpl)editor;
     assert documentRange.isValid();
     assert injectedFile.isValid();
     Ref<EditorWindowImpl> editorWindow = Ref.create();
@@ -33,8 +36,8 @@ final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker 
           }
         }
       }
-      editor.executeNonCancelableBlock(()-> {
-        EditorWindowImpl newEditorWindow = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
+      editorImpl.executeNonCancelableBlock(()-> {
+        EditorWindowImpl newEditorWindow = new EditorWindowImpl(documentRangeImpl, editorImpl, injectedFile, documentRange.isOneLine());
         editorWindow.set(newEditorWindow);
         allEditors.add(newEditorWindow);
         newEditorWindow.assertValid();

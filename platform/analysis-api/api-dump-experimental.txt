@@ -7,6 +7,9 @@
 - highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
 f:com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 - *s:getModCommandPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+com.intellij.codeInsight.lookup.LookupEx
+- com.intellij.codeInsight.lookup.Lookup
+- *a:setPresentation(com.intellij.codeInsight.lookup.LookupPresentation):V
 *e:com.intellij.codeInsight.lookup.LookupPositionStrategy
 - java.lang.Enum
 - sf:ONLY_ABOVE:com.intellij.codeInsight.lookup.LookupPositionStrategy
