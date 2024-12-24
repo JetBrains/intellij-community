@@ -314,7 +314,7 @@
       ],
       "autoscrollFromSource.svg": "general/autoscrollFromSource.svg",
       "autoscrollToSource.svg": "general/autoscrollToSource.svg",
-      "user.svg": "general/user.svg",
+      "user.svg": ["general/user.svg", "vcs/author.svg"],
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",
         "actions/findAndShowNextMatchesSmall.svg",
@@ -641,7 +641,7 @@
       "classInitializer.svg": "nodes/classInitializer.svg",
       "constant.svg": "nodes/constant.svg",
       "controller.svg": "nodes/controller.svg",
-      "copyOfFolder.svg": "nodes/copyOfFolder.svg",
+      "copyOfFolder.svg": ["nodes/copyOfFolder.svg", "vcs/folders.svg"],
       "dataColumn.svg": "nodes/dataColumn.svg",
       "dataSchema.svg": "nodes/dataSchema.svg",
       "dataTables.svg": "nodes/DataTables.svg",
@@ -722,6 +722,7 @@
       "star.svg": "nodes/favorite.svg",
       "starEmpty.svg": "nodes/notFavoriteOnHover.svg",
       "static.svg": "nodes/static.svg",
+      "sortBySeverity.svg": "nodes/sortBySeverity.svg",
       "tag.svg": "tag.svg",
       "template.svg": "nodes/template.svg",
       "test.svg": "nodes/test.svg",
@@ -939,20 +940,24 @@
       ]
     },
     "vcs": {
-      "diff.svg": "actions/diff.svg",
+      "arrowLeft.svg": "vcs/arrow_left.svg",
+      "arrowRight.svg": "vcs/arrow_right.svg",
       "changes.svg": "actions/listChanges.svg",
+      "clone.svg": "vcs/clone.svg",
       "commit.svg": [
         "actions/commit.svg",
         "vcs/commitNode.svg"
       ],
-      "revert.svg": "actions/rollback.svg",
-      "update.svg": "actions/checkOut.svg",
+      "changelist.svg": "vcs/changelist.svg",
+      "diff.svg": "actions/diff.svg",
       "fetch.svg": "vcs/fetch.svg",
       "merge.svg": "vcs/merge.svg",
       "patch.svg": "vcs/patch.svg",
       "push.svg": "vcs/push.svg",
-      "changelist.svg": "vcs/changelist.svg",
+      "remove.svg": "actions/remove.svg",
+      "revert.svg": "actions/rollback.svg",
       "shelve.svg": ["vcs/shelveSilent.svg", "ide/incomingChangesOn.svg"],
+      "update.svg": "actions/checkOut.svg",
       "unshelve.svg": [
         "vcs/Unshelve.svg",
         "vcs/unshelveSilent.svg"
