@@ -77,10 +77,11 @@ internal class JavaDefaultMethodsNotOverriddenByDelegationInspection : AbstractK
 
                 val bodyTypeSuperFix = IntentionWrapper(KtDelegateJavaDefaultMethodsQuickFix(methodsToOverride, BodyType.Super))
 
+                val fixes = if (holder.isOnTheFly) listOfNotNull(bodyTypeDelegateFix, bodyTypeSuperFix).toTypedArray() else emptyArray()
                 holder.registerProblem(
                     specifier,
                     KotlinBundle.message("inspection.java.default.methods.not.overridden.by.delegation.message"),
-                    *listOfNotNull(bodyTypeDelegateFix, bodyTypeSuperFix).toTypedArray()
+                    *fixes
                 )
             }
         }
