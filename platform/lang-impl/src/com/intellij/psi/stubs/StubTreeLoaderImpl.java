@@ -183,6 +183,8 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
           message += " (this)";
         }
         message += " shouldBeIndexed=" + IndexableFilesIndex.getInstance(project).shouldBeIndexed(vFile);
+        // Should return the same as above. Why do we need two different API?
+        message += " shouldBeIndexed2=" + ((FileBasedIndexImpl)FileBasedIndex.getInstance()).belongsToProjectIndexableFiles(vFile, project);
         message += "\n";
       }
     }
