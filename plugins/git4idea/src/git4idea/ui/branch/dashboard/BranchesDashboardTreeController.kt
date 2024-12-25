@@ -6,12 +6,14 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreePath
@@ -122,3 +124,15 @@ internal class BranchesDashboardTreeController(
     }
   }
 }
+
+@ApiStatus.Internal
+val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
+  object : VcsLogApplicationSettings.CustomBooleanProperty("Change.Log.Filter.on.Branch.Selection") {
+    override fun defaultValue() = false
+  }
+
+@ApiStatus.Internal
+val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
+  object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
+    override fun defaultValue() = false
+  }
