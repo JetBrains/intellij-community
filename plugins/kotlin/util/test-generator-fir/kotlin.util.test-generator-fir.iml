@@ -71,6 +71,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.fir.tests" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2.tests" scope="TEST" />

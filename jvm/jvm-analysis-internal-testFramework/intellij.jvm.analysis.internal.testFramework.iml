@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.testFramework" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" exported="" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.java" />

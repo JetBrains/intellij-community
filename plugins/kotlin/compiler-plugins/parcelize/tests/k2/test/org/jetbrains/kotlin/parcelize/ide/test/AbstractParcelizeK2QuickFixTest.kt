@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.parcelize.ide.test
 
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
