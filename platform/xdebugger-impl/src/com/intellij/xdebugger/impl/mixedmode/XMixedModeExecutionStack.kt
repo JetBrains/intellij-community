@@ -54,7 +54,6 @@ class XMixedModeExecutionStack(
     }
   }
   suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
-      prepareThreadBeforeFrameComputation()
       logger.info("Preparation for frame computation completed")
 
       val lowLevelAcc = MyAccumulatingContainer()
@@ -94,12 +93,6 @@ class XMixedModeExecutionStack(
         }
       }
     }
-
-  private suspend fun prepareThreadBeforeFrameComputation() {
-    val threadId = lowLevelExecutionStack.nativeThreadId
-    val lowLevel = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
-    lowLevel.prepareThreadBeforeFramesComputation(threadId)
-  }
 
   override fun getNativeThreadId(): Long = lowLevelExecutionStack.nativeThreadId
 

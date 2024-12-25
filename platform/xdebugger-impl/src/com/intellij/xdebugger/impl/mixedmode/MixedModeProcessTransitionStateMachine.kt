@@ -31,7 +31,6 @@ class MixedModeProcessTransitionStateMachine(
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStoppedWaitingForLowStepToComplete(val highSuspendContext: XSuspendContext) : State
   object OnlyLowStopped : State
-  class WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread : State
   class HighLevelDebuggerStoppedAfterStepWaitingForLowStop(val highLevelSuspendContext : XSuspendContext) : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
   class ManagedStepStarted(val low: XSuspendContext) : State
@@ -139,17 +138,10 @@ class MixedModeProcessTransitionStateMachine(
 
       is HighLevelPositionReached -> {
         when (currentState) {
-          is WaitingForHighProcessPositionReached, is WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread, BothRunning -> {
+          is WaitingForHighProcessPositionReached, BothRunning -> {
             runBlocking(stateMachineHelperScope.coroutineContext) {
               val stopThreadId = high.getStoppedThreadId(event.suspendContext)
-              if (currentState is WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread) {
-                // Low level breakpoint has been triggered on the stopped thread, so this thread is not blocked
-                low.pauseMixedModeSession(stopThreadId)
-              }
-              else {
-                // No native evaluation is possible on blocked in kernel thread
-                low.pauseMixedModeSessionUnBlockStopEventThread(stopThreadId)
-              }
+              low.pauseMixedModeSession(stopThreadId)
             }
 
             logger.info("Low level process has been stopped")
@@ -157,9 +149,7 @@ class MixedModeProcessTransitionStateMachine(
           }
           is HighLevelDebuggerResumedForStepOnlyLowStopped -> {
             val stopThreadId = high.getStoppedThreadId(event.suspendContext)
-            runBlocking(stateMachineHelperScope.coroutineContext) {
-              low.pauseMixedModeSessionUnBlockStopEventThread(stopThreadId)
-            }
+            low.pauseMixedModeSession(stopThreadId)
 
             // Resume low level and stop it, it's made to have low level stack
             changeState(HighLevelDebuggerStoppedAfterStepWaitingForLowStop(event.suspendContext))
@@ -186,7 +176,7 @@ class MixedModeProcessTransitionStateMachine(
               // please keep don't await it, it will break the status change logic
               high.pauseMixedModeSession()
             }
-            changeState(WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread())
+            changeState(WaitingForHighProcessPositionReached)
           }
           is OnlyHighStopped, is OnlyHighStoppedWaitingForLowStepToComplete -> {
             if (currentState is OnlyHighStoppedWaitingForLowStepToComplete)
