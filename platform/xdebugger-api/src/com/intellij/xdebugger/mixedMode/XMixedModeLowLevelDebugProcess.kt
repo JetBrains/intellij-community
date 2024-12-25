@@ -2,8 +2,11 @@
 package com.intellij.xdebugger.mixedMode
 
 import com.intellij.xdebugger.frame.XSuspendContext
+import kotlinx.coroutines.Deferred
 
 interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
+  val ready : Deferred<Unit>
+
   suspend fun continueAllThreads(exceptEventThread: Boolean, silent : Boolean)
   suspend fun continueHighDebuggerServiceThreads()
 
