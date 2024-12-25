@@ -106,11 +106,14 @@ public class PyTypeCheckerInspection extends PyInspection {
             return;
           }
 
-          PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
-
-          if (actual != null && returnExpr != null) {
-            if (reportTypedDictProblems(expected, actual, returnExpr)) return;
+          if (expected instanceof PyTypedDictType expectedTypedDictType) {
+            if (returnExpr != null && PyTypedDictType.isDictExpression(returnExpr, myTypeEvalContext)) {
+              reportTypedDictProblems(expectedTypedDictType, returnExpr);
+              return;
+            }
           }
+
+          PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
 
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
@@ -219,11 +222,12 @@ public class PyTypeCheckerInspection extends PyInspection {
         }
       }
 
-      final PyType actual = tryPromotingType(value, expected);
-      if (expected != null && actual != null) {
-        if (reportTypedDictProblems(expected, actual, value)) return;
+      if (expected instanceof PyTypedDictType expectedTypedDictType && PyTypedDictType.isDictExpression(value, myTypeEvalContext)) {
+        reportTypedDictProblems(expectedTypedDictType, value);
+        return;
       }
 
+      final PyType actual = tryPromotingType(value, expected);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -241,50 +245,25 @@ public class PyTypeCheckerInspection extends PyInspection {
       return Ref.create(myTypeEvalContext.getType(attrDefinition));
     }
 
-    private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyType actual, @NotNull PyExpression value) {
-      final PyExpression valueWithoutKeyword = value instanceof PyKeywordArgument ? ((PyKeywordArgument)value).getValueExpression() : value;
-      final PyTypedDictType.TypeCheckingResult result =
-        PyTypedDictType.Companion.checkTypes(expected, actual, myTypeEvalContext, valueWithoutKeyword);
-      if (result == null) return false;
-      if (!result.getMatch()) {
-        if (result.getValueTypeErrors().isEmpty() &&
-            result.getExtraKeys().isEmpty() &&
-            result.getMissingKeys().isEmpty()) {
-          registerProblem(valueWithoutKeyword, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
-                                                                   PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
-                                                                   PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
-        }
-
-        if (!result.getValueTypeErrors().isEmpty()) {
-          result.getValueTypeErrors().forEach(error -> {
-            registerProblem(error.getActualExpression(), PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
-                                                                             PythonDocumentationProvider.getTypeName(
-                                                                               error.getExpectedType(), myTypeEvalContext),
-                                                                             PythonDocumentationProvider.getTypeName(error.getActualType(),
-                                                                                                                     myTypeEvalContext)));
-          });
-          if (!(PyTypedDictType.isDictExpression(valueWithoutKeyword, myTypeEvalContext))) {
-            return true;
-          }
-        }
-        if (!result.getExtraKeys().isEmpty()) {
-          result.getExtraKeys().forEach(error -> {
-            registerProblem(Objects.requireNonNullElse(error.getActualExpression(), valueWithoutKeyword),
-                            PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", error.getKey(),
-                                                error.getExpectedTypedDictName()));
-          });
-        }
-        if (!result.getMissingKeys().isEmpty()) {
-          result.getMissingKeys().forEach(error -> {
-            final List<String> missingKeys = error.getMissingKeys();
-            registerProblem(error.getActualExpression() != null ? error.getActualExpression() : valueWithoutKeyword,
-                            PyPsiBundle.message("INSP.type.checker.typed.dict.missing.keys", error.getExpectedTypedDictName(),
-                                                missingKeys.size(),
-                                                StringUtil.join(missingKeys, s -> String.format("'%s'", s), ", ")));
-          });
-        }
-      }
-      return true;
+    private void reportTypedDictProblems(@NotNull PyTypedDictType expectedType, @NotNull PyExpression expression) {
+      @NotNull PyTypedDictType.TypeCheckingResult result = new PyTypedDictType.TypeCheckingResult();
+      PyTypedDictType.checkExpression(expectedType, expression, myTypeEvalContext, result);
+      result.getValueTypeErrors().forEach(error -> {
+        registerProblem(error.getActualExpression(),
+                        PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                            PythonDocumentationProvider.getTypeName(error.getExpectedType(), myTypeEvalContext),
+                                            PythonDocumentationProvider.getTypeName(error.getActualType(), myTypeEvalContext)));
+      });
+      result.getExtraKeys().forEach(error -> {
+        registerProblem(Objects.requireNonNullElse(error.getActualExpression(), expression),
+                        PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", error.getKey(), error.getExpectedTypedDictName()));
+      });
+      result.getMissingKeys().forEach(error -> {
+        registerProblem(error.getActualExpression() != null ? error.getActualExpression() : expression,
+                        PyPsiBundle.message("INSP.type.checker.typed.dict.missing.keys", error.getExpectedTypedDictName(),
+                                            error.getMissingKeys().size(),
+                                            StringUtil.join(error.getMissingKeys(), s -> String.format("'%s'", s), ", ")));
+      });
     }
 
     private @Nullable PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected) {
@@ -564,8 +543,13 @@ public class PyTypeCheckerInspection extends PyInspection {
                                               @Nullable PyType argumentType,
                                               @Nullable PyExpression argument,
                                               @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
-      if (parameterType != null && argumentType != null && argument != null) {
-        if (reportTypedDictProblems(parameterType, argumentType, argument)) return true;
+      argument = PyUtil.peelArgument(argument);
+
+      if (parameterType instanceof PyTypedDictType expectedTypedDictType) {
+        if (argument != null && PyTypedDictType.isDictExpression(argument, myTypeEvalContext)) {
+          reportTypedDictProblems(expectedTypedDictType, argument);
+          return true;
+        }
       }
 
       return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&

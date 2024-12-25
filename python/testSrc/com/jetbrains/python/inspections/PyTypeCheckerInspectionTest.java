@@ -1402,7 +1402,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            record_movie(movie={'name': <warning descr="Expected type 'str', got 'int' instead">1984</warning>, 'year': 1984})
                            record_movie(movie=<warning descr="TypedDict 'Movie' has missing keys: 'name', 'year'">{}</warning>)
                            record_movie(movie={'name': '1984', 'year': 1984, <warning descr="Extra key 'director' for TypedDict 'Movie'">'director': 'Michael Radford'</warning>})
-                           record_movie(movie=<warning descr="Expected type 'Movie', got 'Point' instead">Point(x=123, y=321)</warning>)""")
+                           record_movie(<warning descr="Expected type 'Movie', got 'Point' instead">movie=Point(x=123, y=321)</warning>)""")
     );
   }
 

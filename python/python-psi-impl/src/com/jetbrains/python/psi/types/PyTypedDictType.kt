@@ -7,7 +7,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.impl.PyPsiUtils
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -136,112 +135,60 @@ class PyTypedDictType @JvmOverloads constructor(
     const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
 
     /**
-     * [actual] matches [expected] if:
-     * * all required keys from [expected] are present in [actual]
-     * * all keys from [actual] are present in [expected]
-     * * each key has the same value type in [expected] and [actual]
+     * [expression] matches [expectedType] if:
+     * * all required keys from [expectedType] are present in [expression]
+     * * all keys from [expression] are present in [expectedType]
+     * * each key has the same value type in [expectedType] and [expression]
      */
-    fun checkTypes(expected: PyType,
-                   actual: PyType?,
-                   context: TypeEvalContext,
-                   value: PyExpression?): TypeCheckingResult? {
-      if (!isDictExpression(value, context)) {
-        if (actual !is PyTypedDictType) return null
-        val match = checkStructuralCompatibility(expected, actual, context) ?: return null
-        return TypeCheckingResult(match)
+    @ApiStatus.Internal
+    @JvmStatic
+    fun checkExpression(
+      expectedType: PyTypedDictType,
+      expression: PyExpression,
+      context: TypeEvalContext,
+      result: TypeCheckingResult,
+    ) {
+      assert(isDictExpression(expression, context))
+      val actualFields = getTypedDictFieldsFromExpression(expression, context)
+      if (actualFields == null) {
+        result.valueTypeErrors.add(ValueTypeError(expression, expectedType, context.getType(expression)))
+        return
       }
-      if (expected !is PyTypedDictType) return null
 
-      val mandatoryArguments = expected.fields.filterValues { it.qualifiers.isRequired == true}.mapValues { Pair(it.value.value, it.value.type) }
-      val actualArguments = getTypedDictFieldsFromExpression(value, context) ?: return null
-
-      return match(mandatoryArguments, expected.fields, actualArguments, context, value, expected.name)
-    }
-
-    private fun match(mandatoryArguments: Map<String, Pair<PyExpression?, PyType?>>,
-                      expectedArguments: Map<String, FieldTypeAndTotality>,
-                      actualArguments: Map<String, Pair<PyExpression?, PyType?>>,
-                      context: TypeEvalContext,
-                      actualTypedDict: PyExpression?,
-                      expectedTypedDictName: String): TypeCheckingResult {
-      val valueTypeErrors = mutableListOf<ValueTypeError>()
-      val missingKeys = mutableListOf<MissingKeysError>()
-      val extraKeys = mutableListOf<ExtraKeyError>()
-      var match = true
-
-      val containedExpression = PyPsiUtils.flattenParens(PyUtil.peelArgument(actualTypedDict))
-      val typedDictInstanceCreation = isDictExpression(containedExpression, context)
-
-      actualArguments.forEach {
-        val actualValue = it.value.first
+      actualFields.forEach {
         val key = it.key
-        if (!expectedArguments.containsKey(key)) {
-          if (typedDictInstanceCreation) {
-            val extraKeyToHighlight = PsiTreeUtil.getParentOfType(actualValue, PyKeyValueExpression::class.java)
-                                      ?: PsiTreeUtil.getParentOfType(actualValue, PyKeywordArgument::class.java)
-                                      ?: actualValue
-            extraKeys.add(ExtraKeyError(extraKeyToHighlight, expectedTypedDictName, key))
-            match = false
+        val (actualFieldValue, actualFieldType) = it.value
+        if (expectedType.fields.containsKey(key)) {
+          val expectedFieldType = expectedType.fields[key]?.type
+          if (expectedFieldType is PyTypedDictType && actualFieldValue != null && isDictExpression(actualFieldValue, context)) {
+            checkExpression(expectedFieldType, actualFieldValue, context, result)
           }
           else {
-            return TypeCheckingResult(false)
-          }
-        }
-        val expectedType = expectedArguments[key]?.type
-        val actualType = it.value.second
-        if (expectedType is PyTypedDictType && (actualType is PyTypedDictType || isDictExpression(actualValue, context))) {
-          val res = checkTypes(expectedType, actualType, context, actualValue)
-          if (res != null && !res.match) {
-            val (innerMatch, innerValueTypeErrors, innerMissingKeys, innerExtraKeys) = res
-            if (typedDictInstanceCreation) {
-              if (!innerMatch && innerExtraKeys.isEmpty() && innerMissingKeys.isEmpty() && innerValueTypeErrors.isEmpty()) {
-                match = false
-                valueTypeErrors.add(ValueTypeError(actualValue, expectedType,
-                                                   actualType)) // inner TypedDict didn't match, but it's not a dict definition
-              }
-              match = false
-              valueTypeErrors.addAll(innerValueTypeErrors)
-              extraKeys.addAll(innerExtraKeys)
-              missingKeys.addAll(innerMissingKeys)
-            }
-            else if (!innerMatch) {
-              return TypeCheckingResult(false)
-            }
-          }
-        }
-        else {
-          val promotedType = if (actualValue != null) {
-            PyLiteralType.promoteToLiteral(actualValue, expectedType, context, null) ?: context.getType(actualValue)
-          }
-          else {
-            actualType
-          }
-          if (!strictUnionMatch(expectedType, promotedType, context)) {
-            if (typedDictInstanceCreation) {
-              valueTypeErrors.add(ValueTypeError(actualValue, expectedType, it.value.second))
-              match = false
+            val promotedType = if (actualFieldValue != null) {
+              PyLiteralType.promoteToLiteral(actualFieldValue, expectedFieldType, context, null) ?: context.getType(actualFieldValue)
             }
             else {
-              return TypeCheckingResult(false)
+              actualFieldType
+            }
+            if (!strictUnionMatch(expectedFieldType, promotedType, context)) {
+              result.valueTypeErrors.add(ValueTypeError(actualFieldValue, expectedFieldType, actualFieldType))
             }
           }
         }
-      }
-
-      if (!actualArguments.keys.containsAll(mandatoryArguments.keys)) {
-        if (typedDictInstanceCreation) {
-          missingKeys.add(MissingKeysError(actualTypedDict, expectedTypedDictName, mandatoryArguments.keys.filter {
-            !actualArguments.containsKey(it)
-          }))
-          match = false
-        }
         else {
-          return TypeCheckingResult(false)
+          val extraKeyToHighlight = PsiTreeUtil.getParentOfType(actualFieldValue, PyKeyValueExpression::class.java)
+                                    ?: PsiTreeUtil.getParentOfType(actualFieldValue, PyKeywordArgument::class.java)
+                                    ?: actualFieldValue
+          result.extraKeys.add(ExtraKeyError(extraKeyToHighlight, expectedType.name, key))
         }
       }
 
-      return if (typedDictInstanceCreation) TypeCheckingResult(match, valueTypeErrors, missingKeys, extraKeys)
-      else TypeCheckingResult(true)
+      val missingKeys = expectedType.fields.entries
+        .filter { (key, value) -> value.qualifiers.isRequired == true && key !in actualFields }
+        .map { it.key }
+      if (missingKeys.isNotEmpty()) {
+        result.missingKeys.add(MissingKeysError(expression, expectedType.name, missingKeys))
+      }
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
@@ -252,9 +199,13 @@ class PyTypedDictType @JvmOverloads constructor(
      * Rules for type-checking TypedDicts are described in PEP-589
      * @see <a href=https://www.python.org/dev/peps/pep-0589/#type-consistency>PEP-589</a>
      */
-    private fun checkStructuralCompatibility(expected: PyType?,
-                                             actual: PyTypedDictType,
-                                             context: TypeEvalContext): Boolean? {
+    @ApiStatus.Internal
+    @JvmStatic
+    fun match(
+      expected: PyType,
+      actual: PyTypedDictType,
+      context: TypeEvalContext,
+    ): Boolean? {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
         val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
         val elementTypes = expected.elementTypes
@@ -305,7 +256,7 @@ class PyTypedDictType @JvmOverloads constructor(
 
     @ApiStatus.Internal
     @JvmStatic
-    fun isDictExpression(expression: PyExpression?, context: TypeEvalContext): Boolean {
+    fun isDictExpression(expression: PyExpression, context: TypeEvalContext): Boolean {
       if (expression is PyDictLiteralExpression) return true
       if (expression is PyCallExpression) {
         val callee = expression.callee
@@ -317,7 +268,7 @@ class PyTypedDictType @JvmOverloads constructor(
     }
 
     private fun getTypedDictFieldsFromExpression(
-      expression: PyExpression?,
+      expression: PyExpression,
       context: TypeEvalContext,
     ): Map<String, Pair<PyExpression?, PyType?>>? {
       assert(isDictExpression(expression, context))
@@ -357,11 +308,9 @@ class PyTypedDictType @JvmOverloads constructor(
 
   data class ValueTypeError(val actualExpression: PyExpression?, val expectedType: PyType?, val actualType: PyType?)
 
-  data class TypeCheckingResult(val match: Boolean,
-                                val valueTypeErrors: List<ValueTypeError>,
-                                val missingKeys: List<MissingKeysError>,
-                                val extraKeys: List<ExtraKeyError>) {
-
-    constructor(match: Boolean) : this(match, emptyList(), emptyList(), emptyList())
+  class TypeCheckingResult {
+    val valueTypeErrors: MutableList<ValueTypeError> = mutableListOf()
+    val missingKeys: MutableList<MissingKeysError> = mutableListOf()
+    val extraKeys: MutableList<ExtraKeyError> = mutableListOf()
   }
 }
