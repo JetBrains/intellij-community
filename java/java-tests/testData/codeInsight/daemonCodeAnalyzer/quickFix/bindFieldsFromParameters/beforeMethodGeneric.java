@@ -1,8 +1,8 @@
-// "Bind constructor parameters to fields" "false"
+// "Bind method parameters to fields" "true-preview"
 
 class Bar {
 
-  <T> void get<caret>(Class<T> a) {
+  <T> void <caret>get(Class<T> a, int b) {
 
   }
 }
