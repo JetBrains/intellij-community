@@ -278,10 +278,15 @@ object ChangeTypeQuickFixFactories {
                     }
                 }
             }
-            if (expression is KtPrefixExpression) {
-                val declaration =
-                    expression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.psi as? KtCallableDeclaration ?: return@buildList
-                add(UpdateTypeQuickFix(declaration, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType)))
+            // Fixing overloaded operators
+            if (expression is KtOperationExpression) {
+                val callable = expression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return@buildList
+                // Do not create the fix if descriptor has more than one overridden declaration
+                if (callable.allOverriddenSymbols.toSet().size > 1) return@buildList
+
+                val singleMatchingOverriddenFunctionPsi = callable.psiSafe<KtCallableDeclaration>() ?:return@buildList
+                if (!singleMatchingOverriddenFunctionPsi.isWritable) return@buildList
+                add(UpdateTypeQuickFix(singleMatchingOverriddenFunctionPsi, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType)))
             }
         }
     }
