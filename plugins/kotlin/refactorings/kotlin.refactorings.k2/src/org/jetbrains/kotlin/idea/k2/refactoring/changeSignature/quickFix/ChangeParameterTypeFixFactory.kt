@@ -52,14 +52,27 @@ object ChangeParameterTypeFixFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createTypeMismatchFixes(psi: PsiElement, targetType: KaType): List<KotlinQuickFixAction<*>> {
-        val valueArgument = getValueArgument(psi) ?: return emptyList()
-
-        val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
+        val psiParent = psi.parent ?: return emptyList()
+        // Support of overloaded operators and anonymous objects infix calls
+        val (argumentKey, callElement) = if (psiParent is KtOperationExpression) {
+            val argumentKey = psi as? KtExpression
+            val callElement = psiParent
+            Pair(argumentKey, callElement)
+        } else {
+            val valueArgument = getValueArgument(psi) ?: return emptyList()
+            val valueArgumentExpression = valueArgument.getArgumentExpression() ?: return emptyList()
+            val argumentKey = if (valueArgumentExpression is KtParenthesizedExpression) {
+                psi as? KtExpression
+            } else {
+                valueArgumentExpression
+            }
+            val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
+            Pair(argumentKey, callElement)
+        }
         val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
-        val paramSymbol =
-            memberCall.argumentMapping[valueArgument.getArgumentExpression()] ?: memberCall.argumentMapping[psi as? KtExpression]
+        val paramSymbol = memberCall.argumentMapping[argumentKey]
         val parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
 
         createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol)?.let { fix -> return listOf(fix) } ?: return emptyList()
