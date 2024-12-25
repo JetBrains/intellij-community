@@ -94,8 +94,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param context the compilation context.
    * @return the collection of output roots.
    */
-  @Unmodifiable
-  public abstract @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context);
+  public abstract @Unmodifiable @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context);
 
   @Override
   public String toString() {

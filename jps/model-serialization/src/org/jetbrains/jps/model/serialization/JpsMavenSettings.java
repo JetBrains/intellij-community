@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.Namespace;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,14 +32,12 @@ public final class JpsMavenSettings {
     Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0")
   );
 
-  @NotNull
-  public static File getUserMavenSettingsXml() {
+  public static @NotNull File getUserMavenSettingsXml() {
     String defaultMavenFolder = SystemProperties.getUserHome() + File.separator + M2_DIR;
     return new File(defaultMavenFolder, SETTINGS_XML);
   }
 
-  @Nullable
-  public static File getGlobalMavenSettingsXml() {
+  public static @Nullable File getGlobalMavenSettingsXml() {
     String mavenHome = resolveMavenHomeDirectory();
     if (mavenHome == null) {
       return null;
@@ -47,8 +45,7 @@ public final class JpsMavenSettings {
     return new File(mavenHome + File.separator + CONF_DIR, SETTINGS_XML);
   }
 
-  @Nullable
-  private static String resolveMavenHomeDirectory() {
+  private static @Nullable String resolveMavenHomeDirectory() {
     String m2home = System.getenv("M2_HOME");
     if (isValidMavenHome(m2home)) return m2home;
 
@@ -70,8 +67,7 @@ public final class JpsMavenSettings {
     return null;
   }
 
-  @Nullable
-  public static String getMavenRepositoryPath() {
+  public static @Nullable String getMavenRepositoryPath() {
     String defaultMavenFolder = SystemProperties.getUserHome() + File.separator + M2_DIR;
     // Check user local settings
     File userSettingsFile = getUserMavenSettingsXml();
@@ -106,8 +102,7 @@ public final class JpsMavenSettings {
    * @return Map of Remote Repository ID to Authentication Data elements.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static Map<String, RemoteRepositoryAuthentication> loadAuthenticationSettings(
+  public static @NotNull Map<String, RemoteRepositoryAuthentication> loadAuthenticationSettings(
     @Nullable File globalMavenSettingsXml,
     @NotNull File userMavenSettingsXml
   ) {
@@ -125,8 +120,7 @@ public final class JpsMavenSettings {
     return result;
   }
 
-  @Nullable
-  private static String fromBrew() {
+  private static @Nullable String fromBrew() {
     final File brewDir = new File("/usr/local/Cellar/maven");
     final String[] list = brewDir.list();
     if (list == null || list.length == 0) return null;
@@ -136,8 +130,7 @@ public final class JpsMavenSettings {
     return brewDir + File.separator + list[0] + "/libexec";
   }
 
-  @Nullable
-  private static String getRepositoryFromSettings(final File file) {
+  private static @Nullable String getRepositoryFromSettings(final File file) {
     Element settingsXmlRoot;
     try {
       settingsXmlRoot = JDOMUtil.load(file);

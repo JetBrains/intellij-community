@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,7 @@ public class ResourcePatterns {
     }
   }
 
-  public boolean isResourceFile(File file, @NotNull final File srcRoot) {
+  public boolean isResourceFile(File file, final @NotNull File srcRoot) {
     final String name = file.getName();
     final String relativePathToParent;
     final String parentPath = file.getParent();
@@ -161,9 +161,9 @@ public class ResourcePatterns {
   }
   
   private static class CompiledPattern {
-    @NotNull final Pattern fileName;
-    @Nullable final Pattern dir;
-    @Nullable final Pattern srcRoot;
+    final @NotNull Pattern fileName;
+    final @Nullable Pattern dir;
+    final @Nullable Pattern srcRoot;
 
     CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
       this.fileName = fileName;

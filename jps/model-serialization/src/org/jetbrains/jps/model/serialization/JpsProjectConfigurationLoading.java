@@ -93,8 +93,7 @@ public final class JpsProjectConfigurationLoading {
     return false;
   }
 
-  @Unmodifiable
-  static @NotNull List<Path> listXmlFiles(@NotNull Path dir) {
+  static @Unmodifiable @NotNull List<Path> listXmlFiles(@NotNull Path dir) {
     try {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> it.getFileName().toString().endsWith(".xml") && Files.isRegularFile(it))) {
         return ContainerUtil.collect(stream.iterator());

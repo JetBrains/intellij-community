@@ -63,8 +63,7 @@ public class CompiledClass extends UserDataHolderBase{
     return mySourceFiles;
   }
 
-  @Unmodifiable
-  public @NotNull List<String> getSourceFilesPaths() {
+  public @Unmodifiable @NotNull List<String> getSourceFilesPaths() {
     return ContainerUtil.map(mySourceFiles, file -> file.getPath());
   }
 

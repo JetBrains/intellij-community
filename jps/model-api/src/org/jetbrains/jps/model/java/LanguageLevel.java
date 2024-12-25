@@ -42,8 +42,7 @@ public enum LanguageLevel {
     myVersion = JavaVersion.compose(major);
   }
 
-  @NotNull
-  public JavaVersion toJavaVersion() {
+  public @NotNull JavaVersion toJavaVersion() {
     return myVersion;
   }
 

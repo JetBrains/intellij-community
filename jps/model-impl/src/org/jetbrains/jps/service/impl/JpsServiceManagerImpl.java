@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.service.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -77,8 +77,7 @@ public final class JpsServiceManagerImpl extends JpsServiceManager {
     }
   }
 
-  @NotNull
-  private <T> Collection<T> loadExtensions(Class<T> extensionClass) {
+  private @NotNull <T> Collection<T> loadExtensions(Class<T> extensionClass) {
     JpsPluginManager pluginManager = myPluginManager;
     if (pluginManager == null || !pluginManager.isFullyLoaded()) {
       Iterator<JpsPluginManager> managers = ServiceLoader.load(JpsPluginManager.class, JpsPluginManager.class.getClassLoader()).iterator();
@@ -106,9 +105,8 @@ public final class JpsServiceManagerImpl extends JpsServiceManager {
   }
 
   private static final class SingleClassLoaderPluginManager extends JpsPluginManager {
-    @NotNull
     @Override
-    public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
+    public @NotNull <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
       ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
       return ContainerUtil.newArrayList(loader);
     }

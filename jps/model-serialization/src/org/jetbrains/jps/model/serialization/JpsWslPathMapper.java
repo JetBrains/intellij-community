@@ -44,8 +44,7 @@ public final class JpsWslPathMapper implements JpsPathMapper {
     return url;
   }
 
-  @NotNull
-  private String mapPath(@NotNull String path) {
+  private @NotNull String mapPath(@NotNull String path) {
     if (myWslRootPrefix == null || path.indexOf(':') != 1) {
       String wslPath;
       try {

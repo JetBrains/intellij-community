@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -11,8 +11,7 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 public final class FileNameMatcherFactoryImpl extends FileNameMatcherFactory {
   @Override
-  @NotNull
-  public FileNameMatcher createMatcher(@NotNull String pattern) {
+  public @NotNull FileNameMatcher createMatcher(@NotNull String pattern) {
     if (pattern.startsWith("*.") &&
         pattern.indexOf('*', 2) < 0 &&
         pattern.indexOf('.', 2) < 0 &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.client;
 
 import com.intellij.openapi.application.PathManager;
@@ -85,8 +85,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
   }
 
   @Override
-  @Unmodifiable
-  public List<OutputLoadResult> downloadCompiledModules(@NotNull JpsLoaderContext context, @NotNull List<AffectedModule> affectedModules) {
+  public @Unmodifiable List<OutputLoadResult> downloadCompiledModules(@NotNull JpsLoaderContext context, @NotNull List<AffectedModule> affectedModules) {
     File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesLoaderUtil.LOADER_TMP_FOLDER_NAME);
     if (targetDir.exists()) FileUtil.delete(targetDir);
     targetDir.mkdirs();

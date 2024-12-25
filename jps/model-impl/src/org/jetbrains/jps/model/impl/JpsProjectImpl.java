@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +35,8 @@ final class JpsProjectImpl extends JpsProjectBase {
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -52,31 +51,27 @@ final class JpsProjectImpl extends JpsProjectBase {
     myContainer.getChild(EXTERNAL_REFERENCES_COLLECTION_ROLE).addChild(reference);
   }
 
-  @NotNull
   @Override
-  public
+  public @NotNull
   <P extends JpsElement, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
-  JpsModule addModule(@NotNull final String name, @NotNull ModuleType moduleType) {
+  JpsModule addModule(final @NotNull String name, @NotNull ModuleType moduleType) {
     final JpsElementCollection<JpsModule> collection = myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
     return collection.addChild(new JpsModuleImpl<>(moduleType, name, moduleType.createDefaultProperties()));
   }
 
-  @NotNull
   @Override
-  public <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  public @NotNull <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType libraryType) {
     return myLibraryCollection.addLibrary(name, libraryType);
   }
 
-  @NotNull
   @Override
-  public List<JpsModule> getModules() {
+  public @NotNull List<JpsModule> getModules() {
     return myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).getElements();
   }
 
   @Override
-  @NotNull
-  public <P extends JpsElement> Iterable<JpsTypedModule<P>> getModules(JpsModuleType<P> type) {
+  public @NotNull <P extends JpsElement> Iterable<JpsTypedModule<P>> getModules(JpsModuleType<P> type) {
     return myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).getElementsOfType(type);
   }
 
@@ -90,15 +85,13 @@ final class JpsProjectImpl extends JpsProjectBase {
     myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).removeChild(module);
   }
 
-  @NotNull
   @Override
-  public JpsLibraryCollection getLibraryCollection() {
+  public @NotNull JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
   }
 
   @Override
-  @NotNull
-  public JpsSdkReferencesTable getSdkReferencesTable() {
+  public @NotNull JpsSdkReferencesTable getSdkReferencesTable() {
     return myContainer.getChild(JpsSdkReferencesTableImpl.ROLE);
   }
 }

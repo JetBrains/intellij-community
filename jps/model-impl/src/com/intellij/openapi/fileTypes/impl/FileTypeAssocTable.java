@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -145,8 +145,7 @@ public final class FileTypeAssocTable<T> {
     removeAllAssociations(bean -> bean.equals(type));
   }
 
-  @Nullable
-  public T findAssociatedFileType(@NotNull @NonNls CharSequence fileName) {
+  public @Nullable T findAssociatedFileType(@NotNull @NonNls CharSequence fileName) {
     if (!myExactFileNameMappings.isEmpty()) {
       T t = myExactFileNameMappings.get(fileName);
       if (t != null) return t;
@@ -207,8 +206,7 @@ public final class FileTypeAssocTable<T> {
     return ArrayUtilRt.toStringArray(extensions);
   }
 
-  @NotNull
-  public FileTypeAssocTable<T> copy() {
+  public @NotNull FileTypeAssocTable<T> copy() {
     return new FileTypeAssocTable<>(
       myExtensionMappings,
       myExactFileNameMappings,
@@ -219,8 +217,7 @@ public final class FileTypeAssocTable<T> {
     );
   }
 
-  @NotNull
-  public List<FileNameMatcher> getAssociations(@NotNull T type) {
+  public @NotNull List<FileNameMatcher> getAssociations(@NotNull T type) {
     List<FileNameMatcher> result = new ArrayList<>();
     for (Pair<FileNameMatcher, T> mapping : myMatchingMappings) {
       if (type.equals(mapping.getSecond())) {
@@ -247,9 +244,7 @@ public final class FileTypeAssocTable<T> {
     return result;
   }
 
-  @NotNull
-  @Unmodifiable
-  public List<String> getHashBangPatterns(@NotNull T type) {
+  public @NotNull @Unmodifiable List<String> getHashBangPatterns(@NotNull T type) {
     return myHashBangMap.entrySet().stream()
       .filter(e -> e.getValue().equals(type))
       .map(e -> e.getKey())

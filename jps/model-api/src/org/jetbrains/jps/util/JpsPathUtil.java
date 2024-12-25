@@ -41,8 +41,7 @@ public final class JpsPathUtil {
     return new File(urlToOsPath(url));
   }
 
-  @NotNull
-  public static String urlToOsPath(@NotNull String url) {
+  public static @NotNull String urlToOsPath(@NotNull String url) {
     return FileUtilRt.toSystemDependentName(urlToPath(url));
   }
 

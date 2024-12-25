@@ -18,9 +18,8 @@ public abstract class JpsGlobalBase extends JpsRootElementBase<JpsGlobalBase> im
     myContainer.setChild(JpsFileTypesConfigurationImpl.ROLE, new JpsFileTypesConfigurationImpl());
   }
 
-  @NotNull
   @Override
-  public JpsFileTypesConfiguration getFileTypesConfiguration() {
+  public @NotNull JpsFileTypesConfiguration getFileTypesConfiguration() {
     return myContainer.getChild(JpsFileTypesConfigurationImpl.ROLE);
   }
 
@@ -34,9 +33,8 @@ public abstract class JpsGlobalBase extends JpsRootElementBase<JpsGlobalBase> im
     myPathMapper = pathMapper;
   }
 
-  @NotNull
   @Override
-  public JpsElementReference<JpsGlobal> createReference() {
+  public @NotNull JpsElementReference<JpsGlobal> createReference() {
     return new JpsGlobalElementReference();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +22,8 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   }
 
   @Override
-  @NotNull
-  public JpsModel loadModel(@NotNull Path projectPath, @Nullable Path externalConfigurationDirectory, @Nullable Path optionsPath,
-                            boolean loadUnloadedModules) throws IOException {
+  public @NotNull JpsModel loadModel(@NotNull Path projectPath, @Nullable Path externalConfigurationDirectory, @Nullable Path optionsPath,
+                                     boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
       String projectCachePath = System.getProperty("jps.workspace.storage.project.cache.path");
@@ -59,11 +58,10 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   }
 
   @Override
-  @NotNull
-  public JpsProject loadProject(@NotNull Path projectPath,
-                                @Nullable Path externalConfigurationDirectory,
-                                @NotNull Map<String, String> pathVariables,
-                                boolean loadUnloadedModules) throws IOException {
+  public @NotNull JpsProject loadProject(@NotNull Path projectPath,
+                                         @Nullable Path externalConfigurationDirectory,
+                                         @NotNull Map<String, String> pathVariables,
+                                         boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
       return serializationViaWorkspaceModel.loadProject(projectPath, externalConfigurationDirectory, pathVariables, loadUnloadedModules);

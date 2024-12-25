@@ -520,14 +520,14 @@ public final class Iterators {
     };
   }
 
-  private static abstract class BaseIterator<T> implements Iterator<T> {
+  private abstract static class BaseIterator<T> implements Iterator<T> {
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }
   }
 
-  private static abstract class LazyIterator<T> implements Iterator<T> {
+  private abstract static class LazyIterator<T> implements Iterator<T> {
     private Iterator<? extends T> myDelegate;
 
     protected abstract Iterator<? extends T> create();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -21,9 +21,8 @@ class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectExtension
     myLanguageLevel = original.myLanguageLevel;
   }
 
-  @NotNull
   @Override
-  public JpsJavaProjectExtensionImpl createCopy() {
+  public @NotNull JpsJavaProjectExtensionImpl createCopy() {
     return new JpsJavaProjectExtensionImpl(this);
   }
 

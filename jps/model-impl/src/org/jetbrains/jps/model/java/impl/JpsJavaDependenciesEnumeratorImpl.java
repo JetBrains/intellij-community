@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -44,30 +30,26 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     myHandlers = handlers != null ? handlers : Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator productionOnly() {
+  public @NotNull JpsJavaDependenciesEnumerator productionOnly() {
     myProductionOnly = true;
     return this;
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator compileOnly() {
+  public @NotNull JpsJavaDependenciesEnumerator compileOnly() {
     myCompileOnly = true;
     return this;
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator runtimeOnly() {
+  public @NotNull JpsJavaDependenciesEnumerator runtimeOnly() {
     myRuntimeOnly = true;
     return this;
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator exportedOnly() {
+  public @NotNull JpsJavaDependenciesEnumerator exportedOnly() {
     if (myRecursively) {
       myRecursivelyExportedOnly = true;
     }
@@ -77,34 +59,29 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     return this;
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator recursivelyExportedOnly() {
+  public @NotNull JpsJavaDependenciesEnumerator recursivelyExportedOnly() {
     return recursively().exportedOnly();
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator includedIn(@NotNull JpsJavaClasspathKind classpathKind) {
+  public @NotNull JpsJavaDependenciesEnumerator includedIn(@NotNull JpsJavaClasspathKind classpathKind) {
     myClasspathKind = classpathKind;
     return this;
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesRootsEnumerator classes() {
+  public @NotNull JpsJavaDependenciesRootsEnumerator classes() {
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.COMPILED);
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesRootsEnumerator sources() {
+  public @NotNull JpsJavaDependenciesRootsEnumerator sources() {
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.SOURCES);
   }
 
-  @NotNull
   @Override
-  public JpsJavaDependenciesRootsEnumerator annotations() {
+  public @NotNull JpsJavaDependenciesRootsEnumerator annotations() {
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsAnnotationRootType.INSTANCE);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.ex;
 
 import com.intellij.util.containers.CollectionFactory;
@@ -39,23 +39,20 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
     }
   }
 
-  @NotNull
   @Override
-  public <T extends JpsElement, P, K extends JpsElementChildRole<T> & JpsElementParameterizedCreator<T, P>> T setChild(@NotNull K role, @NotNull P param) {
+  public @NotNull <T extends JpsElement, P, K extends JpsElementChildRole<T> & JpsElementParameterizedCreator<T, P>> T setChild(@NotNull K role, @NotNull P param) {
     final T child = role.create(param);
     return setChild(role, child);
   }
 
-  @NotNull
   @Override
-  public <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T setChild(@NotNull K role) {
+  public @NotNull <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T setChild(@NotNull K role) {
     final T child = role.create();
     return setChild(role, child);
   }
 
-  @NotNull
   @Override
-  public <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T getOrSetChild(@NotNull K role) {
+  public @NotNull <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T getOrSetChild(@NotNull K role) {
     synchronized (myDataLock) {
       final T cached = (T)myElements.get(role);
       if (cached != null) {
@@ -83,8 +80,7 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
     }
   }
 
-  @NotNull
-  private <T extends JpsElement> T putChild(JpsElementChildRole<T> role, T child) {
+  private @NotNull <T extends JpsElement> T putChild(JpsElementChildRole<T> role, T child) {
     JpsElementBase.setParent(child, myParent);
     myElements.put(role, child);
     return child;
