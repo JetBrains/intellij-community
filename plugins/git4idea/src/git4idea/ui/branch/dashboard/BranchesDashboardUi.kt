@@ -12,6 +12,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
+import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogContentProvider
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
@@ -20,6 +21,9 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.with
+import com.intellij.vcs.log.visible.filters.without
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -35,6 +39,18 @@ internal class BranchesDashboardUi(private val logUi: BranchesVcsLogUi) : Dispos
       is BranchNodeDescriptor.Branch -> logUi.jumpToBranch(selection.branchInfo.branchName, navigateSilently, focus)
       is BranchNodeDescriptor.Ref -> logUi.jumpToRefOrHash(selection.refInfo.refName, navigateSilently, focus)
     }
+  }
+
+  private fun filterLogBy(branches: List<String>) {
+    val logFilterUi = logUi.filterUi
+    val oldFilters = logFilterUi.filters
+    val newFilters = if (branches.isNotEmpty()) {
+      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(branches))
+    }
+    else {
+      oldFilters.without(VcsLogBranchLikeFilter::class.java)
+    }
+    logFilterUi.filters = newFilters
   }
 
   init {
@@ -58,7 +74,7 @@ internal class BranchesDashboardUi(private val logUi: BranchesVcsLogUi) : Dispos
                                                           logData.project,
                                                           model,
                                                           logUi.properties,
-                                                          logUi.filterUi,
+                                                          ::filterLogBy,
                                                           ::navigateToSelection,
                                                           logUi.toolbar
     )

@@ -22,7 +22,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.impl.VcsLogUiProperties
-import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
@@ -43,7 +42,7 @@ internal object BranchesDashboardTreeComponent {
     project: Project,
     model: BranchesDashboardTreeModel,
     logProperties: VcsLogUiProperties,
-    logFilterUi: VcsLogFilterUiEx,
+    logFilterer: (branches: List<String>) -> Unit,
     logNavigator: (BranchNodeDescriptor.LogNavigatable, focus: Boolean) -> Unit,
     searchHeightReferent: JComponent? = null,
   ): JComponent {
@@ -82,7 +81,7 @@ internal object BranchesDashboardTreeComponent {
     })
 
     val uiController = BranchesDashboardTreeController(
-      project, logProperties, logFilterUi, logNavigator, model, tree
+      project, logProperties, logFilterer, logNavigator, model, tree
     )
 
     return simplePanel().withBorder(createBorder(SideBorder.LEFT))

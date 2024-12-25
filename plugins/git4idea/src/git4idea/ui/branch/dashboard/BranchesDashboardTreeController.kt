@@ -6,13 +6,8 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
-import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.with
-import com.intellij.vcs.log.visible.filters.without
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -24,7 +19,7 @@ import javax.swing.tree.TreePath
 internal class BranchesDashboardTreeController(
   private val project: Project,
   private val logProperties: VcsLogUiProperties,
-  private val logFilterUi: VcsLogFilterUiEx,
+  private val logFilterer: (branches: List<String>) -> Unit,
   private val logNavigator: (BranchNodeDescriptor.LogNavigatable, focus: Boolean) -> Unit,
   private val model: BranchesDashboardTreeModel,
   private val tree: BranchesTreeComponent,
@@ -50,14 +45,7 @@ internal class BranchesDashboardTreeController(
 
   fun updateLogBranchFilter() {
     val selectedFilters = tree.getSelection().selectedBranchFilters
-    val oldFilters = logFilterUi.filters
-    val newFilters = if (selectedFilters.isNotEmpty()) {
-      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(selectedFilters))
-    }
-    else {
-      oldFilters.without(VcsLogBranchLikeFilter::class.java)
-    }
-    logFilterUi.filters = newFilters
+    logFilterer(selectedFilters)
   }
 
   fun navigateLogToRef(selection: BranchNodeDescriptor.LogNavigatable) {
