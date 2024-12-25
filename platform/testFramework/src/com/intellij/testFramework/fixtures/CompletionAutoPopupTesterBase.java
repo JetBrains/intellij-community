@@ -41,8 +41,7 @@ public abstract class CompletionAutoPopupTesterBase {
     }
   }
 
-  @Nullable
-  protected abstract Editor getEditor();
+  protected abstract @Nullable Editor getEditor();
 
   public void joinCompletion() {
     waitPhase(phase -> {
@@ -72,8 +71,7 @@ public abstract class CompletionAutoPopupTesterBase {
     TestCase.fail("Too long completion: " + CompletionServiceImpl.getCompletionPhase());
   }
 
-  @NotNull
-  protected abstract Project getProject();
+  protected abstract @NotNull Project getProject();
 
   public void joinCommit(Runnable c1) {
     AtomicBoolean committed = new AtomicBoolean();

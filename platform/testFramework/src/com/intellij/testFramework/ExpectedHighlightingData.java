@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -433,8 +433,7 @@ public class ExpectedHighlightingData {
     return info.getLineMarkerTooltip();
   }
 
-  @NotNull
-  private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
+  private @NotNull String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
     StringBuilder result = new StringBuilder();
     int index = 0;
     List<Pair<LineMarkerInfo, Integer>> lineMarkerInfos = new ArrayList<>(markerInfos.size() * 2);
@@ -555,8 +554,7 @@ public class ExpectedHighlightingData {
     }
   }
 
-  @NotNull
-  private static Set<HighlightInfo> indexInfos(Collection<? extends HighlightInfo> infos) {
+  private static @NotNull Set<HighlightInfo> indexInfos(Collection<? extends HighlightInfo> infos) {
     Set<HighlightInfo> index = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
       public int hashCode(HighlightInfo object) {
@@ -613,10 +611,9 @@ public class ExpectedHighlightingData {
     return entry != null ? entry.getKey() : null;
   }
 
-  @NotNull
-  public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
-                                   @NotNull Collection<? extends HighlightInfo> infos,
-                                   @NotNull String text) {
+  public static @NotNull String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
+                                            @NotNull Collection<? extends HighlightInfo> infos,
+                                            @NotNull String text) {
     // filter highlighting data and map each highlighting to a tag name
     List<Pair<String, ? extends HighlightInfo>> list = infos.stream()
       .map(info -> pair(findTag(types, info), info))
@@ -802,9 +799,8 @@ public class ExpectedHighlightingData {
   }
 
   private static final SmartPsiElementPointer<PsiElement> NULL_POINTER = new SmartPsiElementPointer<>() {
-    @Nullable
     @Override
-    public PsiElement getElement() {
+    public @Nullable PsiElement getElement() {
       return null;
     }
 

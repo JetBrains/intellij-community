@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -39,9 +39,8 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     }
   }
 
-  @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject) {
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject) {
     return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name, null, isDirectoryBasedProject), myFixtureBuilderProviders);
   }
 
@@ -52,43 +51,37 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
     return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name, projectPath, isDirectoryBasedProject), myFixtureBuilderProviders);
   }
 
-  @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName) {
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName) {
     return createLightFixtureBuilder(null, projectName);
   }
 
-  @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
-                                                                              @NotNull String projectName) {
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
+                                                                                       @NotNull String projectName) {
     if (projectDescriptor == null) {
       projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
     }
     return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(projectDescriptor, projectName));
   }
 
-  @NotNull
   @Override
-  public CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture) {
+  public @NotNull CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture) {
     return createCodeInsightFixture(projectFixture, new TempDirTestFixtureImpl());
   }
 
-  @NotNull
   @Override
-  public CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirFixture) {
+  public @NotNull CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirFixture) {
     return new CodeInsightTestFixtureImpl(projectFixture, tempDirFixture);
   }
 
-  @NotNull
   @Override
-  public TempDirTestFixture createTempDirTestFixture() {
+  public @NotNull TempDirTestFixture createTempDirTestFixture() {
     return new TempDirTestFixtureImpl();
   }
 
-  @NotNull
   @Override
-  public BareTestFixture createBareFixture() {
+  public @NotNull BareTestFixture createBareFixture() {
     return new BareTestFixtureImpl();
   }
 
@@ -97,9 +90,8 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
       super(testFixtureBuilder);
     }
 
-    @NotNull
     @Override
-    protected ModuleFixture instantiateFixture() {
+    protected @NotNull ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);
     }
   }

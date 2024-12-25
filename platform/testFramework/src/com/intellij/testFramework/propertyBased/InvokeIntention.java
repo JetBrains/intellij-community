@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -82,8 +68,7 @@ public class InvokeIntention extends ActionOnFile {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
-  @Nullable
-  private static IntentionAction chooseIntention(@NotNull Environment env, List<? extends IntentionAction> actions) {
+  private static @Nullable IntentionAction chooseIntention(@NotNull Environment env, List<? extends IntentionAction> actions) {
     if (actions.isEmpty()) {
       env.logMessage("No intentions found");
       return null;
@@ -257,12 +242,11 @@ public class InvokeIntention extends ActionOnFile {
     //       may require explicit formatting
   }
 
-  @NotNull
-  private List<IntentionAction> wrapAndCheck(Environment env,
-                                             Editor editor,
-                                             PsiElement currentElement,
-                                             boolean hasErrors,
-                                             List<IntentionAction> intentions) {
+  private @NotNull List<IntentionAction> wrapAndCheck(Environment env,
+                                                      Editor editor,
+                                                      PsiElement currentElement,
+                                                      boolean hasErrors,
+                                                      List<IntentionAction> intentions) {
     if (currentElement == null) return intentions;
     int offset = editor.getCaretModel().getOffset();
     /*
@@ -375,20 +359,16 @@ public class InvokeIntention extends ActionOnFile {
     }
   }
 
-  @NotNull
-  private static String shortInfoText(HighlightInfo info) {
+  private static @NotNull String shortInfoText(HighlightInfo info) {
     return "'" + info.getDescription() + "'(" + info.startOffset + "," + info.endOffset + ")";
   }
 
-  @NotNull
-  @Unmodifiable
-  static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
+  static @NotNull @Unmodifiable List<HighlightInfo> highlightErrors(Project project, Editor editor) {
     List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
     return ContainerUtil.filter(infos, i -> i.getSeverity() == HighlightSeverity.ERROR);
   }
 
-  @Nullable
-  private Document getDocumentToBeChanged(IntentionAction intention) {
+  private @Nullable Document getDocumentToBeChanged(IntentionAction intention) {
     PsiElement changedElement = intention.getElementToMakeWritable(getFile());
     PsiFile changedFile = changedElement == null ? null : changedElement.getContainingFile();
     return changedFile == null ? null : changedFile.getViewProvider().getDocument();

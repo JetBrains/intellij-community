@@ -58,9 +58,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     }
   }
 
-  @NotNull
-  @Unmodifiable
-  protected List<HighlightInfo> doHighlighting() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     int[] toIgnore = {Pass.UPDATE_FOLDING, Pass.LOCAL_INSPECTIONS};

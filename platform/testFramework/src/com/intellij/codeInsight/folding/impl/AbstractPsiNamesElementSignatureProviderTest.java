@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
@@ -29,13 +29,11 @@ abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatform
     }
   }
 
-  @Nullable
-  private static PsiElement findElement(@NotNull FoldRegion region, @NotNull PsiFile file) {
+  private static @Nullable PsiElement findElement(@NotNull FoldRegion region, @NotNull PsiFile file) {
     return findElement(region.getStartOffset(), region.getEndOffset(), file);
   }
 
-  @Nullable
-  static PsiElement findElement(int startOffset, int endOffset, @NotNull PsiFile file) {
+  static @Nullable PsiElement findElement(int startOffset, int endOffset, @NotNull PsiFile file) {
     for (PsiElement element = file.findElementAt(startOffset); element != null; element = element.getParent()) {
       TextRange range = element.getTextRange();
       if (range.getStartOffset() < startOffset) {

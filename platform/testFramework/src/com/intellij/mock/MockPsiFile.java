@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.lang.FileASTNode;
@@ -55,14 +55,12 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "mock.file";
   }
 
   @Override
-  @Nullable
-  public ItemPresentation getPresentation() {
+  public @Nullable ItemPresentation getPresentation() {
     return null;
   }
 
@@ -86,8 +84,7 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
     return null;
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
+  public @Nullable PsiDirectory getParentDirectory() {
     throw new UnsupportedOperationException("Method getParentDirectory is not yet implemented in " + getClass().getName());
   }
 
@@ -97,20 +94,17 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return this;
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return StdFileTypes.JAVA;
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return StdFileTypes.JAVA.getLanguage();
   }
 
@@ -120,8 +114,7 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myFileViewProvider;
   }
 
@@ -315,8 +308,7 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 
@@ -339,14 +331,12 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return GlobalSearchScope.EMPTY_SCOPE;
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return LocalSearchScope.EMPTY;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -720,7 +720,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testFolding(@NotNull String fileName);
 
-  void testFoldingWithCollapseStatus(@NotNull final String verificationFileName, @Nullable String destinationFileName);
+  void testFoldingWithCollapseStatus(final @NotNull String verificationFileName, @Nullable String destinationFileName);
 
   void testFoldingWithCollapseStatus(@NotNull String fileName);
 
@@ -839,8 +839,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * It's disposed earlier than {@link UsefulTestCase#getTestRootDisposable()} and can be useful
    * e.g. for avoiding library virtual pointers leaks: {@code PsiTestUtil.addLibrary(myFixture.getProjectDisposable(), ...)}
    */
-  @NotNull
-  default Disposable getProjectDisposable() {
+  default @NotNull Disposable getProjectDisposable() {
     return ((ProjectEx)getProject()).getEarlyDisposable();
   }
 }

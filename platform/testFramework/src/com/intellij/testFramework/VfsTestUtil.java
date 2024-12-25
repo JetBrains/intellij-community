@@ -231,8 +231,7 @@ public final class VfsTestUtil {
     return allEvents;
   }
 
-  @Unmodifiable
-  public static @NotNull List<String> print(@NotNull List<? extends VFileEvent> events) {
+  public static @Unmodifiable @NotNull List<String> print(@NotNull List<? extends VFileEvent> events) {
     return ContainerUtil.map(events, VfsTestUtil::print);
   }
 

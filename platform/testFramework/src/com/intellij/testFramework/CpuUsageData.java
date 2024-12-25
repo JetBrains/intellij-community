@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Pair;
@@ -59,8 +59,7 @@ public final class CpuUsageData {
            " of " + myProcessTimeMs + "ms total";
   }
 
-  @NotNull
-  public String getThreadStats() {
+  public @NotNull String getThreadStats() {
     return printLongestNames(myThreadTimes);
   }
 
@@ -70,8 +69,7 @@ public final class CpuUsageData {
     return usedAfter - usedBefore;
   }
 
-  @NotNull
-  public String getSummary(@NotNull String indent) {
+  public @NotNull String getSummary(@NotNull String indent) {
     return indent + "GC: " + getGcStats() + "\n" +
            indent + "Threads: " + getThreadStats() + "\n" +
            indent + "Process: " + getProcessCpuStats();
@@ -83,8 +81,7 @@ public final class CpuUsageData {
            myGcTimes.stream().anyMatch(pair -> pair.first > 0);
   }
 
-  @NotNull
-  private static String printLongestNames(@NotNull List<? extends Pair<Long, String>> times) {
+  private static @NotNull String printLongestNames(@NotNull List<? extends Pair<Long, String>> times) {
     String stats = times.stream()
       .sorted(Comparator.comparingLong((Pair<Long, String> p) -> p.first).reversed())
       .filter(p -> p.first > 10)
@@ -94,8 +91,7 @@ public final class CpuUsageData {
     return stats.isEmpty() ? "insignificant" : stats;
   }
 
-  @NotNull
-  public static <E extends Throwable> CpuUsageData measureCpuUsage(@NotNull ThrowableRunnable<E> runnable) throws E {
+  public static @NotNull <E extends Throwable> CpuUsageData measureCpuUsage(@NotNull ThrowableRunnable<E> runnable) throws E {
     FreeMemorySnapshot memStart = new FreeMemorySnapshot();
 
     Map<GarbageCollectorMXBean, Long> gcTimes = new HashMap<>();

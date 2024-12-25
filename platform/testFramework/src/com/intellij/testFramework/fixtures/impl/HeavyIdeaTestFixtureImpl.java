@@ -200,8 +200,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
-  @NotNull
-  private Path generateProjectPath() {
+  private @NotNull Path generateProjectPath() {
     Path tempDirectory;
     if (myProjectPath == null) {
       tempDirectory = TemporaryDirectory.generateTemporaryPath(mySanitizedName);
@@ -230,8 +229,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private final class MyDataProvider implements DataProvider {
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
@@ -261,7 +259,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   @Override
-  public PsiFile addFileToProject(@NotNull @NonNls String rootPath, @NotNull @NonNls final String relativePath, @NotNull @NonNls final String fileText) throws IOException {
+  public PsiFile addFileToProject(@NotNull @NonNls String rootPath, final @NotNull @NonNls String relativePath, final @NotNull @NonNls String fileText) throws IOException {
     final VirtualFile dir = VfsUtil.createDirectories(rootPath + "/" + PathUtil.getParentPath(relativePath));
 
     final VirtualFile[] virtualFile = new VirtualFile[1];

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.mock;
 
@@ -11,7 +11,7 @@ public class AnotherMockFacet extends Facet<AnotherMockFacetConfiguration> {
   private boolean myDisposed;
   private boolean myConfigured;
 
-  public AnotherMockFacet(@NotNull final Module module, final String name) {
+  public AnotherMockFacet(final @NotNull Module module, final String name) {
     this(module, name, new AnotherMockFacetConfiguration());
   }
 

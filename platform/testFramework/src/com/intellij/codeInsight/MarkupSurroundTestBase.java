@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.template.TemplateActionContext;
@@ -14,8 +14,7 @@ import java.util.List;
 public abstract class MarkupSurroundTestBase extends BasePlatformTestCase {
   protected static final String BASE_PATH = "/codeInsight/surroundWith/";
 
-  @Unmodifiable
-  private List<InvokeTemplateAction> buildSurroundersForFileTypeWithGivenExtension() {
+  private @Unmodifiable List<InvokeTemplateAction> buildSurroundersForFileTypeWithGivenExtension() {
     return ContainerUtil.map(
       TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
         TemplateActionContext.surrounding(myFixture.getFile(), myFixture.getEditor())),

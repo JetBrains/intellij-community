@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -68,8 +68,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
@@ -143,8 +143,7 @@ public final class EditorTestUtil {
     return event.getPresentation().isEnabled();
   }
 
-  @NotNull
-  private static DataContext createEditorContext(@NotNull Editor editor) {
+  private static @NotNull DataContext createEditorContext(@NotNull Editor editor) {
     Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
     return SimpleDataContext.builder()
@@ -210,11 +209,11 @@ public final class EditorTestUtil {
     return result.toString();
   }
 
-  public static int getCaretPosition(@NotNull final String content) {
+  public static int getCaretPosition(final @NotNull String content) {
     return getCaretAndSelectionPosition(content)[0];
   }
 
-  public static int[] getCaretAndSelectionPosition(@NotNull final String content) {
+  public static int[] getCaretAndSelectionPosition(final @NotNull String content) {
     int caretPosInSourceFile = content.indexOf(CARET_TAG_PREFIX);
     int caretEndInSourceFile = content.indexOf(">", caretPosInSourceFile);
     int caretLength = caretEndInSourceFile - caretPosInSourceFile;
@@ -355,8 +354,7 @@ public final class EditorTestUtil {
    *
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
     return extractCaretAndSelectionMarkers(document, true);
   }
 
@@ -366,13 +364,11 @@ public final class EditorTestUtil {
    *
    * @param processBlockSelection if {@code true}, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
     return WriteCommandAction.writeCommandAction(null).compute(() -> extractCaretAndSelectionMarkersImpl(document, processBlockSelection));
   }
 
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
     List<CaretInfo> carets = new ArrayList<>();
     String fileText = document.getText();
 
@@ -781,16 +777,14 @@ public final class EditorTestUtil {
   /**
    * @see #getTextWithCaretsAndSelections(Editor, boolean, boolean)
    */
-  @NotNull
-  public static String getTextWithCaretsAndSelections(@NotNull Editor editor) {
+  public static @NotNull String getTextWithCaretsAndSelections(@NotNull Editor editor) {
     return getTextWithCaretsAndSelections(editor, true, true);
   }
 
   /**
    * @return a text from the {@code editor} with optional carets and selections markers.
    */
-  @NotNull
-  public static String getTextWithCaretsAndSelections(@NotNull Editor editor, boolean addCarets, boolean addSelections) {
+  public static @NotNull String getTextWithCaretsAndSelections(@NotNull Editor editor, boolean addCarets, boolean addSelections) {
     StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
     ContainerUtil.reverse(editor.getCaretModel().getAllCarets()).forEach(
       caret -> ContainerUtil.reverse(getCaretMacros(caret, addCarets, addSelections)).forEach(
@@ -801,8 +795,7 @@ public final class EditorTestUtil {
   /**
    * Return macros describing a {@code caret}
    */
-  @NotNull
-  public static List<Pair<Integer, String>> getCaretMacros(@NotNull Caret caret, boolean position, boolean selection) {
+  public static @NotNull List<Pair<Integer, String>> getCaretMacros(@NotNull Caret caret, boolean position, boolean selection) {
     if (!position && !selection) {
       return Collections.emptyList();
     }
@@ -905,12 +898,10 @@ public final class EditorTestUtil {
   }
 
   public static class CaretInfo {
-    @Nullable
-    public final LogicalPosition position; // column number in this position is calculated in terms of characters,
+    public final @Nullable LogicalPosition position; // column number in this position is calculated in terms of characters,
                                            // not in terms of visual position
                                            // so Tab character always increases the column number by 1
-    @Nullable
-    public final TextRange selection;
+                                           public final @Nullable TextRange selection;
 
     public CaretInfo(@Nullable LogicalPosition position, @Nullable TextRange selection) {
       this.position = position;

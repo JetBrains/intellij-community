@@ -353,8 +353,7 @@ public final class IoTestUtil {
     return "\\\\127.0.0.1\\" + localPath.charAt(0) + '$' + localPath.substring(2);
   }
 
-  @Unmodifiable
-  public static @NotNull List<@NotNull String> enumerateWslDistributions() {
+  public static @Unmodifiable @NotNull List<@NotNull String> enumerateWslDistributions() {
     assertTrue(SystemInfo.isWin10OrNewer);
     try {
       GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-l", "-q").withRedirectErrorStream(true).withCharset(StandardCharsets.UTF_16LE);

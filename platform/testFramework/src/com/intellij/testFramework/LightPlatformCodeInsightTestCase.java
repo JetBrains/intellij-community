@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -119,22 +119,18 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  @NotNull
-  protected String getAnswerFilePath() {
+  protected @NotNull String getAnswerFilePath() {
     return getTestDataPath() + myFileSuffix + ".txt";
   }
 
-  @NonNls
-  @NotNull
-  protected String getTestDataPath() {
+  protected @NonNls @NotNull String getTestDataPath() {
     if (myTestDataPath != null) {
       return myTestDataPath;
     }
     return PathManagerEx.getTestDataPath();
   }
 
-  @NotNull
-  protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
+  protected @NotNull VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
     String fullPath = getTestDataPath() + filePath;
 
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
@@ -148,8 +144,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileName name of the file.
    * @param fileText data file text.
    */
-  @NotNull
-  protected Document configureFromFileText(@NonNls @NotNull String fileName, @NonNls @NotNull String fileText) {
+  protected @NotNull Document configureFromFileText(@NonNls @NotNull String fileName, @NonNls @NotNull String fileText) {
     return configureFromFileText(fileName, fileText, false);
   }
 
@@ -160,8 +155,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText   data file text.
    * @param checkCaret if true, it will be verified that file contains at least one caret or selection marker
    */
-  @NotNull
-  protected Document configureFromFileText(@NonNls @NotNull String fileName,
+  protected @NotNull Document configureFromFileText(@NonNls @NotNull String fileName,
                                            @NonNls @NotNull String fileText,
                                            boolean checkCaret) {
     return WriteCommandAction.writeCommandAction(null).compute(() -> {
@@ -187,8 +181,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  @NotNull
-  protected Editor configureFromFileTextWithoutPSI(@NonNls @NotNull String fileText) {
+  protected @NotNull Editor configureFromFileTextWithoutPSI(@NonNls @NotNull String fileText) {
     return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
       EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
@@ -204,8 +197,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  @NotNull
-  protected Editor createEditor(@NotNull VirtualFile file) {
+  protected @NotNull Editor createEditor(@NotNull VirtualFile file) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
     DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart("LightPlatformCodeInsightTestCase.createEditor");
@@ -215,8 +207,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return editor;
   }
 
-  @NotNull
-  private Document setupFileEditorAndDocument(@NotNull String relativePath, @NotNull String fileText) throws IOException {
+  private @NotNull Document setupFileEditorAndDocument(@NotNull String relativePath, @NotNull String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     deleteVFile();
@@ -228,16 +219,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return getEditor().getDocument();
   }
 
-  @NotNull
-  protected Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
+  protected @NotNull Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
     Editor editor = createEditor(VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText));
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     getIndexingMode().ensureIndexingStatus(getProject());
     return editor;
   }
 
-  @NotNull
-  protected static VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) {
+  protected static @NotNull VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) {
     return VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText);
   }
 
@@ -477,8 +466,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  @NotNull
-  private static String getMessage(@NonNls @NotNull String engineMessage, @Nullable String userMessage) {
+  private static @NotNull String getMessage(@NonNls @NotNull String engineMessage, @Nullable String userMessage) {
     if (userMessage == null) return engineMessage;
     return userMessage + " [" + engineMessage + "]";
   }
@@ -733,8 +721,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       .executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());
   }
 
-  @NotNull
-  protected DataContext getCurrentEditorDataContext() {
+  protected @NotNull DataContext getCurrentEditorDataContext() {
     DataContext defaultContext = DataManager.getInstance().getDataContext();
     return CustomizedDataContext.withSnapshot(defaultContext, sink -> {
       sink.set(CommonDataKeys.EDITOR, getEditor());

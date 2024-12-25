@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -91,16 +91,14 @@ public class IntentionPolicy {
    * @return list of elements which could be wrapped. One of them will be selected and wrapped and it will be checked that no intentions
    * changed. Returns an empty list by default which means that no wrapping should be performed
    */
-  @NotNull
-  public List<PsiElement> getElementsToWrap(@NotNull PsiElement currentElement) {
+  public @NotNull List<PsiElement> getElementsToWrap(@NotNull PsiElement currentElement) {
     return Collections.emptyList();
   }
 
   /**
    * @return a wrap prefix for {@link #getElementsToWrap(PsiElement)}.
    */
-  @NotNull
-  public String getWrapPrefix() { return "";}
+  public @NotNull String getWrapPrefix() { return "";}
 
   /**
    * @return a wrap suffix for {@link #getElementsToWrap(PsiElement)}.
@@ -119,8 +117,7 @@ public class IntentionPolicy {
    * @param modCommand command to validate (already unpacked, not composite)
    * @return non-null message if the command should be skipped, null if it's ok to execute such a command
    */
-  @Nullable
-  public String validateCommand(@NotNull ModCommand modCommand) {
+  public @Nullable String validateCommand(@NotNull ModCommand modCommand) {
     // TODO: debug commands that do nothing. This should not be generally the case
     if (modCommand instanceof ModDisplayMessage message && message.kind() == ModDisplayMessage.MessageKind.ERROR) {
       return "Error: " + message.messageText();
