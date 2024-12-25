@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -62,8 +62,7 @@ public abstract class XDebugProcess {
   /**
    * @return editor provider which will be used to produce editors for "Evaluate" and "Set Value" actions
    */
-  @NotNull
-  public abstract XDebuggerEditorsProvider getEditorsProvider();
+  public abstract @NotNull XDebuggerEditorsProvider getEditorsProvider();
 
   /**
    * Called when {@link XDebugSession} is initialized and breakpoints are registered in
@@ -145,8 +144,7 @@ public abstract class XDebugProcess {
   /**
    * Implement {@link XSmartStepIntoHandler} and return its instance from this method to enable the Smart Step Into action.
    */
-  @Nullable
-  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+  public @Nullable XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return null;
   }
 
@@ -154,8 +152,7 @@ public abstract class XDebugProcess {
    * Implement {@link XDropFrameHandler} and return its instance from this method to enable the Drop Frame action.
    */
   @ApiStatus.Experimental
-  @Nullable
-  public XDropFrameHandler getDropFrameHandler() {
+  public @Nullable XDropFrameHandler getDropFrameHandler() {
     return null;
   }
 
@@ -164,8 +161,7 @@ public abstract class XDebugProcess {
    * support for alternative view of the execution position, like a disassembly view.
    */
   @ApiStatus.Experimental
-  @Nullable
-  public XAlternativeSourceHandler getAlternativeSourceHandler() {
+  public @Nullable XAlternativeSourceHandler getAlternativeSourceHandler() {
     return null;
   }
 
@@ -177,8 +173,7 @@ public abstract class XDebugProcess {
     throw new AbstractMethodError();
   }
 
-  @NotNull
-  public Promise<Object> stopAsync() {
+  public @NotNull Promise<Object> stopAsync() {
     stop();
     return Promises.resolvedPromise();
   }
@@ -235,13 +230,11 @@ public abstract class XDebugProcess {
     return true;
   }
 
-  @Nullable
-  protected ProcessHandler doGetProcessHandler() {
+  protected @Nullable ProcessHandler doGetProcessHandler() {
     return null;
   }
 
-  @NotNull
-  public final ProcessHandler getProcessHandler() {
+  public final @NotNull ProcessHandler getProcessHandler() {
     if (myProcessHandler == null) {
       myProcessHandler = doGetProcessHandler();
       if (myProcessHandler == null) {
@@ -251,8 +244,7 @@ public abstract class XDebugProcess {
     return myProcessHandler;
   }
 
-  @NotNull
-  public ExecutionConsole createConsole() {
+  public @NotNull ExecutionConsole createConsole() {
     return TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject()).getConsole();
   }
 
@@ -260,8 +252,7 @@ public abstract class XDebugProcess {
    * Override this method to enable the 'Mark Object' action.
    * @return new instance of {@link XValueMarkerProvider}'s implementation, or {@code null} if the 'Mark Object' feature isn't supported
    */
-  @Nullable
-  public XValueMarkerProvider<?,?> createValueMarkerProvider() {
+  public @Nullable XValueMarkerProvider<?,?> createValueMarkerProvider() {
     return null;
   }
 
@@ -278,16 +269,14 @@ public abstract class XDebugProcess {
     return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
   }
 
-  @Nullable
-  public HyperlinkListener getCurrentStateHyperlinkListener() {
+  public @Nullable HyperlinkListener getCurrentStateHyperlinkListener() {
     return null;
   }
 
   /**
    * Override this method to customize the content of the tab in the 'Debug' tool window.
    */
-  @NotNull
-  public XDebugTabLayouter createTabLayouter() {
+  public @NotNull XDebugTabLayouter createTabLayouter() {
     return new XDebugTabLayouter() {
     };
   }
@@ -301,8 +290,7 @@ public abstract class XDebugProcess {
     return false;
   }
 
-  @Nullable
-  public XDebuggerEvaluator getEvaluator() {
+  public @Nullable XDebuggerEvaluator getEvaluator() {
     XStackFrame frame = getSession().getCurrentStackFrame();
     return frame == null ? null : frame.getEvaluator();
   }

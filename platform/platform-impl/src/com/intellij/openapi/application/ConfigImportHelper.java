@@ -59,8 +59,8 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -916,8 +916,7 @@ public final class ConfigImportHelper {
       this.mergeVmOptions = mergeVmOptions;
     }
 
-    @Nullable
-    public ProgressIndicator getHeadlessProgressIndicator() {
+    public @Nullable ProgressIndicator getHeadlessProgressIndicator() {
       return headlessProgressIndicator;
     }
 

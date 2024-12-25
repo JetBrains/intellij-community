@@ -1152,8 +1152,7 @@ public final class TreeUtil {
    * @param mapper a function to convert a selected tree path to a corresponding object
    * @return a list of objects which correspond to all selected paths
    */
-  @Unmodifiable
-  public static @NotNull <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper) {
+  public static @Unmodifiable @NotNull <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends T> mapper) {
     return getSelection(tree, path -> isViewable(tree, path), mapper);
   }
 
@@ -1162,8 +1161,7 @@ public final class TreeUtil {
    * @param root an ascendant tree path to filter selected tree paths
    * @return a list of selected paths under the specified root node
    */
-  @Unmodifiable
-  public static @NotNull List<TreePath> collectSelectedPaths(@NotNull JTree tree, @NotNull TreePath root) {
+  public static @Unmodifiable @NotNull List<TreePath> collectSelectedPaths(@NotNull JTree tree, @NotNull TreePath root) {
     return collectSelectedObjects(tree, root, Function.identity());
   }
 
@@ -1172,8 +1170,7 @@ public final class TreeUtil {
    * @param root an ascendant tree path to filter selected tree paths
    * @return a list of user objects which correspond to selected paths under the specified root node
    */
-  @Unmodifiable
-  public static @NotNull List<Object> collectSelectedUserObjects(@NotNull JTree tree, @NotNull TreePath root) {
+  public static @Unmodifiable @NotNull List<Object> collectSelectedUserObjects(@NotNull JTree tree, @NotNull TreePath root) {
     return collectSelectedObjects(tree, root, TreeUtil::getLastUserObject);
   }
 
@@ -1183,14 +1180,12 @@ public final class TreeUtil {
    * @param mapper a function to convert a selected tree path to a corresponding object
    * @return a list of objects which correspond to selected paths under the specified root node
    */
-  @Unmodifiable
-  public static @NotNull <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<? super TreePath, ? extends T> mapper) {
+  public static @Unmodifiable @NotNull <T> List<T> collectSelectedObjects(@NotNull JTree tree, @NotNull TreePath root, @NotNull Function<? super TreePath, ? extends T> mapper) {
     if (!tree.isVisible(root)) return Collections.emptyList(); // invisible path should not be selected
     return getSelection(tree, path -> isViewable(tree, path) && root.isDescendant(path), mapper);
   }
 
-  @Unmodifiable
-  private static @NotNull <T> List<T> getSelection(@NotNull JTree tree, @NotNull Predicate<? super TreePath> filter, @NotNull Function<? super TreePath, ? extends T> mapper) {
+  private static @Unmodifiable @NotNull <T> List<T> getSelection(@NotNull JTree tree, @NotNull Predicate<? super TreePath> filter, @NotNull Function<? super TreePath, ? extends T> mapper) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) return Collections.emptyList(); // nothing is selected
     return Stream.of(paths).filter(filter).map(mapper).filter(Objects::nonNull).collect(toList());

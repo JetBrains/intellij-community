@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -162,8 +162,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file) {
+  public @Unmodifiable @NotNull List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file) {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator == null) {
       throw new IllegalStateException("Inspections must be run under progress indicator. See ProgressManager.run*() or .execute*()");

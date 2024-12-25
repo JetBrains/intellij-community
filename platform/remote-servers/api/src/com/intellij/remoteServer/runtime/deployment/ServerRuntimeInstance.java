@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.runtime.deployment;
 
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
@@ -15,16 +16,12 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
 
   public abstract void computeDeployments(@NotNull ComputeDeploymentsCallback callback);
 
-  @NotNull
-  @Nls
-  public String getDeploymentName(@NotNull DeploymentSource source, @NotNull D configuration) {
+  public @NotNull @Nls String getDeploymentName(@NotNull DeploymentSource source, @NotNull D configuration) {
     return source.getPresentableName();
   }
 
-  @NotNull
-  @Nls
-  public String getRuntimeDeploymentName(@NotNull DeploymentRuntime deploymentRuntime,
-                                         @NotNull DeploymentSource source, @NotNull D configuration) {
+  public @NotNull @Nls String getRuntimeDeploymentName(@NotNull DeploymentRuntime deploymentRuntime,
+                                                       @NotNull DeploymentSource source, @NotNull D configuration) {
     return getDeploymentName(source, configuration);
   }
 

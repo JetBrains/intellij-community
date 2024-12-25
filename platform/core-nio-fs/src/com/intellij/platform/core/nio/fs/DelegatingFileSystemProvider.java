@@ -127,9 +127,8 @@ public abstract class DelegatingFileSystemProvider<
     return wrapDelegateFileSystem(getDelegate(null, null).getFileSystem(uri));
   }
 
-  @NotNull
   @Override
-  public Path getPath(@NotNull URI uri) {
+  public @NotNull Path getPath(@NotNull URI uri) {
     return toDelegatePath(getDelegate(null, null).getPath(uri));
   }
 

@@ -244,11 +244,10 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     }
     resultSink.accept(InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID, injectedPsi, result);
   }
-  @NotNull
-  private static List<HighlightInfo> createPatchedInfos(@NotNull HighlightInfo info,
-                                                        @NotNull PsiFile injectedPsi,
-                                                        @NotNull DocumentWindow documentWindow,
-                                                        @NotNull InjectedLanguageManager injectedLanguageManager) {
+  private static @NotNull List<HighlightInfo> createPatchedInfos(@NotNull HighlightInfo info,
+                                                                 @NotNull PsiFile injectedPsi,
+                                                                 @NotNull DocumentWindow documentWindow,
+                                                                 @NotNull InjectedLanguageManager injectedLanguageManager) {
     ProperTextRange infoRange = new ProperTextRange(info.startOffset, info.endOffset);
     List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, infoRange);
     List<HighlightInfo> result = new ArrayList<>(editables.size());

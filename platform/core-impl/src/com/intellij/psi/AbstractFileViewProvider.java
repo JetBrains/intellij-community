@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -376,11 +376,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);
 
-  @Unmodifiable
-  public abstract @NotNull List<PsiFile> getCachedPsiFiles();
+  public abstract @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles();
 
-  @Unmodifiable
-  public abstract @NotNull List<FileASTNode> getKnownTreeRoots();
+  public abstract @Unmodifiable @NotNull List<FileASTNode> getKnownTreeRoots();
 
   public final void markInvalidated() {
     invalidateCachedPsi();

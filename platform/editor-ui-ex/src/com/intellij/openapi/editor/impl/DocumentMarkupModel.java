@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -87,8 +87,7 @@ public final class DocumentMarkupModel {
    * over all opened projects and calling {@link #forDocument} with {@code create=false}.
    */
   @ApiStatus.Experimental
-  @Unmodifiable
-  public static @NotNull List<? extends MarkupModel> getExistingMarkupModels(@NotNull Document document) {
+  public static @Unmodifiable @NotNull List<? extends MarkupModel> getExistingMarkupModels(@NotNull Document document) {
     if (document instanceof DocumentWindow documentWindow) {
       Document delegate = documentWindow.getDelegate();
       List<? extends MarkupModel> baseMarkupModels = getExistingMarkupModels(delegate);

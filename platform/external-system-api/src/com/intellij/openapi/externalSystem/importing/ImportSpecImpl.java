@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -30,20 +16,20 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Internal
 public final class ImportSpecImpl implements ImportSpec {
-  @NotNull private final Project myProject;
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private ProgressExecutionMode myProgressExecutionMode;
-  @Nullable private ExternalProjectRefreshCallback myCallback;
+  private final @NotNull Project myProject;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private @NotNull ProgressExecutionMode myProgressExecutionMode;
+  private @Nullable ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean createDirectoriesForEmptyContentRoots;
   private boolean isActivateBuildToolWindowOnStart;
   private boolean isActivateBuildToolWindowOnFailure;
-  @NotNull private ThreeState myNavigateToError = ThreeState.UNSURE;
-  @Nullable private String myVmOptions;
-  @Nullable private String myArguments;
-  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
-  @Nullable private Runnable myRerunAction;
-  @Nullable private UserDataHolderBase myUserData;
+  private @NotNull ThreeState myNavigateToError = ThreeState.UNSURE;
+  private @Nullable String myVmOptions;
+  private @Nullable String myArguments;
+  private @Nullable ProjectResolverPolicy myProjectResolverPolicy;
+  private @Nullable Runnable myRerunAction;
+  private @Nullable UserDataHolderBase myUserData;
 
   public ImportSpecImpl(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -51,21 +37,18 @@ public final class ImportSpecImpl implements ImportSpec {
     myProgressExecutionMode = ProgressExecutionMode.MODAL_SYNC;
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
   @Override
-  public ProjectSystemId getExternalSystemId() {
+  public @NotNull ProjectSystemId getExternalSystemId() {
     return myExternalSystemId;
   }
 
-  @NotNull
   @Override
-  public ProgressExecutionMode getProgressExecutionMode() {
+  public @NotNull ProgressExecutionMode getProgressExecutionMode() {
     return myProgressExecutionMode;
   }
 
@@ -77,9 +60,8 @@ public final class ImportSpecImpl implements ImportSpec {
     myCallback = callback;
   }
 
-  @Nullable
   @Override
-  public ExternalProjectRefreshCallback getCallback() {
+  public @Nullable ExternalProjectRefreshCallback getCallback() {
     return myCallback;
   }
 
@@ -128,9 +110,8 @@ public final class ImportSpecImpl implements ImportSpec {
     myNavigateToError = navigateToError;
   }
 
-  @Nullable
   @Override
-  public String getVmOptions() {
+  public @Nullable String getVmOptions() {
     return myVmOptions;
   }
 
@@ -138,9 +119,8 @@ public final class ImportSpecImpl implements ImportSpec {
     myVmOptions = vmOptions;
   }
 
-  @Nullable
   @Override
-  public String getArguments() {
+  public @Nullable String getArguments() {
     return myArguments;
   }
 
@@ -148,8 +128,7 @@ public final class ImportSpecImpl implements ImportSpec {
     myArguments = arguments;
   }
 
-  @Nullable
-  public ProjectResolverPolicy getProjectResolverPolicy() {
+  public @Nullable ProjectResolverPolicy getProjectResolverPolicy() {
     return myProjectResolverPolicy;
   }
 
@@ -157,8 +136,7 @@ public final class ImportSpecImpl implements ImportSpec {
     myProjectResolverPolicy = projectResolverPolicy;
   }
 
-  @Nullable
-  public Runnable getRerunAction() {
+  public @Nullable Runnable getRerunAction() {
     return myRerunAction;
   }
 

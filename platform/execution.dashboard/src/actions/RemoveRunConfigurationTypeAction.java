@@ -52,8 +52,7 @@ final class RemoveRunConfigurationTypeAction extends DumbAwareAction {
     runDashboardManager.setTypes(types);
   }
 
-  @Unmodifiable
-  private static Set<ConfigurationType> getTargetTypes(AnActionEvent e) {
+  private static @Unmodifiable Set<ConfigurationType> getTargetTypes(AnActionEvent e) {
     List<RunDashboardRunConfigurationNode> nodes = ServiceViewActionUtils.getTargets(e, RunDashboardRunConfigurationNode.class);
     return ContainerUtil.map2Set(nodes, node -> node.getConfigurationSettings().getType());
   }

@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService;
 import com.intellij.internal.statistic.utils.StartMoment;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -111,8 +114,7 @@ public final class SearchFieldStatisticsCollector implements Disposable {
     return event.getData(START_MOMENT_KEY);
   }
 
-  @NotNull
-  public static AnActionEvent wrapEventWithActionStartData(@NotNull AnActionEvent event) {
+  public static @NotNull AnActionEvent wrapEventWithActionStartData(@NotNull AnActionEvent event) {
     StartMoment startMoment = StartMoment.Companion.now();
     DataContext initialDataContext = event.getDataContext();
     DataContext wrappedDataContext = wrapDataContextWithActionStartData(initialDataContext, startMoment);
@@ -120,14 +122,12 @@ public final class SearchFieldStatisticsCollector implements Disposable {
     return event.withDataContext(wrappedDataContext);
   }
 
-  @NotNull
-  private static DataContext wrapDataContextWithActionStartData(@NotNull DataContext dataContext, @NotNull StartMoment startMoment) {
+  private static @NotNull DataContext wrapDataContextWithActionStartData(@NotNull DataContext dataContext, @NotNull StartMoment startMoment) {
     if (dataContext.getData(START_MOMENT_KEY) != null) return dataContext;
     return CustomizedDataContext.withSnapshot(dataContext, sink -> sink.set(START_MOMENT_KEY, startMoment));
   }
 
-  @NotNull
-  public static DataContext wrapDataContextWithActionStartData(@NotNull DataContext dataContext) {
+  public static @NotNull DataContext wrapDataContextWithActionStartData(@NotNull DataContext dataContext) {
     return wrapDataContextWithActionStartData(dataContext, StartMoment.Companion.now());
   }
 }

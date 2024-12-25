@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,8 +15,7 @@ public abstract class ColorPickerListenerFactory {
   private static final ExtensionPointName<ColorPickerListenerFactory> EP_NAME =
     ExtensionPointName.create("com.intellij.colorPickerListenerFactory");
 
-  @Unmodifiable
-  public static @NotNull List<ColorPickerListener> createListenersFor(@Nullable PsiElement element) {
+  public static @Unmodifiable @NotNull List<ColorPickerListener> createListenersFor(@Nullable PsiElement element) {
     List<ColorPickerListener> listeners = null;
     for (ColorPickerListenerFactory factory : EP_NAME.getExtensions()) {
       ColorPickerListener listener = factory.createListener(element);

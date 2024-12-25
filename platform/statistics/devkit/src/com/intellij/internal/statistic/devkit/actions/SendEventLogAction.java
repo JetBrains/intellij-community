@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions;
 
 import com.intellij.ide.scratch.RootType;
@@ -144,9 +144,8 @@ final class SendEventLogAction extends AnAction {
       }
     }
 
-    @NotNull
     @Override
-    public StatisticsResult onFinished() {
+    public @NotNull StatisticsResult onFinished() {
       int total = mySucceed.size() + myFailed.size();
       if (mySucceed.isEmpty() && myFailed.isEmpty()) {
         return new StatisticsResult(StatisticsResult.ResultCode.NOTHING_TO_SEND, "No files to upload.");

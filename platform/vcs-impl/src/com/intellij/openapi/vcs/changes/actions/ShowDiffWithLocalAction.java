@@ -66,7 +66,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ListSelection<Change> selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
     boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(e.getData(CommittedChangesBrowserUseCase.DATA_KEY));
@@ -98,8 +98,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     return new Change(localRevision, revision);
   }
 
-  @Nullable
-  private static VirtualFile getLocalVirtualFileFor(@Nullable ContentRevision revision) {
+  private static @Nullable VirtualFile getLocalVirtualFileFor(@Nullable ContentRevision revision) {
     if (revision == null) return null;
     FilePath filePath = revision.getFile();
     if (filePath.isNonLocal() || filePath.isDirectory()) return null;

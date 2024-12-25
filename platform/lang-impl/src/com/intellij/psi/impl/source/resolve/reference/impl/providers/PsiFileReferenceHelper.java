@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
@@ -62,8 +62,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project, @NotNull VirtualFile file, boolean isAbsoluteReference) {
+  public @Unmodifiable @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project, @NotNull VirtualFile file, boolean isAbsoluteReference) {
     List<PsiFileSystemItem> contexts;
     if (isAbsoluteReference) {
       ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
@@ -273,10 +272,9 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       .toList();
   }
 
-  @Unmodifiable
-  static @NotNull List<PsiFileSystemItem> getContextsForScope(@NotNull Project project,
-                                                              @NotNull String packageName,
-                                                              @NotNull GlobalSearchScope scope) {
+  static @Unmodifiable @NotNull List<PsiFileSystemItem> getContextsForScope(@NotNull Project project,
+                                                                            @NotNull String packageName,
+                                                                            @NotNull GlobalSearchScope scope) {
     Query<VirtualFile> query = PlatformPackageUtil.getDirectoriesByPackageName(packageName, scope, project);
     Collection<VirtualFile> files = ContainerUtil.reverse(ContainerUtil.sorted(query.findAll(), scope::compare));
     return ContainerUtil.mapNotNull(files, PsiManager.getInstance(project)::findDirectory);

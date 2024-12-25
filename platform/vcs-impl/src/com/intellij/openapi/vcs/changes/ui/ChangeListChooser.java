@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -61,9 +61,8 @@ public class ChangeListChooser extends DialogWrapper {
     return myPanel.getPreferredFocusedComponent();
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.dialogs.vcs.changelist.chooser";
   }
 
@@ -80,8 +79,7 @@ public class ChangeListChooser extends DialogWrapper {
     }
   }
 
-  @Nullable
-  public LocalChangeList getSelectedList() {
+  public @Nullable LocalChangeList getSelectedList() {
     return mySelectedList;
   }
 

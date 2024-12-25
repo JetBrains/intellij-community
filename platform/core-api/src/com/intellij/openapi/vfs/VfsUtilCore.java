@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -481,8 +481,7 @@ public class VfsUtilCore {
    * @see #virtualToIoFile(VirtualFile)
    * @see VirtualFile#toNioPath()
    */
-  @Unmodifiable
-  public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
+  public static @Unmodifiable List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.map(files, file -> virtualToIoFile(file));
   }
 

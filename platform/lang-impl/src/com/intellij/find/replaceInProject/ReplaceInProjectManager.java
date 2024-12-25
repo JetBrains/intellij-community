@@ -241,8 +241,7 @@ public class ReplaceInProjectManager {
       .ask(myProject);
   }
 
-  @Unmodifiable
-  private static Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
+  private static @Unmodifiable Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
     return ContainerUtil.map2Set(usages, usage -> ((UsageInfo2UsageAdapter)usage).getFile());
   }
 

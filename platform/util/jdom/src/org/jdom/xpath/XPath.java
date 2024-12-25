@@ -111,7 +111,7 @@ public abstract class XPath implements Serializable {
    *                       expression on the specified context
    *                       failed.
    */
-  abstract public List selectNodes(Object context) throws JDOMException;
+  public abstract List selectNodes(Object context) throws JDOMException;
 
   /**
    * Evaluates the wrapped XPath expression and returns the first
@@ -126,7 +126,7 @@ public abstract class XPath implements Serializable {
    *                       expression on the specified context
    *                       failed.
    */
-  abstract public Object selectSingleNode(Object context) throws JDOMException;
+  public abstract Object selectSingleNode(Object context) throws JDOMException;
 
   /**
    * Returns the string value of the first node selected by applying
@@ -140,7 +140,7 @@ public abstract class XPath implements Serializable {
    *                       its evaluation on the specified context
    *                       failed.
    */
-  abstract public String valueOf(Object context) throws JDOMException;
+  public abstract String valueOf(Object context) throws JDOMException;
 
   /**
    * Adds a namespace definition to the list of namespaces known of
@@ -152,7 +152,7 @@ public abstract class XPath implements Serializable {
    *
    * @param namespace the namespace.
    */
-  abstract public void addNamespace(Namespace namespace);
+  public abstract void addNamespace(Namespace namespace);
 
   /**
    * Adds a namespace definition (prefix and URI) to the list of
@@ -177,7 +177,7 @@ public abstract class XPath implements Serializable {
    *
    * @return the wrapped XPath expression as a string.
    */
-  abstract public String getXPath();
+  public abstract String getXPath();
 
 
   /**
@@ -269,7 +269,7 @@ public abstract class XPath implements Serializable {
    * to create instances of the concrete XPath wrapper currently
    * configured.</p>
    */
-  private final static class XPathString implements Serializable {
+  private static final class XPathString implements Serializable {
     /**
      * Standard JDOM2 Serialization. Default mechanism.
      */

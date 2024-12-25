@@ -31,8 +31,8 @@ public class VcsExecutablePathSelector {
   private final JButton myTestButton;
   private final BorderLayoutPanel myErrorComponent = new BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0);
 
-  @Nullable private String mySavedPath;
-  @Nullable private String myAutoDetectedPath = null;
+  private @Nullable String mySavedPath;
+  private @Nullable String myAutoDetectedPath = null;
 
   public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @Nullable Disposable disposable, @NotNull ExecutableHandler handler) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
@@ -66,8 +66,7 @@ public class VcsExecutablePathSelector {
     myMainPanel.add(myErrorComponent, gb.nextLine().next().next().insets(JBUI.insets(4, 4, 0, 0)));
   }
 
-  @NotNull
-  public BorderLayoutPanel getErrorComponent() {
+  public @NotNull BorderLayoutPanel getErrorComponent() {
     return myErrorComponent;
   }
 
@@ -90,8 +89,7 @@ public class VcsExecutablePathSelector {
     }
   }
 
-  @Nullable
-  public String getCurrentPath() {
+  public @Nullable String getCurrentPath() {
     return StringUtil.nullize(myPathSelector.getText().trim());
   }
 
@@ -136,13 +134,11 @@ public class VcsExecutablePathSelector {
     }
   }
 
-  @NotNull
-  public JPanel getMainPanel() {
+  public @NotNull JPanel getMainPanel() {
     return myMainPanel;
   }
 
-  @Nullable
-  private String getExecutablePath() {
+  private @Nullable String getExecutablePath() {
     return ObjectUtils.chooseNotNull(getCurrentPath(), myAutoDetectedPath);
   }
 
@@ -175,8 +171,7 @@ public class VcsExecutablePathSelector {
   }
 
   public interface ExecutableHandler {
-    @Nullable
-    default String patchExecutable(@NotNull String executable) {
+    default @Nullable String patchExecutable(@NotNull String executable) {
       return null;
     }
 

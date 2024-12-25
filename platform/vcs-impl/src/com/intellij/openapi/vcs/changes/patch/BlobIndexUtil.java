@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.google.common.base.Charsets;
@@ -20,22 +20,19 @@ public final class BlobIndexUtil {
   public static final String NOT_COMMITTED_HASH = StringUtil.repeat("0", 40);
 
 
-  @NotNull
-  public static String getSha1(@NotNull File file) throws IOException {
+  public static @NotNull String getSha1(@NotNull File file) throws IOException {
     return getSha1(Files.toByteArray(file));
   }
 
   /**
    * Generate sha1 for file content using git-like algorithm
    */
-  @NotNull
-  public static String getSha1(byte @NotNull [] bytes) {
+  public static @NotNull String getSha1(byte @NotNull [] bytes) {
     String prefix = "blob " + bytes.length + '\u0000'; //NON-NLS
     return Hashing.sha1().newHasher().putBytes(prefix.getBytes(Charsets.UTF_8)).putBytes(bytes).hash().toString();
   }
 
-  @NotNull
-  public static Couple<String> getBeforeAfterSha1(@NotNull Change change) throws VcsException {
+  public static @NotNull Couple<String> getBeforeAfterSha1(@NotNull Change change) throws VcsException {
     ContentRevision beforeRevision = change.getBeforeRevision();
     ContentRevision afterRevision = change.getAfterRevision();
 

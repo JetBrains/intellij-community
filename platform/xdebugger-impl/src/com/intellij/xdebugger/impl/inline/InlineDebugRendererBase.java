@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -154,8 +154,7 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     return UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.forJavaStyle(fontStyle)));
   }
 
-  @NotNull
-  private static FontMetrics getFontMetrics(Font font, @NotNull Editor editor) {
+  private static @NotNull FontMetrics getFontMetrics(Font font, @NotNull Editor editor) {
     return FontInfo.getFontMetrics(font, FontInfo.getFontRenderContext(editor.getContentComponent()));
   }
 
@@ -216,8 +215,7 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     }
   }
 
-  @NotNull
-  abstract public SimpleColoredText getPresentation();
+  public abstract @NotNull SimpleColoredText getPresentation();
 
   private TextAttributes getAttributes(Editor editor) {
     TextAttributesKey key = isInExecutionPointCached ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
@@ -250,12 +248,12 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     return myTextStartXCoordinate;
   }
 
-  abstract public boolean isCustomNode();
+  public abstract boolean isCustomNode();
 
-  abstract public boolean isErrorMessage();
+  public abstract boolean isErrorMessage();
 
   @RequiresBackgroundThread
-  abstract protected boolean calculateIsInExecutionPoint();
+  protected abstract boolean calculateIsInExecutionPoint();
 
   @ApiStatus.Internal
   public String getSpecialRenderId() {

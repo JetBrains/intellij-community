@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -293,8 +293,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       .showInBestPositionFor(editor);
   }
 
-  @Unmodifiable
-  private static @NotNull List<TargetDirectoryListItem> getTargetDirectoryListItems(List<? extends TargetDirectory> directories) {
+  private static @Unmodifiable @NotNull List<TargetDirectoryListItem> getTargetDirectoryListItems(List<? extends TargetDirectory> directories) {
     return ContainerUtil.map(directories, targetDirectory -> {
       PsiDirectory d = targetDirectory.getDirectory();
       assert d != null : "Invalid PsiDirectory instances found";

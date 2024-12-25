@@ -33,8 +33,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   private final @NlsContexts.DialogTitle String myRefactoringName;
   protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
-  @Unmodifiable
-  protected final List<MemberInfoType> myMemberInfos;
+  protected final @Unmodifiable List<MemberInfoType> myMemberInfos;
 
   private JRadioButton myRbExtractSuperclass;
   private JRadioButton myRbExtractSubclass;

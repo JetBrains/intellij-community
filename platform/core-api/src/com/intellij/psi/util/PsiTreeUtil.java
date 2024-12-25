@@ -888,9 +888,8 @@ public class PsiTreeUtil {
 
   @SafeVarargs
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element,
-                                                                                    @NotNull Class<T> @NotNull ... classes) {
+  public static @Unmodifiable @NotNull <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element,
+                                                                                                  @NotNull Class<T> @NotNull ... classes) {
     return findChildrenOfAnyType(element, false, classes);
   }
 

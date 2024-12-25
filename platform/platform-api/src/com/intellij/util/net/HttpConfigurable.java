@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -277,7 +277,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
    */
   @Deprecated(forRemoval = true)
   public PasswordAuthentication getGenericPromptedAuthentication(final @Nls String prefix, final @NlsSafe String host,
-                                                                 @Nls final String prompt, final int port, final boolean remember) {
+                                                                 final @Nls String prompt, final int port, final boolean remember) {
     Credentials credentials = ProxyAuthentication.getInstance().getPromptedAuthentication(prompt, host, port);
     return credentialsToPasswordAuth(credentials);
   }
@@ -291,7 +291,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link ProxyAuthentication#getPromptedAuthentication(String, String, int)} */
   @Deprecated(forRemoval = true)
-  public PasswordAuthentication getPromptedAuthentication(final String host, @Nls final String prompt) {
+  public PasswordAuthentication getPromptedAuthentication(final String host, final @Nls String prompt) {
     Credentials credentials = ProxyAuthentication.getInstance().getPromptedAuthentication(prompt, host, PROXY_PORT);
     return credentialsToPasswordAuth(credentials);
   }

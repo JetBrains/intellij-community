@@ -2,9 +2,12 @@
 package com.intellij.platform.runtime.product.serialization.impl;
 
 import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
-import com.intellij.platform.runtime.product.serialization.ResourceFileResolver;
-import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver;
+import com.intellij.platform.runtime.repository.MalformedRepositoryException;
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.platform.runtime.repository.serialization.impl.XmlStreamUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,14 +17,16 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class PluginXmlReader {
   private static final String PLUGIN_XML_PATH = "META-INF/plugin.xml";
 
-  @NotNull
-  public static List<RawIncludedRuntimeModule> loadPluginModules(RuntimeModuleDescriptor mainModule, RuntimeModuleRepository repository,
-                                                                 ResourceFileResolver resourceFileResolver) {
+  public static @NotNull List<RawIncludedRuntimeModule> loadPluginModules(RuntimeModuleDescriptor mainModule, RuntimeModuleRepository repository,
+                                                                          ResourceFileResolver resourceFileResolver) {
     try {
       List<RawIncludedRuntimeModule> modules = new ArrayList<>();
       Set<String> addedModules = new HashSet<>();

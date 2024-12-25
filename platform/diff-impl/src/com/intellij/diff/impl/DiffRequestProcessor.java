@@ -754,15 +754,13 @@ public abstract class DiffRequestProcessor
     return myDisposed;
   }
 
-  @NotNull
   @Override
-  public CheckedDisposable getDisposable() {
+  public @NotNull CheckedDisposable getDisposable() {
     return this;
   }
 
-  @NotNull
   @Override
-  public List<Editor> getEmbeddedEditors() {
+  public @NotNull List<Editor> getEmbeddedEditors() {
     DiffViewer viewer = getActiveViewer();
     if (viewer instanceof EditorDiffViewer editorDiffViewer) {
       return new ArrayList<>(editorDiffViewer.getHighlightEditors());
@@ -770,10 +768,8 @@ public abstract class DiffRequestProcessor
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<VirtualFile> getFilesToRefresh() {
+  public @NotNull @Unmodifiable List<VirtualFile> getFilesToRefresh() {
     DiffRequest request = getActiveRequest();
     if (request != null) {
       return request.getFilesToRefresh();
@@ -862,8 +858,7 @@ public abstract class DiffRequestProcessor
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    @Unmodifiable
-    private @NotNull List<ShowInExternalToolAction> getShowActions() {
+    private @Unmodifiable @NotNull List<ShowInExternalToolAction> getShowActions() {
       Map<ExternalToolGroup, List<ExternalTool>> externalTools = ExternalDiffSettings.getInstance().getExternalTools();
       List<ExternalTool> diffTools = externalTools.getOrDefault(ExternalToolGroup.DIFF_TOOL, Collections.emptyList());
 
@@ -1506,8 +1501,7 @@ public abstract class DiffRequestProcessor
     @RequiresEdt
     default void destroy() { }
 
-    @Nullable
-    default JComponent getPreferredFocusedComponent() { return null; }
+    default @Nullable JComponent getPreferredFocusedComponent() { return null; }
 
     @Override
     default void uiDataSnapshot(@NotNull DataSink sink) { }

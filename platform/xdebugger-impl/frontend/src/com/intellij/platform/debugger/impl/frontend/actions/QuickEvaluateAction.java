@@ -22,8 +22,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
   }
 
   @Override
-  @NotNull
-  protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
+  protected @NotNull DebuggerActionHandler getHandler(final @NotNull DebuggerSupport debuggerSupport) {
     return new QuickEvaluateHandlerWrapper(debuggerSupport.getQuickEvaluateHandler());
   }
 

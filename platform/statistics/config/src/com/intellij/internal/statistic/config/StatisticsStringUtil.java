@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config;
 
 import org.jetbrains.annotations.Contract;
@@ -42,8 +42,7 @@ public final class StatisticsStringUtil {
     return s1.equals(s2);
   }
 
-  @NotNull
-  public static List<String> split(@NotNull String text, char separator) {
+  public static @NotNull List<String> split(@NotNull String text, char separator) {
     List<String> result = new ArrayList<>();
     int pos = 0;
     int index = text.indexOf(separator, pos);

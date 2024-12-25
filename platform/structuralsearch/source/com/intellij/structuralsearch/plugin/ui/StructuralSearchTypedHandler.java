@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -19,9 +19,8 @@ import java.util.List;
  */
 public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
 
-  @NotNull
   @Override
-  public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (editor.getUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY) == null) {
       return Result.CONTINUE;
     }

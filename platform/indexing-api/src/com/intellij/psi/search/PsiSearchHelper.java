@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -36,8 +36,7 @@ public interface PsiSearchHelper {
     }
   }
 
-  @NotNull
-  static PsiSearchHelper getInstance(@NotNull Project project) {
+  static @NotNull PsiSearchHelper getInstance(@NotNull Project project) {
     return project.getService(PsiSearchHelper.class);
   }
 
@@ -218,10 +217,9 @@ public interface PsiSearchHelper {
                                          @Nullable PsiFile psiFileToIgnoreOccurrencesIn,
                                          @Nullable ProgressIndicator progress);
 
-  @NotNull
-  default SearchCostResult isCheapEnoughToSearch(@NotNull String name,
-                                                 @NotNull GlobalSearchScope scope,
-                                                 @Nullable PsiFile psiFileToIgnoreOccurrencesIn) {
+  default @NotNull SearchCostResult isCheapEnoughToSearch(@NotNull String name,
+                                                          @NotNull GlobalSearchScope scope,
+                                                          @Nullable PsiFile psiFileToIgnoreOccurrencesIn) {
     return isCheapEnoughToSearch(name, scope, psiFileToIgnoreOccurrencesIn, null);
   }
 

@@ -134,8 +134,7 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
     return Collections.emptyList();
   }
 
-  @Unmodifiable
-  public @NotNull List<VcsRef> getBranchesAtRow(int row) {
+  public @Unmodifiable @NotNull List<VcsRef> getBranchesAtRow(int row) {
     return ContainerUtil.filter(getRefsAtRow(row), ref -> ref.getType().isBranch());
   }
 

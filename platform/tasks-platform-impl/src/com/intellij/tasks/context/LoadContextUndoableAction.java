@@ -14,7 +14,7 @@ public abstract class LoadContextUndoableAction extends GlobalUndoableAction {
 
   protected final WorkingContextManager myManager;
   private final boolean myClear;
-  @NonNls private static final String SNAPSHOT = "snapshot";
+  private static final @NonNls String SNAPSHOT = "snapshot";
 
   public static LoadContextUndoableAction createAction(WorkingContextManager manager, boolean clear, final String contextName) {
     return new LoadContextUndoableAction(manager, clear) {

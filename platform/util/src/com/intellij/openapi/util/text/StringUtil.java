@@ -125,8 +125,7 @@ public class StringUtil {
   public static final java.util.function.Function<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> getWordsInStringLongestFirst(@NotNull String find) {
+  public static @Unmodifiable @NotNull List<String> getWordsInStringLongestFirst(@NotNull String find) {
     List<String> words = getWordsIn(find);
     // hope long words are rare
     return ContainerUtil.sorted(words, (o1, o2) -> o2.length() - o1.length());
@@ -1291,8 +1290,7 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> splitHonorQuotes(@NotNull String s, char separator) {
+  public static @Unmodifiable @NotNull List<String> splitHonorQuotes(@NotNull String s, char separator) {
     return Collections.unmodifiableList(StringUtilRt.splitHonorQuotes(s, separator));
   }
 
@@ -1402,8 +1400,7 @@ public class StringUtil {
    * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are {@code Character.isJavaIdentifierPart(c)}.
    */
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> getWordsIn(@NotNull String text) {
+  public static @Unmodifiable @NotNull List<String> getWordsIn(@NotNull String text) {
     FreezableArrayList<String> result = null;
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
@@ -1433,8 +1430,7 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<TextRange> getWordIndicesIn(@NotNull String text) {
+  public static @Unmodifiable @NotNull List<TextRange> getWordIndicesIn(@NotNull String text) {
     return getWordIndicesIn(text, null);
   }
 
@@ -1445,8 +1441,7 @@ public class StringUtil {
    * @return ranges of words in passed text.
    */
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
+  public static @Unmodifiable @NotNull List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
     FreezableArrayList<TextRange> result = new FreezableArrayList<>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
@@ -1703,14 +1698,12 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> findMatches(@NotNull String s, @NotNull Pattern pattern) {
+  public static @Unmodifiable @NotNull List<String> findMatches(@NotNull String s, @NotNull Pattern pattern) {
     return findMatches(s, pattern, 1);
   }
 
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<String> findMatches(@NotNull String s, @NotNull Pattern pattern, int groupIndex) {
+  public static @Unmodifiable @NotNull List<String> findMatches(@NotNull String s, @NotNull Pattern pattern, int groupIndex) {
     FreezableArrayList<String> result = new FreezableArrayList<>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
@@ -2641,8 +2634,7 @@ public class StringUtil {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
   @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
+  public static @Unmodifiable @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     FreezableArrayList<Pair<String, Integer>> result = new FreezableArrayList<>();
     s += " ";
     StringBuilder name = new StringBuilder();
@@ -3274,12 +3266,11 @@ public class StringUtil {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static String convertLineSeparators(@NotNull String text,
-                                             @NotNull String newSeparator,
-                                             int @Nullable [] offsetsToKeep,
-                                             boolean keepCarriageReturn) {
+  public static @NotNull String convertLineSeparators(@NotNull String text,
+                                                      @NotNull String newSeparator,
+                                                      int @Nullable [] offsetsToKeep,
+                                                      boolean keepCarriageReturn) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn);
   }
 
@@ -3293,18 +3284,16 @@ public class StringUtil {
     return StringUtilRt.endsWithIgnoreCase(text, suffix);
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
+  public static @NotNull String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
     return StringUtilRt.formatFileSize(fileSize, unitSeparator, rank);
   }
 
   /**
    * @see StringUtilRt#formatFileSize(long, String, int, boolean)
    */
-  @NotNull
   @Contract(pure = true)
-  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank, boolean fixedFractionPrecision) {
+  public static @NotNull String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank, boolean fixedFractionPrecision) {
     return StringUtilRt.formatFileSize(fileSize, unitSeparator, rank, fixedFractionPrecision);
   }
 

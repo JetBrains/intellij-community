@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,8 +22,7 @@ public final class UsageLimitUtil {
     CONTINUE, ABORT
   }
 
-  @NotNull
-  public static Result showTooManyUsagesWarning(@NotNull final Project project, @NotNull final @NlsContexts.DialogMessage String message) {
+  public static @NotNull Result showTooManyUsagesWarning(final @NotNull Project project, final @NotNull @NlsContexts.DialogMessage String message) {
     boolean result = runOrInvokeAndWait(() -> {
       String title = UsageViewBundle.message("find.excessive.usages.title");
       return MessageDialogBuilder.okCancel(title, message).yesText(UsageViewBundle.message("button.text.continue"))
@@ -32,7 +31,7 @@ public final class UsageLimitUtil {
     return result ? Result.CONTINUE : Result.ABORT;
   }
 
-  private static boolean runOrInvokeAndWait(@NotNull final Computable<Boolean> f) {
+  private static boolean runOrInvokeAndWait(final @NotNull Computable<Boolean> f) {
     final boolean[] answer = new boolean[1];
     try {
       ApplicationManager.getApplication().invokeAndWait(() -> answer[0] = f.compute());

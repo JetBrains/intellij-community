@@ -874,8 +874,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
       return res;
     }
 
-    @Unmodifiable
-    private @NotNull List<RunAnythingGroup> getVisibleGroups() {
+    private @Unmodifiable @NotNull List<RunAnythingGroup> getVisibleGroups() {
       return ContainerUtil.filter(myTemplateGroups, group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group));
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -31,8 +31,7 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
     myFile = file;
   }
 
-  @NotNull
-  public /*abstract*/ PsiFile getFile() {
+  public @NotNull /*abstract*/ PsiFile getFile() {
     return myFile;
   }
 
@@ -40,8 +39,7 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
-  @NotNull
-  public /*abstract*/ TextRange getPriorityRange() {
+  public @NotNull /*abstract*/ TextRange getPriorityRange() {
     return getFile().getTextRange();
   }
 

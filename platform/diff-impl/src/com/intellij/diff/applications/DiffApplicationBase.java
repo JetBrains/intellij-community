@@ -101,8 +101,7 @@ public final class DiffApplicationBase {
     return file;
   }
 
-  @Unmodifiable
-  public static @NotNull List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends VirtualFile> contents) {
+  public static @Unmodifiable @NotNull List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends VirtualFile> contents) {
     return ContainerUtil.map(contents, file -> file != null ? file : new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
   }
 

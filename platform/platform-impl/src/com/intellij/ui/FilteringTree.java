@@ -243,8 +243,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       return myNodeCache.get(object);
     }
 
-    @NotNull
-    private N createNode(@NotNull U object) {
+    private @NotNull N createNode(@NotNull U object) {
       assert !(object instanceof DefaultMutableTreeNode);
       return myFactory.fun(object);
     }

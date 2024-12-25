@@ -22,7 +22,7 @@ final class LinearBekGraphBuilder {
   static final int MAX_BLOCK_SIZE = 200;
   private static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
   private static final GraphEdgeToDownNode GRAPH_EDGE_TO_DOWN_NODE = new GraphEdgeToDownNode();
-  @NotNull private final GraphLayout myGraphLayout;
+  private final @NotNull GraphLayout myGraphLayout;
   private final LinearBekGraph myLinearBekGraph;
 
   LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
@@ -30,8 +30,7 @@ final class LinearBekGraphBuilder {
     myGraphLayout = graphLayout;
   }
 
-  @NotNull
-  public IntSet collapseAll() {
+  public @NotNull IntSet collapseAll() {
     IntSet collapsedMerges = new IntOpenHashSet();
     for (int i = myLinearBekGraph.getGraph().nodesCount() - 1; i >= 0; i--) {
       MergeFragment fragment = getFragment(i);
@@ -43,8 +42,7 @@ final class LinearBekGraphBuilder {
     return collapsedMerges;
   }
 
-  @Nullable
-  public MergeFragment collapseFragment(int mergeCommit) {
+  public @Nullable MergeFragment collapseFragment(int mergeCommit) {
     MergeFragment fragment = getFragment(mergeCommit);
     if (fragment != null) {
       fragment.collapse(myLinearBekGraph);
@@ -53,16 +51,14 @@ final class LinearBekGraphBuilder {
     return null;
   }
 
-  @Nullable
-  public MergeFragment getFragment(int mergeCommit) {
+  public @Nullable MergeFragment getFragment(int mergeCommit) {
     List<Integer> downNodes = ContainerUtil.sorted(LinearGraphUtils.getDownNodes(myLinearBekGraph, mergeCommit));
     if (downNodes.size() != 2) return null;
 
     return getFragment(downNodes.get(1), downNodes.get(0), mergeCommit);
   }
 
-  @Nullable
-  private MergeFragment getFragment(int leftChild, int rightChild, int parent) {
+  private @Nullable MergeFragment getFragment(int leftChild, int rightChild, int parent) {
     MergeFragment fragment = new MergeFragment(parent, leftChild, rightChild);
 
     int leftLi = myGraphLayout.getLayoutIndex(leftChild);
@@ -163,8 +159,7 @@ final class LinearBekGraphBuilder {
     return fragment;
   }
 
-  @NotNull
-  private Set<Integer> calculateMagicSet(int node) {
+  private @NotNull Set<Integer> calculateMagicSet(int node) {
     Set<Integer> magicSet;
     magicSet = new HashSet<>(MAGIC_SET_SIZE);
 
@@ -179,15 +174,15 @@ final class LinearBekGraphBuilder {
     return magicSet;
   }
 
-  public final static class MergeFragment {
+  public static final class MergeFragment {
     private final int myParent;
     private final int myLeftChild;
     private final int myRightChild;
 
     private boolean myMergeWithOldCommit = false;
-    @NotNull private final IntIntMultiMap myTailEdges = new IntIntMultiMap();
-    @NotNull private final IntSet myBlockBody = new IntOpenHashSet();
-    @NotNull private final IntSet myTails = new IntOpenHashSet();
+    private final @NotNull IntIntMultiMap myTailEdges = new IntIntMultiMap();
+    private final @NotNull IntSet myBlockBody = new IntOpenHashSet();
+    private final @NotNull IntSet myTails = new IntOpenHashSet();
 
     private MergeFragment(int parent, int leftChild, int rightChild) {
       myParent = parent;
@@ -220,8 +215,7 @@ final class LinearBekGraphBuilder {
       myBlockBody.add(body);
     }
 
-    @NotNull
-    public IntSet getTails() {
+    public @NotNull IntSet getTails() {
       return myTails;
     }
 

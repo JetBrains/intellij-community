@@ -12,7 +12,7 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 @ApiStatus.Internal
 public class AllLinesIterator implements Iterator<Pair<Integer, CharSequence>> {
-  @NotNull private final Document myDocument;
+  private final @NotNull Document myDocument;
   private int myLine = 0;
 
   public AllLinesIterator(@NotNull Document document) {

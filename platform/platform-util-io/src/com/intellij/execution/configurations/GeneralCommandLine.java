@@ -431,8 +431,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * Tries to get Eel backend for this GeneralCommandLine. If this function returns {@code null}, then the old implementation should be used.
    */
   @ApiStatus.Internal
-  @Nullable
-  public EelApi tryGetEel() {
+  public @Nullable EelApi tryGetEel() {
     Ref<EelApi> eelApiRef = myEelApi;
     if (eelApiRef != null) {
       return eelApiRef.get();

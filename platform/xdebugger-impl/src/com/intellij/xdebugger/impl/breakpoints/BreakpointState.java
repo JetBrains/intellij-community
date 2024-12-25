@@ -109,8 +109,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myLogStack = logStack;
   }
 
-  @Nullable
-  public String getGroup() {
+  public @Nullable String getGroup() {
     return myGroup;
   }
 
@@ -126,9 +125,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myDescription = description;
   }
 
-  @Nullable
   @Property(surroundWithTag = false)
-  public LogExpression getLogExpression() {
+  public @Nullable LogExpression getLogExpression() {
     return myLogExpression;
   }
 
@@ -139,9 +137,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myLogExpression = logExpression;
   }
 
-  @Nullable
   @Property(surroundWithTag = false)
-  public Condition getCondition() {
+  public @Nullable Condition getCondition() {
     return myCondition;
   }
 
@@ -194,8 +191,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
       super(disabled, expression);
     }
 
-    @Nullable
-    public static Condition create(boolean disabled, XExpression expression) {
+    public static @Nullable Condition create(boolean disabled, XExpression expression) {
       if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
         return null;
       }
@@ -212,8 +208,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
       super(disabled, expression);
     }
 
-    @Nullable
-    public static LogExpression create(boolean disabled, XExpression expression) {
+    public static @Nullable LogExpression create(boolean disabled, XExpression expression) {
       if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
         return null;
       }

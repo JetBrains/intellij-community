@@ -82,8 +82,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * @deprecated just don't use this method
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
+  protected static @NotNull GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
       WinRunnerMediator.injectRunnerCommand(commandLine, showConsole);
     }

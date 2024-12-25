@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.lexer.Lexer;
@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter {
   private final Lexer lexer;
   private LayeredHighlighterIterator layeredHighlighterIterator;
-  @NotNull
-  private final SyntaxHighlighter highlighter;
+  private final @NotNull SyntaxHighlighter highlighter;
 
   public SyntaxHighlighterOverEditorHighlighter(@NotNull SyntaxHighlighter _highlighter, @NotNull VirtualFile file, @NotNull Project project) {
     FileType type = file.getFileType();
@@ -46,9 +45,8 @@ public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter
     }
   }
 
-  @NotNull
   @Override
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return lexer;
   }
 

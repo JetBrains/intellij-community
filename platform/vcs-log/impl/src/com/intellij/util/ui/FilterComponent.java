@@ -34,11 +34,11 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   protected static final int BORDER_SIZE = 2;
   protected static final int ARC_SIZE = 10;
 
-  @NotNull private final Supplier<@NlsContexts.Label @NotNull String> myDisplayName;
-  @Nullable private JLabel myNameLabel;
-  @NotNull private JLabel myValueLabel;
-  @NotNull private InlineIconButton myFilterActionButton;
-  @Nullable private Runnable myShowPopupAction;
+  private final @NotNull Supplier<@NlsContexts.Label @NotNull String> myDisplayName;
+  private @Nullable JLabel myNameLabel;
+  private @NotNull JLabel myValueLabel;
+  private @NotNull InlineIconButton myFilterActionButton;
+  private @Nullable Runnable myShowPopupAction;
 
   protected FilterComponent(@NotNull Supplier<@NlsContexts.Label @NotNull String> displayName) {
     super(null);
@@ -128,9 +128,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
   /**
    * @return text that shows when filter value not selected (e.g. "All")
    */
-  @NotNull
-  @Nls
-  public abstract String getEmptyFilterValue();
+  public abstract @NotNull @Nls String getEmptyFilterValue();
 
   protected abstract boolean isValueSelected();
 
@@ -140,8 +138,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     return true;
   }
 
-  @NotNull
-  protected DrawLabelMode shouldDrawLabel() {
+  protected @NotNull DrawLabelMode shouldDrawLabel() {
     return DrawLabelMode.ALWAYS;
   }
 
@@ -320,8 +317,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) { myText = text; }
 
     @Override
-    @NlsContexts.Label
-    public String getText() {
+    public @NlsContexts.Label String getText() {
       //noinspection ConstantValue -- can be called during superclass initialization
       if (myText == null) return "";
       return myText.get();

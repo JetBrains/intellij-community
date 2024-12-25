@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.application.WriteAction;
@@ -43,8 +43,8 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExternalSystemLocalSettings.State> {
   protected S state;
 
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final Project myProject;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull Project myProject;
 
   protected AbstractExternalSystemLocalSettings(@NotNull ProjectSystemId externalSystemId, @NotNull Project project, @NotNull S state) {
     myExternalSystemId = externalSystemId;
@@ -98,8 +98,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     }
   }
 
-  @NotNull
-  public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> getAvailableProjects() {
+  public @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> getAvailableProjects() {
     return state.availableProjects;
   }
 
@@ -107,24 +106,19 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     state.availableProjects = projects;
   }
 
-  @NotNull
-  @Unmodifiable
-  public List<ExternalTaskExecutionInfo> getRecentTasks() {
+  public @NotNull @Unmodifiable List<ExternalTaskExecutionInfo> getRecentTasks() {
     return ContainerUtil.notNullize(state.recentTasks);
   }
 
-  @NotNull
-  public Map<String, Long> getExternalConfigModificationStamps() {
+  public @NotNull Map<String, Long> getExternalConfigModificationStamps() {
     return state.modificationStamps;
   }
 
-  @NotNull
-  public Map<String, SyncType> getProjectSyncType() {
+  public @NotNull Map<String, SyncType> getProjectSyncType() {
     return state.projectSyncType;
   }
 
-  @Nullable
-  public S getState() {
+  public @Nullable S getState() {
     return state;
   }
 

@@ -90,8 +90,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  @Unmodifiable
-  protected @NotNull List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
+  protected @Unmodifiable @NotNull List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
     return getElementsToCopy(editor, dataContext);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder {
+public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
 
@@ -206,8 +206,7 @@ final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
     return createBuilder(severity, null);
   }
 
-  @NotNull
-  private B createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
+  private @NotNull B createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
     return new B(this, severity, message, myCurrentElement.get(), myAnnotator);
   }
 

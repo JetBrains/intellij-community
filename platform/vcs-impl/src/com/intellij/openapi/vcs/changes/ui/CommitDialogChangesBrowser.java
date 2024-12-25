@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
@@ -22,27 +22,20 @@ public abstract class CommitDialogChangesBrowser extends ChangesBrowserBase impl
   }
 
 
-  @NotNull
-  public abstract LocalChangeList getSelectedChangeList();
+  public abstract @NotNull LocalChangeList getSelectedChangeList();
 
 
-  @NotNull
-  public abstract List<Change> getDisplayedChanges();
+  public abstract @NotNull List<Change> getDisplayedChanges();
 
-  @NotNull
-  public abstract List<Change> getSelectedChanges();
+  public abstract @NotNull List<Change> getSelectedChanges();
 
-  @NotNull
-  public abstract List<Change> getIncludedChanges();
+  public abstract @NotNull List<Change> getIncludedChanges();
 
-  @NotNull
-  public abstract List<FilePath> getDisplayedUnversionedFiles();
+  public abstract @NotNull List<FilePath> getDisplayedUnversionedFiles();
 
-  @NotNull
-  public abstract List<FilePath> getSelectedUnversionedFiles();
+  public abstract @NotNull List<FilePath> getSelectedUnversionedFiles();
 
-  @NotNull
-  public abstract List<FilePath> getIncludedUnversionedFiles();
+  public abstract @NotNull List<FilePath> getIncludedUnversionedFiles();
 
 
   public abstract void updateDisplayedChangeLists();

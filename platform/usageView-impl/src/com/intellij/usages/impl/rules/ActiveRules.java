@@ -114,7 +114,7 @@ public final class ActiveRules {
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
-  private static abstract class GroupingRuleExWrapper implements UsageGroupingRuleEx {
+  private abstract static class GroupingRuleExWrapper implements UsageGroupingRuleEx {
     private final UsageGroupingRule myGroupingRule;
 
     protected GroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
@@ -127,9 +127,7 @@ public final class ActiveRules {
     }
 
     @Override
-    @NotNull
-    @Unmodifiable
-    public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+    public @NotNull @Unmodifiable List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       return myGroupingRule.getParentGroupsFor(usage, targets);
     }
 

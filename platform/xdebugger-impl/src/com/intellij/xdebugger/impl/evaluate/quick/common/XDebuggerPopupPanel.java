@@ -99,10 +99,9 @@ public abstract class XDebuggerPopupPanel {
     fillContentPanel(content, myToolbar);
   }
 
-  @NotNull
-  private ActionToolbarImpl createToolbar(@NotNull DefaultActionGroup toolbarActions,
-                                          @NotNull String actionsPlace,
-                                          @Nullable Component toolbarActionsDataProvider) {
+  private @NotNull ActionToolbarImpl createToolbar(@NotNull DefaultActionGroup toolbarActions,
+                                                   @NotNull String actionsPlace,
+                                                   @Nullable Component toolbarActionsDataProvider) {
     toolbarActions.add(new Separator());
     DefaultActionGroup wrappedActions = wrapActions(toolbarActions, actionsPlace, toolbarActionsDataProvider);
 
@@ -127,10 +126,9 @@ public abstract class XDebuggerPopupPanel {
       .addToBottom(toolbar);
   }
 
-  @NotNull
-  private DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions,
-                                         @NotNull String actionsPlace,
-                                         @Nullable Component toolbarActionsDataProvider) {
+  private @NotNull DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions,
+                                                  @NotNull String actionsPlace,
+                                                  @Nullable Component toolbarActionsDataProvider) {
     DefaultActionGroup wrappedActions = new DefaultActionGroup();
     for (AnAction action : toolbarActions.getChildren(ActionManager.getInstance())) {
       ActionWrapper actionLink = new ActionWrapper(action, actionsPlace);

@@ -1529,8 +1529,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<TextAnnotationGutterProvider> getTextAnnotations() {
+  public @Unmodifiable @NotNull List<TextAnnotationGutterProvider> getTextAnnotations() {
     return ContainerUtil.map(myTextAnnotationGutterProviders, i->i.provider());
   }
 

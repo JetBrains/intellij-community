@@ -61,14 +61,12 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   }
 
   @Override
-  @NotNull
-  public XExpression getExpression() {
+  public @NotNull XExpression getExpression() {
     return myWatch.getExpression();
   }
 
-  @NotNull
   @Override
-  public XValue getValueContainer() {
+  public @NotNull XValue getValueContainer() {
     XValue container = super.getValueContainer();
     if (container instanceof XWatchValue) {
       XValue value = ((XWatchValue)container).myValue;
@@ -79,8 +77,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     return container;
   }
 
-  @NotNull
-  public XEvaluationOrigin getEvaluationOrigin() {
+  public @NotNull XEvaluationOrigin getEvaluationOrigin() {
     return XEvaluationOrigin.WATCH;
   }
 
@@ -155,8 +152,8 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
-      @NotNull private final XValueNode myNode;
-      @NotNull private final XValuePlace myPlace;
+      private final @NotNull XValueNode myNode;
+      private final @NotNull XValuePlace myPlace;
 
       MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
         myNode = node;
@@ -192,9 +189,8 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     }
 
     private static final XValuePresentation EMPTY_PRESENTATION = new XValuePresentation() {
-      @NotNull
       @Override
-      public String getSeparator() {
+      public @NotNull String getSeparator() {
         return "";
       }
 
@@ -204,26 +200,22 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     };
 
     @Override
-    @Nullable
-    public String getEvaluationExpression() {
+    public @Nullable String getEvaluationExpression() {
       return myValue != null ? myValue.getEvaluationExpression() : null;
     }
 
     @Override
-    @NotNull
-    public Promise<XExpression> calculateEvaluationExpression() {
+    public @NotNull Promise<XExpression> calculateEvaluationExpression() {
       return Promises.resolvedPromise(myWatch.getExpression());
     }
 
     @Override
-    @Nullable
-    public XInstanceEvaluator getInstanceEvaluator() {
+    public @Nullable XInstanceEvaluator getInstanceEvaluator() {
       return myValue != null ? myValue.getInstanceEvaluator() : null;
     }
 
     @Override
-    @Nullable
-    public XValueModifier getModifier() {
+    public @Nullable XValueModifier getModifier() {
       return myValue != null ? myValue.getModifier() : null;
     }
 
@@ -235,8 +227,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     }
 
     @Override
-    @NotNull
-    public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    public @NotNull ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
       return ThreeState.NO;
     }
 
@@ -258,8 +249,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     }
 
     @Override
-    @Nullable
-    public XReferrersProvider getReferrersProvider() {
+    public @Nullable XReferrersProvider getReferrersProvider() {
       return myValue != null ? myValue.getReferrersProvider() : null;
     }
 
@@ -285,9 +275,8 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
 
   @ApiStatus.Internal
   public static final XValuePresentation PAUSED_PRESENTATION = new XValuePresentation() {
-    @NotNull
     @Override
-    public String getSeparator() {
+    public @NotNull String getSeparator() {
       return " ";
     }
 

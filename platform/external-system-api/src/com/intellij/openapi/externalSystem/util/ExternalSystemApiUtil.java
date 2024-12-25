@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
@@ -713,8 +713,7 @@ public final class ExternalSystemApiUtil {
     getSettings(project, systemId).subscribe(listener, parentDisposable);
   }
 
-  @Unmodifiable
-  public static @NotNull Collection<TaskData> findProjectTasks(
+  public static @Unmodifiable @NotNull Collection<TaskData> findProjectTasks(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId,
     @NotNull String projectPath

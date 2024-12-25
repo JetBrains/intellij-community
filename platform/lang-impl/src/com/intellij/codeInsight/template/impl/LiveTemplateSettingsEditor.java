@@ -50,8 +50,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class LiveTemplateSettingsEditor extends JPanel {
@@ -430,8 +430,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return Pair.create(panel, checkboxTree);
   }
 
-  @Unmodifiable
-  private static @NotNull List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
+  private static @Unmodifiable @NotNull List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
     return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
   }
 

@@ -60,7 +60,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private final @NotNull CanISilentlyChange.Result myCanChangeFileSilently;
   private final Number myDaemonCancelEventCount;
   private final int myDaemonInitialCancelEventCount;
-  @NotNull private final TextRange myCompositeDocumentDirtyRange;
+  private final @NotNull TextRange myCompositeDocumentDirtyRange;
   private volatile boolean myIsEssentialHighlightingOnly;
   private final Long2ObjectMap<RangeMarker> myRange2markerCache = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
   private volatile boolean myInContent;
@@ -379,8 +379,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
   }
 
-  @NotNull
-  static RangeMarker getOrCreateVisitingRangeMarker(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
+  static @NotNull RangeMarker getOrCreateVisitingRangeMarker(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
     // in the case of multi-roots provider, the session is stored in the main
     PsiFile mainRoot = psiFile.getViewProvider().getAllFiles().get(0);
     HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(mainRoot);

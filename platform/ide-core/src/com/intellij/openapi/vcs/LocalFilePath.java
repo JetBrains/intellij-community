@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,9 +27,7 @@ import java.util.Objects;
 public class LocalFilePath implements FilePath {
   private static final Logger LOG = Logger.getInstance(LocalFilePath.class);
 
-  @NotNull
-  @SystemIndependent
-  private final String myPath;
+  private final @NotNull @SystemIndependent String myPath;
   private final boolean myIsDirectory;
   private VirtualFile myCachedFile;
 
@@ -88,9 +86,8 @@ public class LocalFilePath implements FilePath {
    * Most paths will not have a trailing '/' with an exception to file system roots: "C:/" and "/".
    * For this reason, the paths are never empty.
    */
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return myPath;
   }
 
@@ -105,8 +102,7 @@ public class LocalFilePath implements FilePath {
   }
 
   @Override
-  @Nullable
-  public FilePath getParentPath() {
+  public @Nullable FilePath getParentPath() {
     String parent = PathUtil.getParentPath(myPath);
 
     if (SystemInfo.isWindows) {
@@ -133,8 +129,7 @@ public class LocalFilePath implements FilePath {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     VirtualFile cachedFile = myCachedFile;
     if (cachedFile == null ||
         !cachedFile.isValid() ||
@@ -144,50 +139,42 @@ public class LocalFilePath implements FilePath {
     return cachedFile;
   }
 
-  @Nullable
-  protected VirtualFile findFile(@NotNull String path) {
+  protected @Nullable VirtualFile findFile(@NotNull String path) {
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
-  @NotNull
-  protected @NonNls String getPath(@NotNull VirtualFile cachedFile) {
+  protected @NotNull @NonNls String getPath(@NotNull VirtualFile cachedFile) {
     return cachedFile.getPath();
   }
 
   @Override
-  @Nullable
-  public VirtualFile getVirtualFileParent() {
+  public @Nullable VirtualFile getVirtualFileParent() {
     FilePath parent = getParentPath();
     return parent != null ? parent.getVirtualFile() : null;
   }
 
   @Override
-  @NotNull
-  public File getIOFile() {
+  public @NotNull File getIOFile() {
     return new File(myPath);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return PathUtil.getFileName(myPath);
   }
 
-  @NotNull
   @Override
-  public String getPresentableUrl() {
+  public @NotNull String getPresentableUrl() {
     return FileUtil.toSystemDependentName(myPath);
   }
 
   @Override
-  @NotNull
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     return getCharset(null);
   }
 
   @Override
-  @NotNull
-  public Charset getCharset(@Nullable Project project) {
+  public @NotNull Charset getCharset(@Nullable Project project) {
     VirtualFile file = getVirtualFile();
     String path = myPath;
     while ((file == null || !file.isValid()) && !path.isEmpty()) {
@@ -202,16 +189,14 @@ public class LocalFilePath implements FilePath {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     VirtualFile file = getVirtualFile();
     FileTypeManager manager = FileTypeManager.getInstance();
     return file != null ? manager.getFileTypeByFile(file) : manager.getFileTypeByFileName(getName());
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return myPath + (myIsDirectory && !StringUtil.endsWith(myPath, "/") ? "/" : "");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -29,8 +29,7 @@ import java.util.*;
  * @author maxim
  */
 public final class ReplacementBuilder {
-  @NotNull
-  private final String replacement;
+  private final @NotNull String replacement;
   private final MultiMap<String, ParameterInfo> parameterizations = MultiMap.createLinked();
   private final Map<String, ScriptSupport> replacementVarsMap = new HashMap<>();
   private final ReplaceOptions options;
@@ -155,8 +154,7 @@ public final class ReplacementBuilder {
     return result.toString();
   }
 
-  @Nullable
-  private Object generateReplacement(@NotNull ParameterInfo info, @NotNull MatchResult match) {
+  private @Nullable Object generateReplacement(@NotNull ParameterInfo info, @NotNull MatchResult match) {
     ScriptSupport scriptSupport = replacementVarsMap.get(info.getName());
 
     if (scriptSupport == null) {
@@ -188,8 +186,7 @@ public final class ReplacementBuilder {
     return ContainerUtil.find(findParameterization(profile.stripReplacementTypedVariableDecorations(text)), info -> info.getElement() == element);
   }
 
-  @NotNull
-  public String prepareReplacementPattern() {
+  public @NotNull String prepareReplacementPattern() {
     final LanguageFileType fileType = options.getMatchOptions().getFileType();
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
     assert profile != null;

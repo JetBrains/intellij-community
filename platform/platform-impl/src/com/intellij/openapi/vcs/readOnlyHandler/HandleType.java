@@ -82,8 +82,7 @@ public abstract class HandleType {
   public abstract void processFiles(@NotNull Collection<? extends VirtualFile> virtualFiles,
                                     @Nullable String changelist, boolean setChangeListActive);
 
-  @Unmodifiable
-  public List<String> getChangelists() {
+  public @Unmodifiable List<String> getChangelists() {
     return Collections.emptyList();
   }
 

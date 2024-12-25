@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.diff.DiffContentFactory;
@@ -38,8 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class TestDiffRequestProcessor {
-  @NotNull
-  public static DiffRequestChain createRequestChain(@NotNull Project project, @NotNull ListSelection<? extends DiffHyperlink> requests) {
+  public static @NotNull DiffRequestChain createRequestChain(@NotNull Project project, @NotNull ListSelection<? extends DiffHyperlink> requests) {
     ListSelection<DiffRequestProducer> producers = requests.map(hyperlink -> new DiffHyperlinkRequestProducer(project, hyperlink));
 
     SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducers(producers);
@@ -73,9 +72,8 @@ public final class TestDiffRequestProcessor {
     }
 
     @Override
-    @NotNull
-    public DiffRequest process(@NotNull UserDataHolder context,
-                               @NotNull ProgressIndicator indicator) {
+    public @NotNull DiffRequest process(@NotNull UserDataHolder context,
+                                        @NotNull ProgressIndicator indicator) {
       String windowTitle = myHyperlink.getDiffTitle();
       AbstractTestProxy testProxy = myHyperlink.getTestProxy();
       String text1 = myHyperlink.getLeft();
@@ -140,18 +138,16 @@ public final class TestDiffRequestProcessor {
     }
   }
 
-  @Nullable
-  private static VirtualFile findFile(@Nullable String path) {
+  private static @Nullable VirtualFile findFile(@Nullable String path) {
     if (path == null) return null;
     NewVirtualFileSystem fs = path.contains(URLUtil.JAR_SEPARATOR) ? JarFileSystem.getInstance() : LocalFileSystem.getInstance();
     return fs.refreshAndFindFileByPath(path);
   }
 
-  @NotNull
-  private static DiffContent createContentWithTitle(@Nullable Project project,
-                                                    @NotNull String content,
-                                                    @Nullable VirtualFile contentFile,
-                                                    @Nullable VirtualFile highlightFile) {
+  private static @NotNull DiffContent createContentWithTitle(@Nullable Project project,
+                                                             @NotNull String content,
+                                                             @Nullable VirtualFile contentFile,
+                                                             @Nullable VirtualFile highlightFile) {
     if (contentFile != null) {
       return DiffContentFactory.getInstance().create(project, contentFile);
     }

@@ -54,7 +54,7 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends Breakp
   }
 
   @Override
-  public XBreakpointBase<XLineBreakpoint<P>,P, ?> createBreakpoint(@NotNull final XLineBreakpointType<P> type, @NotNull XBreakpointManagerImpl breakpointManager) {
+  public XBreakpointBase<XLineBreakpoint<P>,P, ?> createBreakpoint(final @NotNull XLineBreakpointType<P> type, @NotNull XBreakpointManagerImpl breakpointManager) {
     return new XLineBreakpointImpl<>(type, breakpointManager, this);
   }
 }

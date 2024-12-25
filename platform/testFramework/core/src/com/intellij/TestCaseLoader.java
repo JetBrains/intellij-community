@@ -269,8 +269,7 @@ public class TestCaseLoader {
     }
   }
 
-  @Unmodifiable
-  private static List<String> getTestGroups() {
+  private static @Unmodifiable List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
@@ -522,8 +521,7 @@ public class TestCaseLoader {
     Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
       @Override
-      @Unmodifiable
-      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
+      public @Unmodifiable @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
         return ContainerUtil.sorted(testClasses,
                                     Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }

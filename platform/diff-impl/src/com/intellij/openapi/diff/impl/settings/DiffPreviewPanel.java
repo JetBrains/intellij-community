@@ -99,21 +99,18 @@ class DiffPreviewPanel implements PreviewPanel {
       myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
-    @NotNull
     @Override
-    public List<DiffContent> getContents() {
+    public @NotNull List<DiffContent> getContents() {
       return myContents;
     }
 
-    @NotNull
     @Override
-    public List<String> getContentTitles() {
+    public @NotNull List<String> getContentTitles() {
       return Arrays.asList(null, null, null);
     }
 
-    @Nullable
     @Override
-    public String getTitle() {
+    public @Nullable String getTitle() {
       return DiffBundle.message("merge.color.options.dialog.title");
     }
   }
@@ -128,9 +125,8 @@ class DiffPreviewPanel implements PreviewPanel {
       putUserData(TextDiffSettings.KEY, settings);
     }
 
-    @Nullable
     @Override
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return null;
     }
 
@@ -150,12 +146,12 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   @Override
-  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
+  public void addListener(final @NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
   private final class EditorMouseListener implements EditorMouseMotionListener {
-    @NotNull private final ThreeSide mySide;
+    private final @NotNull ThreeSide mySide;
 
     private EditorMouseListener(@NotNull ThreeSide side) {
       mySide = side;
@@ -172,7 +168,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private final class EditorClickListener implements CaretListener, com.intellij.openapi.editor.event.EditorMouseListener {
-    @NotNull private final ThreeSide mySide;
+    private final @NotNull ThreeSide mySide;
 
     private EditorClickListener(@NotNull ThreeSide side) {
       mySide = side;
@@ -205,8 +201,7 @@ class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  @Nullable
-  private SimpleThreesideDiffChange getChange(@NotNull ThreeSide side, int line) {
+  private @Nullable SimpleThreesideDiffChange getChange(@NotNull ThreeSide side, int line) {
     for (SimpleThreesideDiffChange change : myViewer.getChanges()) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
@@ -217,8 +212,7 @@ class DiffPreviewPanel implements PreviewPanel {
     return null;
   }
 
-  @Nullable
-  private FoldRegion getFoldRegion(@NotNull ThreeSide side, int line) {
+  private @Nullable FoldRegion getFoldRegion(@NotNull ThreeSide side, int line) {
     EditorEx editor = myViewer.getEditor(side);
     DocumentEx document = editor.getDocument();
     for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
@@ -239,9 +233,8 @@ class DiffPreviewPanel implements PreviewPanel {
     Disposer.dispose(myViewer);
   }
 
-  @NotNull
   @TestOnly
-  public SimpleThreesideDiffViewer testGetViewer() {
+  public @NotNull SimpleThreesideDiffViewer testGetViewer() {
     return myViewer;
   }
 

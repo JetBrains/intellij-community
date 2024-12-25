@@ -21,10 +21,10 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class TextMergeViewer implements MergeTool.MergeViewer {
-  @NotNull private final MergeContext myMergeContext;
-  @NotNull private final TextMergeRequest myMergeRequest;
+  private final @NotNull MergeContext myMergeContext;
+  private final @NotNull TextMergeRequest myMergeRequest;
 
-  @NotNull protected final MergeThreesideViewer myViewer;
+  protected final @NotNull MergeThreesideViewer myViewer;
 
   private final Action myCancelResolveAction;
   private final Action myLeftResolveAction;
@@ -50,8 +50,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     myAcceptResolveAction = myViewer.getLoadedResolveAction(MergeResult.RESOLVED);
   }
 
-  @NotNull
-  private static List<DiffContent> getDiffContents(@NotNull TextMergeRequest mergeRequest) {
+  private static @NotNull List<DiffContent> getDiffContents(@NotNull TextMergeRequest mergeRequest) {
     List<DocumentContent> contents = mergeRequest.getContents();
 
     final DocumentContent left = ThreeSide.LEFT.select(contents);
@@ -61,8 +60,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     return Arrays.asList(left, output, right);
   }
 
-  @NotNull
-  private static List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
+  private static @NotNull List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
     List<String> titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles());
     titles.set(ThreeSide.BASE.getIndex(), DiffBundle.message("merge.version.title.merged.result"));
     return titles;
@@ -72,21 +70,18 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   // Impl
   //
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myViewer.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myViewer.getPreferredFocusedComponent();
   }
 
-  @NotNull
   @Override
-  public MergeTool.ToolbarComponents init() {
+  public @NotNull MergeTool.ToolbarComponents init() {
     MergeTool.ToolbarComponents components = new MergeTool.ToolbarComponents();
 
     FrameDiffTool.ToolbarComponents init = myViewer.init();
@@ -104,9 +99,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     return components;
   }
 
-  @Nullable
   @Override
-  public Action getResolveAction(@NotNull MergeResult result) {
+  public @Nullable Action getResolveAction(@NotNull MergeResult result) {
     return switch (result) {
       case CANCEL -> myCancelResolveAction;
       case LEFT -> myLeftResolveAction;
@@ -124,8 +118,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   // Getters
   //
 
-  @NotNull
-  public MergeThreesideViewer getViewer() {
+  public @NotNull MergeThreesideViewer getViewer() {
     return myViewer;
   }
 

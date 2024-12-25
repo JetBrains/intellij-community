@@ -744,8 +744,7 @@ public final class FSRecordsImpl implements Closeable {
   }
 
 
-  @Unmodifiable
-  public @NotNull List<CharSequence> listNames(int parentId) {
+  public @Unmodifiable @NotNull List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -22,8 +22,7 @@ public abstract class ExecutorRegistry {
     return Executor.EXECUTOR_EXTENSION_NAME.getExtensionList().toArray(new Executor[0]);
   }
 
-  @Nullable
-  public abstract Executor getExecutorById(@NotNull String executorId);
+  public abstract @Nullable Executor getExecutorById(@NotNull String executorId);
 
   /** @deprecated Use {@link ExecutionManager#isStarting(ExecutionEnvironment)} */
   @SuppressWarnings("MethodMayBeStatic")

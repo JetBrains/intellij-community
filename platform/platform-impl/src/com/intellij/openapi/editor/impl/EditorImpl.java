@@ -44,7 +44,10 @@ import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -92,8 +95,8 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
-import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
@@ -120,8 +123,8 @@ import java.lang.invoke.MethodHandle;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2880,16 +2883,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return result;
   }
 
-  @NotNull
-  private VisualPosition nextSelectionVisualPosition(@NotNull VisualPosition pos) {
+  private @NotNull VisualPosition nextSelectionVisualPosition(@NotNull VisualPosition pos) {
     if (!isColumnMode() && pos.column >= EditorUtil.getLastVisualLineColumnNumber(this, pos.line)) {
       return new VisualPosition(pos.line + 1, 0, false);
     }
     return new VisualPosition(pos.line, pos.column + 1, false);
   }
 
-  @NotNull
-  private VisualPosition prevSelectionVisualPosition(@NotNull VisualPosition pos) {
+  private @NotNull VisualPosition prevSelectionVisualPosition(@NotNull VisualPosition pos) {
     int prevColumn = pos.column - 1;
     if (prevColumn >= 0) {
       return new VisualPosition(pos.line, prevColumn, true);
@@ -3179,11 +3180,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public static final class CaretRectangle {
-    @NotNull
-    public final Point2D myPoint;
+    public final @NotNull Point2D myPoint;
     public final float myWidth;
-    @Nullable
-    public final Caret myCaret;
+    public final @Nullable Caret myCaret;
     public final boolean myIsRtl;
 
     private CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
@@ -3614,7 +3613,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @see EditorImpl.MyColorSchemeDelegate
    */
   @Override
-  public void setColorsScheme(@NotNull final EditorColorsScheme scheme) {
+  public void setColorsScheme(final @NotNull EditorColorsScheme scheme) {
     assertIsDispatchThread();
     final EditorImpl finalEditor = this;
     ReadAction.run(() -> {
@@ -3931,8 +3930,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
 
   static final class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
-    @NotNull
-    private final InputMethodRequests myDelegate;
+    private final @NotNull InputMethodRequests myDelegate;
 
     MyInputMethodHandleSwingThreadWrapper(@NotNull InputMethodRequests delegate) {
       myDelegate = delegate;
@@ -4142,8 +4140,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return text == null ? null : new AttributedString(text).getIterator();
     }
 
-    @NotNull
-    private static String createComposedString(int composedIndex, @NotNull AttributedCharacterIterator text) {
+    private static @NotNull String createComposedString(int composedIndex, @NotNull AttributedCharacterIterator text) {
       StringBuilder strBuf = new StringBuilder();
 
       // create attributed string with no attributes

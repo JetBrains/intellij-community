@@ -515,8 +515,7 @@ public final class TestLoggerFactory implements Logger.Factory {
      * Calling {@link com.intellij.openapi.application.ex.ApplicationManagerEx#isInStressTest} reflectively to avoid dependency on a platform module
      */
     private static class Accessor {
-      @NotNull
-      private static final MethodHandle isInStressTest = getMethodHandle();
+      private static final @NotNull MethodHandle isInStressTest = getMethodHandle();
 
       private static @NotNull MethodHandle getMethodHandle() {
         try {

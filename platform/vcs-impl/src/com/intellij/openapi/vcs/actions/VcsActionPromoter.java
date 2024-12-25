@@ -18,8 +18,7 @@ import java.util.List;
 @ApiStatus.Internal
 public final class VcsActionPromoter implements ActionPromoter {
   @Override
-  @Unmodifiable
-  public List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
+  public @Unmodifiable List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     ActionManager am = ActionManager.getInstance();
     List<AnAction> reorderedActions = new ArrayList<>(actions);
     List<String> reorderedIds = new ArrayList<>(ContainerUtil.map(reorderedActions, it -> am.getId(it)));

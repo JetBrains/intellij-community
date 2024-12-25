@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -24,7 +24,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   private int mouseButton;
   private boolean wasDragged;
   private boolean leftMouseButtonOnly = false;
-  private final static boolean moveAfterMouseRelease = StartupUiUtil.isWaylandToolkit();
+  private static final boolean moveAfterMouseRelease = StartupUiUtil.isWaylandToolkit();
 
   /**
    * @param content the window content to find a window, or {@code null} to use a component from a mouse event

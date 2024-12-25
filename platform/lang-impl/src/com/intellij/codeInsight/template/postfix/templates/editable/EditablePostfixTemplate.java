@@ -110,8 +110,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     return Objects.hash(getKey(), myLiveTemplate);
   }
 
-  @Unmodifiable
-  protected abstract List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
+  protected abstract @Unmodifiable List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {

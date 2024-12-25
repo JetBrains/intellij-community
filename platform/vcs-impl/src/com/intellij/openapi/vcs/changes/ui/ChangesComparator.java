@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.treeView.FileNameComparator;
@@ -23,18 +23,15 @@ public final class ChangesComparator {
   private static final Comparator<FilePath> FILE_PATH_FLAT = new FilePathComparator(true);
   private static final Comparator<FilePath> FILE_PATH_TREE = new FilePathComparator(false);
 
-  @NotNull
-  public static Comparator<Change> getInstance(boolean flattened) {
+  public static @NotNull Comparator<Change> getInstance(boolean flattened) {
     return flattened ? CHANGE_FLAT : CHANGE_TREE;
   }
 
-  @NotNull
-  public static Comparator<VirtualFile> getVirtualFileComparator(boolean flattened) {
+  public static @NotNull Comparator<VirtualFile> getVirtualFileComparator(boolean flattened) {
     return flattened ? VIRTUAL_FILE_FLAT : VIRTUAL_FILE_TREE;
   }
 
-  @NotNull
-  public static Comparator<FilePath> getFilePathComparator(boolean flattened) {
+  public static @NotNull Comparator<FilePath> getFilePathComparator(boolean flattened) {
     return flattened ? FILE_PATH_FLAT : FILE_PATH_TREE;
   }
 

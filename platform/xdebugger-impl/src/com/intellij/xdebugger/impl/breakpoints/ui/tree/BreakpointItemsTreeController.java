@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.ide.util.treeView.TreeState;
@@ -107,8 +107,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
 
-  @NotNull
-  private CheckedTreeNode getParentNode(final BreakpointItem breakpoint) {
+  private @NotNull CheckedTreeNode getParentNode(final BreakpointItem breakpoint) {
     CheckedTreeNode parent = myRoot;
     for (int i = 0; i < myGroupingRules.size(); i++) {
       XBreakpointGroup group = myGroupingRules.get(i).getGroup(breakpoint.getBreakpoint(), Collections.emptyList());
@@ -193,7 +192,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     return list;
   }
 
-  public void selectBreakpointItem(@Nullable final BreakpointItem breakpoint, TreePath path) {
+  public void selectBreakpointItem(final @Nullable BreakpointItem breakpoint, TreePath path) {
     BreakpointItemNode node = myNodes.get(breakpoint);
     if (node != null) {
       path = TreeUtil.getPathFromRoot(node);

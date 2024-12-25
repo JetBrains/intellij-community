@@ -56,8 +56,7 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     myModel.saveState(state);
   }
 
-  @NotNull
-  abstract List<ServiceViewItem> getSelectedItems();
+  abstract @NotNull List<ServiceViewItem> getSelectedItems();
 
   abstract Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass);
 

@@ -15,8 +15,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public abstract class RunAnythingGroupBase extends RunAnythingGroup {
-  @Unmodifiable
-  public abstract @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern);
+  public abstract @Unmodifiable @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern);
 
   protected @Nullable Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern) {
     return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -86,20 +86,17 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   @Override
-  @NotNull
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return VcsFileSystem.getInstance();
   }
 
   @Override
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     return myPath;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -108,9 +105,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     return getPresentableName(myName);
   }
 
-  @NotNull
-  @Nls
-  protected String getPresentableName(@NotNull @Nls String baseName) {
+  protected @NotNull @Nls String getPresentableName(@NotNull @Nls String baseName) {
     if (myRevision == null) return baseName;
     return baseName + " (" + myRevision + ")";
   }
@@ -142,8 +137,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new RuntimeException(VcsFileSystem.getCouldNotImplementMessage());
   }
 

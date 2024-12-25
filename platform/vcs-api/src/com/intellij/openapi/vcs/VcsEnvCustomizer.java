@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.execution.wsl.WSLCommandLineOptions;
@@ -52,23 +52,19 @@ public abstract class VcsEnvCustomizer {
       myWslOptions = type == VcsEnvCustomizer.ExecutableType.WSL ? new WSLCommandLineOptions() : null;
     }
 
-    @Nullable
-    public AbstractVcs getVcs() {
+    public @Nullable AbstractVcs getVcs() {
       return myVcs;
     }
 
-    @Nullable
-    public VirtualFile getRoot() {
+    public @Nullable VirtualFile getRoot() {
       return myRoot;
     }
 
-    @NotNull
-    public ExecutableType getType() {
+    public @NotNull ExecutableType getType() {
       return myType;
     }
 
-    @Nullable
-    public WSLCommandLineOptions getWslOptions() {
+    public @Nullable WSLCommandLineOptions getWslOptions() {
       return myWslOptions;
     }
   }

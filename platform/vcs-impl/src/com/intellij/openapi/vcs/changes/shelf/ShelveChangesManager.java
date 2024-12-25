@@ -110,7 +110,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private final ReadWriteLock SHELVED_FILES_LOCK = new ReentrantReadWriteLock(true);
   private final Tracer myTracer = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope);
   private final Project myProject;
-  @NotNull final CoroutineScope coroutineScope;
+  final @NotNull CoroutineScope coroutineScope;
   private State myState = new State();
   private @NotNull SchemeManager<ShelvedChangeList> schemeManager;
   private ScheduledFuture<?> myCleaningFuture;

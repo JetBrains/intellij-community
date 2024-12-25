@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DocumentContent;
@@ -34,14 +20,14 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class TextMergeRequestImpl extends TextMergeRequest {
-  @Nullable private final Project myProject;
-  @NotNull private final DocumentContent myOutput;
-  @NotNull private final List<DocumentContent> myContents;
+  private final @Nullable Project myProject;
+  private final @NotNull DocumentContent myOutput;
+  private final @NotNull List<DocumentContent> myContents;
 
-  @NotNull private final CharSequence myOriginalContent;
+  private final @NotNull CharSequence myOriginalContent;
 
-  @Nullable private final @NlsContexts.DialogTitle String myTitle;
-  @NotNull private final List<String> myTitles;
+  private final @Nullable @NlsContexts.DialogTitle String myTitle;
+  private final @NotNull List<String> myTitles;
 
   public TextMergeRequestImpl(@Nullable Project project,
                               @NotNull DocumentContent output,
@@ -61,27 +47,23 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     myTitle = title;
   }
 
-  @NotNull
   @Override
-  public DocumentContent getOutputContent() {
+  public @NotNull DocumentContent getOutputContent() {
     return myOutput;
   }
 
-  @NotNull
   @Override
-  public List<DocumentContent> getContents() {
+  public @NotNull List<DocumentContent> getContents() {
     return myContents;
   }
 
-  @Nullable
   @Override
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return myTitle;
   }
 
-  @NotNull
   @Override
-  public List<String> getContentTitles() {
+  public @NotNull List<String> getContentTitles() {
     return myTitles;
   }
 

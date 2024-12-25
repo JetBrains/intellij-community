@@ -21,8 +21,7 @@ import java.util.Objects;
 // Stores result of various `FSRecords#list*` methods and the current `FSRecords#getModCount` for optimistic locking support.
 final class ListResult {
   private final int parentModStamp;
-  @Unmodifiable
-  final List<? extends ChildInfo> children;  // sorted by `#getId`
+  final @Unmodifiable List<? extends ChildInfo> children;  // sorted by `#getId`
   private final int parentId;
 
   ListResult(int parentModStamp,

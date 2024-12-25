@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -34,7 +34,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInContent(@NotNull final VirtualFile file) {
+  public boolean isInContent(final @NotNull VirtualFile file) {
     return myFileIndex.isInContent(file);
   }
 
@@ -64,7 +64,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isExcludedFile(@NotNull final VirtualFile file) {
+  public boolean isExcludedFile(final @NotNull VirtualFile file) {
     return myFileIndex.isExcluded(file);
   }
 
@@ -73,14 +73,13 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.isUnderIgnored(file);
   }
 
-  @Nullable
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file) {
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file) {
     return myFileIndex.getModuleForFile(file);
   }
 
   @Override
-  public boolean isValidAncestor(@NotNull final VirtualFile baseDir, @NotNull VirtualFile childDir) {
+  public boolean isValidAncestor(final @NotNull VirtualFile baseDir, @NotNull VirtualFile childDir) {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();
     }
@@ -93,15 +92,13 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     }
   }
 
-  @NotNull
   @Override
-  public ModificationTracker getRootModificationTracker() {
+  public @NotNull ModificationTracker getRootModificationTracker() {
     return ProjectRootManager.getInstance(myProject);
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
     return ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions();
   }
 

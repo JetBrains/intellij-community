@@ -459,9 +459,8 @@ public final class NewMappings implements Disposable {
     }
   }
 
-  @Nullable
-  private MappedRoot findDirectMappingFor(@NotNull VcsDirectoryMapping mapping,
-                                          @NotNull Disposable pointerDisposable) {
+  private @Nullable MappedRoot findDirectMappingFor(@NotNull VcsDirectoryMapping mapping,
+                                                    @NotNull Disposable pointerDisposable) {
     AbstractVcs vcs = getMappingsVcs(mapping);
     String rootPath = mapping.getDirectory();
 
@@ -482,10 +481,9 @@ public final class NewMappings implements Disposable {
     });
   }
 
-  @NotNull
-  private List<MappedRoot> findDefaultMappingsFor(@NotNull VcsDirectoryMapping mapping,
-                                                  @NotNull Set<VirtualFile> directMappingDirs,
-                                                  @NotNull Disposable pointerDisposable) throws VcsException {
+  private @NotNull List<MappedRoot> findDefaultMappingsFor(@NotNull VcsDirectoryMapping mapping,
+                                                           @NotNull Set<VirtualFile> directMappingDirs,
+                                                           @NotNull Disposable pointerDisposable) throws VcsException {
     AbstractVcs vcs = getMappingsVcs(mapping);
     if (vcs == null) {
       return Collections.emptyList();
@@ -507,10 +505,9 @@ public final class NewMappings implements Disposable {
     return result;
   }
 
-  @NotNull
-  private List<MappedRoot> reuseDefaultMappingsFrom(@NotNull VcsDirectoryMapping mapping,
-                                                    @NotNull List<MappedRoot> oldMappedRoots,
-                                                    @NotNull Disposable pointerDisposable) {
+  private @NotNull List<MappedRoot> reuseDefaultMappingsFrom(@NotNull VcsDirectoryMapping mapping,
+                                                             @NotNull List<MappedRoot> oldMappedRoots,
+                                                             @NotNull Disposable pointerDisposable) {
     // Pretend that mappings did not change at first, and "<Project>" mappings has detected all the roots that were used before.
     // This prevents such roots from being temporally unregistered if they will be detected later by the proper-and-slow logic.
     // Which in its turn allows preserving Change-to-Changelist mappings and
@@ -667,8 +664,7 @@ public final class NewMappings implements Disposable {
     return myMappings;
   }
 
-  @Unmodifiable
-  public List<VcsDirectoryMapping> getDirectoryMappings(String vcsName) {
+  public @Unmodifiable List<VcsDirectoryMapping> getDirectoryMappings(String vcsName) {
     return ContainerUtil.filter(myMappings, mapping -> Objects.equals(mapping.getVcs(), vcsName));
   }
 

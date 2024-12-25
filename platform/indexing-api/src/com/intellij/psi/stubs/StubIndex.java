@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
@@ -42,9 +41,9 @@ public abstract class StubIndex {
    */
   @Deprecated(forRemoval = true)
   <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                           @NotNull Key key,
-                                                           @NotNull Project project,
-                                                           @Nullable final GlobalSearchScope scope) {
+                                                    @NotNull Key key,
+                                                    @NotNull Project project,
+                                                    final @Nullable GlobalSearchScope scope) {
     List<Psi> result = new SmartList<>();
     processElements(indexKey, key, project, scope, (Class<Psi>)PsiElement.class, Processors.cancelableCollectProcessor(result));
     return result;
@@ -69,8 +68,7 @@ public abstract class StubIndex {
     return processElements(indexKey, key, project, scope, requiredClass, processor);
   }
 
-  @NotNull
-  public abstract <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
+  public abstract @NotNull <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project, @NotNull Processor<? super K> processor) {
     return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
@@ -87,22 +85,20 @@ public abstract class StubIndex {
     return processAllKeys(indexKey, Objects.requireNonNull(scope.getProject()), processor);
   }
 
-  @NotNull
-  public static <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                          @NotNull Key key,
-                                                                          @NotNull final Project project,
-                                                                          @Nullable final GlobalSearchScope scope,
-                                                                          @NotNull Class<Psi> requiredClass) {
+  public static @NotNull <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                                   @NotNull Key key,
+                                                                                   final @NotNull Project project,
+                                                                                   final @Nullable GlobalSearchScope scope,
+                                                                                   @NotNull Class<Psi> requiredClass) {
     return getElements(indexKey, key, project, scope, null, requiredClass);
   }
 
-  @NotNull
-  public static <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                          @NotNull Key key,
-                                                                          @NotNull final Project project,
-                                                                          @Nullable final GlobalSearchScope scope,
-                                                                          @Nullable IdFilter idFilter,
-                                                                          @NotNull Class<Psi> requiredClass) {
+  public static @NotNull <Key, Psi extends PsiElement> Collection<Psi> getElements(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                                   @NotNull Key key,
+                                                                                   final @NotNull Project project,
+                                                                                   final @Nullable GlobalSearchScope scope,
+                                                                                   @Nullable IdFilter idFilter,
+                                                                                   @NotNull Class<Psi> requiredClass) {
     final List<Psi> result = new SmartList<>();
     Processor<Psi> processor = Processors.cancelableCollectProcessor(result);
     getInstance().processElements(indexKey, key, project, scope, idFilter, requiredClass, processor);
@@ -112,8 +108,7 @@ public abstract class StubIndex {
   /**
    * @return lazily reified iterator of VirtualFile's.
    */
-  @NotNull
-  public abstract <Key> Iterator<VirtualFile> getContainingFilesIterator(@NotNull StubIndexKey<Key, ?> indexKey,
+  public abstract @NotNull <Key> Iterator<VirtualFile> getContainingFilesIterator(@NotNull StubIndexKey<Key, ?> indexKey,
                                                                          @NotNull @NonNls Key dataKey,
                                                                          @NotNull Project project,
                                                                          @NotNull GlobalSearchScope scope);
@@ -122,8 +117,7 @@ public abstract class StubIndex {
    * @deprecated use {@link StubIndex#getContainingFilesIterator(StubIndexKey, Object, Project, GlobalSearchScope)}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
+  public @NotNull <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
                                                    @NotNull @NonNls Key dataKey,
                                                    @NotNull Project project,
                                                    @NotNull GlobalSearchScope scope) {

@@ -546,8 +546,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
-  @Nullable
-  public static Window getCurrentWindow(@NotNull Project project) {
+  public static @Nullable Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -1906,8 +1905,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
-  @Nullable
-  protected Dimension calculateSizeForPack(boolean width, boolean height) {
+  protected @Nullable Dimension calculateSizeForPack(boolean width, boolean height) {
     if (!isVisible() || !width && !height || isBusy()) return null;
 
     Dimension size = getSize();
@@ -2740,8 +2738,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return point == null ? null : new Rectangle(point, component.getSize());
   }
 
-  @Unmodifiable
-  public static @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
+  public static @Unmodifiable @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
     return ContainerUtil.filter(all.toStrongList(), popup -> {
       Component owner = popup.getOwner();
       while (owner != null) {

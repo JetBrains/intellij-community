@@ -47,8 +47,7 @@ public final class ShowAnnotateOperationsPopup extends DumbAwareAction {
     popup.showInBestPositionFor(e.getDataContext());
   }
 
-  @Nullable
-  private static List<AnAction> getActions(@NotNull DataContext context) {
+  private static @Nullable List<AnAction> getActions(@NotNull DataContext context) {
     Editor editor = context.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
 

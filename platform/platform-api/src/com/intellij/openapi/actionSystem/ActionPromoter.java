@@ -36,8 +36,7 @@ public interface ActionPromoter {
    * and {@link PlatformCoreDataKeys#FILE_EDITOR} keys are available,
    * but {@link CommonDataKeys#PSI_FILE} is not.
    */
-  @Unmodifiable
-  default @Nullable List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
+  default @Unmodifiable @Nullable List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }
 
@@ -46,8 +45,7 @@ public interface ActionPromoter {
    * <p>
    * See {@link #promote(List, DataContext)} javadoc notes on performance and the provided {@link DataContext}.
    */
-  @Unmodifiable
-  default @Nullable List<AnAction> suppress(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
+  default @Unmodifiable @Nullable List<AnAction> suppress(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }
 }

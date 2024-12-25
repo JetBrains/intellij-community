@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -57,9 +57,8 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<FilePath> values() {
+  public @NotNull Collection<FilePath> values() {
     return myMap;
   }
 

@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
@@ -37,8 +37,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -339,8 +339,7 @@ public final class JBCefApp {
    */
   @Deprecated
   @Contract(pure = true)
-  @NotNull
-  public Integer getRemoteDebuggingPort() {
+  public @NotNull Integer getRemoteDebuggingPort() {
     if (myCefSettings == null) throw new UnsupportedOperationException();
     return myCefSettings.remote_debugging_port;
   }

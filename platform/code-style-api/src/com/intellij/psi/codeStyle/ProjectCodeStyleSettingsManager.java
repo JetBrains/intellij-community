@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,14 +7,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 @State(
@@ -75,9 +73,8 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     }
   }
 
-  @NotNull
   @Override
-  public CodeStyleSettings getMainProjectCodeStyle() {
+  public @NotNull CodeStyleSettings getMainProjectCodeStyle() {
     synchronized (myStateLock) {
       return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
     }
@@ -154,21 +151,18 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   }
 
   static final class StateSplitter extends MainConfigurationStateSplitter {
-    @NotNull
     @Override
-    protected String getComponentStateFileName() {
+    protected @NotNull String getComponentStateFileName() {
       return PROJECT_CODE_STYLE_CONFIG_FILE_NAME;
     }
 
-    @NotNull
     @Override
-    protected String getSubStateTagName() {
+    protected @NotNull String getSubStateTagName() {
       return CodeStyleScheme.CODE_STYLE_TAG_NAME;
     }
 
-    @NotNull
     @Override
-    protected String getSubStateFileName(@NotNull Element element) {
+    protected @NotNull String getSubStateFileName(@NotNull Element element) {
       return Objects.requireNonNull(element.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR));
     }
   }

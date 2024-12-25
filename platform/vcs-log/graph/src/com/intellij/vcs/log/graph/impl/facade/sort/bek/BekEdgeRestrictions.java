@@ -5,9 +5,9 @@ import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import org.jetbrains.annotations.NotNull;
 
 class BekEdgeRestrictions {
-  @NotNull private final IntIntMultiMap myUpToEdge = new IntIntMultiMap();
+  private final @NotNull IntIntMultiMap myUpToEdge = new IntIntMultiMap();
 
-  @NotNull private final IntIntMultiMap myDownToEdge = new IntIntMultiMap();
+  private final @NotNull IntIntMultiMap myDownToEdge = new IntIntMultiMap();
 
   void addRestriction(int upNode, int downNode) {
     myUpToEdge.putValue(upNode, downNode);

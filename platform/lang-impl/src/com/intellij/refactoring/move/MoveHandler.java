@@ -223,8 +223,7 @@ public final class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  @Unmodifiable
-  private static @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
+  private static @Unmodifiable @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
     return ContainerUtil.filter(MoveHandlerDelegate.EP_NAME.getExtensionList(),
                                 (delegate) -> delegate.supportsLanguage(element.getLanguage()));
   }

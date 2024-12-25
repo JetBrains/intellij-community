@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -149,16 +149,14 @@ public final class PathsList  {
   /**
    * @return {@link VirtualFile}s on local file system (returns jars as files).
    */
-  @Unmodifiable
-  public List<VirtualFile> getVirtualFiles() {
+  public @Unmodifiable List<VirtualFile> getVirtualFiles() {
     return JBIterable.from(getPathList()).filterMap(PATH_TO_LOCAL_VFILE).toList();
   }
 
   /**
    * @return The same as {@link #getVirtualFiles()} but returns jars as {@code JarFileSystem} roots.
    */
-  @Unmodifiable
-  public List<VirtualFile> getRootDirs() {
+  public @Unmodifiable List<VirtualFile> getRootDirs() {
     return JBIterable.from(getPathList()).filterMap(PATH_TO_DIR).toList();
   }
 

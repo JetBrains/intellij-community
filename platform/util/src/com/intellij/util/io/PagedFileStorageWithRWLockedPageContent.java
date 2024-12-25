@@ -618,8 +618,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     }
   }
 
-  @NotNull
-  private static StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
+  private static @NotNull StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
     final StorageLockContext threadContext = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
     if (threadContext != null) {
       if (storageLockContext != null && storageLockContext != threadContext) {

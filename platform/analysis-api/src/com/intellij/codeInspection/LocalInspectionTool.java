@@ -216,8 +216,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
-  @Unmodifiable
-  public @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
+  public @Unmodifiable @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     return manager.defaultProcessFile(this, file);
   }
 }

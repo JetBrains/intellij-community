@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
@@ -16,15 +16,13 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class FilePromptMacro extends PromptingMacro implements SecondQueueExpandMacro, PathMacro {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "FilePrompt";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return ExecutionBundle.message("shows.a.file.chooser.dialog");
   }
 

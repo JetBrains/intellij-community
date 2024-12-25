@@ -56,15 +56,14 @@ public final class GetVersionFromRepositoryActionProvider implements AnActionExt
   }
 
   private static class MyFileContentProvider implements GetVersionAction.FileRevisionProvider {
-    @NotNull private final Change myChange;
+    private final @NotNull Change myChange;
 
     private MyFileContentProvider(@NotNull Change change) {
       myChange = change;
     }
 
-    @NotNull
     @Override
-    public FilePath getFilePath() {
+    public @NotNull FilePath getFilePath() {
       return ChangesUtil.getFilePath(myChange);
     }
 

@@ -30,8 +30,7 @@ public class TreeBackedLighterAST extends LighterAST {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent) {
+  public @Unmodifiable @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent) {
     final ASTNode[] children = unwrap(parent).getChildren(null);
     if (children.length == 0) return ContainerUtil.emptyList();
 

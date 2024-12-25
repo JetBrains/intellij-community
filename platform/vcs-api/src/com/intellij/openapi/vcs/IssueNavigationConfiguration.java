@@ -65,9 +65,8 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
       myTargetUrl = targetUrl;
     }
 
-    @NotNull
     @Override
-    public TextRange getRange() {
+    public @NotNull TextRange getRange() {
       return myRange;
     }
 

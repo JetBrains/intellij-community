@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.*;
@@ -41,13 +41,11 @@ public abstract class CommandLineState implements RunProfileState {
     return myEnvironment;
   }
 
-  @Nullable
-  public RunnerSettings getRunnerSettings() {
+  public @Nullable RunnerSettings getRunnerSettings() {
     return myEnvironment.getRunnerSettings();
   }
 
-  @NotNull
-  public ExecutionTarget getExecutionTarget() {
+  public @NotNull ExecutionTarget getExecutionTarget() {
     return myEnvironment.getExecutionTarget();
   }
 
@@ -56,8 +54,7 @@ public abstract class CommandLineState implements RunProfileState {
   }
 
   @Override
-  @NotNull
-  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
+  public @NotNull ExecutionResult execute(final @NotNull Executor executor, final @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
     final ConsoleView console = createConsole(executor);
     if (console != null) {
@@ -66,8 +63,7 @@ public abstract class CommandLineState implements RunProfileState {
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
   }
 
-  @Nullable
-  protected ConsoleView createConsole(@NotNull final Executor executor) throws ExecutionException {
+  protected @Nullable ConsoleView createConsole(final @NotNull Executor executor) throws ExecutionException {
     TextConsoleBuilder builder = getConsoleBuilder();
     return builder != null ? builder.getConsole() : null;
   }
@@ -80,8 +76,7 @@ public abstract class CommandLineState implements RunProfileState {
    * @see GeneralCommandLine
    * @see com.intellij.execution.process.OSProcessHandler
    */
-  @NotNull
-  protected abstract ProcessHandler startProcess() throws ExecutionException;
+  protected abstract @NotNull ProcessHandler startProcess() throws ExecutionException;
 
   protected AnAction @NotNull [] createActions(final ConsoleView console, final ProcessHandler processHandler) {
     return createActions(console, processHandler, null);

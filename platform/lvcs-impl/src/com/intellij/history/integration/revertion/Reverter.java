@@ -76,8 +76,7 @@ public abstract class Reverter {
 
   protected abstract void doRevert() throws IOException;
 
-  @NotNull
-  public static @Nls String getRevertCommandName(@NotNull Revision to) {
+  public static @NotNull @Nls String getRevertCommandName(@NotNull Revision to) {
     String name = to.getChangeSetName();
     String date = DateFormatUtil.formatDateTime(to.getTimestamp());
     if (name != null) {

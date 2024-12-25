@@ -61,8 +61,8 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -130,8 +130,7 @@ public final class XFramesView extends XDebugView {
         };
       }
 
-      @Nullable
-      private XSourcePosition getFrameSourcePosition(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
+      private @Nullable XSourcePosition getFrameSourcePosition(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
         if (isMainSourceKindPreferred) {
           XSourcePosition position = frame.getSourcePosition();
           if (position != null) {
@@ -258,8 +257,7 @@ public final class XFramesView extends XDebugView {
    * 1) for presentation in UI
    * 2) for speedsearch
    */
-  @NotNull
-  private static String getStackFramePresentableText(XStackFrame frame) {
+  private static @NotNull String getStackFramePresentableText(XStackFrame frame) {
     StringBuilderTextContainer builder = new StringBuilderTextContainer();
     frame.customizePresentation(builder);
     return builder.getText();
@@ -303,18 +301,15 @@ public final class XFramesView extends XDebugView {
     myFrameSelectionHandler.onMouseClicked(myFramesList);
   }
 
-  @Nullable
-  @NlsSafe
-  private static String getShortcutText(@NotNull @NonNls String actionId) {
+  private static @Nullable @NlsSafe String getShortcutText(@NotNull @NonNls String actionId) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
     if (shortcut == null) return null;
     return KeymapUtil.getShortcutText(shortcut);
   }
 
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
-    @NotNull
     @Override
-    protected List<Component> getOrderedComponents() {
+    protected @NotNull List<Component> getOrderedComponents() {
       return Arrays.asList(myFramesList,
                            myThreadComboBox);
     }
@@ -603,12 +598,12 @@ public final class XFramesView extends XDebugView {
     }
 
     @Override
-    public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, final boolean last) {
+    public void addStackFrames(final @NotNull List<? extends XStackFrame> stackFrames, final boolean last) {
       addStackFrames(stackFrames, null, last);
     }
 
     @Override
-    public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, final boolean last) {
+    public void addStackFrames(final @NotNull List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, final boolean last) {
       if (isObsolete()) return;
       EdtExecutorService.getInstance().execute(() -> {
         if (isObsolete()) return;
@@ -636,7 +631,7 @@ public final class XFramesView extends XDebugView {
     }
 
     @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
+    public void errorOccurred(final @NotNull String errorMessage) {
       if (isObsolete()) return;
       EdtExecutorService.getInstance().execute(() -> {
         if (isObsolete()) return;

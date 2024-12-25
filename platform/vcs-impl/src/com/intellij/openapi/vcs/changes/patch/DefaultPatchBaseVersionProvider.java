@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.patch;
 
@@ -60,11 +60,10 @@ public final class DefaultPatchBaseVersionProvider {
     });
   }
 
-  @Nullable
-  private static String loadContentByRevisionId(@NotNull String versionId,
-                                                @NotNull VirtualFile file,
-                                                @NotNull FilePath pathBeforeRename,
-                                                @NotNull AbstractVcs vcs) throws VcsException {
+  private static @Nullable String loadContentByRevisionId(@NotNull String versionId,
+                                                          @NotNull VirtualFile file,
+                                                          @NotNull FilePath pathBeforeRename,
+                                                          @NotNull AbstractVcs vcs) throws VcsException {
     String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
 
     VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
@@ -86,11 +85,10 @@ public final class DefaultPatchBaseVersionProvider {
     return contentRevision.getContent();
   }
 
-  @Nullable
-  private static String findContentInFileHistory(@NotNull String versionId,
-                                                 @NotNull VirtualFile file,
-                                                 @NotNull FilePath pathBeforeRename,
-                                                 @NotNull AbstractVcs vcs) throws VcsException {
+  private static @Nullable String findContentInFileHistory(@NotNull String versionId,
+                                                           @NotNull VirtualFile file,
+                                                           @NotNull FilePath pathBeforeRename,
+                                                           @NotNull AbstractVcs vcs) throws VcsException {
     Date versionDate = PatchDateParser.parseVersionAsDate(versionId);
     String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
     VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;
@@ -129,15 +127,13 @@ public final class DefaultPatchBaseVersionProvider {
     }
   }
 
-  @NotNull
-  private static List<VcsFileRevision> getRevisions(@NotNull FilePath pathBeforeRename, @NotNull AbstractVcs vcs) throws VcsException {
+  private static @NotNull List<VcsFileRevision> getRevisions(@NotNull FilePath pathBeforeRename, @NotNull AbstractVcs vcs) throws VcsException {
     VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
     VcsHistorySession historySession = historyProvider != null ? historyProvider.createSessionFor(pathBeforeRename) : null;
     return historySession == null ? Collections.emptyList() : historySession.getRevisionList();
   }
 
-  @Nullable
-  private static String parseVersionAsRevision(@NotNull String versionId, @NotNull AbstractVcs vcs) {
+  private static @Nullable String parseVersionAsRevision(@NotNull String versionId, @NotNull AbstractVcs vcs) {
     String vcsPattern = vcs.getRevisionPattern();
     if (vcsPattern != null) {
       Pattern revisionPattern = Pattern.compile(String.format(ourRevisionPatternTemplate, vcsPattern));

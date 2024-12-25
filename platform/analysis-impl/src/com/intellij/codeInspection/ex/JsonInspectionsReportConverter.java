@@ -305,9 +305,8 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     return parameter != null ? parameter.getAttributeValue("name") : null;
   }
 
-  @Unmodifiable
-  private static @NotNull Collection<String> getVulnerabilityValues(@NotNull Element element,
-                                                                    @NotNull String vulnerabilitiesTagName) {
+  private static @Unmodifiable @NotNull Collection<String> getVulnerabilityValues(@NotNull Element element,
+                                                                                  @NotNull String vulnerabilitiesTagName) {
     Element vulnerabilities = element.getChild(vulnerabilitiesTagName);
     if (vulnerabilities == null) {
       return Collections.emptyList();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,8 +32,7 @@ public class ScriptSupport {
    * We use a randomly generated uuid for this, so the chance of accidental collision with an existing variable name is extremely small.
    * This also enables to filter out this uuid from Groovy error messages, to clarify for which SSR variable the script failed.
    */
-  @NlsSafe
-  public static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
+  public static final @NlsSafe String UUID = "a3cd264774bf4efb9ab609b250c5165c";
 
   private final Script myScript;
   private final ScriptLog myScriptLog;

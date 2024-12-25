@@ -1,5 +1,5 @@
 
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -10,13 +10,12 @@ import org.jetbrains.annotations.Nullable;
 public class SimpleContentRevision implements ContentRevision {
   private final String myContent;
   private final FilePath myNewFilePath;
-  @NotNull private final VcsRevisionNumber myRevision;
+  private final @NotNull VcsRevisionNumber myRevision;
 
-  public SimpleContentRevision(final String content, final FilePath newFilePath, @NotNull final String revision) {
+  public SimpleContentRevision(final String content, final FilePath newFilePath, final @NotNull String revision) {
     this(content, newFilePath, new VcsRevisionNumber() {
-      @NotNull
       @Override
-      public String asString() {
+      public @NotNull String asString() {
         return revision;
       }
 
@@ -27,27 +26,24 @@ public class SimpleContentRevision implements ContentRevision {
     });
   }
 
-  public SimpleContentRevision(final String content, final FilePath newFilePath, @NotNull final VcsRevisionNumber revision) {
+  public SimpleContentRevision(final String content, final FilePath newFilePath, final @NotNull VcsRevisionNumber revision) {
     myContent = content;
     myNewFilePath = newFilePath;
     myRevision = revision;
   }
 
   @Override
-  @Nullable
-  public String getContent() {
+  public @Nullable String getContent() {
     return myContent;
   }
 
   @Override
-  @NotNull
-  public FilePath getFile() {
+  public @NotNull FilePath getFile() {
     return myNewFilePath;
   }
 
   @Override
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return myRevision;
   }
 }

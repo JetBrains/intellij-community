@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.rollback;
 
@@ -13,9 +13,7 @@ import java.util.List;
 
 public abstract class DefaultRollbackEnvironment implements RollbackEnvironment {
   @Override
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @NotNull
-  public  String getRollbackOperationName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getRollbackOperationName() {
     return getRollbackOperationText();
   }
 
@@ -25,9 +23,7 @@ public abstract class DefaultRollbackEnvironment implements RollbackEnvironment 
     throw new UnsupportedOperationException();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @NotNull
-  public static String getRollbackOperationText() {
+  public static @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getRollbackOperationText() {
     return VcsBundle.message("changes.action.rollback.text");
   }
 }

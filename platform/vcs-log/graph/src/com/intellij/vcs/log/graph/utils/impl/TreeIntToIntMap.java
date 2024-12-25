@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.utils.impl;
 
@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 @ApiStatus.Internal
 public final class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
 
-  public static UpdatableIntToIntMap newInstance(@NotNull final Predicate<? super Integer> thisIsVisible, final int longSize) {
+  public static UpdatableIntToIntMap newInstance(final @NotNull Predicate<? super Integer> thisIsVisible, final int longSize) {
     if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
     if (longSize == 0) return IDIntToIntMap.EMPTY;
@@ -39,7 +39,7 @@ public final class TreeIntToIntMap extends AbstractIntToIntMap implements Updata
     return count;
   }
 
-  @NotNull private final Predicate<? super Integer> myThisIsVisible;
+  private final @NotNull Predicate<? super Integer> myThisIsVisible;
 
   private final int myLongSize;
   private final int myCountLevels;

@@ -144,8 +144,7 @@ public final class XValuePresentationUtil {
     }
   }
 
-  @NotNull
-  public static String computeValueText(@NotNull XValuePresentation presentation) {
+  public static @NotNull String computeValueText(@NotNull XValuePresentation presentation) {
     XValuePresentationTextExtractor extractor = new XValuePresentationTextExtractor();
     presentation.renderValue(extractor);
     return extractor.getText();

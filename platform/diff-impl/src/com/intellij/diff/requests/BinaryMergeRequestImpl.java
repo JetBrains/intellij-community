@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DiffContent;
@@ -44,15 +30,15 @@ import java.util.List;
 public class BinaryMergeRequestImpl extends BinaryMergeRequest {
   private static final Logger LOG = Logger.getInstance(BinaryMergeRequestImpl.class);
 
-  @Nullable private final Project myProject;
-  @NotNull private final FileContent myFile;
-  @NotNull private final List<DiffContent> myContents;
+  private final @Nullable Project myProject;
+  private final @NotNull FileContent myFile;
+  private final @NotNull List<DiffContent> myContents;
 
-  @NotNull private final List<byte[]> myByteContents;
+  private final @NotNull List<byte[]> myByteContents;
   private final byte @NotNull [] myOriginalContent;
 
-  @Nullable private final @NlsContexts.DialogTitle String myTitle;
-  @NotNull private final List<String> myTitles;
+  private final @Nullable @NlsContexts.DialogTitle String myTitle;
+  private final @NotNull List<String> myTitles;
 
   public BinaryMergeRequestImpl(@Nullable Project project,
                                 @NotNull FileContent file,
@@ -75,33 +61,28 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
     myTitles = contentTitles;
   }
 
-  @NotNull
   @Override
-  public FileContent getOutputContent() {
+  public @NotNull FileContent getOutputContent() {
     return myFile;
   }
 
-  @NotNull
   @Override
-  public List<DiffContent> getContents() {
+  public @NotNull List<DiffContent> getContents() {
     return myContents;
   }
 
-  @NotNull
   @Override
-  public List<byte[]> getByteContents() {
+  public @NotNull List<byte[]> getByteContents() {
     return myByteContents;
   }
 
-  @Nullable
   @Override
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return myTitle;
   }
 
-  @NotNull
   @Override
-  public List<String> getContentTitles() {
+  public @NotNull List<String> getContentTitles() {
     return myTitles;
   }
 

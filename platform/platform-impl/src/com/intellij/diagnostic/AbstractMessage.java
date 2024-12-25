@@ -37,8 +37,7 @@ public abstract class AbstractMessage {
   }
 
   /** Returns a list of attachments marked by a user to be included in the error report. */
-  @Unmodifiable
-  public @NotNull List<Attachment> getIncludedAttachments() {
+  public @Unmodifiable @NotNull List<Attachment> getIncludedAttachments() {
     return ContainerUtil.filter(getAllAttachments(), Attachment::isIncluded);
   }
 

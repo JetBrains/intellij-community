@@ -35,9 +35,8 @@ public final class PostCommitChecksTodosTreeBuilder extends CustomChangelistTodo
     }
   }
 
-  @NotNull
   @Override
-  protected Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter) {
+  protected @NotNull Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter) {
     Collection<Change> changes = myChanges.values();
     TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, todoFilter);
     worker.execute();
@@ -45,9 +44,8 @@ public final class PostCommitChecksTodosTreeBuilder extends CustomChangelistTodo
     return worker.inOneList();
   }
 
-  @NotNull
   @Override
-  protected Set<TodoItem> doFindTodoForFile(@NotNull PsiFile psiFile, @Nullable TodoFilter todoFilter) {
+  protected @NotNull Set<TodoItem> doFindTodoForFile(@NotNull PsiFile psiFile, @Nullable TodoFilter todoFilter) {
     VirtualFile file = psiFile.getVirtualFile();
     Change change = myChanges.get(file);
     if (change == null) return Collections.emptySet();

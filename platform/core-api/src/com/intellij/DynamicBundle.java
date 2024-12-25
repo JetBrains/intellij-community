@@ -189,10 +189,8 @@ public class DynamicBundle extends AbstractBundle {
    * It's to be refactored with "ResourceBundleProvider" since 'core-api' module will use java 1.9+
    */
   private static class DynamicBundleInternal {
-    @NotNull
-    private static final MethodHandle SET_PARENT;
-    @NotNull
-    private static final MethodHandle GET_PARENT;
+    private static final @NotNull MethodHandle SET_PARENT;
+    private static final @NotNull MethodHandle GET_PARENT;
 
     static {
       try {
@@ -365,9 +363,7 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  @Unmodifiable
-  public static Map<String, ResourceBundle> getResourceBundles() {
+  public static @NotNull @Unmodifiable Map<String, ResourceBundle> getResourceBundles() {
     return Collections.unmodifiableMap(bundles);
   }
 

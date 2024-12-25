@@ -20,8 +20,7 @@ public final class SingleNodeIterator extends NodeIterator {
     myHasNext = node != null;
   }
 
-  @NotNull
-  public static SingleNodeIterator create(@Nullable PsiElement node) {
+  public static @NotNull SingleNodeIterator create(@Nullable PsiElement node) {
     return node == null ? EMPTY : new SingleNodeIterator(node);
   }
 

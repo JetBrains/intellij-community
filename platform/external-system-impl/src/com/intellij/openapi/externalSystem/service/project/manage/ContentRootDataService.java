@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -50,7 +50,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -70,9 +73,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static final Logger LOG = Logger.getInstance(ContentRootDataService.class);
 
-  @NotNull
   @Override
-  public Key<ContentRootData> getTargetDataKey() {
+  public @NotNull Key<ContentRootData> getTargetDataKey() {
     return ProjectKeys.CONTENT_ROOT;
   }
 
@@ -136,9 +138,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   }
 
   private static void importData(@NotNull Project project,
-                                  @NotNull IdeModifiableModelsProvider modelsProvider,
-                                 @NotNull final Collection<? extends DataNode<ContentRootData>> data,
-                                 @NotNull final Module module, boolean forceDirectoriesCreation,
+                                 @NotNull IdeModifiableModelsProvider modelsProvider,
+                                 final @NotNull Collection<? extends DataNode<ContentRootData>> data,
+                                 final @NotNull Module module, boolean forceDirectoriesCreation,
                                  @Nullable ProjectSystemId owner) {
     logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
     final SourceFolderManager sourceFolderManager = SourceFolderManager.getInstance(project);
@@ -227,8 +229,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
            && owner.getId().equals(importedEntitySource.getExternalSystemId());
   }
 
-  @Nullable
-  private static JpsModuleSourceRootType<?> getJavaSourceRootType(ExternalSystemSourceType type) {
+  private static @Nullable JpsModuleSourceRootType<?> getJavaSourceRootType(ExternalSystemSourceType type) {
     return switch (type) {
       case SOURCE, SOURCE_GENERATED -> JavaSourceRootType.SOURCE;
       case TEST, TEST_GENERATED -> JavaSourceRootType.TEST_SOURCE;
@@ -238,8 +239,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     };
   }
 
-  @NotNull
-  private static ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull ContentRootData contentRootData, @NotNull Map<String, ContentEntry> contentEntryMap) {
+  private static @NotNull ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull ContentRootData contentRootData, @NotNull Map<String, ContentEntry> contentEntryMap) {
     String path = contentRootData.getRootPath();
     if (contentEntryMap.containsKey(path)) {
       return contentEntryMap.get(path);
@@ -275,7 +275,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static void createOrReplaceSourceFolder(@NotNull SourceFolderManager sourceFolderManager,
                                                   @NotNull ContentEntry contentEntry,
-                                                  @NotNull final SourceRoot sourceRoot,
+                                                  final @NotNull SourceRoot sourceRoot,
                                                   @NotNull Module module,
                                                   @NotNull JpsModuleSourceRootType<?> sourceRootType,
                                                   boolean createEmptyContentRootDirectories,
@@ -354,8 +354,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     });
   }
 
-  @Nullable
-  private static SourceFolder findSourceFolder(@NotNull ContentEntry contentEntry, @NotNull SourceRoot sourceRoot) {
+  private static @Nullable SourceFolder findSourceFolder(@NotNull ContentEntry contentEntry, @NotNull SourceRoot sourceRoot) {
     for (SourceFolder folder : contentEntry.getSourceFolders()) {
       VirtualFile file = folder.getFile();
       if (file == null) continue;
@@ -439,8 +438,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     }
   }
 
-  @Nullable
-  private static @Nls String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
+  private static @Nullable @Nls String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
     String firstMessage = null;
     LOG.warn("Duplicating content roots detected.");
     for (Map.Entry<String, DuplicateModuleReport> entry : toReport.entrySet()) {

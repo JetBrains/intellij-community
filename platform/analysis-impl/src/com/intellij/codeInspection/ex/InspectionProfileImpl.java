@@ -426,8 +426,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return null;
   }
 
-  @Unmodifiable
-  public @NotNull List<InspectionToolWrapper<?, ?>> findToolsById(@NotNull String id, @NotNull PsiElement element) {
+  public @Unmodifiable @NotNull List<InspectionToolWrapper<?, ?>> findToolsById(@NotNull String id, @NotNull PsiElement element) {
     initInspectionTools();
     List<InspectionToolWrapper<?, ?>> result = null;
     for (Tools toolList : myTools.values()) {

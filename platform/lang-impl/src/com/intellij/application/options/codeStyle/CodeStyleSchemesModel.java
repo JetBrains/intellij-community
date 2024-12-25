@@ -163,8 +163,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     }
   }
 
-  @Unmodifiable
-  private @NotNull List<CodeStyleScheme> getIdeSchemes() {
+  private @Unmodifiable @NotNull List<CodeStyleScheme> getIdeSchemes() {
     return ContainerUtil.filter(mySchemes, scheme -> !(scheme instanceof ProjectScheme));
   }
 
@@ -349,8 +348,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return null;
   }
 
-  @Unmodifiable
-  private List<CodeStyleSettingsModifier> getOverridingModifiers() {
+  private @Unmodifiable List<CodeStyleSettingsModifier> getOverridingModifiers() {
     return
       ContainerUtil.filter(
         CodeStyleSettingsModifier.EP_NAME.getExtensionList(),

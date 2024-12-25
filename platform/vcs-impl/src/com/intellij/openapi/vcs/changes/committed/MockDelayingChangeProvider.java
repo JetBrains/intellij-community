@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,8 +20,8 @@ public class MockDelayingChangeProvider implements ChangeProvider {
   }
 
   @Override
-  public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
-                         @NotNull final ChangeListManagerGate addGate) {
+  public void getChanges(final @NotNull VcsDirtyScope dirtyScope, final @NotNull ChangelistBuilder builder, final @NotNull ProgressIndicator progress,
+                         final @NotNull ChangeListManagerGate addGate) {
     synchronized (myLock) {
       if (myExecuteInsideUpdate == null) {
         return;

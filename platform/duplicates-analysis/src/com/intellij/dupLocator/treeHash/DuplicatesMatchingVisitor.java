@@ -212,9 +212,8 @@ final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     return hashToElement.size() == 0;
   }
 
-  @NotNull
   @Override
-  protected NodeFilter getNodeFilter() {
+  protected @NotNull NodeFilter getNodeFilter() {
     return myNodeFilter;
   }
 }

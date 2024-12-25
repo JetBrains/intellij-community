@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -96,11 +96,11 @@ public abstract class AbstractVcsTestCase {
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
   }
 
-  public VirtualFile createFileInCommand(@NotNull String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(@NotNull String name, final @Nullable String content) {
     return createFileInCommand(myWorkingCopyDir, name, content);
   }
 
-  public VirtualFile createFileInCommand(@NotNull VirtualFile parent, @NotNull String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(@NotNull VirtualFile parent, @NotNull String name, final @Nullable String content) {
     return VcsTestUtil.createFile(myProject, parent, name, content);
   }
 
@@ -182,8 +182,7 @@ public abstract class AbstractVcsTestCase {
     VcsTestUtil.editFileInCommand(myProject, file, newContent);
   }
 
-  @NotNull
-  protected VirtualFile copyFileInCommand(@NotNull VirtualFile file, final String toName) {
+  protected @NotNull VirtualFile copyFileInCommand(@NotNull VirtualFile file, final String toName) {
     final AtomicReference<VirtualFile> res = new AtomicReference<>();
     WriteCommandAction.writeCommandAction(myProject).run(() -> {
       try {
@@ -232,7 +231,7 @@ public abstract class AbstractVcsTestCase {
     return annotation;
   }
 
-  public void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
+  public void setFileText(final @NotNull VirtualFile file, final @NotNull String text) throws IOException {
     HeavyPlatformTestCase.setFileText(file, text);
   }
 

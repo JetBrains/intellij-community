@@ -712,9 +712,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return actualSize;
     }
 
-    @NotNull
     @Override
-    public Rectangle getBounds() { // just delegate to the above
+    public @NotNull Rectangle getBounds() { // just delegate to the above
       return new Rectangle(getLocation(), getSize());
     }
 

@@ -43,9 +43,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   // Diff
   //
 
-  @NotNull
   @Override
-  public ContentDiffRequest createFromFiles(@Nullable Project project, @Nullable VirtualFile file1, @Nullable VirtualFile file2) {
+  public @NotNull ContentDiffRequest createFromFiles(@Nullable Project project, @Nullable VirtualFile file1, @Nullable VirtualFile file2) {
     assert file1 != null || file2 != null;
 
     DiffContent content1 = file1 != null ? myContentFactory.create(project, file1) : myContentFactory.createEmpty();
@@ -59,12 +58,11 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return new SimpleDiffRequest(title, content1, content2, title1, title2);
   }
 
-  @NotNull
   @Override
-  public ContentDiffRequest createFromFiles(@Nullable Project project,
-                                            @NotNull VirtualFile leftFile,
-                                            @NotNull VirtualFile baseFile,
-                                            @NotNull VirtualFile rightFile) {
+  public @NotNull ContentDiffRequest createFromFiles(@Nullable Project project,
+                                                     @NotNull VirtualFile leftFile,
+                                                     @NotNull VirtualFile baseFile,
+                                                     @NotNull VirtualFile rightFile) {
     DiffContent content1 = myContentFactory.create(project, leftFile);
     DiffContent content2 = myContentFactory.create(project, baseFile);
     DiffContent content3 = myContentFactory.create(project, rightFile);
@@ -76,9 +74,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return new SimpleDiffRequest(null, content1, content2, content3, title1, title2, title3);
   }
 
-  @NotNull
   @Override
-  public ContentDiffRequest createClipboardVsValue(@NotNull String value) {
+  public @NotNull ContentDiffRequest createClipboardVsValue(@NotNull String value) {
     DiffContent content1 = myContentFactory.createClipboardContent();
     DiffContent content2 = myContentFactory.create(value);
 
@@ -94,9 +91,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   // Titles
   //
 
-  @Nullable
   @Override
-  public String getContentTitle(@Nullable VirtualFile file) {
+  public @Nullable String getContentTitle(@Nullable VirtualFile file) {
     if (file == null) return null;
     return getContentTitle(toFilePath(file));
   }
@@ -111,15 +107,12 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return getTitleForComparison(toFilePath(file1), toFilePath(file2));
   }
 
-  @NotNull
   @Override
-  public String getTitle(@NotNull VirtualFile file) {
+  public @NotNull String getTitle(@NotNull VirtualFile file) {
     return getTitleForComparison(file, null);
   }
 
-  @Nls
-  @NotNull
-  public static String getContentTitle(@NotNull FilePath path) {
+  public static @Nls @NotNull String getContentTitle(@NotNull FilePath path) {
     if (path.isDirectory()) return path.getPresentableUrl();
     FilePath parent = path.getParentPath();
     return getContentTitle(path.getName(), path.getPresentableUrl(), parent != null ? parent.getPresentableUrl() : null);
@@ -140,9 +133,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return getTitle(path1, path2, DIFF_TITLE_RENAME_SEPARATOR);
   }
 
-  @Nls
-  @NotNull
-  public static String getTitle(@Nullable FilePath path1, @Nullable FilePath path2, @NotNull @Nls String separator) {
+  public static @Nls @NotNull String getTitle(@Nullable FilePath path1, @Nullable FilePath path2, @NotNull @Nls String separator) {
     if (path1 == null && path2 == null) {
       return DiffBundle.message("diff.files.dialog.title");
     }
@@ -170,9 +161,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                            separator);
   }
 
-  @Nls
-  @NotNull
-  private static String getContentTitle(@NotNull @Nls String name, @NotNull @Nls String path, @Nullable @Nls String parentPath) {
+  private static @Nls @NotNull String getContentTitle(@NotNull @Nls String name, @NotNull @Nls String path, @Nullable @Nls String parentPath) {
     if (parentPath != null) {
       return name + " (" + parentPath + ")";
     }
@@ -181,11 +170,9 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     }
   }
 
-  @Nls
-  @NotNull
-  private static String getRequestTitle(@NotNull @Nls String name1, @NotNull @Nls String path1, @Nullable @Nls String parentPath1,
-                                        @NotNull @Nls String name2, @NotNull @Nls String path2, @Nullable @Nls String parentPath2,
-                                        @NotNull @Nls String sep) {
+  private static @Nls @NotNull String getRequestTitle(@NotNull @Nls String name1, @NotNull @Nls String path1, @Nullable @Nls String parentPath1,
+                                                      @NotNull @Nls String name2, @NotNull @Nls String path2, @Nullable @Nls String parentPath2,
+                                                      @NotNull @Nls String sep) {
     if (path1.equals(path2)) return getContentTitle(name1, path1, parentPath1);
 
     if (Objects.equals(parentPath1, parentPath2)) {
@@ -220,15 +207,14 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   // Merge
   //
 
-  @NotNull
   @Override
-  public MergeRequest createMergeRequest(@Nullable Project project,
-                                         @Nullable FileType fileType,
-                                         @NotNull Document outputDocument,
-                                         @NotNull List<String> textContents,
-                                         @Nullable @NlsContexts.DialogTitle String title,
-                                         @NotNull List<@Nls String> titles,
-                                         @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @Nullable FileType fileType,
+                                                  @NotNull Document outputDocument,
+                                                  @NotNull List<String> textContents,
+                                                  @Nullable @NlsContexts.DialogTitle String title,
+                                                  @NotNull List<@Nls String> titles,
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (textContents.size() != 3) throw new IllegalArgumentException();
     if (titles.size() != 3) throw new IllegalArgumentException();
 
@@ -246,48 +232,44 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return MergeCallback.register(request, applyCallback);
   }
 
-  @NotNull
   @Override
-  public MergeRequest createMergeRequest(@Nullable Project project,
-                                         @NotNull VirtualFile output,
-                                         @NotNull List<byte[]> byteContents,
-                                         @Nullable @NlsContexts.DialogTitle String title,
-                                         @NotNull List<@Nls String> contentTitles,
-                                         @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable @NlsContexts.DialogTitle String title,
+                                                  @NotNull List<@Nls String> contentTitles,
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     return createMergeRequest(project, output, byteContents, null, title, contentTitles, applyCallback);
   }
 
-  @NotNull
   @Override
-  public MergeRequest createMergeRequest(@Nullable Project project,
-                                         @NotNull VirtualFile output,
-                                         @NotNull List<byte[]> byteContents,
-                                         @Nullable ConflictType conflictType,
-                                         @Nullable @NlsContexts.DialogTitle String title,
-                                         @NotNull List<@Nls String> contentTitles,
-                                         @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable ConflictType conflictType,
+                                                  @Nullable @NlsContexts.DialogTitle String title,
+                                                  @NotNull List<@Nls String> contentTitles,
+                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     MergeRequest request = createMergeRequest(project, output, byteContents, conflictType, title, contentTitles);
     return MergeCallback.register(request, applyCallback);
   }
 
-  @NotNull
   @Override
-  public MergeRequest createMergeRequest(@Nullable Project project,
-                                         @NotNull VirtualFile output,
-                                         @NotNull List<byte[]> byteContents,
-                                         @Nullable @NlsContexts.DialogTitle String title,
-                                         @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable @NlsContexts.DialogTitle String title,
+                                                  @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
     return createMergeRequest(project, output, byteContents, null, title, contentTitles);
   }
 
-  @NotNull
   @Override
-  public MergeRequest createMergeRequest(@Nullable Project project,
-                                         @NotNull VirtualFile output,
-                                         @NotNull List<byte[]> byteContents,
-                                         @Nullable ConflictType conflictType,
-                                         @Nullable @NlsContexts.DialogTitle String title,
-                                         @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createMergeRequest(@Nullable Project project,
+                                                  @NotNull VirtualFile output,
+                                                  @NotNull List<byte[]> byteContents,
+                                                  @Nullable ConflictType conflictType,
+                                                  @Nullable @NlsContexts.DialogTitle String title,
+                                                  @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
     try {
       return createTextMergeRequest(project, output, byteContents, conflictType, title, contentTitles);
     }
@@ -296,37 +278,34 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     }
   }
 
-  @NotNull
   @Override
-  public TextMergeRequest createTextMergeRequest(@Nullable Project project,
-                                                 @NotNull VirtualFile output,
-                                                 @NotNull List<byte[]> byteContents,
-                                                 @Nullable @NlsContexts.DialogTitle String title,
-                                                 @NotNull List<@Nls String> contentTitles,
-                                                 @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull TextMergeRequest createTextMergeRequest(@Nullable Project project,
+                                                          @NotNull VirtualFile output,
+                                                          @NotNull List<byte[]> byteContents,
+                                                          @Nullable @NlsContexts.DialogTitle String title,
+                                                          @NotNull List<@Nls String> contentTitles,
+                                                          @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     return createTextMergeRequest(project, output, byteContents, null, title, contentTitles, applyCallback);
   }
 
-  @NotNull
   @Override
-  public TextMergeRequest createTextMergeRequest(@Nullable Project project,
-                                                 @NotNull VirtualFile output,
-                                                 @NotNull List<byte[]> byteContents,
-                                                 @Nullable ConflictType conflictType,
-                                                 @Nullable @NlsContexts.DialogTitle String title,
-                                                 @NotNull List<@Nls String> contentTitles,
-                                                 @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull TextMergeRequest createTextMergeRequest(@Nullable Project project,
+                                                          @NotNull VirtualFile output,
+                                                          @NotNull List<byte[]> byteContents,
+                                                          @Nullable ConflictType conflictType,
+                                                          @Nullable @NlsContexts.DialogTitle String title,
+                                                          @NotNull List<@Nls String> contentTitles,
+                                                          @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     TextMergeRequest request = createTextMergeRequest(project, output, byteContents, conflictType, title, contentTitles);
     return MergeCallback.register(request, applyCallback);
   }
 
-  @NotNull
-  private TextMergeRequest createTextMergeRequest(@Nullable Project project,
-                                                  @NotNull VirtualFile output,
-                                                  @NotNull List<byte[]> byteContents,
-                                                  @Nullable ConflictType conflictType,
-                                                  @Nullable @NlsContexts.DialogTitle String title,
-                                                  @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
+  private @NotNull TextMergeRequest createTextMergeRequest(@Nullable Project project,
+                                                           @NotNull VirtualFile output,
+                                                           @NotNull List<byte[]> byteContents,
+                                                           @Nullable ConflictType conflictType,
+                                                           @Nullable @NlsContexts.DialogTitle String title,
+                                                           @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
     if (byteContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
@@ -342,24 +321,22 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles);
   }
 
-  @NotNull
   @Override
-  public MergeRequest createBinaryMergeRequest(@Nullable Project project,
-                                               @NotNull VirtualFile output,
-                                               @NotNull List<byte[]> byteContents,
-                                               @Nullable @NlsContexts.DialogTitle String title,
-                                               @NotNull List<@Nls String> contentTitles,
-                                               @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createBinaryMergeRequest(@Nullable Project project,
+                                                        @NotNull VirtualFile output,
+                                                        @NotNull List<byte[]> byteContents,
+                                                        @Nullable @NlsContexts.DialogTitle String title,
+                                                        @NotNull List<@Nls String> contentTitles,
+                                                        @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     MergeRequest request = createBinaryMergeRequest(project, output, byteContents, title, contentTitles);
     return MergeCallback.register(request, applyCallback);
   }
 
-  @NotNull
-  private MergeRequest createBinaryMergeRequest(@Nullable Project project,
-                                                @NotNull VirtualFile output,
-                                                @NotNull List<byte[]> byteContents,
-                                                @Nullable @NlsContexts.DialogTitle String title,
-                                                @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
+  private @NotNull MergeRequest createBinaryMergeRequest(@Nullable Project project,
+                                                         @NotNull VirtualFile output,
+                                                         @NotNull List<byte[]> byteContents,
+                                                         @Nullable @NlsContexts.DialogTitle String title,
+                                                         @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
     if (byteContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
@@ -380,12 +357,11 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     }
   }
 
-  @NotNull
   @Override
-  public MergeRequest createMergeRequestFromFiles(@Nullable Project project,
-                                                  @NotNull VirtualFile output,
-                                                  @NotNull List<? extends VirtualFile> fileContents,
-                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createMergeRequestFromFiles(@Nullable Project project,
+                                                           @NotNull VirtualFile output,
+                                                           @NotNull List<? extends VirtualFile> fileContents,
+                                                           @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     String title = DiffBundle.message("merge.window.title.file", output.getPresentableUrl());
     List<String> titles = Arrays.asList(DiffBundle.message("merge.version.title.our"),
                                         DiffBundle.message("merge.version.title.base"),
@@ -393,14 +369,13 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return createMergeRequestFromFiles(project, output, fileContents, title, titles, applyCallback);
   }
 
-  @NotNull
   @Override
-  public MergeRequest createMergeRequestFromFiles(@Nullable Project project,
-                                                  @NotNull VirtualFile output,
-                                                  @NotNull List<? extends VirtualFile> fileContents,
-                                                  @Nullable String title,
-                                                  @NotNull List<String> contentTitles,
-                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createMergeRequestFromFiles(@Nullable Project project,
+                                                           @NotNull VirtualFile output,
+                                                           @NotNull List<? extends VirtualFile> fileContents,
+                                                           @Nullable String title,
+                                                           @NotNull List<String> contentTitles,
+                                                           @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (fileContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 
@@ -412,14 +387,13 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     }
   }
 
-  @NotNull
   @Override
-  public TextMergeRequest createTextMergeRequestFromFiles(@Nullable Project project,
-                                                          @NotNull VirtualFile output,
-                                                          @NotNull List<? extends VirtualFile> fileContents,
-                                                          @Nullable String title,
-                                                          @NotNull List<String> contentTitles,
-                                                          @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull TextMergeRequest createTextMergeRequestFromFiles(@Nullable Project project,
+                                                                   @NotNull VirtualFile output,
+                                                                   @NotNull List<? extends VirtualFile> fileContents,
+                                                                   @Nullable String title,
+                                                                   @NotNull List<String> contentTitles,
+                                                                   @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     List<byte[]> byteContents = new ArrayList<>(3);
     for (VirtualFile file : fileContents) {
       try {
@@ -433,13 +407,12 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return createTextMergeRequest(project, output, byteContents, title, contentTitles, applyCallback);
   }
 
-  @NotNull
-  public MergeRequest createBinaryMergeRequestFromFiles(@Nullable Project project,
-                                                        @NotNull VirtualFile output,
-                                                        @NotNull List<? extends VirtualFile> fileContents,
-                                                        @Nullable @NlsContexts.DialogTitle String title,
-                                                        @NotNull List<@Nls String> contentTitles,
-                                                        @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+  public @NotNull MergeRequest createBinaryMergeRequestFromFiles(@Nullable Project project,
+                                                                 @NotNull VirtualFile output,
+                                                                 @NotNull List<? extends VirtualFile> fileContents,
+                                                                 @Nullable @NlsContexts.DialogTitle String title,
+                                                                 @NotNull List<@Nls String> contentTitles,
+                                                                 @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
     if (fileContents.size() != 3) throw new IllegalArgumentException();
     if (contentTitles.size() != 3) throw new IllegalArgumentException();
 

@@ -23,9 +23,8 @@ import java.util.stream.Collectors;
 
 final class AutoCompletionProvider {
 
-  @Unmodifiable
-  public static List<SearchEverywhereFoundElementInfo> getCompletionElements(Collection<SearchEverywhereContributor<?>> contributors,
-                                                                             JTextComponent textComponent) {
+  public static @Unmodifiable List<SearchEverywhereFoundElementInfo> getCompletionElements(Collection<SearchEverywhereContributor<?>> contributors,
+                                                                                           JTextComponent textComponent) {
     StubContributor stubContributor = new StubContributor(textComponent);
     return ContainerUtil.map(
       getCompletions(contributors, textComponent),

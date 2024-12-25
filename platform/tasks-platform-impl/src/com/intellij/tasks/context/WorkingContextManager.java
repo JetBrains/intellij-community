@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.notification.Notification;
@@ -38,11 +38,11 @@ import java.util.List;
 @Service(Service.Level.PROJECT)
 public final class WorkingContextManager {
   private static final Logger LOG = Logger.getInstance(WorkingContextManager.class);
-  @NonNls private static final String TASKS_FOLDER = "tasks";
+  private static final @NonNls String TASKS_FOLDER = "tasks";
 
   private final Project myProject;
-  @NonNls private static final String TASKS_ZIP_POSTFIX = ".tasks.zip";
-  @NonNls private static final String TASK_XML_POSTFIX = ".task.xml";
+  private static final @NonNls String TASKS_ZIP_POSTFIX = ".tasks.zip";
+  private static final @NonNls String TASK_XML_POSTFIX = ".task.xml";
   private static final String CONTEXT_ZIP_POSTFIX = ".contexts.zip";
   private static final Comparator<JBZipEntry> ENTRY_COMPARATOR = (o1, o2) -> Long.signum(o2.getTime() - o1.getTime());
   private boolean ENABLED;
@@ -193,13 +193,11 @@ public final class WorkingContextManager {
     return false;
   }
 
-  @Unmodifiable
-  public List<ContextInfo> getContextHistory() {
+  public @Unmodifiable List<ContextInfo> getContextHistory() {
     return getContextHistory(CONTEXT_ZIP_POSTFIX);
   }
 
-  @Unmodifiable
-  private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
+  private synchronized @Unmodifiable List<ContextInfo> getContextHistory(String zipPostfix) {
     if (!ENABLED) return Collections.emptyList();
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();

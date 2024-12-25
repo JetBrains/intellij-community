@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -121,8 +121,7 @@ public class Advertiser {
     return myComponent;
   }
 
-  @Unmodifiable
-  public List<String> getAdvertisements() {
+  public @Unmodifiable List<String> getAdvertisements() {
     return ContainerUtil.map(myTexts, item -> item.text);
   }
 

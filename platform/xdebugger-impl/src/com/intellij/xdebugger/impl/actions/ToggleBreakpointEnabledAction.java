@@ -40,8 +40,7 @@ public class ToggleBreakpointEnabledAction extends DumbAwareAction {
     return ActionUpdateThread.EDT;
   }
 
-  @NotNull
-  private static Set<XLineBreakpoint> findLineBreakpoints(AnActionEvent e) {
+  private static @NotNull Set<XLineBreakpoint> findLineBreakpoints(AnActionEvent e) {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return Collections.emptySet();

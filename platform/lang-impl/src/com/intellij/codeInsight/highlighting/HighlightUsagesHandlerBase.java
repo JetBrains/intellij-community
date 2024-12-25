@@ -74,8 +74,7 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
     }
   }
 
-  @Unmodifiable
-  public abstract @NotNull List<T> getTargets();
+  public abstract @Unmodifiable @NotNull List<T> getTargets();
 
   public @Nullable String getFeatureId() {
     return null;

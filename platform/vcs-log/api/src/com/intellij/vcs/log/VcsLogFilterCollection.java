@@ -45,21 +45,18 @@ public interface VcsLogFilterCollection {
   @NotNull
   Collection<VcsLogFilter> getFilters();
 
-  @NotNull
-  @Unmodifiable
-  default List<VcsLogDetailsFilter> getDetailsFilters() {
+  default @NotNull @Unmodifiable List<VcsLogDetailsFilter> getDetailsFilters() {
     return ContainerUtil.findAll(getFilters(), VcsLogDetailsFilter.class);
   }
 
   class FilterKey<T extends VcsLogFilter> {
-    @NotNull private final String myName;
+    private final @NotNull String myName;
 
     public FilterKey(@NotNull String name) {
       myName = name;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
@@ -81,8 +78,7 @@ public interface VcsLogFilterCollection {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return myName + " filter";
     }
   }

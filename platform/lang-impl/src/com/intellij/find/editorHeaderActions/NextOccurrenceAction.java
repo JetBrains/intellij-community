@@ -34,8 +34,7 @@ public final class NextOccurrenceAction extends PrevNextOccurrenceAction {
   }
 
   @Override
-  @Unmodifiable
-  protected @NotNull List<Shortcut> getSingleLineShortcuts() {
+  protected @Unmodifiable @NotNull List<Shortcut> getSingleLineShortcuts() {
     if (mySearch) {
       return ContainerUtil.append(Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN), CommonShortcuts.ENTER.getShortcuts());
     }

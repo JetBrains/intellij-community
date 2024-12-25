@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Pair;
@@ -38,8 +38,7 @@ public abstract class Classifier<T> {
    * May return an empty list if there are no suitable objects available.
    * Used for diagnostics and statistic collection.
    */
-  @Unmodifiable
-  public abstract @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull ProcessingContext context);
+  public abstract @Unmodifiable @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull ProcessingContext context);
 
   public final @Nullable Classifier<T> getNext() {
     return myNext;

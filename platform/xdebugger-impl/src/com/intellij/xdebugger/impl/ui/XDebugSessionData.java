@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +44,7 @@ public class XDebugSessionData extends UserDataHolderBase {
     instance.getWatchesManager().setWatches(myConfigurationName, watchExpressions);
   }
 
-  @NotNull
-  public List<XExpression> getWatchExpressions() {
+  public @NotNull List<XExpression> getWatchExpressions() {
     if (myProject == null) return Collections.emptyList();
     XDebuggerManagerImpl instance = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
     return instance.getWatchesManager().getWatches(myConfigurationName);
@@ -60,8 +58,7 @@ public class XDebugSessionData extends UserDataHolderBase {
     myBreakpointsMuted = breakpointsMuted;
   }
 
-  @NotNull
-  public String getConfigurationName() {
+  public @NotNull String getConfigurationName() {
     return myConfigurationName;
   }
 }

@@ -100,9 +100,8 @@ final class ServiceTreeView extends ServiceView {
           }));
       }
 
-      @Nullable
       @Override
-      public ServiceViewItem getSelectedItem() {
+      public @Nullable ServiceViewItem getSelectedItem() {
         return myLastSelection;
       }
     };
@@ -560,9 +559,8 @@ final class ServiceTreeView extends ServiceView {
       myPath = ContainerUtil.newLinkedList(path.getPath());
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       Object node = path.getLastPathComponent();
       if (node.equals(myPath.peek())) {
         myPath.poll();
@@ -579,9 +577,8 @@ final class ServiceTreeView extends ServiceView {
       myPaths = paths;
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       if (path.getParentPath() == null) return Action.CONTINUE;
 
       for (TreePath treePath : myPaths) {

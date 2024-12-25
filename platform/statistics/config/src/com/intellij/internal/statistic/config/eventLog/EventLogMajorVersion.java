@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config.eventLog;
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil;
@@ -20,8 +20,7 @@ public final class EventLogMajorVersion implements Comparable<EventLogMajorVersi
     return myComponents.clone();
   }
 
-  @Nullable
-  public static EventLogMajorVersion fromString(@Nullable String version) {
+  public static @Nullable EventLogMajorVersion fromString(@Nullable String version) {
     if (version == null || StatisticsStringUtil.isEmptyOrSpaces(version)) {
       return null;
     }

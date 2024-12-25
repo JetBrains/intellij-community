@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -66,8 +66,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
     return super.dressDescription(editor, tooltipText, true);
   }
 
-  @Unmodifiable
-  protected @NotNull List<@Tooltip String> getProblems(@NotNull @Tooltip String tooltipText) {
+  protected @Unmodifiable @NotNull List<@Tooltip String> getProblems(@NotNull @Tooltip String tooltipText) {
     return StringUtil.split(UIUtil.getHtmlBody(new Html(tooltipText).setKeepFont(true)), UIUtil.BORDER_LINE);
   }
 

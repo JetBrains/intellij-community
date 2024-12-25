@@ -175,8 +175,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return node;
   }
 
-  @Unmodifiable
-  protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
+  protected @Unmodifiable Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
     Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
     return ContainerUtil.mapNotNull(references, psiReference -> psiReference.getElement());
   }

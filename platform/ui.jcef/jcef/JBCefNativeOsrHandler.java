@@ -37,7 +37,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   }
 
   @Override
-  synchronized public void disposeNativeResources() {
+  public synchronized void disposeNativeResources() {
     if (myIsDisposed)
       return;
 

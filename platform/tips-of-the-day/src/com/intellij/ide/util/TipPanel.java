@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
@@ -59,8 +59,8 @@ final class TipPanel extends JPanel implements DoNotAskOption {
 
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
-  private @Nullable final Project myProject;
-  private @NotNull final JLabel mySubSystemLabel;
+  private final @Nullable Project myProject;
+  private final @NotNull JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
   final AbstractAction myNextTipAction;
@@ -74,7 +74,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
   private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
   private Boolean myCurrentLikenessState = null;
 
-  TipPanel(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
+  TipPanel(final @Nullable Project project, final @NotNull TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
 
@@ -404,9 +404,8 @@ final class TipPanel extends JPanel implements DoNotAskOption {
     GeneralSettings.getInstance().setShowTipsOnStartup(toBeShown);
   }
 
-  @NotNull
   @Override
-  public String getDoNotShowMessage() {
+  public @NotNull String getDoNotShowMessage() {
     return IdeBundle.message("checkbox.show.tips.on.startup");
   }
 

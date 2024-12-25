@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,13 +38,11 @@ public class TreeAnchorizer {
 
   public void freeAnchor(Object element) { }
 
-  @Unmodifiable
-  public static @NotNull List<Object> anchorizeList(@NotNull Collection<Object> elements) {
+  public static @Unmodifiable @NotNull List<Object> anchorizeList(@NotNull Collection<Object> elements) {
     return ContainerUtil.map(elements, getService()::createAnchor);
   }
 
-  @Unmodifiable
-  public static @NotNull List<Object> retrieveList(Collection<Object> anchors) {
+  public static @Unmodifiable @NotNull List<Object> retrieveList(Collection<Object> anchors) {
     return ContainerUtil.mapNotNull(anchors, getService()::retrieveElement);
   }
 

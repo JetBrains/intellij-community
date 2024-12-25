@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,6 +10,5 @@ import javax.swing.tree.DefaultTreeModel;
 public abstract class ChangesGroupingPolicyFactory {
   public static final ExtensionPointName<ChangesGroupingPolicyFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.changesGroupingPolicy");
 
-  @NotNull
-  public abstract ChangesGroupingPolicy createGroupingPolicy(@NotNull Project project, @NotNull DefaultTreeModel model);
+  public abstract @NotNull ChangesGroupingPolicy createGroupingPolicy(@NotNull Project project, @NotNull DefaultTreeModel model);
 }

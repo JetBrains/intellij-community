@@ -41,6 +41,5 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
 
   protected abstract @NotNull List<Shortcut> getDefaultShortcuts();
 
-  @Unmodifiable
-  protected abstract @NotNull List<Shortcut> getSingleLineShortcuts();
+  protected abstract @Unmodifiable @NotNull List<Shortcut> getSingleLineShortcuts();
 }

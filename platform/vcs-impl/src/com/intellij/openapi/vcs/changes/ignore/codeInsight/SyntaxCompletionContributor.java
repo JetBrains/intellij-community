@@ -45,8 +45,7 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public class SyntaxCompletionContributor extends CompletionContributor {
-  @NotNull
-  private static final List<LookupElementBuilder> SYNTAX_ELEMENTS = new ArrayList<>();
+  private static final @NotNull List<LookupElementBuilder> SYNTAX_ELEMENTS = new ArrayList<>();
 
   static {
     for (Syntax syntax : Syntax.values()) {

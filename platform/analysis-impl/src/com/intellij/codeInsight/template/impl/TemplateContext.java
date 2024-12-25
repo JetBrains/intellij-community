@@ -19,8 +19,7 @@ import java.util.Map;
 public final class TemplateContext {
   private volatile Map<String, Boolean> myContextStates = Map.of();
 
-  @NotNull
-  public TemplateContext createCopy() {
+  public @NotNull TemplateContext createCopy() {
     TemplateContext cloneResult = new TemplateContext();
     cloneResult.myContextStates = myContextStates;
     return cloneResult;

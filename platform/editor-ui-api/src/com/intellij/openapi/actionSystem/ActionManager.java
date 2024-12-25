@@ -112,8 +112,7 @@ public abstract class ActionManager {
   /**
    * Returns the list of all registered action IDs with the specified prefix.
    */
-  @Unmodifiable
-  public abstract @NotNull List<@NonNls String> getActionIdList(@NotNull String idPrefix);
+  public abstract @Unmodifiable @NotNull List<@NonNls String> getActionIdList(@NotNull String idPrefix);
 
   /**
    * Checks if the specified action ID represents an action group and not an individual action.

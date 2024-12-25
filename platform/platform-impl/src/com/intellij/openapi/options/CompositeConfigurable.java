@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +43,9 @@ public abstract class CompositeConfigurable<T extends UnnamedConfigurable> exten
     }
   }
 
-  @Unmodifiable
-  protected abstract @NotNull List<T> createConfigurables();
+  protected abstract @Unmodifiable @NotNull List<T> createConfigurables();
 
-  @Unmodifiable
-  public @NotNull List<T> getConfigurables() {
+  public @Unmodifiable @NotNull List<T> getConfigurables() {
     if (myConfigurables == null) {
       myConfigurables = createConfigurables();
     }

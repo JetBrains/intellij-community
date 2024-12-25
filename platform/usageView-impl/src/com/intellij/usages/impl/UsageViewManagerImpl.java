@@ -54,7 +54,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 public class UsageViewManagerImpl extends UsageViewManager {
   private static final Logger LOG = Logger.getInstance(UsageViewManagerImpl.class);
   private final Project project;
-  @NotNull private final CoroutineScope coroutineScope;
+  private final @NotNull CoroutineScope coroutineScope;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
 
   @ApiStatus.Internal
@@ -64,11 +64,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
-  @NotNull
-  public UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
-                                     Usage @NotNull [] usages,
-                                     @NotNull UsageViewPresentation presentation,
-                                     @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
+  public @NotNull UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
+                                              Usage @NotNull [] usages,
+                                              @NotNull UsageViewPresentation presentation,
+                                              @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
     for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
       UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
       if (result != null) {
@@ -178,9 +177,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
         super.onCancel();
       }
 
-      @NotNull
       @Override
-      public NotificationInfo getNotificationInfo() {
+      public @NotNull NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
         long duration = reportSearchCompletedToFus(false);
@@ -248,8 +246,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return null;
   }
 
-  @NotNull
-  public static @NlsContexts.ProgressTitle String getProgressTitle(@NotNull UsageViewPresentation presentation) {
+  public static @NotNull @NlsContexts.ProgressTitle String getProgressTitle(@NotNull UsageViewPresentation presentation) {
     return UsageViewBundle.message("search.progress.0.in.1", presentation.getSearchString(), presentation.getScopeText());
   }
 
@@ -294,8 +291,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static String presentableSize(long bytes) {
+  public static @NotNull String presentableSize(long bytes) {
     long megabytes = bytes / (1024 * 1024);
     return UsageViewBundle.message("find.file.size.megabytes", Long.toString(megabytes));
   }

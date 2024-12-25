@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -35,11 +35,9 @@ public abstract class TaskManager {
    * @return up-to-date issues retrieved from repositories
    * @see #getCachedIssues()
    */
-  @Unmodifiable
-  public abstract List<Task> getIssues(@Nullable String query);
+  public abstract @Unmodifiable List<Task> getIssues(@Nullable String query);
 
-  @Unmodifiable
-  public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
+  public abstract @Unmodifiable List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
   /**
    * Most arguments have the same meaning as the ones in {@link TaskRepository#getIssues(String, int, int, boolean, ProgressIndicator)}.
@@ -54,8 +52,7 @@ public abstract class TaskManager {
    * @param forceRequest whether to download issues anew or use already cached ones.
    * @return tasks collected from all active repositories
    */
-  @Unmodifiable
-  public abstract List<Task> getIssues(@Nullable String query,
+  public abstract @Unmodifiable List<Task> getIssues(@Nullable String query,
                               int offset,
                               int limit,
                               boolean withClosed,
@@ -67,17 +64,13 @@ public abstract class TaskManager {
    *
    * @return cached issues.
    */
-  @Unmodifiable
-  public abstract List<Task> getCachedIssues();
+  public abstract @Unmodifiable List<Task> getCachedIssues();
 
-  @Unmodifiable
-  public abstract List<Task> getCachedIssues(final boolean withClosed);
+  public abstract @Unmodifiable List<Task> getCachedIssues(final boolean withClosed);
 
-  @Unmodifiable
-  public abstract List<LocalTask> getLocalTasks();
+  public abstract @Unmodifiable List<LocalTask> getLocalTasks();
 
-  @Unmodifiable
-  public abstract List<LocalTask> getLocalTasks(final boolean withClosed);
+  public abstract @Unmodifiable List<LocalTask> getLocalTasks(final boolean withClosed);
 
   public abstract LocalTask addTask(Task issue);
 
@@ -85,11 +78,9 @@ public abstract class TaskManager {
 
   public abstract LocalTask activateTask(@NotNull Task task, boolean clearContext);
 
-  @NotNull
-  public abstract LocalTask getActiveTask();
+  public abstract @NotNull LocalTask getActiveTask();
 
-  @Nullable
-  public abstract LocalTask findTask(String id);
+  public abstract @Nullable LocalTask findTask(String id);
 
   /**
    * Update issue cache asynchronously
@@ -104,8 +95,7 @@ public abstract class TaskManager {
 
   public abstract boolean isLocallyClosed(LocalTask localTask);
 
-  @Nullable
-  public abstract LocalTask getAssociatedTask(LocalChangeList list);
+  public abstract @Nullable LocalTask getAssociatedTask(LocalChangeList list);
 
   public abstract void trackContext(LocalChangeList changeList);
 

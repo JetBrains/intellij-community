@@ -300,8 +300,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  @Unmodifiable
-  private static List<String> getRecent() {
+  private static @Unmodifiable List<String> getRecent() {
     String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
     return StringUtil.isEmpty(value) ? new ArrayList<>(0) : StringUtil.split(value, "=");
   }

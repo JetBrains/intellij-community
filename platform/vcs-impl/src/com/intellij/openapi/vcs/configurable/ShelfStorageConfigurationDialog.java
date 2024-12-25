@@ -39,12 +39,12 @@ import static com.intellij.util.ui.UIUtil.*;
 public class ShelfStorageConfigurationDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ShelfStorageConfigurationDialog.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final VcsConfiguration myVcsConfiguration;
-  @NotNull private final JBRadioButton myUseCustomShelfDirectory;
-  @NotNull private final JBRadioButton myUseDefaultShelfDirectory;
-  @NotNull private final TextFieldWithBrowseButton myShelfDirectoryPath;
-  @NotNull private final JBCheckBox myMoveShelvesCheckBox;
+  private final @NotNull Project myProject;
+  private final @NotNull VcsConfiguration myVcsConfiguration;
+  private final @NotNull JBRadioButton myUseCustomShelfDirectory;
+  private final @NotNull JBRadioButton myUseDefaultShelfDirectory;
+  private final @NotNull TextFieldWithBrowseButton myShelfDirectoryPath;
+  private final @NotNull JBCheckBox myMoveShelvesCheckBox;
 
 
   protected ShelfStorageConfigurationDialog(@NotNull Project project) {
@@ -94,9 +94,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     myShelfDirectoryPath.setEditable(enabled);
   }
 
-  @Nullable
   @Override
-  protected JComponent createNorthPanel() {
+  protected @Nullable JComponent createNorthPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
     JBLabel label = new JBLabel(VcsBundle.message("change.shelves.location.dialog.group.title"));
     contentPanel.add(label, BorderLayout.NORTH);
@@ -111,22 +110,19 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     return contentPanel;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return null;
   }
 
-  @NotNull
-  private JPanel createCustomShelveLocationPanel() {
+  private @NotNull JPanel createCustomShelveLocationPanel() {
     JPanel customPanel = new JPanel(new BorderLayout());
     customPanel.add(myUseCustomShelfDirectory, BorderLayout.WEST);
     customPanel.add(myShelfDirectoryPath, BorderLayout.CENTER);
     return customPanel;
   }
 
-  @NotNull
-  private JPanel createDefaultLocationPanel() {
+  private @NotNull JPanel createDefaultLocationPanel() {
     JPanel defaultPanel = new JPanel(new BorderLayout());
     defaultPanel.add(myUseDefaultShelfDirectory, BorderLayout.WEST);
     JLabel infoLabel = new JLabel(getDefaultShelfPresentationPath(myProject));
@@ -136,9 +132,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     return defaultPanel;
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.dialogs.vcs.shelf.settings";
   }
 
@@ -179,9 +174,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     return true;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     updateOkAction();
     if (myUseCustomShelfDirectory.isSelected()) {
       File toFile = new File(myShelfDirectoryPath.getText());

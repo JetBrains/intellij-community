@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.interpreter;
 
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
@@ -40,8 +40,7 @@ public class StateQueue {
     return true;
   }
 
-  @Unmodifiable
-  public @NotNull List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
+  public @Unmodifiable @NotNull List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
     DfaInstructionState state = myQueue.remove();
     final Instruction instruction = state.getInstruction();
     myMap.remove(state);

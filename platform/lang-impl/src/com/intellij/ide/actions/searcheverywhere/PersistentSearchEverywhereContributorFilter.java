@@ -40,8 +40,7 @@ public final class PersistentSearchEverywhereContributorFilter<T> {
     return myElements;
   }
 
-  @Unmodifiable
-  public List<T> getSelectedElements() {
+  public @Unmodifiable List<T> getSelectedElements() {
     return ContainerUtil.filter(myElements, type -> myVisibilityStateHolder.isVisible(type));
   }
 

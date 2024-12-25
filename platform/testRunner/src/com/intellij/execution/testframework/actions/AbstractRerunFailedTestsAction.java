@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -101,16 +101,14 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
     return false;
   }
 
-  @NotNull
-  protected List<AbstractTestProxy> getFailedTests(@NotNull Project project) {
+  protected @NotNull List<AbstractTestProxy> getFailedTests(@NotNull Project project) {
     TestFrameworkRunningModel model = getModel();
     if (model == null) return Collections.emptyList();
     //noinspection unchecked
     return getFilter(project, model.getProperties().getScope()).select(model.getRoot().getAllTests());
   }
 
-  @NotNull
-  protected Filter getFilter(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+  protected @NotNull Filter getFilter(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     return getFailuresFilter();
   }
 
@@ -170,13 +168,12 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(environment.getExecutor(), true)
         .setRenderer(new DefaultListCellRenderer() {
-          @NotNull
           @Override
-          public Component getListCellRendererComponent(@NotNull JList list,
-                                                        Object value,
-                                                        int index,
-                                                        boolean isSelected,
-                                                        boolean cellHasFocus) {
+          public @NotNull Component getListCellRendererComponent(@NotNull JList list,
+                                                                 Object value,
+                                                                 int index,
+                                                                 boolean isSelected,
+                                                                 boolean cellHasFocus) {
             final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof Executor) {
               setText(((Executor)value).getActionName());
@@ -207,13 +204,11 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
     }
   }
 
-  @Nullable
-  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
+  protected @Nullable MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
     return null;
   }
 
-  @Nullable
-  public TestFrameworkRunningModel getModel() {
+  public @Nullable TestFrameworkRunningModel getModel() {
     if (myModel != null) {
       return myModel;
     }
@@ -223,7 +218,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
     return null;
   }
 
-  protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
+  protected abstract static class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
                                                                                                 WrappingRunConfiguration<RunConfigurationBase<?>>,
                                                                                                 ConsolePropertiesProvider {
 
@@ -250,18 +245,17 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
 
     ///////////////////////////////////Delegates
     @Override
-    public void readExternal(@NotNull final Element element) throws InvalidDataException {
+    public void readExternal(final @NotNull Element element) throws InvalidDataException {
       myConfiguration.readExternal(element);
     }
 
     @Override
-    public void writeExternal(@NotNull final Element element) throws WriteExternalException {
+    public void writeExternal(final @NotNull Element element) throws WriteExternalException {
       myConfiguration.writeExternal(element);
     }
 
     @Override
-    @NotNull
-    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfiguration.getConfigurationEditor();
     }
 
@@ -290,9 +284,8 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
       return myConfiguration.getOptionsForPredefinedLogFile(predefinedLogFile);
     }
 
-    @NotNull
     @Override
-    public List<PredefinedLogFile> getPredefinedLogFiles() {
+    public @NotNull List<PredefinedLogFile> getPredefinedLogFiles() {
       return myConfiguration.getPredefinedLogFiles();
     }
 
@@ -301,9 +294,8 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
       return myConfiguration.getAllLogFiles();
     }
 
-    @NotNull
     @Override
-    public List<LogFileOptions> getLogFiles() {
+    public @NotNull List<LogFileOptions> getLogFiles() {
       return myConfiguration.getLogFiles();
     }
   }

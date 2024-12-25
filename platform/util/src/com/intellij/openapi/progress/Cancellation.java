@@ -173,8 +173,7 @@ public final class Cancellation {
    * @return cancellability state of the current thread which can be adjusted by the debugger
    */
   @SuppressWarnings("unused")
-  @NotNull
-  private static DebugNonCancellableState initThreadNonCancellableState() {
+  private static @NotNull DebugNonCancellableState initThreadNonCancellableState() {
     DebugNonCancellableState state = debugIsInNonCancelableSection.get();
     if (state != null) return state;
     state = new DebugNonCancellableState();

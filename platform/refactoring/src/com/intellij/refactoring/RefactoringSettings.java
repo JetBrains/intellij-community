@@ -39,7 +39,7 @@ public final class RefactoringSettings implements PersistentStateComponent<Refac
   }
 
   @Override
-  public void loadState(@NotNull final RefactoringSettings state) {
+  public void loadState(final @NotNull RefactoringSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

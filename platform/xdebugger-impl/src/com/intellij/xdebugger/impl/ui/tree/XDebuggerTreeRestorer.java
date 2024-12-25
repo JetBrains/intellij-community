@@ -133,7 +133,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   @Override
-  public void nodeLoaded(@NotNull final RestorableStateNode node, @NotNull final String name) {
+  public void nodeLoaded(final @NotNull RestorableStateNode node, final @NotNull String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     XDebuggerTreeState.NodeInfo nodeInfo = parentInfo != null ? parentInfo.getChild(node) : myPendingNode2State.remove(node);
     // always restore if parentInfo is available
@@ -153,7 +153,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   @Override
-  public void childrenLoaded(@NotNull final XDebuggerTreeNode node, @NotNull final List<? extends XValueContainerNode<?>> children, final boolean last) {
+  public void childrenLoaded(final @NotNull XDebuggerTreeNode node, final @NotNull List<? extends XValueContainerNode<?>> children, final boolean last) {
     XDebuggerTreeState.NodeInfo nodeInfo = myNode2State.get(node);
     if (nodeInfo != null) {
       for (XDebuggerTreeNode child : children) {

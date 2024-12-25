@@ -230,11 +230,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return CodeInsightBundle.message("action.analyze.verb");
   }
 
-  @Unmodifiable
-  public static @NotNull List<ModelScopeItem> standardItems(@NotNull Project project,
-                                                            @NotNull AnalysisScope scope,
-                                                            @Nullable Module module,
-                                                            @Nullable PsiElement context) {
+  public static @Unmodifiable @NotNull List<ModelScopeItem> standardItems(@NotNull Project project,
+                                                                          @NotNull AnalysisScope scope,
+                                                                          @Nullable Module module,
+                                                                          @Nullable PsiElement context) {
     return ContainerUtil.mapNotNull(
       ModelScopeItemPresenter.EP_NAME.getExtensionList(),
       presenter -> presenter.tryCreate(project, scope, module, context));

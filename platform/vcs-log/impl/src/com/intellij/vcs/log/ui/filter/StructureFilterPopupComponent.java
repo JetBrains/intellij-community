@@ -47,8 +47,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 
 public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFilterCollection, FileFilterModel> {
@@ -249,9 +249,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     return path2Text(filePath, systemDependent, getAllRoots());
   }
 
-  @NotNull
-  @NlsSafe
-  public static String path2Text(@NotNull FilePath filePath, boolean systemDependent, Set<VirtualFile> roots) {
+  public static @NotNull @NlsSafe String path2Text(@NotNull FilePath filePath, boolean systemDependent, Set<VirtualFile> roots) {
     VirtualFile commonAncestor = VfsUtil.getCommonAncestor(roots);
     String path = null;
     if (commonAncestor != null) {

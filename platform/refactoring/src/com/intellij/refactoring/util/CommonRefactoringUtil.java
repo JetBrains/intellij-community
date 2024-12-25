@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.ide.ui.IdeUiService;
@@ -230,7 +230,7 @@ public final class CommonRefactoringUtil {
     return seenNonWritablePsiFilesWithoutVirtualFile;
   }
 
-  public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, @NotNull final Collection<? super VirtualFile> list) {
+  public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, final @NotNull Collection<? super VirtualFile> list) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
 
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
@@ -252,7 +252,7 @@ public final class CommonRefactoringUtil {
     return false;
   }
 
-  private static int fixCaretOffset(@NotNull final Editor editor) {
+  private static int fixCaretOffset(final @NotNull Editor editor) {
     final int caret = editor.getCaretModel().getOffset();
     if (editor.getSelectionModel().hasSelection()) {
       if (caret == editor.getSelectionModel().getSelectionEnd()) {
@@ -317,7 +317,7 @@ public final class CommonRefactoringUtil {
     return (List<T>)elements;
   }
 
-  public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
+  public static PsiElement getElementAtCaret(final @NotNull Editor editor, final PsiFile file) {
     final int offset = fixCaretOffset(editor);
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset == file.getTextLength()) {

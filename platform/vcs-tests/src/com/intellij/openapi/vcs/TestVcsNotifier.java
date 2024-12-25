@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.ActionCenter;
@@ -23,8 +23,7 @@ public final class TestVcsNotifier extends VcsNotifier {
     return ContainerUtil.getLastItem(getNotifications());
   }
 
-  @Nullable
-  public Notification findExpectedNotification(@NotNull Notification expectedNotification) {
+  public @Nullable Notification findExpectedNotification(@NotNull Notification expectedNotification) {
     return ContainerUtil.find(getNotifications(), notification ->
       expectedNotification.getType().equals(notification.getType()) &&
       expectedNotification.getTitle().equals(notification.getTitle()) &&
@@ -32,9 +31,7 @@ public final class TestVcsNotifier extends VcsNotifier {
     );
   }
 
-  @NotNull
-  @Unmodifiable
-  public List<Notification> getNotifications() {
+  public @NotNull @Unmodifiable List<Notification> getNotifications() {
     List<NotificationGroup> vcsGroups
       = Arrays.asList(toolWindowNotification(), importantNotification(), standardNotification(), silentNotification());
 

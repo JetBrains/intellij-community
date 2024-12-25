@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
@@ -35,16 +34,16 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static java.util.Objects.requireNonNull;
 
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
-  @NonNls private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
-  @NonNls private static final String HELP_ID = "Vcs.Push.Dialog";
+  private static final @NonNls String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
+  private static final @NonNls String HELP_ID = "Vcs.Push.Dialog";
   private static final Logger LOG = Logger.getInstance(VcsPushDialog.class);
   private static final ExtensionPointName<PushDialogCustomizer> PUSH_DIALOG_CUSTOMIZER_EP =
     ExtensionPointName.create("com.intellij.pushDialogCustomizer");
@@ -57,13 +56,12 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   protected final Project myProject;
   protected final PushController myController;
   private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
-  @Unmodifiable
-  private final Map<String, VcsPushOptionsPanel> myCustomPanels;
+  private final @Unmodifiable Map<String, VcsPushOptionsPanel> myCustomPanels;
   private final PushLog myListPanel;
   private final JComponent myTopPanel;
 
   private final ComplexPushAction myMainAction;
-  @NotNull private final List<ActionWrapper> myPushActions;
+  private final @NotNull List<ActionWrapper> myPushActions;
 
   public VcsPushDialog(@NotNull Project project,
                        @NotNull List<? extends Repository> selectedRepositories,
@@ -137,15 +135,13 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     simplePushAction.setCondition(customizer.getCondition());
   }
 
-  @Nullable
   @Override
-  protected Border createContentPaneBorder() {
+  protected @Nullable Border createContentPaneBorder() {
     return null;
   }
 
-  @Nullable
   @Override
-  protected JPanel createSouthAdditionalPanel() {
+  protected @Nullable JPanel createSouthAdditionalPanel() {
     return createSouthOptionsPanel();
   }
 
@@ -166,8 +162,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return panel;
   }
 
-  @NotNull
-  protected JPanel createOptionsPanel() {
+  protected @NotNull JPanel createOptionsPanel() {
     JPanel optionsPanel = new OptionsPanel();
     optionsPanel.setBorder(JBUI.Borders.emptyTop(2));
 
@@ -182,8 +177,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return optionsPanel;
   }
 
-  @NotNull
-  private JPanel createSouthOptionsPanel() {
+  private @NotNull JPanel createSouthOptionsPanel() {
     JPanel optionsPanel =
       new JPanel(new MigLayout("ins 0 20 0 0, flowx, gapx 16")); //NON-NLS
 
@@ -203,9 +197,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return DIMENSION_KEY;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     updateOkActions();
     return null;
   }
@@ -244,15 +237,13 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return myController.getSelectedPushSpecs();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myListPanel.getPreferredFocusedComponent();
   }
 
-  @NotNull
   @Override
-  protected Action getOKAction() {
+  protected @NotNull Action getOKAction() {
     return myMainAction;
   }
 
@@ -361,15 +352,13 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @Nullable
-  public VcsPushOptionValue getAdditionalOptionValue(@NotNull PushSupport support) {
+  public @Nullable VcsPushOptionValue getAdditionalOptionValue(@NotNull PushSupport support) {
     VcsPushOptionsPanel panel = myAdditionalPanels.get(support);
     return panel == null ? null : panel.getValue();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (VcsPushUi.VCS_PUSH_DIALOG.is(dataId)) {
       return this;
     }
@@ -377,8 +366,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public Map<String, VcsPushOptionValue> getCustomParams() {
+  public @NotNull Map<String, VcsPushOptionValue> getCustomParams() {
     Map<String, VcsPushOptionValue> ret = new HashMap<>();
     myCustomPanels.forEach((id, panel) -> {
       VcsPushOptionValue value = panel.getValue();
@@ -427,9 +415,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   private static class ActionWrapper extends AbstractAction {
 
-    @NotNull private final Project myProject;
-    @NotNull private final VcsPushUi myDialog;
-    @NotNull private final PushActionBase myRealAction;
+    private final @NotNull Project myProject;
+    private final @NotNull VcsPushUi myDialog;
+    private final @NotNull PushActionBase myRealAction;
 
     ActionWrapper(@NotNull Project project, @NotNull VcsPushUi dialog, @NotNull PushActionBase realAction) {
       myProject = project;
@@ -451,9 +439,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
-    @Nls
-    @NotNull
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());
     }
   }

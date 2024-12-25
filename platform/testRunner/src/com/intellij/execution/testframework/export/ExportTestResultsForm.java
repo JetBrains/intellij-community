@@ -148,8 +148,7 @@ public class ExportTestResultsForm {
     myEventDispatcher.addListener(changeListener);
   }
 
-  @Nullable
-  public @NlsContexts.Label String validate() {
+  public @Nullable @NlsContexts.Label String validate() {
     if (getExportFormat() == ExportTestResultsConfiguration.ExportFormat.UserTemplate) {
       if (StringUtil.isEmpty(myCustomTemplateField.getText())) {
         return ExecutionBundle.message("export.test.results.custom.template.path.empty");

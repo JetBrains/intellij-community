@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,8 +28,7 @@ public interface VcsQuickListContentProvider {
    *
    * @return action list or null if provider should be ignored
    */
-  @Nullable
-  default List<AnAction> getVcsActions(@Nullable Project project,
+  default @Nullable List<AnAction> getVcsActions(@Nullable Project project,
                                        @NotNull AbstractVcs activeVcs,
                                        @NotNull AnActionEvent event) {
     return getVcsActions(project, activeVcs, event.getDataContext());
@@ -38,9 +38,8 @@ public interface VcsQuickListContentProvider {
    * @deprecated Implement {@link #getVcsActions(Project, AbstractVcs, AnActionEvent)}
    * to avoid direct {@link com.intellij.openapi.actionSystem.ActionGroup#getChildren(AnActionEvent)} calls.
    */
-  @Nullable
   @Deprecated
-  default List<AnAction> getVcsActions(@Nullable Project project,
+  default @Nullable List<AnAction> getVcsActions(@Nullable Project project,
                                        @NotNull AbstractVcs activeVcs,
                                        @NotNull DataContext dataContext) { return null; }
 
@@ -50,8 +49,7 @@ public interface VcsQuickListContentProvider {
    *
    * @return action list or null if provider should be ignored
    */
-  @Nullable
-  default List<AnAction> getNotInVcsActions(@Nullable Project project,
+  default @Nullable List<AnAction> getNotInVcsActions(@Nullable Project project,
                                             @NotNull AnActionEvent event) {
     return getNotInVcsActions(project, event.getDataContext());
   }
@@ -60,9 +58,8 @@ public interface VcsQuickListContentProvider {
    * @deprecated Implement {@link #getNotInVcsActions(Project, AnActionEvent)}
    * to avoid direct {@link com.intellij.openapi.actionSystem.ActionGroup#getChildren(AnActionEvent)} calls.
    */
-  @Nullable
   @Deprecated
-  default List<AnAction> getNotInVcsActions(@Nullable Project project,
+  default @Nullable List<AnAction> getNotInVcsActions(@Nullable Project project,
                                             @NotNull DataContext dataContext) { return null; }
 
   /**

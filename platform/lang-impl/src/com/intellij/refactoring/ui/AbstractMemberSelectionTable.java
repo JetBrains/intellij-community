@@ -59,8 +59,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
   protected final @NlsContexts.ColumnName String myAbstractColumnHeader;
   private @NotNull CancellablePromise<List<MemberInfoData>> myCancellablePromise;
-  @Unmodifiable
-  protected List<M> myMemberInfos;
+  protected @Unmodifiable List<M> myMemberInfos;
   protected final boolean myAbstractEnabled;
   protected MemberInfoModel<T, M> myMemberInfoModel;
   protected MyTableModel<T, M> myTableModel;

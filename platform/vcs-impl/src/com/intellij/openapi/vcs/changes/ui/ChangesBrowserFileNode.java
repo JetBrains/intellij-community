@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> implements Comparable<ChangesBrowserFileNode> {
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
   private final String myName;
 
   public ChangesBrowserFileNode(@Nullable Project project, @NotNull VirtualFile userObject) {
@@ -37,7 +37,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
   }
 
   @Override
-  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(final @NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final VirtualFile file = getUserObject();
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322065, EA-857522")) {
       FileStatus fileStatus = getFileStatus();
@@ -77,8 +77,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
     return compareFileNames(myName, o.myName);
   }
 
-  @NotNull
-  private FileStatus getFileStatus() {
+  private @NotNull FileStatus getFileStatus() {
     if (myProject == null || myProject.isDisposed()) return FileStatus.NOT_CHANGED;
     return ChangeListManager.getInstance(myProject).getStatus(getUserObject());
   }

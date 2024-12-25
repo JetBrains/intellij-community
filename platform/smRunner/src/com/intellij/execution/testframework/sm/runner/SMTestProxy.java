@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -77,18 +77,14 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
    * @see SMTestProxy#setSuiteStarted()
    * @see SMTestProxy#setTerminated(long)
    */
-  @ApiStatus.Experimental
-  @Nullable
-  volatile Long myStartTime = null;
+  @ApiStatus.Experimental volatile @Nullable Long myStartTime = null;
   /**
    * Represents the end time of node based on calls
    * This information can be used to customize output
    * @see SMTestProxy#setFinished() ()
    * @see SMTestProxy#setTerminated(long)
    */
-  @ApiStatus.Experimental
-  @Nullable
-  volatile Long myEndTime = null;
+  @ApiStatus.Experimental volatile @Nullable Long myEndTime = null;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
   private boolean myHasPassedTests = false;
@@ -106,8 +102,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   //false:: printables appear as soon as they are discovered in the output; true :: predefined test structure
   private boolean myTreeBuildBeforeStart = false;
   private CachedValue<Map<GlobalSearchScope, Ref<Location>>> myLocationMapCachedValue;
-  @Nullable
-  private TestDurationStrategy myDurationStrategyCached = null;
+  private @Nullable TestDurationStrategy myDurationStrategyCached = null;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
@@ -272,8 +267,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
-  @Nullable
-  private Printer getRightPrinter(@Nullable Printer printer) {
+  private @Nullable Printer getRightPrinter(@Nullable Printer printer) {
     if (myPreferredPrinter != null && printer != null) {
       return myPreferredPrinter;
     }
@@ -331,8 +325,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   @Override
-  @Nullable
-  public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+  public @Nullable Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     String locationUrl = getLocationUrl();
     if (locationUrl == null || myLocator == null) {
       return null;
@@ -353,8 +346,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return ref.get();
   }
 
-  @Nullable
-  private Location computeLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String locationUrl) {
+  private @Nullable Location computeLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String locationUrl) {
     SMTestLocator locator = Objects.requireNonNull(myLocator);
     String protocolId = VirtualFileManager.extractProtocol(locationUrl);
     if (protocolId != null) {
@@ -370,8 +362,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   @Override
-  @Nullable
-  public Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties) {
+  public @Nullable Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties) {
     // by location gets navigatable element.
     // It can be file or place in file (e.g. when OPEN_FAILURE_LINE is enabled)
     if (location == null) return null;
@@ -428,15 +419,13 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  @Nullable
-  public Long getStartTime() {
+  public @Nullable Long getStartTime() {
     return myStartTime;
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  @Nullable
-  public Long getEndTime() {
+  public @Nullable Long getEndTime() {
     return myEndTime;
   }
 
@@ -455,9 +444,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
    *
    * @return null if duration is unknown, otherwise duration value in milliseconds;
    */
-  @Nullable
   @Override
-  public Long getDuration() {
+  public @Nullable Long getDuration() {
     // Returns duration value for tests
     // or cached duration for suites
     if (myDurationIsCached || durationShouldBeSetExplicitly()) {
@@ -477,9 +465,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  @Nullable
   @Override
-  public Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
+  public @Nullable Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
     if (testConsoleProperties instanceof SMTRunnerTestTreeViewProvider provider) {
       SMTRunnerTestTreeView view = provider.createSMTRunnerTestTreeView();
       if (view instanceof SMTRunnerTestTreeViewProvider.CustomizedDurationProvider customizedDurationProvider) {
@@ -489,9 +476,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return myDuration;
   }
 
-  @Nullable
   @Override
-  public String getDurationString(TestConsoleProperties consoleProperties) {
+  public @Nullable String getDurationString(TestConsoleProperties consoleProperties) {
     return switch (getMagnitudeInfo()) {
       case PASSED_INDEX -> !isSubjectToHide(consoleProperties) ? getDurationString() : null;
       case RUNNING_INDEX ->
@@ -526,8 +512,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return !myIsSuite || getDurationStrategy() == TestDurationStrategy.MANUAL;
   }
 
-  @NotNull
-  public TestDurationStrategy getDurationStrategy() {
+  public @NotNull TestDurationStrategy getDurationStrategy() {
     final TestDurationStrategy strategy = myDurationStrategyCached;
     if (strategy != null) {
       return strategy;
@@ -620,18 +605,18 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
-  public void setTestComparisonFailed(@Nullable final String localizedMessage,
-                                      @Nullable final String stackTrace,
-                                      @NotNull final String actualText,
-                                      @NotNull final String expectedText) {
+  public void setTestComparisonFailed(final @Nullable String localizedMessage,
+                                      final @Nullable String stackTrace,
+                                      final @NotNull String actualText,
+                                      final @NotNull String expectedText) {
     setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null, true);
   }
 
-  public void setTestComparisonFailed(@Nullable final String localizedMessage,
-                                      @Nullable final String stackTrace,
-                                      @NotNull final String actualText,
-                                      @NotNull final String expectedText,
-                                      @NotNull final TestFailedEvent event) {
+  public void setTestComparisonFailed(final @Nullable String localizedMessage,
+                                      final @Nullable String stackTrace,
+                                      final @NotNull String actualText,
+                                      final @NotNull String expectedText,
+                                      final @NotNull TestFailedEvent event) {
     TestComparisonFailedState comparisonFailedState = setTestComparisonFailed(
       localizedMessage,
       stackTrace,
@@ -647,12 +632,12 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   @ApiStatus.Internal
   public TestComparisonFailedState setTestComparisonFailed(
-    @Nullable final String localizedMessage,
-    @Nullable final String stackTrace,
-    @NotNull final String actualText,
-    @NotNull final String expectedText,
-    @Nullable final String actualFilePath,
-    @Nullable final String expectedFilePath,
+    final @Nullable String localizedMessage,
+    final @Nullable String stackTrace,
+    final @NotNull String actualText,
+    final @NotNull String expectedText,
+    final @Nullable String actualFilePath,
+    final @Nullable String expectedFilePath,
     boolean printExpectedAndActualValues
   ) {
     setStacktraceIfNotSet(stackTrace);
@@ -684,7 +669,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     fireOnNewPrintable(myState);
   }
 
-  public void setParent(@Nullable final SMTestProxy parent) {
+  public void setParent(final @Nullable SMTestProxy parent) {
     myParent = parent;
   }
 
@@ -805,7 +790,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     });
   }
 
-  public void addError(final String output, @Nullable final String stackTrace, boolean isCritical) {
+  public void addError(final String output, final @Nullable String stackTrace, boolean isCritical) {
     myHasCriticalErrors = isCritical;
     if (isCritical) {
       invalidateCachedHasErrorMark();
@@ -846,8 +831,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   @Override
-  @Nullable
-  public DiffHyperlink getDiffViewerProvider() {
+  public @Nullable DiffHyperlink getDiffViewerProvider() {
     AbstractState state = myState;
     if (state instanceof TestComparisonFailedState) {
       return ((TestComparisonFailedState)state).getHyperlink();
@@ -860,10 +844,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return null;
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<DiffHyperlink> getDiffViewerProviders() {
+  public @NotNull @Unmodifiable List<DiffHyperlink> getDiffViewerProviders() {
     AbstractState state = myState;
     if (state instanceof CompoundTestFailedState) {
       return ((CompoundTestFailedState)state).getHyperlinks();
@@ -920,14 +902,12 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   @Override
-  @Nullable
-  public String getLocationUrl() {
+  public @Nullable String getLocationUrl() {
     return myLocationUrl;
   }
 
   @Override
-  @Nullable
-  public String getMetainfo() {
+  public @Nullable String getMetainfo() {
     return myMetainfo;
   }
 
@@ -1028,8 +1008,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
 
-  @Nullable
-  private Long calcSuiteDuration() {
+  private @Nullable Long calcSuiteDuration() {
     long partialDuration = 0;
     boolean durationOfChildrenIsUnknown = true;
 
@@ -1087,8 +1066,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     private ProcessHandler myHandler;
     private boolean myShouldPrintOwnContentOnly = false;
     private long myExecutionId = -1;
-    @NotNull
-    private TestDurationStrategy myDurationStrategy = TestDurationStrategy.AUTOMATIC;
+    private @NotNull TestDurationStrategy myDurationStrategy = TestDurationStrategy.AUTOMATIC;
     private TestConsoleProperties myTestConsoleProperties;
 
     public SMRootTestProxy() {
@@ -1104,13 +1082,12 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myTestsReporterAttached = true;
     }
 
-    final void setDurationStrategy(@NotNull final TestDurationStrategy strategy) {
+    final void setDurationStrategy(final @NotNull TestDurationStrategy strategy) {
       myDurationStrategy = strategy;
     }
 
-    @NotNull
     @Override
-    public final TestDurationStrategy getDurationStrategy() {
+    public final @NotNull TestDurationStrategy getDurationStrategy() {
       return myDurationStrategy;
     }
 
@@ -1166,9 +1143,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       ((SMTestProxy)this).myLocationMapCachedValue = null;
     }
 
-    @Nullable
     @Override
-    public String getLocationUrl() {
+    public @Nullable String getLocationUrl() {
       return myRootLocationUrl;
     }
 

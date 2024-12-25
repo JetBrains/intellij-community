@@ -152,8 +152,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ArrayUtilRt.toStringArray(allNames);
   }
 
-  @Unmodifiable
-  private List<ChooseByNameContributor> filterDumb(List<? extends ChooseByNameContributor> contributors) {
+  private @Unmodifiable List<ChooseByNameContributor> filterDumb(List<? extends ChooseByNameContributor> contributors) {
     return ContainerUtil.filter(contributors, contributor -> DumbService.getInstance(myProject).isUsableInCurrentContext(contributor));
   }
 

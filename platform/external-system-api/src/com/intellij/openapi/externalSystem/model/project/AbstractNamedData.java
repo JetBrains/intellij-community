@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -6,10 +6,8 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractNamedData extends AbstractExternalEntityData implements Named {
-  @NotNull
-  private String externalName;
-  @NotNull
-  private String internalName;
+  private @NotNull String externalName;
+  private @NotNull String internalName;
 
   public AbstractNamedData(@NotNull ProjectSystemId owner, @NotNull String externalName) {
     this(owner, externalName, externalName);
@@ -21,9 +19,8 @@ public abstract class AbstractNamedData extends AbstractExternalEntityData imple
     this.internalName = internalName;
   }
 
-  @NotNull
   @Override
-  public @NlsSafe String getExternalName() {
+  public @NotNull @NlsSafe String getExternalName() {
     return externalName;
   }
 
@@ -32,9 +29,8 @@ public abstract class AbstractNamedData extends AbstractExternalEntityData imple
     externalName = name;
   }
 
-  @NotNull
   @Override
-  public String getInternalName() {
+  public @NotNull String getInternalName() {
     return internalName;
   }
 

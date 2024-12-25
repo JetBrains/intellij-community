@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.codeInsight.CodeSmellInfo;
@@ -23,8 +23,7 @@ public abstract class CodeSmellDetector {
    * @return the list of problems found during the analysis.
    * @throws ProcessCanceledException if the analysis was cancelled by the user.
    */
-  @NotNull
-  public abstract List<CodeSmellInfo> findCodeSmells(@NotNull List<? extends VirtualFile> files) throws ProcessCanceledException;
+  public abstract @NotNull List<CodeSmellInfo> findCodeSmells(@NotNull List<? extends VirtualFile> files) throws ProcessCanceledException;
 
   /**
    * Shows the specified list of problems found during pre-checkin code analysis in a Messages pane.

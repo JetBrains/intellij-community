@@ -554,9 +554,8 @@ public class TabbedPaneWrapper {
   }
 
   private final class _MyFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
-    @NotNull
     @Override
-    protected List<Component> getOrderedComponents() {
+    protected @NotNull List<Component> getOrderedComponents() {
       List<Component> result = new ArrayList<>();
       if (tabbedPane.getSelectedComponent() != null) {
         result.add(tabbedPane.getSelectedComponent());

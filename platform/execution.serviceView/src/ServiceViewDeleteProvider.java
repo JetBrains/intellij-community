@@ -64,8 +64,7 @@ final class ServiceViewDeleteProvider implements ServiceViewDefaultDeleteProvide
     return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
-  @NotNull
-  private static List<Pair<ServiceViewItem, Runnable>> filterChildren(List<? extends Pair<ServiceViewItem, Runnable>> items) {
+  private static @NotNull List<Pair<ServiceViewItem, Runnable>> filterChildren(List<? extends Pair<ServiceViewItem, Runnable>> items) {
     return ContainerUtil.filter(items, item -> {
       ServiceViewItem parent = item.first.getParent();
       while (parent != null) {

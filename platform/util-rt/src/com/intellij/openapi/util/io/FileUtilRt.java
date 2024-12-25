@@ -1082,7 +1082,8 @@ public final class FileUtilRt {
    * Energy-efficient variant of {@link File#toURI()}. Unlike the latter, doesn't check whether a given file is a directory,
    * so URIs never have a trailing slash (but are nevertheless compatible with {@link File#File(URI)}).
    */
-  public static @NotNull URI fileToUri(@NotNull File file) {
+  @NotNull
+  public static URI fileToUri(@NotNull File file) {
     String path = file.getAbsolutePath();
     if (File.separatorChar != '/') path = path.replace(File.separatorChar, '/');
     if (!path.startsWith("/")) path = '/' + path;

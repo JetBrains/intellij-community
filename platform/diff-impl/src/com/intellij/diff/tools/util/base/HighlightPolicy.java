@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.comparison.InnerFragmentsPolicy;
@@ -28,15 +14,13 @@ public enum HighlightPolicy {
   BY_CHAR("option.highlighting.policy.symbols"),
   DO_NOT_HIGHLIGHT("option.highlighting.policy.none");
 
-  @NotNull private final String myTextKey;
+  private final @NotNull String myTextKey;
 
   HighlightPolicy(@NotNull @PropertyKey(resourceBundle = DiffBundle.BUNDLE) String textKey) {
     myTextKey = textKey;
   }
 
-  @Nls
-  @NotNull
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return DiffBundle.message(myTextKey);
   }
 
@@ -52,8 +36,7 @@ public enum HighlightPolicy {
     return this != BY_WORD_SPLIT;
   }
 
-  @NotNull
-  public InnerFragmentsPolicy getFragmentsPolicy() {
+  public @NotNull InnerFragmentsPolicy getFragmentsPolicy() {
     return switch (this) {
       case BY_WORD, BY_WORD_SPLIT -> InnerFragmentsPolicy.WORDS;
       case BY_CHAR -> InnerFragmentsPolicy.CHARS;

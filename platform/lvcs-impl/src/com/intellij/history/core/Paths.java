@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.core;
 
@@ -62,8 +62,7 @@ public final class Paths {
     return path.substring(1);
   }
 
-  @Unmodifiable
-  public static Iterable<String> split(String path) {
+  public static @Unmodifiable Iterable<String> split(String path) {
     String root = FileUtil.extractRootPath(path);
     if (root == null) return splitInner(path);
     if (root.length() + 1 == path.length() && path.endsWith("/")) {
@@ -74,8 +73,7 @@ public final class Paths {
     return ContainerUtil.concat(Collections.singletonList(root), tail);
   }
 
-  @Unmodifiable
-  private static @NotNull List<String> splitInner(String path) {
+  private static @Unmodifiable @NotNull List<String> splitInner(String path) {
     if (path.isEmpty()) return Collections.emptyList();
     int s = 0;
     int e = path.length();

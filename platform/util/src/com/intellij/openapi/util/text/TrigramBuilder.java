@@ -112,9 +112,8 @@ public final class TrigramBuilder {
         return Collections.nCopies(trigrams.size(), null);
       }
 
-      @NotNull
       @Override
-      public Set<Entry<Integer, Void>> entrySet() {
+      public @NotNull Set<Entry<Integer, Void>> entrySet() {
         return new AbstractSet<Entry<Integer, Void>>() {
           @Override
           public Iterator<Entry<Integer, Void>> iterator() {

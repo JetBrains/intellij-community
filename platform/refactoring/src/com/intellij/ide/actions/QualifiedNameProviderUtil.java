@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -10,8 +10,7 @@ import org.jetbrains.annotations.Nullable;
 public final class QualifiedNameProviderUtil {
   private QualifiedNameProviderUtil() {}
 
-  @Nullable
-  public static PsiElement adjustElementToCopy(@NotNull PsiElement element) {
+  public static @Nullable PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     for (QualifiedNameProvider provider : QualifiedNameProvider.EP_NAME.getExtensionList()) {
       PsiElement adjustedElement = provider.adjustElementToCopy(element);
       if (adjustedElement != null) return adjustedElement;
@@ -19,8 +18,7 @@ public final class QualifiedNameProviderUtil {
     return null;
   }
 
-  @Nullable
-  public static String getQualifiedName(@NotNull PsiElement element) {
+  public static @Nullable String getQualifiedName(@NotNull PsiElement element) {
     for (QualifiedNameProvider provider : QualifiedNameProvider.EP_NAME.getExtensionList()) {
       String qualifiedName = provider.getQualifiedName(element);
       if (qualifiedName != null) return qualifiedName;
@@ -28,8 +26,7 @@ public final class QualifiedNameProviderUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiElement qualifiedNameToElement(@NotNull String qualifiedName, @NotNull Project project) {
+  public static @Nullable PsiElement qualifiedNameToElement(@NotNull String qualifiedName, @NotNull Project project) {
     for (QualifiedNameProvider provider : QualifiedNameProvider.EP_NAME.getExtensionList()) {
       PsiElement element = provider.qualifiedNameToElement(qualifiedName, project);
       if (element != null) return element;

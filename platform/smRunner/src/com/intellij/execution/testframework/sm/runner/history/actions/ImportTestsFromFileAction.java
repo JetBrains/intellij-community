@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
@@ -23,9 +23,8 @@ public class ImportTestsFromFileAction extends AbstractImportTestsAction {
           AllIcons.ToolbarDecorator.Import);
   }
 
-  @Nullable
   @Override
-  protected VirtualFile getFile(@NotNull Project project) {
+  protected @Nullable VirtualFile getFile(@NotNull Project project) {
     final FileChooserDescriptor xmlDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.XML);
     xmlDescriptor.setTitle(SmRunnerBundle.message("sm.test.runner.import.test.choose.test.file.title"));
     VirtualFile file = FileChooser.chooseFile(xmlDescriptor, project, null);

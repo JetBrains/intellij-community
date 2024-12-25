@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.Service;
@@ -89,8 +89,7 @@ public final class LibraryScopeCache {
     return myOrderEntriesToLibraryUseScopeCache.get(orderEntries);
   }
 
-  @NotNull
-  public GlobalSearchScope getLibraryUseScope(@NotNull VirtualFile vFile) {
+  public @NotNull GlobalSearchScope getLibraryUseScope(@NotNull VirtualFile vFile) {
     return myFileToLibraryUseScopeCache.get(vFile);
   }
 

@@ -15,8 +15,7 @@ import java.util.Collection;
  * @author max
  */
 public abstract class VcsDirtyScopeManager {
-  @NotNull
-  public static VcsDirtyScopeManager getInstance(@NotNull Project project) {
+  public static @NotNull VcsDirtyScopeManager getInstance(@NotNull Project project) {
     return project.getService(VcsDirtyScopeManager.class);
   }
 
@@ -48,16 +47,15 @@ public abstract class VcsDirtyScopeManager {
 
   public abstract void dirDirtyRecursively(@NotNull FilePath path);
 
-  @NotNull
-  public abstract Collection<FilePath> whatFilesDirty(@NotNull Collection<? extends FilePath> files);
+  public abstract @NotNull Collection<FilePath> whatFilesDirty(@NotNull Collection<? extends FilePath> files);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filePathsDirty(@Nullable final Collection<? extends FilePath> filesDirty, @Nullable final Collection<? extends FilePath> dirsRecursivelyDirty);
+  public abstract void filePathsDirty(final @Nullable Collection<? extends FilePath> filesDirty, final @Nullable Collection<? extends FilePath> dirsRecursivelyDirty);
 
   /**
    * Requests an asynchronous file status update for all files specified and under the specified directories
    */
-  public abstract void filesDirty(@Nullable final Collection<? extends VirtualFile> filesDirty, @Nullable final Collection<? extends VirtualFile> dirsRecursivelyDirty);
+  public abstract void filesDirty(final @Nullable Collection<? extends VirtualFile> filesDirty, final @Nullable Collection<? extends VirtualFile> dirsRecursivelyDirty);
 }

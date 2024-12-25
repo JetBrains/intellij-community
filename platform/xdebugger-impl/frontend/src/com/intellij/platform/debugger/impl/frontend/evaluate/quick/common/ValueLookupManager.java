@@ -125,7 +125,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
                            final Editor editor,
                            final Point point,
                            @NotNull EditorMouseEvent e,
-                           @NotNull final ValueHintType type) {
+                           final @NotNull ValueHintType type) {
     final Rectangle area = editor.getScrollingModel().getVisibleArea();
     cancelAll();
     if (type == ValueHintType.MOUSE_OVER_HINT) {

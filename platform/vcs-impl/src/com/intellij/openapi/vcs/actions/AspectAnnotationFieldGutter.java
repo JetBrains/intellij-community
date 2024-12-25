@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @ApiStatus.Internal
 public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
-  @NotNull protected final LineAnnotationAspect myAspect;
+  protected final @NotNull LineAnnotationAspect myAspect;
   private final boolean myIsGutterAction;
 
   public AspectAnnotationFieldGutter(@NotNull FileAnnotation annotation,
@@ -49,9 +49,8 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
     return value;
   }
 
-  @Nullable
   @Override
-  public String getToolTip(final int line, final Editor editor) {
+  public @Nullable String getToolTip(final int line, final Editor editor) {
     String text = myAspect.getTooltipText(line);
     if (text != null) return text;
     return isAvailable() ? myAnnotation.getHtmlToolTip(line) : null;
@@ -79,17 +78,15 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
     return super.getStyle(line, editor);
   }
 
-  @Nullable
   @Override
-  public ColorKey getColor(int line, Editor editor) {
+  public @Nullable ColorKey getColor(int line, Editor editor) {
     ColorKey color = myAspect.getColor(line);
     if (color != null) return color;
     return super.getColor(line, editor);
   }
 
-  @Nullable
   @Override
-  public Color getBgColor(int line, Editor editor) {
+  public @Nullable Color getBgColor(int line, Editor editor) {
     Color color = myAspect.getBgColor(line);
     if (color != null) return color;
     return super.getBgColor(line, editor);
@@ -100,9 +97,8 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
     return myAspect.isShowByDefault();
   }
 
-  @Nullable
   @Override
-  public String getID() {
+  public @Nullable String getID() {
     return myAspect.getId();
   }
 

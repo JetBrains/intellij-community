@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.ChangeListColumn;
@@ -69,9 +69,8 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     myProviderClass = providerClass;
   }
 
-  @NotNull
   @Override
-  public CommittedChangesFilterKey getKey() {
+  public @NotNull CommittedChangesFilterKey getKey() {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.USER);
   }
 
@@ -81,8 +80,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  @Nullable
-  public JComponent getFilterUI() {
+  public @Nullable JComponent getFilterUI() {
     return myScrollPane;
   }
 
@@ -136,8 +134,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  @NotNull
-  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
+  public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     final List<String> selection = myValueList.getSelectedValuesList();
     if (myValueList.getSelectedIndex() == 0 || selection.isEmpty()) {
       return new ArrayList<>(changeLists);

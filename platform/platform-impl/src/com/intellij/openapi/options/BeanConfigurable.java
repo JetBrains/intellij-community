@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -283,9 +283,8 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                               @NotNull Function<? super String, @Nls String> nameConverter) {
+  public @Unmodifiable @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                                             @NotNull Function<? super String, @Nls String> nameConverter) {
     List<CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     Object instance = getInstance();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
@@ -333,8 +332,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
   }
 
-  @Unmodifiable
-  private List<JComponent> getComponents() {
+  private @Unmodifiable List<JComponent> getComponents() {
     return ContainerUtil.map(myFields, field -> field.getComponent());
   }
 }

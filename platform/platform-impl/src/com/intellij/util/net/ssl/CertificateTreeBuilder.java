@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
@@ -83,8 +83,7 @@ public final class CertificateTreeBuilder implements Disposable {
     myStructureTreeModel.invalidateAsync();
   }
 
-  @Unmodifiable
-  public List<X509Certificate> getCertificates() {
+  public @Unmodifiable List<X509Certificate> getCertificates() {
     return ContainerUtil.map(myCertificates.values(), wrapper -> wrapper.getCertificate());
   }
 
@@ -132,8 +131,7 @@ public final class CertificateTreeBuilder implements Disposable {
     return certificates.isEmpty() ? null : certificates.iterator().next();
   }
 
-  @Unmodifiable
-  public @NotNull List<X509Certificate> getCertificatesByOrganization(@NotNull String organizationName) {
+  public @Unmodifiable @NotNull List<X509Certificate> getCertificatesByOrganization(@NotNull String organizationName) {
     Collection<CertificateWrapper> wrappers = myCertificates.get(organizationName);
     return extract(wrappers);
   }
@@ -143,8 +141,7 @@ public final class CertificateTreeBuilder implements Disposable {
 
   }
 
-  @Unmodifiable
-  private static List<X509Certificate> extract(Collection<CertificateWrapper> wrappers) {
+  private static @Unmodifiable List<X509Certificate> extract(Collection<CertificateWrapper> wrappers) {
     return ContainerUtil.map(wrappers, wrapper -> wrapper.getCertificate());
   }
 

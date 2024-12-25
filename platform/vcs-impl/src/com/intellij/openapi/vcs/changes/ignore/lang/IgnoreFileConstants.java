@@ -35,26 +35,22 @@ public final class IgnoreFileConstants {
   /**
    * New line character.
    */
-  @NonNls
-  public static final String NEWLINE = "\n";
+  public static final @NonNls String NEWLINE = "\n";
 
   /**
    * Hash sign.
    */
-  @NonNls
-  public static final String HASH = "#";
+  public static final @NonNls String HASH = "#";
 
   /**
    * Star sign.
    */
-  @NonNls
-  public static final String STAR = "*";
+  public static final @NonNls String STAR = "*";
 
   /**
    * Double star sign.
    */
-  @NonNls
-  public static final String DOUBLESTAR = "**";
+  public static final @NonNls String DOUBLESTAR = "**";
 
   private IgnoreFileConstants() {
   }

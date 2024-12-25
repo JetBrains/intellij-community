@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -26,8 +26,8 @@ import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
@@ -41,7 +41,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
   static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
 
-  @NotNull private static final Comparator<? super ExternalSystemNode<?>> ORDER_AWARE_COMPARATOR = new Comparator<>() {
+  private static final @NotNull Comparator<? super ExternalSystemNode<?>> ORDER_AWARE_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(@NotNull ExternalSystemNode<?> o1, @NotNull ExternalSystemNode<?> o2) {
       int order1 = getOrder(o1);
@@ -68,11 +68,9 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   private final ExternalProjectsView myExternalProjectsView;
   private List<ExternalSystemNode<?>> myChildrenList = NO_CHILDREN_LIST;
   DataNode<T> myDataNode;
-  @Nullable
-  private ExternalSystemNode<?> myParent;
+  private @Nullable ExternalSystemNode<?> myParent;
   private ExternalSystemNode<?>[] myChildren;
-  @NotNull
-  private ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
+  private @NotNull ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
   private List<String> myErrors = NO_ERRORS_LIST;
   private ExternalProjectsStructure.ErrorLevel myTotalErrorLevel = null;
 
@@ -100,8 +98,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myParent = parent;
   }
 
-  @Nullable
-  public T getData() {
+  public @Nullable T getData() {
     return myDataNode != null ? myDataNode.getData() : null;
   }
 
@@ -295,8 +292,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return getChildren().length > 0;
   }
 
-  @NotNull
-  protected List<? extends ExternalSystemNode<?>> doBuildChildren() {
+  protected @NotNull List<? extends ExternalSystemNode<?>> doBuildChildren() {
     if (myDataNode != null && !myDataNode.getChildren().isEmpty()) {
       final ExternalProjectsView externalProjectsView = getExternalProjectsView();
       return externalProjectsView.createNodes(externalProjectsView, this, myDataNode);
@@ -310,8 +306,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myDataNode = dataNode;
   }
 
-  @NotNull
-  private ExternalProjectsStructure.ErrorLevel getTotalErrorLevel() {
+  private @NotNull ExternalProjectsStructure.ErrorLevel getTotalErrorLevel() {
     ExternalProjectsStructure.ErrorLevel level = myTotalErrorLevel;
     if (level == null) {
       myTotalErrorLevel = level = calcTotalErrorLevel();
@@ -319,8 +314,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return level;
   }
 
-  @NotNull
-  private ExternalProjectsStructure.ErrorLevel calcTotalErrorLevel() {
+  private @NotNull ExternalProjectsStructure.ErrorLevel calcTotalErrorLevel() {
     ExternalProjectsStructure.ErrorLevel childrenErrorLevel = getChildrenErrorLevel();
     return childrenErrorLevel.compareTo(myErrorLevel) > 0 ? childrenErrorLevel : myErrorLevel;
   }
@@ -385,15 +379,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), waveColor, style);
   }
 
-  @Nullable
-  @NonNls
-  protected String getActionId() {
+  protected @Nullable @NonNls String getActionId() {
     return null;
   }
 
-  @Nullable
-  @NonNls
-  protected String getMenuId() {
+  protected @Nullable @NonNls String getMenuId() {
     return null;
   }
 
@@ -401,13 +391,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return ExternalSystemBundle.message(key, params);
   }
 
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return null;
   }
 
-  @Nullable
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return null;
   }
 

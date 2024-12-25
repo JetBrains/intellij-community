@@ -32,8 +32,7 @@ public final class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @Unmodifiable @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     P provider = getProvider();
     return ContainerUtil.map(provider.getValues(dataContext, pattern), value -> provider.getMainListItem(dataContext, value));
   }

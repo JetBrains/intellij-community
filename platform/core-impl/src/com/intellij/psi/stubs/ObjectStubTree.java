@@ -34,8 +34,7 @@ public class ObjectStubTree<T extends Stub> {
     return myRoot;
   }
 
-  @Unmodifiable
-  public @NotNull List<T> getPlainList() {
+  public @Unmodifiable @NotNull List<T> getPlainList() {
     return myPlainList;
   }
 
@@ -60,8 +59,7 @@ public class ObjectStubTree<T extends Stub> {
     return sink.getResult();
   }
 
-  @Unmodifiable
-  protected @NotNull List<T> enumerateStubs(@NotNull Stub root) {
+  protected @Unmodifiable @NotNull List<T> enumerateStubs(@NotNull Stub root) {
     List<T> result = new ArrayList<>();
     //noinspection rawtypes,unchecked
     enumerateStubsInto(root, (List)result);

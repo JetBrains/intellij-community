@@ -44,8 +44,7 @@ abstract class HighlightInfoUpdater {
   /**
    * {@link HighlightInfoUpdater} which doesn't update markup model. Useful for obtaining highlighting without showing anything
     */
-  @NotNull
-  static final HighlightInfoUpdater EMPTY = new HighlightInfoUpdater(){
+  static final @NotNull HighlightInfoUpdater EMPTY = new HighlightInfoUpdater(){
     @Override
     void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
                                               @NotNull TextRange restrictRange,

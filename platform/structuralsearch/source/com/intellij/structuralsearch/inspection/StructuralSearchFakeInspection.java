@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -45,7 +45,7 @@ import java.util.List;
 public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   private Configuration myMainConfiguration;
-  @NotNull private final List<Configuration> myConfigurations;
+  private final @NotNull List<Configuration> myConfigurations;
 
   public StructuralSearchFakeInspection(@NotNull Collection<@NotNull Configuration> configurations) {
     if (configurations.isEmpty()) throw new IllegalArgumentException();
@@ -62,16 +62,13 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     myMainConfiguration = myConfigurations.get(0);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
     return myMainConfiguration.getName();
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return myMainConfiguration.getUuid();
   }
 
@@ -88,9 +85,8 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return ContainerUtil.exists(myConfigurations, c -> c instanceof ReplaceConfiguration);
   }
 
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     final HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
     if (key != null) {
       return key.getID(); // to avoid using a new suppress id before it is registered.
@@ -104,16 +100,13 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return SSBasedInspection.SHORT_NAME;
   }
 
-  @Nullable
   @Override
-  public String getMainToolId() {
+  public @Nullable String getMainToolId() {
     return SSBasedInspection.SHORT_NAME;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayName() {
     return SSRBundle.message("structural.search.group.name");
   }
 
@@ -122,9 +115,8 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return InspectionProfileUtil.getGroup();
   }
 
-  @Nullable
   @Override
-  public String getStaticDescription() {
+  public @Nullable String getStaticDescription() {
     final String description = myMainConfiguration.getDescription();
     if (StringUtil.isEmpty(description)) {
       return SSRBundle.message("no.description.message");
@@ -222,8 +214,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     saveChangesToProfile(list);
   }
 
-  @NotNull
-  private static Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
+  private static @NotNull Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
     if (source == target) return source;
     target.setDescription(source.getDescription());
     target.setSuppressId(source.getSuppressId());
@@ -301,8 +292,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   private final class AddTemplateAction extends DumbAwareAction {
-    @NotNull
-    private final JList<Configuration> myList;
+    private final @NotNull JList<Configuration> myList;
     private final boolean myReplace;
 
     private AddTemplateAction(@NotNull JList<Configuration> list, boolean replace) {

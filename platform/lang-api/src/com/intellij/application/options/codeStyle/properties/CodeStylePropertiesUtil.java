@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,8 +24,7 @@ public final class CodeStylePropertiesUtil {
     collector.accept(new GeneralCodeStylePropertyMapper(settings));
   }
 
-  @Unmodifiable
-  public static @NotNull List<String> getValueList(@NotNull String string) {
+  public static @Unmodifiable @NotNull List<String> getValueList(@NotNull String string) {
     return ContainerUtil.map(string.split(","), s -> s.trim());
   }
 

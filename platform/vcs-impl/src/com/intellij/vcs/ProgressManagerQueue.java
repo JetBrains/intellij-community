@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,8 +19,8 @@ public final class ProgressManagerQueue {
   private final Object myLock = new Object();
   private final Queue<Runnable> myQueue = new ArrayDeque<>();
 
-  @NotNull private final Project myProject;
-  @NotNull private final @NlsContexts.ProgressTitle String myTitle;
+  private final @NotNull Project myProject;
+  private final @NotNull @NlsContexts.ProgressTitle String myTitle;
 
   private boolean myIsStarted;
   private boolean myActive;
@@ -53,7 +53,7 @@ public final class ProgressManagerQueue {
     }.queue();
   }
 
-  public void run(@NotNull final Runnable stuff) {
+  public void run(final @NotNull Runnable stuff) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       stuff.run();
       return;

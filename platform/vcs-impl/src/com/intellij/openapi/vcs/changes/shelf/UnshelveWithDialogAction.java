@@ -120,15 +120,13 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
       setOKButtonText(VcsBundle.message("unshelve.changes.action"));
     }
 
-    @Nullable
     @Override
-    protected JComponent createDoNotAskCheckbox() {
+    protected @Nullable JComponent createDoNotAskCheckbox() {
       return createRemoveFilesStrategyCheckbox(myProject);
     }
   }
 
-  @NotNull
-  private static JCheckBox createRemoveFilesStrategyCheckbox(@NotNull Project project) {
+  private static @NotNull JCheckBox createRemoveFilesStrategyCheckbox(@NotNull Project project) {
     final JCheckBox removeOptionCheckBox = new JCheckBox(VcsBundle.message("shelve.remove.successfully.applied.files.checkbox"));
     removeOptionCheckBox.setMnemonic(KeyEvent.VK_R);
     final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);

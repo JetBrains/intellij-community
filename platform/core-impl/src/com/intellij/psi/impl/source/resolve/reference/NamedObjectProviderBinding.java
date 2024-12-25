@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -33,12 +33,11 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   private final Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> myNamesToProvidersMap = new ConcurrentHashMap<>(5);
   private final Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> myNamesToProvidersMapInsensitive = new ConcurrentHashMap<>(5);
 
-  synchronized
-  public void registerProvider(@NonNls String @NotNull [] names,
-                               @NotNull ElementPattern<?> filter,
-                               boolean caseSensitive,
-                               @NotNull PsiReferenceProvider provider,
-                               double priority) {
+  public synchronized void registerProvider(@NonNls String @NotNull [] names,
+                                            @NotNull ElementPattern<?> filter,
+                                            boolean caseSensitive,
+                                            @NotNull PsiReferenceProvider provider,
+                                            double priority) {
     Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (String attributeName : names) {
@@ -63,9 +62,8 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     }
   }
 
-  synchronized
   @Override
-  public void unregisterProvider(@NotNull PsiReferenceProvider provider) {
+  public synchronized void unregisterProvider(@NotNull PsiReferenceProvider provider) {
     for (Map.Entry<String, @NotNull ProviderInfo<ElementPattern<?>>[]> entry : myNamesToProvidersMap.entrySet()) {
       entry.setValue((ProviderInfo<ElementPattern<?>>[])removeFromArray(provider, entry.getValue()));
     }

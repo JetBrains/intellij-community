@@ -1035,8 +1035,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return elements.size() == 1 ? elements.get(0) : null;
   }
 
-  @Unmodifiable
-  protected @NotNull List<Object> getChosenElements() {
+  protected @Unmodifiable @NotNull List<Object> getChosenElements() {
     return ContainerUtil.filter(myList.getSelectedValuesList(), o -> o != null && !isSpecialElement(o));
   }
 

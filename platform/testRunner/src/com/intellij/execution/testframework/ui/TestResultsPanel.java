@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -57,8 +57,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, UiC
     properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
-  @NotNull
-  public TestStatusLine getStatusLine() {
+  public @NotNull TestStatusLine getStatusLine() {
     return myStatusLine;
   }
 
@@ -141,8 +140,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, UiC
 
   protected abstract JComponent createTestTreeView();
 
-  @Nullable
-  protected TestTreeView getTreeView() {
+  protected @Nullable TestTreeView getTreeView() {
     return null;
   }
 
@@ -155,8 +153,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, UiC
   public void dispose() {
   }
 
-  @NotNull
-  protected static JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
+  protected static @NotNull JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
     JBSplitter splitter = new OnePixelSplitter(splitVertically, proportionProperty, defaultProportion);
     splitter.setHonorComponentsMinimumSize(true);
     return splitter;

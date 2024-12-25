@@ -235,7 +235,7 @@ public final class RenameUtil {
   }
 
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
-                              @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
+                              final @Nullable RefactoringElementListener listener) throws IncorrectOperationException{
     registerUndoableRename(element, listener);
     RenamePsiElementProcessorBase processor = RenamePsiElementProcessorBase.forPsiElement(element);
     processor.renameElement(element, newName, usages, listener);
@@ -274,8 +274,7 @@ public final class RenameUtil {
     RenameUtilBase.rename(info, newName);
   }
 
-  @Nullable
-  public static List<UnresolvableCollisionUsageInfo> removeConflictUsages(Set<UsageInfo> usages) {
+  public static @Nullable List<UnresolvableCollisionUsageInfo> removeConflictUsages(Set<UsageInfo> usages) {
     final List<UnresolvableCollisionUsageInfo> result = new ArrayList<>();
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
@@ -361,9 +360,9 @@ public final class RenameUtil {
     }
   }
 
-  public static boolean isValidName(@Nullable final Project project,
-                                    @NotNull final PsiElement psiElement,
-                                    @Nullable final String newName) {
+  public static boolean isValidName(final @Nullable Project project,
+                                    final @NotNull PsiElement psiElement,
+                                    final @Nullable String newName) {
     if (StringUtil.isEmpty(newName)) {
       return false;
     }
@@ -393,13 +392,12 @@ public final class RenameUtil {
 
   private record UsageOffset(int startOffset, int endOffset, String newText) implements Comparable<UsageOffset> {
     @Override
-    public int compareTo(@NotNull final UsageOffset o) {
+    public int compareTo(final @NotNull UsageOffset o) {
       return startOffset - o.startOffset;
     }
   }
 
-  @NotNull
-  public static String getUsageViewType(@NotNull PsiElement element) {
+  public static @NotNull String getUsageViewType(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
   }
 }

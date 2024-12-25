@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source;
 
@@ -39,8 +39,7 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, contentElement, context, table, null, language(context, PlainTextLanguage.INSTANCE));
   }
 
-  @NotNull
-  protected static Language language(PsiElement context, @NotNull Language defaultLanguage) {
+  protected static @NotNull Language language(PsiElement context, @NotNull Language defaultLanguage) {
     if (context == null) return defaultLanguage;
     PsiFile file = context.getContainingFile();
     if (file == null) return defaultLanguage;

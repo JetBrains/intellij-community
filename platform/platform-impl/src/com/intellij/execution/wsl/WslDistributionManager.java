@@ -154,8 +154,7 @@ public abstract class WslDistributionManager implements Disposable {
     return d;
   }
 
-  @Unmodifiable
-  private @NotNull List<WSLDistribution> loadInstalledDistributions() {
+  private @Unmodifiable @NotNull List<WSLDistribution> loadInstalledDistributions() {
     if (!isWslExeSupported()) {
       //noinspection removal
       return WSLUtil.getAvailableDistributions();

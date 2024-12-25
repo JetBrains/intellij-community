@@ -188,8 +188,7 @@ public final class StubTreeBuilder {
    * @deprecated use {@link #getStubbedRootDescriptors(FileViewProvider)} instead
    */
   @Deprecated
-  @Unmodifiable
-  public static @NotNull List<Pair<IStubFileElementType<?>, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
+  public static @Unmodifiable @NotNull List<Pair<IStubFileElementType<?>, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
     List<Pair<LanguageStubDescriptor, PsiFile>> descriptors = getStubbedRootDescriptors(viewProvider);
     return ContainerUtil.map(descriptors, (Pair<LanguageStubDescriptor, PsiFile> pair) -> {
       return Pair.create((IStubFileElementType<?>)pair.first.getFileElementType(), pair.second);
@@ -198,8 +197,7 @@ public final class StubTreeBuilder {
 
   /** Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} */
   @ApiStatus.Experimental
-  @Unmodifiable
-  public static @NotNull List<Pair<LanguageStubDescriptor, PsiFile>> getStubbedRootDescriptors(@NotNull FileViewProvider viewProvider) {
+  public static @Unmodifiable @NotNull List<Pair<LanguageStubDescriptor, PsiFile>> getStubbedRootDescriptors(@NotNull FileViewProvider viewProvider) {
     List<Trinity<Language, LanguageStubDescriptor, PsiFile>> roots = new SmartList<>();
     PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
     for (Language language : viewProvider.getLanguages()) {

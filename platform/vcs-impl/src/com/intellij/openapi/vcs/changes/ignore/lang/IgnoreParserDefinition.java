@@ -73,9 +73,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @param project the project to which the lexer is connected.
    * @return the lexer instance.
    */
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new IgnoreLexerAdapter();
   }
 
@@ -107,9 +106,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    *
    * @return the set of comment token types.
    */
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return Lazy.COMMENTS;
   }
 
@@ -119,9 +117,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    *
    * @return the set of string literal element types.
    */
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
@@ -133,9 +130,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @param node the node for which the PSI element should be returned.
    * @return the PSI element matching the element type of the AST node.
    */
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return IgnoreTypes.Factory.createElement(node);
   }
 

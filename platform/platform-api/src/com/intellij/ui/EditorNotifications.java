@@ -39,8 +39,7 @@ public abstract class EditorNotifications {
    * @return intention actions which were registered via {@link IntentionActionProvider#getIntentionAction()} in this {@link EditorNotificationPanel}
    * @see com.intellij.ui.EditorNotificationsImpl#collectIntentionActions(FileEditor, Project)
    */
-  @NotNull
-  public List<IntentionActionWithOptions> getStoredFileLevelIntentions(@NotNull FileEditor fileEditor) {
+  public @NotNull List<IntentionActionWithOptions> getStoredFileLevelIntentions(@NotNull FileEditor fileEditor) {
     return Collections.emptyList();
   }
 

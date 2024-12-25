@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.DiffUtil;
@@ -15,12 +15,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.List;
 
 public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDifferenceIterable {
-  @NotNull
-  @Unmodifiable
-  protected abstract List<? extends T> getChanges();
+  protected abstract @NotNull @Unmodifiable List<? extends T> getChanges();
 
-  @NotNull
-  protected abstract EditorEx getEditor();
+  protected abstract @NotNull EditorEx getEditor();
 
   protected abstract int getStartLine(@NotNull T change);
 
@@ -105,8 +102,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
     scrollToChangeUnderCommand(prev);
   }
 
-  @Nullable
-  public LineRange getCurrentLineRangeByLine(int line) {
+  public @Nullable LineRange getCurrentLineRangeByLine(int line) {
     for (T change : getChanges()) {
       int start = getStartLine(change);
       int end = getEndLine(change);
@@ -118,8 +114,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
     return null;
   }
 
-  @Nullable
-  public LineRange getCurrentLineRange() {
+  public @Nullable LineRange getCurrentLineRange() {
     int line = getEditor().getCaretModel().getLogicalPosition().line;
     return getCurrentLineRangeByLine(line);
   }

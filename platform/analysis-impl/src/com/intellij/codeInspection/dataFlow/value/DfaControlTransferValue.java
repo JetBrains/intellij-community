@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -60,16 +60,14 @@ public final class DfaControlTransferValue extends DfaValue {
     return indices.toIntArray();
   }
 
-  @Unmodifiable
-  public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {
+  public @Unmodifiable @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {
     return dispatch(state, interpreter, target, traps);
   }
 
-  @Unmodifiable
-  public static @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
-                                                            @NotNull DataFlowInterpreter interpreter,
-                                                            @NotNull TransferTarget target,
-                                                            @NotNull FList<Trap> nextTraps) {
+  public static @Unmodifiable @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                                          @NotNull DataFlowInterpreter interpreter,
+                                                                          @NotNull TransferTarget target,
+                                                                          @NotNull FList<Trap> nextTraps) {
     Trap head = nextTraps.getHead();
     nextTraps = nextTraps.getTail() == null ? FList.emptyList() : nextTraps.getTail();
     state.emptyStack();

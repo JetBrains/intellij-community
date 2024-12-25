@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -35,7 +35,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private static final String DELIMITER_CHARS = ",;.[]{}():";
 
   @Override
-  public void compile(PsiElement @NotNull [] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
+  public void compile(PsiElement @NotNull [] elements, final @NotNull GlobalCompilingVisitor globalVisitor) {
     final PsiElement topElement = elements[0].getParent();
     final PsiElement element = elements.length > 1 ? topElement : elements[0];
 
@@ -100,9 +100,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     });
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
+  public @NotNull PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new MyMatchingVisitor(globalVisitor);
   }
 
@@ -122,14 +121,12 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   protected abstract String @NotNull [] getVarPrefixes();
 
-  @NotNull
   @Override
-  public CompiledPattern createCompiledPattern() {
+  public @NotNull CompiledPattern createCompiledPattern() {
     return new CompiledPattern() {
 
-      @NotNull
       @Override
-      protected SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+      protected @NotNull SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
         return new MySubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
       }
 
@@ -148,9 +145,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return false;
       }
 
-      @NotNull
       @Override
-      public String getTypedVarString(@NotNull PsiElement element) {
+      public @NotNull String getTypedVarString(@NotNull PsiElement element) {
         final PsiElement initialElement = element;
         PsiElement child = SkippingHandler.getOnlyNonWhitespaceChild(element);
 
@@ -279,7 +275,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         }
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
-          @Nullable final MatchingHandler handler =
+          final @Nullable MatchingHandler handler =
             myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, substitutionPattern);
 
           if (handler != null) {

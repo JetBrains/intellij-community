@@ -9,8 +9,8 @@ import java.awt.im.InputMethodRequests;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 
-abstract public class SpeedSearchInputMethodRequests implements InputMethodRequests {
-  abstract protected InputMethodRequests getDelegate();
+public abstract class SpeedSearchInputMethodRequests implements InputMethodRequests {
+  protected abstract InputMethodRequests getDelegate();
   protected void ensurePopupIsShown() {}
 
   @Override
@@ -23,9 +23,8 @@ abstract public class SpeedSearchInputMethodRequests implements InputMethodReque
     }
   }
 
-  @Nullable
   @Override
-  public TextHitInfo getLocationOffset(int x, int y) {
+  public @Nullable TextHitInfo getLocationOffset(int x, int y) {
     InputMethodRequests delegate = getDelegate();
     if (delegate == null) {
       return null;
@@ -70,9 +69,8 @@ abstract public class SpeedSearchInputMethodRequests implements InputMethodReque
     }
   }
 
-  @Nullable
   @Override
-  public AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
+  public @Nullable AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
     InputMethodRequests delegate = getDelegate();
     if (delegate == null) {
       return null;
@@ -81,9 +79,8 @@ abstract public class SpeedSearchInputMethodRequests implements InputMethodReque
     }
   }
 
-  @Nullable
   @Override
-  public AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
+  public @Nullable AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
     InputMethodRequests delegate = getDelegate();
     if (delegate == null) {
       return null;

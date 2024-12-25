@@ -28,8 +28,7 @@ import java.util.List;
  */
 public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<V> {
   @Override
-  @Unmodifiable
-  public @NotNull Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @Unmodifiable @NotNull Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
@@ -74,8 +73,7 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+  public @Unmodifiable @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return RunAnythingChooseContextAction.Companion.allContexts(RunAnythingUtil.fetchProject(dataContext));
   }
 

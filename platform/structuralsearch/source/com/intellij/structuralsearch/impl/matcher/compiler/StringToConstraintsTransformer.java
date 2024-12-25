@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.structuralsearch.MalformedPatternException;
@@ -17,15 +17,15 @@ import java.util.regex.PatternSyntaxException;
  * @author maxim
  */
 public final class StringToConstraintsTransformer {
-  @NonNls private static final String REF = "ref";
-  @NonNls private static final String REGEX = "regex";
-  @NonNls private static final String REGEXW = "regexw";
-  @NonNls private static final String EXPRTYPE = "exprtype";
-  @NonNls private static final String FORMAL = "formal";
-  @NonNls private static final String SCRIPT = "script";
-  @NonNls private static final String CONTAINS = "contains";
-  @NonNls private static final String WITHIN = "within";
-  @NonNls private static final String CONTEXT = "context";
+  private static final @NonNls String REF = "ref";
+  private static final @NonNls String REGEX = "regex";
+  private static final @NonNls String REGEXW = "regexw";
+  private static final @NonNls String EXPRTYPE = "exprtype";
+  private static final @NonNls String FORMAL = "formal";
+  private static final @NonNls String SCRIPT = "script";
+  private static final @NonNls String CONTAINS = "contains";
+  private static final @NonNls String WITHIN = "within";
+  private static final @NonNls String CONTEXT = "context";
 
   private static final Set<String> knownOptions =
     Set.of(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
@@ -492,8 +492,7 @@ public final class StringToConstraintsTransformer {
     }
   }
 
-  @NotNull
-  private static String unescape(@NotNull String s) {
+  private static @NotNull String unescape(@NotNull String s) {
     final StringBuilder result = new StringBuilder();
     boolean escaped = false;
     for (int i = 0, length = s.length(); i < length; i++) {

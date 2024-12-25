@@ -64,8 +64,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
@@ -519,8 +521,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    * @deprecated Use {@link XDebuggerWatchesManager#getWatches(String)} directly
    */
   @Deprecated
-  @NotNull
-  protected List<XExpression> getExpressions() {
+  protected @NotNull List<XExpression> getExpressions() {
     return getWatchesManager().getWatches(myConfigurationName);
   }
 

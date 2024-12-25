@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -44,8 +44,7 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction imple
     group.add(new ShowPluginsWithSearchOptionAction(IdeBundle.message("keymap.action.install.keymap"), "/tag:Keymap"));
   }
 
-  @Unmodifiable
-  private static @NotNull List<Keymap> getUnsortedKeymaps() {
+  private static @Unmodifiable @NotNull List<Keymap> getUnsortedKeymaps() {
     return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(KeymapSchemeManager.FILTER);
   }
 

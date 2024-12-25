@@ -123,8 +123,7 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
   }
 
   @Override
-  @Nullable
-  default ModCommandAction asModCommandAction() {
+  default @Nullable ModCommandAction asModCommandAction() {
     if (this instanceof IntentionActionDelegate delegate) {
       return delegate.getDelegate().asModCommandAction();
     }

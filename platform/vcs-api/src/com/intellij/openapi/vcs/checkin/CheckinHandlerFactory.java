@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.checkin;
 
@@ -24,8 +24,7 @@ public abstract class CheckinHandlerFactory implements BaseCheckinHandlerFactory
    * @return handler instance or {@link CheckinHandler#DUMMY} if no handler is necessary
    */
   @Override
-  @NotNull
-  public abstract CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext);
+  public abstract @NotNull CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext);
 
   /**
    * Creates {@link BeforeCheckinDialogHandler}. Called for each commit operation. Only used for Commit Dialog.

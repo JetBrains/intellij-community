@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,14 +73,12 @@ public final class FileCopyPasteUtil {
     return ContainerUtil.exists(transferFlavors, f -> f != null && supported.contains(f));
   }
 
-  @Unmodifiable
-  public static @Nullable List<File> getFileList(@NotNull Transferable transferable) {
+  public static @Unmodifiable @Nullable List<File> getFileList(@NotNull Transferable transferable) {
     var files = getFiles(transferable);
     return files != null ? ContainerUtil.map(files, Path::toFile) : null;
   }
 
-  @Unmodifiable
-  public static @Nullable List<Path> getFiles(@NotNull Transferable transferable) {
+  public static @Unmodifiable @Nullable List<Path> getFiles(@NotNull Transferable transferable) {
     try {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
         @SuppressWarnings("unchecked") var files = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);

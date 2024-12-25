@@ -367,8 +367,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  @Unmodifiable
-  public List<LookupElement> getItems() {
+  public @Unmodifiable List<LookupElement> getItems() {
     synchronized (uiLock) {
       return ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem));
     }
@@ -1197,8 +1196,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
 
   @Override
-  @Unmodifiable
-  public List<String> getAdvertisements() {
+  public @Unmodifiable List<String> getAdvertisements() {
     return myAdComponent.getAdvertisements();
   }
 

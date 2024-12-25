@@ -125,8 +125,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
-  @Unmodifiable
-  public @NotNull List<AnAction> getContextActions(@NotNull ExecutionNode node) {
+  public @Unmodifiable @NotNull List<AnAction> getContextActions(@NotNull ExecutionNode node) {
     return ContainerUtil.map(myContextActions, function -> function.apply(node));
   }
 

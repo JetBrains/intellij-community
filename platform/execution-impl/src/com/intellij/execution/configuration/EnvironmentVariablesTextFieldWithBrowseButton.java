@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
@@ -204,8 +204,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
-  @Unmodifiable
-  protected static List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
+  protected static @Unmodifiable List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
     return ContainerUtil.map(map.entrySet(), entry -> new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
       @Override
       public boolean getNameIsWriteable() {

@@ -823,8 +823,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     myData.setAllChildrenLoaded();
   }
 
-  @Unmodifiable
-  public @NotNull List<String> getSuspiciousNames() {
+  public @Unmodifiable @NotNull List<String> getSuspiciousNames() {
     return myData.getAdoptedNames();
   }
 

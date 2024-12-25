@@ -199,7 +199,7 @@ public final class CompareWithSelectedRevisionAction extends DumbAwareAction {
   }
 
 
-  @Nullable private static VcsFileRevision getRevisionAt(final TreeTableView treeTable, final int index) {
+  private static @Nullable VcsFileRevision getRevisionAt(final TreeTableView treeTable, final int index) {
     final List items = treeTable.getItems();
     if (items.size() <= index) {
       return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
@@ -112,29 +112,29 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     }
   }
 
-  public static void doAnnotate(@NotNull final Editor editor,
-                                @NotNull final Project project,
-                                @NotNull final FileAnnotation fileAnnotation,
-                                @NotNull final AbstractVcs vcs) {
+  public static void doAnnotate(final @NotNull Editor editor,
+                                final @NotNull Project project,
+                                final @NotNull FileAnnotation fileAnnotation,
+                                final @NotNull AbstractVcs vcs) {
     if (project.isDisposed() || editor.isDisposed()) return;
     UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
 
-  public static void doAnnotate(@NotNull final Editor editor,
-                                @NotNull final Project project,
-                                @NotNull final FileAnnotation fileAnnotation,
-                                @NotNull final AbstractVcs vcs,
-                                @NotNull final UpToDateLineNumberProvider upToDateLineNumbers) {
+  public static void doAnnotate(final @NotNull Editor editor,
+                                final @NotNull Project project,
+                                final @NotNull FileAnnotation fileAnnotation,
+                                final @NotNull AbstractVcs vcs,
+                                final @NotNull UpToDateLineNumberProvider upToDateLineNumbers) {
     doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, project.getService(AnnotateWarningsService.class));
   }
 
-  private static void doAnnotate(@NotNull final Editor editor,
-                                 @NotNull final Project project,
-                                 @NotNull final FileAnnotation fileAnnotation,
-                                 @NotNull final AbstractVcs vcs,
-                                 @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
-                                 @Nullable final AnnotateWarningsService warningsService) {
+  private static void doAnnotate(final @NotNull Editor editor,
+                                 final @NotNull Project project,
+                                 final @NotNull FileAnnotation fileAnnotation,
+                                 final @NotNull AbstractVcs vcs,
+                                 final @NotNull UpToDateLineNumberProvider upToDateLineNumbers,
+                                 final @Nullable AnnotateWarningsService warningsService) {
     ThreadingAssertions.assertEventDispatchThread();
     if (project.isDisposed() || editor.isDisposed()) return;
 
@@ -273,8 +273,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     }
   }
 
-  @NotNull
-  static List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
+  static @NotNull List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
     List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
     return ContainerUtil.filterIsInstance(annotations, ActiveAnnotationGutter.class);
   }
@@ -292,8 +291,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     editor.putUserData(AnnotateDataKeys.WARNING_DATA, null);
   }
 
-  @Nullable
-  static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
+  static @Nullable TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
     List<ActiveAnnotationGutter> annotations = getVcsAnnotations(editor);
     for (TextAnnotationGutterProvider annotation : annotations) {
       if (annotation instanceof AnnotationGutterLineConvertorProxy) {
@@ -306,8 +304,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     return null;
   }
 
-  @Nullable
-  static FileAnnotation getFileAnnotation(@NotNull Editor editor) {
+  static @Nullable FileAnnotation getFileAnnotation(@NotNull Editor editor) {
     TextAnnotationPresentation presentation = getAnnotationPresentation(editor);
     if (presentation instanceof AnnotationPresentation) return ((AnnotationPresentation)presentation).getFileAnnotation();
     return null;
@@ -323,8 +320,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     }
   }
 
-  @Nullable
-  private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
+  private static @Nullable Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
     final Map<VcsRevisionNumber, Integer> numbers = new HashMap<>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
@@ -339,8 +335,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     return numbers.size() < 2 ? null : numbers;
   }
 
-  @NotNull
-  private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
+  private static @NotNull Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
     Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
     Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
 
@@ -386,8 +381,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
                      commitAuthorColors.size() > 1 ? commitAuthorColors : null);
   }
 
-  @Nullable
-  private static Provider getProvider(AnActionEvent e) {
+  private static @Nullable Provider getProvider(AnActionEvent e) {
     return EP_NAME.findFirstSafe(provider -> provider.isEnabled(e));
   }
 

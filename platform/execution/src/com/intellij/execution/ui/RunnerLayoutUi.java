@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.ui;
 
@@ -63,7 +63,7 @@ public interface RunnerLayoutUi {
   @NotNull
   RunnerLayoutUi addListener(@NotNull ContentManagerListener listener, @NotNull Disposable parent);
 
-  void removeListener(@NotNull final ContentManagerListener listener);
+  void removeListener(final @NotNull ContentManagerListener listener);
 
   void attractBy(@NotNull @NonNls String condition);
   void clearAttractionBy(@NotNull @NonNls String condition);
@@ -87,8 +87,7 @@ public interface RunnerLayoutUi {
       return project.getService(Factory.class);
     }
 
-    @NotNull
-    public abstract RunnerLayoutUi create(@NotNull String runnerId, @NotNull String runnerTitle, @NotNull String sessionName, @NotNull Disposable parent);
+    public abstract @NotNull RunnerLayoutUi create(@NotNull String runnerId, @NotNull String runnerTitle, @NotNull String sessionName, @NotNull Disposable parent);
   }
 
 }

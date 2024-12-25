@@ -53,7 +53,8 @@ public final class ExceptionUtilRt {
    * @param classToUnwrap exception class to unwrap
    * @return the supplied exception, or unwrapped exception (if the supplied exception class is classToUnwrap)
    */
-  public static @NotNull Throwable unwrapException(@NotNull Throwable throwable, @NotNull Class<? extends Throwable> classToUnwrap) {
+  @NotNull
+  public static Throwable unwrapException(@NotNull Throwable throwable, @NotNull Class<? extends Throwable> classToUnwrap) {
     while (classToUnwrap.isInstance(throwable) && throwable.getCause() != null && throwable.getCause() != throwable) {
       throwable = throwable.getCause();
     }

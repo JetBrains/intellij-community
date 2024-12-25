@@ -41,9 +41,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     myWatch = watch;
   }
 
-  @NotNull
   @Override
-  public XValue getValueContainer() {
+  public @NotNull XValue getValueContainer() {
     return myValueContainer;
   }
 
@@ -68,9 +67,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     });
   }
 
-  @Nullable
   @Override
-  public XDebuggerTreeNodeHyperlink getLink() {
+  public @Nullable XDebuggerTreeNodeHyperlink getLink() {
     return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + (myWatch.getPosition().getLine() + 1)) {
       @Override
       public boolean alwaysOnScreen() {
@@ -162,8 +160,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
-      @NotNull private final XValueNode myNode;
-      @NotNull private final XValuePlace myPlace;
+      private final @NotNull XValueNode myNode;
+      private final @NotNull XValuePlace myPlace;
 
       MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
         myNode = node;
@@ -196,9 +194,8 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     private static final XValuePresentation EMPTY_PRESENTATION = new XValuePresentation() {
-      @NotNull
       @Override
-      public String getSeparator() {
+      public @NotNull String getSeparator() {
         return "";
       }
 
@@ -213,8 +210,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     }
 
     @Override
-    @NotNull
-    public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+    public @NotNull ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
       callback.computed(myPosition);
       return ThreeState.YES;
     }

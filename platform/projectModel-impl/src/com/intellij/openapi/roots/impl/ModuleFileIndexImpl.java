@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -29,8 +29,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
-  @NotNull
-  private final Module myModule;
+  private final @NotNull Module myModule;
 
   public ModuleFileIndexImpl(@NotNull Module module) {
     super(module.getProject());
@@ -108,8 +107,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  @NotNull
-  public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
+  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
     return findAllOrderEntriesWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(fileOrDir));
   }
 
@@ -135,8 +133,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return myModule.isDisposed();
   }
 
-  @Nullable
-  public static OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> orderEntries) {
+  public static @Nullable OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> orderEntries) {
     if (orderEntries.size() < 10) {
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry.getOwnerModule() == ownerModule) {
@@ -149,8 +146,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return index < 0 ? null : orderEntries.get(index);
   }
 
-  @NotNull
-  private static List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> entries) {
+  private static @NotNull List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> entries) {
     if (entries.isEmpty()) return Collections.emptyList();
 
     if (entries.size() == 1) {
@@ -190,9 +186,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       throw new IncorrectOperationException();
     }
 
-    @NotNull
     @Override
-    public String getPresentableName() {
+    public @NotNull String getPresentableName() {
       throw new IncorrectOperationException();
     }
 
@@ -201,9 +196,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       throw new IncorrectOperationException();
     }
 
-    @NotNull
     @Override
-    public Module getOwnerModule() {
+    public @NotNull Module getOwnerModule() {
       return myOwnerModule;
     }
 

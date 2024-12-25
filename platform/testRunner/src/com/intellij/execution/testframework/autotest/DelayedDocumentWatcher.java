@@ -83,8 +83,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
     myListener = new MyDocumentAdapter();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 

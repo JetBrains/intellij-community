@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -19,7 +19,7 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
   }
 
   @Override
-  public void copyFromNewInstance(@NotNull final CachingChildrenTreeNode oldInstance) {
+  public void copyFromNewInstance(final @NotNull CachingChildrenTreeNode oldInstance) {
   }
 
   @Override

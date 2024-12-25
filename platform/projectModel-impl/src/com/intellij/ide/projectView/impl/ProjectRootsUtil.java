@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.module.Module;
@@ -45,13 +45,12 @@ public final class ProjectRootsUtil {
     return projectFileIndex.isInTestSourceContent(directoryFile);
   }
 
-  public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
+  public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, final @NotNull Project project) {
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     return fileIndex.isInSourceContent(virtualFile) && virtualFile.equals(fileIndex.getSourceRootForFile(virtualFile));
   }
 
-  @Nullable
-  public static SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
+  public static @Nullable SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (!root.equals(projectFileIndex.getSourceRootForFile(root))) return null;
     
@@ -93,14 +92,13 @@ public final class ProjectRootsUtil {
     return isModuleContentRoot(directory.getVirtualFile(), directory.getProject());
   }
 
-  public static boolean isModuleContentRoot(@NotNull final VirtualFile directoryFile, @NotNull Project project) {
+  public static boolean isModuleContentRoot(final @NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
     return directoryFile.equals(contentRootForFile);
   }
 
-  @Nullable
-  public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
+  public static @Nullable String findUnloadedModuleByContentRoot(final @NotNull VirtualFile root, @NotNull Project project) {
     if (project.isDefault()) return null;
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     if (fileIndex.isExcluded(root) && root.equals(fileIndex.getContentRootForFile(root, false))) {
@@ -109,7 +107,7 @@ public final class ProjectRootsUtil {
     return null;
   }
 
-  public static String findUnloadedModuleByFile(@NotNull final VirtualFile file, @NotNull Project project) {
+  public static String findUnloadedModuleByFile(final @NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) return null;
     return ProjectFileIndex.getInstance(project).getUnloadedModuleNameForFile(file);
   }
@@ -126,8 +124,7 @@ public final class ProjectRootsUtil {
     return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 
-  @Nullable
-  public static ExcludeFolder findExcludeFolder(@NotNull Module module, @NotNull VirtualFile root) {
+  public static @Nullable ExcludeFolder findExcludeFolder(@NotNull Module module, @NotNull VirtualFile root) {
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       for (ExcludeFolder folder : entry.getExcludeFolders()) {
         if (root.equals(folder.getFile())) {

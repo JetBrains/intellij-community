@@ -37,9 +37,7 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * A good example for <code>metainfo</code> is the line number of the beginning of the test. It can speed up the search procedure,
    * but it changes when editing.
    */
-  @NotNull
-  @Unmodifiable
-  default List<Location> getLocation(@NonNls @NotNull String protocol,
+  default @NotNull @Unmodifiable List<Location> getLocation(@NonNls @NotNull String protocol,
                                      @NonNls @NotNull String path,
                                      @NonNls @Nullable String metainfo,
                                      @NotNull Project project,
@@ -50,9 +48,7 @@ public interface SMTestLocator extends PossiblyDumbAware {
   /**
    * Parse stacktrace line and return corresponding location.
    */
-  @NotNull
-  @Unmodifiable
-  default List<Location> getLocation(@NotNull String stacktraceLine,
+  default @NotNull @Unmodifiable List<Location> getLocation(@NotNull String stacktraceLine,
                                      @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return Collections.emptyList();
   }
@@ -62,8 +58,7 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * @return ModificationTracker instance used to cache result of {{@link #getLocation(String, String, Project, GlobalSearchScope)}};
    *         To disable caching, override and return {@link ModificationTracker#EVER_CHANGED}.
    */
-  @NotNull
-  default ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+  default @NotNull ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
     return PsiModificationTracker.getInstance(project); // invalidates cache on entering/exiting dumb mode
   }
 }

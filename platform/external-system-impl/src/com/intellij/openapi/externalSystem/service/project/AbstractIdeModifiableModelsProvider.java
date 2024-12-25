@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
@@ -54,8 +54,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   protected final Map<Module, String> myProductionModulesForTestModules = new HashMap<>();
   protected final Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
   protected final ClassMap<ModifiableModel> myModifiableModels = new ClassMap<>();
-  @Nullable
-  private ModifiableWorkspace myModifiableWorkspace;
+  private @Nullable ModifiableWorkspace myModifiableWorkspace;
   protected final MyUserDataHolderBase myUserData;
   private volatile boolean myDisposed;
 
@@ -69,15 +68,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     });
   }
 
-  @Nullable
   @Override
-  public <T extends ModifiableModel> T findModifiableModel(@NotNull Class<T> instanceOf) {
+  public @Nullable <T extends ModifiableModel> T findModifiableModel(@NotNull Class<T> instanceOf) {
     return ObjectUtils.tryCast(myModifiableModels.get(instanceOf), instanceOf);
   }
 
-  @NotNull
   @Override
-  public <T extends ModifiableModel> T getModifiableModel(@NotNull Class<T> instanceOf) {
+  public @NotNull <T extends ModifiableModel> T getModifiableModel(@NotNull Class<T> instanceOf) {
     ModifiableModel model = myModifiableModels.get(instanceOf);
     if (instanceOf.isInstance(model)) {
       return instanceOf.cast(model);
@@ -93,9 +90,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   protected abstract Library.ModifiableModel doGetModifiableLibraryModel(Library library);
 
-  @NotNull
   @Override
-  public abstract LibraryTable.ModifiableModel getModifiableProjectLibrariesModel();
+  public abstract @NotNull LibraryTable.ModifiableModel getModifiableProjectLibrariesModel();
 
   @Override
   public Module @NotNull [] getModules() {
@@ -107,9 +103,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return getRootModel(module).getOrderEntries();
   }
 
-  @NotNull
   @Override
-  public Module newModule(@NotNull final String filePath, final String moduleTypeId) {
+  public @NotNull Module newModule(final @NotNull String filePath, final String moduleTypeId) {
     Module module = getModifiableModuleModel().newModule(filePath, moduleTypeId);
     final String moduleName = FileUtilRt.getNameWithoutExtension(new File(filePath).getName());
     if (!module.getName().equals(moduleName)) {
@@ -126,9 +121,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return module;
   }
 
-  @NotNull
   @Override
-  public Module newModule(@NotNull ModuleData moduleData) {
+  public @NotNull Module newModule(@NotNull ModuleData moduleData) {
     String imlName = null;
     for (String candidate: suggestModuleNameCandidates(moduleData)) {
       Module module = findIdeModule(candidate);
@@ -143,16 +137,14 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return newModule(filePath, moduleData.getModuleTypeId());
   }
 
-  @Nullable
   @Override
-  public Module findIdeModule(@NotNull String ideModuleName) {
+  public @Nullable Module findIdeModule(@NotNull String ideModuleName) {
     Module module = getModifiableModuleModel().findModuleByName(ideModuleName);
     return module == null ? getModifiableModuleModel().getModuleToBeRenamed(ideModuleName) : module;
   }
 
-  @Nullable
   @Override
-  public Library findIdeLibrary(@NotNull LibraryData libraryData) {
+  public @Nullable Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable.ModifiableModel libraryTable = getModifiableProjectLibrariesModel();
     for (Library ideLibrary: libraryTable.getLibraries()) {
       if (ExternalSystemApiUtil.isRelated(ideLibrary, libraryData)) return ideLibrary;
@@ -175,9 +167,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return getRootModel(module).getSourceRoots(includingTests);
   }
 
-  @NotNull
   @Override
-  public ModifiableModuleModel getModifiableModuleModel() {
+  public @NotNull ModifiableModuleModel getModifiableModuleModel() {
     if (myModifiableModuleModel == null) {
       myModifiableModuleModel = doGetModifiableModuleModel();
     }
@@ -185,19 +176,16 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   @Override
-  @NotNull
-  public ModifiableRootModel getModifiableRootModel(Module module) {
+  public @NotNull ModifiableRootModel getModifiableRootModel(Module module) {
     return (ModifiableRootModel)getRootModel(module);
   }
 
-  @NotNull
-  private ModuleRootModel getRootModel(Module module) {
+  private @NotNull ModuleRootModel getRootModel(Module module) {
     return myModifiableRootModels.computeIfAbsent(module, k -> doGetModifiableRootModel(module));
   }
 
   @Override
-  @NotNull
-  public ModifiableFacetModel getModifiableFacetModel(Module module) {
+  public @NotNull ModifiableFacetModel getModifiableFacetModel(Module module) {
     return myModifiableFacetModels.computeIfAbsent(module, k -> doGetModifiableFacetModel(module));
   }
 
@@ -207,8 +195,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   @Override
-  @Nullable
-  public Library getLibraryByName(String name) {
+  public @Nullable Library getLibraryByName(String name) {
     return getModifiableProjectLibrariesModel().getLibraryByName(name);
   }
 
@@ -232,8 +219,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return myModifiableLibraryModels.computeIfAbsent(library, k -> doGetModifiableLibraryModel(library));
   }
 
-  @Nullable
-  public ModifiableWorkspace getModifiableWorkspace() {
+  public @Nullable ModifiableWorkspace getModifiableWorkspace() {
     if (myModifiableWorkspace == null && ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
       myModifiableWorkspace = doGetModifiableWorkspace();
     }
@@ -254,9 +240,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return ModalityState.nonModal();
   }
 
-  @NotNull
   @Override
-  public List<Module> getAllDependentModules(@NotNull Module module) {
+  public @NotNull List<Module> getAllDependentModules(@NotNull Module module) {
     final ArrayList<Module> list = new ArrayList<>();
     final Graph<Module> graph = getModuleGraph();
     for (Iterator<Module> i = graph.getOut(module); i.hasNext(); ) {
@@ -272,15 +257,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   private Graph<Module> getModuleGraph() {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
-      @NotNull
       @Override
-      public Collection<Module> getNodes() {
+      public @NotNull Collection<Module> getNodes() {
         return Arrays.asList(getModules());
       }
 
-      @NotNull
       @Override
-      public Iterator<Module> getIn(Module m) {
+      public @NotNull Iterator<Module> getIn(Module m) {
         Module[] dependentModules = getModifiableRootModel(m).getModuleDependencies(true);
         return Arrays.asList(dependentModules).iterator();
       }
@@ -375,9 +358,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     myProductionModulesForTestModules.put(testModule, productionModuleName);
   }
 
-  @Nullable
   @Override
-  public String getProductionModuleName(Module module) {
+  public @Nullable String getProductionModuleName(Module module) {
     return myProductionModulesForTestModules.get(module);
   }
 
@@ -422,9 +404,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return workspace.isSubstituted(libraryName);
   }
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     return myUserData.getUserData(key);
   }
 
@@ -433,9 +414,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     myUserData.putUserData(key, value);
   }
 
-  @Nullable
   @Override
-  public String findModuleByPublication(ProjectCoordinate publicationId) {
+  public @Nullable String findModuleByPublication(ProjectCoordinate publicationId) {
     ModifiableWorkspace workspace = getModifiableWorkspace();
     return workspace == null ? null : workspace.findModule(publicationId);
   }

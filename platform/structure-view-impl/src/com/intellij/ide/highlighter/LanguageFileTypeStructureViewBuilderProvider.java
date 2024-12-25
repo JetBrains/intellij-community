@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 class LanguageFileTypeStructureViewBuilderProvider implements StructureViewBuilderProvider {
   @Override
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull FileType fileType, @NotNull VirtualFile file, @NotNull Project project) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull FileType fileType, @NotNull VirtualFile file, @NotNull Project project) {
     if (!(fileType instanceof LanguageFileType)) return null;
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.Pair;
@@ -41,7 +41,7 @@ public class XTestContainer<T> {
 
   public void setMessage(@NotNull String message,
                          Icon icon,
-                         @NotNull final SimpleTextAttributes attributes,
+                         final @NotNull SimpleTextAttributes attributes,
                          @Nullable XDebuggerTreeNodeHyperlink link) {
   }
 
@@ -53,8 +53,7 @@ public class XTestContainer<T> {
     done(errorMessage);
   }
 
-  @NotNull
-  public Pair<List<T>, String> waitFor(long timeoutMs) {
+  public @NotNull Pair<List<T>, String> waitFor(long timeoutMs) {
     Pair<List<T>, String> result = XDebuggerTestUtil.waitFor(myResultFuture, timeoutMs);
     Assert.assertNotNull("Timed out", result);
     return result;

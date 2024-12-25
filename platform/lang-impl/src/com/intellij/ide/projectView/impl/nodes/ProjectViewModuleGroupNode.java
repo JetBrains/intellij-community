@@ -43,8 +43,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
 
 
   @Override
-  @Unmodifiable
-  protected @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
+  protected @Unmodifiable @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
     return ContainerUtil.createMaybeSingletonList(ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file, false));
   }
 }

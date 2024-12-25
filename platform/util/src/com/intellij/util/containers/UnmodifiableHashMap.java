@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtilRt;
@@ -25,8 +25,7 @@ import java.util.function.Consumer;
  * and has exactly half empty entries, and up to three separate key/value pairs stored in the fields. This allows reusing the
  * same table when a new element is added. Thanks to this, rehashing occurs only once in four additions.
  */
-@Unmodifiable
-public final class UnmodifiableHashMap<K, V> implements Map<@NotNull K, V> {
+public final @Unmodifiable class UnmodifiableHashMap<K, V> implements Map<@NotNull K, V> {
   private static final UnmodifiableHashMap<Object, Object> EMPTY
     = new UnmodifiableHashMap<>(HashingStrategy.canonical(), ArrayUtilRt.EMPTY_OBJECT_ARRAY, null, null, null, null, null, null);
 

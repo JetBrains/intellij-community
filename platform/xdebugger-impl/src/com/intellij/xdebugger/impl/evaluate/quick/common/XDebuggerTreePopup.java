@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.Disposable;
@@ -51,7 +51,7 @@ import static com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase.getCustomize
 @ApiStatus.Experimental
 public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
   public static final String ACTION_PLACE = "XDebuggerTreePopup";
-  private final static @NonNls String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
+  private static final @NonNls String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
 
   protected final @NotNull DebuggerTreeCreator<D> myTreeCreator;
   protected final @NotNull Project myProject;

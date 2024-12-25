@@ -85,8 +85,7 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
-  private static List<ProjectSystemId> getSystemIds(@NotNull AnActionEvent e) {
+  private static @NotNull List<ProjectSystemId> getSystemIds(@NotNull AnActionEvent e) {
     List<ProjectSystemId> systemIds = new ArrayList<>();
     ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     if (externalSystemId == null) {

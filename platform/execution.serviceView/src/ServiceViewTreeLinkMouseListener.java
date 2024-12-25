@@ -33,9 +33,8 @@ public final class ServiceViewTreeLinkMouseListener extends RepaintLinkMouseList
     myTree.repaint();
   }
 
-  @Nullable
   @Override
-  protected Object getTagAt(@NotNull MouseEvent e) {
+  protected @Nullable Object getTagAt(@NotNull MouseEvent e) {
     final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
     if (path == null) return null;
 

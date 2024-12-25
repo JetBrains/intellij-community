@@ -121,20 +121,17 @@ class FreezableHashMap<K,V> extends HashMap<K,V> {
   }
 
   @Override
-  @NotNull
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return isFrozen() ? Collections.unmodifiableSet(super.keySet()) : super.keySet();
   }
 
   @Override
-  @NotNull
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     return isFrozen() ? Collections.unmodifiableCollection(super.values()) : super.values();
   }
 
   @Override
-  @NotNull
-  public Set<Entry<K, V>> entrySet() {
+  public @NotNull Set<Entry<K, V>> entrySet() {
     return isFrozen() ? Collections.unmodifiableSet(super.entrySet()) : super.entrySet();
   }
 }

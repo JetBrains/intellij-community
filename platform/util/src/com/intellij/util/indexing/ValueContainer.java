@@ -67,7 +67,7 @@ public abstract class ValueContainer<Value> {
    * @return true if all the container data was processed, false if processing was stopped early because the action
    * returns false
    */
-  public synchronized final boolean forEach(@NotNull ContainerAction<? super Value> action) {
+  public final synchronized boolean forEach(@NotNull ContainerAction<? super Value> action) {
     for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       Value value = valueIterator.next();
       for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext(); ) {

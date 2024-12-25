@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -55,8 +54,7 @@ public abstract class XDebuggerEvaluator {
    *                           (such expressions are evaluated in quick popups)
    * @return text range of expression
    */
-  @Nullable
-  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset, boolean sideEffectsAllowed) {
+  public @Nullable TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset, boolean sideEffectsAllowed) {
     return null;
   }
 
@@ -68,8 +66,7 @@ public abstract class XDebuggerEvaluator {
    *                           (such expressions are evaluated in quick popups)
    * @return {@link ExpressionInfo} of expression which can be evaluated
    */
-  @Nullable
-  public ExpressionInfo getExpressionInfoAtOffset(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
+  public @Nullable ExpressionInfo getExpressionInfoAtOffset(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
     TextRange range = getExpressionRangeAtOffset(project, document, offset, sideEffectsAllowed);
     return range == null ? null : new ExpressionInfo(range);
   }
@@ -78,15 +75,13 @@ public abstract class XDebuggerEvaluator {
    * Async version of {@link #getExpressionInfoAtOffset(Project, Document, int, boolean)}. Overload this method if you cannot evaluate ExpressionInfo in sync way.
    * The value of the resulting Promise can be null
    */
-  @NotNull
-  public Promise<ExpressionInfo> getExpressionInfoAtOffsetAsync(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
+  public @NotNull Promise<ExpressionInfo> getExpressionInfoAtOffsetAsync(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
     return Promises.resolvedPromise(getExpressionInfoAtOffset(project, document, offset, sideEffectsAllowed));
   }
   /**
    * Override this method to format selected text before it is shown in 'Evaluate' dialog
    */
-  @NotNull
-  public String formatTextForEvaluation(@NotNull String text) {
+  public @NotNull String formatTextForEvaluation(@NotNull String text) {
     return text;
   }
 

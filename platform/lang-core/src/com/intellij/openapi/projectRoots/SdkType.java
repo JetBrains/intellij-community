@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -83,8 +83,7 @@ public abstract class SdkType implements SdkTypeId {
    * @deprecated Use {@link #suggestHomePaths(Project)}
    */
   @Deprecated
-  @Unmodifiable
-  public @NotNull Collection<String> suggestHomePaths() {
+  public @Unmodifiable @NotNull Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
     return ContainerUtil.createMaybeSingletonList(home);
   }
@@ -98,8 +97,7 @@ public abstract class SdkType implements SdkTypeId {
    * for possible interruption request. It is not recommended to call this method from a ETD thread. See
    * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
    */
-  @Unmodifiable
-  public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+  public @Unmodifiable @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
     return suggestHomePaths();
   }
 

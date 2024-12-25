@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.util.Disposer;
@@ -148,8 +148,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<Pair<String, JComponent>> getTabs() {
+  public @Unmodifiable @NotNull List<Pair<String, JComponent>> getTabs() {
     return ContainerUtil.map(myTabs, tab -> Pair.create(tab.getDisplayName(), tab.getComponent()));
   }
 

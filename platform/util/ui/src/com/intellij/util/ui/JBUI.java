@@ -1353,14 +1353,14 @@ public final class JBUI {
           return insets("MainToolbar.SplitDropdown.borderInsets", isNewUI() ? insets(5, 5, 5, 3) : insets(3, 5));
         }
 
-        @NotNull public static Insets separatorMargin() {
+        public static @NotNull Insets separatorMargin() {
           return insets("MainToolbar.SplitDropdown.separatorMargin", insets(5, 3));
         }
 
-        @NotNull public static Insets leftPartMargin() {
+        public static @NotNull Insets leftPartMargin() {
           return insets("MainToolbar.SplitDropdown.leftPartMargin", insets(3, 7));
         }
-        @NotNull public static Insets rightPartMargin() {
+        public static @NotNull Insets rightPartMargin() {
           return insets("MainToolbar.SplitDropdown.rightPartMargin", insets(3));
         }
       }

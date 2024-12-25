@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.platform.diagnostic.telemetry.Scope;
@@ -26,7 +26,7 @@ public final class ActivityImpl implements Activity {
   // null doesn't mean root - not obligated to set parent, only as a hint
   private final ActivityImpl parent;
 
-  private @Nullable final ActivityCategory category;
+  private final @Nullable ActivityCategory category;
 
   private final @Nullable String pluginId;
 

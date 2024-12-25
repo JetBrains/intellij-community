@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
@@ -122,16 +122,14 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     });
   }
 
-  @NotNull
   @Override
-  public List<CodeSmellInfo> findCodeSmells(@NotNull final List<? extends VirtualFile> filesToCheck) throws ProcessCanceledException {
+  public @NotNull List<CodeSmellInfo> findCodeSmells(final @NotNull List<? extends VirtualFile> filesToCheck) throws ProcessCanceledException {
     MainPassesRunner runner =
       new MainPassesRunner(myProject, VcsBundle.message("checking.code.smells.progress.title"), getInspectionProfile());
     Map<Document, List<HighlightInfo>> infos = runner.runMainPasses(filesToCheck, HighlightSeverity.WARNING);
     return convertErrorsAndWarnings(infos);
   }
-  @Nullable
-  private InspectionProfile getInspectionProfile() {
+  private @Nullable InspectionProfile getInspectionProfile() {
     InspectionProfile currentProfile;
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     String codeSmellProfile = vcsConfiguration.CODE_SMELLS_PROFILE;

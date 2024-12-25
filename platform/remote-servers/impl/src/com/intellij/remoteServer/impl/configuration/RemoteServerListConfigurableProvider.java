@@ -35,8 +35,7 @@ public final class RemoteServerListConfigurableProvider extends ConfigurableProv
     return new RemoteServerListConfigurable(RemoteServersManager.getInstance(), getServerTypesIncludedInList(), null);
   }
 
-  @Unmodifiable
-  private static @NotNull List<ServerType<?>> getServerTypesIncludedInList() {
+  private static @Unmodifiable @NotNull List<ServerType<?>> getServerTypesIncludedInList() {
     Set<String> includedTypes = IncludeServerType.EP_NAME.getExtensionList().stream().map(type -> type.myServerType).collect(Collectors.toSet());
     return ContainerUtil.filter(ServerType.EP_NAME.getExtensionList(), type -> includedTypes.contains(type.getClass().getName()));
   }

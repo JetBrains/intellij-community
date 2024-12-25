@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.Range;
@@ -47,11 +47,11 @@ public final class SyncScrollSupport {
   }
 
   public static class TwosideSyncScrollSupport extends SyncScrollSupportBase {
-    @NotNull private final List<? extends Editor> myEditors;
-    @NotNull private final SyncScrollable myScrollable;
+    private final @NotNull List<? extends Editor> myEditors;
+    private final @NotNull SyncScrollable myScrollable;
 
-    @NotNull private final ScrollHelper myHelper1;
-    @NotNull private final ScrollHelper myHelper2;
+    private final @NotNull ScrollHelper myHelper1;
+    private final @NotNull ScrollHelper myHelper2;
 
     public TwosideSyncScrollSupport(@NotNull List<? extends Editor> editors, @NotNull SyncScrollable scrollable) {
       myEditors = editors;
@@ -62,19 +62,16 @@ public final class SyncScrollSupport {
     }
 
     @Override
-    @NotNull
-    protected List<? extends Editor> getEditors() {
+    protected @NotNull List<? extends Editor> getEditors() {
       return myEditors;
     }
 
     @Override
-    @NotNull
-    protected List<? extends ScrollHelper> getScrollHelpers() {
+    protected @NotNull List<? extends ScrollHelper> getScrollHelpers() {
       return Arrays.asList(myHelper1, myHelper2);
     }
 
-    @NotNull
-    public SyncScrollable getScrollable() {
+    public @NotNull SyncScrollable getScrollable() {
       return myScrollable;
     }
 
@@ -102,21 +99,20 @@ public final class SyncScrollSupport {
                     myScrollable.forceSyncVerticalScroll());
     }
 
-    @NotNull
-    private ScrollHelper create(@NotNull Side side) {
+    private @NotNull ScrollHelper create(@NotNull Side side) {
       return new ScrollHelper(myEditors, side.getIndex(), side.other().getIndex(), myScrollable, side);
     }
   }
 
   public static class ThreesideSyncScrollSupport extends SyncScrollSupportBase {
-    @NotNull private final List<? extends Editor> myEditors;
-    @NotNull private final SyncScrollable myScrollable12;
-    @NotNull private final SyncScrollable myScrollable23;
+    private final @NotNull List<? extends Editor> myEditors;
+    private final @NotNull SyncScrollable myScrollable12;
+    private final @NotNull SyncScrollable myScrollable23;
 
-    @NotNull private final ScrollHelper myHelper12;
-    @NotNull private final ScrollHelper myHelper21;
-    @NotNull private final ScrollHelper myHelper23;
-    @NotNull private final ScrollHelper myHelper32;
+    private final @NotNull ScrollHelper myHelper12;
+    private final @NotNull ScrollHelper myHelper21;
+    private final @NotNull ScrollHelper myHelper23;
+    private final @NotNull ScrollHelper myHelper32;
 
     public ThreesideSyncScrollSupport(@NotNull List<? extends Editor> editors,
                                       @NotNull SyncScrollable scrollable12,
@@ -135,24 +131,20 @@ public final class SyncScrollSupport {
     }
 
     @Override
-    @NotNull
-    protected List<? extends Editor> getEditors() {
+    protected @NotNull List<? extends Editor> getEditors() {
       return myEditors;
     }
 
     @Override
-    @NotNull
-    protected List<? extends ScrollHelper> getScrollHelpers() {
+    protected @NotNull List<? extends ScrollHelper> getScrollHelpers() {
       return Arrays.asList(myHelper12, myHelper21, myHelper23, myHelper32);
     }
 
-    @NotNull
-    public SyncScrollable getScrollable12() {
+    public @NotNull SyncScrollable getScrollable12() {
       return myScrollable12;
     }
 
-    @NotNull
-    public SyncScrollable getScrollable23() {
+    public @NotNull SyncScrollable getScrollable23() {
       return myScrollable23;
     }
 
@@ -188,8 +180,7 @@ public final class SyncScrollSupport {
                     myScrollable12.forceSyncVerticalScroll() || myScrollable23.forceSyncVerticalScroll());
     }
 
-    @NotNull
-    private ScrollHelper create(@NotNull ThreeSide master, @NotNull ThreeSide slave) {
+    private @NotNull ScrollHelper create(@NotNull ThreeSide master, @NotNull ThreeSide slave) {
       assert master != slave;
       assert master == ThreeSide.BASE || slave == ThreeSide.BASE;
 
@@ -234,11 +225,9 @@ public final class SyncScrollSupport {
       assert myDuringSyncScrollDepth >= 0;
     }
 
-    @NotNull
-    protected abstract List<? extends Editor> getEditors();
+    protected abstract @NotNull List<? extends Editor> getEditors();
 
-    @NotNull
-    protected abstract List<? extends ScrollHelper> getScrollHelpers();
+    protected abstract @NotNull List<? extends ScrollHelper> getScrollHelpers();
 
     protected void doMakeVisible(final int masterIndex,
                                  int[] startLines,
@@ -301,13 +290,13 @@ public final class SyncScrollSupport {
   }
 
   private static class ScrollHelper implements VisibleAreaListener {
-    @NotNull private final List<? extends Editor> myEditors;
+    private final @NotNull List<? extends Editor> myEditors;
     private final int myMasterIndex;
     private final int mySlaveIndex;
-    @NotNull private final SyncScrollable myScrollable;
-    @NotNull private final Side mySide;
+    private final @NotNull SyncScrollable myScrollable;
+    private final @NotNull Side mySide;
 
-    @Nullable private Anchor myAnchor;
+    private @Nullable Anchor myAnchor;
 
     ScrollHelper(@NotNull List<? extends Editor> editors,
                  int masterIndex,
@@ -350,13 +339,11 @@ public final class SyncScrollSupport {
       return mySlaveIndex;
     }
 
-    @NotNull
-    public Editor getMaster() {
+    public @NotNull Editor getMaster() {
       return myEditors.get(myMasterIndex);
     }
 
-    @NotNull
-    public Editor getSlave() {
+    public @NotNull Editor getSlave() {
       return myEditors.get(mySlaveIndex);
     }
 
@@ -460,7 +447,7 @@ public final class SyncScrollSupport {
     if (!animated) model.enableAnimation();
   }
 
-  private static int getHeaderOffset(@NotNull final Editor editor) {
+  private static int getHeaderOffset(final @NotNull Editor editor) {
     final JComponent header = editor.getHeaderComponent();
     return header == null ? 0 : header.getHeight();
   }

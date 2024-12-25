@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
@@ -10,8 +10,7 @@ import java.util.*;
 public final class SortedList<T> extends AbstractList<T>{
   private final SortedMap<T, List<T>> myMap;
   private final Comparator<? super T> myComparator;
-  @Unmodifiable
-  private List<T> myDelegate;
+  private @Unmodifiable List<T> myDelegate;
 
   public SortedList(@NotNull Comparator<? super T> comparator) {
     myComparator = comparator;

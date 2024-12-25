@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -57,26 +57,23 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract List<? extends AbstractTestProxy> getAllTests();
 
-  @Nullable
-  public Long getDuration() {
+  public @Nullable Long getDuration() {
     return null;
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  @Nullable
-  public Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
+  public @Nullable Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
     return getDuration();
   }
 
-  @Nullable
-  public String getDurationString(TestConsoleProperties consoleProperties) {
+  public @Nullable String getDurationString(TestConsoleProperties consoleProperties) {
     return null;
   }
 
   public abstract boolean shouldSkipRootNodeForExport();
 
-  protected void fireOnNewPrintable(@NotNull final Printable printable) {
+  protected void fireOnNewPrintable(final @NotNull Printable printable) {
     if (myPrinter != null) {
       myPrinter.onNewAvailable(printable);
     }
@@ -95,13 +92,13 @@ public abstract class AbstractTestProxy extends CompositePrintable {
    * @param printable Printable info
    */
   @Override
-  public void addLast(@NotNull final Printable printable) {
+  public void addLast(final @NotNull Printable printable) {
     super.addLast(printable);
     fireOnNewPrintable(printable);
   }
 
   @Override
-  public void insert(@NotNull final Printable printable, int i) {
+  public void insert(final @NotNull Printable printable, int i) {
     super.insert(printable, i);
     fireOnNewPrintable(printable);
   }
@@ -122,20 +119,16 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return myExceptionMark;
   }
 
-  @NotNull
-  @Unmodifiable
-  public List<DiffHyperlink> getDiffViewerProviders() {
+  public @NotNull @Unmodifiable List<DiffHyperlink> getDiffViewerProviders() {
     final DiffHyperlink provider = getDiffViewerProvider();
     return ContainerUtil.createMaybeSingletonList(provider);
   }
 
-  @Nullable
-  public String getStacktrace() {
+  public @Nullable String getStacktrace() {
     return null;
   }
   
-  @Nullable
-  public DiffHyperlink getLeafDiffViewerProvider() {
+  public @Nullable DiffHyperlink getLeafDiffViewerProvider() {
     DiffHyperlink provider = getDiffViewerProvider();
     if (provider != null) return provider;
     if (isDefect()) {
@@ -147,8 +140,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
-  @Nullable
-  public DiffHyperlink getDiffViewerProvider() {
+  public @Nullable DiffHyperlink getDiffViewerProvider() {
     return null;
   }
 
@@ -162,23 +154,19 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return hyperlink;
   }
 
-  @Nullable
-  public String getLocationUrl() {
+  public @Nullable String getLocationUrl() {
     return null;
   }
 
-  @Nullable
-  public String getMetainfo() {
+  public @Nullable String getMetainfo() {
     return null;
   }
 
-  @Nullable
-  public String getErrorMessage() {
+  public @Nullable String getErrorMessage() {
     return null;
   }
 
-  @Nullable
-  public static TestProxyRoot getTestRoot(@NotNull AbstractTestProxy proxy) {
+  public static @Nullable TestProxyRoot getTestRoot(@NotNull AbstractTestProxy proxy) {
     if (proxy instanceof TestProxyRoot) {
       return (TestProxyRoot)proxy;
     }

@@ -152,9 +152,8 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     setLayout(new BorderLayout());
     myFrameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
                                               0.7f, this) {
-      @NotNull
       @Override
-      protected DiffEditorViewer createViewer() {
+      protected @NotNull DiffEditorViewer createViewer() {
         FileHistoryDiffProcessor processor = createDiffPreview(false);
         processor.setToolbarVerticalSizeReferent(myToolbar);
         return processor;

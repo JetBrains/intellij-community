@@ -64,8 +64,7 @@ public class ConsoleConfigurable extends CompositeConfigurable<UnnamedConfigurab
 
   @ApiStatus.Internal
   @Override
-  @Unmodifiable
-  protected @NotNull List<UnnamedConfigurable> createConfigurables() {
+  protected @Unmodifiable @NotNull List<UnnamedConfigurable> createConfigurables() {
     return ContainerUtil.sorted(ConfigurableWrapper.createConfigurables(EP_NAME),
                                 Comparator.comparing(ConfigurableBuilder::getConfigurableTitle));
   }

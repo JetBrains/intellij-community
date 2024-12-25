@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.diff;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -29,8 +29,7 @@ public interface DiffProvider {
   @Nullable
   VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot);
 
-  @Nullable
-  default ContentRevision createCurrentFileContent(VirtualFile file) {
+  default @Nullable ContentRevision createCurrentFileContent(VirtualFile file) {
     VcsRevisionNumber revisionNumber = getCurrentRevision(file);
     if (revisionNumber == null) return null;
     return createFileContent(revisionNumber, file);
@@ -46,9 +45,8 @@ public interface DiffProvider {
     return false;
   }
 
-  @Nullable
-  default Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
-                                                   @NotNull VcsRevisionNumber revNum) throws VcsException {
+  default @Nullable Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
+                                                             @NotNull VcsRevisionNumber revNum) throws VcsException {
     return null;
   }
 }

@@ -50,8 +50,7 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
     return ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
   }
 
-  @Nullable
-  private static AbstractVcs getContextVcs(@Nullable Project project, @NotNull DataContext dataContext) {
+  private static @Nullable AbstractVcs getContextVcs(@Nullable Project project, @NotNull DataContext dataContext) {
     if (project == null) return null;
 
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -65,7 +64,7 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
   }
 
   @ApiStatus.Internal
-  public final static class Providers extends ActionGroup implements DumbAware {
+  public static final class Providers extends ActionGroup implements DumbAware {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
@@ -100,7 +99,7 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
   }
 
   @ApiStatus.Internal
-  public final static class VcsNameSeparator extends ActionGroup implements DumbAware {
+  public static final class VcsNameSeparator extends ActionGroup implements DumbAware {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
@@ -121,7 +120,7 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
   }
 
   @ApiStatus.Internal
-  public final static class VcsAware extends DefaultActionGroup implements DumbAware {
+  public static final class VcsAware extends DefaultActionGroup implements DumbAware {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
@@ -145,7 +144,7 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
   }
 
   @ApiStatus.Internal
-  public final static class NonVcsAware extends DefaultActionGroup implements DumbAware {
+  public static final class NonVcsAware extends DefaultActionGroup implements DumbAware {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();

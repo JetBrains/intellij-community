@@ -151,8 +151,7 @@ public final class FileStatusMap implements Disposable {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return
         (defensivelyMarked ? "defensivelyMarked = "+defensivelyMarked : "")
         +(wolfPassFinished ? "" : "; wolfPassFinished = "+wolfPassFinished)

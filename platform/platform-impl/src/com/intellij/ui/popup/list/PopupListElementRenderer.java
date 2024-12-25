@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -507,8 +507,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   @Override
-  @NlsSafe
-  protected String getDelegateAccessibleName() {
+  protected @NlsSafe String getDelegateAccessibleName() {
     String textLabelAccessibleName = myTextLabel == null ? null : myTextLabel.getAccessibleContext().getAccessibleName();
     String shortcutLabelAccessibleName = myShortcutLabel == null ? null : myShortcutLabel.getAccessibleContext().getAccessibleName();
     if (shortcutLabelAccessibleName != null) {

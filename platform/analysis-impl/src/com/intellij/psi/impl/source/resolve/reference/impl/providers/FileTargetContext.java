@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiFileSystemItem;
@@ -48,8 +48,7 @@ public class FileTargetContext {
     return myPathToCreate;
   }
 
-  @Unmodifiable
-  public static Collection<FileTargetContext> toTargetContexts(Collection<? extends PsiFileSystemItem> items) {
+  public static @Unmodifiable Collection<FileTargetContext> toTargetContexts(Collection<? extends PsiFileSystemItem> items) {
     return ContainerUtil.map(items, FileTargetContext::new);
   }
 

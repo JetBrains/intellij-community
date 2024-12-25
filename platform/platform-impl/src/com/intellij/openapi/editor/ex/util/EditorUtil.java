@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
@@ -43,7 +43,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -1312,7 +1311,7 @@ public final class EditorUtil {
            && !DistractionFreeModeController.isDistractionFreeModeEnabled();
   }
 
-  public static boolean isBlockLikeCaret(@NotNull final Caret caret) {
+  public static boolean isBlockLikeCaret(final @NotNull Caret caret) {
     return switch (caret.getVisualAttributes().getShape()) {
       case DEFAULT -> caret.getEditor().isInsertMode() == caret.getEditor().getSettings().isBlockCursor();
       case BLOCK, BOX, UNDERSCORE -> true;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,8 +103,7 @@ public class ChangeBrowserSettings {
   }
 
   // used externally
-  @Unmodifiable
-  protected @NotNull List<Filter> createFilters() {
+  protected @Unmodifiable @NotNull List<Filter> createFilters() {
     return ContainerUtil.packNullables(
       createDateFilter(getDateBeforeFilter(), true),
       createDateFilter(getDateAfterFilter(), false),

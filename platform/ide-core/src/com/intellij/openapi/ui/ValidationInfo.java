@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -22,12 +22,9 @@ public final class ValidationInfo {
    * The blank message means that there is still a problem, but nothing to display.
    * It can be used for some obvious problems like an empty text field.
    */
-  @NlsContexts.DialogMessage
-  @NotNull
-  public final String message;
+  public final @NlsContexts.DialogMessage @NotNull String message;
 
-  @Nullable
-  public final JComponent component;
+  public final @Nullable JComponent component;
 
   public boolean okEnabled;
   public boolean warning;

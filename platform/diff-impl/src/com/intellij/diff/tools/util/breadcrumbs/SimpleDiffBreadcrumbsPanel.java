@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -31,9 +31,8 @@ public class SimpleDiffBreadcrumbsPanel extends DiffBreadcrumbsPanel {
     return myCollectorHolder != null && myCollectorHolder.update(myFile, enabled);
   }
 
-  @Nullable
   @Override
-  protected Iterable<? extends Crumb> computeCrumbs(int offset) {
+  protected @Nullable Iterable<? extends Crumb> computeCrumbs(int offset) {
     VirtualFile file = myFile;
     FileBreadcrumbsCollector collector = myCollectorHolder != null ? myCollectorHolder.getBreadcrumbsCollector() : null;
     if (file == null || collector == null) return null;

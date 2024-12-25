@@ -11,7 +11,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public abstract class BufferedLineIterator implements Iterator<Pair<Integer, CharSequence>> {
-  @NotNull private final List<Pair<Integer, CharSequence>> myBuffer;
+  private final @NotNull List<Pair<Integer, CharSequence>> myBuffer;
 
   public BufferedLineIterator() {
     myBuffer = new LinkedList<>();

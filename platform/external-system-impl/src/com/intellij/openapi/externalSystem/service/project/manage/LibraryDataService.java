@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -296,8 +296,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  @NotNull
-  private static String getLocalPath(@NotNull String url) {
+  private static @NotNull String getLocalPath(@NotNull String url) {
     if (url.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
       url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -56,9 +56,8 @@ public final class PatternCompiler {
     return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
   }
 
-  @Nullable
-  private static CompiledPattern doCompilePattern(@NotNull Project project, @NotNull MatchOptions options,
-                                                  boolean checkForErrors, boolean optimizeScope)
+  private static @Nullable CompiledPattern doCompilePattern(@NotNull Project project, @NotNull MatchOptions options,
+                                                            boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
@@ -179,13 +178,12 @@ public final class PatternCompiler {
     return ourLastSearchPlan;
   }
 
-  @NotNull
-  private static List<PsiElement> compileByAllPrefixes(@NotNull Project project,
-                                                       @NotNull MatchOptions options,
-                                                       @NotNull CompiledPattern pattern,
-                                                       @NotNull CompileContext context,
-                                                       String @NotNull [] applicablePrefixes,
-                                                       boolean checkForErrors) throws MalformedPatternException {
+  private static @NotNull List<PsiElement> compileByAllPrefixes(@NotNull Project project,
+                                                                @NotNull MatchOptions options,
+                                                                @NotNull CompiledPattern pattern,
+                                                                @NotNull CompileContext context,
+                                                                String @NotNull [] applicablePrefixes,
+                                                                boolean checkForErrors) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
       return Collections.emptyList();
     }
@@ -227,16 +225,15 @@ public final class PatternCompiler {
            : doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context, checkForErrors);
   }
 
-  @Nullable
-  private static List<PsiElement> compileByPrefixes(Project project,
-                                                    MatchOptions options,
-                                                    CompiledPattern pattern,
-                                                    CompileContext context,
-                                                    String[] applicablePrefixes,
-                                                    Pattern[] substitutionPatterns,
-                                                    String[] prefixSequence,
-                                                    int index,
-                                                    boolean checkForErrors) throws MalformedPatternException {
+  private static @Nullable List<PsiElement> compileByPrefixes(Project project,
+                                                              MatchOptions options,
+                                                              CompiledPattern pattern,
+                                                              CompileContext context,
+                                                              String[] applicablePrefixes,
+                                                              Pattern[] substitutionPatterns,
+                                                              String[] prefixSequence,
+                                                              int index,
+                                                              boolean checkForErrors) throws MalformedPatternException {
     if (index >= prefixSequence.length) {
       final List<PsiElement> elements =
         doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context, checkForErrors);
@@ -329,8 +326,7 @@ public final class PatternCompiler {
    * Null: there are only error elements located exactly after template variables or at the end of the pattern
    * True: otherwise
    */
-  @Nullable
-  private static Boolean checkErrorElements(PsiElement element,
+  private static @Nullable Boolean checkErrorElements(PsiElement element,
                                             final int offset,
                                             final int patternEndOffset,
                                             final int[] varEndOffsets,
@@ -376,9 +372,8 @@ public final class PatternCompiler {
       myPrefix = prefix;
     }
 
-    @NotNull
     @Override
-    public String getPrefix(int varIndex) {
+    public @NotNull String getPrefix(int varIndex) {
       return myPrefix;
     }
   }
@@ -397,13 +392,12 @@ public final class PatternCompiler {
     }
   }
 
-  @NotNull
-  private static List<PsiElement> doCompile(@NotNull Project project,
-                                            @NotNull MatchOptions options,
-                                            @NotNull CompiledPattern result,
-                                            @NotNull PrefixProvider prefixProvider,
-                                            @NotNull CompileContext context,
-                                            boolean checkForErrors) throws MalformedPatternException {
+  private static @NotNull List<PsiElement> doCompile(@NotNull Project project,
+                                                     @NotNull MatchOptions options,
+                                                     @NotNull CompiledPattern result,
+                                                     @NotNull PrefixProvider prefixProvider,
+                                                     @NotNull CompileContext context,
+                                                     boolean checkForErrors) throws MalformedPatternException {
     result.clearHandlers();
 
     final StringBuilder buf = new StringBuilder();

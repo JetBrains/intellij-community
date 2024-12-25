@@ -169,7 +169,7 @@ public final class XDebuggerWatchesManager {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(@NotNull final DocumentEvent e) {
+    public void documentChanged(final @NotNull DocumentEvent e) {
       final Document document = e.getDocument();
       Collection<InlineWatch> inlines = getDocumentInlines(document);
       if (!inlines.isEmpty()) {
@@ -217,8 +217,7 @@ public final class XDebuggerWatchesManager {
       .map(t -> (XInlineWatchesView)t.getWatchesView());
   }
 
-  @NotNull
-  public Collection<InlineWatch> getDocumentInlines(Document document) {
+  public @NotNull Collection<InlineWatch> getDocumentInlines(Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
       Set<InlineWatch> inlineWatches = this.inlineWatches.get(file.getUrl());

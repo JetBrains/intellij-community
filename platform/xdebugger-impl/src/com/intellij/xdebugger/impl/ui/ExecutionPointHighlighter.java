@@ -130,8 +130,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  @Nullable
-  public VirtualFile getCurrentFile() {
+  public @Nullable VirtualFile getCurrentFile() {
     return myOpenFileDescriptor != null ? myOpenFileDescriptor.getFile() : null;
   }
 
@@ -145,7 +144,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  public void updateGutterIcon(@Nullable final GutterIconRenderer renderer) {
+  public void updateGutterIcon(final @Nullable GutterIconRenderer renderer) {
     AppUIUtil.invokeOnEdt(() -> {
       if (myRangeHighlighter != null && myGutterIconRenderer != null) {
         myRangeHighlighter.setGutterIconRenderer(renderer);
@@ -227,7 +226,7 @@ public class ExecutionPointHighlighter {
     return myRangeHighlighter != null && myRangeHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
   }
 
-  private static void disableMouseHoverPopups(@NotNull final Editor editor, final boolean disable) {
+  private static void disableMouseHoverPopups(final @NotNull Editor editor, final boolean disable) {
     Project project = editor.getProject();
     if (ApplicationManager.getApplication().isUnitTestMode() || project == null) return;
 
@@ -244,8 +243,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  @NotNull
-  private static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+  private static @NotNull OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
     Navigatable navigatable = position.createNavigatable(project);
     if (navigatable instanceof OpenFileDescriptor) {
       return (OpenFileDescriptor)navigatable;

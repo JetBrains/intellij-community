@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,11 +35,11 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);
   private final AtomicReference<Throwable> myError = new AtomicReference<>();
 
-  @NotNull private final transient Project myIdeProject;
+  private final transient @NotNull Project myIdeProject;
 
-  @NotNull private final ExternalSystemTaskId myId;
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final String myExternalProjectPath;
+  private final @NotNull ExternalSystemTaskId myId;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull String myExternalProjectPath;
 
   protected AbstractExternalSystemTask(@NotNull ProjectSystemId id,
                                        @NotNull ExternalSystemTaskType type,
@@ -51,20 +51,17 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     myExternalProjectPath = externalProjectPath;
   }
 
-  @NotNull
-  public ProjectSystemId getExternalSystemId() {
+  public @NotNull ProjectSystemId getExternalSystemId() {
     return myExternalSystemId;
   }
 
   @Override
-  @NotNull
-  public ExternalSystemTaskId getId() {
+  public @NotNull ExternalSystemTaskId getId() {
     return myId;
   }
 
   @Override
-  @NotNull
-  public ExternalSystemTaskState getState() {
+  public @NotNull ExternalSystemTaskState getState() {
     return myState.get();
   }
 
@@ -81,13 +78,11 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return myError.get();
   }
 
-  @NotNull
-  public Project getIdeProject() {
+  public @NotNull Project getIdeProject() {
     return myIdeProject;
   }
 
-  @NotNull
-  public String getExternalProjectPath() {
+  public @NotNull String getExternalProjectPath() {
     return myExternalProjectPath;
   }
 
@@ -115,14 +110,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   protected abstract boolean doCancel() throws Exception;
 
   @Override
-  public void execute(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
+  public void execute(final @NotNull ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
     var listener = getProgressIndicatorListener(indicator);
     execute(ArrayUtil.append(listeners, listener));
   }
 
   @Override
-  public boolean cancel(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
+  public boolean cancel(final @NotNull ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
     var listener = getProgressIndicatorListener(indicator);
     return cancel(ArrayUtil.append(listeners, listener));
@@ -295,8 +290,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
   }
 
-  @NotNull
-  protected @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
+  protected @NotNull @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
   }
 

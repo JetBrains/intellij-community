@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.project.Project;
@@ -24,17 +24,17 @@ import java.util.*;
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldForceUnixLineSeparator;
 
 public final class UnifiedDiffWriter {
-  @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
-  @NonNls public static final String SUBJECT_HEADER = "Subject: [PATCH] ";
-  @NonNls public static final String HEADER_END_MARKER = "---";
-  @NonNls public static final String ADDITIONAL_PREFIX = "IDEA additional info:";
-  @NonNls public static final String ADD_INFO_HEADER = "Subsystem: ";
-  @NonNls public static final String ADD_INFO_LINE_START = "<+>";
+  private static final @NonNls String INDEX_SIGNATURE = "Index: {0}{1}";
+  public static final @NonNls String SUBJECT_HEADER = "Subject: [PATCH] ";
+  public static final @NonNls String HEADER_END_MARKER = "---";
+  public static final @NonNls String ADDITIONAL_PREFIX = "IDEA additional info:";
+  public static final @NonNls String ADD_INFO_HEADER = "Subsystem: ";
+  public static final @NonNls String ADD_INFO_LINE_START = "<+>";
   private static final String HEADER_SEPARATOR = "===================================================================";
-  @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
-  @NonNls public static final String DEV_NULL = "/dev/null";
-  @NonNls public static final String A_PREFIX = "a/";
-  @NonNls public static final String B_PREFIX = "b/";
+  public static final @NonNls String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
+  public static final @NonNls String DEV_NULL = "/dev/null";
+  public static final @NonNls String A_PREFIX = "a/";
+  public static final @NonNls String B_PREFIX = "b/";
 
   private UnifiedDiffWriter() {
   }
@@ -144,10 +144,10 @@ public final class UnifiedDiffWriter {
     return relativePath;
   }
 
-  private static void writeFileHeading(@NotNull final Writer writer,
+  private static void writeFileHeading(final @NotNull Writer writer,
                                        @Nullable Path basePath,
-                                       @NotNull final FilePatch patch,
-                                       @NotNull final String lineSeparator,
+                                       final @NotNull FilePatch patch,
+                                       final @NotNull String lineSeparator,
                                        @Nullable Map<String, CharSequence> additionalMap) throws IOException {
     writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
     writeAdditionalInfo(writer, lineSeparator, additionalMap);
@@ -191,8 +191,7 @@ public final class UnifiedDiffWriter {
     }
   }
 
-  @NonNls
-  private static String getRevisionHeadingPath(@NotNull FilePatch patch, boolean beforePath) {
+  private static @NonNls String getRevisionHeadingPath(@NotNull FilePatch patch, boolean beforePath) {
     if (beforePath) {
       return patch.isNewFile() ? DEV_NULL : A_PREFIX + patch.getBeforeName();
     }

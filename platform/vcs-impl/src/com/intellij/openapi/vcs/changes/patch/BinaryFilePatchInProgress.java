@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
@@ -23,9 +23,8 @@ public final class BinaryFilePatchInProgress extends CommonBinaryFilePatchInProg
     super(patch.copy(), autoBases, baseDir);
   }
 
-  @NotNull
   @Override
-  protected BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath) {
+  protected @NotNull BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath) {
     return new SimpleBinaryContentRevision(newFilePath) {
       @Override
       public byte @Nullable [] getBinaryContent() {
@@ -34,16 +33,14 @@ public final class BinaryFilePatchInProgress extends CommonBinaryFilePatchInProg
     };
   }
 
-  @NotNull
   @Override
-  protected Change createChange(Project project) {
+  protected @NotNull Change createChange(Project project) {
     ContentRevision before = null;
     ContentRevision after = null;
     if (!myPatch.isNewFile()) {
       before = new CurrentBinaryContentRevision(getFilePath()) {
-        @NotNull
         @Override
-        public VcsRevisionNumber getRevisionNumber() {
+        public @NotNull VcsRevisionNumber getRevisionNumber() {
           return new TextRevisionNumber(VcsBundle.message("local.version.title"));
         }
       };

@@ -540,8 +540,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       return false;
     }
 
-    @NotNull
-    private Set<? extends String> getInactiveToolWrapperIds() {
+    private @NotNull Set<? extends String> getInactiveToolWrapperIds() {
       return myInactiveIds;
     }
   }

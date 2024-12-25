@@ -110,8 +110,7 @@ public abstract class CloudServerRuntimeInstance
     }, callback);
   }
 
-  @Unmodifiable
-  protected List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
+  protected @Unmodifiable List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
     return getAgentTaskExecutor().execute(() -> {
       CloudRemoteApplication[] applications = getAgent().getApplications();
       if (applications == null) {

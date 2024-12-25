@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.Segment;
@@ -93,8 +93,7 @@ public final class FormatTextRanges implements FormattingRangesInfo {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<TextRange> getTextRanges() {
+  public @Unmodifiable @NotNull List<TextRange> getTextRanges() {
     return ContainerUtil.sorted(ContainerUtil.map(myRanges, FormatTextRange::getTextRange), Segment.BY_START_OFFSET_THEN_END_OFFSET);
   }
 

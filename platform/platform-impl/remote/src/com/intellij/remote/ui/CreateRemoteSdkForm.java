@@ -38,8 +38,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> extends JPanel implements RemoteSdkEditorForm, Disposable {
   private JPanel myMainPanel;
@@ -209,8 +209,7 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
   }
 
-  @Unmodifiable
-  protected @NotNull List<CredentialsLanguageContribution> getContributions() {
+  protected @Unmodifiable @NotNull List<CredentialsLanguageContribution> getContributions() {
     return Collections.emptyList();
   }
 

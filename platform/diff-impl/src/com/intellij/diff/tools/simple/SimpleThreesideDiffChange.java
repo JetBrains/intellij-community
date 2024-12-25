@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.MergeLineFragment;
@@ -35,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
-  @NotNull private final SimpleThreesideDiffViewer myViewer;
-  @Nullable private final MergeInnerDifferences myInnerFragments;
+  private final @NotNull SimpleThreesideDiffViewer myViewer;
+  private final @Nullable MergeInnerDifferences myInnerFragments;
 
   private final int[] myLineStarts = new int[3];
   private final int[] myLineEnds = new int[3];
@@ -98,15 +84,13 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     return false;
   }
 
-  @NotNull
   @Override
-  protected Editor getEditor(@NotNull ThreeSide side) {
+  protected @NotNull Editor getEditor(@NotNull ThreeSide side) {
     return myViewer.getEditor(side);
   }
 
-  @Nullable
   @Override
-  protected MergeInnerDifferences getInnerFragments() {
+  protected @Nullable MergeInnerDifferences getInnerFragments() {
     return myInnerFragments;
   }
 
@@ -164,8 +148,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     return DiffBundle.message("action.presentation.diff.accept.text");
   }
 
-  @NotNull
-  private DiffGutterOperation createAcceptOperation(@NotNull ThreeSide sourceSide, @NotNull ThreeSide modifiedSide) {
+  private @NotNull DiffGutterOperation createAcceptOperation(@NotNull ThreeSide sourceSide, @NotNull ThreeSide modifiedSide) {
     EditorEx editor = myViewer.getEditor(sourceSide);
     int offset = DiffGutterOperation.lineToOffset(editor, getStartLine(sourceSide));
 
@@ -187,11 +170,11 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     });
   }
 
-  private GutterIconRenderer createIconRenderer(@NotNull final ThreeSide sourceSide,
-                                                @NotNull final ThreeSide modifiedSide,
-                                                @NotNull final @NlsContexts.Tooltip String tooltipText,
-                                                @NotNull final Icon icon,
-                                                @NotNull final Runnable perform) {
+  private GutterIconRenderer createIconRenderer(final @NotNull ThreeSide sourceSide,
+                                                final @NotNull ThreeSide modifiedSide,
+                                                final @NotNull @NlsContexts.Tooltip String tooltipText,
+                                                final @NotNull Icon icon,
+                                                final @NotNull Runnable perform) {
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
       protected void handleMouseClick() {

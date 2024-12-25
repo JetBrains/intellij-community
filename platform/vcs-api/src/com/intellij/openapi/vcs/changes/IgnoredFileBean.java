@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -51,22 +51,17 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
   }
 
   @Override
-  @Nullable
-  @NlsSafe
-  public String getPath() {
+  public @Nullable @NlsSafe String getPath() {
     return myPath;
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getMask() {
+  public @Nullable @NonNls String getMask() {
     return myMask;
   }
 
   @Override
-  @NotNull
-  public IgnoreSettingsType getType() {
+  public @NotNull IgnoreSettingsType getType() {
     return myType;
   }
 
@@ -122,8 +117,7 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
     }
   }
 
-  @Nullable
-  private FilePath resolve() {
+  private @Nullable FilePath resolve() {
     assert myType != IgnoreSettingsType.MASK;
     if (myCachedResolved == null) {
       myCachedResolved = doResolve(myProject, myPath, myType == IgnoreSettingsType.UNDER_DIR);

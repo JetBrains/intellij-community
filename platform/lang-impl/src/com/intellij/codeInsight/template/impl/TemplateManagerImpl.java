@@ -484,8 +484,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
   }
 
-  @Unmodifiable
-  public static @NotNull List<TemplateContextType> getAllContextTypes() {
+  public static @Unmodifiable @NotNull List<TemplateContextType> getAllContextTypes() {
     return TemplateContextTypes.getAllContextTypes();
   }
 

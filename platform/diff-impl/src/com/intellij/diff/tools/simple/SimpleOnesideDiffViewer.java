@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -51,13 +37,13 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
-  @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
+  private final @NotNull MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
-  @NotNull private final TextDiffProvider myTextDiffProvider;
+  private final @NotNull TextDiffProvider myTextDiffProvider;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  private final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
-  @NotNull private final MyMockFoldingModel myFoldingModel;
+  private final @NotNull MyMockFoldingModel myFoldingModel;
 
   public SimpleOnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -67,9 +53,8 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyReadOnlyLockAction());
@@ -81,9 +66,8 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
     return group;
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createPopupActions() {
+  protected @NotNull List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(Separator.getInstance());
     group.addAll(super.createPopupActions());
@@ -110,8 +94,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   //
 
   @Override
-  @NotNull
-  protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
+  protected @NotNull Runnable performRediff(final @NotNull ProgressIndicator indicator) {
     return () -> {
       clearDiffPresentation();
 

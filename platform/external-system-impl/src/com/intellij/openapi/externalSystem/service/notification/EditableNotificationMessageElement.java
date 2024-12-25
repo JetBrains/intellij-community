@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.ide.IdeTooltipManager;
@@ -36,9 +36,9 @@ import java.util.Map;
 @ApiStatus.Internal
 public class EditableNotificationMessageElement extends NotificationMessageElement implements EditableMessageElement {
 
-  @NotNull private final TreeCellEditor myRightTreeCellEditor;
-  @NotNull private final Notification myNotification;
-  @NotNull private final Map<String/*url*/, String/*link text to replace*/> disabledLinks;
+  private final @NotNull TreeCellEditor myRightTreeCellEditor;
+  private final @NotNull Notification myNotification;
+  private final @NotNull Map<String/*url*/, String/*link text to replace*/> disabledLinks;
 
   public EditableNotificationMessageElement(@NotNull Notification notification,
                                             @NotNull ErrorTreeElementKind kind,
@@ -57,9 +57,8 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     disabledLinks.put(url, text);
   }
 
-  @NotNull
   @Override
-  public TreeCellEditor getRightSelfEditor() {
+  public @NotNull TreeCellEditor getRightSelfEditor() {
     return myRightTreeCellEditor;
   }
 
@@ -72,7 +71,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     disableLink(event, null);
   }
 
-  private static void disableLink(@NotNull final HyperlinkEvent event, @Nullable final String linkText) {
+  private static void disableLink(final @NotNull HyperlinkEvent event, final @Nullable String linkText) {
     if (event.getSource() instanceof MyJEditorPane) {
       UIUtil.invokeLaterIfNeeded(() -> {
         final MyJEditorPane editorPane = (MyJEditorPane)event.getSource();
@@ -117,8 +116,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
   }
 
   private static class MyJEditorPane extends JEditorPane {
-    @NotNull
-    private final EditableNotificationMessageElement myElement;
+    private final @NotNull EditableNotificationMessageElement myElement;
 
     MyJEditorPane(@NotNull EditableNotificationMessageElement element) {
       myElement = element;
@@ -127,8 +125,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
 
   private final class MyCellEditor extends AbstractCellEditor implements TreeCellEditor {
     private final JEditorPane editorComponent;
-    @Nullable
-    private JTree myTree;
+    private @Nullable JTree myTree;
 
     private MyCellEditor() {
       editorComponent = installJep(new MyJEditorPane(EditableNotificationMessageElement.this));

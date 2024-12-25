@@ -32,8 +32,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 @SuppressWarnings("rawtypes")
@@ -70,8 +70,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     return Collections.singleton(LanguagePostfixTemplate.EP_NAME);
   }
 
-  @Unmodifiable
-  private static @NotNull List<PostfixTemplateProvider> getProviders() {
+  private static @Unmodifiable @NotNull List<PostfixTemplateProvider> getProviders() {
     List<LanguageExtensionPoint> list = LanguagePostfixTemplate.EP_NAME.getExtensionList();
     return ContainerUtil.map(list, el -> (PostfixTemplateProvider)el.getInstance());
   }

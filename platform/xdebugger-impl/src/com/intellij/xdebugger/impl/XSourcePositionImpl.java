@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -30,16 +30,14 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPositionByOffset(VirtualFile, int)} instead
    */
-  @Nullable
-  public static XSourcePositionImpl createByOffset(@Nullable VirtualFile file, final int offset) {
+  public static @Nullable XSourcePositionImpl createByOffset(@Nullable VirtualFile file, final int offset) {
     if (file == null) return null;
 
     return new XSourcePositionImpl(file) {
@@ -68,8 +66,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPositionByElement(PsiElement)} instead
    */
-  @Nullable
-  public static XSourcePositionImpl createByElement(@Nullable PsiElement element) {
+  public static @Nullable XSourcePositionImpl createByElement(@Nullable PsiElement element) {
     if (element == null) return null;
 
     PsiFile psiFile = element.getContainingFile();
@@ -99,9 +96,8 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
         return myDelegate.getValue().getOffset();
       }
 
-      @NotNull
       @Override
-      public Navigatable createNavigatable(@NotNull Project project) {
+      public @NotNull Navigatable createNavigatable(@NotNull Project project) {
         // no need to create delegate here, it may be expensive
         if (myDelegate.isComputed()) {
           return myDelegate.getValue().createNavigatable(project);
@@ -170,8 +166,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   }
 
   @Override
-  @NotNull
-  public Navigatable createNavigatable(@NotNull Project project) {
+  public @NotNull Navigatable createNavigatable(@NotNull Project project) {
     return XDebuggerUtilImpl.createNavigatable(project, this);
   }
 

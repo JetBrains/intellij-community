@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.IdeBundle;
@@ -10,12 +10,10 @@ import java.io.File;
 
 @ApiStatus.Internal
 public final class PatchNameChecker {
-  public final static int MAX = 100;
-  private final static int MAX_PATH = 255; // Windows path len restrictions
+  public static final int MAX = 100;
+  private static final int MAX_PATH = 255; // Windows path len restrictions
 
-  @Nls
-  @Nullable
-  public static String validateName(@NotNull @NonNls String name) {
+  public static @Nls @Nullable String validateName(@NotNull @NonNls String name) {
     String fileName = new File(name).getName();
     if (StringUtil.isEmptyOrSpaces(fileName)) {
       return IdeBundle.message("error.name.cannot.be.empty");

@@ -52,9 +52,8 @@ public final class OutsidersPsiFileSupport {
 
   @ApiStatus.Internal
   public static class HighlightingSettingProvider extends DefaultHighlightingSettingProvider {
-    @Nullable
     @Override
-    public FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
+    public @Nullable FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
       if (!isOutsiderFile(file)) return null;
       return FileHighlightingSetting.SKIP_INSPECTION;
     }
@@ -95,13 +94,11 @@ public final class OutsidersPsiFileSupport {
    * @return The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the outsider doesn't
    *         have an original file.
    */
-  @Nullable
-  public static String getOriginalFileUrl(@NotNull VirtualFile file) {
+  public static @Nullable String getOriginalFileUrl(@NotNull VirtualFile file) {
     return file.getUserData(VFS_URL_KEY);
   }
 
-  @Nullable
-  public static String getOriginalFilePath(@NotNull VirtualFile file) {
+  public static @Nullable String getOriginalFilePath(@NotNull VirtualFile file) {
     var vfsUrl = getOriginalFileUrl(file);
     return vfsUrl != null ? VirtualFileManager.extractPath(vfsUrl) : null;
   }

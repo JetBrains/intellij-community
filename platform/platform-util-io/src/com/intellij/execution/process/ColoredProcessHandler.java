@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -53,7 +53,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   }
 
   @Override
-  public final void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
+  public final void notifyTextAvailable(final @NotNull String text, final @NotNull Key outputType) {
     myAnsiEscapeDecoder.escapeText(text, outputType, this);
   }
 

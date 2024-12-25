@@ -158,7 +158,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  synchronized public void connect() {
+  public synchronized void connect() {
     LOG.assertTrue(!myConnected.get());// vfsPeer could be !=null after disconnect
     myIdToDirCache.clear();
     myVfsData = new VfsData(app, this);
@@ -167,7 +167,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  synchronized public void disconnect() {
+  public synchronized void disconnect() {
     if (myConnected.compareAndSet(true, false)) {
       for (PersistentFsConnectionListener listener : PersistentFsConnectionListener.EP_NAME.getExtensionList()) {
         listener.beforeConnectionClosed();
@@ -312,8 +312,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   @ApiStatus.Internal
-  @Unmodifiable
-  public @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
+  public @Unmodifiable @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
     checkReadAccess();
 
     int id = fileId(file);
@@ -1802,8 +1801,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * so we need to extract path from url (IDEA-341011)
    * Path should not end with '!' because then '!' won't be stripped and file won't be found (see {@link ArchiveFileSystem#findLocalByRootPath})
    */
-  @NotNull
-  private static String getRootPath(@NotNull String rootUrl, @NotNull String rootName) {
+  private static @NotNull String getRootPath(@NotNull String rootUrl, @NotNull String rootName) {
     NewVirtualFileSystem fs = detectFileSystem(rootUrl, rootName);
     if (fs instanceof ArchiveFileSystem) {
       String path = VirtualFileManager.extractPath(rootUrl);

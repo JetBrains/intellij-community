@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
-  private final static Interner<String> ourPathInterner = Interner.createWeakInterner();
+  private static final Interner<String> ourPathInterner = Interner.createWeakInterner();
 
   private final Map<LibraryPathType, Set<String>> paths = new EnumMap<>(LibraryPathType.class);
 
@@ -39,9 +39,8 @@ public final class LibraryData extends AbstractNamedData implements Named, Proje
     unresolved = false;
   }
 
-  @Nullable
   @Override
-  public String getGroupId() {
+  public @Nullable String getGroupId() {
     return group;
   }
 
@@ -49,9 +48,8 @@ public final class LibraryData extends AbstractNamedData implements Named, Proje
     this.group = group;
   }
 
-  @Nullable
   @Override
-  public String getArtifactId() {
+  public @Nullable String getArtifactId() {
     return artifactId;
   }
 
@@ -59,9 +57,8 @@ public final class LibraryData extends AbstractNamedData implements Named, Proje
     this.artifactId = artifactId;
   }
 
-  @Nullable
   @Override
-  public String getVersion() {
+  public @Nullable String getVersion() {
     return version;
   }
 
@@ -73,8 +70,7 @@ public final class LibraryData extends AbstractNamedData implements Named, Proje
     return unresolved;
   }
 
-  @NotNull
-  public Set<String> getPaths(@NotNull LibraryPathType type) {
+  public @NotNull Set<String> getPaths(@NotNull LibraryPathType type) {
     Set<String> result = paths.get(type);
     return result == null ? Collections.emptySet() : result;
   }

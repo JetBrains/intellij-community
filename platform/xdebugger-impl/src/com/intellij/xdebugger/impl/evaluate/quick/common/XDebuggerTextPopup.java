@@ -125,7 +125,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
 
       @Override
-      public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
+      public void evaluated(final @NotNull String fullValue, final @Nullable Font font) {
         if (preventDoubleExecution(fullValue)) return;
 
         AppUIUtil.invokeOnEdt(() -> {
@@ -137,7 +137,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
 
       @Override
-      public void errorOccurred(@NotNull final String errorMessage) {
+      public void errorOccurred(final @NotNull String errorMessage) {
         AppUIUtil.invokeOnEdt(() -> {
           myTextPanel.showError(errorMessage);
         });
@@ -247,8 +247,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     return toolbarActions;
   }
 
-  @Nullable
-  private XValueNodeImpl getValueNode() {
+  private @Nullable XValueNodeImpl getValueNode() {
     if (myTree instanceof XDebuggerTree) {
       XDebuggerTreeNode node = ((XDebuggerTree)myTree).getRoot();
       return node instanceof XValueNodeImpl ? (XValueNodeImpl)node : null;

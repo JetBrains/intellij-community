@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -147,10 +147,8 @@ public class InlineWatchesRootNode extends WatchesRootNode {
   }
 
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<? extends XValueContainerNode<?>> getLoadedChildren() {
+  public @NotNull @Unmodifiable List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> children = super.getLoadedChildren();
     if (inlinesRootNodeIsShown()) {
       return ContainerUtil.prepend(children, myInlinesRootNode);
@@ -160,10 +158,8 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     }
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<? extends TreeNode> getChildren() {
+  public @NotNull @Unmodifiable List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
     if (myInlinesRootNode != null && inlinesRootNodeIsShown()) {
       return ContainerUtil.prepend(children, myInlinesRootNode);
@@ -177,8 +173,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     return !getInlineWatchChildren().isEmpty();
   }
 
-  @NotNull
-  public List<? extends InlineWatchNode> getInlineWatchChildren() {
+  public @NotNull List<? extends InlineWatchNode> getInlineWatchChildren() {
     return myInlinesGroup.myChildren;
   }
 

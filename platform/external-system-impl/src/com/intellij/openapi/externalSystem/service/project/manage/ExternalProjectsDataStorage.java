@@ -317,7 +317,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   @NotNull
-  Collection<ExternalProjectInfo> list(@NotNull final ProjectSystemId projectSystemId) {
+  Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
     return ContainerUtil.mapNotNull(myExternalRootProjects.values(),
                                     info -> projectSystemId.equals(info.getProjectSystemId()) ? info : null);
   }
@@ -385,8 +385,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private static DataNode<ExternalConfigPathAware> resolveProjectNode(@NotNull DataNode node) {
+  private static @Nullable DataNode<ExternalConfigPathAware> resolveProjectNode(@NotNull DataNode node) {
     if ((MODULE.equals(node.getKey()) || PROJECT.equals(node.getKey())) && node.getData() instanceof ExternalConfigPathAware) {
       return (DataNode<ExternalConfigPathAware>)node;
     }
@@ -397,8 +396,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     return parent;
   }
 
-  @Nullable("null indicates that cache was invalid")
-  private static List<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
+  private static @Nullable("null indicates that cache was invalid") List<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     VersionedFile cacheFile = getCacheFile(project);
     BasicFileAttributes fileAttributes = PathKt.basicAttributesIfExists(cacheFile.getFile());
     if (fileAttributes == null || !fileAttributes.isRegularFile()) {
@@ -428,19 +426,16 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     return false;
   }
 
-  @NotNull
-  private static VersionedFile getCacheFile(@NotNull Project project) {
+  private static @NotNull VersionedFile getCacheFile(@NotNull Project project) {
     return new VersionedFile(getProjectConfigurationDir(project).resolve("project.dat"), STORAGE_VERSION);
   }
 
-  @NotNull
-  public static Path getProjectConfigurationDir(@NotNull Project project) {
+  public static @NotNull Path getProjectConfigurationDir(@NotNull Project project) {
     return ProjectUtil.getExternalConfigurationDir(project);
   }
 
-  @Nullable
   @Override
-  public synchronized State getState() {
+  public synchronized @Nullable State getState() {
     return myState;
   }
 
@@ -488,8 +483,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     }
   }
 
-  @NotNull
-  private static File getBrokenMarkerFile() {
+  private static @NotNull File getBrokenMarkerFile() {
     return PathManagerEx.getAppSystemDir().resolve("external_build_system").resolve(".broken").toFile();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -95,9 +95,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return getModuleForFile(file, true);
   }
 
-  @Nullable
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     WorkspaceFileSetWithCustomData<ModuleRelatedRootData> fileSet =
       myWorkspaceFileIndex.findFileSetWithCustomData(file, honorExclusion, true, false, false, false, ModuleRelatedRootData.class);
     if (fileSet == null) return null;
@@ -105,8 +104,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  @NotNull
-  public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
+  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     return myDirectoryIndex.getOrderEntries(file);
   }
 
@@ -248,9 +246,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @SuppressWarnings("deprecation")
-  @Nullable
   @Override
-  public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
+  public @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
       myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, false, ModuleSourceRootData.class);
     if (fileSet == null) return null;

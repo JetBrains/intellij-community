@@ -12,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class AddList implements ChangeListCommand {
-  @NotNull private final String myName;
-  @Nullable private final String myComment;
-  @Nullable private final ChangeListData myData;
+  private final @NotNull String myName;
+  private final @Nullable String myComment;
+  private final @Nullable ChangeListData myData;
 
   private boolean myWasListCreated;
   private LocalChangeList myNewListCopy;
@@ -59,8 +59,7 @@ public class AddList implements ChangeListCommand {
     }
   }
 
-  @Nullable
-  public LocalChangeList getNewListCopy() {
+  public @Nullable LocalChangeList getNewListCopy() {
     return myNewListCopy;
   }
 }

@@ -50,8 +50,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchForReferences;
   protected final boolean mySearchInComments;
   protected final boolean mySearchInNonJavaFiles;
-  @NotNull
-  private final PsiDirectory myNewParent;
+  private final @NotNull PsiDirectory myNewParent;
   private final MoveCallback myMoveCallback;
   private NonCodeUsageInfo[] myNonCodeUsages;
   protected final Map<PsiFile, @Unmodifiable List<UsageInfo>> myFoundUsages = new HashMap<>();

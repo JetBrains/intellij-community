@@ -124,8 +124,7 @@ public class FreezableArrayList<T> extends ArrayList<T> {
     super.sort(c);
   }
 
-  @Unmodifiable
-  public List<T> emptyOrFrozen() {
+  public @Unmodifiable List<T> emptyOrFrozen() {
     return isEmpty() ? ContainerUtil.emptyList() :
            ContainerUtil.Options.RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE ? freeze() : this;
   }

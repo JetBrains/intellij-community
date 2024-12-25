@@ -65,11 +65,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   private final NewMappings myMappings;
   private final Project myProject;
 
-  @NonNls private static final String ELEMENT_MAPPING = "mapping";
-  @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
-  @NonNls private static final String ATTRIBUTE_VCS = "vcs";
-  @NonNls private static final String ELEMENT_ROOT_SETTINGS = "rootSettings";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
+  private static final @NonNls String ELEMENT_MAPPING = "mapping";
+  private static final @NonNls String ATTRIBUTE_DIRECTORY = "directory";
+  private static final @NonNls String ATTRIBUTE_VCS = "vcs";
+  private static final @NonNls String ELEMENT_ROOT_SETTINGS = "rootSettings";
+  private static final @NonNls String ATTRIBUTE_CLASS = "class";
 
   private boolean myMappingsLoaded;
 

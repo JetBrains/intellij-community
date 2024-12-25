@@ -26,8 +26,7 @@ public final class AnnotationSessionImpl extends AnnotationSession {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static AnnotationSession create(@NotNull PsiFile file) {
+  public static @NotNull AnnotationSession create(@NotNull PsiFile file) {
     return new AnnotationSessionImpl(file);
   }
 

@@ -18,14 +18,12 @@ public final class VcsRootErrorImpl implements VcsRootError {
   }
 
   @Override
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 
   @Override
-  @NotNull
-  public VcsDirectoryMapping getMapping() {
+  public @NotNull VcsDirectoryMapping getMapping() {
     return myMapping;
   }
 

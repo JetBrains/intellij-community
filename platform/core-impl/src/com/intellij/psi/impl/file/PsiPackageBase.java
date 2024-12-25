@@ -31,8 +31,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   private final PsiManager myManager;
   private final @NotNull String myQualifiedName;
 
-  @Unmodifiable
-  protected abstract Collection<PsiDirectory> getAllDirectories(@NotNull GlobalSearchScope scope);
+  protected abstract @Unmodifiable Collection<PsiDirectory> getAllDirectories(@NotNull GlobalSearchScope scope);
 
   protected abstract PsiPackageBase findPackage(@NotNull String qName);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference;
 
@@ -16,7 +16,7 @@ class SimpleProviderBinding implements ProviderBinding {
   /**
    * the array must be copy-on-write to avoid data races, since it can be read concurrently, via {@link #addAcceptableReferenceProviders}
    */
-  volatile private @NotNull ProviderInfo<?> @NotNull [] myProviderInfos = ProviderInfo.EMPTY_ARRAY;
+  private volatile @NotNull ProviderInfo<?> @NotNull [] myProviderInfos = ProviderInfo.EMPTY_ARRAY;
 
   synchronized
   void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern<?> pattern, double priority) {
@@ -31,8 +31,7 @@ class SimpleProviderBinding implements ProviderBinding {
   }
 
   @Override
-  synchronized
-  public void unregisterProvider(@NotNull PsiReferenceProvider provider) {
+  public synchronized void unregisterProvider(@NotNull PsiReferenceProvider provider) {
     myProviderInfos = NamedObjectProviderBinding.removeFromArray(provider, myProviderInfos);
   }
 

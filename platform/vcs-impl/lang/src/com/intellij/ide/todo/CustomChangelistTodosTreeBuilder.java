@@ -39,11 +39,9 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     return myCustomPsiTodoSearchHelper;
   }
 
-  @NotNull
-  protected abstract Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter);
+  protected abstract @NotNull Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter);
 
-  @NotNull
-  protected abstract Set<TodoItem> doFindTodoForFile(@NotNull PsiFile file, @Nullable TodoFilter todoFilter);
+  protected abstract @NotNull Set<TodoItem> doFindTodoForFile(@NotNull PsiFile file, @Nullable TodoFilter todoFilter);
 
   private boolean isFileDirty(@NotNull PsiFile file) {
     return myDirtyFileSet.contains(file.getVirtualFile());

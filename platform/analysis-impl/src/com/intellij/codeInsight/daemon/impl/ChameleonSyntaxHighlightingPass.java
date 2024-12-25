@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighlightingPass {
-  @NotNull private final ProperTextRange myPriorityRange;
+  private final @NotNull ProperTextRange myPriorityRange;
   private volatile List<HighlightInfo> myHighlights = List.of();
 
   static final class Factory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {

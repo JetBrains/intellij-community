@@ -128,7 +128,7 @@ public final class Format implements Cloneable {
   /**
    * Handles Charsets.
    */
-  private final static class DefaultCharsetEscapeStrategy implements EscapeStrategy {
+  private static final class DefaultCharsetEscapeStrategy implements EscapeStrategy {
     private final CharsetEncoder encoder;
 
     private DefaultCharsetEscapeStrategy(CharsetEncoder cse) {

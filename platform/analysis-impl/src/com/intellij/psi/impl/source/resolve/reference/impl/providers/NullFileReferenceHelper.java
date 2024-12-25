@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
@@ -29,8 +29,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<PsiFileSystemItem> getRoots(final @NotNull Module module) {
+  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(final @NotNull Module module) {
     return ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getContentRoots(), virtualFile -> PsiManager.getInstance(module.getProject()).findDirectory(virtualFile));
   }
 

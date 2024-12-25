@@ -54,7 +54,7 @@ public final class PsiVisitors {
    * @deprecated Use a specific visitor suitable for your task, the purpose of this one is unclear.
    */
   @Deprecated
-  public static abstract class FilteringPsiRecursiveElementWalkingVisitor extends PsiRecursiveElementWalkingVisitor {
+  public abstract static class FilteringPsiRecursiveElementWalkingVisitor extends PsiRecursiveElementWalkingVisitor {
     @Override
     public void visitElement(@NotNull PsiElement element) {
       if (!(element instanceof ForeignLeafPsiElement) && element.isPhysical()) {

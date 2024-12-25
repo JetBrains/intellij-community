@@ -21,7 +21,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.*;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleColoredComponentWithProgress;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
@@ -42,9 +45,6 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,11 +158,10 @@ public class XValueHint extends AbstractValueHint {
     }
   }
 
-  @NotNull
-  protected JComponent createHintComponent(@Nullable Icon icon,
-                                           @NotNull SimpleColoredText text,
-                                           @NotNull XValuePresentation presentation,
-                                           @Nullable XFullValueEvaluator evaluator) {
+  protected @NotNull JComponent createHintComponent(@Nullable Icon icon,
+                                                    @NotNull SimpleColoredText text,
+                                                    @NotNull XValuePresentation presentation,
+                                                    @Nullable XFullValueEvaluator evaluator) {
     var panel = installInformationProperties(new BorderLayoutPanel());
     SimpleColoredComponent component = HintUtil.createInformationComponent();
     component.setIcon(icon);
@@ -223,7 +222,7 @@ public class XValueHint extends AbstractValueHint {
     }
 
     @Override
-    public void evaluated(@NotNull final XValue result) {
+    public void evaluated(final @NotNull XValue result) {
       LOG.assertTrue(myXValueDisposable == null, "XValue wasn't disposed before evaluating new one.");
       myXValueDisposable = Disposer.newDisposable();
       if (result instanceof HintXValue) {
@@ -311,7 +310,7 @@ public class XValueHint extends AbstractValueHint {
     }
 
     @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
+    public void errorOccurred(final @NotNull String errorMessage) {
       myShowEvaluating.set(false);
       ApplicationManager.getApplication().invokeLater(() -> {
         if (getType() == ValueHintType.MOUSE_CLICK_HINT) {

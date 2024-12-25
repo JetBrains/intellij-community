@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.util.DiffUtil;
@@ -87,10 +87,10 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
   }
 
   private static class DiffContentLayout extends AbstractLayoutManager {
-    @NotNull private final JComponent myTitle;
-    @NotNull private final JComponent myTopBreadcrumbs;
-    @NotNull private final JComponent myContent;
-    @NotNull private final JComponent myBottomBreadcrumbs;
+    private final @NotNull JComponent myTitle;
+    private final @NotNull JComponent myTopBreadcrumbs;
+    private final @NotNull JComponent myContent;
+    private final @NotNull JComponent myBottomBreadcrumbs;
 
     DiffContentLayout(@NotNull JComponent title,
                       @NotNull JComponent topBreadcrumbs,
@@ -145,8 +145,7 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
       myBottomBreadcrumbs.setBounds(0, bottomY, width, bottomSize.height);
     }
 
-    @NotNull
-    private static Dimension getPreferredSize(@NotNull JComponent component) {
+    private static @NotNull Dimension getPreferredSize(@NotNull JComponent component) {
       return component.isVisible() ? component.getPreferredSize() : new Dimension();
     }
   }

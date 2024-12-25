@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -27,8 +27,7 @@ import java.util.List;
  * Handles matching for template variables in the pattern. All filtering (= search constraints) happens here.
  */
 public class SubstitutionHandler extends MatchingHandler {
-  @NotNull
-  private final String name;
+  private final @NotNull String name;
   private final int maxOccurs;
   private final int minOccurs;
   private final boolean greedy;
@@ -241,8 +240,7 @@ public class SubstitutionHandler extends MatchingHandler {
     return true;
   }
 
-  @NotNull
-  private MatchResultImpl createMatch(@NotNull PsiElement match, int start, int end) {
+  private @NotNull MatchResultImpl createMatch(@NotNull PsiElement match, int start, int end) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(match);
     assert profile != null;
     final String image = profile.getText(match, start, end);

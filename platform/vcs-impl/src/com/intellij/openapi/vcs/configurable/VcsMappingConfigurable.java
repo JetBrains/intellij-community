@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -20,15 +20,14 @@ public class VcsMappingConfigurable implements SearchableConfigurable {
 
   private final Project myProject;
 
-  @Nullable private VcsDirectoryConfigurationPanel myPanel;
+  private @Nullable VcsDirectoryConfigurationPanel myPanel;
 
   public VcsMappingConfigurable(@NotNull Project project) {
     myProject = project;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name");
   }
 

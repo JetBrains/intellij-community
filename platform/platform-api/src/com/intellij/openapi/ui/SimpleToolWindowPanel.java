@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -153,8 +153,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<AnAction> getActions(boolean originalProvider) {
+  public @Unmodifiable @NotNull List<AnAction> getActions(boolean originalProvider) {
     return collectActions(myToolbar);
   }
 
@@ -206,8 +205,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     }
   }
 
-  @Unmodifiable
-  public static @NotNull List<AnAction> collectActions(@Nullable JComponent component) {
+  public static @Unmodifiable @NotNull List<AnAction> collectActions(@Nullable JComponent component) {
     return UIUtil.uiTraverser(component).traverse()
       .filter(ActionToolbar.class)
       .map(ActionToolbar::getActionGroup)

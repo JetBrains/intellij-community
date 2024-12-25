@@ -49,9 +49,8 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
     super(project);
   }
 
-  @NotNull
   @Override
-  public LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
+  public @NotNull LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
     if (myLibrariesModel != null) return myLibrariesModel;
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     return myLibrariesModel = ((ProjectLibraryTableBridge)libraryTable).getModifiableModel(getActualStorageBuilder());
@@ -71,12 +70,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   }
 
   @Override
-  @NotNull
-  protected ModifiableRootModel doGetModifiableRootModel(@NotNull final Module module) {
+  protected @NotNull ModifiableRootModel doGetModifiableRootModel(final @NotNull Module module) {
     RootConfigurationAccessor rootConfigurationAccessor = new RootConfigurationAccessor() {
-      @Nullable
       @Override
-      public Library getLibrary(Library library, String libraryName, String libraryLevel) {
+      public @Nullable Library getLibrary(Library library, String libraryName, String libraryLevel) {
         if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryLevel)) {
           return getModifiableProjectLibrariesModel().getLibraryByName(libraryName);
         }

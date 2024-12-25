@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -31,15 +31,11 @@ public abstract class PushActionBase extends DumbAwareAction {
 
   protected abstract boolean isEnabled(@NotNull VcsPushUi dialog);
 
-  @Nls
-  @NotNull
-  protected String getText(@NotNull VcsPushUi dialog, boolean enabled) {
+  protected @Nls @NotNull String getText(@NotNull VcsPushUi dialog, boolean enabled) {
     return Objects.requireNonNull(getTemplatePresentation().getTextWithMnemonic());
   }
 
-  @Nls
-  @Nullable
-  protected abstract String getDescription(@NotNull VcsPushUi dialog, boolean enabled);
+  protected abstract @Nls @Nullable String getDescription(@NotNull VcsPushUi dialog, boolean enabled);
 
   protected abstract void actionPerformed(@NotNull Project project, @NotNull VcsPushUi dialog);
 

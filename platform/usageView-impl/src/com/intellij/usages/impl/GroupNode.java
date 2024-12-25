@@ -92,10 +92,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
 
-  @NotNull
-  private GroupNode insertGroupNode(@NotNull UsageGroup group,
-                                    int ruleIndex,
-                                    @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
+  private @NotNull GroupNode insertGroupNode(@NotNull UsageGroup group,
+                                             int ruleIndex,
+                                             @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
     synchronized (this) {
       GroupNode newNode = new GroupNode(this, group, ruleIndex);
       int i = getNodeIndex(newNode, this.myChildren);
@@ -146,8 +145,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myRecursiveUsageCount = 0;
   }
 
-  @Nullable
-  private UsageNode tryMerge(@NotNull Usage usage) {
+  private @Nullable UsageNode tryMerge(@NotNull Usage usage) {
     if (!(usage instanceof MergeableUsage mergeableUsage)) return null;
     for (UsageNode node : getUsageNodes()) {
       Usage original = node.getUsage();
@@ -364,14 +362,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return true;
   }
 
-  @NotNull
   @Override
-  protected String getNodeText() {
+  protected @NotNull String getNodeText() {
     return getGroup().getPresentableGroupText();
   }
 
-  @NotNull
-  public synchronized Collection<GroupNode> getSubGroups() {
+  public synchronized @NotNull Collection<GroupNode> getSubGroups() {
     List<GroupNode> list = new ArrayList<>();
     for (Node n : myChildren) {
       if (n instanceof GroupNode) {
@@ -381,8 +377,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return list;
   }
 
-  @NotNull
-  public synchronized Collection<UsageNode> getUsageNodes() {
+  public synchronized @NotNull Collection<UsageNode> getUsageNodes() {
     List<UsageNode> list = new ArrayList<>();
     for (Node n : myChildren) {
       if (n instanceof UsageNode) {
@@ -423,21 +418,18 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myCachedPresentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY), null);
   }
 
-  @NotNull
-  static Root createRoot() {
+  static @NotNull Root createRoot() {
     return new Root();
   }
 
   static class Root extends GroupNode {
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "Root " + super.toString();
     }
 
-    @NotNull
     @Override
-    protected String getNodeText() {
+    protected @NotNull String getNodeText() {
       return "";
     }
   }

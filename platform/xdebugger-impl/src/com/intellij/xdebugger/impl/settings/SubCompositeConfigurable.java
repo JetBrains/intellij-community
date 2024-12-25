@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
@@ -25,9 +25,8 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     return true;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     buildConfigurables();
     return children != null && children.length == 1 ? children[0].getHelpTopic() : null;
   }
@@ -49,11 +48,9 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     return null;
   }
 
-  @Nullable
-  protected abstract DataViewsConfigurableUi createRootUi();
+  protected abstract @Nullable DataViewsConfigurableUi createRootUi();
 
-  @NotNull
-  protected abstract DebuggerSettingsCategory getCategory();
+  protected abstract @NotNull DebuggerSettingsCategory getCategory();
 
   private boolean isChildrenMerged() {
     return children != null && children.length == 1;
@@ -65,9 +62,8 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     return isChildrenMerged() ? DebuggerConfigurable.EMPTY_CONFIGURABLES : children;
   }
 
-  @NotNull
   @Override
-  public final List<Configurable> getMergedConfigurables() {
+  public final @NotNull List<Configurable> getMergedConfigurables() {
     buildConfigurables();
     return isChildrenMerged()
            ? Arrays.asList(children)
@@ -81,9 +77,8 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
   }
 
 
-  @Nullable
   @Override
-  public final JComponent createComponent() {
+  public final @Nullable JComponent createComponent() {
     if (rootComponent == null) {
       if (root == null) {
         root = createRootUi();

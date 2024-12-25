@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,16 +39,11 @@ class AnsiTerminalEmulator {
   private static final int COLOR_CUBE_MIN_INDEX = MAX_8BIT_COLOR_INDEX + 1;
   private static final int GRAY_MIN_INDEX = 232;
 
-  @NotNull
-  private TerminalFont myFont = TerminalFont.DEFAULT;
-  @NotNull
-  private Weight myWeight = Weight.DEFAULT;
-  @NotNull
-  private Underline myUnderline = Underline.DEFAULT;
-  @NotNull
-  private BlinkSpeed myBlink = BlinkSpeed.DEFAULT;
-  @NotNull
-  private FrameType myFrameType = FrameType.DEFAULT;
+  private @NotNull TerminalFont myFont = TerminalFont.DEFAULT;
+  private @NotNull Weight myWeight = Weight.DEFAULT;
+  private @NotNull Underline myUnderline = Underline.DEFAULT;
+  private @NotNull BlinkSpeed myBlink = BlinkSpeed.DEFAULT;
+  private @NotNull FrameType myFrameType = FrameType.DEFAULT;
 
   private boolean myIsItalic;
   private boolean myIsInverse;
@@ -166,16 +161,14 @@ class AnsiTerminalEmulator {
   /**
    * @return an ANSI string representing the SGR state of the current emulator. Same state is always represented with the same string.
    */
-  @NotNull
-  public String getAnsiSerializedSGRState() {
+  public @NotNull String getAnsiSerializedSGRState() {
     return Objects.requireNonNull(mySerializedSgrStateProvider.getValue());
   }
 
   /**
    * @return an ANSI string representing the SGR state of the current emulator. Same state is always represented with the same string.
    */
-  @NotNull
-  public String computeAnsiSerializedSGRState() {
+  public @NotNull String computeAnsiSerializedSGRState() {
     List<String> state = new ArrayList<>();
     IntConsumer codeConsumer = it -> state.add(Integer.toString(it));
 
@@ -255,8 +248,7 @@ class AnsiTerminalEmulator {
     return EMPTY_EMULATOR.equals(this);
   }
 
-  @Nullable
-  public Color getBackgroundColor() {
+  public @Nullable Color getBackgroundColor() {
     return myBackgroundColor == null ? null : myBackgroundColor.getColor();
   }
 
@@ -264,8 +256,7 @@ class AnsiTerminalEmulator {
     return myBackgroundColor == null ? -1 : myBackgroundColor.getColorIndex();
   }
 
-  @Nullable
-  public Color getForegroundColor() {
+  public @Nullable Color getForegroundColor() {
     return myForegroundColor == null ? null : myForegroundColor.getColor();
   }
 
@@ -277,13 +268,11 @@ class AnsiTerminalEmulator {
     return myIsInverse;
   }
 
-  @NotNull
-  public Underline getUnderline() {
+  public @NotNull Underline getUnderline() {
     return myUnderline;
   }
 
-  @NotNull
-  public FrameType getFrameType() {
+  public @NotNull FrameType getFrameType() {
     return myFrameType;
   }
 
@@ -291,8 +280,7 @@ class AnsiTerminalEmulator {
     return myIsCrossedOut;
   }
 
-  @NotNull
-  public Weight getWeight() {
+  public @NotNull Weight getWeight() {
     return myWeight;
   }
 
@@ -404,8 +392,7 @@ class AnsiTerminalEmulator {
      */
     public final int sgrCode;
 
-    @Nullable
-    public final EffectType effectType;
+    public final @Nullable EffectType effectType;
 
     FrameType(int sgrCode, @Nullable EffectType effectType) {
       this.sgrCode = sgrCode;
@@ -456,8 +443,7 @@ class AnsiTerminalEmulator {
      */
     public final int sgrCode;
 
-    @Nullable
-    public final EffectType effectType;
+    public final @Nullable EffectType effectType;
 
     Underline(int sgrCode, @Nullable EffectType effectType) {
       this.sgrCode = sgrCode;
@@ -500,9 +486,8 @@ class AnsiTerminalEmulator {
       myBlue = blue;
     }
 
-    @NotNull
     @Override
-    public String getAnsiEncodedColor() {
+    public @NotNull String getAnsiEncodedColor() {
       return SGR_COLOR_ENCODING_RGB + ";" + myRed + ";" + myGreen + ";" + myBlue;
     }
 
@@ -512,9 +497,8 @@ class AnsiTerminalEmulator {
       return -1;
     }
 
-    @NotNull
     @Override
-    public Color getColor() {
+    public @NotNull Color getColor() {
       //noinspection UseJBColor
       return new Color(myRed, myGreen, myBlue);
     }
@@ -557,9 +541,8 @@ class AnsiTerminalEmulator {
       return myColorIndex;
     }
 
-    @NotNull
     @Override
-    public String getAnsiEncodedColor() {
+    public @NotNull String getAnsiEncodedColor() {
       return SGR_COLOR_ENCODING_INDEXED + ";" + getColorIndex();
     }
 
@@ -600,9 +583,8 @@ class AnsiTerminalEmulator {
       }
     }
 
-    @Nullable
     @Override
-    public Color getColor() {
+    public @Nullable Color getColor() {
       return null;
     }
   }
@@ -630,9 +612,8 @@ class AnsiTerminalEmulator {
       }
     }
 
-    @Nullable
     @Override
-    public Color getColor() {
+    public @Nullable Color getColor() {
       int colorIndex = getColorIndex();
       if (colorIndex >= COLOR_CUBE_MIN_INDEX && colorIndex < GRAY_MIN_INDEX) {
         int encodedColor = colorIndex - COLOR_CUBE_MIN_INDEX;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
@@ -19,15 +19,15 @@ import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fix
 @ApiStatus.Internal
 public final class PermanentLinearGraphBuilder<CommitId> {
 
-  @NotNull private final List<? extends GraphCommit<CommitId>> myCommits;
-  @NotNull private final Flags mySimpleNodes;
+  private final @NotNull List<? extends GraphCommit<CommitId>> myCommits;
+  private final @NotNull Flags mySimpleNodes;
 
   private final int myNodesCount;
 
   private final int @NotNull [] myNodeToEdgeIndex;
   private final int @NotNull [] myLongEdges;
   // downCommitId -> List of upNodeIndex
-  @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<>();
+  private final @NotNull Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<>();
 
   private PermanentLinearGraphBuilder(@NotNull List<? extends GraphCommit<CommitId>> commits,
                                       @NotNull Flags simpleNodes,
@@ -41,8 +41,7 @@ public final class PermanentLinearGraphBuilder<CommitId> {
     myLongEdges = new int[2 * longEdgesCount];
   }
 
-  @NotNull
-  public static <CommitId> PermanentLinearGraphBuilder<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits) {
+  public static @NotNull <CommitId> PermanentLinearGraphBuilder<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits) {
     graphCommits = fixDuplicateParentCommits(graphCommits);
     Flags simpleNodes = new BitSetFlags(graphCommits.size());
 
@@ -65,8 +64,7 @@ public final class PermanentLinearGraphBuilder<CommitId> {
     return new PermanentLinearGraphBuilder<>(graphCommits, simpleNodes, longEdgesCount);
   }
 
-  @Nullable
-  private static <CommitId> CommitId nextCommitHashIndex(List<? extends GraphCommit<CommitId>> commits, int nodeIndex) {
+  private static @Nullable <CommitId> CommitId nextCommitHashIndex(List<? extends GraphCommit<CommitId>> commits, int nodeIndex) {
     if (nodeIndex < commits.size() - 1) return commits.get(nodeIndex + 1).getId();
     return null;
   }
@@ -150,8 +148,7 @@ public final class PermanentLinearGraphBuilder<CommitId> {
   }
 
   // id's must be less that -2
-  @NotNull
-  public PermanentLinearGraphImpl build(@NotNull Function<? super CommitId, @NotNull Integer> notLoadedCommitToId) {
+  public @NotNull PermanentLinearGraphImpl build(@NotNull Function<? super CommitId, @NotNull Integer> notLoadedCommitToId) {
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
     }
@@ -161,8 +158,7 @@ public final class PermanentLinearGraphBuilder<CommitId> {
     return new PermanentLinearGraphImpl(mySimpleNodes, myNodeToEdgeIndex, myLongEdges);
   }
 
-  @NotNull
-  public PermanentLinearGraphImpl build() {
+  public @NotNull PermanentLinearGraphImpl build() {
     return build(dom -> Integer.MIN_VALUE);
   }
 }

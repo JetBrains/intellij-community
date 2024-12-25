@@ -37,8 +37,7 @@ public final class PrevOccurrenceAction extends PrevNextOccurrenceAction {
   }
 
   @Override
-  @Unmodifiable
-  protected @NotNull List<Shortcut> getSingleLineShortcuts() {
+  protected @Unmodifiable @NotNull List<Shortcut> getSingleLineShortcuts() {
     if (mySearch) {
       return ContainerUtil.append(Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP),
                                   new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));

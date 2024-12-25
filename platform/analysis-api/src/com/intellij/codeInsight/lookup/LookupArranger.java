@@ -24,8 +24,7 @@ public abstract class LookupArranger implements WeighingContext {
   private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
   private final List<LookupElement> myInexactPrefixItems = new ArrayList<>();
   private final Key<PrefixMatcher> myMatcherKey = Key.create("LookupArrangerMatcher");
-  @Nullable
-  private volatile Predicate<LookupElement> myAdditionalMatcher;
+  private volatile @Nullable Predicate<LookupElement> myAdditionalMatcher;
   private volatile String myAdditionalPrefix = "";
 
   public void addElement(LookupElement item, LookupElementPresentation presentation) {

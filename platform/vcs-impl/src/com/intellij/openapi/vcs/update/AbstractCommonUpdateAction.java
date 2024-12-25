@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -55,7 +55,7 @@ import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlyS
 import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 
 public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
-  private final static Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
+  private static final Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
 
   private final boolean myAlwaysVisible;
 
@@ -349,7 +349,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
     }
 
     @Override
-    public void run(@NotNull final ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       runImpl();
     }
 
@@ -405,10 +405,9 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       }
     }
 
-    @NotNull
-    protected UpdateSession performUpdate(ProgressIndicator progressIndicator,
-                                          UpdateEnvironment updateEnvironment,
-                                          Collection<FilePath> files, Ref<SequentialUpdatesContext> refContext) {
+    protected @NotNull UpdateSession performUpdate(ProgressIndicator progressIndicator,
+                                                   UpdateEnvironment updateEnvironment,
+                                                   Collection<FilePath> files, Ref<SequentialUpdatesContext> refContext) {
       return updateEnvironment.updateDirectories(files.toArray(new FilePath[0]), myUpdatedFiles, progressIndicator, refContext);
     }
 
@@ -428,7 +427,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       }
     }
 
-    private void putExceptions(final HotfixData key, @NotNull final List<? extends VcsException> list) {
+    private void putExceptions(final HotfixData key, final @NotNull List<? extends VcsException> list) {
       if (list.isEmpty()) return;
       myGroupedExceptions.computeIfAbsent(key, k -> new ArrayList<>()).addAll(list);
     }
@@ -449,10 +448,9 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       });
     }
 
-    @NotNull
-    private Notification prepareNotification(@NotNull UpdateInfoTree tree,
-                                             boolean someSessionWasCancelled,
-                                             @NotNull List<? extends UpdateSession> updateSessions) {
+    private @NotNull Notification prepareNotification(@NotNull UpdateInfoTree tree,
+                                                      boolean someSessionWasCancelled,
+                                                      @NotNull List<? extends UpdateSession> updateSessions) {
       int allFilesCount = getUpdatedFilesCount();
 
       String title = someSessionWasCancelled
@@ -543,7 +541,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
         UpdateFilesHelper.iterateFileGroupFiles(myUpdatedFiles, new UpdateFilesHelper.Callback() {
           @Override
           public void onFile(final String filePath, final String groupId) {
-            @NonNls final String path = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'));
+            final @NonNls String path = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'));
             final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
             if (file != null) {
               files.add(file);
@@ -637,8 +635,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       }
     }
 
-    @NotNull
-    private UpdateInfoTree showUpdateTree(final boolean willBeContinued, final boolean wasCanceled) {
+    private @NotNull UpdateInfoTree showUpdateTree(final boolean willBeContinued, final boolean wasCanceled) {
       RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
       restoreUpdateTree.registerUpdateInformation(myUpdatedFiles, myActionInfo);
       final String text = myActionName + ((willBeContinued || (myUpdateNumber > 1)) ? ("#" + myUpdateNumber) : "");

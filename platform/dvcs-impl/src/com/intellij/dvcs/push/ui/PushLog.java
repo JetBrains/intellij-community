@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
@@ -47,8 +47,8 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
@@ -56,10 +56,10 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
 public final class PushLog extends JPanel implements Disposable, UiDataProvider {
-  @NonNls private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
-  @NonNls private static final String START_EDITING = "startEditing";
-  @NonNls private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
-  @NonNls private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
+  private static final @NonNls String CONTEXT_MENU = "Vcs.Push.ContextMenu";
+  private static final @NonNls String START_EDITING = "startEditing";
+  private static final @NonNls String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
+  private static final @NonNls String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
   private final PushLogChangesBrowser myChangesBrowser;
   private final JBLoadingPanel myChangesLoadingPane;
   private final CheckboxTree myTree;
@@ -69,7 +69,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
   private final MyShowDetailsAction myShowDetailsAction;
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
-  @Nullable private @Nls String mySyncRenderedText;
+  private @Nullable @Nls String mySyncRenderedText;
   private final @NotNull Project myProject;
   private final boolean myAllowSyncStrategy;
 
@@ -342,13 +342,11 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     }
   }
 
-  @NotNull
-  static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
+  static @NotNull List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
-  @NotNull
-  private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
+  private static @NotNull List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
     //addAll Commit nodes from selected Repository nodes;
     List<CommitNode> nodes = StreamEx.of(selectedNodes)
       .select(RepositoryNode.class)
@@ -361,8 +359,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return nodes;
   }
 
-  @NotNull
-  private static List<Change> collectChanges(@NotNull List<? extends CommitNode> commitNodes) {
+  private static @NotNull List<Change> collectChanges(@NotNull List<? extends CommitNode> commitNodes) {
     List<Change> changes = new ArrayList<>();
     for (CommitNode node : commitNodes) {
       changes.addAll(node.getUserObject().getChanges());
@@ -370,8 +367,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return changes;
   }
 
-  @NotNull
-  private static <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
+  private static @NotNull <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
     List<T> nodes = new ArrayList<>();
     if (node.getChildCount() < 1) {
       return nodes;
@@ -393,8 +389,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return nodes;
   }
 
-  @NotNull
-  private static List<Integer> getSortedRows(int @NotNull [] rows) {
+  private static @NotNull List<Integer> getSortedRows(int @NotNull [] rows) {
     List<Integer> sorted = new ArrayList<>();
     for (int row : rows) {
       sorted.add(row);
@@ -456,20 +451,17 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
       commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject()));
   }
 
-  @NotNull
-  private List<CommitNode> getSelectedCommitNodes() {
+  private @NotNull List<CommitNode> getSelectedCommitNodes() {
     List<DefaultMutableTreeNode> selectedNodes = getSelectedTreeNodes();
     return selectedNodes.isEmpty() ? Collections.emptyList() : collectSelectedCommitNodes(selectedNodes);
   }
 
-  @NotNull
-  private List<DefaultMutableTreeNode> getSelectedTreeNodes() {
+  private @NotNull List<DefaultMutableTreeNode> getSelectedTreeNodes() {
     int[] rows = myTree.getSelectionRows();
     return (rows != null && rows.length != 0) ? getNodesForRows(getSortedRows(rows)) : emptyList();
   }
 
-  @NotNull
-  private List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
+  private @NotNull List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
     List<DefaultMutableTreeNode> nodes = new ArrayList<>();
     for (Integer row : rows) {
       TreePath path = myTree.getPathForRow(row);
@@ -510,8 +502,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     checkedNodes.forEach(n -> myTree.setNodeState(n, newState));
   }
 
-  @Nullable
-  private DefaultMutableTreeNode getFirstNodeToEdit() {
+  private @Nullable DefaultMutableTreeNode getFirstNodeToEdit() {
     // start edit last selected component if editable
     if (myTree.getLastSelectedPathComponent() instanceof RepositoryNode selectedNode) {
       if (selectedNode.isEditableNow()) return selectedNode;
@@ -529,8 +520,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     return myTree;
   }
 
-  @NotNull
-  public CheckboxTree getTree() {
+  public @NotNull CheckboxTree getTree() {
     return myTree;
   }
 
@@ -775,7 +765,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
 
   private static class MyShowDetailsAction extends DumbAwareToggleAction {
     private boolean myEnabled;
-    @NotNull private final PushSettings mySettings;
+    private final @NotNull PushSettings mySettings;
     private final @NotNull Consumer<? super Boolean> myOnUpdate;
 
     MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<? super Boolean> onUpdate) {

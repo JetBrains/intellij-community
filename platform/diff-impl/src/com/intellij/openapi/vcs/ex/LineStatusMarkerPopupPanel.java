@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -45,8 +45,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   private static final JBColor TOOLBAR_BACKGROUND_COLOR =
     JBColor.namedColor("VersionControl.MarkerPopup.Toolbar.background", UIUtil.getPanelBackground());
 
-  @Nullable private final JComponent myEditorComponent;
-  @NotNull private final Editor myEditor;
+  private final @Nullable JComponent myEditorComponent;
+  private final @NotNull Editor myEditor;
 
   private LineStatusMarkerPopupPanel(@NotNull Editor editor,
                                      @NotNull ActionToolbar toolbar,
@@ -108,8 +108,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     emptyPanel.addMouseListener(listener);
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -152,8 +151,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     return size;
   }
 
-  @NotNull
-  public static EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
+  public static @NotNull EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
     EditorTextField field = new EditorTextField(content);
     field.setBorder(null);
     field.setOneLineMode(false);
@@ -179,16 +177,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     return field;
   }
 
-  @NotNull
-  public static JComponent createEditorComponent(@NotNull Editor editor, @NotNull JComponent popupEditor) {
+  public static @NotNull JComponent createEditorComponent(@NotNull Editor editor, @NotNull JComponent popupEditor) {
     JPanel editorComponent = JBUI.Panels.simplePanel(popupEditor);
     editorComponent.setBorder(createEditorFragmentBorder());
     editorComponent.setBackground(getEditorBackgroundColor(editor));
     return editorComponent;
   }
 
-  @NotNull
-  private static Border createEditorFragmentBorder() {
+  private static @NotNull Border createEditorFragmentBorder() {
     Border outsideEditorBorder = JBUI.Borders.customLine(getBorderColor(), 1);
     Border insideEditorBorder = JBUI.Borders.empty(2);
     return BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder);
@@ -199,15 +195,13 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     return color != null ? color : EditorFragmentComponent.getBackgroundColor(editor);
   }
 
-  @NotNull
-  public static Color getBorderColor() {
+  public static @NotNull Color getBorderColor() {
     return JBColor.namedColor("VersionControl.MarkerPopup.borderColor", new JBColor(Gray._206, Gray._75));
   }
 
-  @NotNull
-  public static ActionToolbar buildToolbar(@NotNull Editor editor,
-                                           @NotNull List<? extends AnAction> actions,
-                                           @NotNull Disposable parentDisposable) {
+  public static @NotNull ActionToolbar buildToolbar(@NotNull Editor editor,
+                                                    @NotNull List<? extends AnAction> actions,
+                                                    @NotNull Disposable parentDisposable) {
     JComponent editorComponent = editor.getComponent();
     for (AnAction action : actions) {
       DiffUtil.registerAction(action, editorComponent);

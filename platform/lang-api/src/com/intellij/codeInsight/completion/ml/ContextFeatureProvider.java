@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.ml;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -25,8 +25,7 @@ import java.util.Map;
 public interface ContextFeatureProvider {
   LanguageExtension<ContextFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.contextFeatures");
 
-  @Unmodifiable
-  static @NotNull List<ContextFeatureProvider> forLanguage(@NotNull Language language) {
+  static @Unmodifiable @NotNull List<ContextFeatureProvider> forLanguage(@NotNull Language language) {
     return EP_NAME.allForLanguageOrAny(language);
   }
 

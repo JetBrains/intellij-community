@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.execution.console.ConsoleExecuteAction;
@@ -32,13 +32,11 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
     return super.isEnabled(session, dataContext) && getConsoleExecuteAction(session) != null;
   }
 
-  @Nullable
-  private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull XDebugSession session) {
+  private static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@NotNull XDebugSession session) {
     return getConsoleExecuteAction(session.getConsoleView());
   }
 
-  @Nullable
-  public static ConsoleExecuteAction getConsoleExecuteAction(@Nullable ConsoleView consoleView) {
+  public static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@Nullable ConsoleView consoleView) {
     if (!(consoleView instanceof LanguageConsoleView)) {
       return null;
     }

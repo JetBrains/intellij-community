@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.template.Expression;
@@ -54,8 +54,7 @@ public record ModStartTemplate(@NotNull VirtualFile file, @NotNull List<@NotNull
    */
   public record ExpressionField(@NotNull TextRange range, @Nullable String varName, @NotNull Expression expression) implements TemplateField {
     @Override
-    @NotNull
-    public TemplateField withRange(@NotNull TextRange range) {
+    public @NotNull TemplateField withRange(@NotNull TextRange range) {
       return new ExpressionField(range, varName, expression);
     }
   }

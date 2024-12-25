@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.local;
 
 import com.intellij.execution.CantRunException;
@@ -94,44 +94,37 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     return new ResolvedPortBinding(hostPort, hostPort);
   }
 
-  @NotNull
   @Override
-  public Map<UploadRoot, UploadableVolume> getUploadVolumes() {
+  public @NotNull Map<UploadRoot, UploadableVolume> getUploadVolumes() {
     return Collections.unmodifiableMap(myUploadVolumes);
   }
 
-  @NotNull
   @Override
-  public Map<DownloadRoot, DownloadableVolume> getDownloadVolumes() {
+  public @NotNull Map<DownloadRoot, DownloadableVolume> getDownloadVolumes() {
     return Collections.unmodifiableMap(myDownloadVolumes);
   }
 
-  @NotNull
   @Override
-  public Map<TargetPortBinding, ResolvedPortBinding> getTargetPortBindings() {
+  public @NotNull Map<TargetPortBinding, ResolvedPortBinding> getTargetPortBindings() {
     return Collections.unmodifiableMap(myTargetPortBindings);
   }
 
-  @NotNull
   @Override
-  public Map<LocalPortBinding, ResolvedPortBinding> getLocalPortBindings() {
+  public @NotNull Map<LocalPortBinding, ResolvedPortBinding> getLocalPortBindings() {
     return Collections.unmodifiableMap(myLocalPortBindings);
   }
 
-  @NotNull
   @Override
-  public TargetPlatform getTargetPlatform() {
+  public @NotNull TargetPlatform getTargetPlatform() {
     return TargetPlatform.CURRENT;
   }
 
-  @NotNull
   @Override
-  public Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws ExecutionException {
+  public @NotNull Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws ExecutionException {
     return createGeneralCommandLine(commandLine).createProcess();
   }
 
-  @NotNull
-  public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
+  public @NotNull GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
       PtyOptions ptyOption = commandLine.getPtyOptions();
       LocalPtyOptions localPtyOptions = ptyOption != null ? LocalTargets.toLocalPtyOptions(ptyOption) : null;
@@ -205,21 +198,18 @@ public class LocalTargetEnvironment extends TargetEnvironment {
       }
     }
 
-    @NotNull
     @Override
-    public Path getLocalRoot() {
+    public @NotNull Path getLocalRoot() {
       return myLocalRoot;
     }
 
-    @NotNull
     @Override
-    public String getTargetRoot() {
+    public @NotNull String getTargetRoot() {
       return myTargetRoot.toString();
     }
 
-    @NotNull
     @Override
-    public String resolveTargetPath(@NotNull String relativePath) throws IOException {
+    public @NotNull String resolveTargetPath(@NotNull String relativePath) throws IOException {
       if (myReal) {
         File targetFile = myTargetRoot.resolve(relativePath).toFile().getCanonicalFile();
         return targetFile.toString();

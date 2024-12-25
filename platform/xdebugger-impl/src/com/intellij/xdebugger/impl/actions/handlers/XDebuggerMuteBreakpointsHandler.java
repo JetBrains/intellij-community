@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandler {
   @Override
-  protected boolean isEnabled(@Nullable final XDebugSession session, final AnActionEvent event) {
+  protected boolean isEnabled(final @Nullable XDebugSession session, final AnActionEvent event) {
     if (session instanceof XDebugSessionImpl) {
       return !((XDebugSessionImpl)session).isReadOnly();
     }
@@ -19,7 +19,7 @@ public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandle
   }
 
   @Override
-  protected boolean isSelected(@Nullable final XDebugSession session, final AnActionEvent event) {
+  protected boolean isSelected(final @Nullable XDebugSession session, final AnActionEvent event) {
     if (session != null) {
       return session.areBreakpointsMuted();
     }
@@ -33,7 +33,7 @@ public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandle
   }
 
   @Override
-  protected void setSelected(@Nullable final XDebugSession session, final AnActionEvent event, final boolean state) {
+  protected void setSelected(final @Nullable XDebugSession session, final AnActionEvent event, final boolean state) {
     if (session != null) {
       session.setBreakpointMuted(state);
     }

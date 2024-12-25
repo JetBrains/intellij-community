@@ -149,8 +149,7 @@ public final class RollbackAction extends DumbAwareAction {
     return emptyList();
   }
 
-  @Nullable
-  private static Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
+  private static @Nullable Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
     List<VirtualFile> selectedModifiedWithoutEditing =
       JBIterable.from(e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY)).toList();
     if (!ContainerUtil.isEmpty(selectedModifiedWithoutEditing)) {

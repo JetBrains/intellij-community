@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.Template;
@@ -37,7 +37,7 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
   private final Editor editor;
   private final ShortFilterTextProvider myShortFilterTextProvider;
   private final boolean myCanBeReplace;
-  @Nullable private final Consumer<? super String> myCurrentVariableCallback;
+  private final @Nullable Consumer<? super String> myCurrentVariableCallback;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
   private final Map<String, Inlay<FilterRenderer>> inlays = new HashMap<>();
 

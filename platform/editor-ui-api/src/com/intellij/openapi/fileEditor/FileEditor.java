@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -146,8 +146,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
   /**
    * Returns the files for which {@link com.intellij.ide.SaveAndSyncHandler} should be called on frame activation.
    */
-  @Unmodifiable
-  default @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
+  default @Unmodifiable @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
     VirtualFile file = getFile();
     return ContainerUtil.createMaybeSingletonList(file);
   }

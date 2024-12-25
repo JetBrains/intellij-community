@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public class EditData implements ChangeListCommand {
   private final String myName;
-  @Nullable private final ChangeListData myNewData;
+  private final @Nullable ChangeListData myNewData;
 
   private boolean myResult;
   private LocalChangeList myListCopy;

@@ -89,8 +89,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<@NotNull PsiFile> getAllFiles() {
+  public @Unmodifiable @NotNull List<@NotNull PsiFile> getAllFiles() {
     return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
@@ -131,14 +130,12 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @Unmodifiable
-  public final @NotNull List<PsiFile> getCachedPsiFiles() {
+  public final @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
   }
 
   @Override
-  @Unmodifiable
-  public final @NotNull List<FileASTNode> getKnownTreeRoots() {
+  public final @Unmodifiable @NotNull List<FileASTNode> getKnownTreeRoots() {
     PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (!(psiFile instanceof PsiFileImpl)) return Collections.emptyList();
     FileASTNode element = ((PsiFileImpl)psiFile).getNodeIfLoaded();

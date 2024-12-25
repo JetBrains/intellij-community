@@ -55,9 +55,8 @@ public interface FileSystemInterface {
    * Returns all virtual files under which the given path is known in the VFS, starting with virtual file for the passed path.
    * Please note, that it is guaranteed to find all aliases only if path is canonical.
    */
-  @Unmodifiable
   @RequiresReadLockAbsence(generateAssertion = false)
-  default @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
+  default @Unmodifiable @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
     return Collections.emptyList();
   }
 

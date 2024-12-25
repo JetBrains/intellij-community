@@ -59,8 +59,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -167,9 +167,8 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
     setLayout(new BorderLayout());
     myDiffPreview = new FrameDiffPreview(myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION, 0.7f, this) {
-      @NotNull
       @Override
-      protected DiffEditorViewer createViewer() {
+      protected @NotNull DiffEditorViewer createViewer() {
         DiffEditorViewer processor = myChangesBrowser.createChangeProcessor(false);
         processor.setToolbarVerticalSizeReferent(getToolbar());
         return processor;

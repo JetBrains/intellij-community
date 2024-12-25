@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.IdeEventQueue;
@@ -74,14 +74,12 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
             null, null, null, false);
     }
 
-    @Nullable
     @Override
-    protected JComponent createDoNotAskCheckbox() {
+    protected @Nullable JComponent createDoNotAskCheckbox() {
       return createAnalyzeOnTheFlyOptionPanel();
     }
 
-    @NotNull
-    private static JCheckBox createAnalyzeOnTheFlyOptionPanel() {
+    private static @NotNull JCheckBox createAnalyzeOnTheFlyOptionPanel() {
       final JCheckBox removeOptionCheckBox = new JCheckBox(VcsBundle.message("patch.apply.analyze.from.clipboard.on.the.fly.checkbox"));
       removeOptionCheckBox.setMnemonic(KeyEvent.VK_L);
       removeOptionCheckBox.setSelected(VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY);

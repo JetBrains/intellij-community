@@ -97,8 +97,7 @@ public final class FileManagerImpl implements FileManager {
     map.remove(NULL);
   }
 
-  @NotNull
-  private ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
+  private @NotNull ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
     if (map == null) {
       map = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, CollectionFactory.createConcurrentWeakValueMap());

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -58,8 +58,7 @@ public abstract class CompositeFilePathHolder implements FileHolder {
     return holder != null && holder.containsFile(file, vcsRoot.getPath());
   }
 
-  @NotNull
-  public Collection<FilePath> getFiles() {
+  public @NotNull Collection<FilePath> getFiles() {
     HashSet<FilePath> result = new HashSet<>();
     for (FilePathHolder fileHolder : myMap.values()) {
       result.addAll(fileHolder.values());
@@ -78,8 +77,7 @@ public abstract class CompositeFilePathHolder implements FileHolder {
     }
   }
 
-  @NotNull
-  protected abstract FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs);
+  protected abstract @NotNull FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs);
 
   @Override
   public boolean equals(Object o) {
@@ -99,9 +97,8 @@ public abstract class CompositeFilePathHolder implements FileHolder {
       super(project);
     }
 
-    @NotNull
     @Override
-    protected FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs) {
+    protected @NotNull FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs) {
       VcsManagedFilesHolder.Provider provider = VcsManagedFilesHolder.VCS_UNVERSIONED_FILES_HOLDER_EP
         .findFirstSafe(project, ep -> ep.getVcs().equals(vcs));
       if (provider != null) {
@@ -125,9 +122,8 @@ public abstract class CompositeFilePathHolder implements FileHolder {
       super(project);
     }
 
-    @NotNull
     @Override
-    protected FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs) {
+    protected @NotNull FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs) {
       VcsManagedFilesHolder.Provider provider = VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP
         .findFirstSafe(project, ep -> ep.getVcs().equals(vcs));
       if (provider != null) {

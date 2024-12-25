@@ -26,8 +26,7 @@ public interface EditorSearchAreaProvider {
   ExtensionPointName<EditorSearchAreaProvider> EP_NAME = ExtensionPointName.create("com.intellij.editorSearchAreaProvider");
 
   @RequiresEdt
-  @Unmodifiable
-  static List<EditorSearchAreaProvider> getEnabled(@NotNull Editor editor, @NotNull FindModel findModel) {
+  static @Unmodifiable List<EditorSearchAreaProvider> getEnabled(@NotNull Editor editor, @NotNull FindModel findModel) {
     return ContainerUtil.filter(EP_NAME.getExtensionList(), p -> p.isEnabled(editor, findModel));
   }
 

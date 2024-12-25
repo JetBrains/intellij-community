@@ -91,8 +91,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, true));
   }
 
-  @Unmodifiable
-  protected @NotNull List<T> getRepositories(Class<T> type) {
+  protected @Unmodifiable @NotNull List<T> getRepositories(Class<T> type) {
     return ContainerUtil.findAll(myGlobalRepositoryManager.getRepositories(), type);
   }
 

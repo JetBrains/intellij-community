@@ -76,8 +76,7 @@ final class IntersectionScope extends GlobalSearchScope implements VirtualFileEn
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @Unmodifiable @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return ContainerUtil.intersection(myScope1.getUnloadedModulesBelongingToScope(), myScope2.getUnloadedModulesBelongingToScope());
   }
 

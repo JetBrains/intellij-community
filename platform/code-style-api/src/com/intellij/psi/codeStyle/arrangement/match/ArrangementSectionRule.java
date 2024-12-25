@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,8 +21,8 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
  * @author Svetlana.Zemlyanskaya
  */
 public final class ArrangementSectionRule implements Cloneable {
-  @Nullable private final String myStartComment;
-  @Nullable private final String myEndComment;
+  private final @Nullable String myStartComment;
+  private final @Nullable String myEndComment;
   private final List<StdArrangementMatchRule> myMatchRules;
 
   private ArrangementSectionRule(@Nullable String start, @Nullable String end, @NotNull List<StdArrangementMatchRule> rules) {
@@ -55,20 +55,17 @@ public final class ArrangementSectionRule implements Cloneable {
     return new ArrangementSectionRule(start, end, matchRules);
   }
 
-  @NotNull
-  private static StdArrangementMatchRule createSectionRule(@NotNull String comment, @NotNull ArrangementSettingsToken token) {
+  private static @NotNull StdArrangementMatchRule createSectionRule(@NotNull String comment, @NotNull ArrangementSettingsToken token) {
     final ArrangementAtomMatchCondition text = new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.TEXT, comment);
     final ArrangementMatchCondition condition = ArrangementUtil.combine(new ArrangementAtomMatchCondition(token), text);
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition));
   }
 
-  @Nullable
-  public String getStartComment() {
+  public @Nullable String getStartComment() {
     return myStartComment;
   }
 
-  @Nullable
-  public String getEndComment() {
+  public @Nullable String getEndComment() {
     return myEndComment;
   }
 

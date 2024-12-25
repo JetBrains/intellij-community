@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.Location;
@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
 
 public class TestStackTraceParser {
 
-  private final static Pattern outerPattern = Pattern.compile("\tat (.*)\\.([^.]*)\\((.*)\\)");
-  private final static Pattern innerPattern = Pattern.compile("(.*):(\\d*)");
+  private static final Pattern outerPattern = Pattern.compile("\tat (.*)\\.([^.]*)\\((.*)\\)");
+  private static final Pattern innerPattern = Pattern.compile("(.*):(\\d*)");
 
   private int myFailedLine = -1;
   private String myFailedMethodName;

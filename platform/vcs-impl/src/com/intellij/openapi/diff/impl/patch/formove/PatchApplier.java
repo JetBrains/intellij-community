@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.history.*;
@@ -54,18 +54,18 @@ public final class PatchApplier {
   private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
-  @NotNull private final List<FilePatch> myPatches;
+  private final @NotNull List<FilePatch> myPatches;
   private final CommitContext myCommitContext;
-  @Nullable private final LocalChangeList myTargetChangeList;
-  @NotNull private final List<FilePatch> myRemainingPatches;
-  @NotNull private final List<FilePatch> myFailedPatches;
+  private final @Nullable LocalChangeList myTargetChangeList;
+  private final @NotNull List<FilePatch> myRemainingPatches;
+  private final @NotNull List<FilePatch> myFailedPatches;
   private final PathsVerifier myVerifier;
 
   private final boolean myReverseConflict;
-  @NlsContexts.Label @Nullable private final String myLeftConflictPanelTitle;
-  @NlsContexts.Label @Nullable private final String myRightConflictPanelTitle;
-  @NlsContexts.Label @NotNull private final String myActivityName;
-  @Nullable private final ActivityId myActivityId;
+  private final @NlsContexts.Label @Nullable String myLeftConflictPanelTitle;
+  private final @NlsContexts.Label @Nullable String myRightConflictPanelTitle;
+  private final @NlsContexts.Label @NotNull String myActivityName;
+  private final @Nullable ActivityId myActivityId;
 
   @Contract(mutates = "param3")
   public PatchApplier(@NotNull Project project,
@@ -107,18 +107,15 @@ public final class PatchApplier {
          VcsBundle.message("activity.name.apply.patch"), VcsActivity.ApplyPatch);
   }
 
-  @NotNull
-  public List<FilePatch> getRemainingPatches() {
+  public @NotNull List<FilePatch> getRemainingPatches() {
     return myRemainingPatches;
   }
 
-  @NotNull
-  public Collection<FilePatch> getFailedPatches() {
+  public @NotNull Collection<FilePatch> getFailedPatches() {
     return myFailedPatches;
   }
 
-  @NotNull
-  private List<FilePatch> getBinaryPatches() {
+  private @NotNull List<FilePatch> getBinaryPatches() {
     return ContainerUtil.mapNotNull(myVerifier.getBinaryPatches(),
                                     patchInfo -> patchInfo.getApplyPatch().getPatch());
   }
@@ -268,7 +265,7 @@ public final class PatchApplier {
     return doRollback.get();
   }
 
-  private static void rollbackUnderProgressIfNeeded(@NotNull final Project project, @NotNull final Label labelToRevert) {
+  private static void rollbackUnderProgressIfNeeded(final @NotNull Project project, final @NotNull Label labelToRevert) {
     Runnable rollback = () -> {
       try {
         labelToRevert.revert(project, project.getBaseDir());
@@ -295,8 +292,7 @@ public final class PatchApplier {
   }
 
 
-  @NotNull
-  private ApplyPatchStatus nonWriteActionPreCheck() {
+  private @NotNull ApplyPatchStatus nonWriteActionPreCheck() {
     final List<FilePatch> failedPreCheck = myVerifier.nonWriteActionPreCheck();
     final List<FilePatch> skipped = myVerifier.getSkipped();
 
@@ -319,8 +315,7 @@ public final class PatchApplier {
     }
   }
 
-  @NotNull
-  private ApplyPatchStatus executeWritable() {
+  private @NotNull ApplyPatchStatus executeWritable() {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-305053, EA-659443")) {
       ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus =
         ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myVerifier.getWritableFiles());

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.ui.ValidationInfo;
@@ -26,8 +26,7 @@ public interface CommitSession {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
-  @Nullable
-  default JComponent getAdditionalConfigurationUI() {
+  default @Nullable JComponent getAdditionalConfigurationUI() {
     return null;
   }
 
@@ -37,8 +36,7 @@ public interface CommitSession {
    * @see com.intellij.openapi.vcs.changes.ui.SessionDialog
    * @see com.intellij.openapi.ui.DialogPanel
    */
-  @Nullable
-  default JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
+  default @Nullable JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
     return getAdditionalConfigurationUI();
   }
 
@@ -60,9 +58,7 @@ public interface CommitSession {
   /**
    * @return the ID of the help topic to show for the {@link #getAdditionalConfigurationUI} dialog.
    */
-  @Nullable
-  @NonNls
-  default String getHelpId() {
+  default @Nullable @NonNls String getHelpId() {
     return null;
   }
 

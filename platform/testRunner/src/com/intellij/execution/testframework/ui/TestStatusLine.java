@@ -199,9 +199,7 @@ public class TestStatusLine extends NonOpaquePanel {
     });
   }
 
-  @NlsSafe
-  @NotNull
-  public String getStateText() {
+  public @NlsSafe @NotNull String getStateText() {
     return myState.toString();
   }
 

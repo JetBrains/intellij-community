@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -29,7 +15,7 @@ import java.util.List;
 
 public abstract class XDebuggerTreeActionBase extends AnAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
     if (node != null) {
       String nodeName = node.getName();
@@ -42,7 +28,7 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
   protected abstract void perform(final XValueNodeImpl node, @NotNull String nodeName, final AnActionEvent e);
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
     e.getPresentation().setEnabled(node != null && isEnabled(node, e));
   }
@@ -59,8 +45,7 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
     return ContainerUtil.getFirstItem(getSelectedNodes(dataContext));
   }
 
-  @Nullable
-  public static XValue getSelectedValue(@NotNull DataContext dataContext) {
+  public static @Nullable XValue getSelectedValue(@NotNull DataContext dataContext) {
     XValueNodeImpl node = getSelectedNode(dataContext);
     return node != null ? node.getValueContainer() : null;
   }

@@ -69,8 +69,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   /**
    * If {@link ProjectGeneratorPeer#getComponent(TextFieldWithBrowseButton, Runnable)} is Kotlin DSL UI, we store it here and use for validation
    */
-  @Nullable
-  private DialogPanelWrapper myDialogPanelWrapper;
+  private @Nullable DialogPanelWrapper myDialogPanelWrapper;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
                                  AbstractNewProjectStep.AbstractCallback<T> callback) {

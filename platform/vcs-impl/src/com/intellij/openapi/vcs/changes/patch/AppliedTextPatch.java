@@ -1,4 +1,4 @@
- // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.util.LineRange;
@@ -16,7 +16,7 @@ import static com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus
 
 
 public final class AppliedTextPatch {
-  @NotNull private final List<AppliedSplitPatchHunk> mySplitPatchHunkList;
+  private final @NotNull List<AppliedSplitPatchHunk> mySplitPatchHunkList;
 
   public enum HunkStatus {ALREADY_APPLIED, EXACTLY_APPLIED, NOT_APPLIED}
 
@@ -48,19 +48,18 @@ public final class AppliedTextPatch {
     mySplitPatchHunkList = hunks;
   }
 
-  @NotNull
-  public List<AppliedSplitPatchHunk> getHunks() {
+  public @NotNull List<AppliedSplitPatchHunk> getHunks() {
     return mySplitPatchHunkList;
   }
 
   public static class AppliedSplitPatchHunk {
-    @NotNull private final HunkStatus myStatus;
+    private final @NotNull HunkStatus myStatus;
 
-    @NotNull private final List<String> myContextBefore;
-    @NotNull private final List<String> myContextAfter;
+    private final @NotNull List<String> myContextBefore;
+    private final @NotNull List<String> myContextAfter;
 
-    @NotNull private final List<String> myDeletedLines;
-    @NotNull private final List<String> myInsertedLines;
+    private final @NotNull List<String> myDeletedLines;
+    private final @NotNull List<String> myInsertedLines;
 
     private final int myAppliedToLinesStart;
     private final int myAppliedToLinesEnd;
@@ -117,8 +116,7 @@ public final class AppliedTextPatch {
     /*
      * Hunk lines (including context) in base document
      */
-    @NotNull
-    public LineRange getLineRangeBefore() {
+    public @NotNull LineRange getLineRangeBefore() {
       int start = myStartLineBefore;
       return new LineRange(start, start + myContextBefore.size() + myDeletedLines.size() + myContextAfter.size());
     }
@@ -126,34 +124,28 @@ public final class AppliedTextPatch {
     /*
      * Hunk lines (including context) in originally patched document
      */
-    @NotNull
-    public LineRange getLineRangeAfter() {
+    public @NotNull LineRange getLineRangeAfter() {
       int start = myStartLineAfter;
       return new LineRange(start, start + myContextBefore.size() + myInsertedLines.size() + myContextAfter.size());
     }
 
-    @NotNull
-    public HunkStatus getStatus() {
+    public @NotNull HunkStatus getStatus() {
       return myStatus;
     }
 
-    @NotNull
-    public List<String> getContextBefore() {
+    public @NotNull List<String> getContextBefore() {
       return myContextBefore;
     }
 
-    @NotNull
-    public List<String> getContextAfter() {
+    public @NotNull List<String> getContextAfter() {
       return myContextAfter;
     }
 
-    @NotNull
-    public List<String> getDeletedLines() {
+    public @NotNull List<String> getDeletedLines() {
       return myDeletedLines;
     }
 
-    @NotNull
-    public List<String> getInsertedLines() {
+    public @NotNull List<String> getInsertedLines() {
       return myInsertedLines;
     }
   }

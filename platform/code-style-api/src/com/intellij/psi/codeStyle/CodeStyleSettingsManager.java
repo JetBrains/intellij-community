@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -37,9 +37,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
+  @Deprecated(forRemoval = true) public volatile @Nullable CodeStyleSettings PER_PROJECT_SETTINGS;
 
   public volatile boolean USE_PER_PROJECT_SETTINGS;
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
@@ -47,10 +45,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   
   private final ThreadLocal<CodeStyleSettings> myLocalSettings = new ThreadLocal<>();
 
-  private final static WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
+  private static final WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
 
-  @NotNull
-  public CodeStyleSettings createSettings() {
+  public @NotNull CodeStyleSettings createSettings() {
     CodeStyleSettings newSettings = new CodeStyleSettings(true, false);
     registerSettings(newSettings);
     return newSettings;
@@ -61,8 +58,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   @TestOnly
-  @NotNull
-  public final CodeStyleSettings createTemporarySettings() {
+  public final @NotNull CodeStyleSettings createTemporarySettings() {
     CodeStyleSettings temporarySettings = new CodeStyleSettings(true, false);
     myTemporarySettings = temporarySettings;
     return temporarySettings;
@@ -221,8 +217,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }, disposable);
   }
 
-  @NotNull
-  protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
+  protected @NotNull Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
 
   @ApiStatus.Internal
   public final void registerFileTypeIndentOptions(@NotNull Collection<? extends CodeStyleSettings> allSettings,
@@ -278,9 +273,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * code doesn't allow to easily retrieve a PsiFile. Otherwise the code will not catch up with proper file code style settings since the
    * settings may differ for different files depending on their scope.
    */
-  @NotNull
   @Deprecated
-  public static CodeStyleSettings getSettings(@Nullable final Project project) {
+  public static @NotNull CodeStyleSettings getSettings(final @Nullable Project project) {
     return getInstance(project).getCurrentSettings();
   }
 
@@ -288,8 +282,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * @deprecated see comments for {@link #getSettings(Project)} or {@link CodeStyle#getDefaultSettings()}
    */
   @Deprecated
-  @NotNull
-  public CodeStyleSettings getCurrentSettings() {
+  public @NotNull CodeStyleSettings getCurrentSettings() {
     CodeStyleSettings localSettings = getLocalSettings();
     if (localSettings != null) return localSettings;
     CodeStyleSettings temporarySettings = myTemporarySettings;
@@ -343,8 +336,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @return The main project code style settings. For default project, that's the only code style.
    */
-  @Nullable
-  public CodeStyleSettings getMainProjectCodeStyle() {
+  public @Nullable CodeStyleSettings getMainProjectCodeStyle() {
     return PER_PROJECT_SETTINGS;
   }
 
@@ -361,9 +353,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     myTemporarySettings = null;
   }
 
-  @Nullable
   @TestOnly
-  public CodeStyleSettings getTemporarySettings() {
+  public @Nullable CodeStyleSettings getTemporarySettings() {
     return myTemporarySettings;
   }
   

@@ -413,8 +413,7 @@ public final class HippieWordCompletionHandler implements CodeInsightActionHandl
     return state;
   }
 
-  @Unmodifiable
-  private static @NotNull List<Integer> getCaretOffsets(Editor editor) {
+  private static @Unmodifiable @NotNull List<Integer> getCaretOffsets(Editor editor) {
     return ContainerUtil.map(editor.getCaretModel().getAllCarets(), caret -> caret.getOffset());
   }
 

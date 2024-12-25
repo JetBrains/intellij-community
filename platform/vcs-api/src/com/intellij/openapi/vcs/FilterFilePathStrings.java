@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class FilterFilePathStrings extends AbstractFilterChildren<String> {
-  private final static FilterFilePathStrings ourInstance = new FilterFilePathStrings();
+  private static final FilterFilePathStrings ourInstance = new FilterFilePathStrings();
 
   public static FilterFilePathStrings getInstance() {
     return ourInstance;

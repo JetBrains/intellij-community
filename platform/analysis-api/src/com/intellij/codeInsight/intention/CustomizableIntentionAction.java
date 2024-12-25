@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.openapi.editor.Editor;
@@ -78,8 +78,7 @@ public interface CustomizableIntentionAction extends IntentionAction {
    * @param editor the host editor where the popup is displayed
    * @param file the host PSI file where the popup is displayed; the PSI may be uncommitted
    */
-  @Unmodifiable
-  default @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
+  default @Unmodifiable @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     return List.of();
   }
 

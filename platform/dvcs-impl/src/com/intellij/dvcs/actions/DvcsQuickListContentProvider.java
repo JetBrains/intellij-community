@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.actions;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -21,9 +21,8 @@ import java.util.List;
 public abstract class DvcsQuickListContentProvider implements VcsQuickListContentProvider {
 
   @Override
-  @Nullable
-  public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs,
-                                      @NotNull AnActionEvent event) {
+  public @Nullable List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs,
+                                                @NotNull AnActionEvent event) {
     if (activeVcs == null || !replaceVcsActionsFor(activeVcs, event.getDataContext())) return null;
 
     ActionGroup vcsGroup = ObjectUtils.tryCast(CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP),
@@ -50,9 +49,7 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
     actions.addAll(providerActions);
   }
 
-  @NonNls
-  @NotNull
-  protected abstract String getVcsName();
+  protected abstract @NonNls @NotNull String getVcsName();
 
   protected abstract List<AnAction> collectVcsSpecificActions(@NotNull ActionManager manager);
 

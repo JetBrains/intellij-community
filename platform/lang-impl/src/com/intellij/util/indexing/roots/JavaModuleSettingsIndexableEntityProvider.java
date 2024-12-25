@@ -62,8 +62,7 @@ final class JavaModuleSettingsIndexableEntityProvider implements IndexableEntity
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getSymbolicId(), newRootUrls, oldRootUrls);
   }
 
-  @Unmodifiable
-  private static @NotNull List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
+  private static @Unmodifiable @NotNull List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
     return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 }

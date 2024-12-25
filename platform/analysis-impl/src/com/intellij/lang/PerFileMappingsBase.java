@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -63,8 +63,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   protected @Nullable Project getProject() { return myProject; }
 
   @Override
-  @Unmodifiable
-  public @NotNull Map<VirtualFile, T> getMappings() {
+  public @Unmodifiable @NotNull Map<VirtualFile, T> getMappings() {
     synchronized (myMappings) {
       ensureStateLoaded();
       cleanup();
@@ -72,8 +71,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Unmodifiable
-  private @NotNull Map<VirtualFile, T> doGetMappings() {
+  private @Unmodifiable @NotNull Map<VirtualFile, T> doGetMappings() {
     return ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value()));
   }
 
@@ -231,8 +229,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Unmodifiable
-  public abstract @NotNull List<T> getAvailableValues();
+  public abstract @Unmodifiable @NotNull List<T> getAvailableValues();
 
   protected abstract @Nullable String serialize(@NotNull T t);
 

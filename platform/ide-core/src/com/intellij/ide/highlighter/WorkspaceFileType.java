@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
@@ -14,32 +14,28 @@ import javax.swing.*;
 
 public final class WorkspaceFileType implements InternalFileType {
   public static final WorkspaceFileType INSTANCE = new WorkspaceFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "iws";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
+  public static final @NonNls String DEFAULT_EXTENSION = "iws";
+  public static final @NonNls String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
   private WorkspaceFileType() {}
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "IDEA_WORKSPACE";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return IdeCoreBundle.message("filetype.idea.workspace.description");
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return IdeCoreBundle.message("filetype.idea.workspace.display.name");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 

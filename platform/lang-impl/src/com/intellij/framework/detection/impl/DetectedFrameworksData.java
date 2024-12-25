@@ -88,9 +88,8 @@ public final class DetectedFrameworksData {
     }
   }
 
-  @Unmodifiable
-  public Collection<? extends DetectedFrameworkDescription> updateFrameworksList(String detectorId,
-                                                                                 Collection<? extends DetectedFrameworkDescription> frameworks) {
+  public @Unmodifiable Collection<? extends DetectedFrameworkDescription> updateFrameworksList(String detectorId,
+                                                                                               Collection<? extends DetectedFrameworkDescription> frameworks) {
     synchronized (myLock) {
       final Collection<DetectedFrameworkDescription> oldFrameworks = myDetectedFrameworks.remove(detectorId);
       myDetectedFrameworks.putValues(detectorId, frameworks);

@@ -213,8 +213,7 @@ public final class ApplyPatchUtil {
     });
   }
 
-  @Nullable
-  private static String convertLineSeparators(@Nullable String charSequence) {
+  private static @Nullable String convertLineSeparators(@Nullable String charSequence) {
     return charSequence != null ? StringUtil.convertLineSeparators(charSequence) : null;
   }
 }

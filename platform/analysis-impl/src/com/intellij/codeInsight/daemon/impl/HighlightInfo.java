@@ -1,4 +1,4 @@
-/* Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -85,15 +85,11 @@ public class HighlightInfo implements Segment {
   /**
    * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
    */
-  @Deprecated
-  @Unmodifiable
-  public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
+  @Deprecated public @Unmodifiable List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   /**
    * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
    */
-  @Deprecated
-  @Unmodifiable
-  public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
+  @Deprecated public @Unmodifiable List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
   private @Unmodifiable @NotNull List<IntentionActionDescriptor> myIntentionActionDescriptors = List.of(); // guarded by this
 
@@ -618,19 +614,16 @@ public class HighlightInfo implements Segment {
   /**
    * @deprecated use {@link HighlightInfo#fromAnnotation(ExternalAnnotator, Annotation)}
    */
-  @NotNull
   @Deprecated
-  public static HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
+  public static @NotNull HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
     return fromAnnotation(ExternalAnnotator.class, annotation, false);
   }
 
-  @NotNull
-  public static HighlightInfo fromAnnotation(@NotNull ExternalAnnotator<?,?> externalAnnotator, @NotNull Annotation annotation) {
+  public static @NotNull HighlightInfo fromAnnotation(@NotNull ExternalAnnotator<?,?> externalAnnotator, @NotNull Annotation annotation) {
     return fromAnnotation(externalAnnotator.getClass(), annotation, false);
   }
 
-  @NotNull
-  static HighlightInfo fromAnnotation(@NotNull Class<?> annotatorClass, @NotNull Annotation annotation, boolean batchMode) {
+  static @NotNull HighlightInfo fromAnnotation(@NotNull Class<?> annotatorClass, @NotNull Annotation annotation, boolean batchMode) {
     TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
     TextAttributesKey key = annotation.getTextAttributes();
     TextAttributesKey forcedAttributesKey = forcedAttributes == null && key != HighlighterColors.NO_HIGHLIGHTING ? key : null;
@@ -656,8 +649,7 @@ public class HighlightInfo implements Segment {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  private static HighlightInfoType convertType(@NotNull Annotation annotation) {
+  private static @NotNull HighlightInfoType convertType(@NotNull Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
     HighlightSeverity severity = annotation.getSeverity();
     return toHighlightInfoType(type, severity);
@@ -1018,8 +1010,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  @NotNull
-  private Long2ObjectMap<RangeMarker> getRangeMarkerCache() {
+  private @NotNull Long2ObjectMap<RangeMarker> getRangeMarkerCache() {
     Long2ObjectMap<RangeMarker> cache = new Long2ObjectOpenHashMap<>();
     for (IntentionActionDescriptor pair : myIntentionActionDescriptors) {
       Segment fixRange = pair.myFixRange;
@@ -1122,8 +1113,7 @@ public class HighlightInfo implements Segment {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  @Nullable
-  public PsiReference getUnresolvedReference() {
+  public @Nullable PsiReference getUnresolvedReference() {
     return unresolvedReference;
   }
 

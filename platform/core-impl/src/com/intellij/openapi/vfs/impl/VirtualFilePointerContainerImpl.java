@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -411,8 +411,7 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<Pair<String, Boolean>> getJarDirectories() {
+  public @Unmodifiable @NotNull List<Pair<String, Boolean>> getJarDirectories() {
     List<Pair<String, Boolean>> jars = ContainerUtil.map(myJarDirectories, ptr -> Pair.create(ptr.getUrl(), false));
     List<Pair<String, Boolean>> recJars = ContainerUtil.map(myJarRecursiveDirectories, ptr -> Pair.create(ptr.getUrl(), true));
     return ContainerUtil.concat(jars, recJars);

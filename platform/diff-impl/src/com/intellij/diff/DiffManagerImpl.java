@@ -92,17 +92,15 @@ public class DiffManagerImpl extends DiffManagerEx {
     return DialogWrapper.findInstance(IdeFocusManager.getInstance(project).getFocusOwner()) != null;
   }
 
-  @NotNull
   @Override
-  public DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window) {
+  public @NotNull DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window) {
     DiffRequestPanelImpl panel = new DiffRequestPanelImpl(project, window);
     Disposer.register(parent, panel);
     return panel;
   }
 
-  @NotNull
   @Override
-  public List<DiffTool> getDiffTools() {
+  public @NotNull List<DiffTool> getDiffTools() {
     List<DiffTool> result = new ArrayList<>();
     result.addAll(DiffTool.EP_NAME.getExtensionList());
     result.add(SimpleDiffTool.INSTANCE);
@@ -112,9 +110,8 @@ public class DiffManagerImpl extends DiffManagerEx {
     return result;
   }
 
-  @NotNull
   @Override
-  public List<MergeTool> getMergeTools() {
+  public @NotNull List<MergeTool> getMergeTools() {
     List<MergeTool> result = new ArrayList<>();
     Collections.addAll(result, MergeTool.EP_NAME.getExtensions());
     result.add(TextMergeTool.INSTANCE);

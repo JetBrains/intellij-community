@@ -1184,8 +1184,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   // return update outcome for debug
-  @NotNull @NonNls
-  private String runUpdate() {
+  private @NotNull @NonNls String runUpdate() {
     ThreadingAssertions.assertEventDispatchThread();
     if (myDisposed) {
       return "wasn't run because i'm disposed";
@@ -1477,8 +1476,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @TestOnly
-  @Unmodifiable
-  synchronized @NotNull Map<FileEditor, DaemonProgressIndicator> getUpdateProgress() {
+  synchronized @Unmodifiable @NotNull Map<FileEditor, DaemonProgressIndicator> getUpdateProgress() {
     return Map.copyOf(myUpdateProgress);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
@@ -48,8 +48,8 @@ import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFocusNavigatable;
 
@@ -221,8 +221,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     return position != null ? position.createNavigatable(myProject) : null;
   }
 
-  @Nullable
-  private static VirtualFile getFile(XStackFrame frame) {
+  private static @Nullable VirtualFile getFile(XStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.getFile() : null;
   }
@@ -244,15 +243,13 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
 
     XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
-        @Nullable
         @Override
-        public String getTextFor(Object value) {
+        public @Nullable String getTextFor(Object value) {
           return null;
         }
 
-        @Nullable
         @Override
-        public String getCaptionAboveOf(Object value) {
+        public @Nullable String getCaptionAboveOf(Object value) {
           return value instanceof ItemWithSeparatorAbove ? ((ItemWithSeparatorAbove)value).getCaptionAboveOf() : null;
         }
 
@@ -323,7 +320,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     );
 
     @Override
-    protected void customizeCellRenderer(@NotNull final JList list,
+    protected void customizeCellRenderer(final @NotNull JList list,
                                          final Object value,
                                          final int index,
                                          final boolean selected,

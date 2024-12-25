@@ -47,12 +47,11 @@ public final class HashMapZipFile implements ZipFile {
     return result instanceof EmptyZipFile ? null : (HashMapZipFile)result;
   }
 
-  @NotNull
-  static HashMapZipFile createHashMapZipFile(@NotNull ByteBuffer buffer,
-                                             int fileSize,
-                                             int entryCount,
-                                             int centralDirSize,
-                                             int centralDirPosition) throws EOFException {
+  static @NotNull HashMapZipFile createHashMapZipFile(@NotNull ByteBuffer buffer,
+                                                      int fileSize,
+                                                      int entryCount,
+                                                      int centralDirSize,
+                                                      int centralDirPosition) throws EOFException {
     // ensure the table is even length
     if (entryCount == 65535) {
       // it means that more than 65k entries - estimate the number of entries

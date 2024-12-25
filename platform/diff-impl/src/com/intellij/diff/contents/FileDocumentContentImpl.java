@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.contents;
 
 import com.intellij.diff.util.DiffUtil;
@@ -29,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 public class FileDocumentContentImpl extends DocumentContentBase implements FileContent {
-  @NotNull private final VirtualFile myFile;
-  @Nullable private final VirtualFile myHighlightFile;
+  private final @NotNull VirtualFile myFile;
+  private final @Nullable VirtualFile myHighlightFile;
 
   public FileDocumentContentImpl(@Nullable Project project,
                                  @NotNull Document document,
@@ -52,35 +38,30 @@ public class FileDocumentContentImpl extends DocumentContentBase implements File
     return ObjectUtils.chooseNotNull(myHighlightFile, myFile);
   }
 
-  @Nullable
   @Override
-  public LineSeparator getLineSeparator() {
+  public @Nullable LineSeparator getLineSeparator() {
     String s = LoadTextUtil.detectLineSeparator(myFile, true);
     if (s == null) return null;
     return LineSeparator.fromString(s);
   }
 
-  @Nullable
   @Override
-  public Charset getCharset() {
+  public @Nullable Charset getCharset() {
     return myFile.getCharset();
   }
 
-  @Nullable
   @Override
-  public Boolean hasBom() {
+  public @Nullable Boolean hasBom() {
     return myFile.getBOM() != null;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @Nullable
   @Override
-  public FileType getContentType() {
+  public @Nullable FileType getContentType() {
     return myFile.getFileType();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -53,11 +53,11 @@ public interface TestSearchScope {
   };
 
   class Wrapper implements JDOMExternalizable {
-    @NonNls private static final String DEFAULT_NAME = "defaultName";
+    private static final @NonNls String DEFAULT_NAME = "defaultName";
     private TestSearchScope myScope = SINGLE_MODULE;
-    @NonNls private static final String WHOLE_PROJECT_NAE = "wholeProject";
-    @NonNls private static final String SINGLE_MODULE_NAME = "singleModule";
-    @NonNls private static final String MODULE_WITH_DEPENDENCIES_NAME = "moduleWithDependencies";
+    private static final @NonNls String WHOLE_PROJECT_NAE = "wholeProject";
+    private static final @NonNls String SINGLE_MODULE_NAME = "singleModule";
+    private static final @NonNls String MODULE_WITH_DEPENDENCIES_NAME = "moduleWithDependencies";
 
     @Override
     public void readExternal(final Element element) throws InvalidDataException {

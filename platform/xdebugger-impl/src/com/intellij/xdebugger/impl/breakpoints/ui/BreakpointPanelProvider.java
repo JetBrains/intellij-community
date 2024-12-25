@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.Disposable;
@@ -21,11 +21,9 @@ public abstract class BreakpointPanelProvider<B> {
 
   public abstract int getPriority();
 
-  @Nullable
-  public abstract B findBreakpoint(@NotNull Project project, @NotNull Document document, int offset);
+  public abstract @Nullable B findBreakpoint(@NotNull Project project, @NotNull Document document, int offset);
 
-  @Nullable
-  public abstract GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint);
+  public abstract @Nullable GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint);
 
   public abstract void onDialogClosed(final Project project);
 

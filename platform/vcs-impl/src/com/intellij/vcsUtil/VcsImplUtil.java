@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.diff.DiffContentFactoryImpl;
@@ -57,19 +57,15 @@ public final class VcsImplUtil {
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(task, null, project);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
+  public static @NlsSafe @NotNull String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
     return VcsUtil.getShortVcsRootName(project, root);
   }
 
-  @Nullable
-  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull AbstractVcs vcs) {
+  public static @Nullable IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull AbstractVcs vcs) {
     return findIgnoredFileContentProvider(vcs.getProject(), vcs.getKeyInstanceMethod());
   }
 
-  @Nullable
-  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project, @NotNull VcsKey vcsKey) {
+  public static @Nullable IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project, @NotNull VcsKey vcsKey) {
     IgnoredFileContentProvider ignoreContentProvider = null;
     for (IgnoredFileContentProvider provider : IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.getExtensionList(project)) {
       if (provider.getSupportedVcs().equals(vcsKey)) {
@@ -128,14 +124,12 @@ public final class VcsImplUtil {
     });
   }
 
-  @NotNull
-  public static String loadTextFromBytes(@Nullable Project project, byte @NotNull [] bytes, @NotNull FilePath filePath) {
+  public static @NotNull String loadTextFromBytes(@Nullable Project project, byte @NotNull [] bytes, @NotNull FilePath filePath) {
     Charset charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath);
     return CharsetToolkit.decodeString(bytes, charset);
   }
 
-  @Nullable
-  public static VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
+  public static @Nullable VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
     VirtualFile result = filePath.getVirtualFile();
     if (result != null) return result;
 

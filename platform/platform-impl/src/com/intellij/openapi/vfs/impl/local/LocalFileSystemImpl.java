@@ -167,8 +167,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
+  public @Unmodifiable @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
     return ContainerUtil.mapNotNull(getAliasedPaths(path), path1 -> findFileByPathIfCached(path1));
   }
 

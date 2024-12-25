@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -24,13 +24,13 @@ import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskI
 
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
-  @NotNull private final List<String> myTasksToExecute;
-  @Nullable private final String myVmOptions;
-  @Nullable private String myArguments;
-  @Nullable private final String myJvmParametersSetup;
+  private final @NotNull List<String> myTasksToExecute;
+  private final @Nullable String myVmOptions;
+  private @Nullable String myArguments;
+  private final @Nullable String myJvmParametersSetup;
   private final boolean myPassParentEnvs;
   private final Map<String, String> myEnv;
-  @NotNull private final ExternalSystemRunConfiguration myConfiguration;
+  private final @NotNull ExternalSystemRunConfiguration myConfiguration;
 
   public ExternalSystemExecuteTaskTask(@NotNull Project project,
                                        @NotNull ExternalSystemTaskExecutionSettings settings,
@@ -48,18 +48,15 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     configuration.copyUserDataTo(this);
   }
 
-  @NotNull
-  public List<String> getTasksToExecute() {
+  public @NotNull List<String> getTasksToExecute() {
     return myTasksToExecute;
   }
 
-  @Nullable
-  public String getVmOptions() {
+  public @Nullable String getVmOptions() {
     return myVmOptions;
   }
 
-  @Nullable
-  public String getArguments() {
+  public @Nullable String getArguments() {
     return myArguments;
   }
 

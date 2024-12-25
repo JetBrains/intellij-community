@@ -209,9 +209,8 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                               @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
+  public @Unmodifiable @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                                             @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
     List<ConfigurableBuilder.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override

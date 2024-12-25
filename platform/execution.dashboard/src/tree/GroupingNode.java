@@ -35,9 +35,8 @@ public final class GroupingNode extends AbstractTreeNode<Pair<Object, RunDashboa
     return getValue().getSecond();
   }
 
-  @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     return myChildren;
   }
 

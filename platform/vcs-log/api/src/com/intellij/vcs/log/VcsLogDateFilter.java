@@ -26,9 +26,8 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
   @Nullable
   Date getBefore();
 
-  @NotNull
   @Override
-  default VcsLogFilterCollection.FilterKey<VcsLogDateFilter> getKey() {
+  default @NotNull VcsLogFilterCollection.FilterKey<VcsLogDateFilter> getKey() {
     return DATE_FILTER;
   }
 }

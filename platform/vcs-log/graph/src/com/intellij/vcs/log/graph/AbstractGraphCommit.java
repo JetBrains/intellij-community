@@ -30,9 +30,8 @@ abstract class AbstractGraphCommit<CommitId> extends ImmutableList<CommitId> imp
     return getId().hashCode();
   }
 
-  @NotNull
   @Override
-  public List<CommitId> getParents() {
+  public @NotNull List<CommitId> getParents() {
     return this;
   }
 

@@ -21,30 +21,30 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 6);
   private static final StringEventField DIFF_PLACE_FIELD = EventFields.String("diff_place",
                                                                               List.of(DiffPlaces.DEFAULT, DiffPlaces.CHANGES_VIEW,
                                                                                       DiffPlaces.VCS_LOG_VIEW, DiffPlaces.COMMIT_DIALOG,
                                                                                       DiffPlaces.TESTS_FAILED_ASSERTIONS, DiffPlaces.MERGE,
                                                                                       DiffPlaces.DIR_DIFF, DiffPlaces.EXTERNAL,
                                                                                      "unknown"));
-  private final static EventId2<HighlightPolicy, String> TOGGLE_HIGHLIGHT_POLICY =
+  private static final EventId2<HighlightPolicy, String> TOGGLE_HIGHLIGHT_POLICY =
     GROUP.registerEvent("toggle.highlight.policy", EventFields.Enum("value", HighlightPolicy.class, value -> value.name()),
                         DIFF_PLACE_FIELD);
-  private final static EventId2<IgnorePolicy, String> TOGGLE_IGNORE_POLICY =
+  private static final EventId2<IgnorePolicy, String> TOGGLE_IGNORE_POLICY =
     GROUP.registerEvent("toggle.ignore.policy", EventFields.Enum("value", IgnorePolicy.class, value -> value.name()),
                         DIFF_PLACE_FIELD);
   private static final ClassEventField DIFF_TOOL_CLASS = EventFields.Class("value");
-  private final static EventId3<PluginInfo, Class<?>, String> TOGGLE_DIFF_TOOL =
+  private static final EventId3<PluginInfo, Class<?>, String> TOGGLE_DIFF_TOOL =
     GROUP.registerEvent("toggle.diff.tool", EventFields.PluginInfo, DIFF_TOOL_CLASS, DIFF_PLACE_FIELD);
 
-  private final static EventId TOGGLE_COMBINED_DIFF_BLOCK_COLLAPSE = GROUP.registerEvent("toggle.combined.diff.block.collapse");
+  private static final EventId TOGGLE_COMBINED_DIFF_BLOCK_COLLAPSE = GROUP.registerEvent("toggle.combined.diff.block.collapse");
 
-  private final static EventId3<PluginInfo, Class<?>, String> SHOW_DIFF_TOOL =
+  private static final EventId3<PluginInfo, Class<?>, String> SHOW_DIFF_TOOL =
     GROUP.registerEvent("show.diff.tool", EventFields.PluginInfo, DIFF_TOOL_CLASS, DIFF_PLACE_FIELD);
 
   private static final BooleanEventField IS_MERGE = EventFields.Boolean("is_merge");
-  private final static EventId1<Boolean> SHOW_EXTERNAL_DIFF_TOOL = GROUP.registerEvent("show.external.diff.tool", IS_MERGE);
+  private static final EventId1<Boolean> SHOW_EXTERNAL_DIFF_TOOL = GROUP.registerEvent("show.external.diff.tool", IS_MERGE);
 
   @Override
   public EventLogGroup getGroup() {
@@ -85,8 +85,7 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
     TOGGLE_COMBINED_DIFF_BLOCK_COLLAPSE.log(project);
   }
 
-  @NotNull
-  private static String getPlaceName(@NonNls @Nullable String place) {
+  private static @NotNull String getPlaceName(@NonNls @Nullable String place) {
     return StringUtil.notNullize(place, "unknown");
   }
 }

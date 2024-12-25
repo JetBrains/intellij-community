@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -37,8 +37,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<PsiReference> getReferences() {
+  public @Unmodifiable @NotNull List<PsiReference> getReferences() {
     return ContainerUtil.concat(myReferences,
                                 it -> it instanceof PsiReferencesWrapper ?
                                       ((PsiReferencesWrapper)it).getReferences() :

@@ -280,7 +280,7 @@ public final class NioFiles {
    * A handy stub for building tree stats collecting visitors (e.g., for estimating the number of files before deletion).
    * It ignores exceptions and skips symlinks and NTFS reparse points.
    */
-  public static abstract class StatsCollectingVisitor extends SimpleFileVisitor<Path> {
+  public abstract static class StatsCollectingVisitor extends SimpleFileVisitor<Path> {
     protected abstract void countDirectory(Path dir, BasicFileAttributes attrs);
     protected abstract void countFile(Path file, BasicFileAttributes attrs);
 

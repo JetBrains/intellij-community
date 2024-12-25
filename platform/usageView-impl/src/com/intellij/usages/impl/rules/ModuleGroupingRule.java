@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
@@ -37,9 +37,8 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     myFlattenModules = flattenModules;
   }
 
-  @NotNull
   @Override
-  public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  public @NotNull List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof UsageInModule usageInModule) {
       Module module = usageInModule.getModule();
       if (module != null) {
@@ -97,8 +96,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myEntry.getPresentableName();
     }
 
@@ -115,7 +113,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
   }
 
   private static class SyntheticLibraryUsageGroup extends UsageGroupBase {
-    @NotNull private final ItemPresentation myItemPresentation;
+    private final @NotNull ItemPresentation myItemPresentation;
 
     SyntheticLibraryUsageGroup(@NotNull ItemPresentation itemPresentation) {
       super(2);
@@ -128,8 +126,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return StringUtil.notNullize(myItemPresentation.getPresentableText(), UsageViewBundle.message("list.item.library"));
     }
 
@@ -174,8 +171,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myModule.isDisposed() ? "" : myGrouper != null ? myGrouper.getShortenedName(myModule) : myModule.getName();
     }
 
@@ -189,9 +185,8 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       return UsageViewBundle.message("node.group.module", getPresentableGroupText());
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (!isValid()) return null;
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         return myModule;
@@ -225,8 +220,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myGroupPath.get(myGroupPath.size()-1);
     }
 

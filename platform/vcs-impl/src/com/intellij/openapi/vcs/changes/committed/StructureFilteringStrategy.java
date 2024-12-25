@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.util.treeView.TreeState;
@@ -45,9 +45,8 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public CommittedChangesFilterKey getKey() {
+  public @NotNull CommittedChangesFilterKey getKey() {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.STRUCTURE);
   }
 
@@ -57,8 +56,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  @Nullable
-  public JComponent getFilterUI() {
+  public @Nullable JComponent getFilterUI() {
     if (myUI == null) {
       myUI = new MyUI();
     }
@@ -96,8 +94,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  @NotNull
-  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
+  public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     if (mySelection.size() == 0) {
       return new ArrayList<>(changeLists);
     }
@@ -156,8 +153,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       myScrollPane = ScrollPaneFactory.createScrollPane(myStructureTree);
     }
 
-    @NotNull
-    private static List<FilePath> getFilePathsUnder(@NotNull ChangesBrowserNode<?> node) {
+    private static @NotNull List<FilePath> getFilePathsUnder(@NotNull ChangesBrowserNode<?> node) {
       List<FilePath> result = Collections.emptyList();
       Object userObject = node.getUserObject();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.application.options.CodeStyle;
@@ -57,8 +57,7 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
     myModifier = modifier;
   }
 
-  @Nullable
-  public CodeStyleSettingsModifier getModifier() {
+  public @Nullable CodeStyleSettingsModifier getModifier() {
     return myModifier;
   }
 
@@ -66,19 +65,17 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
    * @return A file for which the settings were initially computed or {@code null} if the file is no longer valid
    * (doesn't exist) and has been garbage collected.
    */
-  @Nullable
-  public PsiFile getPsiFile() {
+  public @Nullable PsiFile getPsiFile() {
     VirtualFile file = myFileRef.get();
     return file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
   }
 
-  @NotNull
   @Override
-  public IndentOptions getIndentOptionsByFile(@NotNull Project project,
-                                              @Nullable VirtualFile file,
-                                              @Nullable TextRange formatRange,
-                                              boolean ignoreDocOptions,
-                                              @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
+  public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project,
+                                                       @Nullable VirtualFile file,
+                                                       @Nullable TextRange formatRange,
+                                                       boolean ignoreDocOptions,
+                                                       @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
     if (file != null && file.isValid()) {
       FileType fileType = file.getFileType();
       return getIndentOptions(fileType);

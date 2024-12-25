@@ -1,20 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractExternalEntityData implements ExternalEntityData {
-  @NotNull
-  private final ProjectSystemId owner;
+  private final @NotNull ProjectSystemId owner;
 
   public AbstractExternalEntityData(@NotNull ProjectSystemId owner) {
     this.owner = owner;
   }
 
   @Override
-  @NotNull
-  public ProjectSystemId getOwner() {
+  public @NotNull ProjectSystemId getOwner() {
     return owner;
   }
 

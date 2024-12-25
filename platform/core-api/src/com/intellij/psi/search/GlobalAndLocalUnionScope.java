@@ -42,8 +42,7 @@ class GlobalAndLocalUnionScope extends GlobalSearchScope {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @Unmodifiable @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return myMyGlobalScope.getUnloadedModulesBelongingToScope();
   }
 

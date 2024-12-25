@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class AbstractExternalSystemToolWindowFactory implements ToolWindowFactory, DumbAware {
-  @NotNull private final ProjectSystemId externalSystemId;
+  private final @NotNull ProjectSystemId externalSystemId;
 
   protected AbstractExternalSystemToolWindowFactory(@NotNull ProjectSystemId id) {
     externalSystemId = id;

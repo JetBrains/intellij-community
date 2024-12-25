@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.collect.Iterables;
@@ -15,10 +15,10 @@ import java.util.*;
 @ApiStatus.Internal
 public class CommittedListsSequencesZipper {
 
-  @NotNull private final VcsCommittedListsZipper myVcsPartner;
-  @NotNull private final List<RepositoryLocation> myInLocations;
-  @NotNull private final Map<String, List<? extends CommittedChangeList>> myInLists;
-  @NotNull private final Comparator<CommittedChangeList> myComparator;
+  private final @NotNull VcsCommittedListsZipper myVcsPartner;
+  private final @NotNull List<RepositoryLocation> myInLocations;
+  private final @NotNull Map<String, List<? extends CommittedChangeList>> myInLists;
+  private final @NotNull Comparator<CommittedChangeList> myComparator;
 
   public CommittedListsSequencesZipper(@NotNull VcsCommittedListsZipper vcsPartner) {
     myVcsPartner = vcsPartner;
@@ -36,8 +36,7 @@ public class CommittedListsSequencesZipper {
     myInLists.put(location.toPresentableString(), lists);
   }
 
-  @NotNull
-  public List<CommittedChangeList> execute() {
+  public @NotNull List<CommittedChangeList> execute() {
     Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupingResult = myVcsPartner.groupLocations(myInLocations);
     List<CommittedChangeList> result = new ArrayList<>();
 
@@ -49,8 +48,7 @@ public class CommittedListsSequencesZipper {
     return result;
   }
 
-  @NotNull
-  private List<List<? extends CommittedChangeList>> collectChangeLists(@NotNull List<? extends RepositoryLocation> locations) {
+  private @NotNull List<List<? extends CommittedChangeList>> collectChangeLists(@NotNull List<? extends RepositoryLocation> locations) {
     List<List<? extends CommittedChangeList>> result = new ArrayList<>(locations.size());
 
     for (RepositoryLocation location : locations) {
@@ -60,8 +58,7 @@ public class CommittedListsSequencesZipper {
     return result;
   }
 
-  @NotNull
-  private List<CommittedChangeList> mergeLocationGroupChangeLists(@NotNull RepositoryLocationGroup group) {
+  private @NotNull List<CommittedChangeList> mergeLocationGroupChangeLists(@NotNull RepositoryLocationGroup group) {
     List<CommittedChangeList> result = new ArrayList<>();
     List<CommittedChangeList> equalLists = new ArrayList<>();
     CommittedChangeList previousList = null;
@@ -81,8 +78,7 @@ public class CommittedListsSequencesZipper {
     return result;
   }
 
-  @NotNull
-  private CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> equalLists) {
+  private @NotNull CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> equalLists) {
     if (equalLists.isEmpty()) {
       throw new IllegalArgumentException("equalLists can not be empty");
     }

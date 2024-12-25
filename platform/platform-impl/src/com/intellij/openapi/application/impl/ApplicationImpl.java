@@ -70,9 +70,9 @@ import java.util.function.Supplier;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
+import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 import static com.intellij.util.concurrency.Propagation.isContextAwareComputation;
-import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
 
 @ApiStatus.Internal
 public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx, ReadActionListener, WriteActionListener {
@@ -1245,8 +1245,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return getThreadingSupport().hasPermitAsContextElement(context);
   }
 
-  @NotNull
-  private static ThreadingSupport getThreadingSupport() {
+  private static @NotNull ThreadingSupport getThreadingSupport() {
     return AnyThreadWriteThreadingSupport.INSTANCE;
   }
 }

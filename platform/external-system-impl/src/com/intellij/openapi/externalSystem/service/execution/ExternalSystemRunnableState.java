@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -84,11 +84,11 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
   private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
 
-  @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
-  @NotNull private final Project myProject;
-  @NotNull private final ExternalSystemRunConfiguration myConfiguration;
-  @NotNull private final ExecutionEnvironment myEnv;
-  @Nullable private RunContentDescriptor myContentDescriptor;
+  private final @NotNull ExternalSystemTaskExecutionSettings mySettings;
+  private final @NotNull Project myProject;
+  private final @NotNull ExternalSystemRunConfiguration myConfiguration;
+  private final @NotNull ExecutionEnvironment myEnv;
+  private @Nullable RunContentDescriptor myContentDescriptor;
 
   private final int myDebugPort;
   private ServerSocket myForkSocket = null;
@@ -122,8 +122,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myDebugPort;
   }
 
-  @Nullable
-  public ServerSocket getForkSocket() {
+  public @Nullable ServerSocket getForkSocket() {
     if (myForkSocket == null && !Boolean.getBoolean("external.system.disable.fork.debugger")) {
       try {
         boolean isRemoteRun = ContainerUtil.exists(
@@ -175,9 +174,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return myConfiguration.isDebugServerProcess();
   }
 
-  @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     if (myProject.isDisposed()) return null;
 
     ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
@@ -415,8 +413,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
   }
 
-  @Nullable
-  private String getJvmParametersSetup() throws ExecutionException {
+  private @Nullable String getJvmParametersSetup() throws ExecutionException {
     var extensionsJP = new SimpleJavaParameters();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());

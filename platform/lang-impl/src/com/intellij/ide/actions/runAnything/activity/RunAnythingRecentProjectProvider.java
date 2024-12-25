@@ -76,8 +76,7 @@ public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionP
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+  public @Unmodifiable @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return ContainerUtil.emptyList();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -59,8 +59,7 @@ public class ExcludedFiles {
     myDescriptors.clear();
   }
 
-  @Unmodifiable
-  public List<FileSetDescriptor> getDescriptors(@NotNull String descriptorType) {
+  public @Unmodifiable List<FileSetDescriptor> getDescriptors(@NotNull String descriptorType) {
     return ContainerUtil.filter(myDescriptors, descriptor -> descriptorType.equals(descriptor.getType()));
   }
 
@@ -83,8 +82,7 @@ public class ExcludedFiles {
 
   public class State {
     @OptionTag("DO_NOT_FORMAT")
-    @Unmodifiable
-    public List<FileSetDescriptor.State> getDescriptors() {
+    public @Unmodifiable List<FileSetDescriptor.State> getDescriptors() {
       return ContainerUtil.map(myDescriptors, descriptor -> descriptor.getState());
     }
 

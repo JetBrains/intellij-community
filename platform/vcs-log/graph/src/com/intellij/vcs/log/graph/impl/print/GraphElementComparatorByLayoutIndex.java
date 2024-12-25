@@ -16,7 +16,7 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getNotNullNodeIn
 
 @ApiStatus.Internal
 public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElement> {
-  @NotNull private final Function<? super Integer, @NotNull Integer> myLayoutIndexGetter;
+  private final @NotNull Function<? super Integer, @NotNull Integer> myLayoutIndexGetter;
 
   public GraphElementComparatorByLayoutIndex(@NotNull Function<? super Integer, @NotNull Integer> layoutIndexGetter) {
     myLayoutIndexGetter = layoutIndexGetter;

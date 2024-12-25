@@ -264,10 +264,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, localProcessor);
   }
 
-  @Nullable("null means we did not find common container files")
-  private Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
-                                                              @NotNull Collection<? extends WordRequestInfo> data,
-                                                              @NotNull TextIndexQuery query) {
+  private @Nullable("null means we did not find common container files") Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
+                                                                                                                             @NotNull Collection<? extends WordRequestInfo> data,
+                                                                                                                             @NotNull TextIndexQuery query) {
     String commonName = null;
     short searchContext = 0;
     boolean caseSensitive = true;
@@ -662,8 +661,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  @Nullable
-  private static PsiFile findOriginalPsiFile(@NotNull PsiBinaryFile psiFile) {
+  private static @Nullable PsiFile findOriginalPsiFile(@NotNull PsiBinaryFile psiFile) {
     List<BinaryFileSourceProvider> providers = BinaryFileSourceProvider.EP.getExtensionList();
     for (BinaryFileSourceProvider provider : providers) {
       PsiFile originalFile = provider.findSourceFile(psiFile);
@@ -868,9 +866,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     CHANGED,
   }
 
-  @NotNull
-  static Processor<? super CandidateFileInfo> localProcessor(@NotNull StringSearcher searcher,
-                                                             @NotNull BulkOccurrenceProcessor processor) {
+  static @NotNull Processor<? super CandidateFileInfo> localProcessor(@NotNull StringSearcher searcher,
+                                                                      @NotNull BulkOccurrenceProcessor processor) {
     return new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(CandidateFileInfo candidateFileInfo) {
@@ -1367,8 +1364,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return new TextIndexQuery(keys, trigrams, context, useOnlyWordHashToSearch, words);
     }
 
-    @Unmodifiable
-    private static @NotNull List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
+    private static @Unmodifiable @NotNull List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
       List<String> words = StringUtil.getWordsInStringLongestFirst(name);
       if (words.isEmpty()) {
         String trimmed = name.trim();

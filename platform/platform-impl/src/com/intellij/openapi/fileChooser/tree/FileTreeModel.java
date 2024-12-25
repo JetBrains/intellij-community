@@ -294,8 +294,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return jar == null ? VirtualFile.EMPTY_ARRAY : jar.getChildren();
     }
 
-    @Unmodifiable
-    private List<Root> getRoots() {
+    private @Unmodifiable List<Root> getRoots() {
       if (!model.invoker.isValidThread()) {
         LOG.error(new IllegalStateException(Thread.currentThread().getName()));
       }
@@ -354,8 +353,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       addRoots(model.roots, rootsToAdd);
     }
 
-    @Unmodifiable
-    private static @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
+    private static @Unmodifiable @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
       return ContainerUtil.map(roots, FileNode::getFile);
     }
 

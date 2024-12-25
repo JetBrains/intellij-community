@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
@@ -26,10 +26,10 @@ import java.util.function.Consumer;
 @State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
-  public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
+  public static final long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
-  @NonNls public static final String PATCH = "patch";
-  @NonNls public static final String DIFF = "diff";
+  public static final @NonNls String PATCH = "patch";
+  public static final @NonNls String DIFF = "diff";
 
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
@@ -57,7 +57,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
-  @NlsSafe public String UPDATE_FILTER_SCOPE_NAME = null;
+  public @NlsSafe String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = true;
@@ -85,13 +85,11 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     private final String myId;
     private final String myKey;
 
-    @NonNls
-    public String getId() {
+    public @NonNls String getId() {
       return myId;
     }
 
-    @Nls
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return VcsBundle.message(myKey);
     }
   }
@@ -106,17 +104,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
       myKey = key;
     }
 
-    @NotNull
-    private final String myId;
+    private final @NotNull String myId;
     private final String myKey;
 
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
       return myId;
     }
 
-    @Nls
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return VcsBundle.message(myKey);
     }
   }
@@ -172,7 +167,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     });
   }
 
-  public void saveTempChunkCommitMessage(@NotNull final String comment) {
+  public void saveTempChunkCommitMessage(final @NotNull String comment) {
     LAST_CHUNK_COMMIT_MESSAGE = comment;
   }
 
@@ -191,9 +186,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return ContainerUtil.getLastItem(myLastCommitMessages);
   }
 
-  @NotNull
   @CalledInAny
-  public ArrayList<String> getRecentMessages() {
+  public @NotNull ArrayList<String> getRecentMessages() {
     return new ArrayList<>(myLastCommitMessages);
   }
 

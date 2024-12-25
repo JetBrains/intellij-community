@@ -47,8 +47,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1347,8 +1347,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
   }
 
-  @Unmodifiable
-  public static @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+  public static @Unmodifiable @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     return ContainerUtil.map2Set(descriptors,
                                  IdeaPluginDescriptor::getName);
   }
@@ -1405,8 +1404,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return icon;
   }
 
-  @Unmodifiable
-  private static @NotNull List<String> getDependenciesOnPlugins(@NotNull Project project) {
+  private static @Unmodifiable @NotNull List<String> getDependenciesOnPlugins(@NotNull Project project) {
     return ContainerUtil.map(ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin.class),
                              DependencyOnPlugin::getPluginId);
   }

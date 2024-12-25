@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.actions;
 
 import com.intellij.dvcs.repo.Repository;
@@ -19,12 +19,10 @@ import java.util.List;
  * Compares selected file/folder with itself in another branch.
  */
 public abstract class DvcsCompareWithBranchAction<T extends Repository> extends DvcsCompareWithAction<T> {
-  @NotNull
-  protected abstract List<String> getBranchNamesExceptCurrent(@NotNull T repository);
+  protected abstract @NotNull List<String> getBranchNamesExceptCurrent(@NotNull T repository);
 
-  @NotNull
-  protected abstract Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
-                                                       @NotNull String branchToCompare) throws VcsException;
+  protected abstract @NotNull Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
+                                                                @NotNull String branchToCompare) throws VcsException;
 
 
   @Override
@@ -36,17 +34,16 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
                        selected -> showDiffWithBranchUnderModalProgress(project, file, presentableRevisionName, selected));
   }
 
-  private void showDiffWithBranchUnderModalProgress(@NotNull final Project project,
-                                                    @NotNull final VirtualFile file,
-                                                    @NotNull final @NlsSafe String head,
-                                                    @NotNull final @NlsSafe String compare) {
+  private void showDiffWithBranchUnderModalProgress(final @NotNull Project project,
+                                                    final @NotNull VirtualFile file,
+                                                    final @NotNull @NlsSafe String head,
+                                                    final @NotNull @NlsSafe String compare) {
     String revNumTitle1 = VcsDiffUtil.getRevisionTitle(compare, false);
     String revNumTitle2 = VcsDiffUtil.getRevisionTitle(head, true);
     showDiffBetweenRevision(project, file, revNumTitle1, revNumTitle2, () -> getDiffChanges(project, file, compare));
   }
 
-  @NlsSafe
-  protected static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
+  protected static @NlsSafe String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
     return DvcsBundle.message("error.text.file.not.found.in.branch",
                               file.isDirectory() ? 2 : 1, file.getPresentableUrl(), branchToCompare);
   }

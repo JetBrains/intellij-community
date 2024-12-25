@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -113,8 +113,7 @@ public final class ConsoleFoldingSettings implements PersistentStateComponent<Co
     return negated ? myNegativePatterns : myPositivePatterns;
   }
 
-  @Unmodifiable
-  private static Collection<String> filterEmptyStringsFromCollection(Collection<String> collection) {
+  private static @Unmodifiable Collection<String> filterEmptyStringsFromCollection(Collection<String> collection) {
     return ContainerUtil.filter(collection, input -> !StringUtil.isEmpty(input));
   }
 

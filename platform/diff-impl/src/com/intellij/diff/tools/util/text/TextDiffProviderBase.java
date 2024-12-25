@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.tools.util.base.HighlightPolicy;
@@ -32,26 +32,22 @@ public class TextDiffProviderBase implements TextDiffProvider {
     settings.addListener(new MyListener(rediff), disposable);
   }
 
-  @NotNull
   @Override
-  public List<AnAction> getToolbarActions() {
+  public @NotNull List<AnAction> getToolbarActions() {
     return Arrays.asList(myIgnorePolicySettingAction, myHighlightPolicySettingAction);
   }
 
-  @NotNull
   @Override
-  public List<AnAction> getPopupActions() {
+  public @NotNull List<AnAction> getPopupActions() {
     return Arrays.asList(Separator.getInstance(), myIgnorePolicySettingAction.getActions(), Separator.getInstance(),
                          myHighlightPolicySettingAction.getActions(), Separator.getInstance());
   }
 
-  @NotNull
-  public IgnorePolicy getIgnorePolicy() {
+  public @NotNull IgnorePolicy getIgnorePolicy() {
     return myIgnorePolicySettingAction.getValue();
   }
 
-  @NotNull
-  public HighlightPolicy getHighlightPolicy() {
+  public @NotNull HighlightPolicy getHighlightPolicy() {
     return myHighlightPolicySettingAction.getValue();
   }
 
@@ -60,15 +56,11 @@ public class TextDiffProviderBase implements TextDiffProvider {
   }
 
 
-  @Nls
-  @Nullable
-  protected String getText(@NotNull IgnorePolicy option) {
+  protected @Nls @Nullable String getText(@NotNull IgnorePolicy option) {
     return null;
   }
 
-  @Nls
-  @Nullable
-  protected String getText(@NotNull HighlightPolicy option) {
+  protected @Nls @Nullable String getText(@NotNull HighlightPolicy option) {
     return null;
   }
 
@@ -79,9 +71,8 @@ public class TextDiffProviderBase implements TextDiffProvider {
       super(settings, ignorePolicies);
     }
 
-    @NotNull
     @Override
-    protected String getText(@NotNull IgnorePolicy option) {
+    protected @NotNull String getText(@NotNull IgnorePolicy option) {
       String text = TextDiffProviderBase.this.getText(option);
       if (text != null) return text;
       return super.getText(option);
@@ -94,9 +85,8 @@ public class TextDiffProviderBase implements TextDiffProvider {
       super(settings, highlightPolicies);
     }
 
-    @NotNull
     @Override
-    protected String getText(@NotNull HighlightPolicy option) {
+    protected @NotNull String getText(@NotNull HighlightPolicy option) {
       String text = TextDiffProviderBase.this.getText(option);
       if (text != null) return text;
       return super.getText(option);
@@ -104,7 +94,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
   }
 
   private static class MyListener extends TextDiffSettings.Listener.Adapter {
-    @NotNull private final Runnable myRediff;
+    private final @NotNull Runnable myRediff;
 
     MyListener(@NotNull Runnable rediff) {
       myRediff = rediff;

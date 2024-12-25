@@ -11,7 +11,7 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
 public final class SortChecker {
-  private final static Logger LOG = Logger.getInstance(SortChecker.class);
+  private static final Logger LOG = Logger.getInstance(SortChecker.class);
 
   public static void checkLinearGraph(@NotNull LinearGraph linearGraph) {
     Pair<Integer, Integer> reversedEdge = findReversedEdge(linearGraph);
@@ -20,8 +20,7 @@ public final class SortChecker {
     }
   }
 
-  @Nullable
-  public static Pair<Integer, Integer> findReversedEdge(@NotNull LinearGraph linearGraph) {
+  public static @Nullable Pair<Integer, Integer> findReversedEdge(@NotNull LinearGraph linearGraph) {
     for (int i = 0; i < linearGraph.nodesCount(); i++) {
       for (int downNode : getDownNodes(linearGraph, i)) {
         if (downNode <= i) {

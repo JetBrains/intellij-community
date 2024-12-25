@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
@@ -39,8 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class XVariablesViewBase extends XDebugView {
@@ -77,7 +77,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     return myTreePanel.getTree();
   }
 
-  protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
+  protected void buildTreeAndRestoreState(final @NotNull XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
     DebuggerUIUtil.freezePaintingToReduceFlickering(myTreePanel.getContentComponent());
@@ -170,8 +170,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     return myTreeRestorer != null ? CompletableFuture.allOf(myTreeRestorer.onFinished(), loaded).thenCompose(v -> loaded) : loaded.copy();
   }
 
-  @NotNull
-  public final XDebuggerTree getTree() {
+  public final @NotNull XDebuggerTree getTree() {
     return myTreePanel.getTree();
   }
 
@@ -213,7 +212,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
 
     @Override
-    public void selectionChanged(@NotNull final SelectionEvent e) {
+    public void selectionChanged(final @NotNull SelectionEvent e) {
       if (!Registry.is("debugger.valueTooltipAutoShowOnSelection") ||
           myEditor.getCaretModel().getCaretCount() > 1 ||
           e.getNewRanges().length != 1 ||

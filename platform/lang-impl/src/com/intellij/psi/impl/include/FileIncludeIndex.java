@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.include;
 
@@ -30,8 +30,7 @@ import java.util.stream.Collectors;
 public final class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
   public static final ID<String,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
-  @Unmodifiable
-  public static @NotNull List<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Unmodifiable @NotNull List<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull Project project) {
     Map<String, List<FileIncludeInfoImpl>> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project);
     return ContainerUtil.flatten(data.values());
   }
@@ -65,8 +64,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
       }
 
       @Override
-      @Unmodifiable
-      public @NotNull Set<String> getSubIndexerVersion(@NotNull Set<FileIncludeProvider> providers) {
+      public @Unmodifiable @NotNull Set<String> getSubIndexerVersion(@NotNull Set<FileIncludeProvider> providers) {
         return ContainerUtil.map2Set(providers, provider -> provider.getId() + ":" + provider.getVersion());
       }
 

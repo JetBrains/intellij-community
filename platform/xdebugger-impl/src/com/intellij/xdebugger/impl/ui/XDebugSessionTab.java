@@ -56,15 +56,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
   private final Map<String, XDebugView> myViews = new LinkedHashMap<>();
 
-  @Nullable
-  protected XDebugSessionImpl mySession;
+  protected @Nullable XDebugSessionImpl mySession;
   private XDebugSessionData mySessionData;
 
-  @NotNull
-  public static XDebugSessionTab create(@NotNull XDebugSessionImpl session,
-                                        @Nullable Icon icon,
-                                        @Nullable ExecutionEnvironment environment,
-                                        @Nullable RunContentDescriptor contentToReuse) {
+  public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
+                                                 @Nullable Icon icon,
+                                                 @Nullable ExecutionEnvironment environment,
+                                                 @Nullable RunContentDescriptor contentToReuse) {
     if (contentToReuse != null && SystemProperties.getBooleanProperty("xdebugger.reuse.session.tab", false)) {
       JComponent component = contentToReuse.getComponent();
       if (component != null) {
@@ -94,8 +92,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return tab;
   }
 
-  @NotNull
-  public RunnerLayoutUi getUi() {
+  public @NotNull RunnerLayoutUi getUi() {
     return myUi;
   }
 
@@ -249,8 +246,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return watchesContent;
   }
 
-  @NotNull
-  private Content createFramesContent() {
+  private @NotNull Content createFramesContent() {
     XFramesView framesView = new XFramesView(mySession);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
@@ -259,8 +255,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return framesContent;
   }
 
-  @NotNull
-  private Content createThreadsContent() {
+  private @NotNull Content createThreadsContent() {
     XThreadsView stacksView = new XThreadsView(myProject, mySession);
     registerView(DebuggerContentInfo.THREADS_CONTENT, stacksView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, stacksView.getPanel(),
@@ -363,8 +358,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     mySession = null;
   }
 
-  @Nullable
-  public RunContentDescriptor getRunContentDescriptor() {
+  public @Nullable RunContentDescriptor getRunContentDescriptor() {
     return myRunContentDescriptor;
   }
 
@@ -420,7 +414,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
+  public void toFront(boolean focus, final @Nullable Runnable onShowCallback) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -455,13 +449,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  @NotNull
-  protected String getWatchesContentId() {
+  protected @NotNull String getWatchesContentId() {
     return myWatchesInVariables ? DebuggerContentInfo.VARIABLES_CONTENT : DebuggerContentInfo.WATCHES_CONTENT;
   }
 
-  @NotNull
-  protected String getFramesContentId() {
+  protected @NotNull String getFramesContentId() {
     return DebuggerContentInfo.FRAME_CONTENT;
   }
 

@@ -387,8 +387,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  @NotNull
-  public ToolbarLayoutStrategy getLayoutStrategy() {
+  public @NotNull ToolbarLayoutStrategy getLayoutStrategy() {
     return myLayoutStrategy;
   }
 

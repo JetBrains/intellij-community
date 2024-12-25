@@ -325,8 +325,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
   }
 
-  @Unmodifiable
-  private static @NotNull List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<IFileElementType> types) {
+  private static @Unmodifiable @NotNull List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<IFileElementType> types) {
     StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
     return ContainerUtil.map(types, (elemType) -> {
       var plugin = PluginManager.getPluginByClass(elemType.getClass());

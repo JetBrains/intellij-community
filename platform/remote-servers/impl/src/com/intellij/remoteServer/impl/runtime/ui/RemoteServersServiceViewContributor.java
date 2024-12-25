@@ -232,8 +232,7 @@ public abstract class RemoteServersServiceViewContributor
     }
 
     @Override
-    @Unmodifiable
-    public @NotNull List<RemoteServerNodeServiceViewContributor> getServices(@NotNull Project project) {
+    public @Unmodifiable @NotNull List<RemoteServerNodeServiceViewContributor> getServices(@NotNull Project project) {
       return ContainerUtil.map(myNode.getChildren(), myRootContributor::createNodeContributor);
     }
 

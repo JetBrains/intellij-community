@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -57,10 +57,9 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     }.queue();
   }
 
-  @NotNull
-  protected Collection<PatchApplier> getPatchAppliers(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroups,
-                                                      @Nullable LocalChangeList localList,
-                                                      @NotNull CommitContext commitContext) {
+  protected @NotNull Collection<PatchApplier> getPatchAppliers(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroups,
+                                                               @Nullable LocalChangeList localList,
+                                                               @NotNull CommitContext commitContext) {
     Collection<PatchApplier> appliers = new ArrayList<>();
     for (VirtualFile base : patchGroups.keySet()) {
       appliers.add(new PatchApplier(myProject, base, new ArrayList<>(ContainerUtil.map(patchGroups.get(base), patchInProgress -> {

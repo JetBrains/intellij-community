@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -78,8 +78,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myResult = result;
   }
 
-  @NotNull
-  public MatchContext getMatchContext() {
+  public @NotNull MatchContext getMatchContext() {
     return matchContext;
   }
 
@@ -99,9 +98,8 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
            : handler.validate(matchContext, 0);
   }
 
-  @NotNull
   @Override
-  protected NodeFilter getNodeFilter() {
+  protected @NotNull NodeFilter getNodeFilter() {
     return LexicalNodesFilter.getInstance();
   }
 
@@ -162,8 +160,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myResult;
   }
 
-  @Nullable
-  private PsiElementVisitor getVisitorForElement(PsiElement element) {
+  private @Nullable PsiElementVisitor getVisitorForElement(PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     if (profile == null) {
       LOG.warn("No StructuralSearchProfile found for language " + element.getLanguage().getID());

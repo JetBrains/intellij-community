@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -11,9 +11,9 @@ import java.nio.charset.StandardCharsets;
 
 public class OutputWrapper extends OutputStream {
 
-  @NotNull private final ExternalSystemTaskNotificationListener myListener;
-  @NotNull private final ExternalSystemTaskId myTaskId;
-  @Nullable private StringBuilder myBuffer;
+  private final @NotNull ExternalSystemTaskNotificationListener myListener;
+  private final @NotNull ExternalSystemTaskId myTaskId;
+  private @Nullable StringBuilder myBuffer;
   private final boolean myStdOut;
 
   public OutputWrapper(@NotNull ExternalSystemTaskNotificationListener listener, @NotNull ExternalSystemTaskId taskId, boolean stdOut) {

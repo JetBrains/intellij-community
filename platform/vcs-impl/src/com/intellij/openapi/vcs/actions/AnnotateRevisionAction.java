@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -24,8 +24,8 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware {
-  @NotNull protected final FileAnnotation myAnnotation;
-  @NotNull private final AbstractVcs myVcs;
+  protected final @NotNull FileAnnotation myAnnotation;
+  private final @NotNull AbstractVcs myVcs;
 
   AnnotateRevisionAction(@NotNull Supplier<String> dynamicText,
                          @NotNull Supplier<String> dynamicDescription,
@@ -59,14 +59,12 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   }
 
   @Override
-  @Nullable
-  protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
+  protected @Nullable AbstractVcs getVcs(@NotNull AnActionEvent e) {
     return myVcs;
   }
 
-  @Nullable
   @Override
-  protected VirtualFile getFile(@NotNull AnActionEvent e) {
+  protected @Nullable VirtualFile getFile(@NotNull AnActionEvent e) {
     VcsFileRevision revision = getFileRevision(e);
     if (revision == null) return null;
 
@@ -76,23 +74,21 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     return new MyVcsVirtualFile(filePath, revision, currentFileType);
   }
 
-  @Nullable
   @Override
-  protected Editor getEditor(@NotNull AnActionEvent e) {
+  protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.EDITOR);
   }
 
   private static class MyVcsVirtualFile extends VcsVirtualFile {
-    @NotNull private final FileType myCurrentFileType;
+    private final @NotNull FileType myCurrentFileType;
 
     MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
       super(filePath, revision);
       myCurrentFileType = currentFileType;
     }
 
-    @NotNull
     @Override
-    public FileType getFileType() {
+    public @NotNull FileType getFileType() {
       FileType type = super.getFileType();
       if (!type.isBinary()) return type;
       if (!myCurrentFileType.isBinary()) return myCurrentFileType;

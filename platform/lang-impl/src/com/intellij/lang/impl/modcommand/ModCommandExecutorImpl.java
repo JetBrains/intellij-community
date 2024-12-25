@@ -521,8 +521,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   }
 
   @Override
-  @Unmodifiable
-  protected @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
+  protected @Unmodifiable @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
     List<@NotNull Fragment> ranges = upd.updatedRanges();
     if (!ranges.isEmpty()) return ranges;
     String oldText = upd.oldText();

@@ -114,8 +114,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myInputFields = getFields(element);
   }
 
-  @Unmodifiable
-  private static List<WizardInputField<?>> getFields(Element templateElement) {
+  private static @Unmodifiable List<WizardInputField<?>> getFields(Element templateElement) {
     return ContainerUtil
       .mapNotNull(templateElement.getChildren(INPUT_FIELD), element -> {
         ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());

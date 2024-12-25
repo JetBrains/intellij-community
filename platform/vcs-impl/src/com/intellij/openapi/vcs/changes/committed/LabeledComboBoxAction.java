@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.Presentation;
@@ -13,15 +13,14 @@ import java.awt.*;
 
 public abstract class LabeledComboBoxAction extends ComboBoxAction {
 
-  @NotNull private final @NlsContexts.Label String myLabel;
+  private final @NotNull @NlsContexts.Label String myLabel;
 
   protected LabeledComboBoxAction(@NlsContexts.Label @NotNull String label) {
     myLabel = label;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = createComboBoxButton(presentation);
 
     JLabel label = new JLabel(myLabel);

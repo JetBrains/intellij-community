@@ -11,7 +11,7 @@ import java.util.Collection;
 
 public abstract class ChangesBrowserSpecificNode<T, F> extends ChangesBrowserNode<T> {
   protected final boolean myIsMany;
-  @NotNull protected final Runnable myDialogShower;
+  protected final @NotNull Runnable myDialogShower;
   private final int myManyFileCount;
   private final int myManyDirectoryCount;
 

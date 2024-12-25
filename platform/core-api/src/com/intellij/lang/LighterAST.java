@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.util.CharTable;
@@ -26,6 +26,5 @@ public abstract class LighterAST {
 
   public abstract @Nullable LighterASTNode getParent(final @NotNull LighterASTNode node);
 
-  @Unmodifiable
-  public abstract @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent);
+  public abstract @Unmodifiable @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent);
 }

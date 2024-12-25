@@ -9,8 +9,8 @@ import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
 
 class MultiRoutingWatchServiceDelegate implements WatchService {
-  @NotNull final WatchService myDelegate;
-  @NotNull private final MultiRoutingFileSystemProvider myProvider;
+  final @NotNull WatchService myDelegate;
+  private final @NotNull MultiRoutingFileSystemProvider myProvider;
 
   MultiRoutingWatchServiceDelegate(@NotNull WatchService delegate, @NotNull MultiRoutingFileSystemProvider provider) {
     myDelegate = delegate;

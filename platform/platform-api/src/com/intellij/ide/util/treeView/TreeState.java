@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -153,9 +153,8 @@ public final class TreeState implements JDOMExternalizable {
       return item != null && data != null && data.isValid();
     }
 
-    @NotNull
     @Property(surroundWithTag = false)
-    public PathElement getItem() {
+    public @NotNull PathElement getItem() {
       return item;
     }
 
@@ -164,9 +163,8 @@ public final class TreeState implements JDOMExternalizable {
       this.item = item;
     }
 
-    @NotNull
     @Property(surroundWithTag = false)
-    public CachedPresentationDataImpl getData() {
+    public @NotNull CachedPresentationDataImpl getData() {
       return data;
     }
 
@@ -175,9 +173,8 @@ public final class TreeState implements JDOMExternalizable {
       this.data = data;
     }
 
-    @Nullable
     @XCollection(style = XCollection.Style.v2)
-    public Map<String, String> getAttributes() {
+    public @Nullable Map<String, String> getAttributes() {
       return attributes;
     }
 
@@ -225,10 +222,9 @@ public final class TreeState implements JDOMExternalizable {
       return text != null;
     }
 
-    @NotNull
     @Override
     @Attribute("text")
-    public String getText() {
+    public @NotNull String getText() {
       return text;
     }
 
@@ -237,9 +233,8 @@ public final class TreeState implements JDOMExternalizable {
       this.text = text;
     }
 
-    @Nullable
     @Attribute("iconPath")
-    public String getIconPath() {
+    public @Nullable String getIconPath() {
       return iconPath;
     }
 
@@ -248,9 +243,8 @@ public final class TreeState implements JDOMExternalizable {
       this.iconPath = iconPath;
     }
 
-    @Nullable
     @Attribute("iconPlugin")
-    public String getIconPlugin() {
+    public @Nullable String getIconPlugin() {
       return iconPlugin;
     }
 
@@ -259,9 +253,8 @@ public final class TreeState implements JDOMExternalizable {
       this.iconPlugin = iconPlugin;
     }
 
-    @Nullable
     @Attribute("iconModule")
-    public String getIconModule() {
+    public @Nullable String getIconModule() {
       return iconModule;
     }
 
@@ -270,9 +263,8 @@ public final class TreeState implements JDOMExternalizable {
       this.iconModule = iconModule;
     }
 
-    @Nullable
     @Override
-    public CachedIconPresentation getIconData() {
+    public @Nullable CachedIconPresentation getIconData() {
       if (iconPath == null || iconPlugin == null) return null;
       return new CachedIconPresentation(iconPath, iconPlugin, iconModule);
     }

@@ -53,8 +53,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -108,8 +108,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   protected abstract @Nullable <S> Object getParameter(@NotNull Key<S> key);
 
-  @Unmodifiable
-  protected @NotNull List<Mapping<T>> getDefaultMappings() {
+  protected @Unmodifiable @NotNull List<Mapping<T>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
 
@@ -706,8 +705,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return param(NULL_TEXT);
   }
 
-  @Unmodifiable
-  protected @NotNull Collection<T> getValueVariants(@Nullable Object target) {
+  protected @Unmodifiable @NotNull Collection<T> getValueVariants(@Nullable Object target) {
     if (myMappings instanceof PerFileMappingsBase) return ((PerFileMappingsBase<T>)myMappings).getAvailableValues();
     throw new UnsupportedOperationException();
   }

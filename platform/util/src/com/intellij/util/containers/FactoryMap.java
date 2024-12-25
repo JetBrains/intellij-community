@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
@@ -131,14 +131,12 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<V> values() {
+  public @Unmodifiable @NotNull Collection<V> values() {
     return ContainerUtil.map(getMap().values(), FactoryMap::nullize);
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Set<Entry<K, V>> entrySet() {
+  public @Unmodifiable @NotNull Set<Entry<K, V>> entrySet() {
     return ContainerUtil.map2Set(getMap().entrySet(),
                                  entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));
   }

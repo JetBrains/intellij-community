@@ -78,8 +78,7 @@ public abstract class StubProcessingHelperBase {
     return true;
   }
 
-  @Unmodifiable
-  private static @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {
+  private static @Unmodifiable @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {
     if (!(psiFile instanceof PsiFileImpl) && psiFile instanceof PsiFileWithStubSupport) {
       return Collections.singletonList(((PsiFileWithStubSupport)psiFile).getStubbedSpine());
     }

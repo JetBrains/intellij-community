@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -56,8 +56,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     mySingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject());
   }
 
-  @NotNull
-  private Object2IntMap<VirtualFile> calcRoots() {
+  private @NotNull Object2IntMap<VirtualFile> calcRoots() {
     OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
       if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
       return OrderRootType.CLASSES;
@@ -73,8 +72,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return map;
   }
 
-  @NotNull
-  private OrderEnumerator getOrderEnumeratorForOptions() {
+  private @NotNull OrderEnumerator getOrderEnumeratorForOptions() {
     OrderEnumerator en = ModuleRootManager.getInstance(myModule).orderEntries();
     en.recursively();
     if (hasOption(COMPILE_ONLY)) en.exportedOnly().compileOnly();
@@ -164,8 +162,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   }
 
   @TestOnly
-  @NotNull
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     List<VirtualFile> result = new ArrayList<>(myRoots.keySet());
     result.sort(Comparator.comparingInt(myRoots::getInt));
     return result;
@@ -195,8 +192,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   /**
    * Compute a set of ids of all files under {@code roots}
    */
-  @NotNull
-  public static VirtualFileEnumeration getFileEnumerationUnderRoots(@NotNull Collection<? extends VirtualFile> roots) {
+  public static @NotNull VirtualFileEnumeration getFileEnumerationUnderRoots(@NotNull Collection<? extends VirtualFile> roots) {
     IntSet result = new IntOpenHashSet();
     for (VirtualFile file : roots) {
       if (file instanceof VirtualFileWithId) {

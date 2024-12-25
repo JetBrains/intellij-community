@@ -123,15 +123,13 @@ public class TestAll implements Test {
     return ourClassLoadingProblems;
   }
 
-  @Unmodifiable
-  public static List<Path> getClassRoots() {
+  public static @Unmodifiable List<Path> getClassRoots() {
     return TeamCityLogger.block("Collecting tests from ...", () -> {
       return doGetClassRoots();
     });
   }
 
-  @Unmodifiable
-  private static List<Path> doGetClassRoots() {
+  private static @Unmodifiable List<Path> doGetClassRoots() {
     String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
     if (jarsToRunTestsFrom != null) {
       String[] jars = jarsToRunTestsFrom.split(";");
@@ -370,7 +368,7 @@ public class TestAll implements Test {
     return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
   }
 
-  private void runOrCollectNextTest(@NotNull final TestResult testResult,
+  private void runOrCollectNextTest(final @NotNull TestResult testResult,
                                     int totalTests,
                                     @NotNull Class<?> testCaseClass,
                                     @Nullable List<String> collectedTests) {
@@ -417,8 +415,7 @@ public class TestAll implements Test {
     }
   }
 
-  @Nullable
-  private Test getTest(@NotNull final Class<?> testCaseClass) {
+  private @Nullable Test getTest(final @NotNull Class<?> testCaseClass) {
     try {
       if (!Modifier.isPublic(testCaseClass.getModifiers())) {
         return null;
@@ -482,8 +479,7 @@ public class TestAll implements Test {
           super.addTest(test);
         }
 
-        @Nullable
-        private static Method findTestMethod(final TestCase testCase) {
+        private static @Nullable Method findTestMethod(final TestCase testCase) {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
@@ -497,7 +493,7 @@ public class TestAll implements Test {
     }
   }
 
-  private static boolean isPotentiallyATest(@NotNull final Class<?> testCaseClass) {
+  private static boolean isPotentiallyATest(final @NotNull Class<?> testCaseClass) {
     try {
       if (!Modifier.isPublic(testCaseClass.getModifiers())) {
         return false;
@@ -540,8 +536,7 @@ public class TestAll implements Test {
     }
   }
 
-  @NotNull
-  protected JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
+  protected @NotNull JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
     return new JUnit4TestAdapter(testCaseClass, getJUnit4TestAdapterCache());
   }
 
@@ -577,8 +572,7 @@ public class TestAll implements Test {
     return ourUnit4TestAdapterCache;
   }
 
-  @Nullable
-  private static Method safeFindMethod(Class<?> klass, String name) {
+  private static @Nullable Method safeFindMethod(Class<?> klass, String name) {
     return ReflectionUtil.getMethod(klass, name);
   }
 

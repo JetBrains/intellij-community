@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Editor;
@@ -31,8 +31,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
 public final class LineStatusMarkerDrawUtil {
-  @NotNull
-  public static List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
+  public static @NotNull List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
     int lineHeight = editor.getLineHeight();
     int triangleGap = lineHeight / 3;
 
@@ -214,8 +213,7 @@ public final class LineStatusMarkerDrawUtil {
     }
   }
 
-  @NotNull
-  public static IntPair getGutterArea(@NotNull Editor editor) {
+  public static @NotNull IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     if (ExperimentalUI.isNewUI()) {
       int x = gutter.getExtraLineMarkerFreePaintersAreaOffset();
@@ -307,8 +305,7 @@ public final class LineStatusMarkerDrawUtil {
     return PaintUtil.RoundingMode.ROUND.round(v * scale);
   }
 
-  @Nullable
-  public static Color getErrorStripeColor(byte type) {
+  public static @Nullable Color getErrorStripeColor(byte type) {
     return LineStatusMarkerColorScheme.DEFAULT.getErrorStripeColor(type);
   }
 

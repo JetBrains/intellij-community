@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -42,9 +42,8 @@ public class CapturingProcessHandler extends OSProcessHandler {
   /**
    * Blocks until process finished, returns its output
    */
-  @NotNull
   @RequiresBackgroundThread(generateAssertion = false)
-  public final ProcessOutput runProcess() {
+  public final @NotNull ProcessOutput runProcess() {
     return myProcessRunner.runProcess();
   }
 
@@ -68,18 +67,15 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return myProcessRunner.runProcess(timeoutInMilliseconds, destroyOnTimeout);
   }
 
-  @NotNull
-  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator) {
+  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator) {
     return myProcessRunner.runProcess(indicator);
   }
 
-  @NotNull
-  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
+  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
     return myProcessRunner.runProcess(indicator, timeoutInMilliseconds);
   }
 
-  @NotNull
-  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
+  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
     return myProcessRunner.runProcess(indicator, timeoutInMilliseconds, destroyOnTimeout);
   }
 
@@ -92,9 +88,8 @@ public class CapturingProcessHandler extends OSProcessHandler {
       super(process, charset, commandLine);
     }
 
-    @NotNull
     @Override
-    protected BaseOutputReader.Options readerOptions() {
+    protected @NotNull BaseOutputReader.Options readerOptions() {
       return BaseOutputReader.Options.forMostlySilentProcess();
     }
   }

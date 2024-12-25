@@ -60,12 +60,11 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   private static final @NotNull List<Key<?>> TEMP_CACHE_KEYS =
     Arrays.asList(DIRECTORY_CACHE, IS_CACHING_ROOT, SimpleChangesGroupingPolicy.GROUP_NODE_CACHE);
 
-  @Nullable
-  public final Project myProject;
+  public final @Nullable Project myProject;
 
-  @NotNull public final DefaultTreeModel myModel;
-  @NotNull public final ChangesBrowserNode<?> myRoot;
-  @NotNull private final ChangesGroupingPolicyFactory myGroupingPolicyFactory;
+  public final @NotNull DefaultTreeModel myModel;
+  public final @NotNull ChangesBrowserNode<?> myRoot;
+  private final @NotNull ChangesGroupingPolicyFactory myGroupingPolicyFactory;
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static final Comparator<ChangesBrowserNode> BROWSER_NODE_COMPARATOR = (node1, node2) -> {
@@ -89,9 +88,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    * This ensures that helper {@link #createPathNode} node will not be created if there is already a 'data' node with the same path,
    * as all 'parents' are processed before their 'children'.
    */
-  public final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
-  public final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
-  public final static Comparator<VirtualFile> FILE_COMPARATOR = VirtualFileHierarchicalComparator.getInstance();
+  public static final Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
+  public static final Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
+  public static final Comparator<VirtualFile> FILE_COMPARATOR = VirtualFileHierarchicalComparator.getInstance();
 
   /**
    * Requires non-null Project for local changes.
@@ -103,65 +102,57 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     myGroupingPolicyFactory = grouping;
   }
 
-  @NotNull
-  public static DefaultTreeModel buildEmpty() {
+  public static @NotNull DefaultTreeModel buildEmpty() {
     return new ChangesTreeModel(ChangesBrowserNode.createRoot());
   }
 
-  @NotNull
-  public static DefaultTreeModel buildFromChanges(@Nullable Project project,
-                                                  @NotNull ChangesGroupingPolicyFactory grouping,
-                                                  @NotNull Collection<? extends Change> changes,
-                                                  @Nullable ChangeNodeDecorator changeNodeDecorator) {
+  public static @NotNull DefaultTreeModel buildFromChanges(@Nullable Project project,
+                                                           @NotNull ChangesGroupingPolicyFactory grouping,
+                                                           @NotNull Collection<? extends Change> changes,
+                                                           @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return new TreeModelBuilder(project, grouping)
       .setChanges(changes, changeNodeDecorator)
       .build();
   }
 
-  @NotNull
-  public static DefaultTreeModel buildFromFilePaths(@Nullable Project project,
-                                                    @NotNull ChangesGroupingPolicyFactory grouping,
-                                                    @NotNull Collection<? extends FilePath> filePaths) {
+  public static @NotNull DefaultTreeModel buildFromFilePaths(@Nullable Project project,
+                                                             @NotNull ChangesGroupingPolicyFactory grouping,
+                                                             @NotNull Collection<? extends FilePath> filePaths) {
     return new TreeModelBuilder(project, grouping)
       .setFilePaths(filePaths)
       .build();
   }
 
-  @NotNull
-  public static DefaultTreeModel buildFromChangeLists(@NotNull Project project,
-                                                      @NotNull ChangesGroupingPolicyFactory grouping,
-                                                      @NotNull Collection<? extends ChangeList> changeLists) {
+  public static @NotNull DefaultTreeModel buildFromChangeLists(@NotNull Project project,
+                                                               @NotNull ChangesGroupingPolicyFactory grouping,
+                                                               @NotNull Collection<? extends ChangeList> changeLists) {
     return buildFromChangeLists(project, grouping, changeLists, false);
   }
 
-  @NotNull
-  public static DefaultTreeModel buildFromChangeLists(@NotNull Project project,
-                                                      @NotNull ChangesGroupingPolicyFactory grouping,
-                                                      @NotNull Collection<? extends ChangeList> changeLists,
-                                                      boolean skipSingleDefaultChangelist) {
+  public static @NotNull DefaultTreeModel buildFromChangeLists(@NotNull Project project,
+                                                               @NotNull ChangesGroupingPolicyFactory grouping,
+                                                               @NotNull Collection<? extends ChangeList> changeLists,
+                                                               boolean skipSingleDefaultChangelist) {
     return new TreeModelBuilder(project, grouping)
       .setChangeLists(changeLists, skipSingleDefaultChangelist, null)
       .build();
   }
 
-  @NotNull
-  public static DefaultTreeModel buildFromVirtualFiles(@Nullable Project project,
-                                                       @NotNull ChangesGroupingPolicyFactory grouping,
-                                                       @NotNull Collection<? extends VirtualFile> virtualFiles) {
+  public static @NotNull DefaultTreeModel buildFromVirtualFiles(@Nullable Project project,
+                                                                @NotNull ChangesGroupingPolicyFactory grouping,
+                                                                @NotNull Collection<? extends VirtualFile> virtualFiles) {
     return new TreeModelBuilder(project, grouping)
       .setVirtualFiles(virtualFiles, null)
       .build();
   }
 
-  @NotNull
-  public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
+  public @NotNull TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return setChanges(changes, changeNodeDecorator, null);
   }
 
-  @NotNull
-  public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes,
-                                     @Nullable ChangeNodeDecorator changeNodeDecorator,
-                                     @Nullable ChangesBrowserNode.Tag tag) {
+  public @NotNull TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes,
+                                              @Nullable ChangeNodeDecorator changeNodeDecorator,
+                                              @Nullable ChangesBrowserNode.Tag tag) {
     insertChanges(changes, createTagNode(tag), changeNodeDecorator);
     return this;
   }
@@ -179,26 +170,23 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     }
   }
 
-  @NotNull
-  public TreeModelBuilder setUnversioned(@Nullable List<? extends FilePath> unversionedFiles) {
+  public @NotNull TreeModelBuilder setUnversioned(@Nullable List<? extends FilePath> unversionedFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
     ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, unversionedFiles);
     return insertSpecificFilePathNodeToModel(unversionedFiles, node, FileStatus.UNKNOWN);
   }
 
-  @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<? extends FilePath> ignoredFiles) {
+  public @NotNull TreeModelBuilder setIgnored(@Nullable List<? extends FilePath> ignoredFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
     ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles);
     return insertSpecificFilePathNodeToModel(ignoredFiles, node, FileStatus.IGNORED);
   }
 
-  @NotNull
-  private TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
-                                                             @NotNull ChangesBrowserSpecificFilePathsNode<?> node,
-                                                             @NotNull FileStatus status) {
+  private @NotNull TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
+                                                                      @NotNull ChangesBrowserSpecificFilePathsNode<?> node,
+                                                                      @NotNull FileStatus status) {
     insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
       node.markAsHelperNode();
@@ -207,10 +195,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
-  private TreeModelBuilder insertSpecificFileNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
-                                                         @NotNull ChangesBrowserSpecificFilesNode<?> node,
-                                                         @NotNull FileStatus status) {
+  private @NotNull TreeModelBuilder insertSpecificFileNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
+                                                                  @NotNull ChangesBrowserSpecificFilesNode<?> node,
+                                                                  @NotNull FileStatus status) {
     insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
       node.markAsHelperNode();
@@ -219,10 +206,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
-  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists,
-                                         boolean skipSingleDefaultChangeList,
-                                         @Nullable Function<? super ChangeNodeDecorator, ? extends ChangeNodeDecorator> changeDecoratorProvider) {
+  public @NotNull TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists,
+                                                  boolean skipSingleDefaultChangeList,
+                                                  @Nullable Function<? super ChangeNodeDecorator, ? extends ChangeNodeDecorator> changeDecoratorProvider) {
     assert myProject != null;
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
@@ -259,58 +245,49 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return ((LocalChangeList)single).isBlank();
   }
 
-  @NotNull
-  public ChangesBrowserNode<?> createChangeNode(@NotNull Change change, @Nullable ChangeNodeDecorator decorator) {
+  public @NotNull ChangesBrowserNode<?> createChangeNode(@NotNull Change change, @Nullable ChangeNodeDecorator decorator) {
     return new ChangesBrowserChangeNode(myProject, change, decorator);
   }
 
-  @NotNull
-  public TreeModelBuilder setLockedFolders(@Nullable List<? extends VirtualFile> lockedFolders) {
+  public @NotNull TreeModelBuilder setLockedFolders(@Nullable List<? extends VirtualFile> lockedFolders) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(lockedFolders)) return this;
     insertFilesIntoNode(lockedFolders, createLockedFolders(myProject));
     return this;
   }
 
-  @NotNull
-  public TreeModelBuilder setModifiedWithoutEditing(@NotNull List<? extends VirtualFile> modifiedWithoutEditing) {
+  public @NotNull TreeModelBuilder setModifiedWithoutEditing(@NotNull List<? extends VirtualFile> modifiedWithoutEditing) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(modifiedWithoutEditing)) return this;
     ModifiedWithoutEditingNode node = new ModifiedWithoutEditingNode(myProject, modifiedWithoutEditing);
     return insertSpecificFileNodeToModel(modifiedWithoutEditing, node, FileStatus.HIJACKED);
   }
 
-  @NotNull
-  private TreeModelBuilder setVirtualFiles(@Nullable Collection<? extends VirtualFile> files, @Nullable ChangesBrowserNode.Tag tag) {
+  private @NotNull TreeModelBuilder setVirtualFiles(@Nullable Collection<? extends VirtualFile> files, @Nullable ChangesBrowserNode.Tag tag) {
     if (ContainerUtil.isEmpty(files)) return this;
     insertFilesIntoNode(files, createTagNode(tag));
     return this;
   }
 
-  @NotNull
-  public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag) {
+  public @NotNull ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag) {
     return createTagNode(new ChangesBrowserNode.TagImpl(tag));
   }
 
-  @NotNull
-  public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag) {
+  public @NotNull ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag) {
     return createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
   }
 
-  @NotNull
-  public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, boolean expandByDefault) {
+  public @NotNull ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, boolean expandByDefault) {
     return createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault);
   }
 
-  @NotNull
-  public ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, @NotNull SimpleTextAttributes attributes, boolean expandByDefault) {
+  public @NotNull ChangesBrowserNode<?> createTagNode(@NotNull @Nls String tag, @NotNull SimpleTextAttributes attributes, boolean expandByDefault) {
     return createTagNode(new ChangesBrowserNode.TagImpl(tag), attributes, expandByDefault);
   }
 
-  @NotNull
-  public ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag,
-                                             @NotNull SimpleTextAttributes attributes,
-                                             boolean expandByDefault) {
+  public @NotNull ChangesBrowserNode<?> createTagNode(@Nullable ChangesBrowserNode.Tag tag,
+                                                      @NotNull SimpleTextAttributes attributes,
+                                                      boolean expandByDefault) {
     if (tag == null) return myRoot;
 
     ChangesBrowserNode<?> subtreeRoot = new TagChangesBrowserNode(tag, attributes, expandByDefault);
@@ -346,8 +323,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     }
   }
 
-  @NotNull
-  public TreeModelBuilder setLocallyDeletedPaths(@Nullable Collection<? extends LocallyDeletedChange> locallyDeletedChanges) {
+  public @NotNull TreeModelBuilder setLocallyDeletedPaths(@Nullable Collection<? extends LocallyDeletedChange> locallyDeletedChanges) {
     if (ContainerUtil.isEmpty(locallyDeletedChanges)) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG);
 
@@ -357,13 +333,11 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
-  public TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths) {
+  public @NotNull TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths) {
     return setFilePaths(filePaths, myRoot);
   }
 
-  @NotNull
-  public TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths, @NotNull ChangesBrowserNode<?> subtreeRoot) {
+  public @NotNull TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths, @NotNull ChangesBrowserNode<?> subtreeRoot) {
     for (FilePath file : sorted(filePaths, PATH_COMPARATOR)) {
       assert file != null;
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFilePath(file));
@@ -371,8 +345,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
-  public TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, @NlsSafe String> switchedRoots) {
+  public @NotNull TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, @NlsSafe String> switchedRoots) {
     if (ContainerUtil.isEmpty(switchedRoots)) return this;
     ChangesBrowserNode<?> rootsHeadNode = createTagNode(ChangesBrowserNode.SWITCHED_ROOTS_TAG,
                                                         SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES,
@@ -398,8 +371,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
-  public TreeModelBuilder setSwitchedFiles(@NotNull MultiMap<@NlsSafe String, VirtualFile> switchedFiles) {
+  public @NotNull TreeModelBuilder setSwitchedFiles(@NotNull MultiMap<@NlsSafe String, VirtualFile> switchedFiles) {
     if (switchedFiles.isEmpty()) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
     for (@Nls String branchName : switchedFiles.keySet()) {
@@ -418,8 +390,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
-  public TreeModelBuilder setLogicallyLockedFiles(@Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
+  public @NotNull TreeModelBuilder setLogicallyLockedFiles(@Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     if (ContainerUtil.isEmpty(logicallyLockedFiles)) return this;
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
@@ -432,15 +403,13 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
   @Override
-  public TreeModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
+  public @NotNull TreeModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
     insertSubtreeRoot(node, myRoot);
     return this;
   }
 
-  @NotNull
-  public TreeModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node, @NotNull ChangesBrowserNode<?> subtreeRoot) {
+  public @NotNull TreeModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node, @NotNull ChangesBrowserNode<?> subtreeRoot) {
     myModel.insertNodeInto(node, subtreeRoot, subtreeRoot.getChildCount());
     return this;
   }
@@ -517,14 +486,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     }
   }
 
-  @NotNull
-  public DefaultTreeModel build() {
+  public @NotNull DefaultTreeModel build() {
     return build(false);
   }
 
-  @NotNull
   @ApiStatus.Experimental
-  public DefaultTreeModel build(boolean forcePrepareCaches) {
+  public @NotNull DefaultTreeModel build(boolean forcePrepareCaches) {
     TreeUtil.sort(myModel, BROWSER_NODE_COMPARATOR);
     collapseDirectories(myModel, myRoot);
 
@@ -586,9 +553,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     });
   }
 
-  @Nullable
-  private static ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent,
-                                                                   @NotNull ChangesBrowserNode<?> child) {
+  private static @Nullable ChangesBrowserNode<?> collapseParentWithOnlyChild(@NotNull ChangesBrowserNode<?> parent,
+                                                                             @NotNull ChangesBrowserNode<?> child) {
     if (child.isLeaf()) return null;
 
     Object parentUserObject = parent.getUserObject();
@@ -617,23 +583,19 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return null;
   }
 
-  @NotNull
-  public static StaticFilePath staticFrom(@NotNull FilePath fp) {
+  public static @NotNull StaticFilePath staticFrom(@NotNull FilePath fp) {
     return new StaticFilePath(fp);
   }
 
-  @NotNull
-  public static StaticFilePath staticFrom(@NotNull VirtualFile vf) {
+  public static @NotNull StaticFilePath staticFrom(@NotNull VirtualFile vf) {
     return new StaticFilePath(VcsUtil.getFilePath(vf));
   }
 
-  @NotNull
-  public static StaticFilePath staticFrom(@NotNull Change change) {
+  public static @NotNull StaticFilePath staticFrom(@NotNull Change change) {
     return staticFrom(ChangesUtil.getFilePath(change));
   }
 
-  @NotNull
-  public static FilePath getPathForObject(@NotNull Object o) {
+  public static @NotNull FilePath getPathForObject(@NotNull Object o) {
     if (o instanceof Change) {
       return ChangesUtil.getFilePath((Change)o);
     }
@@ -650,8 +612,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     throw new IllegalArgumentException("Unknown type - " + o.getClass());
   }
 
-  @NotNull
-  private static ChangesBrowserNode<?> createPathNode(@NotNull StaticFilePath path) {
+  private static @NotNull ChangesBrowserNode<?> createPathNode(@NotNull StaticFilePath path) {
     return ChangesBrowserNode.createFilePath(path.getFilePath());
   }
 

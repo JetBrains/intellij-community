@@ -43,7 +43,7 @@ public final class JDOMXIncluder {
 
   private final boolean ignoreMissing;
   private final PathResolver pathResolver;
-  @Nullable private final String pointer;
+  private final @Nullable String pointer;
 
   private JDOMXIncluder(boolean ignoreMissing, @NotNull PathResolver pathResolver, @Nullable String defaultPointer) {
     this.ignoreMissing = ignoreMissing;

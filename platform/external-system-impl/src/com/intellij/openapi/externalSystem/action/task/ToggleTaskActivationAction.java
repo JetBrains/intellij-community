@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -29,8 +29,7 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 @ApiStatus.Internal
 public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAction {
 
-  @NotNull
-  private final ExternalSystemTaskActivator.Phase myPhase;
+  private final @NotNull ExternalSystemTaskActivator.Phase myPhase;
 
   protected ToggleTaskActivationAction(@NotNull ExternalSystemTaskActivator.Phase phase) {
     myPhase = phase;
@@ -58,8 +57,7 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
     }
   }
 
-  @NotNull
-  private static List<TaskData> getTasks(@NotNull AnActionEvent e) {
+  private static @NotNull List<TaskData> getTasks(@NotNull AnActionEvent e) {
     final List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
     if (selectedNodes == null) return Collections.emptyList();
 

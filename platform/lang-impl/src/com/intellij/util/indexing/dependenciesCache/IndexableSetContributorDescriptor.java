@@ -70,8 +70,7 @@ final class IndexableSetContributorDescriptor {
     return new IndexableSetContributorFilesIteratorBuilder(presentableText, debugName, roots, projectAware, contributor);
   }
 
-  @Unmodifiable
-  public static @NotNull List<IndexableSetContributorDescriptor> collectDescriptors(@NotNull Project project) {
+  public static @Unmodifiable @NotNull List<IndexableSetContributorDescriptor> collectDescriptors(@NotNull Project project) {
     return ContainerUtil.map(IndexableSetContributor.EP_NAME.getExtensionList(),
                              contributor -> new IndexableSetContributorDescriptor(contributor, project));
   }

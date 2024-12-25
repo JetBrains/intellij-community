@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -45,8 +45,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * The returned set must contain {@link #getLookupString()}.
    * @see #isCaseSensitive()
    */
-  @Unmodifiable
-  public Set<String> getAllLookupStrings() {
+  public @Unmodifiable Set<String> getAllLookupStrings() {
     return Collections.singleton(getLookupString());
   }
 

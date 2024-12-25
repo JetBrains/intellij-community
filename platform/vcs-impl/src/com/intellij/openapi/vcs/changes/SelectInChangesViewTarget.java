@@ -52,9 +52,8 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     }
   }
 
-  @Nullable
   @Override
-  public String getToolWindowId() {
+  public @Nullable String getToolWindowId() {
     return getToolWindowIdFor(myProject, LOCAL_CHANGES);
   }
 

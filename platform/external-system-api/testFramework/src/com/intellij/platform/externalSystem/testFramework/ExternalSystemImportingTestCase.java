@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.externalSystem.testFramework;
 
 import com.intellij.find.FindManager;
@@ -42,12 +42,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.externalSystem.testFramework.utils.module.ExternalSystemSourceRootAssertion;
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions;
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions;
+import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions;
-import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
@@ -341,8 +341,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertUnorderedElementsAreEqual(ContainerUtil.map2Array(deps, entry -> entry.getScope()), scopes);
   }
 
-  @NotNull
-  private List<ModuleOrderEntry> getModuleModuleDeps(@NotNull String moduleName, @NotNull String depName) {
+  private @NotNull List<ModuleOrderEntry> getModuleModuleDeps(@NotNull String moduleName, @NotNull String depName) {
     return getModuleDep(moduleName, depName, ModuleOrderEntry.class);
   }
 
@@ -361,8 +360,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return collectModuleDepsNames(moduleName, entry -> clazz.isInstance(entry));
   }
 
-  @NotNull
-  private <T> List<T> getModuleDep(@NotNull String moduleName, @NotNull String depName, @NotNull Class<T> clazz) {
+  private @NotNull <T> List<T> getModuleDep(@NotNull String moduleName, @NotNull String depName, @NotNull Class<T> clazz) {
     List<T> deps = new ArrayList<>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
@@ -469,7 +467,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     if (callback == null || callback instanceof ImportSpecBuilder.DefaultProjectRefreshCallback) {
       importSpec = new ImportSpecBuilder(importSpec).callback(new ExternalProjectRefreshCallback() {
         @Override
-        public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+        public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
           if (externalProject == null) {
             System.err.println("Got null External project after import");
             return;
@@ -551,13 +549,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     });
   }
 
-  @Nullable
-  protected SourceFolder findSource(@NotNull String moduleName, @NotNull String sourcePath) {
+  protected @Nullable SourceFolder findSource(@NotNull String moduleName, @NotNull String sourcePath) {
     return findSource(getRootManager(moduleName), sourcePath);
   }
 
-  @Nullable
-  protected SourceFolder findSource(@NotNull ModuleRootModel moduleRootManager, @NotNull String sourcePath) {
+  protected @Nullable SourceFolder findSource(@NotNull ModuleRootModel moduleRootManager, @NotNull String sourcePath) {
     ContentEntry[] contentRoots = moduleRootManager.getContentEntries();
     Module module = moduleRootManager.getModule();
     String rootUrl = getAbsolutePath(ExternalSystemApiUtil.getExternalProjectPath(module));

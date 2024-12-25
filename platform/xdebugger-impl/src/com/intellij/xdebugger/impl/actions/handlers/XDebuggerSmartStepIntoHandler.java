@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -165,9 +165,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         return aValue.getIcon();
       }
 
-      @NotNull
       @Override
-      public String getTextFor(V value) {
+      public @NotNull String getTextFor(V value) {
         return value.getText();
       }
 
@@ -437,8 +436,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     class VariantInfo {
-      @NotNull final V myVariant;
-      @NotNull final Point myStartPoint;
+      final @NotNull V myVariant;
+      final @NotNull Point myStartPoint;
 
       VariantInfo(@NotNull V variant) {
         myVariant = variant;
@@ -447,7 +446,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static abstract class SmartStepEditorActionHandler extends EditorActionHandler {
+  abstract static class SmartStepEditorActionHandler extends EditorActionHandler {
     protected final EditorActionHandler myOriginalHandler;
 
     SmartStepEditorActionHandler(EditorActionHandler originalHandler) {

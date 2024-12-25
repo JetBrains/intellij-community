@@ -34,9 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class IgnoreLanguageHighlighterFactory extends SyntaxHighlighterFactory {
-  @NotNull
   @Override
-  public SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+  public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
     return new IgnoreLanguageHighlighter(virtualFile);
   }
 }

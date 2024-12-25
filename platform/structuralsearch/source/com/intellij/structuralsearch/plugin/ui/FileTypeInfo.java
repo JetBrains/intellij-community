@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
@@ -28,18 +28,15 @@ class FileTypeInfo {
     myDescription = fileType.getDescription();
   }
 
-  @NotNull
-  public LanguageFileType getFileType() {
+  public @NotNull LanguageFileType getFileType() {
     return myFileType;
   }
 
-  @Nullable
-  public Language getDialect() {
+  public @Nullable Language getDialect() {
     return myDialect;
   }
 
-  @Nullable
-  public PatternContext getContext() {
+  public @Nullable PatternContext getContext() {
     return myContext;
   }
 

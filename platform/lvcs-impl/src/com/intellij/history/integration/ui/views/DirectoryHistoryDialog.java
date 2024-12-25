@@ -180,8 +180,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       ShowDiffAction.showDiffForChange(myProject, changes, index, new ShowDiffContext(DiffDialogHints.FRAME));
     }
 
-    @Unmodifiable
-    private @NotNull List<DirectoryChange> iterFileChanges() {
+    private @Unmodifiable @NotNull List<DirectoryChange> iterFileChanges() {
       return ContainerUtil.filter(getDisplayedChanges(), each -> each.canShowFileDifference());
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.ide.DataManager;
@@ -107,9 +107,7 @@ public final class MacroManager {
   /**
    * @return all macros (built-in and provided via {@link Macro} extension point)
    */
-  @NotNull
-  @Unmodifiable
-  public Collection<Macro> getMacros() {
+  public @NotNull @Unmodifiable Collection<Macro> getMacros() {
     return ContainerUtil.concat(predefinedMacros, Macro.EP_NAME.getExtensionList());
   }
 
@@ -157,8 +155,7 @@ public final class MacroManager {
    * @return string with macros expanded
    * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
    */
-  @Nullable
-  public String expandMacrosInString(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
+  public @Nullable String expandMacrosInString(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
     throws ExecutionCancelledException {
     return expandMacrosInString(str, firstQueueExpand, dataContext, false);
   }
@@ -175,8 +172,7 @@ public final class MacroManager {
    * @return string with macros expanded
    * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
    */
-  @Nullable
-  public String expandSilentMacros(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
+  public @Nullable String expandSilentMacros(@Nullable String str, boolean firstQueueExpand, DataContext dataContext)
     throws ExecutionCancelledException {
     return expandMacrosInString(str, firstQueueExpand, dataContext, true);
   }
@@ -193,8 +189,7 @@ public final class MacroManager {
    * and {@code defaultExpandValue} is {@code null}
    * @throws ExecutionCancelledException can be thrown by any macro's expand method to stop expansion
    */
-  @Nullable
-  public String expandMacrosInString(@Nullable String str,
+  public @Nullable String expandMacrosInString(@Nullable String str,
                                      boolean firstQueueExpand,
                                      DataContext dataContext,
                                      boolean onlySilent) throws ExecutionCancelledException {
@@ -205,11 +200,10 @@ public final class MacroManager {
     return expandMacroSet(str, firstQueueExpand, dataContext, macros);
   }
 
-  @Nullable
-  private static String expandMacroSet(@Nullable String str,
-                                       boolean firstQueueExpand,
-                                       DataContext dataContext,
-                                       Collection<? extends Macro> macros) throws ExecutionCancelledException {
+  private static @Nullable String expandMacroSet(@Nullable String str,
+                                                 boolean firstQueueExpand,
+                                                 DataContext dataContext,
+                                                 Collection<? extends Macro> macros) throws ExecutionCancelledException {
     if (str == null) {
       return null;
     }

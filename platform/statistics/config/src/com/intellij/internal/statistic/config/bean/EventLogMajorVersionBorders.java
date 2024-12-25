@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config.bean;
 
 import com.intellij.internal.statistic.config.eventLog.EventLogMajorVersion;
@@ -6,10 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EventLogMajorVersionBorders {
-  @Nullable
-  public String from;
-  @Nullable
-  public String to;
+  public @Nullable String from;
+  public @Nullable String to;
 
   public boolean accept(@NotNull String current) {
     EventLogMajorVersion build = EventLogMajorVersion.fromString(current);

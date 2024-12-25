@@ -279,8 +279,7 @@ public class JavaHomeFinderBasic {
       .collect(Collectors.toSet());
   }
 
-  @Nullable
-  private Path findMiseInstallsDir() {
+  private @Nullable Path findMiseInstallsDir() {
     // try to use environment variable for custom data directory
     // https://mise.jdx.dev/configuration.html#mise-data-dir
     Path miseDataDir = getPathInEnvironmentVariable("MISE_DATA_DIR", "installs");

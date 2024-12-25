@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -18,9 +18,9 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 @ApiStatus.Internal
 public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<ChangesBrowserNode.Tag> implements TreeLinkMouseListener.HaveTooltip {
 
-  @NotNull private static final SimpleTextAttributes CLEANUP_LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBColor.RED);
+  private static final @NotNull SimpleTextAttributes CLEANUP_LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBColor.RED);
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public ChangesBrowserLockedFoldersNode(@NotNull Project project) {
     super(LOCKED_FOLDERS_TAG);
@@ -28,8 +28,7 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<ChangesB
   }
 
   @Override
-  @NotNull
-  public String getTooltip() {
+  public @NotNull String getTooltip() {
     return VcsBundle.message("changes.nodetitle.locked.folders.tooltip");
   }
 
@@ -47,8 +46,8 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<ChangesB
   }
 
   private static final class CleanupWorker implements Runnable {
-    @NotNull private final Project myProject;
-    @NotNull private final ChangesBrowserNode<?> myNode;
+    private final @NotNull Project myProject;
+    private final @NotNull ChangesBrowserNode<?> myNode;
 
     private CleanupWorker(@NotNull Project project, @NotNull ChangesBrowserNode<?> node) {
       myProject = project;

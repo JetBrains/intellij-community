@@ -162,8 +162,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     });
   }
 
-  @NotNull
-  private static List<EventPair<?>> computeDataInReadAction(@NotNull Project project) {
+  private static @NotNull List<EventPair<?>> computeDataInReadAction(@NotNull Project project) {
     return ReadAction.nonBlocking((Callable<List<EventPair<?>>>)() -> {
         boolean isDumb = DumbService.isDumb(project);
         IncompleteDependenciesService service = project.getService(IncompleteDependenciesService.class);

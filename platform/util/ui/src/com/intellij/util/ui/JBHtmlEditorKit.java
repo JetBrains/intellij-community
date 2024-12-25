@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -164,8 +164,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     return myViewFactory;
   }
 
-  @Unmodifiable
-  private static @NotNull List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
+  private static @Unmodifiable @NotNull List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
     return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
   }
 

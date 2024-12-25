@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
@@ -46,8 +46,7 @@ public final class FUCounterUsageLogger {
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
-  @NotNull
-  public static FUCounterUsageLogger getInstance() {
+  public static @NotNull FUCounterUsageLogger getInstance() {
     return ApplicationManager.getApplication().getService(FUCounterUsageLogger.class);
   }
 
@@ -248,8 +247,7 @@ public final class FUCounterUsageLogger {
     }
   }
 
-  @Nullable
-  private EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
+  private @Nullable EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
     if (!myGroups.containsKey(groupId)) {
       LOG.error(
         "Cannot record event because group '" + groupId + "' is not registered. " +

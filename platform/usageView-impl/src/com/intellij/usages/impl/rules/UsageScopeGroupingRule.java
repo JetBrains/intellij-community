@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
@@ -24,9 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
-  @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage elementUsage)) {
       return null;
     }
@@ -61,8 +60,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.test");
     }
   };
@@ -73,8 +71,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.production");
     }
   };
@@ -85,8 +82,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.library");
     }
   };

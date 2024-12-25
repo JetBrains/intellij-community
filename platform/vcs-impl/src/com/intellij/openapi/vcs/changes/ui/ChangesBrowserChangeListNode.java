@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -71,9 +71,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
-  @NlsContexts.Tooltip
-  @Nullable
-  private String getTooltipText() {
+  private @NlsContexts.Tooltip @Nullable String getTooltipText() {
     if (!(userObject instanceof LocalChangeList)) return null;
     ChangeListData data = getChangeListData((LocalChangeList)userObject);
     if (data == null) return null;
@@ -93,8 +91,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   /**
    * Get first 5 lines from the comment and add ellipsis if are smth else
    */
-  @Nullable
-  private static String cropMessageIfNeeded(@Nullable String comment) {
+  private static @Nullable String cropMessageIfNeeded(@Nullable String comment) {
     if (comment == null) return null;
     String[] lines = StringUtil.splitByLines(XmlStringUtil.escapeString(comment), false);
     String croppedMessage = of(lines).limit(5).joining(UIUtil.BR);

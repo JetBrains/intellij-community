@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
@@ -80,15 +80,13 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   public static class TipInfoValidationRule extends CustomValidationRule {
     public static final String RULE_ID = "tip_info";
 
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return RULE_ID;
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       PluginInfo info = context.getPayload(PLUGIN_INFO);
       if (info != null) {
         return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;

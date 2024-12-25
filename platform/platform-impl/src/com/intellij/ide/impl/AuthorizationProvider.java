@@ -34,8 +34,7 @@ public interface AuthorizationProvider {
    * @return an access token data or null if the token does not exist. If the token exists, it should always be returned, even if it might be already expired.
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  default String getAccessToken(@NotNull String url) {
+  default @Nullable String getAccessToken(@NotNull String url) {
     return null;
   }
 
@@ -51,8 +50,7 @@ public interface AuthorizationProvider {
    * @return an access token data or null if the token does not exist. If the token exists, it should always be returned, even if it might be already expired.
    */
   @Deprecated
-  @Nullable
-  default Map<String, String> getRequestHeaders(@NotNull String url) {
+  default @Nullable Map<String, String> getRequestHeaders(@NotNull String url) {
     String accessToken = getAccessToken(url);
     return accessToken != null? Map.of(AUTH_TOKEN_HEADER_NAME, accessToken) : null;
   }
@@ -69,8 +67,7 @@ public interface AuthorizationProvider {
    * @param isRefreshAttempt a hint flag. The 'true' value means that the current token is likely to be expired and token refresh can be performed to update it
    * @return an access token data or null if the token does not exist or the currentToken cannot be replaced/converted with a data from the provider. If some token exists, it should always be returned, even if it might be already expired.
    */
-  @Nullable
-  default Map<String, String> getRequestHeaders(@NotNull String url, @Nullable TokenData currentToken, boolean isRefreshAttempt) {
+  default @Nullable Map<String, String> getRequestHeaders(@NotNull String url, @Nullable TokenData currentToken, boolean isRefreshAttempt) {
     return getRequestHeaders(url);
   }
 

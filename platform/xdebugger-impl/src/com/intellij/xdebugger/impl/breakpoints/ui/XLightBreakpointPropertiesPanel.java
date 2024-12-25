@@ -315,8 +315,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     myBreakpointNameLabel.setText(getBreakpointNameLabel());
   }
 
-  @Nls
-  private String getBreakpointNameLabel() {
+  private @Nls String getBreakpointNameLabel() {
     var description = XBreakpointUtil.getGeneralDescription(myBreakpoint);
     if (myIsEditorBalloon) {
       // Use tooltip-like description in this case.

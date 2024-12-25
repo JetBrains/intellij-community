@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -423,8 +423,7 @@ public class ConfigurationContext {
   /**
    * The same as {@link #getConfigurationsFromContext()} but this method doesn't search among existing run configurations
    */
-  @Unmodifiable
-  public @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
+  public @Unmodifiable @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
     // At the moment of writing, caching is not needed here, the result is cached outside.
     return PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, false);
   }

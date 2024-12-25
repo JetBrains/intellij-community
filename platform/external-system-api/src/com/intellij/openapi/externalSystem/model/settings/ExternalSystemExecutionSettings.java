@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.settings;
 
 import com.intellij.openapi.util.Key;
@@ -87,8 +87,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myVerboseProcessing = verboseProcessing;
   }
 
-  @NotNull
-  public List<String> getJvmArguments() {
+  public @NotNull List<String> getJvmArguments() {
     return Collections.unmodifiableList(myJvmArguments);
   }
 
@@ -100,13 +99,11 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myTasks = new ArrayList<>(tasks);
   }
 
-  @NotNull
-  public List<String> getArguments() {
+  public @NotNull List<String> getArguments() {
     return Collections.unmodifiableList(myArguments);
   }
 
-  @NotNull
-  public Map<String, String> getEnv() {
+  public @NotNull Map<String, String> getEnv() {
     return Collections.unmodifiableMap(myEnv);
   }
 
@@ -177,9 +174,8 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myJvmParameters = jvmParameters;
   }
 
-  @Nullable
   @Override
-  public <U> U getUserData(@NotNull Key<U> key) {
+  public @Nullable <U> U getUserData(@NotNull Key<U> key) {
     return myUserData.getUserData(key);
   }
 

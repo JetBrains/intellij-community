@@ -147,6 +147,5 @@ public abstract class InspectionManager {
   public abstract @NotNull GlobalInspectionContext createNewGlobalContext();
 
   @ApiStatus.Internal
-  @Unmodifiable
-  public abstract @NotNull List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file);
+  public abstract @Unmodifiable @NotNull List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file);
 }

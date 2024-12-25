@@ -94,130 +94,109 @@ public class XDebuggerSupport extends DebuggerSupport {
   }
 
   @Override
-  @NotNull
-  public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
+  public @NotNull BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getStepOverHandler() {
+  public @NotNull DebuggerActionHandler getStepOverHandler() {
     return myStepOverHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getStepIntoHandler() {
+  public @NotNull DebuggerActionHandler getStepIntoHandler() {
     return myStepIntoHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getSmartStepIntoHandler() {
+  public @NotNull DebuggerActionHandler getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getStepOutHandler() {
+  public @NotNull DebuggerActionHandler getStepOutHandler() {
     return myStepOutHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getForceStepOverHandler() {
+  public @NotNull DebuggerActionHandler getForceStepOverHandler() {
     return myForceStepOverHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getForceStepIntoHandler() {
+  public @NotNull DebuggerActionHandler getForceStepIntoHandler() {
     return myForceStepIntoHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getRunToCursorHandler() {
+  public @NotNull DebuggerActionHandler getRunToCursorHandler() {
     return myRunToCursorHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getForceRunToCursorHandler() {
+  public @NotNull DebuggerActionHandler getForceRunToCursorHandler() {
     return myForceRunToCursor;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getResumeActionHandler() {
+  public @NotNull DebuggerActionHandler getResumeActionHandler() {
     return myResumeHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getPauseHandler() {
+  public @NotNull DebuggerActionHandler getPauseHandler() {
     return myPauseHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getToggleLineBreakpointHandler() {
+  public @NotNull DebuggerActionHandler getToggleLineBreakpointHandler() {
     return myToggleLineBreakpointActionHandler;
   }
 
-  @NotNull
   @Override
-  public DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
+  public @NotNull DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
     return myToggleTemporaryLineBreakpointActionHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getShowExecutionPointHandler() {
+  public @NotNull DebuggerActionHandler getShowExecutionPointHandler() {
     return myShowExecutionPointHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerActionHandler getEvaluateHandler() {
+  public @NotNull DebuggerActionHandler getEvaluateHandler() {
     return myEvaluateHandler;
   }
 
-  @NotNull
   @Override
-  public DebuggerActionHandler getAddToWatchesActionHandler() {
+  public @NotNull DebuggerActionHandler getAddToWatchesActionHandler() {
     return myAddToWatchesActionHandler;
   }
 
-  @NotNull
   @Override
-  public DebuggerActionHandler getAddToInlineWatchesActionHandler() {
+  public @NotNull DebuggerActionHandler getAddToInlineWatchesActionHandler() {
     return myAddToInlineWatchesActionHandler;
   }
 
 
-  @NotNull
   @Override
-  public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
+  public @NotNull DebuggerActionHandler getEvaluateInConsoleActionHandler() {
     return myEvaluateInConsoleActionHandler;
   }
 
   @Override
-  @NotNull
-  public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
+  public @NotNull DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
   }
 
   @ApiStatus.Internal
-  @NotNull
   @Override
-  public MarkObjectActionHandler getMarkObjectHandler() {
+  public @NotNull MarkObjectActionHandler getMarkObjectHandler() {
     return myMarkObjectActionHandler;
   }
 
-  @NotNull
   @Override
-  public EditBreakpointActionHandler getEditBreakpointAction() {
+  public @NotNull EditBreakpointActionHandler getEditBreakpointAction() {
     return myEditBreakpointActionHandler;
   }
 }

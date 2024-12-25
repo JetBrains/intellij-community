@@ -26,8 +26,8 @@ import java.util.function.Consumer;
  */
 final class ManagedHighlighterRecycler {
   private final Long2ObjectMap<List<InvalidPsi>> incinerator = new Long2ObjectOpenHashMap<>();  // range -> list of highlighters in this range; these are managed highlighters (ones which are registered in HighlightInfoUpdaterImpl)
-  @NotNull final HighlightingSession myHighlightingSession;
-  @NotNull private final HighlightInfoUpdaterImpl myHighlightInfoUpdater;
+  final @NotNull HighlightingSession myHighlightingSession;
+  private final @NotNull HighlightInfoUpdaterImpl myHighlightInfoUpdater;
 
   /** do not instantiate, use {@link #runWithRecycler} instead */
   private ManagedHighlighterRecycler(@NotNull HighlightingSession session) {
@@ -49,8 +49,7 @@ final class ManagedHighlighterRecycler {
   }
 
   // null means no highlighter found in the cache
-  @Nullable
-  synchronized InvalidPsi pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized @Nullable InvalidPsi pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<InvalidPsi> list = incinerator.get(range);
     if (list != null) {
@@ -72,9 +71,7 @@ final class ManagedHighlighterRecycler {
     return null;
   }
   //
-  @NotNull
-  @Unmodifiable
-  synchronized Collection<? extends InvalidPsi> forAllInGarbageBin() {
+  synchronized @NotNull @Unmodifiable Collection<? extends InvalidPsi> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }
 

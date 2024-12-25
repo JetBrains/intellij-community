@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -19,19 +19,19 @@ import java.util.*;
 final class ChangeListManagerSerialization {
   private static final int DISABLED_CHANGES_THRESHOLD = 100;
 
-  @NonNls private static final String ATT_ID = "id";
-  @NonNls private static final String ATT_NAME = "name";
-  @NonNls private static final String ATT_COMMENT = "comment";
-  @NonNls private static final String ATT_DEFAULT = "default";
-  @NonNls private static final String ATT_VALUE_TRUE = "true";
-  @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
-  @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
-  @NonNls private static final String ATT_CHANGE_BEFORE_PATH_ESCAPED = "beforePathEscaped";
-  @NonNls private static final String ATT_CHANGE_AFTER_PATH_ESCAPED = "afterPathEscaped";
-  @NonNls private static final String ATT_CHANGE_BEFORE_PATH_IS_DIR = "beforeDir";
-  @NonNls private static final String ATT_CHANGE_AFTER_PATH_IS_DIR = "afterDir";
-  @NonNls private static final String NODE_LIST = "list";
-  @NonNls private static final String NODE_CHANGE = "change";
+  private static final @NonNls String ATT_ID = "id";
+  private static final @NonNls String ATT_NAME = "name";
+  private static final @NonNls String ATT_COMMENT = "comment";
+  private static final @NonNls String ATT_DEFAULT = "default";
+  private static final @NonNls String ATT_VALUE_TRUE = "true";
+  private static final @NonNls String ATT_CHANGE_BEFORE_PATH = "beforePath";
+  private static final @NonNls String ATT_CHANGE_AFTER_PATH = "afterPath";
+  private static final @NonNls String ATT_CHANGE_BEFORE_PATH_ESCAPED = "beforePathEscaped";
+  private static final @NonNls String ATT_CHANGE_AFTER_PATH_ESCAPED = "afterPathEscaped";
+  private static final @NonNls String ATT_CHANGE_BEFORE_PATH_IS_DIR = "beforeDir";
+  private static final @NonNls String ATT_CHANGE_AFTER_PATH_IS_DIR = "afterDir";
+  private static final @NonNls String NODE_LIST = "list";
+  private static final @NonNls String NODE_CHANGE = "change";
 
   static void writeExternal(@NotNull Element element,
                             @Nullable List<? extends LocalChangeList> changeLists,
@@ -42,8 +42,7 @@ final class ChangeListManagerSerialization {
     }
   }
 
-  @NotNull
-  static List<LocalChangeListImpl> readExternal(@NotNull Element element, @NotNull Project project) {
+  static @NotNull List<LocalChangeListImpl> readExternal(@NotNull Element element, @NotNull Project project) {
     List<LocalChangeListImpl> lists = new ArrayList<>();
     for (Element listNode : element.getChildren(NODE_LIST)) {
       lists.add(readChangeList(listNode, project));
@@ -51,8 +50,7 @@ final class ChangeListManagerSerialization {
     return new ArrayList<>(removeDuplicatedLists(lists));
   }
 
-  @NotNull
-  private static Collection<LocalChangeListImpl> removeDuplicatedLists(@NotNull List<LocalChangeListImpl> lists) {
+  private static @NotNull Collection<LocalChangeListImpl> removeDuplicatedLists(@NotNull List<LocalChangeListImpl> lists) {
     // workaround for loading incorrect settings (with duplicate changelist names)
 
     boolean hasDefault = false;
@@ -77,8 +75,7 @@ final class ChangeListManagerSerialization {
     return map.values();
   }
 
-  @NotNull
-  private static Element writeChangeList(@NotNull LocalChangeList list, boolean areChangeListsEnabled) {
+  private static @NotNull Element writeChangeList(@NotNull LocalChangeList list, boolean areChangeListsEnabled) {
     Element listNode = new Element(NODE_LIST);
 
     if (list.isDefault()) listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
@@ -129,8 +126,7 @@ final class ChangeListManagerSerialization {
     }
   }
 
-  @NotNull
-  private static LocalChangeListImpl readChangeList(@NotNull Element listNode, @NotNull Project project) {
+  private static @NotNull LocalChangeListImpl readChangeList(@NotNull Element listNode, @NotNull Project project) {
     String id = listNode.getAttributeValue(ATT_ID);
     String name = StringUtil.notNullize(listNode.getAttributeValue(ATT_NAME), LocalChangeList.getDefaultName());
     String comment = StringUtil.notNullize(listNode.getAttributeValue(ATT_COMMENT));
@@ -151,16 +147,14 @@ final class ChangeListManagerSerialization {
       .build();
   }
 
-  @NotNull
-  private static Element writeChange(@NotNull Change change) {
+  private static @NotNull Element writeChange(@NotNull Change change) {
     Element changeNode = new Element(NODE_CHANGE);
     writeContentRevision(changeNode, change.getBeforeRevision(), RevisionSide.BEFORE);
     writeContentRevision(changeNode, change.getAfterRevision(), RevisionSide.AFTER);
     return changeNode;
   }
 
-  @NotNull
-  private static Change readChange(@NotNull Element changeNode, @NotNull Project project) {
+  private static @NotNull Change readChange(@NotNull Element changeNode, @NotNull Project project) {
     FakeRevision bRev = readContentRevision(changeNode, project, RevisionSide.BEFORE);
     FakeRevision aRev = readContentRevision(changeNode, project, RevisionSide.AFTER);
     return new Change(bRev, aRev);
@@ -180,8 +174,7 @@ final class ChangeListManagerSerialization {
     changeNode.setAttribute(side.getIsDirKey(), String.valueOf(filePath.isDirectory()));
   }
 
-  @Nullable
-  private static FakeRevision readContentRevision(@NotNull Element changeNode, @NotNull Project project, @NotNull RevisionSide side) {
+  private static @Nullable FakeRevision readContentRevision(@NotNull Element changeNode, @NotNull Project project, @NotNull RevisionSide side) {
     String plainPath = changeNode.getAttributeValue(side.getPathKey());
     String escapedPath = changeNode.getAttributeValue(side.getEscapedPathKey());
     String path = escapedPath != null ? XmlStringUtil.unescapeIllegalXmlChars(escapedPath) : plainPath;
@@ -198,9 +191,9 @@ final class ChangeListManagerSerialization {
     BEFORE(ATT_CHANGE_BEFORE_PATH, ATT_CHANGE_BEFORE_PATH_ESCAPED, ATT_CHANGE_BEFORE_PATH_IS_DIR),
     AFTER(ATT_CHANGE_AFTER_PATH, ATT_CHANGE_AFTER_PATH_ESCAPED, ATT_CHANGE_AFTER_PATH_IS_DIR);
 
-    @NotNull private final String myPathKey;
-    @NotNull private final String myEscapedPathKey;
-    @NotNull private final String myIsDirKey;
+    private final @NotNull String myPathKey;
+    private final @NotNull String myEscapedPathKey;
+    private final @NotNull String myIsDirKey;
 
     RevisionSide(@NotNull String pathKey, @NotNull String escapedPathKey, @NotNull String isDirKey) {
       myPathKey = pathKey;
@@ -208,8 +201,7 @@ final class ChangeListManagerSerialization {
       myIsDirKey = isDirKey;
     }
 
-    @NotNull
-    public String getPathKey() {
+    public @NotNull String getPathKey() {
       return myPathKey;
     }
 
@@ -218,8 +210,7 @@ final class ChangeListManagerSerialization {
       return myEscapedPathKey;
     }
 
-    @NotNull
-    public String getIsDirKey() {
+    public @NotNull String getIsDirKey() {
       return myIsDirKey;
     }
   }

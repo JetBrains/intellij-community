@@ -61,9 +61,8 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       }
     }
 
-    @Nullable
     @Override
-    public String getTag() {
+    public @Nullable String getTag() {
       if (stackFrame instanceof PinToTopParentValue pinToTopParentValue) {
         return pinToTopParentValue.getTag();
       }
@@ -130,23 +129,18 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       .ifPresent(node -> myChildren.add(new ResultNode(myTree, this, node.getExpression(), node.getValueContainer())));
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<? extends XValueContainerNode<?>> getLoadedChildren() {
+  public @NotNull @Unmodifiable List<? extends XValueContainerNode<?>> getLoadedChildren() {
     return ContainerUtil.concat(myChildren, super.getLoadedChildren());
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<? extends TreeNode> getChildren() {
+  public @NotNull @Unmodifiable List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
     return ContainerUtil.concat(myChildren, children);
   }
 
-  @NotNull
-  public List<? extends WatchNode> getWatchChildren() {
+  public @NotNull List<? extends WatchNode> getWatchChildren() {
     return myChildren;
   }
 

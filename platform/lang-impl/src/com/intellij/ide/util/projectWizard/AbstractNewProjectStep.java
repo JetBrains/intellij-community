@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -272,8 +272,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     myWizardContext = wizardContext;
   }
 
-  @Nullable
-  final WizardContext getWizardContext() {
+  final @Nullable WizardContext getWizardContext() {
     return myWizardContext;
   }
 }

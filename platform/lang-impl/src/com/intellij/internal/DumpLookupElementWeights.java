@@ -56,8 +56,7 @@ public final class DumpLookupElementWeights extends AnAction implements DumbAwar
     } catch (Exception ignore){}
   }
 
-  @Unmodifiable
-  public static List<String> getLookupElementWeights(LookupImpl lookup, boolean hideSingleValued) {
+  public static @Unmodifiable List<String> getLookupElementWeights(LookupImpl lookup, boolean hideSingleValued) {
     final Map<LookupElement, List<Pair<String, Object>>> weights = lookup.getRelevanceObjects(lookup.getItems(), hideSingleValued);
     return ContainerUtil.map(weights.entrySet(), entry -> entry.getKey().getLookupString() + "\t" + StringUtil.join(entry.getValue(), pair -> pair.first + "=" + pair.second, ", "));
   }

@@ -28,18 +28,15 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog.SpecificFileP
     myView.installPopupHandler(registerUnversionedPopupGroup(myView));
   }
 
-  @NotNull
-  public static ActionGroup getUnversionedToolbarGroup() {
+  public static @NotNull ActionGroup getUnversionedToolbarGroup() {
     return (ActionGroup)ActionManager.getInstance().getAction(TOOLBAR_GROUP);
   }
 
-  @NotNull
-  public static ActionGroup getUnversionedPopupGroup() {
+  public static @NotNull ActionGroup getUnversionedPopupGroup() {
     return (ActionGroup)ActionManager.getInstance().getAction(POPUP_GROUP);
   }
 
-  @NotNull
-  public static ActionGroup registerUnversionedPopupGroup(@NotNull JComponent component) {
+  public static @NotNull ActionGroup registerUnversionedPopupGroup(@NotNull JComponent component) {
     ActionGroup popupGroup = getUnversionedPopupGroup();
     recursiveRegisterShortcutSet(popupGroup, component, null);
     return popupGroup;

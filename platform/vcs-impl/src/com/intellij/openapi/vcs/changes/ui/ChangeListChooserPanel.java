@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +38,7 @@ public final class ChangeListChooserPanel extends JPanel {
   private final Project myProject;
   private String myLastTypedDescription;
   private boolean myNewNameSuggested = false;
-  @Nullable private ChangeListData myData;
+  private @Nullable ChangeListData myData;
 
   public ChangeListChooserPanel(final Project project, @NotNull Consumer<? super @Nullable String> okEnabledListener) {
     super(new BorderLayout());
@@ -65,9 +65,8 @@ public final class ChangeListChooserPanel extends JPanel {
       @Override
       protected NewEditChangelistPanel.ComponentWithTextFieldWrapper createComponentWithTextField(Project project) {
         return new ComponentWithTextFieldWrapper(myExistingListsCombo) {
-          @NotNull
           @Override
-          public EditorTextField getEditorTextField() {
+          public @NotNull EditorTextField getEditorTextField() {
             return myExistingListsCombo.getEditorTextField();
           }
         };
@@ -163,8 +162,7 @@ public final class ChangeListChooserPanel extends JPanel {
   /**
    * Method used as getResult, usually invoked inside doOkAction
    */
-  @Nullable
-  public LocalChangeList getSelectedList(Project project) {
+  public @Nullable LocalChangeList getSelectedList(Project project) {
     ChangeListManagerEx manager = ChangeListManagerEx.getInstanceEx(project);
     String changeListName = myListPanel.getChangeListName();
     LocalChangeList localChangeList = manager.findChangeList(changeListName);
@@ -262,8 +260,7 @@ public final class ChangeListChooserPanel extends JPanel {
       setEditor(compositeEditor);
     }
 
-    @NotNull
-    private EditorTextField getEditorTextField() {
+    private @NotNull EditorTextField getEditorTextField() {
       return myEditorTextField;
     }
   }

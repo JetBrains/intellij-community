@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.CaretState;
@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -133,8 +133,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
 
   private static final Pattern TAG_PATTERN = Pattern.compile("([cse])(\\d{1,3})");
 
-  @Unmodifiable
-  private static List<CaretState> extractStates(String text) {
+  private static @Unmodifiable List<CaretState> extractStates(String text) {
     int x = 0;
     int y = 0;
     List<LogicalPosition[]> list = new ArrayList<>();

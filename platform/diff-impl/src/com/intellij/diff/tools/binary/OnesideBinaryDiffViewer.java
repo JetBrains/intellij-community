@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
@@ -25,7 +25,7 @@ import static java.util.Collections.singletonList;
 
 @ApiStatus.Internal
 public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolder> {
-  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
+  private final @NotNull TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public OnesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
@@ -59,14 +59,12 @@ public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolde
   //
 
   @Override
-  @NotNull
-  protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
+  protected @NotNull Runnable performRediff(final @NotNull ProgressIndicator indicator) {
     JComponent notification = getSide().select(DiffNotifications.createRemovedContent(), DiffNotifications.createInsertedContent());
     return applyNotification(notification);
   }
 
-  @NotNull
-  private Runnable applyNotification(@Nullable final JComponent notification) {
+  private @NotNull Runnable applyNotification(final @Nullable JComponent notification) {
     return () -> {
       clearDiffPresentation();
       if (notification != null) myPanel.addNotification(notification);

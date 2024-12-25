@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -31,8 +31,7 @@ public abstract class AdditionalLibraryRootsProvider {
    * @param project Project instance
    * @return a collection of {@link SyntheticLibrary}
    */
-  @Unmodifiable
-  public @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+  public @Unmodifiable @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
     return Collections.emptyList();
   }
 
@@ -49,8 +48,7 @@ public abstract class AdditionalLibraryRootsProvider {
    * @param project Project instance
    * @see com.intellij.openapi.roots.WatchedRootsProvider
    */
-  @Unmodifiable
-  public @NotNull Collection<VirtualFile> getRootsToWatch(@NotNull Project project) {
+  public @Unmodifiable @NotNull Collection<VirtualFile> getRootsToWatch(@NotNull Project project) {
     return Collections.emptyList();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.BeforeRunTask;
@@ -73,8 +73,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     DnDManager.getInstance().registerTarget(this, this, this);
   }
 
-  @Unmodifiable
-  private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
+  private @Unmodifiable List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
     Set<? extends Key<?>> existing = ContainerUtil.map2Set(myTags, button -> button.myTask.getProviderId());
     return ContainerUtil.filter(BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject()),
                                 provider -> provider.createTask(myConfiguration) != null && (!provider.isSingleton() || !existing.contains(provider.getId())));

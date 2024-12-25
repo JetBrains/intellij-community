@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -106,8 +106,7 @@ public class CommitListPanel extends JPanel implements UiDataProvider {
     }
   }
 
-  @NotNull
-  public JComponent getPreferredFocusComponent() {
+  public @NotNull JComponent getPreferredFocusComponent() {
     return myTable;
   }
 
@@ -196,7 +195,7 @@ public class CommitListPanel extends JPanel implements UiDataProvider {
 
   private abstract static class CommitColumnInfo extends ColumnInfo<VcsFullCommitDetails, String> {
 
-    @NotNull private final String myMaxString;
+    private final @NotNull String myMaxString;
 
     CommitColumnInfo(@NotNull @NlsContexts.ColumnName String name, @NotNull String maxString) {
       super(name);

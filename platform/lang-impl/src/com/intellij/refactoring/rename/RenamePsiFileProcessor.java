@@ -34,10 +34,9 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
-                                                          @NotNull SearchScope searchScope,
-                                                          boolean searchInCommentsAndStrings) {
+  public @Unmodifiable @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                                        @NotNull SearchScope searchScope,
+                                                                        boolean searchInCommentsAndStrings) {
     if (!getSearchForReferences(element)) {
       return Collections.emptyList();
     }

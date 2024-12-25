@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -103,8 +102,7 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     return new Pair<>(entry.getKey(), entry.getValue());
   }
 
-  @NotNull
-  private static String prepareCallArgs(@NotNull List<String> callArgs) {
+  private static @NotNull String prepareCallArgs(@NotNull List<String> callArgs) {
     List<String> preparedCallArgs = CommandLineUtil.toCommandLine(callArgs);
     String firstArg = preparedCallArgs.remove(0);
     preparedCallArgs.add(0, CommandLineUtil.escapeParameterOnWindows(firstArg, false));

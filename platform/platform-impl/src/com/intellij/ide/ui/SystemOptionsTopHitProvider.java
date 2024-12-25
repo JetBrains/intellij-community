@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.GeneralSettings;
@@ -16,8 +16,7 @@ import java.util.List;
 
 final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
   @Override
-  @Unmodifiable
-  public @NotNull Collection<OptionDescription> getOptions() {
+  public @Unmodifiable @NotNull Collection<OptionDescription> getOptions() {
     return ContainerUtil.concat(
       GeneralSettingsConfigurableKt.getAllOptionDescriptors(),
       List.of(

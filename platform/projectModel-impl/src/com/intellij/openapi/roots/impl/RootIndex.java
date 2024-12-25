@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,8 +26,8 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
+import com.intellij.util.containers.Stack;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
+import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.*;
 
 class RootIndex {
   static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
@@ -49,7 +49,7 @@ class RootIndex {
   private static final Logger LOG = Logger.getInstance(RootIndex.class);
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final Lazy<OrderEntryGraph> myOrderEntryGraphLazy = LazyKt.lazy(() -> calculateOrderEntryGraph());
 
   RootIndex(@NotNull Project project) {
@@ -65,8 +65,7 @@ class RootIndex {
     }
   }
 
-  @NotNull
-  private RootInfo buildRootInfo(@NotNull Project project) {
+  private @NotNull RootInfo buildRootInfo(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Start building root info " + Thread.currentThread());
     }
@@ -212,8 +211,7 @@ class RootIndex {
     return info;
   }
 
-  @NotNull
-  private static Set<VirtualFile> collectSdkClasses(@NotNull Set<? extends Sdk> sdks) {
+  private static @NotNull Set<VirtualFile> collectSdkClasses(@NotNull Set<? extends Sdk> sdks) {
     Set<VirtualFile> roots = new HashSet<>();
 
     for (Sdk sdk : sdks) {
@@ -222,8 +220,7 @@ class RootIndex {
     return roots;
   }
 
-  @NotNull
-  private Set<Sdk> collectSdks() {
+  private @NotNull Set<Sdk> collectSdks() {
     Set<Sdk> sdks = new HashSet<>();
 
     for (Module m : ModuleManager.getInstance(myProject).getModules()) {
@@ -260,13 +257,11 @@ class RootIndex {
     return RootFileValidityChecker.ensureValid(file, container, null);
   }
 
-  @NotNull
-  private OrderEntryGraph getOrderEntryGraph() {
+  private @NotNull OrderEntryGraph getOrderEntryGraph() {
     return myOrderEntryGraphLazy.getValue();
   }
 
-  @NotNull
-  private OrderEntryGraph calculateOrderEntryGraph() {
+  private @NotNull OrderEntryGraph calculateOrderEntryGraph() {
     RootInfo rootInfo = buildRootInfo(myProject);
     Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
     return new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
@@ -280,8 +275,7 @@ class RootIndex {
   private static class OrderEntryGraph {
     private static class Edge {
       private final Module myKey;
-      @NotNull
-      private final ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
+      private final @NotNull ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
       private final boolean myRecursive; // Whether this edge should be descended into during graph walk
 
       Edge(@NotNull Module key, @NotNull ModuleOrderEntry orderEntry, boolean recursive) {
@@ -338,19 +332,16 @@ class RootIndex {
       myAllRoots = rootInfo.getAllRoots();
       int cacheSize = Math.max(100, myAllRoots.size() / 3);
       myCache = new SynchronizedSLRUCache<>(cacheSize, cacheSize) {
-        @NotNull
         @Override
-        @Unmodifiable
-        public List<OrderEntry> createValue(@NotNull VirtualFile key) {
+        public @NotNull @Unmodifiable List<OrderEntry> createValue(@NotNull VirtualFile key) {
           return collectOrderEntries(key);
         }
       };
       int dependentUnloadedModulesCacheSize = ModuleManager.getInstance(project).getModules().length / 2;
       myDependentUnloadedModulesCache =
         new SynchronizedSLRUCache<>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
-          @NotNull
           @Override
-          public Set<String> createValue(@NotNull Module key) {
+          public @NotNull Set<String> createValue(@NotNull Module key) {
             return collectDependentUnloadedModules(key);
           }
         };
@@ -361,8 +352,7 @@ class RootIndex {
       myLibSourceRootEntries = libSourceRootEntries;
     }
 
-    @NotNull
-    private Pair<Graph, MultiMap<VirtualFile, Node>> initGraphRoots() {
+    private @NotNull Pair<Graph, MultiMap<VirtualFile, Node>> initGraphRoots() {
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       Module[] modules = moduleManager.getModules();
       Graph graph = new Graph(modules.length);
@@ -418,17 +408,14 @@ class RootIndex {
       return Pair.create(graph, roots);
     }
 
-    @NotNull
-    private List<OrderEntry> getOrderEntries(@NotNull VirtualFile file) {
+    private @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile file) {
       return myCache.get(file);
     }
 
     /**
      * Traverses the graph from the given file, collecting all encountered order entries.
      */
-    @NotNull
-    @Unmodifiable
-    private List<OrderEntry> collectOrderEntries(@NotNull VirtualFile file) {
+    private @NotNull @Unmodifiable List<OrderEntry> collectOrderEntries(@NotNull VirtualFile file) {
       List<VirtualFile> roots = getHierarchy(file, myAllRoots, myRootInfo);
       if (roots == null) {
         return Collections.emptyList();
@@ -484,8 +471,7 @@ class RootIndex {
     /**
      * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
      */
-    @NotNull
-    private Set<String> collectDependentUnloadedModules(@NotNull Module module) {
+    private @NotNull Set<String> collectDependentUnloadedModules(@NotNull Module module) {
       Node start = myGraph.myNodes.get(module);
       if (start == null) return Collections.emptySet();
       Deque<Node> stack = new ArrayDeque<>();
@@ -518,8 +504,7 @@ class RootIndex {
     }
   }
 
-  @NotNull
-  private Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
+  private @NotNull Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
     MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<>();
     MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<>();
 
@@ -543,8 +528,7 @@ class RootIndex {
   /**
    * @return list of all super-directories which are marked as some kind of root, or {@code null} if {@code deepDir} is under the ignored folder (with no nested roots)
    */
-  @Nullable("returns null only if dir is under ignored folder")
-  private static List<VirtualFile> getHierarchy(@NotNull VirtualFile deepDir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
+  private static @Nullable("returns null only if dir is under ignored folder") List<VirtualFile> getHierarchy(@NotNull VirtualFile deepDir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
     List<VirtualFile> hierarchy = new ArrayList<>();
     boolean hasContentRoots = false;
     for (VirtualFile dir = deepDir; dir != null; dir = dir.getParent()) {
@@ -561,24 +545,23 @@ class RootIndex {
 
   private static class RootInfo {
     // getDirectoriesByPackageName used to be in this order, some clients might rely on that
-    @NotNull private final Set<VirtualFile> classAndSourceRoots = new LinkedHashSet<>();
+    private final @NotNull Set<VirtualFile> classAndSourceRoots = new LinkedHashSet<>();
 
-    @NotNull private final Set<VirtualFile> libraryOrSdkSources = new HashSet<>();
-    @NotNull private final Set<VirtualFile> libraryOrSdkClasses = new HashSet<>();
-    @NotNull private final Map<VirtualFile, Module> contentRootOf = new HashMap<>();
-    @NotNull private final Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
-    @NotNull private final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> excludedFromLibraries = MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> classOfLibraries = MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> sourceOfLibraries = MultiMap.createSet();
-    @NotNull private final Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions = new HashMap<>();
-    @NotNull private final Set<VirtualFile> excludedFromProject = new HashSet<>();
-    @NotNull private final Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
-    @NotNull private final Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
-    @NotNull private final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
+    private final @NotNull Set<VirtualFile> libraryOrSdkSources = new HashSet<>();
+    private final @NotNull Set<VirtualFile> libraryOrSdkClasses = new HashSet<>();
+    private final @NotNull Map<VirtualFile, Module> contentRootOf = new HashMap<>();
+    private final @NotNull Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
+    private final @NotNull MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
+    private final @NotNull MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> excludedFromLibraries = MultiMap.createSet();
+    private final @NotNull MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> classOfLibraries = MultiMap.createSet();
+    private final @NotNull MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> sourceOfLibraries = MultiMap.createSet();
+    private final @NotNull Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions = new HashMap<>();
+    private final @NotNull Set<VirtualFile> excludedFromProject = new HashSet<>();
+    private final @NotNull Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
+    private final @NotNull Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
+    private final @NotNull Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
 
-    @NotNull
-    private Set<VirtualFile> getAllRoots() {
+    private @NotNull Set<VirtualFile> getAllRoots() {
       VirtualFileSet result = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet();
       result.addAll(classAndSourceRoots);
       result.addAll(contentRootOf.keySet());
@@ -594,8 +577,7 @@ class RootIndex {
      * Returns nearest content root for a file by its parent directories hierarchy. If the file is excluded (i.e. located under an excluded
      * root and there are no source roots on the path to the excluded root) returns {@code null}.
      */
-    @Nullable
-    private VirtualFile findNearestContentRoot(@NotNull List<? extends VirtualFile> hierarchy) {
+    private @Nullable VirtualFile findNearestContentRoot(@NotNull List<? extends VirtualFile> hierarchy) {
       Collection<Module> sourceRootOwners = null;
       boolean underExcludedSourceRoot = false;
       for (VirtualFile root : hierarchy) {
@@ -644,8 +626,7 @@ class RootIndex {
     /**
      * @return root and set of libraries that provided it
      */
-    @Nullable
-    private Pair<VirtualFile, List<Condition<? super VirtualFile>>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
+    private @Nullable Pair<VirtualFile, List<Condition<? super VirtualFile>>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
                                                                                         boolean source) {
       Set</*Library|SyntheticLibrary|WorkspaceEntity*/ Object> librariesToIgnore = createLibrarySet();
       for (VirtualFile root : hierarchy) {
@@ -664,8 +645,7 @@ class RootIndex {
       return null;
     }
 
-    @NotNull
-    private static Set</*Library|SyntheticLibrary*/ Object> createLibrarySet() {
+    private static @NotNull Set</*Library|SyntheticLibrary*/ Object> createLibrarySet() {
       return CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
         @Override
         public int hashCode(Object object) {
@@ -718,12 +698,11 @@ class RootIndex {
       return null;
     }
 
-    @NotNull
-    private Set<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
-                                                   @Nullable VirtualFile libraryClassRoot,
-                                                   @Nullable VirtualFile librarySourceRoot,
-                                                   @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
-                                                   @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+    private @NotNull Set<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
+                                                            @Nullable VirtualFile libraryClassRoot,
+                                                            @Nullable VirtualFile librarySourceRoot,
+                                                            @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                                                            @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
       Set<OrderEntry> orderEntries = new LinkedHashSet<>();
       for (VirtualFile root : hierarchy) {
         if (root.equals(libraryClassRoot) && !sourceRootOf.containsKey(root)) {
@@ -740,10 +719,9 @@ class RootIndex {
     }
 
 
-    @Nullable
-    private ModuleSourceOrderEntry getModuleSourceEntry(@NotNull List<? extends VirtualFile> hierarchy,
-                                                        @NotNull VirtualFile moduleContentRoot,
-                                                        @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries) {
+    private @Nullable ModuleSourceOrderEntry getModuleSourceEntry(@NotNull List<? extends VirtualFile> hierarchy,
+                                                                  @NotNull VirtualFile moduleContentRoot,
+                                                                  @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries) {
       Module module = contentRootOf.get(moduleContentRoot);
       for (VirtualFile root : hierarchy) {
         if (sourceRootOf.get(root).contains(module)) {
@@ -778,12 +756,10 @@ class RootIndex {
       super(protectedQueueSize, probationalQueueSize);
     }
 
-    @NotNull
-    public abstract V createValue(@NotNull K key);
+    public abstract @NotNull V createValue(@NotNull K key);
 
     @Override
-    @NotNull
-    public V get(K key) {
+    public @NotNull V get(K key) {
       V value;
       synchronized (myLock) {
         value = super.get(key);

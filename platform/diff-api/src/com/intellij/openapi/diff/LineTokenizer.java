@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.util.ArrayUtilRt;
@@ -47,14 +47,12 @@ public class LineTokenizer extends LineTokenizerBase<String> {
     return myChars.length;
   }
 
-  @NotNull
   @Override
-  protected String substring(int start, int end) {
+  protected @NotNull String substring(int start, int end) {
     return myText.substring(start, end);
   }
 
-  @NotNull
-  public static String concatLines(String @NotNull [] lines) {
+  public static @NotNull String concatLines(String @NotNull [] lines) {
     StringBuilder buffer = new StringBuilder();
     for (String line : lines) {
       buffer.append(line);
@@ -62,8 +60,7 @@ public class LineTokenizer extends LineTokenizerBase<String> {
     return buffer.substring(0, buffer.length());
   }
 
-  @NotNull
-  public static String correctLineSeparators(@NotNull String text) {
+  public static @NotNull String correctLineSeparators(@NotNull String text) {
     return concatLines(new LineTokenizer(text).execute());
   }
 

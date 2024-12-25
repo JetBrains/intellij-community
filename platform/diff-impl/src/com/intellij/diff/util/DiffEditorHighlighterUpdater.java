@@ -22,7 +22,7 @@ import java.awt.*;
 
 @ApiStatus.Internal
 public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
-  @NotNull private final DocumentContent myContent;
+  private final @NotNull DocumentContent myContent;
 
   public DiffEditorHighlighterUpdater(@NotNull Project project,
                                       @NotNull Disposable parentDisposable,
@@ -32,9 +32,8 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
     myContent = content;
   }
 
-  @NotNull
   @Override
-  protected EditorHighlighter createHighlighter(boolean forceEmpty) {
+  protected @NotNull EditorHighlighter createHighlighter(boolean forceEmpty) {
     if (!forceEmpty) {
       CharSequence text = editor.getDocument().getImmutableCharSequence();
       EditorHighlighter highlighter = DiffUtil.initEditorHighlighter(project, myContent, text);

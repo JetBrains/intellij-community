@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -29,8 +29,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
     return EP_NAME.getExtensionList();
   }
 
-  @Unmodifiable
-  public static @NotNull List<Class<?>> getRepositoryClasses() {
+  public static @Unmodifiable @NotNull List<Class<?>> getRepositoryClasses() {
     return ContainerUtil.map(getRepositoryTypes(), TaskRepositoryType::getRepositoryClass);
   }
 
@@ -39,31 +38,25 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   }
 
   @Override
-  @NotNull
-  public abstract String getName();
+  public abstract @NotNull String getName();
 
   @Override
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
-  @Nullable
-  public @Nls String getAdvertiser() { return null; }
+  public @Nullable @Nls String getAdvertiser() { return null; }
 
-  @NotNull
-  public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
+  public abstract @NotNull TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
 
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
     return Collections.singletonList(this);
   }
 
-  @NotNull
-  public TaskRepository createRepository(TaskRepositorySubtype subtype) {
+  public @NotNull TaskRepository createRepository(TaskRepositorySubtype subtype) {
     return subtype.createRepository();
   }
 
   @Override
-  @NotNull
-  public abstract TaskRepository createRepository();
+  public abstract @NotNull TaskRepository createRepository();
 
   public abstract Class<T> getRepositoryClass();
 

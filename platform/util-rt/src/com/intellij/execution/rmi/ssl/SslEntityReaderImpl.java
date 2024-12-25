@@ -46,11 +46,13 @@ public class SslEntityReaderImpl extends SslEntityReader {
     }
   }
 
-  private static @NotNull List<? extends Entity> readDer(@NotNull InputStream stream) throws IOException {
+  @NotNull
+  private static List<? extends Entity> readDer(@NotNull InputStream stream) throws IOException {
     return Collections.singletonList(readDerKey(FileUtilRt.loadBytes(stream)));
   }
 
-  private static @NotNull PrivateKeyEntity readDerKey(final byte[] bytes) {
+  @NotNull
+  private static PrivateKeyEntity readDerKey(final byte[] bytes) {
     try {
       UnencryptedPrivateKeyEntity unencrypted = new PKCS8PrivateKey(bytes);
       PrivateKey ignored = unencrypted.get();
@@ -61,7 +63,8 @@ public class SslEntityReaderImpl extends SslEntityReader {
     }
   }
 
-  private static @NotNull List<? extends Entity> readPem(@NotNull InputStream stream) throws IOException {
+  @NotNull
+  private static List<? extends Entity> readPem(@NotNull InputStream stream) throws IOException {
     List<Entity> result = new ArrayList<>();
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       while (true) {
@@ -76,7 +79,8 @@ public class SslEntityReaderImpl extends SslEntityReader {
     return result;
   }
 
-  private static @Nullable Entity readPemEntity(String line, BufferedReader reader) throws IOException {
+  @Nullable
+  private static Entity readPemEntity(String line, BufferedReader reader) throws IOException {
     if (!line.startsWith(OTHER_BEGIN_MARKER)) {
       return null;
     }
@@ -96,7 +100,8 @@ public class SslEntityReaderImpl extends SslEntityReader {
     return Base64.decode(readPemEntryText(reader, null).toString());
   }
 
-  private static @NotNull CharSequence readPemEntryText(BufferedReader reader, String firstLine) throws IOException {
+  @NotNull
+  private static CharSequence readPemEntryText(BufferedReader reader, String firstLine) throws IOException {
     StringBuilder builder = new StringBuilder();
     if (firstLine != null) builder.append(firstLine).append('\n');
     while (true) {
@@ -143,7 +148,7 @@ public class SslEntityReaderImpl extends SslEntityReader {
     }
   }
 
-  private static abstract class UnencryptedPrivateKeyImpl implements UnencryptedPrivateKeyEntity {
+  private abstract static class UnencryptedPrivateKeyImpl implements UnencryptedPrivateKeyEntity {
     protected final byte[] myBytes;
     private PrivateKey myKey;
 

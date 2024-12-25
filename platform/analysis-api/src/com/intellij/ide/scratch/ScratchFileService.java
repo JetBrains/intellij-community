@@ -37,8 +37,7 @@ public abstract class ScratchFileService implements VirtualFileEnumerationAware 
     return ourInstance.get();
   }
 
-  @SystemIndependent
-  public abstract @NotNull String getRootPath(@NotNull RootType rootType);
+  public abstract @SystemIndependent @NotNull String getRootPath(@NotNull RootType rootType);
 
   public abstract @Nullable RootType getRootType(@Nullable VirtualFile file);
 

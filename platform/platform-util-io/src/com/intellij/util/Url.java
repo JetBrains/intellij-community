@@ -52,6 +52,5 @@ public interface Url {
   @Contract(pure = true)
   @NotNull Url addParameters(@NotNull Map<String, String> parameters);
 
-  @NotNull
-  default Url removeParameter(String name) { return this; } 
+  default @NotNull Url removeParameter(String name) { return this; }
 }

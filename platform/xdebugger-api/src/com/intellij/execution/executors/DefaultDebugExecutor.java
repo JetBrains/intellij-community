@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
@@ -16,23 +16,20 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DefaultDebugExecutor extends Executor {
-  @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
+  public static final @NonNls String EXECUTOR_ID = ToolWindowId.DEBUG;
 
-  @NotNull
   @Override
-  public String getToolWindowId() {
+  public @NotNull String getToolWindowId() {
     return ToolWindowId.DEBUG;
   }
 
-  @NotNull
   @Override
-  public Icon getToolWindowIcon() {
+  public @NotNull Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowDebugger;
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Actions.StartDebugger;
   }
 
@@ -47,14 +44,12 @@ public class DefaultDebugExecutor extends Executor {
   }
 
   @Override
-  @NotNull
-  public String getActionName() {
+  public @NotNull String getActionName() {
     return UIBundle.message("tool.window.name.debug");
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return EXECUTOR_ID;
   }
 
@@ -64,14 +59,12 @@ public class DefaultDebugExecutor extends Executor {
   }
 
   @Override
-  @NotNull
-  public String getStartActionText() {
+  public @NotNull String getStartActionText() {
     return XDebuggerBundle.message("debugger.runner.start.action.text");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
   @Override
-  public @NotNull String getStartActionText(@NotNull String configurationName) {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getStartActionText(@NotNull String configurationName) {
     if (configurationName.isEmpty()) return getStartActionText();
     return TextWithMnemonic.parse(XDebuggerBundle.message("debugger.runner.start.action.text.2"))
       .replaceFirst("%s", shortenNameIfNeeded(configurationName)).toString();

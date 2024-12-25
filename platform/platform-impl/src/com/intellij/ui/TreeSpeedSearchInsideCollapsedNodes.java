@@ -26,9 +26,9 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
 @ApiStatus.Internal
 public class TreeSpeedSearchInsideCollapsedNodes extends TreeSpeedSearch {
 
-  @Nullable private SearchInsideCollapsedNodesOptionButton searchOptionButton;
-  @Nullable @ActionText private final String searchOptionButtonText;
-  @Nullable private ShortcutSet searchOptionShortcutSet;
+  private @Nullable SearchInsideCollapsedNodesOptionButton searchOptionButton;
+  private final @Nullable @ActionText String searchOptionButtonText;
+  private @Nullable ShortcutSet searchOptionShortcutSet;
 
   protected TreeSpeedSearchInsideCollapsedNodes(@NotNull JTree tree,
                                                 boolean canExpand,
@@ -39,8 +39,7 @@ public class TreeSpeedSearchInsideCollapsedNodes extends TreeSpeedSearch {
     setSearchOptionAction(new SearchInsideCollapsedNodesAction());
   }
 
-  @Nullable
-  protected ActionButton getSearchOptionButton() {
+  protected @Nullable ActionButton getSearchOptionButton() {
     return searchOptionButton;
   }
 

@@ -127,8 +127,7 @@ public final class LiveTemplateBuilder {
     return template;
   }
 
-  @Unmodifiable
-  private <T> List<T> getListWithLimit(List<T> list) {
+  private @Unmodifiable <T> List<T> getListWithLimit(List<T> list) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return list;
     }

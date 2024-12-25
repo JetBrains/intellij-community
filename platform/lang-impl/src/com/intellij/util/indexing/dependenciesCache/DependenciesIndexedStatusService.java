@@ -115,8 +115,7 @@ public final class DependenciesIndexedStatusService {
   }
 
 
-  @Unmodifiable
-  public @NotNull List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
+  public @Unmodifiable @NotNull List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
     LOG.assertTrue(shouldSaveStatus());
     List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
     synchronized (LOCK) {
@@ -142,8 +141,7 @@ public final class DependenciesIndexedStatusService {
     return libraries;
   }
 
-  @Unmodifiable
-  public @NotNull List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
+  public @Unmodifiable @NotNull List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
     LOG.assertTrue(shouldSaveStatus());
     @NotNull List<IndexableSetContributorDescriptor> descriptors = IndexableSetContributorDescriptor.collectDescriptors(project);
     synchronized (LOCK) {
@@ -247,8 +245,7 @@ public final class DependenciesIndexedStatusService {
       return result;
     }
 
-    @Unmodifiable
-    public @NotNull Map<IndexableSetContributor, IndexableSetContributorDescriptor> contributorsToMap() {
+    public @Unmodifiable @NotNull Map<IndexableSetContributor, IndexableSetContributorDescriptor> contributorsToMap() {
       LOG.assertTrue(contributors != null);
       return ContainerUtil.map2Map(contributors, descriptor -> com.intellij.openapi.util.Pair.create(descriptor.contributor, descriptor));
     }

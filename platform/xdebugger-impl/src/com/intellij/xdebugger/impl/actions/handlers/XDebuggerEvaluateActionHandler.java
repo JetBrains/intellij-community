@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeWithMe.ClientId;
@@ -124,8 +124,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   /**
    * The value of resulting Promise can be null
    */
-  @NotNull
-  public static Promise<String> getExpressionText(@Nullable XDebuggerEvaluator evaluator, @Nullable Project project, @NotNull Editor editor) {
+  public static @NotNull Promise<String> getExpressionText(@Nullable XDebuggerEvaluator evaluator, @Nullable Project project, @NotNull Editor editor) {
     if (project == null || evaluator == null) {
       return Promises.resolvedPromise(null);
     }
@@ -135,8 +134,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     return expressionInfoPromise.then(expressionInfo -> getExpressionText(expressionInfo, document));
   }
 
-  @Nullable
-  public static String getExpressionText(@Nullable ExpressionInfo expressionInfo, @NotNull Document document) {
+  public static @Nullable String getExpressionText(@Nullable ExpressionInfo expressionInfo, @NotNull Document document) {
     if (expressionInfo == null) {
       return null;
     }
@@ -144,8 +142,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     return text == null ? document.getText(expressionInfo.getTextRange()) : text;
   }
 
-  @Nullable
-  public static String getDisplayText(@Nullable ExpressionInfo expressionInfo, @NotNull Document document) {
+  public static @Nullable String getDisplayText(@Nullable ExpressionInfo expressionInfo, @NotNull Document document) {
     if (expressionInfo == null) {
       return null;
     }

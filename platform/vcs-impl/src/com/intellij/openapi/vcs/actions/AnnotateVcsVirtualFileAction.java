@@ -74,7 +74,7 @@ public final class AnnotateVcsVirtualFileAction {
     }
   }
 
-  private static void doAnnotate(@NotNull final Project project, @NotNull final Editor editor, @NotNull final VirtualFile file) {
+  private static void doAnnotate(final @NotNull Project project, final @NotNull Editor editor, final @NotNull VirtualFile file) {
     final AnnotationData data = AnnotationData.extractFrom(project, file);
     assert data != null;
 

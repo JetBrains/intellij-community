@@ -56,8 +56,7 @@ public final class InspectionVisitorOptimizer {
     myTargetPsiClasses = getTargetPsiClasses(elements);
   }
 
-  @NotNull @Unmodifiable
-  static List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
+  static @NotNull @Unmodifiable List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
     if (!useOptimizedVisitors) return ALL_ELEMENTS_VISIT_LIST;
 
     List<? extends Class<?>> acceptingPsiTypes;

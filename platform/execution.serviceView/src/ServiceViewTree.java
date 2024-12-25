@@ -91,9 +91,8 @@ final class ServiceViewTree extends Tree {
       myDescriptor = null;
     }
 
-    @Nullable
     @Override
-    protected ItemPresentation getPresentation(Object node) {
+    protected @Nullable ItemPresentation getPresentation(Object node) {
       // Ensure that value != myTreeModel.getRoot() && !(value instanceof LoadingNode)
       if (!(node instanceof ServiceViewItem)) return null;
 

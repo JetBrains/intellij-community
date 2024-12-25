@@ -770,9 +770,8 @@ public class ShelvedChangesViewManager implements Disposable {
         super(myTree, myTreeScrollPane, MyShelvedPreviewProcessor.ShelveTreeDiffPreviewHandler.INSTANCE);
       }
 
-      @NotNull
       @Override
-      protected DiffEditorViewer createViewer() {
+      protected @NotNull DiffEditorViewer createViewer() {
         return new MyShelvedPreviewProcessor(myProject, myTree, true);
       }
 
@@ -787,9 +786,8 @@ public class ShelvedChangesViewManager implements Disposable {
         DiffShelvedChangesActionProvider.updateAvailability(event);
       }
 
-      @Nullable
       @Override
-      public String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
+      public @Nullable String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
         return wrapper != null
                ? VcsBundle.message("shelve.editor.diff.preview.title", wrapper.getPresentableName())
                : VcsBundle.message("shelved.version.name");

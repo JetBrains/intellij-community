@@ -107,8 +107,7 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
   }
 
-  @Unmodifiable
-  public @NotNull List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
+  public @Unmodifiable @NotNull List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
     return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT
                                                       && !(info.element instanceof ResultsNotificationElement));
   }

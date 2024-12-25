@@ -44,8 +44,7 @@ final class FTManager {
   private final @Nullable FTManager original;
   private final Map<String, FileTemplateBase> templates;
   private volatile List<? extends FileTemplateBase> sortedTemplates;
-  @NotNull
-  private final List<? extends DefaultTemplate> defaultTemplates;
+  private final @NotNull List<? extends DefaultTemplate> defaultTemplates;
   private final StreamProvider streamProvider;
 
   FTManager(@NotNull @NonNls String name,

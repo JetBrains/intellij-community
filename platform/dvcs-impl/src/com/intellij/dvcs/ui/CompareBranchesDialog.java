@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -18,13 +18,13 @@ import javax.swing.*;
  * Dialog for comparing two DVCS branches.
  */
 public class CompareBranchesDialog {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
-  @NotNull private final JPanel myLogPanel;
-  @NotNull private final TabbedPaneImpl myTabbedPane;
-  @NotNull private final @NlsContexts.DialogTitle String myTitle;
+  private final @NotNull JPanel myLogPanel;
+  private final @NotNull TabbedPaneImpl myTabbedPane;
+  private final @NotNull @NlsContexts.DialogTitle String myTitle;
 
-  @NotNull private final WindowWrapper.Mode myMode;
+  private final @NotNull WindowWrapper.Mode myMode;
 
   private WindowWrapper myWrapper;
 

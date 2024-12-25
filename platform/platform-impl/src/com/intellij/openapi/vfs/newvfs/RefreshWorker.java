@@ -279,8 +279,7 @@ final class RefreshWorker {
     return !isDirectoryChanged(dir, vfsChildren, vfsNames);
   }
 
-  @Unmodifiable
-  private static List<String> getNames(VirtualFile[] children) {
+  private static @Unmodifiable List<String> getNames(VirtualFile[] children) {
     return ContainerUtil.map(children, VirtualFile::getName);
   }
 

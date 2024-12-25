@@ -99,8 +99,7 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     return myOptionInspectionFixes;
   }
 
-  @Unmodifiable
-  public @NotNull List<IntentionAction> getOptionActions() {
+  public @Unmodifiable @NotNull List<IntentionAction> getOptionActions() {
     return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }
 

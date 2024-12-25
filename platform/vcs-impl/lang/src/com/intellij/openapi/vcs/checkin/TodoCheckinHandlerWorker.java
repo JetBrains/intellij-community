@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.codeInsight.actions.ChangedRangesShifter;
@@ -57,7 +57,7 @@ import static java.util.Objects.requireNonNull;
 
 @ApiStatus.Internal
 public class TodoCheckinHandlerWorker {
-  private final static Logger LOG = Logger.getInstance(TodoCheckinHandlerWorker.class);
+  private static final Logger LOG = Logger.getInstance(TodoCheckinHandlerWorker.class);
 
   private final Project myProject;
   private final Collection<? extends Change> myChanges;
@@ -75,8 +75,7 @@ public class TodoCheckinHandlerWorker {
     myTodoFilter = todoFilter;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -144,8 +143,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  @NotNull
-  private List<TodoItem> collectTodoItems(@NotNull PsiFile psiFile, boolean isLight) {
+  private @NotNull List<TodoItem> collectTodoItems(@NotNull PsiFile psiFile, boolean isLight) {
     if (!isLight) ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.getInstance(myProject);
     TodoItem[] todoItems = isLight ? searchHelper.findTodoItemsLight(psiFile)
@@ -256,11 +254,11 @@ public class TodoCheckinHandlerWorker {
   }
 
   private abstract class EditedFileProcessorBase {
-    @NotNull protected final Project myProject;
+    protected final @NotNull Project myProject;
     protected String myBeforeContent;
-    @NotNull protected final String myAfterContent;
-    @NotNull protected final FilePath myAfterFile;
-    @NotNull private final List<? extends TodoItem> myNewTodoItems;
+    protected final @NotNull String myAfterContent;
+    protected final @NotNull FilePath myAfterFile;
+    private final @NotNull List<? extends TodoItem> myNewTodoItems;
 
     private EditedFileProcessorBase(@NotNull Project project,
                                     @NotNull FilePath afterFilePath,
@@ -332,18 +330,15 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  @NotNull
-  public Set<TodoItem> getAddedOrEditedTodos() {
+  public @NotNull Set<TodoItem> getAddedOrEditedTodos() {
     return myAddedOrEditedTodos;
   }
 
-  @NotNull
-  public Set<TodoItem> getInChangedTodos() {
+  public @NotNull Set<TodoItem> getInChangedTodos() {
     return myInChangedTodos;
   }
 
-  @NotNull
-  public List<Pair<FilePath, String>> getSkipped() {
+  public @NotNull List<Pair<FilePath, String>> getSkipped() {
     return mySkipped;
   }
 
@@ -359,8 +354,7 @@ public class TodoCheckinHandlerWorker {
     return StringUtil.join(fragment.split("\\s"), " "); //NON-NLS
   }
 
-  @Nullable
-  private static String getRevisionContent(@NotNull ContentRevision revision) {
+  private static @Nullable String getRevisionContent(@NotNull ContentRevision revision) {
     try {
       String content = revision.getContent();
       return content != null ? StringUtil.convertLineSeparators(content) : null;
@@ -406,16 +400,14 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  @NotNull
-  public Set<TodoItem> inOneList() {
+  public @NotNull Set<TodoItem> inOneList() {
     final Set<TodoItem> set = new HashSet<>();
     set.addAll(getAddedOrEditedTodos());
     set.addAll(getInChangedTodos());
     return set;
   }
 
-  @NotNull
-  public List<Change> getChanges() {
+  public @NotNull List<Change> getChanges() {
     return new ArrayList<>(myChanges);
   }
 }

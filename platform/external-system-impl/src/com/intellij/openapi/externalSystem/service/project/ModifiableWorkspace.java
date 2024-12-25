@@ -140,8 +140,7 @@ public final class ModifiableWorkspace {
     return myNamesMap.get(moduleName);
   }
 
-  @Nullable
-  public String findModule(@NotNull ProjectCoordinate id) {
+  public @Nullable String findModule(@NotNull ProjectCoordinate id) {
     if (StringUtil.isEmpty(id.getArtifactId())) return null;
     String result = myModuleMappingById.get(id);
     return result == null && id.getVersion() != null

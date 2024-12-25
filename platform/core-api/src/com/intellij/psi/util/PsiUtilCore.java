@@ -474,20 +474,17 @@ public class PsiUtilCore {
     return name;
   }
 
-  @NotNull
-  public static String getQualifiedNameAfterRename(String qName, @NotNull String newName) {
+  public static @NotNull String getQualifiedNameAfterRename(String qName, @NotNull String newName) {
     if (qName == null) return newName;
     int index = qName.lastIndexOf('.');
     return index < 0 ? newName : qName.substring(0, index + 1) + newName;
   }
 
-  @NotNull
-  public static Language getDialect(@NotNull PsiElement element) {
+  public static @NotNull Language getDialect(@NotNull PsiElement element) {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  @NotNull
-  protected static Language narrowLanguage(@NotNull Language language, @NotNull Language candidate) {
+  protected static @NotNull Language narrowLanguage(@NotNull Language language, @NotNull Language candidate) {
     return candidate.isKindOf(language) ? candidate : language;
   }
 

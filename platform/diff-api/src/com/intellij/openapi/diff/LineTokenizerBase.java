@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +17,7 @@ public abstract class LineTokenizerBase<T> {
 
   protected abstract int length();
 
-  @NotNull
-  protected abstract String substring(int start, int end);
+  protected abstract @NotNull String substring(int start, int end);
 
   public void doExecute(List<? super T> lines) {
     while (notAtEnd()) {
@@ -64,8 +63,7 @@ public abstract class LineTokenizerBase<T> {
     }
   }
 
-  @Nullable
-  public String getLineSeparator() {
+  public @Nullable String getLineSeparator() {
     if (myLineSeparatorStart == -1) return null;
     return substring(myLineSeparatorStart, myLineSeparatorEnd);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -95,8 +95,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
     return getValueMarkers(event) == null;
   }
 
-  @Nullable
-  private static XValueMarkers<?, ?> getValueMarkers(AnActionEvent event) {
+  private static @Nullable XValueMarkers<?, ?> getValueMarkers(AnActionEvent event) {
     XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null ? ((XDebugSessionImpl)session).getValueMarkers() : null;
   }

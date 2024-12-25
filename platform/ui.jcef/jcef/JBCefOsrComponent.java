@@ -350,7 +350,7 @@ class JBCefOsrComponent extends JPanel {
       composition.reset();
     }
 
-    static private boolean areHomogenous(MouseWheelEvent e1, MouseWheelEvent e2) {
+    private static boolean areHomogenous(MouseWheelEvent e1, MouseWheelEvent e2) {
       if (e1 == null || e2 == null) return false;
 
       double distance = Point2D.distance(e1.getX(), e1.getY(), e2.getX(), e2.getY());

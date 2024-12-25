@@ -26,9 +26,7 @@ public interface UsageGroupingRule extends PossiblyDumbAware {
    * <p>If the rule returns at most one parent group extend {@link SingleParentUsageGroupingRule} and override
    * {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead.</p>
    */
-  @NotNull
-  @Unmodifiable
-  default List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  default @NotNull @Unmodifiable List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     return ContainerUtil.createMaybeSingletonList(groupUsage(usage));
   }
 
@@ -44,8 +42,7 @@ public interface UsageGroupingRule extends PossiblyDumbAware {
    * @deprecated extend {@link SingleParentUsageGroupingRule} and override {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead
    */
   @Deprecated
-  @Nullable
-  default UsageGroup groupUsage(@NotNull Usage usage) {
+  default @Nullable UsageGroup groupUsage(@NotNull Usage usage) {
     throw new UnsupportedOperationException();
   }
 }

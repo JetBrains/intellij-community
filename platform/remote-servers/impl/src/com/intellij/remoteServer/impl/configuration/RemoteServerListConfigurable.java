@@ -109,8 +109,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     }
   }
 
-  @Unmodifiable
-  private @NotNull List<? extends RemoteServer<?>> getServers() {
+  private @Unmodifiable @NotNull List<? extends RemoteServer<?>> getServers() {
     return ContainerUtil.filter(myServersManager.getServers(), s -> myDisplayedServerTypes.contains(s.getType()));
   }
 

@@ -389,8 +389,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /***
    * Never run {@link #fixTTYSize(GeneralCommandLine)}
    */
-  @NotNull
-  public static GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
+  public static @NotNull GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
     commandLine.putUserData(NEVER_RUN_TTY_FIX, true);
     return commandLine;
   }

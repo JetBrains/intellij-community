@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.diagnostic.PluginException;
@@ -22,8 +22,8 @@ import java.util.regex.Pattern;
  */
 @ApiStatus.Internal
 public abstract class FeatureUsagesCollector {
-  @NonNls private static final String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
-  @Nullable private String fileName = null;
+  private static final @NonNls String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
+  private @Nullable String fileName = null;
 
   /**
    * Set environment variable FUS_COLLECTOR_FILENAME_ENABLED to true to get collector's file name in a generated scheme.
@@ -59,10 +59,8 @@ public abstract class FeatureUsagesCollector {
   /**
    * @deprecated Please use {@link FeatureUsagesCollector#getGroup()} instead.
    */
-  @NonNls
-  @NotNull
   @Deprecated(forRemoval = true)
-  public String getGroupId() {
+  public @NonNls @NotNull String getGroupId() {
     EventLogGroup group = getGroup();
     if (group == null) {
       throw PluginException.createByClass("Please override either getGroupId() or getGroup() in " + getClass().getName(), null, getClass());

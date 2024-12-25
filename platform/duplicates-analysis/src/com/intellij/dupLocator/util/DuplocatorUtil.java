@@ -83,8 +83,7 @@ public final class DuplocatorUtil {
   }
 
   @Contract("null, _, _ -> null;!null, _, _ -> !null;")
-  @Nullable
-  public static PsiElement skipNodeIfNecessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
+  public static @Nullable PsiElement skipNodeIfNecessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
     if (element == null) {
       return null;
     }
@@ -109,8 +108,7 @@ public final class DuplocatorUtil {
     return getOnlyChild(element, filter);
   }
 
-  @Nullable
-  private static PsiElement getOnlyChildFromDescriptor(EquivalenceDescriptor equivalenceDescriptor, NodeFilter filter) {
+  private static @Nullable PsiElement getOnlyChildFromDescriptor(EquivalenceDescriptor equivalenceDescriptor, NodeFilter filter) {
     if (!equivalenceDescriptor.getConstants().isEmpty()) {
       return null;
     }
@@ -265,9 +263,8 @@ public final class DuplocatorUtil {
     };
   }
 
-  @Nullable
   @Contract("null -> null")
-  public static DuplocatorState getDuplocatorState(PsiFragment frag) {
+  public static @Nullable DuplocatorState getDuplocatorState(PsiFragment frag) {
     if (frag == null) {
       return null;
     }
@@ -282,8 +279,7 @@ public final class DuplocatorUtil {
            : null;
   }
 
-  @NotNull
-  public static ExternalizableDuplocatorState registerAndGetState(@NotNull Language language) {
+  public static @NotNull ExternalizableDuplocatorState registerAndGetState(@NotNull Language language) {
     final MultilanguageDuplocatorSettings settings = MultilanguageDuplocatorSettings.getInstance();
     DefaultDuplocatorState state = settings.getState(language);
     if (state == null) {

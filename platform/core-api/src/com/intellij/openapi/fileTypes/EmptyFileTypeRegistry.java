@@ -50,21 +50,18 @@ final class EmptyFileTypeRegistry extends FileTypeRegistry {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return "Mock";
     }
 
     @Override
-    @NotNull
-    public String getDescription() {
+    public @NotNull String getDescription() {
       //noinspection HardCodedStringLiteral
       return "Mock";
     }
 
     @Override
-    @NotNull
-    public String getDefaultExtension() {
+    public @NotNull String getDefaultExtension() {
       return ".mockExtensionThatProbablyWon'tEverExist";
     }
 

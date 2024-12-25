@@ -44,8 +44,7 @@ final class HighlighterRecycler {
   }
 
   // null means no highlighter found in the cache
-  @Nullable
-  synchronized RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized @Nullable RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<HighlightInfo> collection = incinerator.get(range);
     if (collection != null) {
@@ -67,9 +66,7 @@ final class HighlighterRecycler {
     return null;
   }
   //
-  @NotNull
-  @Unmodifiable
-  private synchronized Collection<? extends HighlightInfo> forAllInGarbageBin() {
+  private synchronized @NotNull @Unmodifiable Collection<? extends HighlightInfo> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }
 

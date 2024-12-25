@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -15,8 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Medvedev
  */
 public interface ChangeSignatureHandler extends RefactoringActionHandler {
-  @Nullable
-  default PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
+  default @Nullable PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     return element != null ? findTargetMember(element) : null;
   }

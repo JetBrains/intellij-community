@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -88,10 +88,10 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     }
   }
 
-  private static void setupLogBreakpoint(@Nullable final XLineBreakpoint<?> breakpoint,
-                                         @Nullable final InputEvent inputEvent,
-                                         @Nullable final Editor editor,
-                                         @NotNull final Project project) {
+  private static void setupLogBreakpoint(final @Nullable XLineBreakpoint<?> breakpoint,
+                                         final @Nullable InputEvent inputEvent,
+                                         final @Nullable Editor editor,
+                                         final @NotNull Project project) {
     if (breakpoint == null || editor == null ||
         !(inputEvent instanceof MouseEvent mouseEvent) ||
         inputEvent.isAltDown() || !inputEvent.isShiftDown()) {

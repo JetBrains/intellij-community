@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -41,8 +41,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
+  public @NotNull PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new XmlMatchingVisitor(globalVisitor);
   }
 
@@ -51,9 +50,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME;
   }
 
-  @NotNull
   @Override
-  public String getTypedVarString(@NotNull PsiElement element) {
+  public @NotNull String getTypedVarString(@NotNull PsiElement element) {
     return element instanceof XmlText ? element.getText().trim() : super.getTypedVarString(element);
   }
 
@@ -63,8 +61,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  @NotNull
-  public CompiledPattern createCompiledPattern() {
+  public @NotNull CompiledPattern createCompiledPattern() {
     return new XmlCompiledPattern();
   }
 
@@ -83,7 +80,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
                                                   @NotNull Project project,
                                                   boolean physical) {
     text = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
-    @NonNls final String fileName = "dummy." + fileType.getDefaultExtension();
+    final @NonNls String fileName = "dummy." + fileType.getDefaultExtension();
     final PsiFile fileFromText =
       PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), physical, true);
 
@@ -110,15 +107,13 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return super.extendMatchedByDownUp(node);
   }
 
-  @NotNull
   @Override
-  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+  public @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return XmlContextType.class;
   }
 
-  @NotNull
   @Override
-  public LanguageFileType detectFileType(@NotNull PsiElement context) {
+  public @NotNull LanguageFileType detectFileType(@NotNull PsiElement context) {
     final PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
     final Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
     if (file.getLanguage() == HTMLLanguage.INSTANCE ||
@@ -168,8 +163,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   private static class XmlReplaceHandler extends StructuralReplaceHandler {
 
-    @NotNull private final Project myProject;
-    @NotNull private final ReplaceOptions myReplaceOptions;
+    private final @NotNull Project myProject;
+    private final @NotNull ReplaceOptions myReplaceOptions;
 
     XmlReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
       myProject = project;

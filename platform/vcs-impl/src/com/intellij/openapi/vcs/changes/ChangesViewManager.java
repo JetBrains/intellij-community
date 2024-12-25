@@ -591,9 +591,8 @@ public class ChangesViewManager implements ChangesViewEx,
         super(myView, myContentPanel, ChangesViewDiffPreviewHandler.INSTANCE);
       }
 
-      @NotNull
       @Override
-      protected DiffEditorViewer createViewer() {
+      protected @NotNull DiffEditorViewer createViewer() {
         return new ChangesViewDiffPreviewProcessor(ChangesViewToolWindowPanel.this, myView, true);
       }
 
@@ -608,9 +607,8 @@ public class ChangesViewManager implements ChangesViewEx,
         ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
       }
 
-      @Nullable
       @Override
-      public String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
+      public @Nullable String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
         return wrapper != null
                ? VcsBundle.message("commit.editor.diff.preview.title", wrapper.getPresentableName())
                : VcsBundle.message("commit.editor.diff.preview.empty.title");
@@ -943,8 +941,7 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
-    @Nullable
-    private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
+    private static @Nullable ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
       return root.iterateNodeChildren()
         .filter(ChangesBrowserChangeListNode.class)
         .find(node -> {

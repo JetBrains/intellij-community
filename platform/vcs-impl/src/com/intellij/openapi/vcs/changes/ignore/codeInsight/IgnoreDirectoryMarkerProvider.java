@@ -106,8 +106,7 @@ public final class IgnoreDirectoryMarkerProvider extends LineMarkerProviderDescr
     return PlatformIcons.FOLDER_ICON;
   }
 
-  @Nullable
-  private static PsiElement firstLeafOrNull(@NotNull PsiElement element) {
+  private static @Nullable PsiElement firstLeafOrNull(@NotNull PsiElement element) {
     LeafElement firstLeaf = TreeUtil.findFirstLeaf(element.getNode());
     return firstLeaf != null ? firstLeaf.getPsi() : null;
   }

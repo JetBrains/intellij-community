@@ -62,9 +62,8 @@ public final class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTre
     return ids;
   }
 
-  @NotNull
   @Override
-  protected Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter) {
+  protected @NotNull Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter) {
     List<Change> allChanges = new ArrayList<>();
     if (myIncludedChangeListsIds == null) {
       allChanges.addAll(ChangeListManager.getInstance(myProject).getAllChanges());
@@ -95,9 +94,8 @@ public final class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTre
     return worker.inOneList();
   }
 
-  @NotNull
   @Override
-  protected Set<TodoItem> doFindTodoForFile(@NotNull PsiFile psiFile, @Nullable TodoFilter todoFilter) {
+  protected @NotNull Set<TodoItem> doFindTodoForFile(@NotNull PsiFile psiFile, @Nullable TodoFilter todoFilter) {
     VirtualFile file = psiFile.getVirtualFile();
     if (!myIncludedFiles.contains(file)) return Collections.emptySet();
 

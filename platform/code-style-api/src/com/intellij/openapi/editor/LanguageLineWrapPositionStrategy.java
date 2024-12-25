@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.LanguageExtension;
@@ -30,8 +30,7 @@ public final class LanguageLineWrapPositionStrategy extends LanguageExtension<Li
    * @param editor    editor that manages document which text should be processed by wrap position strategy
    * @return          line wrap position strategy to use for the lines from the document managed by the given editor
    */
-  @NotNull
-  public LineWrapPositionStrategy forEditor(@NotNull Editor editor) {
+  public @NotNull LineWrapPositionStrategy forEditor(@NotNull Editor editor) {
     LineWrapPositionStrategy result = getDefaultImplementation();
     Project project = editor.getProject();
     if (project != null && !project.isDisposed()) {
@@ -45,9 +44,8 @@ public final class LanguageLineWrapPositionStrategy extends LanguageExtension<Li
     return result;
   }
 
-  @NotNull
   @Override
-  public LineWrapPositionStrategy getDefaultImplementation() {
+  public @NotNull LineWrapPositionStrategy getDefaultImplementation() {
     return super.getDefaultImplementation();
   }
 }

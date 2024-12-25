@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui.browser;
 
 import com.intellij.openapi.Disposable;
@@ -31,11 +31,11 @@ import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 public class LoadingChangesPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(LoadingChangesPanel.class);
 
-  @NotNull private final JBLoadingPanel myLoadingPanel;
-  @NotNull private final JScrollPane myErrorPanel;
-  @NotNull private final JBLabel myErrorLabel;
+  private final @NotNull JBLoadingPanel myLoadingPanel;
+  private final @NotNull JScrollPane myErrorPanel;
+  private final @NotNull JBLabel myErrorLabel;
 
-  @Nullable private ProgressIndicator myIndicator;
+  private @Nullable ProgressIndicator myIndicator;
 
   public LoadingChangesPanel(@NotNull JComponent panel, @Nullable StatusText emptyText, @NotNull Disposable disposable) {
     this(panel, disposable);
@@ -71,9 +71,8 @@ public class LoadingChangesPanel extends JPanel implements Disposable {
     myErrorPanel.setVisible(false);
   }
 
-  @NotNull
-  private <T> Runnable doLoadChanges(@NotNull ThrowableComputable<? extends T, ? extends VcsException> loadChanges,
-                                     @NotNull Consumer<@Nullable T> applyResult) {
+  private @NotNull <T> Runnable doLoadChanges(@NotNull ThrowableComputable<? extends T, ? extends VcsException> loadChanges,
+                                              @NotNull Consumer<@Nullable T> applyResult) {
     try {
       T changes = loadChanges.compute();
       return () -> {

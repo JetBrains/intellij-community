@@ -49,8 +49,7 @@ public final class CopyReferenceUtil {
     }
   }
 
-  @Unmodifiable
-  static @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
+  static @Unmodifiable @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
     List<PsiElement> elements = new ArrayList<>();
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);
@@ -117,8 +116,7 @@ public final class CopyReferenceUtil {
    * @deprecated use {@link FqnUtil#getVirtualFileFqn}
    */
   @Deprecated
-  @NotNull
-  public static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  public static @NotNull String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return FqnUtil.getVirtualFileFqn(virtualFile, project);
   }
 }
