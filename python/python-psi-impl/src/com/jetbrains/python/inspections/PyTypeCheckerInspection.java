@@ -108,8 +108,8 @@ public class PyTypeCheckerInspection extends PyInspection {
 
           PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
 
-          if (actual instanceof PyTypedDictType) {
-            if (reportTypedDictProblems(expected, (PyTypedDictType)actual, returnExpr)) return;
+          if (actual != null && returnExpr != null) {
+            if (reportTypedDictProblems(expected, actual, returnExpr)) return;
           }
 
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
@@ -220,8 +220,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       final PyType actual = tryPromotingType(value, expected);
-      if (expected != null && actual instanceof PyTypedDictType) {
-        if (reportTypedDictProblems(expected, (PyTypedDictType)actual, value)) return;
+      if (expected != null && actual != null) {
+        if (reportTypedDictProblems(expected, actual, value)) return;
       }
 
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
@@ -241,7 +241,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       return Ref.create(myTypeEvalContext.getType(attrDefinition));
     }
 
-    private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyTypedDictType actual, @NotNull PyExpression value) {
+    private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyType actual, @NotNull PyExpression value) {
       final PyExpression valueWithoutKeyword = value instanceof PyKeywordArgument ? ((PyKeywordArgument)value).getValueExpression() : value;
       final PyTypedDictType.TypeCheckingResult result =
         PyTypedDictType.Companion.checkTypes(expected, actual, myTypeEvalContext, valueWithoutKeyword);
@@ -263,7 +263,7 @@ public class PyTypeCheckerInspection extends PyInspection {
                                                                              PythonDocumentationProvider.getTypeName(error.getActualType(),
                                                                                                                      myTypeEvalContext)));
           });
-          if (!actual.isInferred()) {
+          if (!(PyTypedDictType.isDictExpression(valueWithoutKeyword, myTypeEvalContext))) {
             return true;
           }
         }
@@ -564,8 +564,8 @@ public class PyTypeCheckerInspection extends PyInspection {
                                               @Nullable PyType argumentType,
                                               @Nullable PyExpression argument,
                                               @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
-      if (parameterType != null && argumentType instanceof PyTypedDictType && argument != null) {
-        if (reportTypedDictProblems(parameterType, (PyTypedDictType)argumentType, argument)) return true;
+      if (parameterType != null && argumentType != null && argument != null) {
+        if (reportTypedDictProblems(parameterType, argumentType, argument)) return true;
       }
 
       return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&

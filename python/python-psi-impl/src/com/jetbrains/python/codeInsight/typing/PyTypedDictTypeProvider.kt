@@ -383,45 +383,5 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       }
       return if (expr != null) Pair(getType(expr, context), qualifiers) else null
     }
-
-
-    fun inferTypedDictFromCallExpression(callExpression: PyCallExpression, context: TypeEvalContext): PyTypedDictType? {
-      val resolvedQualifiedNames = if (callExpression.callee != null) resolveToQualifiedNames(callExpression.callee!!, context)
-      else return null
-      if (resolvedQualifiedNames.any { it == PyNames.DICT }) {
-        val arguments = callExpression.arguments
-        if (arguments.size > 1) {
-          val fields = getTypingTDFieldsFromDictKeywordArguments(arguments, context)
-          if (fields != null) {
-            val dictClass = PyBuiltinCache.getInstance(callExpression).dictType?.pyClass
-            if (dictClass == null) return null
-            return PyTypedDictType("TypedDict", fields, true, dictClass,
-                                   PyTypedDictType.DefinitionLevel.INSTANCE,
-                                   emptyList())
-          }
-        }
-      }
-      return null
-    }
-
-    private fun getTypingTDFieldsFromDictKeywordArguments(keywordArguments: Array<PyExpression>, context: TypeEvalContext): TDFields? {
-      val fields = LinkedHashMap<String, PyExpression?>()
-
-      keywordArguments.forEach {
-        if (it !is PyKeywordArgument || it.keyword == null) return null
-        fields[it.keyword!!] = it.valueExpression
-      }
-
-      return typedDictFieldsFromKeysAndValues(fields, context)
-    }
-
-    private fun typedDictFieldsFromKeysAndValues(fields: Map<String, PyExpression?>, context: TypeEvalContext): TDFields {
-      val result = TDFields()
-      for ((key, value) in fields) {
-        result[key] = if (value != null) PyTypedDictType.FieldTypeAndTotality(value, context.getType(value))
-        else PyTypedDictType.FieldTypeAndTotality(null, null)
-      }
-      return result
-    }
   }
 }

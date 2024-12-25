@@ -428,14 +428,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return Ref.create(getTypeParameterTypeFromDeclaration(callSite, context));
     }
 
-    if (initializedClass != null && callSite instanceof PyCallExpression && PyNames.DICT.equals(initializedClass.getQualifiedName())) {
-      final PyType inferredTypedDict =
-        PyTypedDictTypeProvider.Companion.inferTypedDictFromCallExpression((PyCallExpression)callSite, context.myContext);
-      if (inferredTypedDict != null) {
-        return Ref.create(inferredTypedDict);
-      }
-    }
-
     if (functionReturningCallSiteAsAType(function)) {
       return getAsClassObjectType(callSite, context);
     }

@@ -10,6 +10,7 @@ import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 class PyTypedDictType @JvmOverloads constructor(private val name: String,
@@ -147,11 +148,6 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
 
     fun createFromKeysToValueTypes(anchor: PsiElement,
-                                   keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>): PyTypedDictType? {
-      return createFromKeysToValueTypes(anchor, keysToValueTypes, true)
-    }
-
-    fun createFromKeysToValueTypes(anchor: PsiElement,
                                    keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>,
                                    inferred: Boolean): PyTypedDictType? {
       val dict = PyBuiltinCache.getInstance(anchor).dictType?.pyClass
@@ -171,17 +167,18 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      * * each key has the same value type in [expected] and [actual]
      */
     fun checkTypes(expected: PyType,
-                   actual: PyTypedDictType,
+                   actual: PyType?,
                    context: TypeEvalContext,
                    value: PyExpression?): TypeCheckingResult? {
-      if (!actual.isInferred()) {
+      if (!isDictExpression(value, context)) {
+        if (actual !is PyTypedDictType) return null
         val match = checkStructuralCompatibility(expected, actual, context) ?: return null
         return TypeCheckingResult(match)
       }
       if (expected !is PyTypedDictType) return null
 
       val mandatoryArguments = expected.fields.filterValues { it.qualifiers.isRequired == true}.mapValues { Pair(it.value.value, it.value.type) }
-      val actualArguments = actual.getKeysToValuesWithTypes()
+      val actualArguments = getTypedDictFieldsFromExpression(value, context) ?: return null
       val expectedArguments = expected.getKeysToValuesWithTypes()
 
       return match(mandatoryArguments, expectedArguments, actualArguments, context, value, expected.name)
@@ -198,11 +195,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
       val extraKeys = mutableListOf<ExtraKeyError>()
       var match = true
 
-      val containedExpression = PyPsiUtils.flattenParens(
-        if (actualTypedDict is PyKeywordArgument) actualTypedDict.valueExpression else actualTypedDict)
-      val typedDictInstanceCreation = containedExpression is PyDictLiteralExpression ||
-                                      containedExpression is PyCallExpression && containedExpression.callee?.textMatches(
-        PyNames.DICT) ?: false
+      val containedExpression = PyPsiUtils.flattenParens(PyUtil.peelArgument(actualTypedDict))
+      val typedDictInstanceCreation = isDictExpression(containedExpression, context)
 
       actualArguments.forEach {
         val actualValue = it.value.first
@@ -221,7 +215,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         }
         val expectedType = expectedArguments[key]?.second
         val actualType = it.value.second
-        if (expectedType is PyTypedDictType && actualType is PyTypedDictType) {
+        if (expectedType is PyTypedDictType && (actualType is PyTypedDictType || isDictExpression(actualValue, context))) {
           val res = checkTypes(expectedType, actualType, context, actualValue)
           if (res != null && !res.match) {
             val (innerMatch, innerValueTypeErrors, innerMissingKeys, innerExtraKeys) = res
@@ -241,20 +235,21 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             }
           }
         }
-        val matchResult: Boolean = strictUnionMatch(
-          expectedType,
-          if (actualValue != null) PyLiteralType.promoteToLiteral(actualValue, expectedType, context, null) ?: context.getType(actualValue)
-          else it.value.second,
-          context
-        )
-        if (!matchResult && (expectedType !is PyTypedDictType || actualType !is PyTypedDictType)) {
-          if (typedDictInstanceCreation) {
-            valueTypeErrors.add(
-              ValueTypeError(actualValue, expectedType, it.value.second))
-            match = false
+        else {
+          val promotedType = if (actualValue != null) {
+            PyLiteralType.promoteToLiteral(actualValue, expectedType, context, null) ?: context.getType(actualValue)
           }
           else {
-            return TypeCheckingResult(false)
+            actualType
+          }
+          if (!strictUnionMatch(expectedType, promotedType, context)) {
+            if (typedDictInstanceCreation) {
+              valueTypeErrors.add(ValueTypeError(actualValue, expectedType, it.value.second))
+              match = false
+            }
+            else {
+              return TypeCheckingResult(false)
+            }
           }
         }
       }
@@ -332,6 +327,53 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         }
       }
       return true
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isDictExpression(expression: PyExpression?, context: TypeEvalContext): Boolean {
+      if (expression is PyDictLiteralExpression) return true
+      if (expression is PyCallExpression) {
+        val callee = expression.callee
+        if (callee != null) {
+          return PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.DICT }
+        }
+      }
+      return false
+    }
+
+    private fun getTypedDictFieldsFromExpression(
+      expression: PyExpression?,
+      context: TypeEvalContext,
+    ): Map<String, Pair<PyExpression?, PyType?>>? {
+      assert(isDictExpression(expression, context))
+      return if (expression is PyDictLiteralExpression) {
+        PyCollectionTypeUtil.getTypedDictFieldsFromDictLiteral(expression, context)
+      }
+      else {
+        getTypedDictFieldsFromDictConstructorCall(expression as PyCallExpression, context)
+      }
+    }
+
+    private fun getTypedDictFieldsFromDictConstructorCall(
+      callExpression: PyCallExpression,
+      context: TypeEvalContext,
+    ): Map<String, Pair<PyExpression?, PyType?>>? {
+      val callee = callExpression.callee ?: return null
+      if (PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.DICT }) {
+        val arguments = callExpression.arguments
+        if (arguments.size > 1) {
+          val fields = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
+          for (argument in arguments) {
+            if (argument !is PyKeywordArgument) return null
+            val keyword = argument.keyword ?: return null
+            val valueExpression = argument.valueExpression
+            fields[keyword] = valueExpression to valueExpression?.let(context::getType)
+          }
+          return fields
+        }
+      }
+      return null
     }
   }
 

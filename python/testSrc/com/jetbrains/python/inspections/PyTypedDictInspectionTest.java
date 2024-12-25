@@ -513,6 +513,15 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-78174
+  public void testRawDictTypeInferredForDictLiteral() {
+    doTestByText("""
+                   d = {'name': 'Matrix', 'year': 1999}
+                   def f():
+                       d['name'] = 1
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

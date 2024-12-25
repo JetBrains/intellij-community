@@ -38,44 +38,38 @@ object PyCollectionTypeUtil {
 
   @JvmStatic
   fun getDictLiteralType(expression: PyDictLiteralExpression, context: TypeEvalContext): PyType? {
-    val typedDictType = getTypedDictTypeFromDictLiteral(expression, context)
-    if (typedDictType != null) {
-      return typedDictType
-    }
     val cls = PyBuiltinCache.getInstance(expression).getClass("dict") ?: return null
     val (keyType, valueType) = getDictLiteralElementTypes(expression, context)
     return PyCollectionTypeImpl(cls, false, listOf(keyType, valueType))
   }
 
-  private fun getTypedDictTypeFromDictLiteral(sequence: PyDictLiteralExpression, context: TypeEvalContext): PyTypedDictType? {
-    val elements = sequence.elements
-    if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
-      return null
-    }
-
+  @JvmStatic
+  fun getTypedDictFieldsFromDictLiteral(
+    sequence: PyDictLiteralExpression,
+    context: TypeEvalContext,
+  ): Map<String, Pair<PyExpression?, PyType?>>? {
     val strKeysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
 
-    elements
-      .take(MAX_ANALYZED_ELEMENTS_OF_LITERALS)
-      .forEach { element ->
-        val elementType = context.getType(element)
-        val (keyType, valueType) = getKeyValueType(elementType)
+    sequence.elements.forEach { element ->
+      val elementType = context.getType(element)
+      val (keyType, valueType) = getKeyValueType(elementType)
 
-        if (!(keyType is PyClassType && PyNames.TYPE_STR == keyType.classQName)) {
-          return null
-        }
-        val keyExpression = if (keyType is PyLiteralType) {
-          keyType.expression
-        }
-        else {
-          element.key
-        }
-        if (keyExpression is PyStringLiteralExpression) {
-          strKeysToValueTypes[keyExpression.stringValue] = Pair(element.value, replaceLiteralWithItsClass(valueType))
-        }
+      if (!(keyType is PyClassType && PyNames.TYPE_STR == keyType.classQName)) {
+        return null
       }
+      val keyExpression = if (keyType is PyLiteralType) {
+        keyType.expression
+      }
+      else {
+        element.key
+      }
+      if (keyExpression !is PyStringLiteralExpression) {
+        return null
+      }
+      strKeysToValueTypes[keyExpression.stringValue] = Pair(element.value, replaceLiteralWithItsClass(valueType))
+    }
 
-    return PyTypedDictType.createFromKeysToValueTypes(sequence, strKeysToValueTypes)
+    return strKeysToValueTypes
   }
 
   private fun getDictLiteralElementTypes(sequence: PyDictLiteralExpression, context: TypeEvalContext): Pair<PyType?, PyType?> {

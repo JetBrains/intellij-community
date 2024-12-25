@@ -1421,13 +1421,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            n = {"foo": "", "quux": 3}
                            f(<warning descr="Expected type 'C', got 'dict' instead">y</warning>)
                            f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>)
-                           f(z)
-                           f(x=<warning descr="Expected type 'C', got 'dict' instead">y</warning>)
-                           f(x=<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>)
-                           f(x=z)
+                           f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict' instead">x=y</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">x=n</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">x=z</warning>)
                            z2: C = <warning descr="Expected type 'C', got 'dict' instead">y</warning>
                            z2: C = <warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>
-                           z2: C = z
+                           z2: C = <warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>
                            """)
     );
   }
