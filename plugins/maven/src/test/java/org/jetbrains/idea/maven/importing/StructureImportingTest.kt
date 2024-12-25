@@ -856,6 +856,8 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
     createProjectSubFile("m2/src/io.properties", "")
 
+    assertTrue("File src/io.properties not found", Files.exists(m2.toNioPath().parent.resolve("src/io.properties")))
+
     importProjectAsync()
 
     val m1Project = projectsManager.findProject(m1)!!
