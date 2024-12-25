@@ -45,7 +45,7 @@ interface PathSegmentHandler {
   }
 }
 
-object DefaultExactPathSegmentHandler : PathSegmentHandler {
+internal object DefaultExactPathSegmentHandler : PathSegmentHandler {
   override fun render(segment: UrlPath.PathSegment): String =
     UrlPath.FULL_PATH_VARIABLE_PRESENTATION.patternMatch(segment)
 

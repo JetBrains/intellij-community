@@ -1770,6 +1770,82 @@
       implementation="com.intellij.codeInsight.inline.completion.logs.InlineCompletionListenerSessionLogs"/>
     <inline.completion.session.logs
       implementation="com.intellij.codeInsight.inline.completion.logs.InlineCompletionContextLogs$CollectorExtension"/>
+
+    <applicationService serviceInterface="com.intellij.microservices.HttpReferenceService"
+                        serviceImplementation="com.intellij.microservices.HttpReferenceServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.microservices.url.inlay.UrlPathInlayActionService"
+                        serviceImplementation="com.intellij.microservices.url.inlay.UrlPathInlayActionServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.microservices.url.PlaceholderSplitEscaperService"
+                        serviceImplementation="com.intellij.microservices.url.PlaceholderSplitEscaperServiceImpl"/>
+
+    <referenceInjector implementation="com.intellij.microservices.mime.MimeTypeReferenceInjector"/>
+    <referenceInjector implementation="com.intellij.microservices.http.HttpHeaderReferenceInjector"/>
+
+    <contributedReferencesAnnotator language=""
+                                    implementationClass="com.intellij.microservices.references.MicroserviceReferenceAnnotator"/>
+
+    <documentationProvider implementation="com.intellij.microservices.http.HttpHeaderReferenceDocumentationProvider"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.microservices.utils.MicroservicesUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.microservices.utils.EndpointsProviderNameRule"/>
+
+    <completion.confidence
+      language="any"
+      order="before javaSkipAutopopupInStrings"
+      id="enableAutopopupInUrlReferences"
+      implementationClass="com.intellij.microservices.url.references.EnableAutopopupInUrlPathReferences"/>
+
+    <typedHandler implementation="com.intellij.microservices.url.references.SlashTypedHandlerAutoPopup"/>
+
+    <completion.contributor language="any"
+                            implementationClass="com.intellij.microservices.url.references.UrlPathReferenceCompletionContributor"
+                            id="urlPathReferenceContributor"
+                            order="before legacy"/>
+
+    <completion.confidence
+      language="any"
+      order="before javaSkipAutopopupInStrings"
+      id="enableAutopopupInHttpHeaderReferences"
+      implementationClass="com.intellij.microservices.http.EnableAutopopupInHttpHeaderReferences"/>
+    <typedHandler implementation="com.intellij.microservices.http.QuotesTypedHandlerAutoPopup"/>
+    <completion.contributor id="httpHeaderReferenceContributor"
+                            language="any"
+                            implementationClass="com.intellij.microservices.http.HttpHeaderReferenceCompletionContributor"
+                            order="before legacy"/>
+
+    <renameInputValidator implementation="com.intellij.microservices.url.parameters.PathVariableRenameInputValidator"/>
+
+    <renamePsiElementProcessor implementation="com.intellij.microservices.url.parameters.SemElementRenamePsiElementProcessor"/>
+    <findUsagesHandlerFactory implementation="com.intellij.microservices.url.parameters.RenameableSemElementFindUsagesHandlerFactory"/>
+    <findUsagesHandlerFactory implementation="com.intellij.microservices.url.UrlPathUsagesHandlerFactory"/>
+    <referencesSearch implementation="com.intellij.microservices.url.parameters.SemElementRenamePsiReferenceSearcher"/>
+    <useScopeEnlarger implementation="com.intellij.microservices.url.parameters.RenameableSemElementUseScopeEnlarger"/>
+
+    <codeInsight.inlayProviderFactory implementation="com.intellij.microservices.url.inlay.UrlPathInlayHintsProviderFactory"/>
+    <codeInsight.parameterNameHintsSuppressor implementation="com.intellij.microservices.url.inlay.UrlPathInlayParameterNameHintSuppressor"/>
+
+    <microservices.urlInlayAction implementation="com.intellij.microservices.url.inlay.FindUsagesUrlPathInlayAction" order="first"/>
+    <microservices.urlInlayAction implementation="com.intellij.microservices.client.generator.OpenInScratchClientGeneratorInlayAction"/>
+
+    <intentionAction>
+      <language/>
+      <className>com.intellij.microservices.url.inlay.UrlPathInlayHintsDisableIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.microservices.url.inlay.UrlPathInlayHintsEnableIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.microservices.intention.OpenInWebBrowserIntention</className>
+      <bundleName>messages.MicroservicesBundle</bundleName>
+      <categoryKey>microservices.intention.category</categoryKey>
+    </intentionAction>
+
+    <microservices.requestNavigator implementation="com.intellij.microservices.http.request.DefaultRequestNavigator" order="last"/>
+
+    <registryKey key="client.generator.inlay.action" defaultValue="false"
+                 description="Enable open in client generator action"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.platform.backend">
     <documentation.targetProvider

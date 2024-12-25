@@ -701,5 +701,7 @@
                       order="before html, after react"/>
 
     <postStartupActivity implementation="com.intellij.javaee.PsiExternalResourceNotifier" />
+
+    <xml.autoPopupEnabler implementation="com.intellij.xml.microservices.UrlReferencesXmlAutoPopupEnabler"/>
   </extensions>
 </idea-plugin>

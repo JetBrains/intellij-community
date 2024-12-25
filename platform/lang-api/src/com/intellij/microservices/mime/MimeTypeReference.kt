@@ -3,7 +3,9 @@ package com.intellij.microservices.mime
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.microservices.HttpReferenceService
 import com.intellij.microservices.MicroservicesBundle
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.ElementManipulators
@@ -19,7 +21,7 @@ class MimeTypeReference @JvmOverloads constructor(element: PsiElement, range: Te
     val value = value
     if (!MimeTypes.MIME_PATTERN.matcher(value).matches()) return null
 
-    return MimeTypePsiElement(element, value)
+    return service<HttpReferenceService>().resolveMimeReference(element, value)
   }
 
   override fun getUnresolvedMessagePattern(): String {
@@ -27,7 +29,7 @@ class MimeTypeReference @JvmOverloads constructor(element: PsiElement, range: Te
   }
 
   override fun isReferenceTo(element: PsiElement): Boolean {
-    return element is MimeTypePsiElement && element.name == value
+    return service<HttpReferenceService>().isReferenceToMimeElement(element, value)
   }
 
   override fun getVariants(): Array<Any> {

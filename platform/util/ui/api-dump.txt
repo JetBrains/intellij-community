@@ -1337,6 +1337,7 @@ f:com.intellij.icons.AllIcons$Vcs$Vendors
 - <init>():V
 f:com.intellij.icons.AllIcons$Webreferences
 - sf:MessageQueue:javax.swing.Icon
+- sf:Openapi:javax.swing.Icon
 - sf:Server:javax.swing.Icon
 - sf:WebSocket:javax.swing.Icon
 - <init>():V

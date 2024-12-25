@@ -727,6 +727,7 @@
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
       <group id="NewWebDevelopment" class="com.intellij.ide.actions.NewWebDevelopmentGroup"/>
+      <group id="NewMicroservices" class="com.intellij.ide.actions.NewMicroservicesGroup"/>
       <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 

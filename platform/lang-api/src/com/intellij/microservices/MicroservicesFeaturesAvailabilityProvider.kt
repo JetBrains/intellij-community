@@ -3,6 +3,7 @@ package com.intellij.microservices
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
@@ -18,6 +19,7 @@ private val EP_NAME: ExtensionPointName<MicroservicesFeaturesAvailabilityProvide
   "com.intellij.microservices.featuresAvailabilityProvider"
 )
 
+@ApiStatus.Internal
 fun isSearchEverywhereAvailableExplicitly(project: Project): Boolean {
   return EP_NAME.extensionList.any { it.searchEverywhereTabAvailableFor(project) }
 }

@@ -110,7 +110,7 @@ class UrlPathReferenceInjector<S> private constructor(
           }
           else result.lastOrNull()?.rangeInElement?.let { lastRef ->
             listOf(
-              // a dummy empty UrlPath in the end of authority reference
+              // a stub empty UrlPath at the end of authority reference
               UrlPathReference(
                 rootContextFromParsedBaseUrl,
                 host,

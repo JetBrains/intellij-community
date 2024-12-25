@@ -1430,6 +1430,7 @@ public class AllIcons {
 
   public static final class Webreferences {
     /** 16x16 */ public static final @NotNull Icon MessageQueue = load("webreferences/messageQueue.svg", 697724752, 0);
+    /** 16x16 */ public static final @NotNull Icon Openapi = load("expui/webReferences/openApi.svg", "webreferences/openapi.svg", -1218656258, 2);
     /** 16x16 */ public static final @NotNull Icon Server = load("expui/webReferences/server.svg", "webreferences/server.svg", -1538667407, 2);
     /** 16x16 */ public static final @NotNull Icon WebSocket = load("webreferences/webSocket.svg", -144898297, 0);
   }

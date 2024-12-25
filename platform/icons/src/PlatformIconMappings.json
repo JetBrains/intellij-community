@@ -967,7 +967,8 @@
       ]
     },
     "webReferences": {
-      "server.svg": "webreferences/server.svg"
+      "server.svg": "webreferences/server.svg",
+      "openApi.svg": "webreferences/openapi.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",

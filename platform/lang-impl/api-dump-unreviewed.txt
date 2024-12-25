@@ -3461,9 +3461,6 @@ a:com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 - f:createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.util.ProperTextRange):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 - a:createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.PsiElement):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 - createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.PsiElement,com.intellij.openapi.util.ProperTextRange):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
-com.intellij.codeInsight.highlighting.HighlightedReference
-- com.intellij.psi.PsiReference
-- isHighlightedWhenSoft():Z
 c:com.intellij.codeInsight.highlighting.PairedBraceMatcherAdapter
 - com.intellij.codeInsight.highlighting.BraceMatcher
 - com.intellij.lang.PairedBraceMatcher
@@ -13081,6 +13078,90 @@ f:com.intellij.lexer.PrefixSuffixStripperLexer
 - getTokenStart():I
 - getTokenType():com.intellij.psi.tree.IElementType
 - start(java.lang.CharSequence,I,I,I):V
+f:com.intellij.microservices.url.inlay.UrlPathInlayHintsPresentationsKt
+- sf:urlInlayPresentation(com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory):com.intellij.codeInsight.hints.presentation.InlayPresentation
+f:com.intellij.microservices.url.inlay.UrlPathInlayHintsProviderFactoryKt
+- sf:getUrlPathInlayHintsProviderFactory():com.intellij.codeInsight.hints.InlayHintsProviderFactory
+f:com.intellij.microservices.url.parameters.PathVariableDeclarationUtils
+- <init>():V
+- s:createPathVariableReferencesForPks(com.intellij.psi.PsiElement,com.intellij.psi.util.PartiallyKnownString,com.intellij.microservices.url.references.UrlPksParser,com.intellij.microservices.url.parameters.PathVariableUsagesProvider):com.intellij.psi.PsiReference[]
+c:com.intellij.microservices.url.parameters.PathVariablePsiElement
+- com.intellij.psi.impl.PomTargetPsiElementImpl
+- canNavigate():Z
+- s:create(java.lang.String,com.intellij.psi.PsiElement,com.intellij.microservices.url.parameters.SemDefinitionProvider):com.intellij.microservices.url.parameters.PathVariablePsiElement
+- s:create(java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.microservices.url.parameters.SemDefinitionProvider):com.intellij.microservices.url.parameters.PathVariablePsiElement
+- s:create(java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.util.regex.Pattern,com.intellij.microservices.url.parameters.SemDefinitionProvider):com.intellij.microservices.url.parameters.PathVariablePsiElement
+- equals(java.lang.Object):Z
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- getNameValidationPattern():java.util.regex.Pattern
+- getParent():com.intellij.psi.PsiElement
+- getTextLength():I
+- getTextOffset():I
+- getTextRange():com.intellij.openapi.util.TextRange
+- getTypeName():java.lang.String
+- getVariablePomTarget():com.intellij.microservices.url.parameters.PathVariablePomTarget
+- hashCode():I
+- s:merge(java.util.List):com.intellij.microservices.url.parameters.PathVariablePsiElement
+- navigate(Z):V
+- navigatingToDeclaration():com.intellij.microservices.url.parameters.PathVariablePsiElement
+- setName(java.lang.String):com.intellij.psi.PsiElement
+com.intellij.microservices.url.parameters.PathVariableSem
+- com.intellij.microservices.url.parameters.RenameableSemElement
+- a:getName():java.lang.String
+- a:getPathVariablePsiElement():com.intellij.microservices.url.parameters.PathVariablePsiElement
+- a:isActualNameHolder():Z
+f:com.intellij.microservices.url.parameters.PathVariableSemElementSupportKt
+- sf:PATH_VARIABLE_SEM_KEY:com.intellij.semantic.SemKey
+f:com.intellij.microservices.url.references.EnableAutopopupInUrlPathReferencesKt
+- sf:hasUsageUrlPathReferences(com.intellij.psi.PsiElement,I):Z
+f:com.intellij.microservices.url.references.QueryParameterNamePomTarget
+- com.intellij.microservices.utils.SimpleNamePomTarget
+- com.intellij.microservices.url.parameters.QueryParameterNameTarget
+- <init>(com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget,com.intellij.openapi.project.Project,java.lang.String):V
+- canNavigate():Z
+- equals(java.lang.Object):Z
+- f:getNavigatablePsiElement():com.intellij.psi.PsiElement
+- f:getParamNavigatable():com.intellij.psi.PsiElement
+- f:getUrlPathReferenceUnifiedPomTarget():com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget
+- hashCode():I
+- navigate(Z):V
+- toElement(Z):com.intellij.psi.PsiElement
+f:com.intellij.microservices.url.references.QueryParameterSemElementSupport
+- com.intellij.microservices.url.parameters.RenameableSemElementSupport
+- sf:INSTANCE:com.intellij.microservices.url.references.QueryParameterSemElementSupport
+- createPomTargetPsi(com.intellij.openapi.project.Project,com.intellij.microservices.url.parameters.QueryParameterSem):com.intellij.pom.PomTargetPsiElement
+- findReferencingPsiElements(com.intellij.pom.PomTarget):java.lang.Iterable
+- sf:getNavigatablePsiElement(com.intellij.microservices.url.parameters.QueryParameterNameReference):com.intellij.psi.PsiElement
+- getSEM_KEY():com.intellij.semantic.SemKey
+- supportsTarget(com.intellij.pom.PomTarget):Z
+f:com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget
+- com.intellij.microservices.url.references.UrlPathReferenceTarget
+- sf:Companion:com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget$Companion
+- canNavigate():Z
+- canNavigateToSource():Z
+- equals(java.lang.Object):Z
+- getContext():com.intellij.microservices.url.references.UrlPathContext
+- sf:getFromPomTargetPsiElement(com.intellij.psi.PsiElement):com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget
+- getName():java.lang.String
+- getNavigatablePsiElement():com.intellij.psi.NavigatablePsiElement
+- f:getPathValues():java.util.List
+- getResolvedTargets():java.util.Set
+- hashCode():I
+- isValid():Z
+- isWritable():Z
+- f:mapVariants(kotlin.jvm.functions.Function2):kotlin.sequences.Sequence
+- navigate(Z):V
+- setName(java.lang.String):java.lang.Object
+- toElement(com.intellij.microservices.url.references.UrlPathReference):com.intellij.psi.PsiElement
+f:com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget$Companion
+- f:getFromPomTargetPsiElement(com.intellij.psi.PsiElement):com.intellij.microservices.url.references.UrlPathReferenceUnifiedPomTarget
+f:com.intellij.microservices.utils.CommonFakeNavigatablePomTargetKt
+- sf:mockFindUsages(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+f:com.intellij.microservices.utils.ReferenceResolveUtilsKt
+- sf:getFakePomTargetForLastUrlPathReference(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getLastUrlPathReference(com.intellij.psi.PsiElement):com.intellij.microservices.url.references.UrlPathReference
+- sf:lazySynchronousResolve(java.lang.String,kotlin.jvm.functions.Function0):kotlin.Lazy
 f:com.intellij.mock.MockPsiManager
 - com.intellij.psi.impl.PsiManagerEx
 - <init>(com.intellij.openapi.project.Project):V

@@ -8,9 +8,9 @@ import com.intellij.psi.util.SplitEscaper
 import com.intellij.util.containers.tailOrEmpty
 
 /**
- * A parser for extracting URL from a [PartiallyKnownString] and mapping URL-parts to corresponding [PsiElement]s.
+ * A parser for extracting URL from a [PartiallyKnownString] and mapping URL parts to corresponding [PsiElement]s.
  *
- * Is configurable via fields to support framework-specific URL-parts like Path Variables and Placeholders.
+ * Is configurable via fields to support framework-specific URL parts like Path Variables and Placeholders.
  */
 class UrlPksParser @JvmOverloads constructor(
   var splitEscaper: (CharSequence, String) -> SplitEscaper = { _, _ -> SplitEscaper.AcceptAll },
@@ -20,17 +20,19 @@ class UrlPksParser @JvmOverloads constructor(
   /**
    * setting to `false` makes parser able to handle input without a scheme like `"localhost/some/path"`.
    * NOTE: in that case incomplete strings like `"loc"` could be treated as both host and scheme
-   * which could lead to incompatible scheme in produced results,
+   * which could lead to an incompatible scheme in produced results,
    * please check that [ParsedPksUrl.scheme] `!=` [ParsedPksUrl.authority] in that case before further processing
    */
   var shouldHaveScheme: Boolean = true
 
+  @ConsistentCopyVisibility
   data class ParsedPksUrl internal constructor(val scheme: PartiallyKnownString?,
                                                val authority: PartiallyKnownString?,
                                                val slashesSplit: List<PartiallyKnownString>,
                                                val urlPath: UrlPath,
                                                val queryParameters: List<QueryParameter> = emptyList())
 
+  @ConsistentCopyVisibility
   data class ParsedPksUrlPath internal constructor(val slashesSplit: List<PartiallyKnownString>,
                                                    val urlPath: UrlPath,
                                                    val queryParameters: List<QueryParameter> = emptyList())
@@ -44,7 +46,7 @@ class UrlPksParser @JvmOverloads constructor(
       when {
         schemeSeparatorIndex == -1 && firstSlashIndex == -1 ->
           if (shouldHaveScheme) {
-            // full string is a Scheme if it is not blanck
+            // full string is a Scheme if it is not blank
             val schemePart = if (pkwString.concatenationOfKnown.isBlank()) PartiallyKnownString.empty else pkwString
             schemePart to PartiallyKnownString.empty
           } 
@@ -135,7 +137,7 @@ class UrlPksParser @JvmOverloads constructor(
                             queryParameters = queryParameters)
   }
 
-  private val slashSplitCache = ReadActionCachedValue<MutableMap<PartiallyKnownString, List<PartiallyKnownString>>>({ HashMap() })
+  private val slashSplitCache = ReadActionCachedValue<MutableMap<PartiallyKnownString, List<PartiallyKnownString>>> { HashMap() }
 
   fun splitUrlPath(sourceString: PartiallyKnownString): List<PartiallyKnownString> {
     return slashSplitCache.getCachedOrEvaluate().getOrPut(sourceString) { sourceString.split("/", splitEscaper) }
@@ -143,7 +145,7 @@ class UrlPksParser @JvmOverloads constructor(
 
   private fun parseUrlPath(slashesSplit: List<PartiallyKnownString>): UrlPath = UrlPath(slashesSplit.map { pksPathSegment(it) })
 
-  // mb refactor and make a method that will return the mapping of PathSegment to Pks and use this mapping instead of the split ?
+  // mb refactor and make a method that will return the mapping of PathSegment to Pks and use this mapping instead of the split?
   fun pksPathSegment(pks: PartiallyKnownString): UrlPath.PathSegment =
     pks.valueIfKnown?.let { value -> customPathSegmentExtractor(value) ?: UrlPath.PathSegment.Exact(value) }
     ?: UrlPath.PathSegment.Undefined

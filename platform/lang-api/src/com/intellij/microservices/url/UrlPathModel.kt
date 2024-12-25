@@ -8,7 +8,6 @@ import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import com.intellij.util.containers.headTailOrNull
 import com.intellij.util.text.PlaceholderTextRanges
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern

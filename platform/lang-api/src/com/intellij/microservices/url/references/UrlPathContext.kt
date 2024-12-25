@@ -1,6 +1,7 @@
 package com.intellij.microservices.url.references
 
 import com.intellij.microservices.url.*
+import com.intellij.microservices.utils.LazyChain
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project

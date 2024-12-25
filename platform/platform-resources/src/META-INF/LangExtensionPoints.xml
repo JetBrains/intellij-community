@@ -724,5 +724,29 @@
 
     <extensionPoint qualifiedName="com.intellij.inlinePrompt" dynamic="true"
                     interface="com.intellij.inlinePrompt.InlinePromptExtension"/>
+
+    <extensionPoint interface="com.intellij.microservices.endpoints.EndpointsProvider"
+                    qualifiedName="com.intellij.microservices.endpointsProvider" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.endpoints.EndpointsSidePanelProvider"
+                    qualifiedName="com.intellij.microservices.endpointsSidePanelProvider" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.endpoints.EndpointsProjectModel"
+                    qualifiedName="com.intellij.microservices.endpointsProjectModel" dynamic="true"/>
+
+    <extensionPoint interface="com.intellij.microservices.url.UrlResolverFactory"
+                    qualifiedName="com.intellij.microservices.urlResolverFactory" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.url.inlay.UrlPathInlayAction"
+                    qualifiedName="com.intellij.microservices.urlInlayAction" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.url.inlay.UrlPathInlayLanguagesProvider"
+                    qualifiedName="com.intellij.microservices.urlInlayLanguagesProvider" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.http.request.RequestNavigator"
+                    qualifiedName="com.intellij.microservices.requestNavigator" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.oas.OasSpecificationProvider"
+                    qualifiedName="com.intellij.microservices.oasSpecificationProvider" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.client.generator.ClientGenerator"
+                    qualifiedName="com.intellij.microservices.clientGenerator" dynamic="true" />
+    <extensionPoint interface="com.intellij.microservices.MicroservicesFeaturesAvailabilityProvider"
+                    qualifiedName="com.intellij.microservices.featuresAvailabilityProvider" dynamic="true"/>
+    <extensionPoint interface="com.intellij.microservices.oas.serialization.OasSerializationCompatibilityProvider"
+                    qualifiedName="com.intellij.microservices.oasSerializationCompatibilityProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

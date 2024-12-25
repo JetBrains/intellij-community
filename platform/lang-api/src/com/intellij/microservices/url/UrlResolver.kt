@@ -9,8 +9,8 @@ interface UrlResolver {
   val authorityHints: List<Authority.Exact> get() = emptyList()
 
   /**
-   * @param schema - a schema string with `://` in the end, like `http://` or `wss://`.
-   * If not specified than all authorities should be returned
+   * @param schema schema string with `://` in the end, like `http://` or `wss://`.
+   * If not specified, then all authorities should be returned
    */
   @Suppress("DEPRECATION")
   fun getAuthorityHints(schema: String?): List<Authority.Exact> = authorityHints
@@ -33,7 +33,6 @@ abstract class HttpUrlResolver : UrlResolver {
 
 /**
  * Annotates, that UrlResolver do not participate in resolve and completion, but provide some helping functionality.
- * @see com.intellij.ws.http.request.microservices.RestClientUrlResolver
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)

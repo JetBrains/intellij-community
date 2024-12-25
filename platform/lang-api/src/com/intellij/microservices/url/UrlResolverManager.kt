@@ -3,6 +3,7 @@ package com.intellij.microservices.url
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -13,7 +14,7 @@ class UrlResolverManager(project: Project) {
   val meaningfulResolvers: List<UrlResolver> = all.filter { it.javaClass.getAnnotation(HelperUrlResolver::class.java) == null }
 
   /**
-   * @param schema - a schema string with `://` in the end, like `http://` or `wss://`.
+   * @param schema schema string with `://` in the end, like `http://` or `wss://`.
    * If not specified, then all authorities should be returned.
    */
   fun getAuthorityHints(schema: String?): List<Authority.Exact>
@@ -64,7 +65,7 @@ class UrlResolverManager(project: Project) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): UrlResolverManager {
-      ApplicationManager.getApplication().assertReadAccessAllowed()
+      ThreadingAssertions.assertReadAccess()
 
       return UrlResolverManager(project)
     }

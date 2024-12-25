@@ -446,6 +446,50 @@ com.intellij.ide.bookmark.BookmarksManager
 - f:startInWriteAction():Z
 - a:surroundElements(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement[]):com.intellij.modcommand.ModCommand
 - f:surroundElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[]):com.intellij.openapi.util.TextRange
+*:com.intellij.microservices.MicroservicesFeaturesAvailabilityProvider
+- a:searchEverywhereTabAvailableFor(com.intellij.openapi.project.Project):Z
+*:com.intellij.microservices.client.generator.AvailableClientSettings
+- getActualClientSettings():com.intellij.microservices.client.generator.ClientGeneratorSetting
+- getBoilerplateAvailable():Z
+- getFrameworkLanguages():java.util.Set
+- getFrameworkVersions():java.util.Set
+*f:com.intellij.microservices.client.generator.ClientExample
+- *sf:Companion:com.intellij.microservices.client.generator.ClientExample$Companion
+- <init>(java.lang.String,com.intellij.openapi.fileTypes.FileType):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.openapi.fileTypes.FileType
+- f:copy(java.lang.String,com.intellij.openapi.fileTypes.FileType):com.intellij.microservices.client.generator.ClientExample
+- bs:copy$default(com.intellij.microservices.client.generator.ClientExample,java.lang.String,com.intellij.openapi.fileTypes.FileType,I,java.lang.Object):com.intellij.microservices.client.generator.ClientExample
+- equals(java.lang.Object):Z
+- f:getFileType():com.intellij.openapi.fileTypes.FileType
+- f:getText():java.lang.String
+- hashCode():I
+*f:com.intellij.microservices.client.generator.ClientExample$Companion
+- f:fromFileExtension(java.lang.String,java.lang.String):com.intellij.microservices.client.generator.ClientExample
+*:com.intellij.microservices.client.generator.ClientGenerator
+- *sf:Companion:com.intellij.microservices.client.generator.ClientGenerator$Companion
+- a:generate(com.intellij.openapi.project.Project,com.intellij.microservices.oas.OpenApiSpecification):com.intellij.microservices.client.generator.ClientExample
+- getAvailableClientSettings():com.intellij.microservices.client.generator.AvailableClientSettings
+- a:getTitle():java.lang.String
+*f:com.intellij.microservices.client.generator.ClientGenerator$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+*f:com.intellij.microservices.client.generator.ClientGeneratorSetting
+- <init>():V
+- <init>(Z,java.lang.String,java.lang.String):V
+- b:<init>(Z,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():Z
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:copy(Z,java.lang.String,java.lang.String):com.intellij.microservices.client.generator.ClientGeneratorSetting
+- bs:copy$default(com.intellij.microservices.client.generator.ClientGeneratorSetting,Z,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.microservices.client.generator.ClientGeneratorSetting
+- equals(java.lang.Object):Z
+- f:getBoilerplate():Z
+- f:getFrameworkLanguage():java.lang.String
+- f:getFrameworkVersion():java.lang.String
+- hashCode():I
+- f:setBoilerplate(Z):V
+- f:setFrameworkLanguage(java.lang.String):V
+- f:setFrameworkVersion(java.lang.String):V
 *:com.intellij.openapi.roots.SkipAddingToWatchedRoots
 *a:com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 - <init>():V

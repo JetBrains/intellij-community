@@ -1,11 +1,13 @@
 package com.intellij.microservices.url.parameters;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.microservices.HttpReferenceService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.ResolvingHint;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
  * Represents a reference to the element in code where the Path Variable is declared
  * EXAMPLE: in {@code "/users/{id}/delete"} it is {@code "{id}"}
  * <p>
- * in many cases it is interchangeable with {@link PathVariablePsiElement} and {@link PathVariablePsiElement.PathVariablePomTarget}
+ * in many cases it is interchangeable with {@link PathVariablePsiElement} and {@link PathVariablePomTarget}
  *
  * @see PathVariablePsiElement
- * @see PathVariablePsiElement.PathVariablePomTarget
+ * @see PathVariablePomTarget
  */
 public final class PathVariableDeclaringReference extends PsiReferenceBase<PsiElement> implements ResolvingHint {
   private final PathVariableUsagesProvider myVariableUsagesProvider;
@@ -40,12 +42,14 @@ public final class PathVariableDeclaringReference extends PsiReferenceBase<PsiEl
   }
 
   @Override
-  public PathVariablePsiElement resolve() {
-    return PathVariablePsiElement.create(getValue(), getElement(), getRangeInElement(), myVariableUsagesProvider);
+  public PomTargetPsiElement resolve() {
+    HttpReferenceService service = ApplicationManager.getApplication().getService(HttpReferenceService.class);
+    return service.resolvePathVariableDeclaration(getValue(), getElement(), getRangeInElement(), myVariableUsagesProvider);
   }
 
   @Override
   public boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass) {
-    return ReflectionUtil.isAssignable(PathVariablePsiElement.class, elementClass);
+    HttpReferenceService service = ApplicationManager.getApplication().getService(HttpReferenceService.class);
+    return service.canResolveToPathVariableDeclaration(elementClass);
   }
 }

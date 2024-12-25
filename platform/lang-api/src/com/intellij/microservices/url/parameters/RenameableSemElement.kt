@@ -10,8 +10,7 @@ import com.intellij.semantic.SemKey
 import com.intellij.semantic.SemService
 import com.intellij.util.Plow
 
-interface RenameableSemElement: SemElement {
-
+interface RenameableSemElement : SemElement {
   val name: String
 
   val nameVariants: Plow<LookupElement>
@@ -21,7 +20,6 @@ interface RenameableSemElement: SemElement {
     @JvmField
     val RENAMEABLE_SEM_KEY: SemKey<RenameableSemElement> = SemKey.createKey("RenameableSemElement")
   }
-
 }
 
 /**
@@ -39,10 +37,10 @@ interface RenameableSemElementSupport<T : RenameableSemElement> {
   /**
    * @return all [SEM_KEY]-"references" for the [pomTarget]
    * All returned [PsiElement]s should have the [SEM_KEY] defined for them via [SemService].
-   * For instance: for the the PathVariable PomTarget it will return PsiParameters that uses it
+   * For instance, for the PathVariable PomTarget it will return PsiParameters that uses it
    *
-   * @param pomTarget - implementation specific pomTarget.
-   * Ok, different PomTargets will be passed there, but the implementation should cast and process it's own
+   * @param pomTarget implementation-specific POM target.
+   * Ok, different PomTargets will be passed there, but the implementation should cast and process its own
    */
   fun findReferencingPsiElements(pomTarget: PomTarget): Iterable<PsiElement>
 
@@ -52,13 +50,12 @@ interface RenameableSemElementSupport<T : RenameableSemElement> {
   fun supportsTarget(pomTarget: PomTarget): Boolean
 
   /**
-   * @return [PomTargetPsiElement] that will be used for references search.
-   * @param sem - data, that should be used to create [PomTargetPsiElement].
+   * @return [PomTargetPsiElement] that will be used for reference search.
+   * @param sem data, that should be used to create [PomTargetPsiElement].
    * It implies that [T] should contain enough data to create a distinguishable [PomTargetPsiElement],
    * though it doesn't mean that [sem] is the only way to create such [PomTargetPsiElement]s
    */
   fun createPomTargetPsi(project: Project, sem: T): PomTargetPsiElement?
-
 }
 
 fun <T : RenameableSemElement> RenameableSemElementSupport<T>.getSemElement(element: PsiElement): T? =

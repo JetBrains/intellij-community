@@ -1,9 +1,14 @@
 package com.intellij.microservices.url.parameters;
 
 import com.intellij.codeInsight.highlighting.HighlightedReference;
+import com.intellij.microservices.HttpReferenceService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReferenceBase;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolvingHint;
 import org.jetbrains.annotations.NotNull;
 
 public class PathVariableUsageReference extends PsiPolyVariantReferenceBase<PsiElement>
@@ -23,29 +28,25 @@ public class PathVariableUsageReference extends PsiPolyVariantReferenceBase<PsiE
 
   @Override
   public Object @NotNull [] getVariants() {
-    return mySearcher.getPathVariables(getElement()).toArray(new PathVariablePsiElement[0]);
+    return mySearcher.getPathVariables(getElement())
+      .toArray(new PomTargetPsiElement[0]);
   }
 
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    final String variableName = getValue();
-    PathVariablePsiElement merge = PathVariablePsiElement.merge(
-      mySearcher.getPathVariables(getElement())
-        .filter(o -> variableName.equals(o.getName()))
-        .map(v -> v.navigatingToDeclaration())
-        .toList()
-    );
-    if (merge == null) return ResolveResult.EMPTY_ARRAY;
-    return PsiElementResolveResult.createResults(merge);
+    HttpReferenceService service = ApplicationManager.getApplication().getService(HttpReferenceService.class);
+    return service.resolvePathVariableUsage(getValue(), getElement(), mySearcher);
   }
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    return element instanceof PathVariablePsiElement && super.isReferenceTo(element);
+    HttpReferenceService service = ApplicationManager.getApplication().getService(HttpReferenceService.class);
+    return service.isReferenceToPathVariableDeclaration(element) && super.isReferenceTo(element);
   }
 
   @Override
   public boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass) {
-    return ReflectionUtil.isAssignable(PathVariablePsiElement.class, elementClass);
+    HttpReferenceService service = ApplicationManager.getApplication().getService(HttpReferenceService.class);
+    return service.canResolveToPathVariableDeclaration(elementClass);
   }
 }

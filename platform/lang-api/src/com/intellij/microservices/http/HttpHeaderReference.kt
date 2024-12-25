@@ -1,12 +1,17 @@
 package com.intellij.microservices.http
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
+import com.intellij.microservices.HttpReferenceService
 import com.intellij.microservices.MicroservicesBundle
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
+import java.util.regex.Pattern
+
+private val HEADER_NAME_PATTERN = Pattern.compile("[^:\\r\\n]+")
 
 class HttpHeaderReference(element: PsiElement, range: TextRange)
   : PsiReferenceBase<PsiElement>(element, range), EmptyResolveMessageProvider {
@@ -15,13 +20,13 @@ class HttpHeaderReference(element: PsiElement, range: TextRange)
 
   override fun resolve(): PsiElement? {
     val value = value
-    if (!HttpHeadersDictionary.HEADER_NAME_PATTERN.matcher(value).matches()) return null
+    if (!HEADER_NAME_PATTERN.matcher(value).matches()) return null
 
-    return HttpHeaderElement(element, value)
+    return service<HttpReferenceService>().resolveHeaderReference(element, value)
   }
 
   override fun isReferenceTo(element: PsiElement): Boolean {
-    return element is HttpHeaderElement && element.name == value
+    return service<HttpReferenceService>().isReferenceToHeaderElement(element, value)
   }
 
   companion object {

@@ -518,6 +518,45 @@ f:com.intellij.ide.impl.StructureViewWrapperImpl
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:createNode(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
 - a:getWorkspaceClass():java.lang.Class
+*f:com.intellij.microservices.client.generator.ClientGeneratorOpenInScratchService
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:createScratchFile(com.intellij.microservices.client.generator.ClientGenerator,com.intellij.microservices.oas.OpenApiSpecification,kotlin.coroutines.Continuation):java.lang.Object
+- f:createScratchFile(com.intellij.microservices.client.generator.ClientGenerator,com.intellij.openapi.editor.Editor,com.intellij.microservices.url.references.UrlPathContext):V
+- f:createScratchFileWithoutEndpointsChangeTracking(com.intellij.microservices.client.generator.ClientGenerator,com.intellij.microservices.oas.OpenApiSpecification):V
+*f:com.intellij.microservices.client.generator.OpenInScratchClientGeneratorInlayActionKt
+- *sf:CLIENT_EXAMPLE_SCRATCH_PREFIX:java.lang.String
+*:com.intellij.microservices.inspection.HttpHeaderInspection
+- checkHeader(com.intellij.codeInspection.ProblemsHolder,java.lang.String,com.intellij.psi.PsiElement):V
+- getCustomHttpHeaderFix(com.intellij.psi.PsiElement,java.lang.String):com.intellij.codeInspection.LocalQuickFix
+- a:isCustomHeader(java.lang.String,com.intellij.psi.PsiElement):Z
+*f:com.intellij.microservices.inspection.HttpHeaderInspection$AddCustomHttpHeaderIntentionAction
+- com.intellij.codeInspection.LocalQuickFix
+- <init>(java.lang.String):V
+- applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):V
+- generatePreview(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- getFamilyName():java.lang.String
+*a:com.intellij.microservices.inspection.HttpHeaderInspectionBase
+- com.intellij.codeInspection.LocalInspectionTool
+- *sf:Companion:com.intellij.microservices.inspection.HttpHeaderInspectionBase$Companion
+- <init>():V
+- a:addCustomHeader(java.lang.String):V
+- a:getCustomHeaders():java.util.Set
+- a:getCustomHeadersEnabled():Z
+*f:com.intellij.microservices.inspection.HttpHeaderInspectionBase$Companion
+- f:getCustomHeaders(com.intellij.psi.PsiElement):java.util.Set
+- f:getCustomHeadersEnabled(com.intellij.psi.PsiElement):Z
+- f:getHTTP_HEADER_INSPECTION():com.intellij.openapi.util.Key
+*:com.intellij.microservices.intention.MicroservicesIntentionPriorityComparableAction
+- java.lang.Comparable
+- compareTo(java.lang.Object):I
+- a:getMicroservicesActionPriority():I
+*f:com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
+- com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
+- *sf:Companion:com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder$Companion
+- <init>(javax.swing.Icon,com.intellij.util.NotNullFunction,com.intellij.util.NotNullFunction):V
+*f:com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder$Companion
+- f:create(javax.swing.Icon,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
+- f:create(javax.swing.Icon,com.intellij.util.NotNullFunction,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
 *:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext
 - *sf:Companion:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext$Companion
 - a:extractData(com.intellij.psi.PsiElement):com.intellij.openapi.editor.actions.lists.ListWithElements

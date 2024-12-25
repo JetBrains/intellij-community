@@ -815,6 +815,9 @@ com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:adjustSurroundWithRange(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
 - adjustSurroundWithRange(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z):com.intellij.openapi.util.TextRange
+com.intellij.codeInsight.highlighting.HighlightedReference
+- com.intellij.psi.PsiReference
+- isHighlightedWhenSoft():Z
 com.intellij.codeInsight.hint.DeclarationRangeHandler
 - a:getDeclarationRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 c:com.intellij.codeInsight.hint.DefaultImplementationTextSelectioner
@@ -3078,6 +3081,1205 @@ com.intellij.lang.surroundWith.Surrounder
 - a:getTemplateDescription():java.lang.String
 - a:isApplicable(com.intellij.psi.PsiElement[]):Z
 - a:surroundElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[]):com.intellij.openapi.util.TextRange
+f:com.intellij.microservices.endpoints.EndpointType
+- <init>(java.lang.String,javax.swing.Icon,java.util.function.Supplier):V
+- f:getIcon():javax.swing.Icon
+- f:getLocalizedMessage():java.util.function.Supplier
+- f:getQueryTag():java.lang.String
+f:com.intellij.microservices.endpoints.EndpointTypes
+- sf:API_DEFINITION_TYPE:com.intellij.microservices.endpoints.EndpointType
+- sf:GRAPH_QL_TYPE:com.intellij.microservices.endpoints.EndpointType
+- sf:HTTP_CLIENT_TYPE:com.intellij.microservices.endpoints.EndpointType
+- sf:HTTP_MOCK_TYPE:com.intellij.microservices.endpoints.EndpointType
+- sf:HTTP_SERVER_TYPE:com.intellij.microservices.endpoints.EndpointType
+- sf:WEBSOCKET_CLIENT_TYPE:com.intellij.microservices.endpoints.EndpointType
+- sf:WEBSOCKET_SERVER_TYPE:com.intellij.microservices.endpoints.EndpointType
+- sf:XML_WEB_SERVICE_TYPE:com.intellij.microservices.endpoints.EndpointType
+com.intellij.microservices.endpoints.EndpointsChangeTracker
+- sf:Companion:com.intellij.microservices.endpoints.EndpointsChangeTracker$Companion
+- a:setTrackingChanges(Z):V
+f:com.intellij.microservices.endpoints.EndpointsChangeTracker$Companion
+- f:getTOPIC():com.intellij.util.messages.Topic
+- f:withExpectedChanges(com.intellij.openapi.project.Project,java.lang.Runnable):V
+- f:withExpectedChanges(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0):V
+com.intellij.microservices.endpoints.EndpointsDocumentationProvider
+- com.intellij.microservices.endpoints.EndpointsProvider
+- a:getEndpointDocumentation(java.lang.Object,com.intellij.openapi.Disposable):javax.swing.JComponent
+- a:prepareDocumentationRequest(java.lang.Object,java.lang.Object):java.lang.Object
+com.intellij.microservices.endpoints.EndpointsElementItem
+- com.intellij.microservices.endpoints.EndpointsListItem
+- a:getEndpoint():java.lang.Object
+- a:getGroup():java.lang.Object
+- a:getModule():com.intellij.microservices.endpoints.EndpointsModuleEntity
+- a:getProvider():com.intellij.microservices.endpoints.EndpointsProvider
+- getUrlTargetInfos():java.lang.Iterable
+- a:isValid():Z
+com.intellij.microservices.endpoints.EndpointsFilter
+com.intellij.microservices.endpoints.EndpointsListItem
+com.intellij.microservices.endpoints.EndpointsModuleEntity
+- a:getIcon():javax.swing.Icon
+- a:getName():java.lang.String
+com.intellij.microservices.endpoints.EndpointsModuleItem
+- a:getModule():com.intellij.microservices.endpoints.EndpointsModuleEntity
+com.intellij.microservices.endpoints.EndpointsProjectModel
+- sf:Companion:com.intellij.microservices.endpoints.EndpointsProjectModel$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:createFilter(com.intellij.microservices.endpoints.EndpointsModuleEntity,Z,Z):com.intellij.microservices.endpoints.EndpointsFilter
+- a:getGroupByModuleTitleFull():java.lang.String
+- a:getGroupByModuleTitleShort():java.lang.String
+- a:getModuleDisplayName():java.lang.String
+- a:getModuleEntities(com.intellij.openapi.project.Project):java.util.Collection
+- a:getModuleQueryTag():java.lang.String
+- a:getSelectModulesTitle():java.lang.String
+- a:isTestModule(com.intellij.microservices.endpoints.EndpointsModuleEntity):Z
+f:com.intellij.microservices.endpoints.EndpointsProjectModel$Companion
+com.intellij.microservices.endpoints.EndpointsProvider
+- sf:Companion:com.intellij.microservices.endpoints.EndpointsProvider$Companion
+- sf:DOCUMENTATION_ELEMENT:com.intellij.openapi.actionSystem.DataKey
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:URL_TARGET_INFO:com.intellij.openapi.actionSystem.DataKey
+- getDocumentationElement(java.lang.Object,java.lang.Object):com.intellij.psi.PsiElement
+- getEndpointData(java.lang.Object,java.lang.Object,java.lang.String):java.lang.Object
+- a:getEndpointGroups(com.intellij.openapi.project.Project,com.intellij.microservices.endpoints.EndpointsFilter):java.lang.Iterable
+- a:getEndpointPresentation(java.lang.Object,java.lang.Object):com.intellij.navigation.ItemPresentation
+- a:getEndpointType():com.intellij.microservices.endpoints.EndpointType
+- a:getEndpoints(java.lang.Object):java.lang.Iterable
+- a:getModificationTracker(com.intellij.openapi.project.Project):com.intellij.openapi.util.ModificationTracker
+- getNavigationElement(java.lang.Object,java.lang.Object):com.intellij.psi.PsiElement
+- a:getPresentation():com.intellij.microservices.endpoints.FrameworkPresentation
+- a:getStatus(com.intellij.openapi.project.Project):com.intellij.microservices.endpoints.EndpointsProvider$Status
+- a:isValidEndpoint(java.lang.Object,java.lang.Object):Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object,java.lang.Object):V
+f:com.intellij.microservices.endpoints.EndpointsProvider$Companion
+- f:getAllProviders():java.util.List
+- f:getAvailableProviders(com.intellij.openapi.project.Project):kotlin.sequences.Sequence
+- f:hasAnyProviders():Z
+e:com.intellij.microservices.endpoints.EndpointsProvider$Status
+- java.lang.Enum
+- sf:AVAILABLE:com.intellij.microservices.endpoints.EndpointsProvider$Status
+- sf:HAS_ENDPOINTS:com.intellij.microservices.endpoints.EndpointsProvider$Status
+- sf:UNAVAILABLE:com.intellij.microservices.endpoints.EndpointsProvider$Status
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.microservices.endpoints.EndpointsProvider$Status
+- s:values():com.intellij.microservices.endpoints.EndpointsProvider$Status[]
+com.intellij.microservices.endpoints.EndpointsSidePanel
+- a:getComponent():javax.swing.JComponent
+- a:getTitle():java.lang.String
+- a:isAvailable(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- selected(java.util.List):V
+- a:update(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.microservices.endpoints.EndpointsSidePanelProvider
+- a:create(com.intellij.openapi.project.Project):com.intellij.microservices.endpoints.EndpointsSidePanel
+com.intellij.microservices.endpoints.EndpointsUrlTargetProvider
+- com.intellij.microservices.endpoints.EndpointsProvider
+- getOpenApiSpecification(java.lang.Object,java.lang.Object):com.intellij.microservices.oas.OpenApiSpecification
+- a:getUrlTargetInfo(java.lang.Object,java.lang.Object):java.lang.Iterable
+- shouldShowOpenApiPanel():Z
+com.intellij.microservices.endpoints.EndpointsViewListener
+- sf:Companion:com.intellij.microservices.endpoints.EndpointsViewListener$Companion
+- a:endpointsChanged(com.intellij.microservices.endpoints.EndpointsViewListener$ChangeEvent):V
+f:com.intellij.microservices.endpoints.EndpointsViewListener$ChangeEvent
+- <init>(com.intellij.openapi.project.Project,com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType):V
+- f:getProject():com.intellij.openapi.project.Project
+- f:getType():com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType
+e:com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType
+- java.lang.Enum
+- sf:FLUSH:com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType
+- sf:ITEMS:com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType
+- sf:PROVIDERS:com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType
+- sf:VIEW:com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType
+- s:values():com.intellij.microservices.endpoints.EndpointsViewListener$ChangeType[]
+f:com.intellij.microservices.endpoints.EndpointsViewListener$Companion
+- f:getTOPIC():com.intellij.util.messages.Topic
+com.intellij.microservices.endpoints.EndpointsViewOpener
+- sf:Companion:com.intellij.microservices.endpoints.EndpointsViewOpener$Companion
+- sf:ENDPOINTS_CONTEXT_MENU_PLACE:java.lang.String
+- sf:ENDPOINTS_FILTER_TOOLBAR_PLACE:java.lang.String
+- sf:ENDPOINTS_TOOLWINDOW_ID:java.lang.String
+- s:isAvailable(com.intellij.openapi.project.Project):Z
+- s:showAllEndpoints(com.intellij.openapi.project.Project):V
+- a:showEndpoints(java.lang.String):V
+- a:showEndpoints(java.lang.String,java.lang.String,java.lang.String):V
+- s:showEndpointsWithFilter(com.intellij.openapi.project.Project,java.lang.String):V
+- s:showEndpointsWithFilter(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String):V
+f:com.intellij.microservices.endpoints.EndpointsViewOpener$Companion
+- sf:ENDPOINTS_CONTEXT_MENU_PLACE:java.lang.String
+- sf:ENDPOINTS_FILTER_TOOLBAR_PLACE:java.lang.String
+- sf:ENDPOINTS_TOOLWINDOW_ID:java.lang.String
+- f:getTOPIC():com.intellij.util.messages.Topic
+- f:isAvailable(com.intellij.openapi.project.Project):Z
+- f:showAllEndpoints(com.intellij.openapi.project.Project):V
+- f:showEndpointsWithFilter(com.intellij.openapi.project.Project,java.lang.String):V
+- f:showEndpointsWithFilter(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String):V
+f:com.intellij.microservices.endpoints.ExternalEndpointsFilter
+- com.intellij.microservices.endpoints.EndpointsFilter
+- sf:INSTANCE:com.intellij.microservices.endpoints.ExternalEndpointsFilter
+f:com.intellij.microservices.endpoints.FrameworkPresentation
+- <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
+- f:getIcon():javax.swing.Icon
+- f:getQueryTag():java.lang.String
+- f:getTitle():java.lang.String
+f:com.intellij.microservices.endpoints.ModuleEndpointsFilter
+- com.intellij.microservices.endpoints.SearchScopeEndpointsFilter
+- <init>(com.intellij.openapi.module.Module,Z,Z):V
+- f:component1():com.intellij.openapi.module.Module
+- f:component2():Z
+- f:component3():Z
+- f:copy(com.intellij.openapi.module.Module,Z,Z):com.intellij.microservices.endpoints.ModuleEndpointsFilter
+- bs:copy$default(com.intellij.microservices.endpoints.ModuleEndpointsFilter,com.intellij.openapi.module.Module,Z,Z,I,java.lang.Object):com.intellij.microservices.endpoints.ModuleEndpointsFilter
+- equals(java.lang.Object):Z
+- f:filterByScope(java.util.Collection,kotlin.jvm.functions.Function1):java.lang.Iterable
+- f:filterByScope(kotlin.sequences.Sequence,kotlin.jvm.functions.Function1):java.lang.Iterable
+- getContentSearchScope():com.intellij.psi.search.GlobalSearchScope
+- f:getFromLibraries():Z
+- f:getFromTests():Z
+- f:getModule():com.intellij.openapi.module.Module
+- getTransitiveSearchScope():com.intellij.psi.search.GlobalSearchScope
+- hashCode():I
+com.intellij.microservices.endpoints.SearchScopeEndpointsFilter
+- com.intellij.microservices.endpoints.EndpointsFilter
+- a:getContentSearchScope():com.intellij.psi.search.GlobalSearchScope
+- a:getTransitiveSearchScope():com.intellij.psi.search.GlobalSearchScope
+com.intellij.microservices.endpoints.presentation.EndpointMethodPresentation
+- a:getEndpointMethodOrder():I
+- a:getEndpointMethodPresentation():java.lang.String
+- a:getEndpointMethods():java.util.List
+f:com.intellij.microservices.endpoints.presentation.HttpMethodPresentation
+- com.intellij.ide.projectView.PresentationData
+- com.intellij.microservices.endpoints.presentation.EndpointMethodPresentation
+- sf:Companion:com.intellij.microservices.endpoints.presentation.HttpMethodPresentation$Companion
+- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.editor.colors.TextAttributesKey):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.editor.colors.TextAttributesKey,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.util.List,java.lang.String,javax.swing.Icon):V
+- <init>(java.lang.String,java.util.List,java.lang.String,javax.swing.Icon,com.intellij.openapi.editor.colors.TextAttributesKey):V
+- b:<init>(java.lang.String,java.util.List,java.lang.String,javax.swing.Icon,com.intellij.openapi.editor.colors.TextAttributesKey,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getEndpointMethodOrder():I
+- getEndpointMethodPresentation():java.lang.String
+- getEndpointMethods():java.util.List
+f:com.intellij.microservices.endpoints.presentation.HttpMethodPresentation$Companion
+- f:getHttpMethodOrder(java.lang.String):I
+- f:getHttpMethodPresentation(java.lang.String):java.lang.String
+- f:getHttpMethodsPresentation(java.util.Collection):java.lang.String
+f:com.intellij.microservices.endpoints.presentation.HttpUrlPresentation
+- com.intellij.ide.projectView.PresentationData
+- <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
+- <init>(java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.editor.colors.TextAttributesKey):V
+e:com.intellij.microservices.http.HttpCode
+- java.lang.Enum
+- sf:ACCEPTED:com.intellij.microservices.http.HttpCode
+- sf:BAD_GATEWAY:com.intellij.microservices.http.HttpCode
+- sf:BAD_REQUEST:com.intellij.microservices.http.HttpCode
+- sf:CONFLICT:com.intellij.microservices.http.HttpCode
+- sf:CREATED:com.intellij.microservices.http.HttpCode
+- sf:EXPECTATION_FAILED:com.intellij.microservices.http.HttpCode
+- sf:FAILED_DEPENDENCY:com.intellij.microservices.http.HttpCode
+- sf:FORBIDDEN:com.intellij.microservices.http.HttpCode
+- sf:FOUND:com.intellij.microservices.http.HttpCode
+- sf:GATEWAY_TIMEOUT:com.intellij.microservices.http.HttpCode
+- sf:GONE:com.intellij.microservices.http.HttpCode
+- sf:HTTP_VERSION_NOT_SUPPORTED:com.intellij.microservices.http.HttpCode
+- sf:INSUFFICIENT_STORAGE:com.intellij.microservices.http.HttpCode
+- sf:INTERNAL_SERVER_ERROR:com.intellij.microservices.http.HttpCode
+- sf:LENGTH_REQUIRED:com.intellij.microservices.http.HttpCode
+- sf:LOCKED:com.intellij.microservices.http.HttpCode
+- sf:METHOD_NOT_ALLOWED:com.intellij.microservices.http.HttpCode
+- sf:MISDIRECTED_REQUEST:com.intellij.microservices.http.HttpCode
+- sf:MOVED_PERMANENTLY:com.intellij.microservices.http.HttpCode
+- sf:MULTIPLE_CHOICES:com.intellij.microservices.http.HttpCode
+- sf:MULTI_STATUS:com.intellij.microservices.http.HttpCode
+- sf:NETWORK_AUTHENTICATION_REQUIRED:com.intellij.microservices.http.HttpCode
+- sf:NON_AUTHORITATIVE_INFORMATION:com.intellij.microservices.http.HttpCode
+- sf:NOT_ACCEPTABLE:com.intellij.microservices.http.HttpCode
+- sf:NOT_EXTENDED:com.intellij.microservices.http.HttpCode
+- sf:NOT_FOUND:com.intellij.microservices.http.HttpCode
+- sf:NOT_IMPLEMENTED:com.intellij.microservices.http.HttpCode
+- sf:NOT_MODIFIED:com.intellij.microservices.http.HttpCode
+- sf:NO_CONTENT:com.intellij.microservices.http.HttpCode
+- sf:OK:com.intellij.microservices.http.HttpCode
+- sf:PARTIAL_CONTENT:com.intellij.microservices.http.HttpCode
+- sf:PAYMENT_REQUIRED:com.intellij.microservices.http.HttpCode
+- sf:PERMANENT_REDIRECT:com.intellij.microservices.http.HttpCode
+- sf:PRECONDITION_FAILED:com.intellij.microservices.http.HttpCode
+- sf:PRECONDITION_REQUIRED:com.intellij.microservices.http.HttpCode
+- sf:PROCESSING:com.intellij.microservices.http.HttpCode
+- sf:PROXY_AUTHENTICATION_REQUIRED:com.intellij.microservices.http.HttpCode
+- sf:REQUESTED_RANGE_NOT_SATISFIABLE:com.intellij.microservices.http.HttpCode
+- sf:REQUEST_ENTITY_TOO_LARGE:com.intellij.microservices.http.HttpCode
+- sf:REQUEST_HEADER_FIELDS_TOO_LARGE:com.intellij.microservices.http.HttpCode
+- sf:REQUEST_TIMEOUT:com.intellij.microservices.http.HttpCode
+- sf:REQUEST_URI_TOO_LONG:com.intellij.microservices.http.HttpCode
+- sf:RESET_CONTENT:com.intellij.microservices.http.HttpCode
+- sf:SEE_OTHER:com.intellij.microservices.http.HttpCode
+- sf:SERVICE_UNAVAILABLE:com.intellij.microservices.http.HttpCode
+- sf:SWITCHING_PROTOCOLS:com.intellij.microservices.http.HttpCode
+- sf:TEMPORARY_REDIRECT:com.intellij.microservices.http.HttpCode
+- sf:TOO_MANY_REQUESTS:com.intellij.microservices.http.HttpCode
+- sf:UNAUTHORIZED:com.intellij.microservices.http.HttpCode
+- sf:UNORDERED_COLLECTION:com.intellij.microservices.http.HttpCode
+- sf:UNPROCESSABLE_ENTITY:com.intellij.microservices.http.HttpCode
+- sf:UNSUPPORTED_MEDIA_TYPE:com.intellij.microservices.http.HttpCode
+- sf:UPGRADE_REQUIRED:com.intellij.microservices.http.HttpCode
+- sf:USE_PROXY:com.intellij.microservices.http.HttpCode
+- sf:VARIANT_ALSO_NEGOTIATES:com.intellij.microservices.http.HttpCode
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getShortDescription():java.lang.String
+- f:getStatusCode():I
+- s:valueOf(java.lang.String):com.intellij.microservices.http.HttpCode
+- s:values():com.intellij.microservices.http.HttpCode[]
+f:com.intellij.microservices.http.HttpHeaderReference
+- com.intellij.psi.PsiReferenceBase
+- com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
+- sf:Companion:com.intellij.microservices.http.HttpHeaderReference$Companion
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
+- sf:forElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- sf:forElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.psi.PsiReference[]
+- getUnresolvedMessagePattern():java.lang.String
+- isReferenceTo(com.intellij.psi.PsiElement):Z
+- resolve():com.intellij.psi.PsiElement
+f:com.intellij.microservices.http.HttpHeaderReference$Companion
+- f:forElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- f:forElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.psi.PsiReference[]
+f:com.intellij.microservices.http.HttpMethodReference
+- com.intellij.psi.PsiReferenceBase
+- com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
+- getUnresolvedMessagePattern():java.lang.String
+- getVariants():java.lang.Object[]
+- isReferenceTo(com.intellij.psi.PsiElement):Z
+- resolve():com.intellij.psi.PsiElement
+f:com.intellij.microservices.http.request.NavigatorHttpRequest
+- <init>(java.lang.String,java.lang.String,java.util.List,java.util.List):V
+- f:getHeaders():java.util.List
+- f:getParams():java.util.List
+- f:getRequestMethod():java.lang.String
+- f:getUrl():java.lang.String
+com.intellij.microservices.http.request.RequestNavigator
+- sf:Companion:com.intellij.microservices.http.request.RequestNavigator$Companion
+- a:accept(com.intellij.microservices.http.request.NavigatorHttpRequest):Z
+- a:getDisplayText():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getId():java.lang.String
+- getNavigationGroupName():java.lang.String
+- getNavigationMessage(com.intellij.microservices.http.request.NavigatorHttpRequest):java.lang.String
+- s:getRequestNavigators():java.util.List
+- s:getRequestNavigators(com.intellij.microservices.http.request.NavigatorHttpRequest):java.util.List
+- hasTarget():Z
+- a:navigate(com.intellij.openapi.project.Project,com.intellij.microservices.http.request.NavigatorHttpRequest,java.lang.String):V
+f:com.intellij.microservices.http.request.RequestNavigator$Companion
+- f:getRequestNavigators():java.util.List
+- f:getRequestNavigators(com.intellij.microservices.http.request.NavigatorHttpRequest):java.util.List
+f:com.intellij.microservices.mime.MimeTypeReference
+- com.intellij.psi.PsiReferenceBase
+- com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
+- sf:Companion:com.intellij.microservices.mime.MimeTypeReference$Companion
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):V
+- b:<init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- sf:forElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- sf:forElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.psi.PsiReference[]
+- sf:forElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiReference[]
+- getUnresolvedMessagePattern():java.lang.String
+- getVariants():java.lang.Object[]
+- f:isInjected():Z
+- isReferenceTo(com.intellij.psi.PsiElement):Z
+- resolve():com.intellij.psi.PsiElement
+f:com.intellij.microservices.mime.MimeTypeReference$Companion
+- f:forElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- f:forElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.psi.PsiReference[]
+- f:forElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiReference[]
+- bs:forElement$default(com.intellij.microservices.mime.MimeTypeReference$Companion,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,I,java.lang.Object):com.intellij.psi.PsiReference[]
+f:com.intellij.microservices.mime.MimeTypes
+- sf:APPLICATION_ATOM_XML:java.lang.String
+- sf:APPLICATION_FORM_URLENCODED:java.lang.String
+- sf:APPLICATION_GRAPHQL:java.lang.String
+- sf:APPLICATION_JAVASCRIPT:java.lang.String
+- sf:APPLICATION_JSON:java.lang.String
+- sf:APPLICATION_OCTET_STREAM:java.lang.String
+- sf:APPLICATION_PDF:java.lang.String
+- sf:APPLICATION_SQL:java.lang.String
+- sf:APPLICATION_STREAM_JSON:java.lang.String
+- sf:APPLICATION_SVG_XML:java.lang.String
+- sf:APPLICATION_XHTML_XML:java.lang.String
+- sf:APPLICATION_XML:java.lang.String
+- sf:APPLICATION_X_NDJSON:java.lang.String
+- sf:APPLICATION_X_YAML:java.lang.String
+- sf:APPLICATION_YAML:java.lang.String
+- sf:APPLICATION_ZIP:java.lang.String
+- sf:AUDIO_MPEG:java.lang.String
+- sf:AUDIO_VORBIS:java.lang.String
+- sf:IMAGE_GIF:java.lang.String
+- sf:IMAGE_JPEG:java.lang.String
+- sf:IMAGE_PNG:java.lang.String
+- sf:IMAGE_SVG:java.lang.String
+- sf:IMAGE_WEBP:java.lang.String
+- sf:MIME_PATTERN:java.util.regex.Pattern
+- sf:MULTIPART_FORM_DATA:java.lang.String
+- sf:PREDEFINED_MIME_VARIANTS:java.lang.String[]
+- sf:PREDEFINED_TEXT_MIME_TYPES:java.util.Set
+- sf:TEXT_CSS:java.lang.String
+- sf:TEXT_CSV:java.lang.String
+- sf:TEXT_EVENT_STREAM:java.lang.String
+- sf:TEXT_HTML:java.lang.String
+- sf:TEXT_JSON:java.lang.String
+- sf:TEXT_PLAIN:java.lang.String
+- sf:TEXT_XML:java.lang.String
+f:com.intellij.microservices.oas.OasArrayValue
+- com.intellij.microservices.oas.OasExampleValue
+- <init>(java.util.List):V
+- f:getItems():java.util.List
+f:com.intellij.microservices.oas.OasBooleanValue
+- com.intellij.microservices.oas.OasPrimitiveTypeValue
+- <init>(Z):V
+f:com.intellij.microservices.oas.OasComponents
+- <init>(java.util.Map):V
+- f:getSchemas():java.util.Map
+f:com.intellij.microservices.oas.OasEndpointPath
+- <init>(java.lang.String,java.lang.String,java.util.Collection):V
+- f:getAbsolutePath():java.lang.String
+- f:getOperations():java.util.Collection
+- f:getPath():java.lang.String
+- f:getSummary():java.lang.String
+f:com.intellij.microservices.oas.OasEndpointPath$Builder
+- <init>(com.intellij.microservices.url.UrlPath):V
+- <init>(java.lang.String):V
+- f:build():com.intellij.microservices.oas.OasEndpointPath
+- f:build(kotlin.jvm.functions.Function1):com.intellij.microservices.oas.OasEndpointPath
+- bs:build$default(com.intellij.microservices.oas.OasEndpointPath$Builder,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.microservices.oas.OasEndpointPath
+- f:getOperations():java.util.Collection
+- f:getSummary():java.lang.String
+- f:setOperations(java.util.Collection):V
+- f:setSummary(java.lang.String):V
+f:com.intellij.microservices.oas.OasExample
+- <init>(java.lang.String,java.lang.String,com.intellij.microservices.oas.OasExampleValue):V
+- f:getDescription():java.lang.String
+- f:getSummary():java.lang.String
+- f:getValue():com.intellij.microservices.oas.OasExampleValue
+f:com.intellij.microservices.oas.OasExample$Builder
+- <init>(com.intellij.microservices.oas.OasExampleValue):V
+- f:build():com.intellij.microservices.oas.OasExample
+- f:build(kotlin.jvm.functions.Function1):com.intellij.microservices.oas.OasExample
+- bs:build$default(com.intellij.microservices.oas.OasExample$Builder,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.microservices.oas.OasExample
+- f:getDescription():java.lang.String
+- f:getSummary():java.lang.String
+- f:getValue():com.intellij.microservices.oas.OasExampleValue
+- f:setDescription(java.lang.String):V
+- f:setSummary(java.lang.String):V
+com.intellij.microservices.oas.OasExampleValue
+f:com.intellij.microservices.oas.OasExportUtilsKt
+- sf:getEMPTY_OPENAPI_SPECIFICATION():com.intellij.microservices.oas.OpenApiSpecification
+- sf:getOpenApi(com.intellij.microservices.endpoints.EndpointsProvider,java.lang.Object,java.lang.Object):com.intellij.microservices.oas.OpenApiSpecification
+- sf:getOpenApiSpecification(java.util.Collection):com.intellij.microservices.oas.OpenApiSpecification
+- sf:getSpecificationByUrls(java.lang.Iterable):com.intellij.microservices.oas.OpenApiSpecification
+- sf:squashOpenApiSpecifications(java.util.List):com.intellij.microservices.oas.OpenApiSpecification
+f:com.intellij.microservices.oas.OasHeader
+- <init>(java.lang.String,Z,com.intellij.microservices.oas.OasSchema):V
+- f:component1():java.lang.String
+- f:component2():Z
+- f:component3():com.intellij.microservices.oas.OasSchema
+- f:copy(java.lang.String,Z,com.intellij.microservices.oas.OasSchema):com.intellij.microservices.oas.OasHeader
+- bs:copy$default(com.intellij.microservices.oas.OasHeader,java.lang.String,Z,com.intellij.microservices.oas.OasSchema,I,java.lang.Object):com.intellij.microservices.oas.OasHeader
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getRequired():Z
+- f:getSchema():com.intellij.microservices.oas.OasSchema
+- hashCode():I
+e:com.intellij.microservices.oas.OasHttpMethod
+- java.lang.Enum
+- sf:DELETE:com.intellij.microservices.oas.OasHttpMethod
+- sf:GET:com.intellij.microservices.oas.OasHttpMethod
+- sf:HEAD:com.intellij.microservices.oas.OasHttpMethod
+- sf:OPTIONS:com.intellij.microservices.oas.OasHttpMethod
+- sf:PATCH:com.intellij.microservices.oas.OasHttpMethod
+- sf:POST:com.intellij.microservices.oas.OasHttpMethod
+- sf:PUT:com.intellij.microservices.oas.OasHttpMethod
+- sf:TRACE:com.intellij.microservices.oas.OasHttpMethod
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getMethodName():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.microservices.oas.OasHttpMethod
+- s:values():com.intellij.microservices.oas.OasHttpMethod[]
+f:com.intellij.microservices.oas.OasMediaTypeObject
+- <init>(com.intellij.microservices.oas.OasSchema,java.util.Map):V
+- f:getExamples():java.util.Map
+- f:getSchema():com.intellij.microservices.oas.OasSchema
+f:com.intellij.microservices.oas.OasModelUtils
+- sf:OPEN_API_UNKNOWN_SEGMENT:java.lang.String
+- sf:getHttpMethodByName(java.lang.String):com.intellij.microservices.oas.OasHttpMethod
+- sf:getOPEN_API_PRESENTATION():com.intellij.microservices.url.UrlPath$PathSegmentRenderer
+f:com.intellij.microservices.oas.OasNullValue
+- com.intellij.microservices.oas.OasExampleValue
+- sf:INSTANCE:com.intellij.microservices.oas.OasNullValue
+f:com.intellij.microservices.oas.OasNumberValue
+- com.intellij.microservices.oas.OasPrimitiveTypeValue
+- <init>(java.lang.Number):V
+f:com.intellij.microservices.oas.OasObjectValue
+- com.intellij.microservices.oas.OasExampleValue
+- <init>(java.util.Map):V
+- f:getProperties():java.util.Map
+f:com.intellij.microservices.oas.OasOperation
+- <init>(com.intellij.microservices.oas.OasHttpMethod,java.util.List,java.lang.String,java.lang.String,java.lang.String,Z,java.util.Collection,com.intellij.microservices.oas.OasRequestBody,java.util.Collection):V
+- f:getDescription():java.lang.String
+- f:getMethod():com.intellij.microservices.oas.OasHttpMethod
+- f:getOperationId():java.lang.String
+- f:getParameters():java.util.Collection
+- f:getRequestBody():com.intellij.microservices.oas.OasRequestBody
+- f:getResponses():java.util.Collection
+- f:getSummary():java.lang.String
+- f:getTags():java.util.List
+- f:isDeprecated():Z
+f:com.intellij.microservices.oas.OasOperation$Builder
+- <init>(com.intellij.microservices.oas.OasHttpMethod):V
+- <init>(java.lang.String):V
+- f:build():com.intellij.microservices.oas.OasOperation
+- f:build(kotlin.jvm.functions.Function1):com.intellij.microservices.oas.OasOperation
+- bs:build$default(com.intellij.microservices.oas.OasOperation$Builder,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.microservices.oas.OasOperation
+- f:getDescription():java.lang.String
+- f:getOperationId():java.lang.String
+- f:getParameters():java.util.List
+- f:getRequestBody():com.intellij.microservices.oas.OasRequestBody
+- f:getResponses():java.util.List
+- f:getSummary():java.lang.String
+- f:getTags():java.util.List
+- f:isDeprecated():Z
+- f:setDeprecated(Z):V
+- f:setDescription(java.lang.String):V
+- f:setOperationId(java.lang.String):V
+- f:setParameters(java.util.List):V
+- f:setRequestBody(com.intellij.microservices.oas.OasRequestBody):V
+- f:setResponses(java.util.List):V
+- f:setSummary(java.lang.String):V
+- f:setTags(java.util.List):V
+f:com.intellij.microservices.oas.OasParameter
+- <init>(java.lang.String,com.intellij.microservices.oas.OasParameterIn,java.lang.String,Z,Z,com.intellij.microservices.oas.OasSchema,com.intellij.microservices.oas.OasParameterStyle):V
+- f:getDescription():java.lang.String
+- f:getInPlace():com.intellij.microservices.oas.OasParameterIn
+- f:getName():java.lang.String
+- f:getSchema():com.intellij.microservices.oas.OasSchema
+- f:getStyle():com.intellij.microservices.oas.OasParameterStyle
+- f:isDeprecated():Z
+- f:isRequired():Z
+f:com.intellij.microservices.oas.OasParameter$Builder
+- <init>(java.lang.String,com.intellij.microservices.oas.OasParameterIn):V
+- f:build():com.intellij.microservices.oas.OasParameter
+- f:build(kotlin.jvm.functions.Function1):com.intellij.microservices.oas.OasParameter
+- bs:build$default(com.intellij.microservices.oas.OasParameter$Builder,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.microservices.oas.OasParameter
+- f:component1():java.lang.String
+- f:copy(java.lang.String,com.intellij.microservices.oas.OasParameterIn):com.intellij.microservices.oas.OasParameter$Builder
+- bs:copy$default(com.intellij.microservices.oas.OasParameter$Builder,java.lang.String,com.intellij.microservices.oas.OasParameterIn,I,java.lang.Object):com.intellij.microservices.oas.OasParameter$Builder
+- equals(java.lang.Object):Z
+- f:getDescription():java.lang.String
+- f:getName():java.lang.String
+- f:getSchema():com.intellij.microservices.oas.OasSchema
+- f:getStyle():com.intellij.microservices.oas.OasParameterStyle
+- hashCode():I
+- f:isDeprecated():Z
+- f:isRequired():Z
+- f:setDeprecated(Z):V
+- f:setDescription(java.lang.String):V
+- f:setRequired(Z):V
+- f:setSchema(com.intellij.microservices.oas.OasSchema):V
+- f:setStyle(com.intellij.microservices.oas.OasParameterStyle):V
+e:com.intellij.microservices.oas.OasParameterIn
+- java.lang.Enum
+- sf:COOKIE:com.intellij.microservices.oas.OasParameterIn
+- sf:HEADER:com.intellij.microservices.oas.OasParameterIn
+- sf:PATH:com.intellij.microservices.oas.OasParameterIn
+- sf:QUERY:com.intellij.microservices.oas.OasParameterIn
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getPlaceName():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.microservices.oas.OasParameterIn
+- s:values():com.intellij.microservices.oas.OasParameterIn[]
+f:com.intellij.microservices.oas.OasParameterInKt
+- sf:valueOfParameter(java.lang.String):com.intellij.microservices.oas.OasParameterIn
+e:com.intellij.microservices.oas.OasParameterStyle
+- java.lang.Enum
+- sf:DEEP_OBJECT:com.intellij.microservices.oas.OasParameterStyle
+- sf:DEFAULT:com.intellij.microservices.oas.OasParameterStyle
+- sf:FORM:com.intellij.microservices.oas.OasParameterStyle
+- sf:LABEL:com.intellij.microservices.oas.OasParameterStyle
+- sf:MATRIX:com.intellij.microservices.oas.OasParameterStyle
+- sf:PIPE_DELIMITED:com.intellij.microservices.oas.OasParameterStyle
+- sf:SIMPLE:com.intellij.microservices.oas.OasParameterStyle
+- sf:SPACE_DELIMITED:com.intellij.microservices.oas.OasParameterStyle
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getValue():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.microservices.oas.OasParameterStyle
+- s:values():com.intellij.microservices.oas.OasParameterStyle[]
+a:com.intellij.microservices.oas.OasPrimitiveTypeValue
+- com.intellij.microservices.oas.OasExampleValue
+- f:getValue():java.lang.Object
+f:com.intellij.microservices.oas.OasProperty
+- <init>(java.lang.String,com.intellij.microservices.oas.OasSchema):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.microservices.oas.OasSchema
+- f:copy(java.lang.String,com.intellij.microservices.oas.OasSchema):com.intellij.microservices.oas.OasProperty
+- bs:copy$default(com.intellij.microservices.oas.OasProperty,java.lang.String,com.intellij.microservices.oas.OasSchema,I,java.lang.Object):com.intellij.microservices.oas.OasProperty
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getSchema():com.intellij.microservices.oas.OasSchema
+- hashCode():I
+f:com.intellij.microservices.oas.OasRequestBody
+- <init>(java.util.Map,Z):V
+- f:getContent():java.util.Map
+- f:getRequired():Z
+f:com.intellij.microservices.oas.OasResponse
+- <init>(java.lang.String,java.lang.String,java.util.Map,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,java.util.Map,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.util.Map
+- f:component4():java.util.List
+- f:copy(java.lang.String,java.lang.String,java.util.Map,java.util.List):com.intellij.microservices.oas.OasResponse
+- bs:copy$default(com.intellij.microservices.oas.OasResponse,java.lang.String,java.lang.String,java.util.Map,java.util.List,I,java.lang.Object):com.intellij.microservices.oas.OasResponse
+- equals(java.lang.Object):Z
+- f:getCode():java.lang.String
+- f:getContent():java.util.Map
+- f:getDescription():java.lang.String
+- f:getHeaders():java.util.List
+- hashCode():I
+f:com.intellij.microservices.oas.OasSchema
+- <init>():V
+- <init>(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z):V
+- b:<init>(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.intellij.microservices.oas.OasSchemaType
+- f:component2():com.intellij.microservices.oas.OasSchemaFormat
+- f:component3():java.lang.String
+- f:component4():com.intellij.microservices.oas.OasSchema
+- f:component5():java.util.List
+- f:component6():java.lang.String
+- f:component7():java.util.List
+- f:component8():java.util.List
+- f:component9():Z
+- f:copy(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z):com.intellij.microservices.oas.OasSchema
+- bs:copy$default(com.intellij.microservices.oas.OasSchema,com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,I,java.lang.Object):com.intellij.microservices.oas.OasSchema
+- equals(java.lang.Object):Z
+- f:getDefault():java.lang.String
+- f:getEnum():java.util.List
+- f:getFormat():com.intellij.microservices.oas.OasSchemaFormat
+- f:getItems():com.intellij.microservices.oas.OasSchema
+- f:getProperties():java.util.List
+- f:getReference():java.lang.String
+- f:getRequired():java.util.List
+- f:getType():com.intellij.microservices.oas.OasSchemaType
+- hashCode():I
+- f:isNullable():Z
+f:com.intellij.microservices.oas.OasSchema$Builder
+- <init>(com.intellij.microservices.oas.OasSchemaType):V
+- f:build():com.intellij.microservices.oas.OasSchema
+- f:build(kotlin.jvm.functions.Function1):com.intellij.microservices.oas.OasSchema
+- bs:build$default(com.intellij.microservices.oas.OasSchema$Builder,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.microservices.oas.OasSchema
+- f:getFormat():com.intellij.microservices.oas.OasSchemaFormat
+- f:getItems():com.intellij.microservices.oas.OasSchema
+- f:getProperties():java.util.Map
+- f:getReference():java.lang.String
+- f:getType():com.intellij.microservices.oas.OasSchemaType
+- f:setFormat(com.intellij.microservices.oas.OasSchemaFormat):V
+- f:setItems(com.intellij.microservices.oas.OasSchema):V
+- f:setProperties(java.util.Map):V
+- f:setReference(java.lang.String):V
+e:com.intellij.microservices.oas.OasSchemaFormat
+- java.lang.Enum
+- sf:BINARY:com.intellij.microservices.oas.OasSchemaFormat
+- sf:BYTE:com.intellij.microservices.oas.OasSchemaFormat
+- sf:DATE:com.intellij.microservices.oas.OasSchemaFormat
+- sf:DATE_TIME:com.intellij.microservices.oas.OasSchemaFormat
+- sf:DOUBLE:com.intellij.microservices.oas.OasSchemaFormat
+- sf:FLOAT:com.intellij.microservices.oas.OasSchemaFormat
+- sf:INT_32:com.intellij.microservices.oas.OasSchemaFormat
+- sf:INT_64:com.intellij.microservices.oas.OasSchemaFormat
+- sf:PARTIAL_TIME:com.intellij.microservices.oas.OasSchemaFormat
+- sf:PASSWORD:com.intellij.microservices.oas.OasSchemaFormat
+- sf:URI:com.intellij.microservices.oas.OasSchemaFormat
+- sf:URL:com.intellij.microservices.oas.OasSchemaFormat
+- sf:UUID:com.intellij.microservices.oas.OasSchemaFormat
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getFormatName():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.microservices.oas.OasSchemaFormat
+- s:values():com.intellij.microservices.oas.OasSchemaFormat[]
+e:com.intellij.microservices.oas.OasSchemaType
+- java.lang.Enum
+- sf:ARRAY:com.intellij.microservices.oas.OasSchemaType
+- sf:BOOLEAN:com.intellij.microservices.oas.OasSchemaType
+- sf:INTEGER:com.intellij.microservices.oas.OasSchemaType
+- sf:NUMBER:com.intellij.microservices.oas.OasSchemaType
+- sf:OBJECT:com.intellij.microservices.oas.OasSchemaType
+- sf:STRING:com.intellij.microservices.oas.OasSchemaType
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getTypeName():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.microservices.oas.OasSchemaType
+- s:values():com.intellij.microservices.oas.OasSchemaType[]
+com.intellij.microservices.oas.OasSpecificationProvider
+- sf:Companion:com.intellij.microservices.oas.OasSpecificationProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getOasSpecification(com.intellij.microservices.url.UrlTargetInfo):com.intellij.microservices.oas.OpenApiSpecification
+- a:getOasSpecificationFile(com.intellij.microservices.url.UrlTargetInfo,java.util.List):com.intellij.openapi.vfs.VirtualFile
+f:com.intellij.microservices.oas.OasSpecificationProvider$Companion
+- f:getOasSpecification(com.intellij.microservices.url.UrlTargetInfo):com.intellij.microservices.oas.OpenApiSpecification
+f:com.intellij.microservices.oas.OasStringValue
+- com.intellij.microservices.oas.OasPrimitiveTypeValue
+- <init>(java.lang.String):V
+f:com.intellij.microservices.oas.OasTag
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.microservices.oas.OasTag
+- bs:copy$default(com.intellij.microservices.oas.OasTag,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.microservices.oas.OasTag
+- equals(java.lang.Object):Z
+- f:getDescription():java.lang.String
+- f:getName():java.lang.String
+- hashCode():I
+f:com.intellij.microservices.oas.OpenApiSpecification
+- <init>(java.util.Collection,com.intellij.microservices.oas.OasComponents,java.util.List):V
+- b:<init>(java.util.Collection,com.intellij.microservices.oas.OasComponents,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:findSinglePathRequestBodyData(java.lang.String):com.intellij.microservices.oas.OasSchema
+- bs:findSinglePathRequestBodyData$default(com.intellij.microservices.oas.OpenApiSpecification,java.lang.String,I,java.lang.Object):com.intellij.microservices.oas.OasSchema
+- f:getComponents():com.intellij.microservices.oas.OasComponents
+- f:getPaths():java.util.Collection
+- f:getTags():java.util.List
+- f:isEmpty():Z
+a:com.intellij.microservices.url.Authority
+f:com.intellij.microservices.url.Authority$Exact
+- com.intellij.microservices.url.Authority
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.microservices.url.Authority$Exact
+- bs:copy$default(com.intellij.microservices.url.Authority$Exact,java.lang.String,I,java.lang.Object):com.intellij.microservices.url.Authority$Exact
+- equals(java.lang.Object):Z
+- f:getText():java.lang.String
+- hashCode():I
+c:com.intellij.microservices.url.Authority$Placeholder
+- com.intellij.microservices.url.Authority
+- <init>():V
+a:com.intellij.microservices.url.FrameworkUrlPathSpecification
+- <init>():V
+- getParser():com.intellij.microservices.url.references.UrlPksParser
+- a:getUrlPathContext(com.intellij.psi.PsiElement):com.intellij.microservices.url.references.UrlPathContext
+- f:parsePath(java.lang.String):com.intellij.microservices.url.UrlPath
+f:com.intellij.microservices.url.HttpMethods
+- sf:CONNECT:java.lang.String
+- sf:DELETE:java.lang.String
+- sf:GET:java.lang.String
+- sf:HEAD:java.lang.String
+- sf:INSTANCE:com.intellij.microservices.url.HttpMethods
+- sf:OPTIONS:java.lang.String
+- sf:PATCH:java.lang.String
+- sf:POST:java.lang.String
+- sf:PUT:java.lang.String
+- sf:TRACE:java.lang.String
+a:com.intellij.microservices.url.HttpUrlResolver
+- com.intellij.microservices.url.UrlResolver
+- sf:Companion:com.intellij.microservices.url.HttpUrlResolver$Companion
+- <init>():V
+- getAuthorityHints(java.lang.String):java.util.List
+- getSupportedSchemes():java.util.List
+f:com.intellij.microservices.url.HttpUrlResolver$Companion
+- f:getHTTP_AUTHORITY():java.util.List
+f:com.intellij.microservices.url.MultiPathBestMatcher
+- <init>():V
+- f:addBestMatching(java.lang.Iterable,com.intellij.microservices.url.UrlPath):com.intellij.microservices.url.MultiPathBestMatcher
+- bs:addBestMatching$default(com.intellij.microservices.url.MultiPathBestMatcher,java.lang.Iterable,com.intellij.microservices.url.UrlPath,I,java.lang.Object):com.intellij.microservices.url.MultiPathBestMatcher
+- f:getResult():java.util.Set
+f:com.intellij.microservices.url.PlaceholderSplitEscaper
+- sf:INSTANCE:com.intellij.microservices.url.PlaceholderSplitEscaper
+- f:create(java.lang.String,java.lang.String,java.lang.CharSequence,java.lang.String):com.intellij.psi.util.SplitEscaper
+- f:create(java.util.List,java.lang.CharSequence,java.lang.String):com.intellij.psi.util.SplitEscaper
+f:com.intellij.microservices.url.UrlConstants
+- sf:HTTP_METHODS:java.util.List
+- sf:HTTP_SCHEME:java.lang.String
+- sf:HTTP_SCHEMES:java.util.List
+- sf:KNOWN_SCHEMES_GROUPS:java.util.List
+- sf:LOCALHOST:java.lang.String
+- sf:WS_SCHEMES:java.util.List
+f:com.intellij.microservices.url.UrlConversionConstants
+- sf:INSTANCE:com.intellij.microservices.url.UrlConversionConstants
+- sf:SPRING_LIKE_PATH_VARIABLE_BRACES:com.intellij.microservices.url.UrlSpecialSegmentMarker
+- sf:SPRING_LIKE_PATH_VARIABLE_PATTERN:java.util.regex.Pattern
+- sf:SPRING_LIKE_PLACEHOLDER_BRACES:com.intellij.microservices.url.UrlSpecialSegmentMarker
+- sf:STANDARD_PATH_VARIABLE_NAME_PATTERN:java.util.regex.Pattern
+f:com.intellij.microservices.url.UrlPath
+- sf:Companion:com.intellij.microservices.url.UrlPath$Companion
+- sf:DEFAULT_PATH_VARIABLE_PRESENTATION:com.intellij.microservices.url.UrlPath$PathSegmentRenderer
+- sf:FULL_PATH_VARIABLE_PRESENTATION:com.intellij.microservices.url.UrlPath$PathSegmentRenderer
+- sf:UNKNOWN_URL_PATH_SEGMENT_PRESENTATION:java.lang.String
+- <init>(java.util.List):V
+- f:canBePrefixFor(com.intellij.microservices.url.UrlPath):Z
+- sf:combinations(com.intellij.microservices.url.UrlPath):kotlin.sequences.Sequence
+- f:commonLength(com.intellij.microservices.url.UrlPath):I
+- equals(java.lang.Object):Z
+- sf:fromExactString(java.lang.String):com.intellij.microservices.url.UrlPath
+- f:getPresentation():java.lang.String
+- f:getPresentation(com.intellij.microservices.url.UrlPath$PathSegmentRenderer):java.lang.String
+- f:getSegments():java.util.List
+- hashCode():I
+- f:isCompatibleWith(com.intellij.microservices.url.UrlPath):Z
+- f:toStringWithStars():java.lang.String
+f:com.intellij.microservices.url.UrlPath$Companion
+- f:combinations(com.intellij.microservices.url.UrlPath):kotlin.sequences.Sequence
+- f:fromExactString(java.lang.String):com.intellij.microservices.url.UrlPath
+- f:getEMPTY():com.intellij.microservices.url.UrlPath
+a:com.intellij.microservices.url.UrlPath$PathSegment
+- f:getValueIfExact():java.lang.String
+- f:isEmpty():Z
+f:com.intellij.microservices.url.UrlPath$PathSegment$Composite
+- com.intellij.microservices.url.UrlPath$PathSegment
+- <init>(java.util.List):V
+- equals(java.lang.Object):Z
+- f:getSegments():java.util.List
+- hashCode():I
+f:com.intellij.microservices.url.UrlPath$PathSegment$Exact
+- com.intellij.microservices.url.UrlPath$PathSegment
+- <init>(java.lang.String):V
+- equals(java.lang.Object):Z
+- f:getValue():java.lang.String
+- hashCode():I
+f:com.intellij.microservices.url.UrlPath$PathSegment$Undefined
+- com.intellij.microservices.url.UrlPath$PathSegment
+- sf:INSTANCE:com.intellij.microservices.url.UrlPath$PathSegment$Undefined
+f:com.intellij.microservices.url.UrlPath$PathSegment$Variable
+- com.intellij.microservices.url.UrlPath$PathSegment
+- <init>(java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:accepts(java.lang.String):Z
+- equals(java.lang.Object):Z
+- f:getRegex():java.lang.String
+- f:getVariableName():java.lang.String
+- hashCode():I
+com.intellij.microservices.url.UrlPath$PathSegmentRenderer
+- patternMatch(com.intellij.microservices.url.UrlPath$PathSegment):java.lang.String
+- visitComposite(com.intellij.microservices.url.UrlPath$PathSegment$Composite):java.lang.String
+- visitExact(com.intellij.microservices.url.UrlPath$PathSegment$Exact):java.lang.String
+- visitUndefined():java.lang.String
+- visitVariable(com.intellij.microservices.url.UrlPath$PathSegment$Variable):java.lang.String
+f:com.intellij.microservices.url.UrlPathModelKt
+- sf:compatibleSchemes(java.util.Collection,java.util.Collection):Z
+- sf:filterBestUrlPathMatches(java.lang.Iterable):java.util.Set
+- sf:filterBestUrlPathMatches(java.lang.Iterable,com.intellij.microservices.url.UrlPath):java.util.Set
+- bs:filterBestUrlPathMatches$default(java.lang.Iterable,com.intellij.microservices.url.UrlPath,I,java.lang.Object):java.util.Set
+- sf:getDeclaredHttpMethods(java.lang.String):java.util.Set
+- sf:getEndpointUrlPresentation(com.intellij.psi.util.PartiallyKnownString):java.lang.String
+com.intellij.microservices.url.UrlQueryParameter
+- a:getDescription():java.lang.String
+- a:getName():java.lang.String
+- a:getRepeatable():Z
+- a:resolveToPsiElement():com.intellij.psi.PsiElement
+f:com.intellij.microservices.url.UrlResolveRequest
+- <init>(java.lang.String,java.lang.String,com.intellij.microservices.url.UrlPath,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,com.intellij.microservices.url.UrlPath,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():com.intellij.microservices.url.UrlPath
+- f:component4():java.lang.String
+- f:copy(java.lang.String,java.lang.String,com.intellij.microservices.url.UrlPath,java.lang.String):com.intellij.microservices.url.UrlResolveRequest
+- bs:copy$default(com.intellij.microservices.url.UrlResolveRequest,java.lang.String,java.lang.String,com.intellij.microservices.url.UrlPath,java.lang.String,I,java.lang.Object):com.intellij.microservices.url.UrlResolveRequest
+- equals(java.lang.Object):Z
+- f:getAuthorityHint():java.lang.String
+- f:getMethod():java.lang.String
+- f:getPath():com.intellij.microservices.url.UrlPath
+- f:getSchemeHint():java.lang.String
+- hashCode():I
+com.intellij.microservices.url.UrlResolver
+- getAuthorityHints():java.util.List
+- getAuthorityHints(java.lang.String):java.util.List
+- a:getSupportedSchemes():java.util.List
+- a:getVariants():java.lang.Iterable
+- a:resolve(com.intellij.microservices.url.UrlResolveRequest):java.lang.Iterable
+com.intellij.microservices.url.UrlResolverFactory
+- sf:Companion:com.intellij.microservices.url.UrlResolverFactory$Companion
+- a:forProject(com.intellij.openapi.project.Project):com.intellij.microservices.url.UrlResolver
+f:com.intellij.microservices.url.UrlResolverFactory$Companion
+f:com.intellij.microservices.url.UrlResolverManager
+- sf:Companion:com.intellij.microservices.url.UrlResolverManager$Companion
+- <init>(com.intellij.openapi.project.Project):V
+- f:getAuthorityHints(java.lang.String):java.util.List
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.microservices.url.UrlResolverManager
+- f:getSupportedSchemes():java.util.List
+- f:getVariants(com.intellij.microservices.url.UrlResolveRequest):java.lang.Iterable
+- f:resolve(com.intellij.microservices.url.UrlResolveRequest):java.lang.Iterable
+- f:resolve(com.intellij.microservices.url.UrlResolveRequest,kotlin.jvm.functions.Function2):java.lang.Iterable
+f:com.intellij.microservices.url.UrlResolverManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.microservices.url.UrlResolverManager
+f:com.intellij.microservices.url.UrlSpecialSegmentMarker
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.util.regex.Pattern):V
+- b:<init>(java.lang.String,java.lang.String,java.util.regex.Pattern,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:extractAll(java.lang.CharSequence):java.util.List
+- f:getPrefix():java.lang.String
+- f:getSuffix():java.lang.String
+- f:matches(java.lang.CharSequence):Z
+f:com.intellij.microservices.url.UrlSpecialSegmentMarker$ExtractionInfo
+- <init>(java.lang.String,java.util.regex.Matcher):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String,java.util.regex.Matcher):com.intellij.microservices.url.UrlSpecialSegmentMarker$ExtractionInfo
+- bs:copy$default(com.intellij.microservices.url.UrlSpecialSegmentMarker$ExtractionInfo,java.lang.String,java.util.regex.Matcher,I,java.lang.Object):com.intellij.microservices.url.UrlSpecialSegmentMarker$ExtractionInfo
+- equals(java.lang.Object):Z
+- f:getRegexGroups():java.util.List
+- f:getValue():java.lang.String
+- hashCode():I
+com.intellij.microservices.url.UrlTargetInfo
+- a:getAuthorities():java.util.List
+- getContentTypes():java.util.Set
+- getDocumentationPsiElement():com.intellij.psi.PsiElement
+- getIcon():javax.swing.Icon
+- getMethods():java.util.Set
+- a:getPath():com.intellij.microservices.url.UrlPath
+- getQueryParameters():java.lang.Iterable
+- a:getSchemes():java.util.List
+- getSource():java.lang.String
+- isDeprecated():Z
+- a:resolveToPsiElement():com.intellij.psi.PsiElement
+f:com.intellij.microservices.url.inlay.ProviderGroupInfo
+- <init>(com.intellij.microservices.url.inlay.ProviderGroupKey,I):V
+- f:component1():com.intellij.microservices.url.inlay.ProviderGroupKey
+- f:component2():I
+- f:copy(com.intellij.microservices.url.inlay.ProviderGroupKey,I):com.intellij.microservices.url.inlay.ProviderGroupInfo
+- bs:copy$default(com.intellij.microservices.url.inlay.ProviderGroupInfo,com.intellij.microservices.url.inlay.ProviderGroupKey,I,I,java.lang.Object):com.intellij.microservices.url.inlay.ProviderGroupInfo
+- equals(java.lang.Object):Z
+- f:getKey():com.intellij.microservices.url.inlay.ProviderGroupKey
+- f:getPriority():I
+- hashCode():I
+f:com.intellij.microservices.url.inlay.ProviderGroupKey
+- sf:Companion:com.intellij.microservices.url.inlay.ProviderGroupKey$Companion
+- <init>(java.lang.String):V
+- f:copy(java.lang.String):com.intellij.microservices.url.inlay.ProviderGroupKey
+- bs:copy$default(com.intellij.microservices.url.inlay.ProviderGroupKey,java.lang.String,I,java.lang.Object):com.intellij.microservices.url.inlay.ProviderGroupKey
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.microservices.url.inlay.ProviderGroupKey$Companion
+- f:getDEFAULT_KEY():com.intellij.microservices.url.inlay.ProviderGroupKey
+f:com.intellij.microservices.url.inlay.PsiElementUrlPathInlayHint
+- com.intellij.microservices.url.inlay.UrlPathInlayHint
+- <init>(com.intellij.psi.PsiElement,com.intellij.microservices.url.references.UrlPathContext):V
+- getAttachedTo():com.intellij.psi.SmartPsiElementPointer
+- getContext():com.intellij.microservices.url.references.UrlPathContext
+- getOffset():I
+- getPresentation(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.InlayPresentationFactory):com.intellij.codeInsight.hints.presentation.InlayPresentation
+- getPriority():I
+- getStyle():com.intellij.microservices.url.inlay.UrlPathInlayHint$Style
+com.intellij.microservices.url.inlay.UrlPathInlayAction
+- actionPerformed(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.microservices.url.inlay.UrlPathInlayHint,java.awt.event.MouseEvent):V
+- actionPerformed(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.microservices.url.references.UrlPathContext,java.awt.event.MouseEvent):V
+- a:getIcon():javax.swing.Icon
+- a:getName():java.lang.String
+- a:isAvailable(com.intellij.psi.PsiFile,com.intellij.microservices.url.inlay.UrlPathInlayHint):Z
+com.intellij.microservices.url.inlay.UrlPathInlayHint
+- getAttachedTo():com.intellij.psi.SmartPsiElementPointer
+- getAvailableActions(com.intellij.psi.PsiFile):java.util.List
+- a:getContext():com.intellij.microservices.url.references.UrlPathContext
+- a:getOffset():I
+- a:getPresentation(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.InlayPresentationFactory):com.intellij.codeInsight.hints.presentation.InlayPresentation
+- a:getPriority():I
+- a:getStyle():com.intellij.microservices.url.inlay.UrlPathInlayHint$Style
+e:com.intellij.microservices.url.inlay.UrlPathInlayHint$Style
+- java.lang.Enum
+- sf:BLOCK:com.intellij.microservices.url.inlay.UrlPathInlayHint$Style
+- sf:INLINE:com.intellij.microservices.url.inlay.UrlPathInlayHint$Style
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.microservices.url.inlay.UrlPathInlayHint$Style
+- s:values():com.intellij.microservices.url.inlay.UrlPathInlayHint$Style[]
+com.intellij.microservices.url.inlay.UrlPathInlayHintsProviderSemElement
+- com.intellij.semantic.SemElement
+- sf:Companion:com.intellij.microservices.url.inlay.UrlPathInlayHintsProviderSemElement$Companion
+- sf:INLAY_HINT_SEM_KEY:com.intellij.semantic.SemKey
+- getGroupInfo():com.intellij.microservices.url.inlay.ProviderGroupInfo
+- a:getInlayHints():java.util.List
+f:com.intellij.microservices.url.inlay.UrlPathInlayHintsProviderSemElement$Companion
+f:com.intellij.microservices.url.inlay.UrlPathInlayHintsProviderSemElementKt
+- sf:getDEFAULT_PROVIDER_GROUP_INFO():com.intellij.microservices.url.inlay.ProviderGroupInfo
+com.intellij.microservices.url.inlay.UrlPathInlayLanguagesProvider
+- a:getLanguages():java.util.Collection
+- getPotentialElementsWithHintsProviders(com.intellij.psi.PsiElement):java.util.List
+c:com.intellij.microservices.url.parameters.DefaultPathVariableUsagesProvider
+- com.intellij.microservices.url.parameters.PathVariableUsagesProvider
+- <init>():V
+- findSemDefiningElements(com.intellij.microservices.url.parameters.PathVariablePomTarget):java.lang.Iterable
+- getCompletionVariantsForDeclaration(com.intellij.psi.PsiElement):java.lang.Iterable
+f:com.intellij.microservices.url.parameters.PathVariableDeclaringReference
+- com.intellij.psi.PsiReferenceBase
+- com.intellij.psi.ResolvingHint
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.microservices.url.parameters.PathVariableUsagesProvider):V
+- canResolveTo(java.lang.Class):Z
+- getVariants():java.lang.Object[]
+- resolve():com.intellij.pom.PomTargetPsiElement
+com.intellij.microservices.url.parameters.PathVariableDefinitionsSearcher
+- getPathVariables(com.intellij.psi.PsiElement):com.intellij.util.Plow
+- a:processDefinitions(com.intellij.psi.PsiElement,com.intellij.util.Processor):Z
+f:com.intellij.microservices.url.parameters.PathVariablePomTarget
+- com.intellij.microservices.utils.SimpleNamePomTarget
+- <init>(java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.microservices.url.parameters.SemDefinitionProvider):V
+- equals(java.lang.Object):Z
+- getScope():com.intellij.psi.PsiElement
+- getSemDefinitionProvider():com.intellij.microservices.url.parameters.SemDefinitionProvider
+- getTextRange():com.intellij.openapi.util.TextRange
+- hashCode():I
+c:com.intellij.microservices.url.parameters.PathVariableUsageReference
+- com.intellij.psi.PsiPolyVariantReferenceBase
+- com.intellij.codeInsight.highlighting.HighlightedReference
+- com.intellij.psi.ResolvingHint
+- <init>(com.intellij.psi.PsiElement,com.intellij.microservices.url.parameters.PathVariableDefinitionsSearcher):V
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.microservices.url.parameters.PathVariableDefinitionsSearcher):V
+- canResolveTo(java.lang.Class):Z
+- getVariants():java.lang.Object[]
+- isReferenceTo(com.intellij.psi.PsiElement):Z
+- multiResolve(Z):com.intellij.psi.ResolveResult[]
+com.intellij.microservices.url.parameters.PathVariableUsagesProvider
+- com.intellij.microservices.url.parameters.SemDefinitionProvider
+- a:getCompletionVariantsForDeclaration(com.intellij.psi.PsiElement):java.lang.Iterable
+f:com.intellij.microservices.url.parameters.PathVariableUtils
+- sf:getPathVariablesFromContext(com.intellij.microservices.url.references.UrlPathContext):java.lang.Iterable
+f:com.intellij.microservices.url.parameters.QueryParameterNameReference
+- com.intellij.psi.PsiReferenceBase
+- com.intellij.microservices.url.references.UrlSegmentReference
+- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange,Z):V
+- b:<init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getContext():com.intellij.microservices.url.references.UrlPathContext
+- getValue():java.lang.String
+- getVariants():java.lang.Object[]
+- resolve():com.intellij.psi.PsiElement
+com.intellij.microservices.url.parameters.QueryParameterNameTarget
+- com.intellij.pom.PomRenameableTarget
+- a:toElement(Z):com.intellij.psi.PsiElement
+com.intellij.microservices.url.parameters.QueryParameterSem
+- com.intellij.microservices.url.parameters.RenameableSemElement
+- a:getName():java.lang.String
+- a:getUrlPathContext():com.intellij.microservices.url.references.UrlPathContext
+f:com.intellij.microservices.url.parameters.QueryParameterSemKt
+- sf:QUERY_PARAMETER_SEM_KEY:com.intellij.semantic.SemKey
+com.intellij.microservices.url.parameters.RenameableSemElement
+- com.intellij.semantic.SemElement
+- sf:Companion:com.intellij.microservices.url.parameters.RenameableSemElement$Companion
+- sf:RENAMEABLE_SEM_KEY:com.intellij.semantic.SemKey
+- a:getName():java.lang.String
+- getNameVariants():com.intellij.util.Plow
+f:com.intellij.microservices.url.parameters.RenameableSemElement$Companion
+f:com.intellij.microservices.url.parameters.RenameableSemElementKt
+- sf:getSemElement(com.intellij.microservices.url.parameters.RenameableSemElementSupport,com.intellij.psi.PsiElement):com.intellij.microservices.url.parameters.RenameableSemElement
+com.intellij.microservices.url.parameters.RenameableSemElementSupport
+- a:createPomTargetPsi(com.intellij.openapi.project.Project,com.intellij.microservices.url.parameters.RenameableSemElement):com.intellij.pom.PomTargetPsiElement
+- a:findReferencingPsiElements(com.intellij.pom.PomTarget):java.lang.Iterable
+- a:getSEM_KEY():com.intellij.semantic.SemKey
+- a:supportsTarget(com.intellij.pom.PomTarget):Z
+com.intellij.microservices.url.parameters.SemDefinitionProvider
+- a:findSemDefiningElements(com.intellij.microservices.url.parameters.PathVariablePomTarget):java.lang.Iterable
+f:com.intellij.microservices.url.references.AuthorityReference
+- com.intellij.psi.PsiReferenceBase$Poly
+- com.intellij.microservices.url.references.UrlSegmentReference
+- <init>(java.lang.String,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange):V
+- <init>(java.lang.String,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange,kotlin.jvm.functions.Function1):V
+- b:<init>(java.lang.String,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getCustomNavigate():kotlin.jvm.functions.Function1
+- f:getGivenValue():java.lang.String
+- multiResolve(Z):com.intellij.psi.ResolveResult[]
+- resolve():com.intellij.psi.PsiElement
+f:com.intellij.microservices.url.references.DefaultFrameworkUrlPathSpecification
+- com.intellij.microservices.url.FrameworkUrlPathSpecification
+- sf:INSTANCE:com.intellij.microservices.url.references.DefaultFrameworkUrlPathSpecification
+- getParser():com.intellij.microservices.url.references.UrlPksParser
+- getUrlPathContext(com.intellij.psi.PsiElement):com.intellij.microservices.url.references.UrlPathContext
+com.intellij.microservices.url.references.PathSegmentHandler
+- createInsertHandler(com.intellij.microservices.url.UrlTargetInfo,Z):com.intellij.codeInsight.completion.InsertHandler
+- createLookupElement(com.intellij.microservices.url.UrlResolveRequest,java.util.List,java.util.List,com.intellij.microservices.url.UrlTargetInfo,java.lang.String,java.lang.String,Z):com.intellij.codeInsight.lookup.LookupElement
+- a:getExactPrefix(com.intellij.microservices.url.UrlPath):java.util.List
+- a:render(com.intellij.microservices.url.UrlPath$PathSegment):java.lang.String
+f:com.intellij.microservices.url.references.SchemeReference
+- com.intellij.psi.PsiReferenceBase$Immediate
+- com.intellij.microservices.url.references.UrlSegmentReference
+- <init>(java.lang.String,java.util.List,com.intellij.psi.PsiLanguageInjectionHost,com.intellij.openapi.util.TextRange):V
+- f:getGivenValue():java.lang.String
+- f:getSupportedSchemes():java.util.List
+f:com.intellij.microservices.url.references.UrlExtractors
+- sf:extractAnyPathVariable(java.lang.String,java.lang.String):com.intellij.microservices.url.UrlPath$PathSegment
+- sf:extractPathVariable(java.lang.String,com.intellij.microservices.url.UrlSpecialSegmentMarker):com.intellij.microservices.url.UrlPath$PathSegment
+- sf:extractPlaceholder(java.lang.String,java.lang.String):com.intellij.microservices.url.UrlPath$PathSegment
+- sf:extractPlaceholderAsUndefined(java.lang.String,com.intellij.microservices.url.UrlSpecialSegmentMarker):com.intellij.microservices.url.UrlPath$PathSegment
+- sf:extractSegmentLikeSpring(java.lang.String):com.intellij.microservices.url.UrlPath$PathSegment
+- sf:springLikePropertySplitEscaper(java.lang.CharSequence,java.lang.String):com.intellij.psi.util.SplitEscaper
+f:com.intellij.microservices.url.references.UrlPathContext
+- sf:Companion:com.intellij.microservices.url.references.UrlPathContext$Companion
+- <init>(com.intellij.microservices.url.UrlTargetInfo):V
+- <init>(java.lang.Iterable):V
+- f:applyOnResolve(kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathContext
+- sf:emptyRoot():com.intellij.microservices.url.references.UrlPathContext
+- f:getAuthorities():java.util.List
+- f:getContentTypes():java.util.Set
+- f:getFullyEvaluated():com.intellij.microservices.url.references.UrlPathContext
+- f:getMethods():java.util.List
+- f:getParent():com.intellij.microservices.url.references.UrlPathContext
+- f:getResolveRequests():java.lang.Iterable
+- f:getSchemes():java.util.List
+- f:getSelfPaths():java.util.List
+- f:isDeclaration():Z
+- f:isEmpty():Z
+- sf:singleContext(java.lang.String,java.lang.String,com.intellij.microservices.url.UrlPath):com.intellij.microservices.url.references.UrlPathContext
+- f:subContext(com.intellij.microservices.url.UrlPath):com.intellij.microservices.url.references.UrlPathContext
+- f:subContexts(java.util.List):com.intellij.microservices.url.references.UrlPathContext
+- sf:supportingSchemes(java.util.List):com.intellij.microservices.url.references.UrlPathContext
+- sf:supportingSchemes(java.util.List,java.lang.String):com.intellij.microservices.url.references.UrlPathContext
+- f:withAuthorities(java.util.Set):com.intellij.microservices.url.references.UrlPathContext
+- f:withContentTypes(java.util.Set):com.intellij.microservices.url.references.UrlPathContext
+- f:withDeclarationFlag(Z):com.intellij.microservices.url.references.UrlPathContext
+- f:withMethod(java.lang.String):com.intellij.microservices.url.references.UrlPathContext
+- f:withMethods(java.util.Collection):com.intellij.microservices.url.references.UrlPathContext
+- f:withPaths(java.util.List):com.intellij.microservices.url.references.UrlPathContext
+- f:withSchemes(java.util.Set):com.intellij.microservices.url.references.UrlPathContext
+- f:withoutLastAppendedText():com.intellij.microservices.url.references.UrlPathContext
+f:com.intellij.microservices.url.references.UrlPathContext$Companion
+- f:emptyRoot():com.intellij.microservices.url.references.UrlPathContext
+- f:singleContext(java.lang.String,java.lang.String,com.intellij.microservices.url.UrlPath):com.intellij.microservices.url.references.UrlPathContext
+- f:supportingSchemes(java.util.List):com.intellij.microservices.url.references.UrlPathContext
+- f:supportingSchemes(java.util.List,java.lang.String):com.intellij.microservices.url.references.UrlPathContext
+- bs:supportingSchemes$default(com.intellij.microservices.url.references.UrlPathContext$Companion,java.util.List,java.lang.String,I,java.lang.Object):com.intellij.microservices.url.references.UrlPathContext
+com.intellij.microservices.url.references.UrlPathContextHolder
+- a:getUrlPathContext():com.intellij.microservices.url.references.UrlPathContext
+f:com.intellij.microservices.url.references.UrlPathContextKt
+- sf:applyFromParsed(com.intellij.microservices.url.references.UrlPathContext,com.intellij.microservices.url.references.UrlPksParser$ParsedPksUrl,Z,Z,Z):com.intellij.microservices.url.references.UrlPathContext
+- bs:applyFromParsed$default(com.intellij.microservices.url.references.UrlPathContext,com.intellij.microservices.url.references.UrlPksParser$ParsedPksUrl,Z,Z,Z,I,java.lang.Object):com.intellij.microservices.url.references.UrlPathContext
+- sf:chopLeadingEmptyBlock(com.intellij.microservices.url.UrlPath):com.intellij.microservices.url.UrlPath
+- sf:chopTrailingEmptyBlock(com.intellij.microservices.url.UrlPath):com.intellij.microservices.url.UrlPath
+- sf:configureFromStringHeuristically(com.intellij.microservices.url.references.UrlPathContext,java.lang.String,com.intellij.microservices.url.FrameworkUrlPathSpecification):com.intellij.microservices.url.references.UrlPathContext
+- sf:forbidExpensiveUrlContext(kotlin.jvm.functions.Function0):java.lang.Object
+- sf:resolveTargets(com.intellij.microservices.url.references.UrlPathContext,com.intellij.openapi.project.Project):java.util.Set
+f:com.intellij.microservices.url.references.UrlPathReference
+- com.intellij.psi.PsiReferenceBase$Poly
+- com.intellij.microservices.url.references.UrlSegmentReference
+- sf:Companion:com.intellij.microservices.url.references.UrlPathReference$Companion
+- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):V
+- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,Z):V
+- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,Z,com.intellij.microservices.url.references.PathSegmentHandler):V
+- sf:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.UrlTargetInfo):com.intellij.psi.NavigatablePsiElement
+- sf:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.references.UrlPathContext):com.intellij.psi.NavigatablePsiElement
+- f:getContext():com.intellij.microservices.url.references.UrlPathContext
+- f:getCustomNavigate():kotlin.jvm.functions.Function1
+- sf:getFromPomTargetPsiElement(com.intellij.psi.PsiElement):com.intellij.microservices.url.references.UrlPathReference
+- f:getPathSegmentHandler():com.intellij.microservices.url.references.PathSegmentHandler
+- f:getShouldHaveSlashBefore():Z
+- f:getUnifiedPomTarget():com.intellij.microservices.url.references.UrlPathReferenceTarget
+- f:isAtEnd():Z
+- isReferenceTo(com.intellij.psi.PsiElement):Z
+- multiResolve(Z):com.intellij.psi.ResolveResult[]
+- f:remainingPath(com.intellij.microservices.url.UrlPath,com.intellij.microservices.url.UrlPath):com.intellij.microservices.url.UrlPath
+f:com.intellij.microservices.url.references.UrlPathReference$Companion
+- f:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.UrlTargetInfo):com.intellij.psi.NavigatablePsiElement
+- f:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.references.UrlPathContext):com.intellij.psi.NavigatablePsiElement
+- f:getFromPomTargetPsiElement(com.intellij.psi.PsiElement):com.intellij.microservices.url.references.UrlPathReference
+f:com.intellij.microservices.url.references.UrlPathReference$UrlPathLookupObject
+- <init>(java.lang.String):V
+- f:copy(java.lang.String):com.intellij.microservices.url.references.UrlPathReference$UrlPathLookupObject
+- bs:copy$default(com.intellij.microservices.url.references.UrlPathReference$UrlPathLookupObject,java.lang.String,I,java.lang.Object):com.intellij.microservices.url.references.UrlPathReference$UrlPathLookupObject
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.microservices.url.references.UrlPathReferenceInjector
+- sf:Companion:com.intellij.microservices.url.references.UrlPathReferenceInjector$Companion
+- f:buildAbsoluteOrRelativeReferences(java.lang.Object,com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- f:buildFullUrlReference(java.lang.Object,com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- f:buildReferences(java.lang.Object):com.intellij.microservices.url.references.UrlPathReferenceInjector$MappedReferences
+- sf:forPartialStringFrom(com.intellij.microservices.url.references.UrlPksParser,kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- sf:forPartialStringFrom(kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- f:getAlignToHost():kotlin.jvm.functions.Function1
+- f:getDefaultRootContextProvider():kotlin.jvm.functions.Function1
+- f:getUrlParser():com.intellij.microservices.url.references.UrlPksParser
+- f:hasCompleteScheme(java.lang.Object):Z
+- sf:hasConsistentFullUrl(com.intellij.psi.PsiReference[]):Z
+- f:setAlignToHost(kotlin.jvm.functions.Function1):V
+- f:setDefaultRootContextProvider(kotlin.jvm.functions.Function1):V
+- f:toUrlPath(java.lang.Object):com.intellij.microservices.url.UrlPath
+- f:withCustomHostAligner(kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- f:withCustomNavigationHandler(kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- f:withDefaultRootContextProviderFactory(kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- f:withPathSegmentHandler(com.intellij.microservices.url.references.PathSegmentHandler):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- f:withSchemesSupport(java.util.List):com.intellij.microservices.url.references.UrlPathReferenceInjector
+f:com.intellij.microservices.url.references.UrlPathReferenceInjector$Companion
+- f:forPartialStringFrom(com.intellij.microservices.url.references.UrlPksParser,kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- f:forPartialStringFrom(kotlin.jvm.functions.Function1):com.intellij.microservices.url.references.UrlPathReferenceInjector
+- f:hasConsistentFullUrl(com.intellij.psi.PsiReference[]):Z
+com.intellij.microservices.url.references.UrlPathReferenceInjector$MappedReferences
+- a:forPsiElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- a:withRootContextProvider(com.intellij.microservices.url.references.UrlPathContext):com.intellij.microservices.url.references.UrlPathReferenceInjector$MappedReferences
+f:com.intellij.microservices.url.references.UrlPathReferenceInjector$MappedReferences$Empty
+- com.intellij.microservices.url.references.UrlPathReferenceInjector$MappedReferences
+- sf:INSTANCE:com.intellij.microservices.url.references.UrlPathReferenceInjector$MappedReferences$Empty
+- forPsiElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- withRootContextProvider(com.intellij.microservices.url.references.UrlPathContext):com.intellij.microservices.url.references.UrlPathReferenceInjector$MappedReferences
+com.intellij.microservices.url.references.UrlPathReferenceTarget
+- com.intellij.pom.PomRenameableTarget
+- a:getContext():com.intellij.microservices.url.references.UrlPathContext
+- a:getNavigatablePsiElement():com.intellij.psi.NavigatablePsiElement
+- a:getResolvedTargets():java.util.Set
+- a:toElement(com.intellij.microservices.url.references.UrlPathReference):com.intellij.psi.PsiElement
+f:com.intellij.microservices.url.references.UrlPksParser
+- sf:Companion:com.intellij.microservices.url.references.UrlPksParser$Companion
+- <init>():V
+- <init>(kotlin.jvm.functions.Function2):V
+- <init>(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1):V
+- <init>(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,Z):V
+- b:<init>(kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getCustomPathSegmentExtractor():kotlin.jvm.functions.Function1
+- f:getParseQueryParameters():Z
+- f:getShouldHaveScheme():Z
+- f:getSplitEscaper():kotlin.jvm.functions.Function2
+- f:parseFullUrl(com.intellij.psi.util.PartiallyKnownString):com.intellij.microservices.url.references.UrlPksParser$ParsedPksUrl
+- f:parseUrlPath(com.intellij.psi.util.PartiallyKnownString):com.intellij.microservices.url.references.UrlPksParser$ParsedPksUrlPath
+- f:pksPathSegment(com.intellij.psi.util.PartiallyKnownString):com.intellij.microservices.url.UrlPath$PathSegment
+- f:setCustomPathSegmentExtractor(kotlin.jvm.functions.Function1):V
+- f:setParseQueryParameters(Z):V
+- f:setShouldHaveScheme(Z):V
+- f:setSplitEscaper(kotlin.jvm.functions.Function2):V
+- f:splitUrlPath(com.intellij.psi.util.PartiallyKnownString):java.util.List
+f:com.intellij.microservices.url.references.UrlPksParser$Companion
+f:com.intellij.microservices.url.references.UrlPksParser$ParsedPksUrl
+- f:component1():com.intellij.psi.util.PartiallyKnownString
+- f:component2():com.intellij.psi.util.PartiallyKnownString
+- f:component3():java.util.List
+- f:component4():com.intellij.microservices.url.UrlPath
+- f:component5():java.util.List
+- equals(java.lang.Object):Z
+- f:getAuthority():com.intellij.psi.util.PartiallyKnownString
+- f:getQueryParameters():java.util.List
+- f:getScheme():com.intellij.psi.util.PartiallyKnownString
+- f:getSlashesSplit():java.util.List
+- f:getUrlPath():com.intellij.microservices.url.UrlPath
+- hashCode():I
+f:com.intellij.microservices.url.references.UrlPksParser$ParsedPksUrlPath
+- f:component1():java.util.List
+- f:component2():com.intellij.microservices.url.UrlPath
+- f:component3():java.util.List
+- equals(java.lang.Object):Z
+- f:getQueryParameters():java.util.List
+- f:getSlashesSplit():java.util.List
+- f:getUrlPath():com.intellij.microservices.url.UrlPath
+- hashCode():I
+f:com.intellij.microservices.url.references.UrlPksParser$QueryParameter
+- <init>(com.intellij.psi.util.PartiallyKnownString,com.intellij.psi.util.PartiallyKnownString):V
+- f:component1():com.intellij.psi.util.PartiallyKnownString
+- f:component2():com.intellij.psi.util.PartiallyKnownString
+- f:copy(com.intellij.psi.util.PartiallyKnownString,com.intellij.psi.util.PartiallyKnownString):com.intellij.microservices.url.references.UrlPksParser$QueryParameter
+- bs:copy$default(com.intellij.microservices.url.references.UrlPksParser$QueryParameter,com.intellij.psi.util.PartiallyKnownString,com.intellij.psi.util.PartiallyKnownString,I,java.lang.Object):com.intellij.microservices.url.references.UrlPksParser$QueryParameter
+- equals(java.lang.Object):Z
+- f:getName():com.intellij.psi.util.PartiallyKnownString
+- f:getValue():com.intellij.psi.util.PartiallyKnownString
+- hashCode():I
+com.intellij.microservices.url.references.UrlSegmentReference
+- com.intellij.psi.PsiReference
+com.intellij.microservices.url.references.UrlSegmentReferenceTarget
+- com.intellij.psi.PsiElement
+f:com.intellij.microservices.utils.PlaceholderReplaceUtils
+- sf:substituteUrlVariables(java.lang.String,java.lang.String,java.lang.String,java.lang.String):java.lang.String
+c:com.intellij.microservices.utils.SimpleNamePomTarget
+- com.intellij.pom.PomRenameableTarget
+- <init>(java.lang.String):V
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- hashCode():I
+- isValid():Z
+- isWritable():Z
+- setName(java.lang.String):java.lang.Object
+f:com.intellij.microservices.utils.UrlMappingBuilder
+- <init>():V
+- <init>(java.lang.String):V
+- f:appendSegment(java.lang.String):com.intellij.microservices.utils.UrlMappingBuilder
+- f:build():java.lang.String
+- f:buildOrNull():java.lang.String
 com.intellij.navigation.ChooseByNameContributor
 - sf:CLASS_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:FILE_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

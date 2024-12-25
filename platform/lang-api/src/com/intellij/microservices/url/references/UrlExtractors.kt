@@ -2,15 +2,12 @@
 
 package com.intellij.microservices.url.references
 
-import com.intellij.microservices.url.FrameworkUrlPathSpecification
-import com.intellij.microservices.url.HTTP_METHODS
-import com.intellij.microservices.url.UrlConversionConstants
+import com.intellij.microservices.url.*
 import com.intellij.microservices.url.UrlPath.PathSegment
-import com.intellij.microservices.url.UrlSpecialSegmentMarker
-import com.intellij.microservices.url.PlaceholderSplitEscaper
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PartiallyKnownString
+import com.intellij.psi.util.SplitEscaper
 import com.intellij.util.SmartList
 
 object DefaultFrameworkUrlPathSpecification : FrameworkUrlPathSpecification() {
@@ -26,8 +23,8 @@ object DefaultFrameworkUrlPathSpecification : FrameworkUrlPathSpecification() {
   }
 }
 
-fun springLikePropertySplitEscaper(input: CharSequence, pattern: String): PlaceholderSplitEscaper =
-  PlaceholderSplitEscaper(
+fun springLikePropertySplitEscaper(input: CharSequence, pattern: String): SplitEscaper =
+  PlaceholderSplitEscaper.create(
     listOf(UrlConversionConstants.SPRING_LIKE_PLACEHOLDER_BRACES, UrlConversionConstants.SPRING_LIKE_PATH_VARIABLE_BRACES),
     input, pattern)
 

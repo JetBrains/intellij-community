@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsContexts
 import javax.swing.JComponent
 
 /**
- * Represents a custom details tab in [com.intellij.microservices.ui.flat.EndpointsView] for selected endpoints.
+ * Represents a custom details tab in the Endpoints tool window for selected endpoints.
  */
 interface EndpointsSidePanelProvider {
   fun create(project: Project): EndpointsSidePanel?
