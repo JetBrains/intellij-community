@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchTreeStructureProvider
@@ -20,9 +19,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore.findFileSystemItem
- import com.intellij.util.IconUtil
+import com.intellij.util.IconUtil
 import javax.swing.Icon
 
 internal val Any.asAbstractTreeNode: AbstractTreeNode<*>?
@@ -65,26 +64,26 @@ internal fun ProjectViewNode<*>.computeDirectoryChildren(): Collection<AbstractT
   return mutableListOf<AbstractTreeNode<*>>().apply {
     children.forEach {
       if (type == null || !type.isIgnored(directory.project, directory.virtualFile)) {
-        when (val item = findFileSystemItem(directory.project, it)) {
-          is PsiDirectory -> add(ExternalFolderNode(item, settings))
-          is PsiFile -> add(PsiFileNode(item.project, item, settings))
+        val item = findFileSystemItem(directory.project, it)
+        if (item != null) {
+          add(FileSystemNode(item, settings))
         }
       }
     }
   }
 }
 
-private class ExternalFolderNode(directory: PsiDirectory, settings: ViewSettings?)
-  : ProjectViewNode<PsiDirectory>(directory.project, directory, settings) {
+private class FileSystemNode(fileSystemItem: PsiFileSystemItem, settings: ViewSettings?)
+  : ProjectViewNode<PsiFileSystemItem>(fileSystemItem.project, fileSystemItem, settings) {
 
-  override fun canRepresent(element: Any?) = virtualFile?.equals(element) ?: false
-  override fun contains(file: VirtualFile) = virtualFile?.let { VfsUtil.isAncestor(it, file, true) } ?: false
+  override fun canRepresent(element: Any?) = virtualFile.equals(element)
+  override fun contains(file: VirtualFile) = virtualFile.let { VfsUtil.isAncestor(it, file, true) }
 
-  override fun getVirtualFile() = value?.virtualFile
-  override fun getChildren() = computeDirectoryChildren()
+  override fun getVirtualFile() = value!!.virtualFile
+  override fun getChildren() = if (virtualFile.isDirectory) computeDirectoryChildren() else emptyList()
 
   override fun update(presentation: PresentationData) {
-    val file = virtualFile ?: return
+    val file = virtualFile
     val scratch = computeScratchPresentation(file)
     presentation.setIcon(scratch?.second ?: findFileIcon())
     presentation.presentableText = scratch?.first ?: file.presentableName

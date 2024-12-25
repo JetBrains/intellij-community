@@ -5,8 +5,6 @@ import com.intellij.ide.DeleteProvider
 import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode
-import com.intellij.ide.util.DeleteHandler.DefaultDeleteProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
@@ -17,20 +15,17 @@ class BookmarksDeleteProvider: DeleteProvider {
 
   override fun deleteElement(dataContext: DataContext) {
     val items = dataContext.getData(PlatformDataKeys.SELECTED_ITEMS) ?: return
-    if (items.none { it is BasePsiNode<*> }) {
-      val project = dataContext.getData(PlatformDataKeys.PROJECT) ?: return
-      val view = dataContext.getData(BookmarksView.BOOKMARKS_VIEW) ?: return
-      @Suppress("UNCHECKED_CAST")
-      val nodes = items.asList() as? List<AbstractTreeNode<*>> ?: return
-      val state = BookmarksViewState.getInstance(project)
-      NodeDeleteAction().deleteSelectedNodes(state, nodes, project, view)
-    } else if (items.all { it is BasePsiNode<*> }) {
-      DefaultDeleteProvider().deleteElement(dataContext)
-    }
+    val project = dataContext.getData(PlatformDataKeys.PROJECT) ?: return
+    val view = dataContext.getData(BookmarksView.BOOKMARKS_VIEW) ?: return
+
+    @Suppress("UNCHECKED_CAST")
+    val nodes = items.asList() as? List<AbstractTreeNode<*>> ?: return
+    val state = BookmarksViewState.getInstance(project)
+    NodeDeleteAction.deleteSelectedNodes(state, nodes, project, view)
   }
 
   override fun canDeleteElement(dataContext: DataContext): Boolean {
     val items = dataContext.getData(PlatformDataKeys.SELECTED_ITEMS) ?: return false
-    return items.all { it is BasePsiNode<*> } || items.all { it is BookmarkNode<*> }
+    return items.all { it is BookmarkNode<*> }
   }
 }
