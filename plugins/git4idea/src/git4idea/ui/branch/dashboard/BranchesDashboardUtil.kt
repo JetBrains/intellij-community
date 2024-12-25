@@ -4,7 +4,6 @@ package git4idea.ui.branch.dashboard
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
@@ -18,16 +17,14 @@ import git4idea.branch.GitRefType
 import git4idea.branch.IncomingOutgoingState
 import git4idea.repo.GitRefUtil.getCurrentTag
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.tree.tags
 import it.unimi.dsi.fastutil.ints.IntSet
 
 internal object BranchesDashboardUtil {
-
-  fun getLocalBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
+  fun getLocalBranches(project: Project, repositories: Collection<GitRepository>): Set<BranchInfo> {
     val localMap = mutableMapOf<GitLocalBranch, MutableSet<GitRepository>>()
-    forEachRepo(project, rootsToFilter) { repo ->
+    repositories.forEach { repo ->
       for (branch in repo.branches.localBranches) {
         localMap.computeIfAbsent(branch) { hashSetOf() }.add(repo)
       }
@@ -48,9 +45,9 @@ internal object BranchesDashboardUtil {
     return local
   }
 
-  fun getRemoteBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
+  fun getRemoteBranches(project: Project, repositories: Collection<GitRepository>): Set<BranchInfo> {
     val remoteMap = mutableMapOf<GitBranch, MutableList<GitRepository>>()
-    forEachRepo(project, rootsToFilter) { repo ->
+    repositories.forEach { repo ->
       for (remoteBranch in repo.branches.remoteBranches) {
         remoteMap.computeIfAbsent(remoteBranch) { mutableListOf() }.add(repo)
       }
@@ -64,9 +61,9 @@ internal object BranchesDashboardUtil {
     }.toHashSet()
   }
 
-  fun getTags(project: Project, rootsToFilter: Set<VirtualFile>?): Set<TagInfo> {
+  fun getTags(project: Project, repositories: Collection<GitRepository>): Set<TagInfo> {
     val tags = mutableMapOf<GitTag, MutableList<GitRepository>>()
-    forEachRepo(project, rootsToFilter) { repo ->
+    repositories.forEach { repo ->
       for (tag in repo.tags) {
         tags.computeIfAbsent(tag.key) { mutableListOf() }.add(repo)
       }
@@ -80,13 +77,6 @@ internal object BranchesDashboardUtil {
   private fun isFavoriteInAnyRepo(repos: Collection<GitRepository>, gitBranchManager: GitBranchManager, ref: GitReference): Boolean {
     val refType = GitRefType.of(ref)
     return repos.any { gitBranchManager.isFavorite(refType, it, ref.name) }
-  }
-
-  private fun forEachRepo(project: Project, rootsToFilter: Set<VirtualFile>?, consumer: (GitRepository) -> Unit) {
-    for (repo in GitRepositoryManager.getInstance(project).repositories) {
-      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
-      consumer(repo)
-    }
   }
 
   fun checkIsMyBranchesSynchronously(

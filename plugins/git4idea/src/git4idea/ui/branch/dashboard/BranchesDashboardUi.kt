@@ -18,6 +18,7 @@ import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import org.jetbrains.annotations.ApiStatus
@@ -38,12 +39,23 @@ internal class BranchesDashboardUi(private val logUi: BranchesVcsLogUi) : Dispos
 
   init {
     val toolbar = ActionManager.getInstance().createActionToolbar("Git.Log.Branches", BranchesDashboardTreeComponent.createActionGroup(), false)
-    val model = BranchesDashboardTreeModelImpl(logUi.logData, logUi.filterUi).also {
+    val logData = logUi.logData
+    val model = BranchesDashboardTreeModelImpl(logData).also {
       Disposer.register(this, it)
     }
 
+    val roots = logData.roots.toSet()
+    val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener {
+      model.rootsToFilter = when (roots.size) {
+        1 -> roots
+        else -> VcsLogUtil.getAllVisibleRoots(roots, logUi.filterUi.filters)
+      }
+    }
+    logUi.filterUi.addFilterListener(logUiFilterListener)
+    logUiFilterListener.onFiltersChanged()
+
     val treePanel = BranchesDashboardTreeComponent.create(this,
-                                                          logUi.logData.project,
+                                                          logData.project,
                                                           model,
                                                           logUi.properties,
                                                           logUi.filterUi,

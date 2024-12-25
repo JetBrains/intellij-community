@@ -15,13 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
-import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitLocalBranch
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.i18n.GitBundle.message
+import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitTagHolder
 import git4idea.repo.GitTagLoaderListener
 import git4idea.ui.branch.GitBranchManager
@@ -33,10 +32,8 @@ internal interface BranchesDashboardTreeModel : BranchesTreeModel {
   fun launchFetch()
 }
 
-internal class BranchesDashboardTreeModelImpl(
-  private val logData: VcsLogData,
-  private val logFilterUi: VcsLogFilterUiEx,
-) : BranchesTreeModelBase(), BranchesDashboardTreeModel, Disposable {
+internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
+  : BranchesTreeModelBase(), BranchesDashboardTreeModel, Disposable {
 
   private val project: Project = logData.project
 
@@ -51,7 +48,7 @@ internal class BranchesDashboardTreeModelImpl(
 
   override var showOnlyMy: Boolean by AtomicObservableProperty(false) { old, new -> if (old != new) updateBranchesIsMyState() }
 
-  private var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
+  var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
     if (new != null && old != null && old != new) {
       updateBranchesTree()
     }
@@ -93,18 +90,6 @@ internal class BranchesDashboardTreeModelImpl(
     Disposer.register(this) {
       logData.removeDataPackChangeListener(changeListener)
     }
-
-    val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener {
-      val roots = logData.roots.toSet()
-      rootsToFilter = if (roots.size == 1) {
-        roots
-      }
-      else {
-        VcsLogUtil.getAllVisibleRoots(roots, logFilterUi.filters)
-      }
-    }
-    logFilterUi.addFilterListener(logUiFilterListener)
-    logUiFilterListener.onFiltersChanged()
   }
 
   override fun dispose() {
@@ -145,9 +130,18 @@ internal class BranchesDashboardTreeModelImpl(
     startLoading()
 
     try {
-      val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project, rootsToFilter)
-      val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project, rootsToFilter)
-      val newTags = BranchesDashboardUtil.getTags(project, rootsToFilter)
+      val allRepositories = GitRepositoryManager.getInstance(project).repositories
+      val rootsToFilter = rootsToFilter
+      val repositories = if (rootsToFilter == null) {
+        allRepositories
+      }
+      else {
+        allRepositories.filter { rootsToFilter.contains(it.root) }
+      }
+
+      val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project, repositories)
+      val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project, repositories)
+      val newTags = BranchesDashboardUtil.getTags(project, repositories)
 
       val reloadedLocal = updateIfChanged(refs.localBranches, newLocalBranches, force)
       val reloadedRemote = updateIfChanged(refs.remoteBranches, newRemoteBranches, force)
