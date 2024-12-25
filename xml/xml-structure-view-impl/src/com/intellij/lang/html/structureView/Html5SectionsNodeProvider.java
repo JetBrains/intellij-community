@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.icons.AllIcons;
@@ -44,26 +30,22 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
   public static final String HTML5_OUTLINE_PROVIDER_PROPERTY = "html5.sections.node.provider";
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ACTION_ID;
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
+  public @NotNull ActionPresentation getPresentation() {
     return new ActionPresentationData(XmlPsiBundle.message("html5.outline.mode"), null, AllIcons.Xml.Html5);
   }
 
-  @NotNull
   @Override
-  public String getCheckBoxText() {
+  public @NotNull String getCheckBoxText() {
     return XmlPsiBundle.message("html5.outline.mode");
   }
 
-  @NotNull
   @Override
-  public String getActionIdForShortcut() {
+  public @NotNull String getActionIdForShortcut() {
     return "FileStructurePopup";
   }
 
@@ -73,14 +55,12 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
   }
 
   @Override
-  @NotNull
-  public String getPropertyName() {
+  public @NotNull String getPropertyName() {
     return HTML5_OUTLINE_PROVIDER_PROPERTY;
   }
 
-  @NotNull
   @Override
-  public Collection<Html5SectionTreeElement> provideNodes(@NotNull final TreeElement node) {
+  public @NotNull Collection<Html5SectionTreeElement> provideNodes(final @NotNull TreeElement node) {
     if (!(node instanceof HtmlFileTreeElement)) return Collections.emptyList();
 
     final XmlFile xmlFile = ((HtmlFileTreeElement)node).getElement();

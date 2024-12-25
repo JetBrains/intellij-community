@@ -47,7 +47,7 @@ public final class ToggleGridAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     super.update(e);
     ImageEditorActionUtil.setEnabled(e);
     e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.grid") : IdeBundle.message("action.text.show.grid"));

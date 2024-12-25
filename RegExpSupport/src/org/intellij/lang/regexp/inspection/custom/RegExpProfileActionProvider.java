@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -30,8 +30,7 @@ public class RegExpProfileActionProvider extends InspectionProfileActionProvider
     return List.of(new ProfilePanelAction(getActionGroup(panel), "regexp.profile.action.provider.add.group"));
   }
 
-  @NotNull
-  private static DefaultActionGroup getActionGroup(@NotNull SingleInspectionProfilePanel panel) {
+  private static @NotNull DefaultActionGroup getActionGroup(@NotNull SingleInspectionProfilePanel panel) {
     return new DefaultActionGroup(
       new AddCustomRegExpInspectionAction(panel, RegExpBundle.message("action.add.regexp.search.inspection.text"), false),
       new AddCustomRegExpInspectionAction(panel, RegExpBundle.message("action.add.regexp.replace.inspection.text"), true)

@@ -30,13 +30,11 @@ public final class ImageEditorManagerImpl {
   private ImageEditorManagerImpl() {
   }
 
-  @NotNull
-  public static ImageEditorUI createImageEditorUI(BufferedImage image) {
+  public static @NotNull ImageEditorUI createImageEditorUI(BufferedImage image) {
     return createImageEditorUI(image, null);
   }
 
-  @NotNull
-  public static ImageEditorUI createImageEditorUI(BufferedImage image, @Nullable String format) {
+  public static @NotNull ImageEditorUI createImageEditorUI(BufferedImage image, @Nullable String format) {
     ImageEditorUI ui = new ImageEditorUI(null);
     Options options = OptionsManager.getInstance().getOptions();
     EditorOptions editorOptions = options.getEditorOptions();

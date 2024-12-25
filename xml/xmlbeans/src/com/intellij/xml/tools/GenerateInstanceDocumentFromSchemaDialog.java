@@ -172,8 +172,7 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     previousUri = uri;
   }
 
-  @Nullable
-  private static XmlTag getRootTag(PsiFile psifile) {
+  private static @Nullable XmlTag getRootTag(PsiFile psifile) {
     XmlFile xmlFile = null;
     if (psifile instanceof XmlFile) {
       xmlFile = (XmlFile)psifile;
@@ -192,8 +191,7 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private PsiFile findFile(String uri) {
+  private @Nullable PsiFile findFile(String uri) {
     final VirtualFile file =
       uri != null ? VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(uri), null) : null;
     return file != null ? PsiManager.getInstance(myProject).findFile(file) : null;
@@ -208,9 +206,7 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     return rootElementChooser.getSelectedItem() != null;
   }
 
-  @Nullable
-  @InspectionMessage
-  private String doValidateWithData() {
+  private @Nullable @InspectionMessage String doValidateWithData() {
     String rootElementName = getElementName();
     if (rootElementName == null || rootElementName.isEmpty()) {
       return XmlBundle.message("schema2.instance.no.valid.root.element.name.validation.error");
@@ -287,8 +283,7 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected String getHelpId() {
+  protected @NotNull String getHelpId() {
     return "webservices.GenerateInstanceDocumentFromSchema";
   }
 }

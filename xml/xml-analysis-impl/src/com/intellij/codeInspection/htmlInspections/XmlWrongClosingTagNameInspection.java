@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -126,8 +126,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
       .create();
   }
 
-  @Nullable
-  static XmlToken findEndTagName(@Nullable PsiErrorElement element) {
+  static @Nullable XmlToken findEndTagName(@Nullable PsiErrorElement element) {
     if (element == null) return null;
 
     ASTNode astNode = element.getNode();

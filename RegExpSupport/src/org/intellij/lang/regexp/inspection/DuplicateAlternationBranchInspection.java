@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -23,9 +23,8 @@ import java.util.Set;
  */
 public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new DuplicateAlternationBranchVisitor(holder, isOnTheFly);
   }
 
@@ -71,10 +70,8 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
   }
 
   private static class DuplicateAlternationBranchFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return RegExpBundle.message("inspection.quick.fix.remove.duplicate.branch");
     }
 

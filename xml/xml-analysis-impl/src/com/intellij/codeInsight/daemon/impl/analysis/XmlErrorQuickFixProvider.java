@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
 
   @Override
-  public void registerErrorQuickFix(@NotNull final PsiErrorElement element, @NotNull final HighlightInfo.Builder highlightInfo) {
+  public void registerErrorQuickFix(final @NotNull PsiErrorElement element, final @NotNull HighlightInfo.Builder highlightInfo) {
     if (PsiTreeUtil.getParentOfType(element, XmlTag.class) == null) {
       return;
     }

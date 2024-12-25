@@ -289,8 +289,7 @@ public final class ArtifactRepositoryManager {
   }
 
   /// Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
-  @Nullable
-  public ArtifactDependencyNode collectDependencies(String groupId, String artifactId, String versionConstraint) throws Exception {
+  public @Nullable ArtifactDependencyNode collectDependencies(String groupId, String artifactId, String versionConstraint) throws Exception {
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
     ArtifactDependencyTreeBuilder builder = new ArtifactDependencyTreeBuilder();
@@ -304,10 +303,9 @@ public final class ArtifactRepositoryManager {
     return builder.getRoot();
   }
 
-  @NotNull
-  public Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,
-                                                          Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
-                                                          List<String> excludedDependencies) throws Exception {
+  public @NotNull Collection<Artifact> resolveDependencyAsArtifact(String groupId, String artifactId, String versionConstraint,
+                                                                   Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
+                                                                   List<String> excludedDependencies) throws Exception {
     List<Artifact> artifacts = new ArrayList<>();
     VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
@@ -372,8 +370,7 @@ public final class ArtifactRepositoryManager {
   }
 
   /// Not a thread-safe method due to [org.apache.maven.model.validation.DefaultModelValidator#validIds]
-  @NotNull
-  private RepositorySystemSession prepareRequests(String groupId,
+  private @NotNull RepositorySystemSession prepareRequests(String groupId,
                                                   String artifactId,
                                                   Set<VersionConstraint> constraints,
                                                   ArtifactKind kind,
@@ -414,10 +411,9 @@ public final class ArtifactRepositoryManager {
     return session;
   }
 
-  @NotNull
-  public Collection<Artifact> resolveDependencyAsArtifactStrict(String groupId, String artifactId, String versionConstraint,
-                                                                ArtifactKind kind, boolean includeTransitiveDependencies,
-                                                                List<String> excludedDependencies) throws Exception {
+  public @NotNull Collection<Artifact> resolveDependencyAsArtifactStrict(String groupId, String artifactId, String versionConstraint,
+                                                                         ArtifactKind kind, boolean includeTransitiveDependencies,
+                                                                         List<String> excludedDependencies) throws Exception {
     List<Artifact> artifacts = new ArrayList<>();
     List<ArtifactRequest> requests = new ArrayList<>();
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
@@ -492,16 +488,14 @@ public final class ArtifactRepositoryManager {
     return candidate;
   }
 
-  @NotNull
-  private static DependencyFilter createScopeFilter() {
+  private static @NotNull DependencyFilter createScopeFilter() {
     return DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE, JavaScopes.RUNTIME);
   }
 
   /**
    * Gets the versions (in ascending order) that matched the requested range.
    */
-  @NotNull
-  public List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, ArtifactKind artifactKind) throws Exception {
+  public @NotNull List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, ArtifactKind artifactKind) throws Exception {
     VersionRangeResult result = ourSystem.resolveVersionRange(
       mySessionFactory.createDefaultSession(), createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
     );
@@ -546,8 +540,7 @@ public final class ArtifactRepositoryManager {
     return new RemoteRepository.Builder(prototype.getId(), prototype.getContentType(), url).setProxy(ourProxySelector.getProxy(url)).build();
   }
 
-  @NotNull
-  public static List<RemoteRepository> createDefaultRemoteRepositories() {
+  public static @NotNull List<RemoteRepository> createDefaultRemoteRepositories() {
     return List.of(
       // Maven Central Repository
       createRemoteRepository(
@@ -681,8 +674,7 @@ public final class ArtifactRepositoryManager {
       return true;
     }
 
-    @NotNull
-    public List<ArtifactRequest> getRequests() {
+    public @NotNull List<ArtifactRequest> getRequests() {
       return myRequests;
     }
   }

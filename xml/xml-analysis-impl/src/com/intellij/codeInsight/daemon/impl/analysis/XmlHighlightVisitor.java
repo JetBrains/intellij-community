@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.BundleBase;
@@ -66,13 +66,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private HighlightInfoHolder myHolder;
 
   @Override
-  public void visit(@NotNull final PsiElement element) {
+  public void visit(final @NotNull PsiElement element) {
     myHasError = false;
     element.accept(this);
   }
 
   @Override
-  public boolean analyze(@NotNull final PsiFile file,
+  public boolean analyze(final @NotNull PsiFile file,
                          final boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
                          @NotNull Runnable action) {
@@ -531,8 +531,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return reference instanceof FileReferenceOwner || reference instanceof AnchorReference || reference instanceof PsiFileReference;
   }
 
-  @NotNull
-  public static @InspectionMessage String getErrorDescription(@NotNull PsiReference reference) {
+  public static @NotNull @InspectionMessage String getErrorDescription(@NotNull PsiReference reference) {
     @InspectionMessage String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
@@ -577,7 +576,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessageWithFixes(final PsiElement context, final String message, @NotNull final ErrorType type, final IntentionAction @NotNull ... fixes) {
+  public void addMessageWithFixes(final PsiElement context, final String message, final @NotNull ErrorType type, final IntentionAction @NotNull ... fixes) {
     if (message != null && !message.isEmpty()) {
       final PsiFile containingFile = context.getContainingFile();
       final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
@@ -607,13 +606,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public boolean suitableForFile(@NotNull final PsiFile file) {
+  public boolean suitableForFile(final @NotNull PsiFile file) {
     return file instanceof XmlFile || XmlTagTreeHighlightingUtil.hasXmlViewProvider(file);
   }
 
   @Override
-  @NotNull
-  public HighlightVisitor clone() {
+  public @NotNull HighlightVisitor clone() {
     return new XmlHighlightVisitor();
   }
 

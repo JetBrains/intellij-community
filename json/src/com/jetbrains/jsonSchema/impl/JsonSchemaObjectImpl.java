@@ -143,9 +143,8 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   @Override
   public @NotNull Iterable<JsonSchemaValidation> getValidations(@Nullable JsonSchemaType type, @NotNull JsonValueAdapter value) {
     return new Iterable<>() {
-      @NotNull
       @Override
-      public Iterator<JsonSchemaValidation> iterator() {
+      public @NotNull Iterator<JsonSchemaValidation> iterator() {
         return getSchema7AndEarlierValidations(JsonSchemaObjectImpl.this, type, value).iterator();
       }
     };

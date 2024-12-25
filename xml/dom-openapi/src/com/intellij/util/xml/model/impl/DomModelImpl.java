@@ -56,8 +56,7 @@ public class DomModelImpl<T extends DomElement> implements DomModel<T> {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<DomFileElement<T>> getRoots() {
+  public @Unmodifiable @NotNull List<DomFileElement<T>> getRoots() {
     if (myMergedModel == null) {
       return ContainerUtil.mapNotNull(myConfigFiles, (NullableFunction<XmlFile, DomFileElement<T>>)xmlFile -> DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, myClass));
     }

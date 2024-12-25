@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -9,14 +9,14 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
-import java.util.List;
-import java.util.Objects;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 
 public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExpNamedGroupRef {
@@ -34,8 +34,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   }
 
   @Override
-  @Nullable
-  public RegExpGroup resolve() {
+  public @Nullable RegExpGroup resolve() {
     final String groupName = getGroupName();
     return groupName == null ? null : resolve(groupName, getContainingFile());
   }
@@ -48,8 +47,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   }
 
   @Override
-  @Nullable
-  public String getGroupName() {
+  public @Nullable String getGroupName() {
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
     return nameNode != null ? nameNode.getText() : null;
   }
@@ -76,15 +74,13 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       return null;
     }
     return new PsiReference() {
-      @NotNull
       @Override
-      public PsiElement getElement() {
+      public @NotNull PsiElement getElement() {
         return RegExpNamedGroupRefImpl.this;
       }
 
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
         assert nameNode != null;
         final int startOffset = getNode().getFirstChildNode().getTextLength();
@@ -97,8 +93,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       }
 
       @Override
-      @NotNull
-      public String getCanonicalText() {
+      public @NotNull String getCanonicalText() {
         return getRangeInElement().substring(getText());
       }
 

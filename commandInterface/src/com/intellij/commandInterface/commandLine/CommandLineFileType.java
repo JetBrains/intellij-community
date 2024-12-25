@@ -21,21 +21,18 @@ public final class CommandLineFileType extends LanguageFileType {
     super(CommandLineLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return CommandLineLanguage.INSTANCE.getID();
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return CommandLineLanguage.INSTANCE.getID();
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return EXTENSION;
   }
 

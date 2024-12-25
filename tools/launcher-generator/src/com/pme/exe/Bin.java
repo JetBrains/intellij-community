@@ -212,7 +212,7 @@ public abstract class Bin {
     }
   }
 
-  public static abstract class ReadOnlyValue extends Value {
+  public abstract static class ReadOnlyValue extends Value {
     public ReadOnlyValue(String name) {
       super(name);
     }

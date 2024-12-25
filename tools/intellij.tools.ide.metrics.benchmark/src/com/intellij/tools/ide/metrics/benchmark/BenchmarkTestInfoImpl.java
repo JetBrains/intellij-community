@@ -53,8 +53,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   public String launchName;                      // to print on fail
   private int warmupIterations = 1;                      // default warmup iterations should be positive
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
-  @NotNull
-  private final IJTracer tracer;
+  private final @NotNull IJTracer tracer;
   private final ArrayList<MetricsCollector> metricsCollectors = new ArrayList<>();
 
   private boolean useDefaultSpanMetricExporter = true;

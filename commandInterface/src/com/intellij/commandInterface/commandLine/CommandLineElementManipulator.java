@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
 public final class CommandLineElementManipulator extends AbstractElementManipulator<CommandLineElement> {
 
   @Override
-  public CommandLineElement handleContentChange(@NotNull final CommandLineElement element,
-                                                @NotNull final TextRange range,
+  public CommandLineElement handleContentChange(final @NotNull CommandLineElement element,
+                                                final @NotNull TextRange range,
                                                 final String newContent) {
     return null;
   }

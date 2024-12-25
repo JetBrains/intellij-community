@@ -47,27 +47,23 @@ public final class SvgFileType extends LanguageFileType implements UIBasedFileTy
     return charset == null ? StandardCharsets.UTF_8 : charset;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "SVG";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return IdeBundle.message("filetype.scalable.vector.graphics.description");
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return IdeBundle.message("filetype.scalable.vector.graphics.display.name");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "svg";
   }
 

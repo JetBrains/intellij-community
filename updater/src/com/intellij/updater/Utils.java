@@ -5,7 +5,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -29,7 +30,7 @@ public final class Utils {
 
   private static File myTempDir;
 
-  public synchronized static File getTempFile(String name) throws IOException {
+  public static synchronized File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
       String path = System.getProperty("java.io.tmpdir");
       if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
@@ -57,7 +58,7 @@ public final class Utils {
     return myTempFile;
   }
 
-  public synchronized static void cleanup() throws IOException {
+  public static synchronized void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
     LOG.info("deleted a working directory: " + myTempDir.getPath());

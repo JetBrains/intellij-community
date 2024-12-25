@@ -71,16 +71,14 @@ public interface ImageDocument {
   /**
    * Returns the bounds of the current image.
    */
-  @Nullable
-  default Rectangle getBounds() {
+  default @Nullable Rectangle getBounds() {
     return getBounds(1d);
   }
 
   /**
    * Returns the bounds of the image represented in the provided scale.
    */
-  @Nullable
-  default Rectangle getBounds(double scale) {
+  default @Nullable Rectangle getBounds(double scale) {
     BufferedImage image = getValue(scale);
     return image != null ? new Rectangle(image.getWidth(), image.getHeight()) : null;
   }

@@ -61,8 +61,7 @@ public final class ModelMergerUtil {
     return (Collection<V>)processor.getResults();
   }
 
-  @Unmodifiable
-  public static @NotNull <T> List<T> getImplementations(T element) {
+  public static @Unmodifiable @NotNull <T> List<T> getImplementations(T element) {
     if (element instanceof MergedObject) {
       final MergedObject<T> mergedObject = (MergedObject<T>)element;
       return mergedObject.getImplementations();

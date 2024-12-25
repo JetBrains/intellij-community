@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator, DumbAware {
-  @NonNls private static final Set<String> POSIX_CHARACTER_CLASSES = ContainerUtil.newHashSet(
+  private static final @NonNls Set<String> POSIX_CHARACTER_CLASSES = ContainerUtil.newHashSet(
     "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "word", "xdigit");
   private AnnotationHolder myHolder;
   private final RegExpLanguageHosts myLanguageHosts;

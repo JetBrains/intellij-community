@@ -7,9 +7,8 @@ import org.jetbrains.annotations.NotNull;
 
 @Deprecated
 public class LegacyMutableJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
-  @NotNull
   @Override
-  public JsonSchemaObject mergeObjects(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other, @NotNull JsonSchemaObject pointTo) {
+  public @NotNull JsonSchemaObject mergeObjects(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other, @NotNull JsonSchemaObject pointTo) {
     return JsonSchemaObjectImpl.merge(((JsonSchemaObjectImpl)base), ((JsonSchemaObjectImpl)other), ((JsonSchemaObjectImpl)pointTo));
   }
 }

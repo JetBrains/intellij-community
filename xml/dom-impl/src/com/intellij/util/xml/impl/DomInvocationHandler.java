@@ -751,13 +751,11 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return getXmlName().evaluateChildName(xmlName);
   }
 
-  @Unmodifiable
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
+  public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
     return getCollectionChildren(description, XmlStubBasedTagBase.shouldProcessIncludesNow());
   }
 
-  @Unmodifiable
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
+  public @Unmodifiable List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
@@ -808,8 +806,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return Collections.unmodifiableList(elements);
   }
 
-  @Unmodifiable
-  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
+  private @Unmodifiable List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
     if (description instanceof CollectionChildDescriptionImpl) {
       return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag, processIncludes);
     }

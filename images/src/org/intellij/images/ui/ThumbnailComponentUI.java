@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -22,8 +22,7 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ThumbnailComponentUI extends ComponentUI {
-  @NonNls
-  private static final String DOTS = "...";
+  private static final @NonNls String DOTS = "...";
 
   private static final Color LINE_COLOR = new Color(0x8E, 0xA8, 0xCE);
   private static final Color PNG_COLOR = new Color(0x80, 0x00, 0x80);

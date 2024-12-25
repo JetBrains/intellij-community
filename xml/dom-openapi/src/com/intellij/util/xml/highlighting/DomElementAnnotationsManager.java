@@ -24,8 +24,7 @@ public abstract class DomElementAnnotationsManager {
 
   public abstract @NotNull DomElementsProblemsHolder getCachedProblemHolder(DomElement element);
 
-  @Unmodifiable
-  public abstract List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor);
+  public abstract @Unmodifiable List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor);
 
   public abstract boolean isHighlightingFinished(final DomElement[] domElements);
 
@@ -42,8 +41,7 @@ public abstract class DomElementAnnotationsManager {
    * @param inspection inspection to run on the given file element
    * @return collected DOM problem descriptors
    */
-  @Unmodifiable
-  public abstract @NotNull <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> element,
+  public abstract @Unmodifiable @NotNull <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> element,
                                                                                             @NotNull DomElementsInspection<T> inspection,
                                                                                             boolean onTheFly);
 

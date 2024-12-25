@@ -17,14 +17,10 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class Option {
-  @NotNull
-  private final List<String> myLongNames = new ArrayList<>();
-  @NotNull
-  private final List<String> myShortNames = new ArrayList<>();
-  @Nullable
-  private final Pair<Integer, Argument> myArgumentAndQuantity;
-  @NotNull
-  private final Help myHelp;
+  private final @NotNull List<String> myLongNames = new ArrayList<>();
+  private final @NotNull List<String> myShortNames = new ArrayList<>();
+  private final @Nullable Pair<Integer, Argument> myArgumentAndQuantity;
+  private final @NotNull Help myHelp;
 
   /**
    * @param argumentAndQuantity if option accepts argument, there should be pair of [argument_quantity, its_type_info]
@@ -32,10 +28,10 @@ public final class Option {
    * @param shortNames          option short names
    * @param longNames           option long names
    */
-  public Option(@Nullable final Pair<Integer, Argument> argumentAndQuantity,
-                @NotNull final Help help,
-                @NotNull final Collection<String> shortNames,
-                @NotNull final Collection<String> longNames) {
+  public Option(final @Nullable Pair<Integer, Argument> argumentAndQuantity,
+                final @NotNull Help help,
+                final @NotNull Collection<String> shortNames,
+                final @NotNull Collection<String> longNames) {
    assert (argumentAndQuantity == null || argumentAndQuantity.first > 0): "Illegal args and quantity: " + argumentAndQuantity;
     myArgumentAndQuantity = argumentAndQuantity;
     myShortNames.addAll(shortNames);
@@ -46,16 +42,14 @@ public final class Option {
   /**
    * @return Option long names
    */
-  @NotNull
-  public List<String> getLongNames() {
+  public @NotNull List<String> getLongNames() {
     return Collections.unmodifiableList(myLongNames);
   }
 
   /**
    * @return all option names (long and short)
    */
-  @NotNull
-  public List<String> getAllNames() {
+  public @NotNull List<String> getAllNames() {
     final List<String> result = new ArrayList<>(myLongNames);
     result.addAll(myShortNames);
     return result;
@@ -64,8 +58,7 @@ public final class Option {
   /**
    * @return Option short names
    */
-  @NotNull
-  public List<String> getShortNames() {
+  public @NotNull List<String> getShortNames() {
     return Collections.unmodifiableList(myShortNames);
   }
 
@@ -74,16 +67,14 @@ public final class Option {
    * @return if option accepts argument -- pair of [argument_quantity, argument]. Null otherwise.
    * Unlike position argument, option argument is <a href="https://docs.python.org/2/library/optparse.html#terminology">always mandatory</a>
    */
-  @Nullable
-  public Pair<Integer, Argument> getArgumentAndQuantity() {
+  public @Nullable Pair<Integer, Argument> getArgumentAndQuantity() {
     return myArgumentAndQuantity;
   }
 
   /**
    * @return Option help
    */
-  @NotNull
-  public Help getHelp() {
+  public @NotNull Help getHelp() {
     return myHelp;
   }
 }

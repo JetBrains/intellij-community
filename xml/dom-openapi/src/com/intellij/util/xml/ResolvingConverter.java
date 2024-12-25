@@ -32,8 +32,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return reference completion variants
    */
-  @Unmodifiable
-  public abstract @NotNull Collection<? extends T> getVariants(@NotNull ConvertContext context);
+  public abstract @Unmodifiable @NotNull Collection<? extends T> getVariants(@NotNull ConvertContext context);
 
   /**
    * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.

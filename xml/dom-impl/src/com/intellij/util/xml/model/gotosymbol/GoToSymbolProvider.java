@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.model.gotosymbol;
 
@@ -55,8 +55,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       CachedValueProvider.Result.create(calcAcceptableModules(project), PsiModificationTracker.MODIFICATION_COUNT), false);
   }
 
-  @Unmodifiable
-  protected @NotNull Collection<Module> calcAcceptableModules(@NotNull Project project) {
+  protected @Unmodifiable @NotNull Collection<Module> calcAcceptableModules(@NotNull Project project) {
     return ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
   }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 final class CommandLineElementType extends IElementType {
-  CommandLineElementType(@NotNull @NonNls final String debugName) {
+  CommandLineElementType(final @NotNull @NonNls String debugName) {
     super(debugName, CommandLineLanguage.INSTANCE);
   }
 }

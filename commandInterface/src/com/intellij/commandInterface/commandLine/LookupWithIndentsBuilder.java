@@ -42,8 +42,7 @@ import java.util.Map.Entry;
  * @author Ilya.Kazakevich
  */
 final class LookupWithIndentsBuilder {
-  @NotNull
-  private final Map<LookupElementBuilder, Pair<String, Integer>> myMap = new LinkedHashMap<>();
+  private final @NotNull Map<LookupElementBuilder, Pair<String, Integer>> myMap = new LinkedHashMap<>();
   private int myMaxLength;
   private boolean myHasPriority;
 
@@ -54,8 +53,8 @@ final class LookupWithIndentsBuilder {
    * @param help                 help text
    * @param priority             priority
    */
-  void addElement(@NotNull final LookupElementBuilder lookupElementBuilder,
-                  @Nullable final String help,
+  void addElement(final @NotNull LookupElementBuilder lookupElementBuilder,
+                  final @Nullable String help,
                   final int priority) {
     addElementInternal(lookupElementBuilder, help, priority);
   }
@@ -67,8 +66,8 @@ final class LookupWithIndentsBuilder {
    * @param lookupElementBuilder lookup element
    * @param help                 help text
    */
-  void addElement(@NotNull final LookupElementBuilder lookupElementBuilder,
-                  @Nullable final String help) {
+  void addElement(final @NotNull LookupElementBuilder lookupElementBuilder,
+                  final @Nullable String help) {
     addElementInternal(lookupElementBuilder, help, null);
   }
 
@@ -79,9 +78,9 @@ final class LookupWithIndentsBuilder {
    * @param help                 help text
    * @param priority             priority or null
    */
-  private void addElementInternal(@NotNull final LookupElementBuilder lookupElementBuilder,
-                                  @Nullable final String help,
-                                  @Nullable final Integer priority) {
+  private void addElementInternal(final @NotNull LookupElementBuilder lookupElementBuilder,
+                                  final @Nullable String help,
+                                  final @Nullable Integer priority) {
     myMaxLength = Math.max(myMaxLength, lookupElementBuilder.getLookupString().length());
     myMap.put(lookupElementBuilder, Pair.create(help, priority));
     if (priority != null) {

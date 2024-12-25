@@ -243,13 +243,11 @@ public class DomUtil {
     return true;
   }
 
-  @Unmodifiable
-  public static <T> List<T> getDefinedChildrenOfType(final @NotNull DomElement parent, final Class<T> type, boolean tags, boolean attributes) {
+  public static @Unmodifiable <T> List<T> getDefinedChildrenOfType(final @NotNull DomElement parent, final Class<T> type, boolean tags, boolean attributes) {
     return ContainerUtil.findAll(getDefinedChildren(parent, tags, attributes), type);
   }
 
-  @Unmodifiable
-  public static <T> List<T> getDefinedChildrenOfType(final @NotNull DomElement parent, final Class<T> type) {
+  public static @Unmodifiable <T> List<T> getDefinedChildrenOfType(final @NotNull DomElement parent, final Class<T> type) {
     return getDefinedChildrenOfType(parent, type, true, true);
   }
 

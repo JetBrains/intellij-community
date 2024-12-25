@@ -14,10 +14,9 @@ import java.util.*;
 
 @Deprecated
 public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
-  @NotNull
-  private static JsonSchemaObjectImpl mergeObjectsInner(@NotNull JsonSchemaObjectImpl first,
-                                                        @NotNull JsonSchemaObjectImpl second,
-                                                        @NotNull JsonSchemaObjectImpl pointTo) {
+  private static @NotNull JsonSchemaObjectImpl mergeObjectsInner(@NotNull JsonSchemaObjectImpl first,
+                                                                 @NotNull JsonSchemaObjectImpl second,
+                                                                 @NotNull JsonSchemaObjectImpl pointTo) {
     final JsonSchemaObjectImpl object = new JsonSchemaObjectImpl(pointTo.getRawFile(), pointTo.getFileUrl(), pointTo.getPointer());
     mergeValues(object, second);
     mergeValues(object, first);
@@ -107,9 +106,8 @@ public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
     }
   }
 
-  @NotNull
   @Override
-  public JsonSchemaObject mergeObjects(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other, @NotNull JsonSchemaObject pointTo) {
+  public @NotNull JsonSchemaObject mergeObjects(@NotNull JsonSchemaObject base, @NotNull JsonSchemaObject other, @NotNull JsonSchemaObject pointTo) {
     JsonSchemaObjectImpl base1 = (JsonSchemaObjectImpl)base;
     JsonSchemaObjectImpl other1 = (JsonSchemaObjectImpl)other;
     JsonSchemaObjectImpl pointTo1 = (JsonSchemaObjectImpl)pointTo;

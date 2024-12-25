@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.xml;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -29,8 +29,7 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
   }
 
   @Override
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(final @NotNull PsiFile psiFile) {
     if (!(psiFile instanceof XmlFile)) {
       return null;
     }
@@ -48,8 +47,7 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
 
     return new TreeBasedStructureViewBuilder() {
       @Override
-      @NotNull
-      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+      public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
         return new XmlStructureViewTreeModel((XmlFile)psiFile, editor);
       }
     };
@@ -60,8 +58,7 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
       .getExtensionPoint(XmlStructureViewBuilderProvider.EP_NAME).getExtensions();
   }
 
-  @Nullable
-  private static StructureViewBuilder getStructureViewBuilderForExtensions(@NotNull PsiFile psiFile) {
+  private static @Nullable StructureViewBuilder getStructureViewBuilderForExtensions(@NotNull PsiFile psiFile) {
     for (Language language : XMLLanguage.INSTANCE.getLanguageExtensionsForFile(psiFile)) {
       PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(language);
       if (factory == null) continue;

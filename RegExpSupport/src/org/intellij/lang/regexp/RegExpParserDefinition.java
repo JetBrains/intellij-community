@@ -37,14 +37,12 @@ public class RegExpParserDefinition implements ParserDefinition {
 
   public static final IFileElementType REGEXP_FILE = new RegExpFileElementType();
 
-  @NotNull
-    public EnumSet<RegExpCapability> getDefaultCapabilities() {
+  public @NotNull EnumSet<RegExpCapability> getDefaultCapabilities() {
         return RegExpCapability.DEFAULT_CAPABILITIES;
     }
 
     @Override
-    @NotNull
-    public Lexer createLexer(Project project) {
+    public @NotNull Lexer createLexer(Project project) {
         return createLexer(project, getDefaultCapabilities());
     }
 
@@ -53,13 +51,11 @@ public class RegExpParserDefinition implements ParserDefinition {
       return createParser(project, getDefaultCapabilities());
     }
 
-    @NotNull
-    public RegExpParser createParser(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
+    public @NotNull RegExpParser createParser(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
         return new RegExpParser(capabilities);
     }
 
-    @NotNull
-    public RegExpLexer createLexer(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
+    public @NotNull RegExpLexer createLexer(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
         return new RegExpLexer(capabilities);
     }
 
@@ -69,26 +65,22 @@ public class RegExpParserDefinition implements ParserDefinition {
   }
 
     @Override
-    @NotNull
-    public TokenSet getWhitespaceTokens() {
+    public @NotNull TokenSet getWhitespaceTokens() {
         return TokenSet.create(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, TokenType.WHITE_SPACE);
     }
 
     @Override
-    @NotNull
-    public TokenSet getStringLiteralElements() {
+    public @NotNull TokenSet getStringLiteralElements() {
         return TokenSet.EMPTY;
     }
 
     @Override
-    @NotNull
-    public TokenSet getCommentTokens() {
+    public @NotNull TokenSet getCommentTokens() {
         return TokenSet.create(RegExpTT.COMMENT);
     }
 
     @Override
-    @NotNull
-    public PsiElement createElement(ASTNode node) {
+    public @NotNull PsiElement createElement(ASTNode node) {
         final IElementType type = node.getElementType();
         if (type == RegExpElementTypes.PATTERN) {
             return new RegExpPatternImpl(node);

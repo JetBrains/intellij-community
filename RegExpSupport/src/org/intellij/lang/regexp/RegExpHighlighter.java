@@ -146,8 +146,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return myParserDefinition.createLexer(myProject);
   }
 

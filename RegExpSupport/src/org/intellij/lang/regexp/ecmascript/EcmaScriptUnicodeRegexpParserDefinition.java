@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.ecmascript;
 
 import com.intellij.lang.PsiParser;
@@ -25,8 +25,7 @@ public class EcmaScriptUnicodeRegexpParserDefinition extends RegExpParserDefinit
                                                                     RegExpCapability.EXTENDED_UNICODE_CHARACTER);
 
   @Override
-  @NotNull
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new RegExpLexer(CAPABILITIES);
   }
 

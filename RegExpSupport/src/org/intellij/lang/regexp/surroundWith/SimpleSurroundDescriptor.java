@@ -93,8 +93,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
     return false;
   }
 
-  @Nullable
-  private static <T extends RegExpElement> T findElementAtStrict(PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
+  private static @Nullable <T extends RegExpElement> T findElementAtStrict(PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
     T element = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, clazz);
     if (element == null || element.getTextRange().getEndOffset() < endOffset) return null;
     return element;

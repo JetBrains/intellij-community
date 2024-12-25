@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -88,8 +88,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return createTemplateFormattingModelInternal(psiFile, settings, getPolicy(settings, psiFile), templateElements, indent);
   }
 
-  @NotNull
-  protected List<PsiElement> getTreeElementsInsideOuterFragment(
+  protected @NotNull List<PsiElement> getTreeElementsInsideOuterFragment(
     @NotNull TemplateLanguageFileViewProvider viewProvider,
     @NotNull OuterLanguageElement outerTemplateElement
   ) {
@@ -135,9 +134,8 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return new DocumentBasedFormattingModel(topBlock, file.getProject(), settings, file.getFileType(), file);
   }
 
-  @NotNull
-  protected Block createCompositeTemplateBlock(@NotNull List<Block> templateBlocks,
-                                                                XmlFormattingPolicy xmlFormattingPolicy) {
+  protected @NotNull Block createCompositeTemplateBlock(@NotNull List<Block> templateBlocks,
+                                                        XmlFormattingPolicy xmlFormattingPolicy) {
     return new CompositeTemplateBlock(templateBlocks);
   }
 
@@ -336,8 +334,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return templateBlocks;
   }
 
-  @NotNull
-  protected List<PsiElement> getTemplateElements(@NotNull TextRange range, @NotNull TemplateLanguageFileViewProvider viewProvider) {
+  protected @NotNull List<PsiElement> getTemplateElements(@NotNull TextRange range, @NotNull TemplateLanguageFileViewProvider viewProvider) {
     return TemplateFormatUtil.findAllElementsInside(range,
                                                     viewProvider,
                                                     true);

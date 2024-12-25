@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -28,27 +28,25 @@ import java.util.Objects;
 
 public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, IntentionAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlAnalysisBundle.message("xml.quickfix.remove.extra.closing.tag");
   }
 
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
     return psiElement instanceof XmlToken && 
            (psiElement.getParent() instanceof XmlTag || psiElement.getParent() instanceof PsiErrorElement);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     doFix(Objects.requireNonNull(file.findElementAt(editor.getCaretModel().getOffset())).getParent());
   }
 
@@ -88,7 +86,7 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof XmlToken)) return;
 

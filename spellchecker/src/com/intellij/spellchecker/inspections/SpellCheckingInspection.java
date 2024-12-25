@@ -125,8 +125,8 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
    * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
-  public static void tokenize(@NotNull final PsiElement element,
-                              @NotNull final Language language,
+  public static void tokenize(final @NotNull PsiElement element,
+                              final @NotNull Language language,
                               TokenConsumer consumer, Set<SpellCheckingScope> allowedScopes) {
     SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
     if (factoryByLanguage == null) {
