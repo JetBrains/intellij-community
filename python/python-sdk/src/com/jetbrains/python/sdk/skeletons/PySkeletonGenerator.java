@@ -83,14 +83,14 @@ public abstract class PySkeletonGenerator {
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final String GENERATOR3 = "generator3/__main__.py";
 
-  @NonNls public static final String STATE_MARKER_FILE = ".state.json";
-  @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
+  public static final @NonNls String STATE_MARKER_FILE = ".state.json";
+  public static final @NonNls String BLACKLIST_FILE_NAME = ".blacklist";
 
   private static final Gson ourGson = new GsonBuilder().create();
 
-  @NotNull protected final Sdk mySdk;
-  @Nullable protected final String myCurrentFolder;
-  @NotNull protected final String mySkeletonsPath;
+  protected final @NotNull Sdk mySdk;
+  protected final @Nullable String myCurrentFolder;
+  protected final @NotNull String mySkeletonsPath;
 
   /**
    * @param skeletonPath  path where skeletons should be generated
@@ -98,14 +98,13 @@ public abstract class PySkeletonGenerator {
    * @param currentFolder current folder (some flavors may search for binary files there) or null if unknown
    */
   // TODO get rid of skeletonPath and currentFolder parameters and configure generator explicitly with builder
-  public PySkeletonGenerator(@NotNull String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
+  public PySkeletonGenerator(@NotNull String skeletonPath, final @NotNull Sdk pySdk, final @Nullable String currentFolder) {
     mySkeletonsPath = StringUtil.trimTrailing(skeletonPath, '\\');
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
   }
 
-  @NotNull
-  public abstract Builder commandBuilder();
+  public abstract @NotNull Builder commandBuilder();
 
 
   /**
@@ -127,62 +126,52 @@ public abstract class PySkeletonGenerator {
     protected Builder() {
     }
 
-    @NotNull
-    public Builder extraSysPath(@NotNull List<String> roots) {
+    public @NotNull Builder extraSysPath(@NotNull List<String> roots) {
       myExtraSysPath.addAll(roots);
       return this;
     }
 
-    @NotNull
-    public Builder assemblyRefs(@NotNull List<String> assemblyRefs) {
+    public @NotNull Builder assemblyRefs(@NotNull List<String> assemblyRefs) {
       myAssemblyRefs.addAll(assemblyRefs);
       return this;
     }
 
-    @NotNull
-    public Builder extraArgs(@NotNull List<String> args) {
+    public @NotNull Builder extraArgs(@NotNull List<String> args) {
       myExtraArgs.addAll(args);
       return this;
     }
 
-    @NotNull
-    public Builder extraArgs(String @NotNull ... args) {
+    public @NotNull Builder extraArgs(String @NotNull ... args) {
       return extraArgs(Arrays.asList(args));
     }
 
-    @NotNull
-    public Builder workingDir(@NotNull String path) {
+    public @NotNull Builder workingDir(@NotNull String path) {
       myWorkingDir = path;
       return this;
     }
 
-    @NotNull
-    public Builder inPrebuildingMode() {
+    public @NotNull Builder inPrebuildingMode() {
       myPrebuilt = true;
       return this;
     }
 
-    @NotNull
-    public Builder targetModule(@NotNull String name, @Nullable String path) {
+    public @NotNull Builder targetModule(@NotNull String name, @Nullable String path) {
       myTargetModuleName = name;
       myTargetModulePath = path;
       return this;
     }
 
-    @NotNull
-    public Builder timeout(int timeout) {
+    public @NotNull Builder timeout(int timeout) {
       myTimeout = timeout;
       return this;
     }
 
-    @NotNull
-    public Builder stdin(@NotNull String content) {
+    public @NotNull Builder stdin(@NotNull String content) {
       myStdin = content;
       return this;
     }
 
-    @Nullable
-    public String getStdin() {
+    public @Nullable String getStdin() {
       return myStdin;
     }
 
@@ -190,11 +179,9 @@ public abstract class PySkeletonGenerator {
       return myTimeout > 0 ? myTimeout : defaultTimeout;
     }
 
-    @NotNull
-    public abstract ProcessOutput runProcess() throws InvalidSdkException;
+    public abstract @NotNull ProcessOutput runProcess() throws InvalidSdkException;
 
-    @NotNull
-    public List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws InvalidSdkException, ExecutionException {
+    public @NotNull List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator) throws InvalidSdkException, ExecutionException {
       return PySkeletonGenerator.this.runGeneration(this, indicator);
     }
 
@@ -202,8 +189,7 @@ public abstract class PySkeletonGenerator {
       throws InvalidSdkException, ExecutionException;
   }
 
-  @NotNull
-  protected List<GenerationResult> runGeneration(@NotNull Builder builder, @Nullable ProgressIndicator indicator)
+  protected @NotNull List<GenerationResult> runGeneration(@NotNull Builder builder, @Nullable ProgressIndicator indicator)
     throws InvalidSdkException, ExecutionException {
     final List<GenerationResult> results = new ArrayList<>();
     final LineWiseProcessOutputListener listener = new LineWiseProcessOutputListener() {
@@ -271,7 +257,7 @@ public abstract class PySkeletonGenerator {
   public void finishSkeletonsGeneration() {
   }
 
-  public boolean exists(@NotNull final String name) {
+  public boolean exists(final @NotNull String name) {
     return new File(name).exists();
   }
 
@@ -282,8 +268,7 @@ public abstract class PySkeletonGenerator {
   public void prepare() {
   }
 
-  @NotNull
-  protected final @NlsSafe String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
+  protected final @NotNull @NlsSafe String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
     final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(mySdk.getHomePath());
     if (process.isTimeout()) {
       sb.append(": timed out.");
@@ -328,18 +313,15 @@ public abstract class PySkeletonGenerator {
     @SerializedName("generation_status")
     private GenerationStatus myGenerationStatus;
 
-    @NotNull
-    public String getModuleName() {
+    public @NotNull String getModuleName() {
       return myModuleName;
     }
 
-    @NotNull
-    public String getModuleOrigin() {
+    public @NotNull String getModuleOrigin() {
       return myModuleOrigin;
     }
 
-    @NotNull
-    public GenerationStatus getGenerationStatus() {
+    public @NotNull GenerationStatus getGenerationStatus() {
       return myGenerationStatus;
     }
 

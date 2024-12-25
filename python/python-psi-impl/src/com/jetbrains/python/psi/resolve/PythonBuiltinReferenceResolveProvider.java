@@ -35,9 +35,8 @@ import java.util.Optional;
  */
 public final class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
 
-  @NotNull
   @Override
-  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
+  public @NotNull List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
     final String referencedName = element.getReferencedName();
     if (referencedName == null) {
       return Collections.emptyList();

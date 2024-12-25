@@ -27,12 +27,11 @@ final class PyProjectStructureDetector extends ProjectStructureDetector {
   public static final @NlsSafe String PYTHON = "Python";
 
 
-  @NotNull
   @Override
-  public DirectoryProcessingResult detectRoots(@NotNull File dir,
-                                               File @NotNull [] children,
-                                               @NotNull File base,
-                                               @NotNull List<DetectedProjectRoot> result) {
+  public @NotNull DirectoryProcessingResult detectRoots(@NotNull File dir,
+                                                        File @NotNull [] children,
+                                                        @NotNull File base,
+                                                        @NotNull List<DetectedProjectRoot> result) {
     LOG.info("Detecting roots under " + dir);
     for (File child : children) {
       final String name = child.getName();

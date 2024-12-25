@@ -32,14 +32,12 @@ import java.util.List;
 public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.lambda.to.function");
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.convert.lambda.to.function");
   }
 

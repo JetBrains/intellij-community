@@ -34,8 +34,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final Project myProject;
   private final PyPluginCommonOptionsPanel content;
   private JComponent labelAnchor;
-  @NotNull
-  private List<String> myEnvPaths = Collections.emptyList();
+  private @NotNull List<String> myEnvPaths = Collections.emptyList();
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
 
@@ -124,8 +123,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  @Nullable
-  public String getSdkHome() {
+  public @Nullable String getSdkHome() {
     Sdk selectedSdk = (Sdk)content.interpreterComboBox.getSelectedItem();
     return selectedSdk == null ? null : selectedSdk.getHomePath();
   }
@@ -271,9 +269,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content.addSourceRootsCheckbox.setSelected(flag);
   }
 
-  @NotNull
   @Override
-  public List<String> getEnvFilePaths() {
+  public @NotNull List<String> getEnvFilePaths() {
     return myEnvPaths;
   }
 

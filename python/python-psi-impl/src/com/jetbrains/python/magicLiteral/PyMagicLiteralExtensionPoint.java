@@ -45,5 +45,5 @@ public interface PyMagicLiteralExtensionPoint {
   @NotNull
   String getLiteralType();
 
-  boolean isEnabled(@NotNull final PsiElement anchor);
+  boolean isEnabled(final @NotNull PsiElement anchor);
 }

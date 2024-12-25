@@ -54,8 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
@@ -78,8 +78,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myTestsPanel;
   private TextFieldWithBrowseButton myPipEnvPathField;
   private JPanel myPipEnvPanel;
-  @NotNull
-  private final Collection<@NotNull DialogPanel> myCustomizePanels = PyIntegratedToolsTestPanelCustomizer.Companion.createPanels();
+  private final @NotNull Collection<@NotNull DialogPanel> myCustomizePanels = PyIntegratedToolsTestPanelCustomizer.Companion.createPanels();
 
 
   public PyIntegratedToolsConfigurable() {

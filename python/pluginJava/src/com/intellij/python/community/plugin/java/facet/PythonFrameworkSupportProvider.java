@@ -23,9 +23,8 @@ final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
     return  PythonPsiApiIcons.Python;
   }
 
-  @NotNull
   @Override
-  public FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+  public @NotNull FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
     return new PythonFrameworkSupportConfigurable(model);
   }
 

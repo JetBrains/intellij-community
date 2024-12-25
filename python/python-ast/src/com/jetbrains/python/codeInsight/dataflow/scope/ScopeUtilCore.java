@@ -25,8 +25,7 @@ public final class ScopeUtilCore {
    *
    * This method does not access AST if underlying PSI is stub based.
    */
-  @Nullable
-  public static AstScopeOwner getScopeOwner(@Nullable final PsiElement element) {
+  public static @Nullable AstScopeOwner getScopeOwner(final @Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
@@ -57,8 +56,7 @@ public final class ScopeUtilCore {
       .create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @Nullable
-  private static AstScopeOwner calculateScopeOwnerByAST(@Nullable PsiElement element) {
+  private static @Nullable AstScopeOwner calculateScopeOwnerByAST(@Nullable PsiElement element) {
     final AstScopeOwner firstOwner = getParentOfType(element, AstScopeOwner.class);
     if (firstOwner == null) {
       return null;

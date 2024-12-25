@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Collections2;
@@ -31,7 +31,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(ClientModeMultiProcessDebugger.class);
 
   private final IPyDebugProcess myDebugProcess;
-  @NotNull private final String myHost;
+  private final @NotNull String myHost;
   private final int myPort;
 
   private final Object myDebuggersObject = new Object();
@@ -60,7 +60,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     }
   }
 
-  public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
+  public ClientModeMultiProcessDebugger(final @NotNull IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
     myDebugProcess = debugProcess;
     myHost = host;
@@ -229,8 +229,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  @NotNull
-  public DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+  public @NotNull DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
     assert builder.getThreadId() != null;
     return debugger(builder.getThreadId()).executeDataViewerCommand(builder);
   }
@@ -240,8 +239,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     debugger(threadId).loadReferrers(threadId, frameId, var, callback);
   }
 
-  @NotNull
-  private ProcessDebugger debugger(@NotNull String threadId) {
+  private @NotNull ProcessDebugger debugger(@NotNull String threadId) {
     ProcessDebugger debugger = myThreadRegistry.getDebugger(threadId);
     if (debugger != null) {
       return debugger;

@@ -26,9 +26,8 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class PyConvertToNewStyleQuickFix extends PsiUpdateModCommandQuickFix {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.convert.to.new.style");
   }
 

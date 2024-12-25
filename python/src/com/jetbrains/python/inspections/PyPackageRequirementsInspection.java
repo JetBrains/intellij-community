@@ -253,8 +253,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     return result;
   }
 
-  @Unmodifiable
-  private static @Nullable List<PyRequirement> getListedRequirements(@NotNull PyPackageManager packageManager, @NotNull Module module) {
+  private static @Unmodifiable @Nullable List<PyRequirement> getListedRequirements(@NotNull PyPackageManager packageManager, @NotNull Module module) {
     final List<PyRequirement> requirements = packageManager.getRequirements(module);
     final List<PyRequirement> extrasRequirements = getExtrasRequirements(module);
     if (requirements == null) return extrasRequirements;

@@ -27,8 +27,7 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
   }
 
   @Override
-  @NotNull
-  public PyTypeParameterStub createStub(@NotNull PyTypeParameter psi, StubElement<? extends PsiElement> parentStub) {
+  public @NotNull PyTypeParameterStub createStub(@NotNull PyTypeParameter psi, StubElement<? extends PsiElement> parentStub) {
     return new PyTypeParameterStubImpl(psi.getName(), psi.getKind(),
                                        psi.getBoundExpression() != null ? psi.getBoundExpression().getText() : null,
                                        psi.getDefaultExpression() != null ? psi.getDefaultExpression().getText() : null,
@@ -44,8 +43,7 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
   }
 
   @Override
-  @NotNull
-  public PyTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     PyTypeParameter.Kind kind = PyTypeParameter.Kind.fromIndex(dataStream.readVarInt());
     String boundExpressionText = dataStream.readNameString();
@@ -58,13 +56,11 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PyTypeParameterImpl(node);
   }
 
-  @NotNull
-  protected IStubElementType getStubElementType() {
+  protected @NotNull IStubElementType getStubElementType() {
     return PyStubElementTypes.TYPE_PARAMETER;
   }
 }

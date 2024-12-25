@@ -75,17 +75,15 @@ public final class ParamHelper {
     }
   }
 
-  @NotNull
-  public static String getPresentableText(PyParameter @NotNull [] parameters,
-                                          boolean includeDefaultValue,
-                                          @Nullable TypeEvalContext context) {
+  public static @NotNull String getPresentableText(PyParameter @NotNull [] parameters,
+                                                   boolean includeDefaultValue,
+                                                   @Nullable TypeEvalContext context) {
     return getPresentableText(ContainerUtil.map(parameters, PyCallableParameterImpl::psi), includeDefaultValue, context);
   }
 
-  @NotNull
-  public static String getPresentableText(@NotNull List<? extends PyCallableParameter> parameters,
-                                          boolean includeDefaultValue,
-                                          @Nullable TypeEvalContext context) {
+  public static @NotNull String getPresentableText(@NotNull List<? extends PyCallableParameter> parameters,
+                                                   boolean includeDefaultValue,
+                                                   @Nullable TypeEvalContext context) {
     final StringBuilder result = new StringBuilder();
     result.append("(");
 
@@ -132,8 +130,7 @@ public final class ParamHelper {
     return result.toString();
   }
 
-  @NotNull
-  public static String getNameInSignature(@NotNull PyCallableParameter parameter) {
+  public static @NotNull String getNameInSignature(@NotNull PyCallableParameter parameter) {
     final StringBuilder sb = new StringBuilder();
 
     if (parameter.isPositionalContainer()) sb.append("*");
@@ -145,8 +142,7 @@ public final class ParamHelper {
     return sb.toString();
   }
 
-  @NotNull
-  public static String getNameInSignature(@NotNull PyNamedParameter parameter) {
+  public static @NotNull String getNameInSignature(@NotNull PyNamedParameter parameter) {
     return ParamHelperCore.getNameInSignature(parameter);
   }
 
@@ -156,9 +152,8 @@ public final class ParamHelper {
    * @return equal sign (surrounded with spaces if {@code parameterRenderedAsTyped}) +
    * {@code defaultValue} (with body escaped if it is a string literal)
    */
-  @Nullable
   @Contract("null, _->null")
-  public static String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
+  public static @Nullable String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
     return ParamHelperCore.getDefaultValuePartInSignature(defaultValue, parameterRenderedAsTyped);
   }
 
@@ -210,7 +205,7 @@ public final class ParamHelper {
     void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last);
   }
 
-  public static abstract class ParamVisitor implements ParamWalker {
+  public abstract static class ParamVisitor implements ParamWalker {
 
     @Override
     public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) { }

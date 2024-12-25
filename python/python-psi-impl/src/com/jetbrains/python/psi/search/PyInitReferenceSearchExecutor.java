@@ -50,8 +50,7 @@ public final class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiRe
 
   private static class ClassInitializationProcessor extends RequestResultProcessor {
 
-    @NotNull
-    private final SingleTargetRequestResultProcessor myProcessor;
+    private final @NotNull SingleTargetRequestResultProcessor myProcessor;
 
     private ClassInitializationProcessor(@NotNull PyClass cls) {
       super(cls);

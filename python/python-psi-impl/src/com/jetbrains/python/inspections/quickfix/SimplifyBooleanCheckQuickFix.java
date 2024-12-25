@@ -39,14 +39,12 @@ public class SimplifyBooleanCheckQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.simplify.boolean.expression", myReplacementText);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.simplify.boolean.expression");
   }
 

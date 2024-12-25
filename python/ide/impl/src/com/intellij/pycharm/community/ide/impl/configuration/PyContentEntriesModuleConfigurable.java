@@ -123,8 +123,7 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "python.project.structure";
   }
 

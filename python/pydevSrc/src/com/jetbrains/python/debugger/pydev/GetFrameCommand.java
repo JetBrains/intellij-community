@@ -1,3 +1,5 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -39,7 +41,7 @@ public class GetFrameCommand extends AbstractFrameCommand {
   }
 
   @Override
-  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(final @NotNull ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     final List<PyDebugValue> values = ProtocolParser.parseValues(response.getPayload(), myDebugProcess);
     myFrameVariables = new XValueChildrenList(values.size());

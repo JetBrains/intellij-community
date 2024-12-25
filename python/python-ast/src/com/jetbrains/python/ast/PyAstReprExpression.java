@@ -8,8 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PyAstReprExpression extends PyAstExpression {
-  @Nullable
-  default PyAstExpression getExpression() {
+  default @Nullable PyAstExpression getExpression() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
 

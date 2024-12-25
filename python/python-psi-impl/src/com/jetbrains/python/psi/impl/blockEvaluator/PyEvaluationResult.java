@@ -28,13 +28,11 @@ import java.util.Map;
  */
 @SuppressWarnings("PackageVisibleField") // Package-only class
 class PyEvaluationResult {
-  @NotNull
-  final Map<String, Object> myNamespace = new HashMap<>();
-  @NotNull
-  final Map<String, List<PyExpression>> myDeclarations = new HashMap<>();
+  final @NotNull Map<String, Object> myNamespace = new HashMap<>();
+  final @NotNull Map<String, List<PyExpression>> myDeclarations = new HashMap<>();
 
   @NotNull
-  List<PyExpression> getDeclarations(@NotNull final String name) {
+  List<PyExpression> getDeclarations(final @NotNull String name) {
     final List<PyExpression> expressions = myDeclarations.get(name);
     return (expressions != null) ? expressions : Collections.emptyList();
   }

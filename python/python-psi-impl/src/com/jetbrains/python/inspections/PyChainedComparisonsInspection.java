@@ -54,11 +54,10 @@ public final class PyChainedComparisonsInspection extends PyInspection {
     );
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, ignoreConstantInTheMiddle, PyInspectionVisitor.getContext(session));
   }
 
@@ -126,8 +125,8 @@ public final class PyChainedComparisonsInspection extends PyInspection {
       }
     }
 
-    private boolean isRightSimplified(@NotNull final PyBinaryExpression leftExpression,
-                                      @NotNull final PyBinaryExpression rightExpression) {
+    private boolean isRightSimplified(final @NotNull PyBinaryExpression leftExpression,
+                                      final @NotNull PyBinaryExpression rightExpression) {
       final PyExpression leftRight = leftExpression.getRightExpression();
       if (leftRight instanceof PyBinaryExpression &&
           PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftRight).getOperator())) {
@@ -214,8 +213,7 @@ public final class PyChainedComparisonsInspection extends PyInspection {
       return result;
     }
 
-    @Nullable
-    private PyExpression getSmallestRight(PyBinaryExpression expression, boolean isRight) {
+    private @Nullable PyExpression getSmallestRight(PyBinaryExpression expression, boolean isRight) {
       PyExpression result = expression;
       while (result instanceof PyBinaryExpression &&
              (PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()) ||

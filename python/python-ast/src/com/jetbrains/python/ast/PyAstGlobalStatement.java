@@ -14,8 +14,7 @@ public interface PyAstGlobalStatement extends PyAstStatement, PyAstNamedElementC
   PyAstTargetExpression @NotNull [] getGlobals();
 
   @Override
-  @NotNull
-  default List<PsiNamedElement> getNamedElements() {
+  default @NotNull List<PsiNamedElement> getNamedElements() {
     return Arrays.asList(getGlobals());
   }
 

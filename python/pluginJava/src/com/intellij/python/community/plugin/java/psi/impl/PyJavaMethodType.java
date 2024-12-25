@@ -28,24 +28,21 @@ public class PyJavaMethodType implements PyCallableType {
     myMethod = method;
   }
 
-  @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context) {
+  public @Nullable PyType getReturnType(@NotNull TypeEvalContext context) {
     return PyJavaTypeProvider.asPyType(myMethod.getReturnType());
   }
 
-  @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     return getReturnType(context);
   }
 
-  @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
     return Collections.emptyList();
   }
 
@@ -54,9 +51,8 @@ public class PyJavaMethodType implements PyCallableType {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     final PsiClass cls = myMethod.getContainingClass();
     return "Java method(" + (cls != null ? cls.getQualifiedName() : null) + "." + myMethod.getName() + ")";
   }

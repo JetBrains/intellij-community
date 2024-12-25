@@ -18,9 +18,8 @@ import java.util.Collections;
 import java.util.List;
 
 public final class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvider {
-  @Nullable
   @Override
-  public PsiElement resolveMember(@NotNull PyFile module, @NotNull String name, @NotNull PyResolveContext resolveContext) {
+  public @Nullable PsiElement resolveMember(@NotNull PyFile module, @NotNull String name, @NotNull PyResolveContext resolveContext) {
     final PyFile moduleSkeleton = PyUserSkeletonsUtil.getUserSkeleton(module);
     if (moduleSkeleton != null) {
       return moduleSkeleton.getElementNamed(name);
@@ -29,8 +28,7 @@ public final class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersP
   }
 
   @Override
-  @NotNull
-  protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
+  protected @NotNull Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
    final PyFile moduleSkeleton = PyUserSkeletonsUtil.getUserSkeletonForModuleQName(qName, module);
     if (moduleSkeleton != null) {
       final List<PyCustomMember> results = new ArrayList<>();

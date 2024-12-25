@@ -85,7 +85,7 @@ public final class ReadWriteInstruction extends InstructionImpl {
                                final PsiElement element,
                                final String name,
                                final ACCESS access,
-                               @Nullable final InstructionTypeCallback getType) {
+                               final @Nullable InstructionTypeCallback getType) {
     super(builder, element);
     myName = name;
     myAccess = access;
@@ -126,15 +126,12 @@ public final class ReadWriteInstruction extends InstructionImpl {
     return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
   }
 
-  @Nullable
-  public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+  public @Nullable Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
     return myGetType.getType(context, anchor);
   }
 
-  @NotNull
-  @NonNls
   @Override
-  public String getElementPresentation() {
+  public @NotNull @NonNls String getElementPresentation() {
     return myAccess + " ACCESS: " + myName;
   }
 }

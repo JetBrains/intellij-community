@@ -39,8 +39,7 @@ public final class PyPsiUtilsCore {
    * Finds first sibling that is neither comment, nor whitespace after given element.
    * @param strict prohibit returning element itself
    */
-  @Nullable
-  public static PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
+  public static @Nullable PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
     if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
       return start;
     }
@@ -55,8 +54,7 @@ public final class PyPsiUtilsCore {
    * @param type    element type expected
    * @return child element described
    */
-  @Nullable
-  public static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
+  public static @Nullable PsiElement getFirstChildOfType(final @NotNull PsiElement element, @NotNull PyElementType type) {
     final ASTNode child = element.getNode().findChildByType(type);
     return child != null ? child.getPsi() : null;
   }
@@ -69,8 +67,7 @@ public final class PyPsiUtilsCore {
    * @param element tree parent node
    * @return PsiElement - child psiElement
    */
-  @Nullable
-  public static PsiElement getChildByFilter(@NotNull PsiElement element, @NotNull TokenSet filter, int number) {
+  public static @Nullable PsiElement getChildByFilter(@NotNull PsiElement element, @NotNull TokenSet filter, int number) {
     final ASTNode node = element.getNode();
     if (node != null) {
       final ASTNode[] children = node.getChildren(filter);
@@ -82,8 +79,7 @@ public final class PyPsiUtilsCore {
   /**
    * Returns the first non-whitespace sibling following the given element but within its line boundaries.
    */
-  @Nullable
-  public static PsiElement getNextNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
+  public static @Nullable PsiElement getNextNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
     PsiElement cur = element.getNextSibling();
     while (cur != null) {
       if (!(cur instanceof PsiWhiteSpace)) {
@@ -97,18 +93,15 @@ public final class PyPsiUtilsCore {
     return null;
   }
 
-  @Nullable
-  public static String strValue(@Nullable PyAstExpression expression) {
+  public static @Nullable String strValue(@Nullable PyAstExpression expression) {
     return expression instanceof PyAstStringLiteralExpression ? ((PyAstStringLiteralExpression)expression).getStringValue() : null;
   }
 
-  @Nullable
-  public static QualifiedName asQualifiedName(@Nullable PyAstExpression expr) {
+  public static @Nullable QualifiedName asQualifiedName(@Nullable PyAstExpression expr) {
     return expr instanceof PyAstQualifiedExpression ? ((PyAstQualifiedExpression)expr).asQualifiedName() : null;
   }
 
-  @Nullable
-  public static QualifiedName asQualifiedName(@NotNull PyAstQualifiedExpression expr) {
+  public static @Nullable QualifiedName asQualifiedName(@NotNull PyAstQualifiedExpression expr) {
     final List<String> path = new LinkedList<>();
     final String firstName = expr.getReferencedName();
     if (firstName == null) {
@@ -134,15 +127,14 @@ public final class PyPsiUtilsCore {
   /**
    * Wrapper for {@link PsiUtilCore#ensureValid(PsiElement)} that skips nulls
    */
-  public static void assertValid(@Nullable final PsiElement element) {
+  public static void assertValid(final @Nullable PsiElement element) {
     if (element == null) {
       return;
     }
     PsiUtilCore.ensureValid(element);
   }
 
-  @Nullable
-  public static PyAstExpression flattenParens(@Nullable PyAstExpression expr) {
+  public static @Nullable PyAstExpression flattenParens(@Nullable PyAstExpression expr) {
     while (expr instanceof PyAstParenthesizedExpression) {
       expr = ((PyAstParenthesizedExpression)expr).getContainedExpression();
     }

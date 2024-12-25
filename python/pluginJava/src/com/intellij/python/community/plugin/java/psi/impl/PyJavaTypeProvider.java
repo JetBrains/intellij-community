@@ -23,8 +23,7 @@ import java.util.List;
 
 public final class PyJavaTypeProvider extends PyTypeProviderBase {
   @Override
-  @Nullable
-  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
+  public @Nullable Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PsiClass) {
       return Ref.create(new PyJavaClassType((PsiClass)referenceTarget, true));
     }
@@ -41,8 +40,7 @@ public final class PyJavaTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
-  public static PyType asPyType(@Nullable PsiType type) {
+  public static @Nullable PyType asPyType(@Nullable PsiType type) {
     if (type instanceof PsiClassType classType) {
       final PsiClass psiClass = classType.resolve();
       if (psiClass != null) {
@@ -53,8 +51,8 @@ public final class PyJavaTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public Ref<PyType> getParameterType(@NotNull final PyNamedParameter param,
-                                      @NotNull final PyFunction func,
+  public Ref<PyType> getParameterType(final @NotNull PyNamedParameter param,
+                                      final @NotNull PyFunction func,
                                       @NotNull TypeEvalContext context) {
     if (!(param.getParent() instanceof PyParameterList)) return null;
     List<PyNamedParameter> params = ParamHelper.collectNamedParameters((PyParameterList) param.getParent());

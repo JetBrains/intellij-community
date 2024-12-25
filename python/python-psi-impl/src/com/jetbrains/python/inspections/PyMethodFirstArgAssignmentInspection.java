@@ -21,11 +21,10 @@ import java.util.List;
  */
 public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -44,8 +43,7 @@ public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private static String extractFirstParamName(PyElement node) {
+    private static @Nullable String extractFirstParamName(PyElement node) {
       // are we a method?
       List<? extends PsiElement> place = PyUtil.searchForWrappingMethod(node, true);
       if (place == null || place.size() < 2) return null;

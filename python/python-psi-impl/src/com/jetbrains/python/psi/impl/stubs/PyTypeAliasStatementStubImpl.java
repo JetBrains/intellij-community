@@ -25,14 +25,12 @@ public class PyTypeAliasStatementStubImpl extends PyVersionSpecificStubBase<PyTy
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
   @Override
-  @Nullable
-  public String getTypeExpressionText() {
+  public @Nullable String getTypeExpressionText() {
     return myTypeExpressionText;
   }
 

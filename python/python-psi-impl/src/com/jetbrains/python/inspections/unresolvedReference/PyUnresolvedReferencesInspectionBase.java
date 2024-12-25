@@ -19,11 +19,10 @@ public abstract class PyUnresolvedReferencesInspectionBase extends PyInspection 
     return "PyUnresolvedReferences";
   }
 
-  @NotNull
   @Override
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                              final boolean isOnTheFly,
-                                              @NotNull final LocalInspectionToolSession session) {
+  public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                       final boolean isOnTheFly,
+                                                       final @NotNull LocalInspectionToolSession session) {
     final PyUnresolvedReferencesVisitor visitor = createVisitor(holder, session);
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final PyUnresolvedReferencesVisitor existingVisitor = session.getUserData(KEY);

@@ -30,7 +30,7 @@ import java.util.List;
 public class PyManagePackagesDialog extends DialogWrapper {
   private final JPanel myMainPanel;
 
-  public PyManagePackagesDialog(@NotNull final Project project, @NotNull Sdk sdk) {
+  public PyManagePackagesDialog(final @NotNull Project project, @NotNull Sdk sdk) {
     super(project, true);
     setTitle(PyBundle.message("manage.python.packages"));
 

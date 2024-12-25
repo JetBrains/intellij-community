@@ -17,7 +17,10 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.controlflow.*;
+import com.intellij.codeInsight.controlflow.ControlFlow;
+import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
+import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.controlflow.TransparentInstruction;
 import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.TransparentInstructionImpl;
 import com.intellij.openapi.util.Pair;
@@ -33,12 +36,14 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
-  @NotNull
-  private static final Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
+  private static final @NotNull Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
 
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
@@ -46,12 +51,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   private record TrueFalseNodes(@NotNull Instruction trueNode, @NotNull Instruction falseNode) {}
 
-  public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
+  public ControlFlow buildControlFlow(final @NotNull ScopeOwner owner) {
     return myBuilder.build(this, owner);
   }
 
-  @NotNull
-  protected ControlFlowBuilder getBuilder() {
+  protected @NotNull ControlFlowBuilder getBuilder() {
     return this.myBuilder;
   }
 

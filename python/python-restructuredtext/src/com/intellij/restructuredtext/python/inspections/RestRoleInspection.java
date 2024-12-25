@@ -16,14 +16,17 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.restructuredtext.*;
+import com.intellij.restructuredtext.RestBundle;
+import com.intellij.restructuredtext.RestFile;
+import com.intellij.restructuredtext.RestTokenTypes;
+import com.intellij.restructuredtext.RestUtil;
 import com.intellij.restructuredtext.inspections.RestInspection;
 import com.intellij.restructuredtext.inspections.RestInspectionVisitor;
+import com.intellij.restructuredtext.psi.RestDirectiveBlock;
+import com.intellij.restructuredtext.psi.RestRole;
 import com.intellij.restructuredtext.python.PythonRestBundle;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
-import com.intellij.restructuredtext.psi.RestDirectiveBlock;
-import com.intellij.restructuredtext.psi.RestRole;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -40,9 +43,8 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public final class RestRoleInspection extends RestInspection {
   public JDOMExternalizableStringList ignoredRoles = new JDOMExternalizableStringList();
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder, ignoredRoles);
   }
 

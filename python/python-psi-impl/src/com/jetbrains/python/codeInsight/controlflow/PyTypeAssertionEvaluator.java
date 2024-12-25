@@ -166,9 +166,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
            PyTypeChecker.match(expected, actual, context);
   }
 
-  @Nullable
-  private static PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
-                                                   @Nullable PyExpression typeElement) {
+  private static @Nullable PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
+                                                             @Nullable PyExpression typeElement) {
     /*
      * We need to distinguish:
      *   if isinstance(x, (int, str)):

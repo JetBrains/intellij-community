@@ -20,72 +20,54 @@ import java.util.regex.Pattern;
  */
 public final class PyPackageVersionNormalizer {
 
-  @NotNull
-  private static final String EPOCH_GROUP = "epoch";
+  private static final @NotNull String EPOCH_GROUP = "epoch";
 
-  @NotNull
-  private static final String RELEASE_GROUP = "release";
+  private static final @NotNull String RELEASE_GROUP = "release";
 
-  @NotNull
-  private static final String PRE_RELEASE_TYPE_GROUP = "pretype";
+  private static final @NotNull String PRE_RELEASE_TYPE_GROUP = "pretype";
 
-  @NotNull
-  private static final String PRE_RELEASE_NUMBER_GROUP = "prenumber";
+  private static final @NotNull String PRE_RELEASE_NUMBER_GROUP = "prenumber";
 
-  @NotNull
-  private static final String POST_RELEASE_TYPE_GROUP = "posttype";
+  private static final @NotNull String POST_RELEASE_TYPE_GROUP = "posttype";
 
-  @NotNull
-  private static final String POST_RELEASE_NUMBER_GROUP = "postnumber";
+  private static final @NotNull String POST_RELEASE_NUMBER_GROUP = "postnumber";
 
-  @NotNull
-  private static final String IMPLICIT_POST_RELEASE_NUMBER_GROUP = "implicitpostnumber";
+  private static final @NotNull String IMPLICIT_POST_RELEASE_NUMBER_GROUP = "implicitpostnumber";
 
-  @NotNull
-  private static final String DEV_RELEASE_TYPE_GROUP = "devtype";
+  private static final @NotNull String DEV_RELEASE_TYPE_GROUP = "devtype";
 
-  @NotNull
-  private static final String DEV_RELEASE_NUMBER_GROUP = "devnumber";
+  private static final @NotNull String DEV_RELEASE_NUMBER_GROUP = "devnumber";
 
-  @NotNull
-  private static final String LOCAL_VERSION_GROUP = "local";
+  private static final @NotNull String LOCAL_VERSION_GROUP = "local";
 
-  @NotNull
-  private static final String SEP_REGEXP = "([\\.\\-_])?";
+  private static final @NotNull String SEP_REGEXP = "([\\.\\-_])?";
 
-  @NotNull
-  private static final String EPOCH_REGEXP = "(?<" + EPOCH_GROUP + ">\\d+!)?";
+  private static final @NotNull String EPOCH_REGEXP = "(?<" + EPOCH_GROUP + ">\\d+!)?";
 
-  @NotNull
-  private static final String RELEASE_REGEXP = "(?<" + RELEASE_GROUP + ">(\\d+(\\.\\d+)*)|(\\d+\\.(\\d+\\.)*\\*))";
+  private static final @NotNull String RELEASE_REGEXP = "(?<" + RELEASE_GROUP + ">(\\d+(\\.\\d+)*)|(\\d+\\.(\\d+\\.)*\\*))";
 
-  @NotNull
-  private static final String PRE_RELEASE_REGEXP =
+  private static final @NotNull String PRE_RELEASE_REGEXP =
     "(" +
     SEP_REGEXP +
     "(?<" + PRE_RELEASE_TYPE_GROUP + ">a|alpha|b|beta|rc|c|pre|preview)" +
     "(" + SEP_REGEXP + "(?<" + PRE_RELEASE_NUMBER_GROUP + ">\\d+))?" +
     ")?";
 
-  @NotNull
-  private static final String POST_RELEASE_REGEXP =
+  private static final @NotNull String POST_RELEASE_REGEXP =
     "(" +
     "(" + SEP_REGEXP + "(?<" + POST_RELEASE_TYPE_GROUP + ">post|rev|r)(" + SEP_REGEXP + "(?<" + POST_RELEASE_NUMBER_GROUP + ">\\d+))?)" +
     "|" +
     "(-(?<" + IMPLICIT_POST_RELEASE_NUMBER_GROUP + ">\\d+))" +
     ")?";
 
-  @NotNull
-  private static final String DEV_RELEASE_REGEXP =
+  private static final @NotNull String DEV_RELEASE_REGEXP =
     "(" +
     SEP_REGEXP + "(?<" + DEV_RELEASE_TYPE_GROUP + ">dev)(?<" + DEV_RELEASE_NUMBER_GROUP + ">\\d+)?" +
     ")?";
 
-  @NotNull
-  private static final String LOCAL_VERSION_REGEXP = "(?<" + LOCAL_VERSION_GROUP + ">\\+[a-z0-9]([a-z0-9\\._-]*[a-z0-9])?)?";
+  private static final @NotNull String LOCAL_VERSION_REGEXP = "(?<" + LOCAL_VERSION_GROUP + ">\\+[a-z0-9]([a-z0-9\\._-]*[a-z0-9])?)?";
 
-  @NotNull
-  private static final Pattern VERSION = Pattern.compile(
+  private static final @NotNull Pattern VERSION = Pattern.compile(
     "^" +
     "v?" +
     EPOCH_REGEXP +
@@ -97,8 +79,7 @@ public final class PyPackageVersionNormalizer {
     "$",
     Pattern.CASE_INSENSITIVE);
 
-  @Nullable
-  public static PyPackageVersion normalize(@NotNull String version) {
+  public static @Nullable PyPackageVersion normalize(@NotNull String version) {
     final Matcher matcher = VERSION.matcher(version);
     if (matcher.matches()) {
       return new PyPackageVersion(
@@ -114,8 +95,7 @@ public final class PyPackageVersionNormalizer {
     return null;
   }
 
-  @Nullable
-  private static String normalizeEpoch(@NotNull Matcher matcher) {
+  private static @Nullable String normalizeEpoch(@NotNull Matcher matcher) {
     final String epoch = matcher.group(EPOCH_GROUP);
     if (epoch != null) {
       return normalizeNumber(epoch.substring(0, epoch.length() - 1));
@@ -124,16 +104,14 @@ public final class PyPackageVersionNormalizer {
     return null;
   }
 
-  @NotNull
-  private static String normalizeRelease(@NotNull Matcher matcher) {
+  private static @NotNull String normalizeRelease(@NotNull Matcher matcher) {
     return StreamEx
       .of(StringUtil.tokenize(matcher.group(RELEASE_GROUP), ".").iterator())
       .map(releasePart -> releasePart.equals("*") ? "*" : normalizeNumber(releasePart))
       .joining(".");
   }
 
-  @Nullable
-  private static String normalizePre(@NotNull Matcher matcher) {
+  private static @Nullable String normalizePre(@NotNull Matcher matcher) {
     final String preReleaseType = matcher.group(PRE_RELEASE_TYPE_GROUP);
     if (preReleaseType != null) {
       final String preReleaseNumber = matcher.group(PRE_RELEASE_NUMBER_GROUP);
@@ -145,8 +123,7 @@ public final class PyPackageVersionNormalizer {
     return null;
   }
 
-  @Nullable
-  private static String normalizePost(@NotNull Matcher matcher) {
+  private static @Nullable String normalizePost(@NotNull Matcher matcher) {
     final String postReleaseType = matcher.group(POST_RELEASE_TYPE_GROUP);
     if (postReleaseType != null) {
       final String postReleaseNumber = matcher.group(POST_RELEASE_NUMBER_GROUP);
@@ -163,8 +140,7 @@ public final class PyPackageVersionNormalizer {
     return null;
   }
 
-  @Nullable
-  private static String normalizeDev(@NotNull Matcher matcher) {
+  private static @Nullable String normalizeDev(@NotNull Matcher matcher) {
     if (matcher.group(DEV_RELEASE_TYPE_GROUP) != null) {
       final String devReleaseNumber = matcher.group(DEV_RELEASE_NUMBER_GROUP);
       final String normalizedDevReleaseNumber = devReleaseNumber == null ? "0" : normalizeNumber(devReleaseNumber);
@@ -175,8 +151,7 @@ public final class PyPackageVersionNormalizer {
     return null;
   }
 
-  @Nullable
-  private static String normalizeLocal(@NotNull Matcher matcher) {
+  private static @Nullable String normalizeLocal(@NotNull Matcher matcher) {
     final String localVersion = matcher.group(LOCAL_VERSION_GROUP);
     if (localVersion != null) {
       return localVersion.substring(1).replaceAll("[-_]", ".");
@@ -185,13 +160,11 @@ public final class PyPackageVersionNormalizer {
     return null;
   }
 
-  @NotNull
-  private static String normalizeNumber(@NotNull String number) {
+  private static @NotNull String normalizeNumber(@NotNull String number) {
     return new BigInteger(number).toString();
   }
 
-  @NotNull
-  private static String normalizePreReleaseType(@NotNull String preReleaseType) {
+  private static @NotNull String normalizePreReleaseType(@NotNull String preReleaseType) {
     if (preReleaseType.equalsIgnoreCase("a") || preReleaseType.equalsIgnoreCase("alpha")) {
       return "a";
     }

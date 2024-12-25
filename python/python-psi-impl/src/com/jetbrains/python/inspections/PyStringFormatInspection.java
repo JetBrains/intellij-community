@@ -34,11 +34,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyStringFormatInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -78,7 +77,7 @@ public final class PyStringFormatInspection extends PyInspection {
       }
 
       // return number of arguments or -1 if it can not be computed
-      private int inspectArguments(@Nullable final PyExpression rightExpression, @NotNull final PsiElement problemTarget) {
+      private int inspectArguments(final @Nullable PyExpression rightExpression, final @NotNull PsiElement problemTarget) {
         final Class[] SIMPLE_RHS_EXPRESSIONS = {
           PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class
         };
@@ -325,8 +324,8 @@ public final class PyStringFormatInspection extends PyInspection {
         myVisitor.registerProblem(problemTarget, message);
       }
 
-      private void checkExpressionType(@NotNull final PyExpression expression,
-                                       @NotNull final String expectedTypeName,
+      private void checkExpressionType(final @NotNull PyExpression expression,
+                                       final @NotNull String expectedTypeName,
                                        @NotNull PsiElement problemTarget) {
         final PyType actual = myTypeEvalContext.getType(expression);
         final PyType expected = PyTypeParser.getTypeByName(problemTarget, expectedTypeName, myTypeEvalContext);
@@ -335,9 +334,9 @@ public final class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private void checkTypeCompatible(@NotNull final PsiElement problemTarget,
-                                       @Nullable final PyType actual,
-                                       @Nullable final PyType expected) {
+      private void checkTypeCompatible(final @NotNull PsiElement problemTarget,
+                                       final @Nullable PyType actual,
+                                       final @Nullable PyType expected) {
         if (expected != null && "str".equals(expected.getName())) {
           return;
         }
@@ -346,7 +345,7 @@ public final class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private void inspectPercentFormat(@NotNull final PyStringLiteralExpression formatExpression) {
+      private void inspectPercentFormat(final @NotNull PyStringLiteralExpression formatExpression) {
         final String value = formatExpression.getText();
         final List<SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
 
@@ -403,7 +402,7 @@ public final class PyStringFormatInspection extends PyInspection {
         return bytesType != null && actualType != null && PyTypeChecker.match(bytesType, actualType, context);
       }
 
-      private void inspectWidth(@NotNull final PyStringLiteralExpression formatExpression, String width) {
+      private void inspectWidth(final @NotNull PyStringLiteralExpression formatExpression, String width) {
         if ("*".equals(width)) {
           ++myExpectedArguments;
           if (myUsedMappingKeys.size() > 0) {
@@ -416,7 +415,7 @@ public final class PyStringFormatInspection extends PyInspection {
         return myProblemRegister;
       }
 
-      private void inspectValues(@Nullable final PyExpression rightExpression) {
+      private void inspectValues(final @Nullable PyExpression rightExpression) {
         if (rightExpression == null) {
           return;
         }
@@ -435,7 +434,7 @@ public final class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private void inspectArgumentsNumber(@NotNull final PyExpression rightExpression) {
+      private void inspectArgumentsNumber(final @NotNull PyExpression rightExpression) {
         final int arguments = inspectArguments(rightExpression, rightExpression);
         if (myUsedMappingKeys.isEmpty() && arguments >= 0) {
           if (myExpectedArguments < arguments) {
@@ -589,7 +588,7 @@ public final class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private static void specifyTypes(@NotNull final Set<String> types, @NotNull final List<String> supportedTypes) {
+      private static void specifyTypes(final @NotNull Set<String> types, final @NotNull List<String> supportedTypes) {
         if (types.isEmpty()) {
           types.addAll(supportedTypes);
         }

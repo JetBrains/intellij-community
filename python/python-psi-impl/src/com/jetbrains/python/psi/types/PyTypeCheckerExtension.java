@@ -18,11 +18,10 @@ public interface PyTypeCheckerExtension {
 
   ExtensionPointName<PyTypeCheckerExtension> EP_NAME = ExtensionPointName.create("Pythonid.typeCheckerExtension");
 
-  @NotNull
-  default Optional<Boolean> match(@Nullable PyType expected,
-                                  @Nullable PyType actual,
-                                  @NotNull TypeEvalContext context,
-                                  @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+  default @NotNull Optional<Boolean> match(@Nullable PyType expected,
+                                           @Nullable PyType actual,
+                                           @NotNull TypeEvalContext context,
+                                           @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
     Map<PyGenericType, PyType> legacyTypeVarSubs = new HashMap<>();
     for (Map.Entry<PyTypeVarType, PyType> entry : substitutions.getTypeVars().entrySet()) {
       if (entry.getKey() instanceof PyGenericType legacyTypeVar) {
@@ -38,8 +37,7 @@ public interface PyTypeCheckerExtension {
    * @deprecated use {@link #match(PyType, PyType, TypeEvalContext, PyTypeChecker.GenericSubstitutions)}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  default Optional<Boolean> match(@Nullable PyType expected,
+  default @NotNull Optional<Boolean> match(@Nullable PyType expected,
                                   @Nullable PyType actual,
                                   @NotNull TypeEvalContext context,
                                   @NotNull Map<PyGenericType, PyType> substitutions) {

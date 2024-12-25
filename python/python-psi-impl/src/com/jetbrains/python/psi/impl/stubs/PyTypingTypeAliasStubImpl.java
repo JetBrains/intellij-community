@@ -33,15 +33,13 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
     myText = text;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 
-  @NotNull
   @Override
-  public Class<PyTypingAliasStubType> getTypeClass() {
+  public @NotNull Class<PyTypingAliasStubType> getTypeClass() {
     return PyTypingAliasStubType.class;
   }
 
@@ -50,9 +48,8 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
     stream.writeName(myText);
   }
 
-  @Nullable
   @Override
-  public QualifiedName getCalleeName() {
+  public @Nullable QualifiedName getCalleeName() {
     return null;
   }
 

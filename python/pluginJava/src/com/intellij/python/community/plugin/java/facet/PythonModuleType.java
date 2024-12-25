@@ -8,8 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 final class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBase> {
   @Override
-  @NotNull
-  public PythonModuleBuilder createModuleBuilder() {
+  public @NotNull PythonModuleBuilder createModuleBuilder() {
     return new PythonModuleBuilder();
   }
 }

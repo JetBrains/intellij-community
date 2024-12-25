@@ -39,8 +39,7 @@ public class PySearchUtilBase {
    * @param anchor element to detect the corresponding Python SDK
    * @see PySearchScopeBuilder
    */
-  @NotNull
-  public static GlobalSearchScope defaultSuggestionScope(@NotNull PsiElement anchor) {
+  public static @NotNull GlobalSearchScope defaultSuggestionScope(@NotNull PsiElement anchor) {
     return PySearchScopeBuilder.forPythonSdkOf(anchor)
       .excludeStandardLibraryTests()
       .excludeThirdPartyPackageTypeShedStubs()
@@ -58,13 +57,11 @@ public class PySearchUtilBase {
    * @param project the project for which the scope should be calculated
    * @return the resulting scope
    */
-  @NotNull
-  public static GlobalSearchScope excludeSdkTestsScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope excludeSdkTestsScope(@NotNull Project project) {
     return excludeSdkTestScope(ProjectScope.getAllScope(project));
   }
 
-  @NotNull
-  public static GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
+  public static @NotNull GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
     Project project = Objects.requireNonNull(scope.getProject());
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
@@ -77,8 +74,7 @@ public class PySearchUtilBase {
     return scope;
   }
 
-  @Nullable
-  public static VirtualFile findLibDir(@NotNull Sdk sdk) {
+  public static @Nullable VirtualFile findLibDir(@NotNull Sdk sdk) {
     return findLibDir(ReadAction.compute(() -> sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
   }
 
@@ -117,8 +113,7 @@ public class PySearchUtilBase {
     return null;
   }
 
-  @Nullable
-  private static VirtualFile findLibDir(VirtualFile[] files) {
+  private static @Nullable VirtualFile findLibDir(VirtualFile[] files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
         continue;

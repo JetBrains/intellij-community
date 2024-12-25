@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public final class RestFileProviderFactory implements FileViewProviderFactory {
 
     @Override
-    @NotNull
-    public FileViewProvider createFileViewProvider(@NotNull VirtualFile virtualFile, Language language, @NotNull PsiManager psiManager, boolean eventSystemEnabled) {
+    public @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile virtualFile, Language language, @NotNull PsiManager psiManager, boolean eventSystemEnabled) {
         return new RestFileViewProvider(psiManager, virtualFile, eventSystemEnabled);
     }
 }

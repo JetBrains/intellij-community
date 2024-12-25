@@ -1,34 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionExceptionWithAttachments;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 import java.util.Collections;
 import java.util.List;
 
 public class PyExecutionException extends ExecutionExceptionWithAttachments {
-  @NotNull private final String myCommand;
-  @NotNull private final List<String> myArgs;
+  private final @NotNull String myCommand;
+  private final @NotNull List<String> myArgs;
   private final int myExitCode;
-  @NotNull private final List<? extends PyExecutionFix> myFixes;
+  private final @NotNull List<? extends PyExecutionFix> myFixes;
 
   public PyExecutionException(@DialogMessage @NotNull String message, @NotNull String command, @NotNull List<String> args) {
     this(message, command, args, "", "", 0, Collections.emptyList());
@@ -68,18 +54,15 @@ public class PyExecutionException extends ExecutionExceptionWithAttachments {
     return b.toString();
   }
 
-  @NotNull
-  public String getCommand() {
+  public @NotNull String getCommand() {
     return myCommand;
   }
 
-  @NotNull
-  public List<String> getArgs() {
+  public @NotNull List<String> getArgs() {
     return myArgs;
   }
 
-  @NotNull
-  public List<? extends PyExecutionFix> getFixes() {
+  public @NotNull List<? extends PyExecutionFix> getFixes() {
     return myFixes;
   }
 

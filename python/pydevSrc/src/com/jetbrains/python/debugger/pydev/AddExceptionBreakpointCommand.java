@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,7 @@ public class AddExceptionBreakpointCommand extends ExceptionBreakpointCommand {
   final String myCondition;
   final String myLogExpression;
 
-  public AddExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger,
+  public AddExceptionBreakpointCommand(final @NotNull RemoteDebugger debugger,
                                        @NotNull String exception,
                                        @Nullable String condition,
                                        @Nullable String logExpression,

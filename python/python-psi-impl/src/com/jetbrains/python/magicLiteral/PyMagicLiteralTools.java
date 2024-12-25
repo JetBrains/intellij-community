@@ -28,7 +28,7 @@ public final class PyMagicLiteralTools {
    * @param element element to check
    * @return true if magic
    */
-  public static boolean couldBeMagicLiteral(@NotNull final PsiElement element) {
+  public static boolean couldBeMagicLiteral(final @NotNull PsiElement element) {
     return (element instanceof StringLiteralExpression) && (element.getReferences().length == 0) &&
            Arrays.stream(PyMagicLiteralExtensionPoint.EP_NAME.getExtensions()).anyMatch(o-> o.isEnabled(element));
   }
@@ -39,8 +39,7 @@ public final class PyMagicLiteralTools {
    * @param element literal
    * @return extension point (if any) or null if literal is unknown to all installed magic literal extension points
    */
-  @Nullable
-  public static PyMagicLiteralExtensionPoint getPoint(@NotNull StringLiteralExpression element) {
+  public static @Nullable PyMagicLiteralExtensionPoint getPoint(@NotNull StringLiteralExpression element) {
     return CachedValuesManager.getCachedValue(element, () -> {
       return Result.create(PyMagicLiteralExtensionPoint.EP_NAME.findFirstSafe(ep -> ep.isMagicLiteral(element)),
                            PsiModificationTracker.MODIFICATION_COUNT);

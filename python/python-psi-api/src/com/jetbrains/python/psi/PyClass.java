@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
@@ -46,8 +32,7 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
   ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
   @Override
-  @NotNull
-  default PyStatementList getStatementList() {
+  default @NotNull PyStatementList getStatementList() {
     return (PyStatementList)PyAstClass.super.getStatementList();
   }
 
@@ -86,8 +71,7 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
    * Operates at the AST level.
    */
   @Override
-  @Nullable
-  default PyArgumentList getSuperClassExpressionList() {
+  default @Nullable PyArgumentList getSuperClassExpressionList() {
     return (PyArgumentList)PyAstClass.super.getSuperClassExpressionList();
   }
 
@@ -144,7 +128,7 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
    * @return method with given name or null, prefers implementation over same name overloads.
    */
   @Nullable
-  PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited, TypeEvalContext context);
+  PyFunction findMethodByName(final @Nullable @NonNls String name, boolean inherited, TypeEvalContext context);
 
   /**
    * Finds a method with the given name and all its overloads.
@@ -361,8 +345,7 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
    * If several candidates are found, the most-derived one (the lowest one in the hierarchy) is returned,
    * and if it cannot be deduced, {@code type} is used as the fallback value.
    */
-  @Nullable
-  default PyClassLikeType getMetaClassType(boolean inherited, @NotNull TypeEvalContext context) {
+  default @Nullable PyClassLikeType getMetaClassType(boolean inherited, @NotNull TypeEvalContext context) {
     return ObjectUtils.tryCast(getMetaClassType(context), PyClassLikeType.class);
   }
 
@@ -382,8 +365,7 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
   PyClassLikeType getType(@NotNull TypeEvalContext context);
 
   @Override
-  @Nullable
-  default PyStringLiteralExpression getDocStringExpression() {
+  default @Nullable PyStringLiteralExpression getDocStringExpression() {
     return (PyStringLiteralExpression)PyAstClass.super.getDocStringExpression();
   }
 }

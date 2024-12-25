@@ -68,7 +68,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return getImportElements(PyElementTypes.IMPORT_ELEMENT, PyTokenTypes.IMPORT_KEYWORD);
   }
 
-  final protected PyImportElement @NotNull [] getImportElements(
+  protected final PyImportElement @NotNull [] getImportElements(
     @NotNull IElementType importElementType,
     @NotNull PyElementType importKeywordToken) {
     final PyFromImportStatementStub stub = getStub();
@@ -98,10 +98,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState state,
                                      final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
+                                     final @NotNull PsiElement place) {
     // import is per-file
     if (place.getContainingFile() != getContainingFile()) {
       return true;
@@ -191,14 +191,12 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  @Nullable
-  public PsiFileSystemItem resolveImportSource() {
+  public @Nullable PsiFileSystemItem resolveImportSource() {
     return FluentIterable.from(resolveImportSourceCandidates()).filter(PsiFileSystemItem.class).first().orNull();
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> resolveImportSourceCandidates() {
+  public @NotNull List<PsiElement> resolveImportSourceCandidates() {
     final QualifiedName qName = getImportSourceQName();
     if (qName == null) {
       final int level = getRelativeLevel();
@@ -210,16 +208,14 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
   }
 
-  @NotNull
   @Override
-  public Iterable<PyElement> iterateNames() {
+  public @NotNull Iterable<PyElement> iterateNames() {
     final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
     return resolved != null ? ImmutableList.of(resolved) : Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
+  public @NotNull List<RatedResolveResult> multiResolveName(@NotNull String name) {
     final QualifiedName importSourceQName = getImportSourceQName();
     if (importSourceQName != null && importSourceQName.endsWith(name)) {
       final PsiElement element = resolveImplicitSubModule();
@@ -235,8 +231,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
    *
    * http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
    */
-  @Nullable
-  private PsiElement resolveImplicitSubModule() {
+  private @Nullable PsiElement resolveImplicitSubModule() {
     final QualifiedName importSourceQName = getImportSourceQName();
     if (importSourceQName != null) {
       final String name = importSourceQName.getLastComponent();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.Pair;
@@ -27,8 +27,7 @@ public final class PythonStringUtil {
   }
 
 
-  @NotNull
-  public static String removeFirstPrefix(@Nullable String s, String separator) {
+  public static @NotNull String removeFirstPrefix(@Nullable String s, String separator) {
     if (s != null) {
       int pos = s.indexOf(separator);
       if (pos != -1) {
@@ -38,8 +37,7 @@ public final class PythonStringUtil {
     return "";
   }
 
-  @NotNull
-  public static String removeLastSuffix(@Nullable String s, String separator) {
+  public static @NotNull String removeLastSuffix(@Nullable String s, String separator) {
     if (s != null) {
       int pos = s.lastIndexOf(separator);
       if (pos != -1) {
@@ -76,8 +74,7 @@ public final class PythonStringUtil {
     return false;
   }
 
-  @NotNull
-  public static String getFirstPrefix(String s, String separator) {
+  public static @NotNull String getFirstPrefix(String s, String separator) {
     if (s != null) {
       int pos = s.indexOf(separator);
       if (pos != -1) {
@@ -130,8 +127,7 @@ public final class PythonStringUtil {
   }
 
 
-  @Nullable
-  public static String intersect(String fullName, String elementStringValue) {
+  public static @Nullable String intersect(String fullName, String elementStringValue) {
     QualifiedName fullQName = QualifiedName.fromDottedString(fullName);
     QualifiedName stringQName = QualifiedName.fromDottedString(elementStringValue);
     String[] s1 = stringQName.getComponents().toArray(new String[stringQName.getComponentCount()]);

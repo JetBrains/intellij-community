@@ -30,12 +30,12 @@ import java.util.Comparator;
 public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private static final Logger LOG = Logger.getInstance(ImportCandidateHolder.class);
 
-  @NotNull private final SmartPsiElementPointer<PsiNamedElement> myImportable;
-  @Nullable private final SmartPsiElementPointer<PyImportElement> myImportElement;
-  @NotNull private final SmartPsiElementPointer<PsiFileSystemItem> myFile;
-  @Nullable private final QualifiedName myPath;
-  @NotNull private final String myImportableName;
-  @Nullable private final String myAsName;
+  private final @NotNull SmartPsiElementPointer<PsiNamedElement> myImportable;
+  private final @Nullable SmartPsiElementPointer<PyImportElement> myImportElement;
+  private final @NotNull SmartPsiElementPointer<PsiFileSystemItem> myFile;
+  private final @Nullable QualifiedName myPath;
+  private final @NotNull String myImportableName;
+  private final @Nullable String myAsName;
   private final int myRelevance;
 
   /**
@@ -71,8 +71,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     this(importable, file, importElement, path, null);
   }
 
-  @Nullable
-  public PsiNamedElement getImportable() {
+  public @Nullable PsiNamedElement getImportable() {
     return myImportable.getElement();
   }
 
@@ -80,18 +79,15 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     return myImportableName;
   }
 
-  @Nullable
-  public PyImportElement getImportElement() {
+  public @Nullable PyImportElement getImportElement() {
     return myImportElement != null ? myImportElement.getElement() : null;
   }
 
-  @Nullable
-  public PsiFileSystemItem getFile() {
+  public @Nullable PsiFileSystemItem getFile() {
     return myFile.getElement();
   }
 
-  @Nullable
-  public QualifiedName getPath() {
+  public @Nullable QualifiedName getPath() {
     return myPath;
   }
 
@@ -104,8 +100,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
    * @param source     known ImportElement to import the name; its 'as' clause is used if present.
    * @return a properly qualified name.
    */
-  @NotNull
-  public static String getQualifiedName(@NotNull String name, @Nullable QualifiedName importPath, @Nullable PyImportElement source) {
+  public static @NotNull String getQualifiedName(@NotNull String name, @Nullable QualifiedName importPath, @Nullable PyImportElement source) {
     final StringBuilder sb = new StringBuilder();
     if (source != null) {
       final PsiElement parent = source.getParent();
@@ -125,8 +120,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     return sb.toString();
   }
 
-  @NotNull
-  public @NlsSafe String getPresentableText() {
+  public @NotNull @NlsSafe String getPresentableText() {
     PyImportElement importElement = getImportElement();
     final StringBuilder sb = new StringBuilder(getQualifiedName(getImportableName(), myPath, importElement));
     PsiElement parent = null;
@@ -177,8 +171,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
     return myRelevance;
   }
 
-  @Nullable
-  public String getAsName() {
+  public @Nullable String getAsName() {
     return myAsName;
   }
 }

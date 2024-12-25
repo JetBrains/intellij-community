@@ -21,8 +21,7 @@ import java.util.List;
 @ApiStatus.Internal
 public final class JavaPythonFacetType extends FacetType<JavaPythonFacet, JavaPythonFacetConfiguration> {
 
-  @NonNls
-  private static final String ID = "Python";
+  private static final @NonNls String ID = "Python";
 
   public static JavaPythonFacetType getInstance() {
     return findInstance(JavaPythonFacetType.class);

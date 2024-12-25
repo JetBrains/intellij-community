@@ -41,8 +41,7 @@ public interface PyPsiFindUsagesHandlerFactory {
            element instanceof PyTargetExpression;
   }
 
-  @Nullable
-  default FindUsagesHandlerBase createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+  default @Nullable FindUsagesHandlerBase createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
     if (element instanceof PyImportedModule) {
       final PsiElement resolved = ((PyImportedModule)element).resolve();
       if (resolved != null) {
@@ -86,8 +85,7 @@ public interface PyPsiFindUsagesHandlerFactory {
     return null;
   }
 
-  @NotNull
-  default PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
+  default @NotNull PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
     return new PyModuleFindUsagesHandler(element);
   }
 

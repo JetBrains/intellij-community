@@ -50,24 +50,22 @@ public final class PyDefUseUtil {
 
   private static final int MAX_CONTROL_FLOW_SIZE = 200;
 
-  @NotNull
-  public static List<Instruction> getLatestDefs(@NotNull ScopeOwner block,
-                                                @NotNull String varName,
-                                                @NotNull PsiElement anchor,
-                                                boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports,
-                                                @NotNull TypeEvalContext context) {
+  public static @NotNull List<Instruction> getLatestDefs(@NotNull ScopeOwner block,
+                                                         @NotNull String varName,
+                                                         @NotNull PsiElement anchor,
+                                                         boolean acceptTypeAssertions,
+                                                         boolean acceptImplicitImports,
+                                                         @NotNull TypeEvalContext context) {
     return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports, context);
   }
 
 
-  @NotNull
-  public static List<Instruction> getLatestDefs(@NotNull ControlFlow controlFlow,
-                                                @NotNull String varName,
-                                                @NotNull PsiElement anchor,
-                                                boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports,
-                                                @NotNull TypeEvalContext context) {
+  public static @NotNull List<Instruction> getLatestDefs(@NotNull ControlFlow controlFlow,
+                                                         @NotNull String varName,
+                                                         @NotNull PsiElement anchor,
+                                                         boolean acceptTypeAssertions,
+                                                         boolean acceptImplicitImports,
+                                                         @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
     int startNum = findStartInstructionId(anchor, instructions);
     if (startNum < 0) {
@@ -160,8 +158,7 @@ public final class PyDefUseUtil {
     return evaluateVersionsForElement(element).contains(version);
   }
 
-  @Nullable
-  private static String elementName(PsiElement element) {
+  private static @Nullable String elementName(PsiElement element) {
     if (element instanceof PyImportElement) {
       return ((PyImportElement) element).getVisibleName();
     }
@@ -218,7 +215,7 @@ public final class PyDefUseUtil {
    *
    * @return false for elements from different scopes, true if searched is defined/imported before target
    */
-  public static boolean isDefinedBefore(@NotNull final PsiElement searched, @NotNull final PsiElement target) {
+  public static boolean isDefinedBefore(final @NotNull PsiElement searched, final @NotNull PsiElement target) {
     ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(searched);
     Ref<Boolean> definedBefore = Ref.create(false);
     if (scopeOwner != null && scopeOwner == ScopeUtil.getScopeOwner(target)) {

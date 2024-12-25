@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.nameResolver;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,7 +47,7 @@ public final class NameResolverTools {
    * @param namesProviders some enum that has one or more names
    * @return true if element's fqn is one of names, provided by provider
    */
-  public static boolean isElementWithName(@NotNull final Collection<? extends PyElement> elements,
+  public static boolean isElementWithName(final @NotNull Collection<? extends PyElement> elements,
                                           final FQNamesProvider @NotNull ... namesProviders) {
     for (final PyElement element : elements) {
       if (isName(element, namesProviders)) {
@@ -92,7 +78,7 @@ public final class NameResolverTools {
    * @param namesProviders some enum that has one or more names
    * @return true if element's fqn is one of names, provided by provider
    */
-  public static boolean isName(@NotNull final PyElement element, final FQNamesProvider @NotNull ... namesProviders) {
+  public static boolean isName(final @NotNull PyElement element, final FQNamesProvider @NotNull ... namesProviders) {
     assert element.isValid();
     final Pair<String, String> qualifiedAndClassName = RecursionManager.doPreventingRecursion(element, false,
                                                                                               () -> QUALIFIED_AND_CLASS_NAME
@@ -122,8 +108,7 @@ public final class NameResolverTools {
    * @param functionName function to find
    * @return parent call or null if not found
    */
-  @Nullable
-  public static PyCallExpression findCallExpParent(@NotNull final PsiElement anchor, @NotNull final FQNamesProvider functionName) {
+  public static @Nullable PyCallExpression findCallExpParent(final @NotNull PsiElement anchor, final @NotNull FQNamesProvider functionName) {
     final PsiElement parent = PsiTreeUtil.findFirstParent(anchor, new MyFunctionCondition(functionName));
     if (parent instanceof PyCallExpression) {
       return (PyCallExpression)parent;
@@ -139,7 +124,7 @@ public final class NameResolverTools {
    * @param function names to check
    * @return true if callee is correct
    */
-  public static boolean isCalleeShortCut(@NotNull final PyCallExpression call,
+  public static boolean isCalleeShortCut(final @NotNull PyCallExpression call,
                                          final FQNamesProvider @NotNull ... function) {
     final PyExpression callee = call.getCallee();
     if (callee == null) {
@@ -151,8 +136,7 @@ public final class NameResolverTools {
     return Arrays.stream(function).anyMatch(o -> getLastComponents(o).contains(callableName));
   }
 
-  @NotNull
-  private static List<String> getLastComponents(@NotNull final FQNamesProvider provider) {
+  private static @NotNull List<String> getLastComponents(final @NotNull FQNamesProvider provider) {
     final List<String> result = new ArrayList<>();
     for (final String name : provider.getNames()) {
       final String component = QualifiedName.fromDottedString(name).getLastComponent();
@@ -168,7 +152,7 @@ public final class NameResolverTools {
    *
    * @param text  test to check
    */
-  public static boolean isContainsName(@NotNull final String text, @NotNull final FQNamesProvider names) {
+  public static boolean isContainsName(final @NotNull String text, final @NotNull FQNamesProvider names) {
     for (final String lastComponent : getLastComponents(names)) {
       if (text.contains(lastComponent)) {
         return true;
@@ -182,7 +166,7 @@ public final class NameResolverTools {
    *
    * @param file  file to check
    */
-  public static boolean isContainsName(@NotNull final PsiFile file, @NotNull final FQNamesProvider names) {
+  public static boolean isContainsName(final @NotNull PsiFile file, final @NotNull FQNamesProvider names) {
     return isContainsName(file.getText(), names);
   }
 
@@ -191,9 +175,9 @@ public final class NameResolverTools {
    *
    * @param child class to check
    */
-  public static boolean isSubclass(@NotNull final PyClass child,
-                                   @NotNull final FQNamesProvider parentName,
-                                   @NotNull final TypeEvalContext context) {
+  public static boolean isSubclass(final @NotNull PyClass child,
+                                   final @NotNull FQNamesProvider parentName,
+                                   final @NotNull TypeEvalContext context) {
     for (final String nameToCheck : parentName.getNames()) {
       if (child.isSubclass(nameToCheck, context)) {
         return true;
@@ -206,10 +190,9 @@ public final class NameResolverTools {
    * Looks for call of some function
    */
   private static class MyFunctionCondition implements Condition<PsiElement> {
-    @NotNull
-    private final FQNamesProvider myNameToSearch;
+    private final @NotNull FQNamesProvider myNameToSearch;
 
-    MyFunctionCondition(@NotNull final FQNamesProvider name) {
+    MyFunctionCondition(final @NotNull FQNamesProvider name) {
       myNameToSearch = name;
     }
 
@@ -227,8 +210,7 @@ public final class NameResolverTools {
    */
   private static class QualifiedAndClassNameObtainer implements Function<PyElement, Pair<String, String>> {
     @Override
-    @NotNull
-    public Pair<String, String> fun(@NotNull final PyElement param) {
+    public @NotNull Pair<String, String> fun(final @NotNull PyElement param) {
       PyElement elementToCheck = param;
 
       // Trying to use no implicit context if possible...

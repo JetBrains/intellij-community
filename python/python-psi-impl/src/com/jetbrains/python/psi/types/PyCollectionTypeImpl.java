@@ -31,7 +31,7 @@ import java.util.List;
 
 
 public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
-  @NotNull protected final List<PyType> myElementTypes;
+  protected final @NotNull List<PyType> myElementTypes;
   protected final Ref<Integer> hashCode = new Ref<>();
 
   public PyCollectionTypeImpl(@NotNull PyClass source, boolean isDefinition, @NotNull List<? extends PyType> elementTypes) {
@@ -40,32 +40,28 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   }
 
 
-  @Nullable
   @Override
-  public PyType getReturnType(@NotNull final TypeEvalContext context) {
+  public @Nullable PyType getReturnType(final @NotNull TypeEvalContext context) {
     if (isDefinition()) {
       return new PyCollectionTypeImpl(getPyClass(), false, myElementTypes);
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public PyType getCallType(@NotNull final TypeEvalContext context, @Nullable final PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(final @NotNull TypeEvalContext context, final @Nullable PyCallSiteExpression callSite) {
     return getReturnType(context);
   }
 
-  @NotNull
   @Override
-  public List<PyType> getElementTypes() {
+  public @NotNull List<PyType> getElementTypes() {
     return Collections.unmodifiableList(myElementTypes);
   }
 
-  @Nullable
-  public static PyCollectionTypeImpl createTypeByQName(@NotNull final PsiElement anchor,
-                                                       @NotNull final String classQualifiedName,
-                                                       final boolean isDefinition,
-                                                       @NotNull final List<? extends PyType> elementTypes) {
+  public static @Nullable PyCollectionTypeImpl createTypeByQName(final @NotNull PsiElement anchor,
+                                                                 final @NotNull String classQualifiedName,
+                                                                 final boolean isDefinition,
+                                                                 final @NotNull List<? extends PyType> elementTypes) {
     final PyClass pyClass = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(classQualifiedName, anchor);
     if (pyClass == null) {
       return null;
@@ -73,15 +69,13 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     return new PyCollectionTypeImpl(pyClass, isDefinition, elementTypes);
   }
 
-  @NotNull
   @Override
-  public PyClassType toInstance() {
+  public @NotNull PyClassType toInstance() {
     return myIsDefinition ? withUserDataCopy(new PyCollectionTypeImpl(myClass, false, myElementTypes)) : this;
   }
 
-  @NotNull
   @Override
-  public PyClassLikeType toClass() {
+  public @NotNull PyClassLikeType toClass() {
     return myIsDefinition ? this : withUserDataCopy(new PyCollectionTypeImpl(myClass, true, myElementTypes));
   }
 
@@ -112,9 +106,8 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     return hashCode.get();
   }
 
-  @Nullable
   @Override
-  public PyType getIteratedItemType() {
+  public @Nullable PyType getIteratedItemType() {
     // TODO: Select the parameter type that matches T in Iterable[T]
     return ContainerUtil.getFirstItem(myElementTypes);
   }

@@ -25,11 +25,10 @@ import java.util.List;
  */
 public final class PyUnreachableCodeInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -39,7 +38,7 @@ public final class PyUnreachableCodeInspection extends PyInspection {
     }
 
     @Override
-    public void visitElement(@NotNull final PsiElement element) {
+    public void visitElement(final @NotNull PsiElement element) {
       if (element instanceof ScopeOwner) {
         final ControlFlow flow = ControlFlowCache.getControlFlow((ScopeOwner)element);
         final Instruction[] instructions = flow.getInstructions();

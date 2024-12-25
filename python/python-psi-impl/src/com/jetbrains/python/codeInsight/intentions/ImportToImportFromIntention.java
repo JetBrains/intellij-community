@@ -186,8 +186,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.import.unqualify");
   }
 

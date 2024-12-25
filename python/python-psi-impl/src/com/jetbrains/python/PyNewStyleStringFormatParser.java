@@ -38,8 +38,7 @@ public final class PyNewStyleStringFormatParser {
   private final String myNodeText;
   private final TextRange myNodeContentRange;
 
-  @NotNull
-  public static ParseResult parse(@NotNull String nodeText) {
+  public static @NotNull ParseResult parse(@NotNull String nodeText) {
     final PyNewStyleStringFormatParser parser = new PyNewStyleStringFormatParser(nodeText);
     parser.parseTopLevel();
     return new ParseResult(parser);
@@ -52,20 +51,17 @@ public final class PyNewStyleStringFormatParser {
       myParser = parser;
     }
 
-    @NotNull
-    public List<Field> getFields() {
+    public @NotNull List<Field> getFields() {
       return Collections.unmodifiableList(myParser.myTopLevelFields);
     }
 
-    @NotNull
-    public List<Field> getAllFields() {
+    public @NotNull List<Field> getAllFields() {
       final List<Field> result = new ArrayList<>();
       collectNestedLists(myParser.myTopLevelFields, result);
       return Collections.unmodifiableList(result);
     }
 
-    @NotNull
-    public List<Integer> getSingleRightBraces() {
+    public @NotNull List<Integer> getSingleRightBraces() {
       return Collections.unmodifiableList(myParser.mySingleRightBraces);
     }
 
@@ -114,8 +110,7 @@ public final class PyNewStyleStringFormatParser {
     }
   }
 
-  @NotNull
-  private Field parseField(int startOffset, int recursionDepth) {
+  private @NotNull Field parseField(int startOffset, int recursionDepth) {
     assert myNodeText.charAt(startOffset) == '{';
 
     int autoFieldNumber = myImplicitlyNumberedFieldsCounter;
@@ -318,21 +313,18 @@ public final class PyNewStyleStringFormatParser {
      * @see #getManualPosition()
      * @see #getAutoPosition()
      */
-    @NotNull
-    public String getFirstName() {
+    public @NotNull String getFirstName() {
       return getFirstNameRange().substring(myNodeText);
     }
 
-    @NotNull
-    public TextRange getFirstNameRange() {
+    public @NotNull TextRange getFirstNameRange() {
       return TextRange.create(myLeftBraceOffset + 1, myAttributesAndLookups[0]);
     }
 
     /**
      * The range of the part after "{" (not including it) up to the "!", ":", "}" or the end of string content.
      */
-    @NotNull
-    public TextRange getNamePartRange() {
+    public @NotNull TextRange getNamePartRange() {
       final int end = Math.min(Math.min(defaultToContentEnd(myFormatSpecOffset),
                                         defaultToContentEnd(myConversionOffset)),
                                defaultToContentEnd(myRightBraceOffset));
@@ -344,14 +336,12 @@ public final class PyNewStyleStringFormatParser {
      *
      * @see #getConversionRange()
      */
-    @Nullable
-    public String getConversion() {
+    public @Nullable String getConversion() {
       final TextRange range = getConversionRange();
       return range != null ? range.substring(myNodeText) : null;
     }
 
-    @Nullable
-    public TextRange getConversionRange() {
+    public @Nullable TextRange getConversionRange() {
       final int end = Math.min(defaultToContentEnd(myFormatSpecOffset), defaultToContentEnd(myRightBraceOffset));
       return myConversionOffset >= 0 ? TextRange.create(myConversionOffset, end) : null;
     }
@@ -361,35 +351,30 @@ public final class PyNewStyleStringFormatParser {
      *
      * @see #getConversionRange()
      */
-    @Nullable
-    public String getFormatSpec() {
+    public @Nullable String getFormatSpec() {
       final TextRange range = getFormatSpecRange();
       return range != null ? range.substring(myNodeText) : null;
     }
 
-    @Nullable
-    public TextRange getFormatSpecRange() {
+    public @Nullable TextRange getFormatSpecRange() {
       return myFormatSpecOffset >= 0 ? TextRange.create(myFormatSpecOffset, defaultToContentEnd(myRightBraceOffset)) : null;
     }
 
     /**
      * Nested fields that occurred in the format specification part this this one.
      */
-    @NotNull
-    public List<Field> getNestedFields() {
+    public @NotNull List<Field> getNestedFields() {
       return Collections.unmodifiableList(myNestedFields);
     }
 
     /**
      * Lookups and attribute references following name or index of the field in form of strings like ".foo" or "[bar]".
      */
-    @NotNull
-    public List<String> getAttributesAndLookups() {
+    public @NotNull List<String> getAttributesAndLookups() {
       return ContainerUtil.map(getAttributesAndLookupsRanges(), ranges -> ranges.substring(myNodeText));
     }
 
-    @NotNull
-    public List<TextRange> getAttributesAndLookupsRanges() {
+    public @NotNull List<TextRange> getAttributesAndLookupsRanges() {
       final List<TextRange> result = new ArrayList<>();
       for (int i = 0; i < myAttributesAndLookups.length - 1; i++) {
         result.add(TextRange.create(myAttributesAndLookups[i], myAttributesAndLookups[i + 1]));

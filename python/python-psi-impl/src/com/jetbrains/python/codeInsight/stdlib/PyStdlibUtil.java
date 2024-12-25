@@ -22,13 +22,11 @@ public final class PyStdlibUtil {
   private PyStdlibUtil() {
   }
 
-  @Nullable
-  public static Collection<String> getPackages() {
+  public static @Nullable Collection<String> getPackages() {
     return PACKAGES.get();
   }
 
-  @Nullable
-  private static Set<String> loadStdlibPackagesList() {
+  private static @Nullable Set<String> loadStdlibPackagesList() {
     final Logger log = Logger.getInstance(PyStdlibUtil.class.getName());
     final String helperPath = PythonHelpersLocator.findPathStringInHelpers("/tools/stdlib_packages.txt");
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(helperPath), StandardCharsets.UTF_8))) {

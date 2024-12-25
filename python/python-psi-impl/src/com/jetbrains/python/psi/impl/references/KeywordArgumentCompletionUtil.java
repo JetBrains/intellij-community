@@ -23,7 +23,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public final class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
                                              List<? super LookupElement> ret,
-                                             @NotNull final TypeEvalContext context,
+                                             final @NotNull TypeEvalContext context,
                                              final boolean addEquals) {
     PyCallExpression callExpr = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpr != null) {
@@ -52,10 +52,9 @@ public final class KeywordArgumentCompletionUtil {
     }
   }
 
-  @NotNull
-  private static List<String> collectParameterNamesFromType(@NotNull PyCallableType type,
-                                                            @NotNull PyCallExpression callSite,
-                                                            @NotNull TypeEvalContext context) {
+  private static @NotNull List<String> collectParameterNamesFromType(@NotNull PyCallableType type,
+                                                                     @NotNull PyCallExpression callSite,
+                                                                     @NotNull TypeEvalContext context) {
     List<String> result = new ArrayList<>();
     if (type.isCallable()) {
       final List<PyCallableParameter> parameters = type.getParameters(context);
@@ -92,11 +91,11 @@ public final class KeywordArgumentCompletionUtil {
     return ContainerUtil.indexOf(parameters, parameter -> parameter.getParameter() instanceof PySlashParameter);
   }
 
-  private static void addKeywordArgumentVariantsForFunction(@NotNull final PyCallExpression callExpr,
-                                                            @NotNull final PyFunction function,
-                                                            @NotNull final List<String> ret,
-                                                            @NotNull final Set<PyCallable> visited,
-                                                            @NotNull final TypeEvalContext context) {
+  private static void addKeywordArgumentVariantsForFunction(final @NotNull PyCallExpression callExpr,
+                                                            final @NotNull PyFunction function,
+                                                            final @NotNull List<String> ret,
+                                                            final @NotNull Set<PyCallable> visited,
+                                                            final @NotNull TypeEvalContext context) {
     if (visited.contains(function)) {
       return;
     }

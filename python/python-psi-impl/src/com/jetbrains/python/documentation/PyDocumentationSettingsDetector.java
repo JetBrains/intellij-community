@@ -44,8 +44,7 @@ public final class PyDocumentationSettingsDetector
     return null;
   }
 
-  @NotNull
-  private static DocStringFormat checkDocString(@NotNull VirtualFile file, @NotNull Module module) {
+  private static @NotNull DocStringFormat checkDocString(@NotNull VirtualFile file, @NotNull Module module) {
     final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(file);
     if (psiFile instanceof PyFile) {
       final DocStringFormat perFileFormat = PyDocumentationSettings.getFormatFromDocformatAttribute(psiFile);

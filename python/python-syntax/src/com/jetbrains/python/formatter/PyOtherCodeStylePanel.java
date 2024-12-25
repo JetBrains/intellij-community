@@ -84,9 +84,8 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return 80;
   }
 
-  @NotNull
   @Override
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return PythonFileType.INSTANCE;
   }
 
@@ -135,8 +134,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return myPanel;
   }
 
-  @NotNull
-  private static PyCodeStyleSettings getCustomSettings(@NotNull CodeStyleSettings settings) {
+  private static @NotNull PyCodeStyleSettings getCustomSettings(@NotNull CodeStyleSettings settings) {
     return settings.getCustomSettings(PyCodeStyleSettings.class);
   }
 

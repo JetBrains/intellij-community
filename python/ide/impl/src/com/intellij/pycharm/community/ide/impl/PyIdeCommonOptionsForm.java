@@ -40,8 +40,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JComponent labelAnchor;
   private final Project myProject;
   private List<Sdk> myPythonSdks;
-  @NotNull
-  private List<String> myEnvPaths = Collections.emptyList();
+  private @NotNull List<String> myEnvPaths = Collections.emptyList();
   private boolean myInterpreterRemote;
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
@@ -150,9 +149,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     mySelectedSdk = sdk;
   }
 
-  @Nullable
   @Override
-  public Module getModule() {
+  public @Nullable Module getModule() {
     final Module selectedItem = content.moduleCombo.getSelectedModule();
     if (selectedItem != null) {
       return selectedItem;
@@ -224,8 +222,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  @Nullable
-  public PathMappingSettings getMappingSettings() {
+  public @Nullable PathMappingSettings getMappingSettings() {
     if (myInterpreterRemote) {
       return content.pathMappingsComponent.getMappingSettings();
     }
@@ -270,8 +267,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     }
   }
 
-  @Nullable
-  private Sdk getSdkSelected() {
+  private @Nullable Sdk getSdkSelected() {
     String sdkHome = getSdkHome();
     if (StringUtil.isEmptyOrSpaces(sdkHome)) {
       final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
@@ -293,9 +289,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content.interpreterComboBox.removeActionListener(listener);
   }
 
-  @NotNull
   @Override
-  public List<String> getEnvFilePaths() {
+  public @NotNull List<String> getEnvFilePaths() {
     return myEnvPaths;
   }
 

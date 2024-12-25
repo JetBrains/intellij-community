@@ -29,24 +29,22 @@ import java.util.*;
  */
 // TODO: Use new annotation-based API to save data instead of legacy manual save
 public class PythonSdkAdditionalData implements SdkAdditionalData {
-  @NonNls private static final String PATHS_ADDED_BY_USER_ROOT = "PATHS_ADDED_BY_USER_ROOT";
-  @NonNls private static final String PATH_ADDED_BY_USER = "PATH_ADDED_BY_USER";
-  @NonNls private static final String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
-  @NonNls private static final String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
-  @NonNls private static final String PATHS_TO_TRANSFER_ROOT = "PATHS_TO_TRANSFER_ROOT";
-  @NonNls private static final String PATH_TO_TRANSFER = "PATH_TO_TRANSFER";
-  @NonNls private static final String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
-  @NonNls
-  private static final String SDK_UUID_FIELD_NAME = "SDK_UUID";
+  private static final @NonNls String PATHS_ADDED_BY_USER_ROOT = "PATHS_ADDED_BY_USER_ROOT";
+  private static final @NonNls String PATH_ADDED_BY_USER = "PATH_ADDED_BY_USER";
+  private static final @NonNls String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
+  private static final @NonNls String PATH_REMOVED_BY_USER = "PATH_REMOVED_BY_USER";
+  private static final @NonNls String PATHS_TO_TRANSFER_ROOT = "PATHS_TO_TRANSFER_ROOT";
+  private static final @NonNls String PATH_TO_TRANSFER = "PATH_TO_TRANSFER";
+  private static final @NonNls String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
+  private static final @NonNls String SDK_UUID_FIELD_NAME = "SDK_UUID";
 
-  @NonNls private static final String FLAVOR_ID = "FLAVOR_ID";
-  @NonNls private static final String FLAVOR_DATA = "FLAVOR_DATA";
+  private static final @NonNls String FLAVOR_ID = "FLAVOR_ID";
+  private static final @NonNls String FLAVOR_DATA = "FLAVOR_DATA";
 
   private final VirtualFilePointerContainer myAddedPaths;
   private final VirtualFilePointerContainer myExcludedPaths;
   private final VirtualFilePointerContainer myPathsToTransfer;
-  @NotNull
-  private UUID myUUID = UUID.randomUUID();
+  private @NotNull UUID myUUID = UUID.randomUUID();
 
   private PyFlavorAndData<?, ?> myFlavorAndData;
   private String myAssociatedModulePath;
@@ -69,8 +67,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
          : new PyFlavorAndData(PyFlavorData.Empty.INSTANCE, ensureSupportsEmptyData(flavor)));
   }
 
-  @NotNull
-  private static PythonSdkFlavor<?> ensureSupportsEmptyData(@NotNull PythonSdkFlavor<?> flavor) {
+  private static @NotNull PythonSdkFlavor<?> ensureSupportsEmptyData(@NotNull PythonSdkFlavor<?> flavor) {
     if (!flavor.supportsEmptyData()) {
       throw new IllegalArgumentException(flavor.getName() + " can't be created without additional data");
     }
@@ -103,13 +100,11 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   /**
    * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
    */
-  @NotNull
-  public final UUID getUUID() {
+  public final @NotNull UUID getUUID() {
     return myUUID;
   }
 
-  @NotNull
-  public PythonSdkAdditionalData copy() {
+  public @NotNull PythonSdkAdditionalData copy() {
     return new PythonSdkAdditionalData(this);
   }
 
@@ -157,7 +152,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myAssociatedModulePath = FileUtil.toSystemIndependentName(modulePath);
   }
 
-  public void save(@NotNull final Element rootElement) {
+  public void save(final @NotNull Element rootElement) {
     savePaths(rootElement, myAddedPaths, PATHS_ADDED_BY_USER_ROOT, PATH_ADDED_BY_USER);
     savePaths(rootElement, myExcludedPaths, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER);
     savePaths(rootElement, myPathsToTransfer, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER);
@@ -178,18 +173,15 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  @NotNull
-  public PythonSdkFlavor<?> getFlavor() {
+  public @NotNull PythonSdkFlavor<?> getFlavor() {
     return myFlavorAndData.getFlavor();
   }
 
-  @NotNull
-  public PyFlavorAndData<?, ?> getFlavorAndData() {
+  public @NotNull PyFlavorAndData<?, ?> getFlavorAndData() {
     return myFlavorAndData;
   }
 
-  @NotNull
-  public static PythonSdkAdditionalData loadFromElement(@Nullable Element element) {
+  public static @NotNull PythonSdkAdditionalData loadFromElement(@Nullable Element element) {
     final PythonSdkAdditionalData data = new PythonSdkAdditionalData();
     data.load(element);
     return data;

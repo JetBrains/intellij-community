@@ -39,19 +39,17 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyTargetExpressionImpl(node);
   }
 
   @Override
-  public PyTargetExpression createPsi(@NotNull final PyTargetExpressionStub stub) {
+  public PyTargetExpression createPsi(final @NotNull PyTargetExpressionStub stub) {
     return new PyTargetExpressionImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyTargetExpressionStub createStub(@NotNull final PyTargetExpression psi, final StubElement parentStub) {
+  public @NotNull PyTargetExpressionStub createStub(final @NotNull PyTargetExpression psi, final StubElement parentStub) {
     final String name = psi.getName();
     final PyExpression assignedValue = psi.findAssignedValue();
     final String docString = DocStringUtil.getDocStringValue(psi);
@@ -88,7 +86,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   @Override
-  public void serialize(@NotNull final PyTargetExpressionStub stub, @NotNull final StubOutputStream stream) throws IOException {
+  public void serialize(final @NotNull PyTargetExpressionStub stub, final @NotNull StubOutputStream stream) throws IOException {
     stream.writeName(stub.getName());
     final String docString = stub.getDocString();
     stream.writeUTFFast(docString != null ? docString : "");
@@ -109,8 +107,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   @Override
-  @NotNull
-  public PyTargetExpressionStub deserialize(@NotNull final StubInputStream stream, final StubElement parentStub) throws IOException {
+  public @NotNull PyTargetExpressionStub deserialize(final @NotNull StubInputStream stream, final StubElement parentStub) throws IOException {
     String name = stream.readNameString();
     String docString = stream.readUTFFast();
     if (docString.isEmpty()) {
@@ -168,9 +165,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
   }
 
-  @NotNull
   @Override
-  public List<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> getExtensions() {
+  public @NotNull List<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> getExtensions() {
     return CustomTargetExpressionStubType.EP_NAME.getExtensionList();
   }
 }

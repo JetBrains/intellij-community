@@ -57,8 +57,7 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }

@@ -43,11 +43,10 @@ public final class PyTypeUtil {
   /**
    * Returns members of certain type from {@link PyClassLikeType}.
    */
-  @NotNull
-  public static <T extends PsiElement> List<T> getMembersOfType(@NotNull final PyClassLikeType type,
-                                                                @NotNull final Class<T> expectedMemberType,
+  public static @NotNull <T extends PsiElement> List<T> getMembersOfType(final @NotNull PyClassLikeType type,
+                                                                final @NotNull Class<T> expectedMemberType,
                                                                 boolean inherited,
-                                                                @NotNull final TypeEvalContext context) {
+                                                                final @NotNull TypeEvalContext context) {
 
     final List<T> result = new ArrayList<>();
     type.visitMembers(t -> {
@@ -69,8 +68,7 @@ public final class PyTypeUtil {
    * @param <T> result tyoe
    * @return data or null if not found
    */
-  @Nullable
-  public static <T> T findData(@NotNull final PyType type, @NotNull final Key<T> key) {
+  public static @Nullable <T> T findData(final @NotNull PyType type, final @NotNull Key<T> key) {
     if (type instanceof UserDataHolder) {
       return ((UserDataHolder)type).getUserData(key);
     }
@@ -88,8 +86,7 @@ public final class PyTypeUtil {
     return null;
   }
 
-  @Nullable
-  public static PyTupleType toPositionalContainerType(@NotNull PsiElement anchor, @Nullable PyType elementType) {
+  public static @Nullable PyTupleType toPositionalContainerType(@NotNull PsiElement anchor, @Nullable PyType elementType) {
     if (elementType instanceof PyUnpackedTupleTypeImpl unpackedTupleType) {
       return unpackedTupleType.asTupleType(anchor);
     }
@@ -99,8 +96,7 @@ public final class PyTypeUtil {
     return PyTupleType.createHomogeneous(anchor, elementType);
   }
 
-  @Nullable
-  public static PyCollectionType toKeywordContainerType(@NotNull PsiElement anchor, @Nullable PyType valueType) {
+  public static @Nullable PyCollectionType toKeywordContainerType(@NotNull PsiElement anchor, @Nullable PyType valueType) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
 
     return Optional
@@ -115,17 +111,15 @@ public final class PyTypeUtil {
    * <p>
    * It allows to process types received as the result of multiresolve uniformly with the others.
    */
-  @NotNull
-  public static StreamEx<PyType> toStream(@Nullable PyType type) {
+  public static @NotNull StreamEx<PyType> toStream(@Nullable PyType type) {
     if (type instanceof PyUnionType) {
       return StreamEx.of(((PyUnionType)type).getMembers());
     }
     return StreamEx.of(type);
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  public static Ref<PyType> notNullToRef(@Nullable PyType type) {
+  public static @Nullable Ref<PyType> notNullToRef(@Nullable PyType type) {
     return type == null ? null : Ref.create(type);
   }
 
@@ -135,8 +129,7 @@ public final class PyTypeUtil {
    *
    * @see #toUnion()
    */
-  @NotNull
-  public static Collector<Ref<PyType>, ?, Ref<PyType>> toUnionFromRef() {
+  public static @NotNull Collector<Ref<PyType>, ?, Ref<PyType>> toUnionFromRef() {
     return Collectors.reducing(null, (accType, hintType) -> {
       if (hintType == null) {
         return accType;
@@ -162,8 +155,7 @@ public final class PyTypeUtil {
    *
    * @see #toUnionFromRef()
    */
-  @NotNull
-  public static Collector<@Nullable PyType, ?, @Nullable PyType> toUnion() {
+  public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnionType::union);
   }
 

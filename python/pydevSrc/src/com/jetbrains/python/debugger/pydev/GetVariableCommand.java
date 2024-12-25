@@ -1,3 +1,5 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -23,8 +25,7 @@ public class GetVariableCommand extends GetFrameCommand {
    * @param var a debug variable
    * @return A string of attributes in a path separated by \t
    */
-  @NotNull
-  public static String composeName(final PyDebugValue var) {
+  public static @NotNull String composeName(final PyDebugValue var) {
     final StringBuilder sb = new StringBuilder();
     PyDebugValue p = var;
 

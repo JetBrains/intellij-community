@@ -2,7 +2,10 @@
 package com.intellij.restructuredtext.python.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -10,11 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 @State(name = "RestSettings", storages = @Storage(value="other.xml", roamingType = RoamingType.DISABLED))
 public class RestSettings implements PersistentStateComponent<RestSettings> {
-  @NotNull private String myCurrentPanel = JBCefApp.isSupported() ? RestConfigurable.JCEF : RestConfigurable.SWING;
+  private @NotNull String myCurrentPanel = JBCefApp.isSupported() ? RestConfigurable.JCEF : RestConfigurable.SWING;
 
-  @NotNull
-  @NlsSafe
-  public String getCurrentPanel() {
+  public @NotNull @NlsSafe String getCurrentPanel() {
     return myCurrentPanel;
   }
 

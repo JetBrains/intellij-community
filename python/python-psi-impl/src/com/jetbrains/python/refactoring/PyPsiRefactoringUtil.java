@@ -42,8 +42,8 @@ public final class PyPsiRefactoringUtil {
    * @param statementList where element should be inserted
    * @return inserted element
    */
-  public static <T extends PyElement> T addElementToStatementList(@NotNull final T element,
-                                                                  @NotNull final PyStatementList statementList) {
+  public static <T extends PyElement> T addElementToStatementList(final @NotNull T element,
+                                                                  final @NotNull PyStatementList statementList) {
     PsiElement before = null;
     PsiElement after = null;
     for (final PyStatement statement : statementList.getStatements()) {
@@ -81,8 +81,7 @@ public final class PyPsiRefactoringUtil {
    * @param toTheBeginning whether to insert element at the beginning or at the end of the statement list
    * @return actually inserted element as for {@link PsiElement#add(PsiElement)}
    */
-  @NotNull
-  public static PsiElement addElementToStatementList(@NotNull PsiElement element,
+  public static @NotNull PsiElement addElementToStatementList(@NotNull PsiElement element,
                                                      @NotNull PyStatementList statementList,
                                                      boolean toTheBeginning) {
     final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
@@ -141,8 +140,7 @@ public final class PyPsiRefactoringUtil {
     return element;
   }
 
-  @NotNull
-  public static List<PyFunction> getAllSuperAbstractMethods(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public static @NotNull List<PyFunction> getAllSuperAbstractMethods(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     return ContainerUtil.filter(getAllSuperMethods(cls, context), method -> isAbstractMethodForClass(method, cls, context));
   }
 
@@ -166,8 +164,7 @@ public final class PyPsiRefactoringUtil {
   /**
    * Returns all super functions available through MRO.
    */
-  @NotNull
-  public static List<PyFunction> getAllSuperMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+  public static @NotNull List<PyFunction> getAllSuperMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
     final Map<String, PyFunction> functions = Maps.newLinkedHashMap();
     for (final PyClassLikeType type : pyClass.getAncestorTypes(context)) {
       if (type != null) {
@@ -250,8 +247,7 @@ public final class PyPsiRefactoringUtil {
     }
   }
 
-  @Nullable
-  public static String getOriginalName(@NotNull PsiNamedElement element) {
+  public static @Nullable String getOriginalName(@NotNull PsiNamedElement element) {
     if (element instanceof PyFile) {
       VirtualFile virtualFile = PsiUtilBase.asVirtualFile(PyUtil.turnInitIntoDir(element));
       if (virtualFile != null) {
@@ -262,8 +258,7 @@ public final class PyPsiRefactoringUtil {
     return element.getName();
   }
 
-  @Nullable
-  public static String getOriginalName(PyImportElement element) {
+  public static @Nullable String getOriginalName(PyImportElement element) {
     final QualifiedName qname = element.getImportedQName();
     if (qname != null && qname.getComponentCount() > 0) {
       return qname.getComponents().get(0);
@@ -279,10 +274,10 @@ public final class PyPsiRefactoringUtil {
    * @param paramExpressions param expressions. Like "object" or "MySuperClass". Will not add any param exp. if null.
    * @param keywordArguments keyword args like "metaclass=ABCMeta". key-value pairs.  Will not add any keyword arg. if null.
    */
-  public static void addSuperClassExpressions(@NotNull final Project project,
-                                              @NotNull final PyClass clazz,
-                                              @Nullable final Collection<String> paramExpressions,
-                                              @Nullable final Collection<Pair<String, String>> keywordArguments) {
+  public static void addSuperClassExpressions(final @NotNull Project project,
+                                              final @NotNull PyClass clazz,
+                                              final @Nullable Collection<String> paramExpressions,
+                                              final @Nullable Collection<Pair<String, String>> keywordArguments) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
     final LanguageLevel languageLevel = LanguageLevel.forElement(clazz);
 
@@ -324,11 +319,10 @@ public final class PyPsiRefactoringUtil {
    * @param value         it's value. Like ABCMeta or 42.
    * @return newly inserted attribute
    */
-  @Nullable
-  public static PsiElement addClassAttributeIfNotExist(
-    @NotNull final PyClass aClass,
-    @NotNull final String attributeName,
-    @NotNull final String value) {
+  public static @Nullable PsiElement addClassAttributeIfNotExist(
+    final @NotNull PyClass aClass,
+    final @NotNull String attributeName,
+    final @NotNull String value) {
     if (aClass.findClassAttribute(attributeName, false, null) != null) {
       return null; //Do not add any if exist already
     }
@@ -369,8 +363,8 @@ public final class PyPsiRefactoringUtil {
    * @param clazz        destination
    * @param superClasses classes to add
    */
-  public static void addSuperclasses(@NotNull final Project project,
-                                     @NotNull final PyClass clazz,
+  public static void addSuperclasses(final @NotNull Project project,
+                                     final @NotNull PyClass clazz,
                                      final PyClass @NotNull ... superClasses) {
 
     final Collection<String> superClassNames = new ArrayList<>();

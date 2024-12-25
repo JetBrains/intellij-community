@@ -25,9 +25,8 @@ import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveStatementQuickFix extends PsiUpdateModCommandQuickFix  {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.statement");
   }
 

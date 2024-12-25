@@ -25,7 +25,7 @@ public final class PyClassInheritorsSearchExecutor implements QueryExecutor<PyCl
   private static final ImmutableSet<String> IGNORED_BASES = ImmutableSet.of("object", "BaseException", "Exception");
 
   @Override
-  public boolean execute(@NotNull final PyClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<? super PyClass> consumer) {
+  public boolean execute(final @NotNull PyClassInheritorsSearch.SearchParameters queryParameters, final @NotNull Processor<? super PyClass> consumer) {
     Set<PyClass> processed = new HashSet<>();
     return processDirectInheritors(queryParameters.getSuperClass(), consumer, queryParameters.isCheckDeepInheritance(), processed);
   }

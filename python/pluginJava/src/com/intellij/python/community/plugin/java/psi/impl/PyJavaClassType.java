@@ -30,21 +30,19 @@ public class PyJavaClassType implements PyClassLikeType {
   }
 
   @Override
-  @Nullable
-  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(final @NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
     return resolveMember(name, location, direction, resolveContext, true);
   }
 
-  @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext,
-                                                          boolean inherited) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext,
+                                                                    boolean inherited) {
     final PsiMethod[] methods = myClass.findMethodsByName(name, inherited);
     if (methods.length > 0) {
       ResolveResultList resultList = new ResolveResultList();
@@ -66,8 +64,7 @@ public class PyJavaClassType implements PyClassLikeType {
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     if (myClass != null) {
       return myClass.getName();
     }
@@ -90,18 +87,16 @@ public class PyJavaClassType implements PyClassLikeType {
     return myDefinition;
   }
 
-  @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context) {
+  public @Nullable PyType getReturnType(@NotNull TypeEvalContext context) {
     if (myDefinition) {
       return new PyJavaClassType(myClass, false);
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     return getReturnType(context);
   }
 
@@ -110,27 +105,23 @@ public class PyJavaClassType implements PyClassLikeType {
     return myDefinition;
   }
 
-  @NotNull
   @Override
-  public PyClassLikeType toInstance() {
+  public @NotNull PyClassLikeType toInstance() {
     return myDefinition ? new PyJavaClassType(myClass, false) : this;
   }
 
-  @NotNull
   @Override
-  public PyClassLikeType toClass() {
+  public @NotNull PyClassLikeType toClass() {
     return myDefinition ? this : new PyJavaClassType(myClass, true);
   }
 
-  @Nullable
   @Override
-  public String getClassQName() {
+  public @Nullable String getClassQName() {
     return myClass.getQualifiedName();
   }
 
-  @NotNull
   @Override
-  public List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
+  public @NotNull List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> result = new ArrayList<>();
     for (PsiClass cls : myClass.getSupers()) {
       result.add(new PyJavaClassType(cls, myDefinition));
@@ -159,9 +150,8 @@ public class PyJavaClassType implements PyClassLikeType {
     }
   }
 
-  @NotNull
   @Override
-  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+  public @NotNull Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
     final Set<String> result = new LinkedHashSet<>();
 
     for (PsiMethod method : myClass.getAllMethods()) {
@@ -183,9 +173,8 @@ public class PyJavaClassType implements PyClassLikeType {
     return result;
   }
 
-  @NotNull
   @Override
-  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+  public @NotNull List<PyClassLikeType> getAncestorTypes(final @NotNull TypeEvalContext context) {
     final List<PyClassLikeType> result = new ArrayList<>();
 
     final Deque<PsiClass> deque = new LinkedList<>();
@@ -213,9 +202,8 @@ public class PyJavaClassType implements PyClassLikeType {
     return myClass.isValid();
   }
 
-  @Nullable
   @Override
-  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
+  public @Nullable PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
     return null;
   }
 

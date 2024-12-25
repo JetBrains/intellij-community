@@ -6,15 +6,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.intellij.restructuredtext.psi.RestLine;
+import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public final class PyRestDocstringLanguageInjector implements LanguageInjector {
   @Override
-  public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
+  public void getLanguagesToInject(final @NotNull PsiLanguageInjectionHost host, final @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
     if (host instanceof RestLine) {
       int start = 0;
       int end = host.getTextLength() - 1;

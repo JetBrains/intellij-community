@@ -21,30 +21,27 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyDecoratorListImpl(node);
   }
 
   @Override
-  public PyDecoratorList createPsi(@NotNull final PyDecoratorListStub stub) {
+  public PyDecoratorList createPsi(final @NotNull PyDecoratorListStub stub) {
     return new PyDecoratorListImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyDecoratorListStub createStub(@NotNull final PyDecoratorList psi, final StubElement parentStub) {
+  public @NotNull PyDecoratorListStub createStub(final @NotNull PyDecoratorList psi, final StubElement parentStub) {
     return new PyDecoratorListStubImpl(parentStub);
   }
 
   @Override
-  public void serialize(@NotNull final PyDecoratorListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(final @NotNull PyDecoratorListStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
     // nothing
   }
 
   @Override
-  @NotNull
-  public PyDecoratorListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyDecoratorListStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PyDecoratorListStubImpl(parentStub);
   }
 }

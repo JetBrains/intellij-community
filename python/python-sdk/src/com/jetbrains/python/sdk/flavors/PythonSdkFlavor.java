@@ -81,8 +81,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * Class of flavor data. Always implement it explicitly
    */
-  @NotNull
-  public Class<D> getFlavorDataClass() {
+  public @NotNull Class<D> getFlavorDataClass() {
     return getEmptyFlavorForBackwardCompatibility();
   }
 
@@ -90,8 +89,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * Some plugins didn't implement {@link #getFlavorDataClass()}
    */
   @SuppressWarnings("unchecked")
-  @NotNull
-  private Class<D> getEmptyFlavorForBackwardCompatibility() {
+  private @NotNull Class<D> getEmptyFlavorForBackwardCompatibility() {
     LOG.warn("getFlavorDataClass is not implemented, please implement it");
     return (Class<D>)PyFlavorData.Empty.class;
   }
@@ -99,7 +97,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * On local targets some flavours could be detected. It returns path to python interpreters for such cases.
    */
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     return ContainerUtil.map(suggestHomePaths(module, context), Path::of);
   }
 
@@ -107,7 +105,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @deprecated use {@link #suggestLocalHomePaths(Module, UserDataHolder)}
    */
   @Deprecated
-  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+  public Collection<String> suggestHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     return Collections.emptyList();
   }
 
@@ -137,8 +135,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @return name of env variable to contain current folder.
    * {@code null} if the flavor doesn't need it
    */
-  @Nullable
-  public String envPathParam() {
+  public @Nullable String envPathParam() {
     return null;
   }
 
@@ -191,8 +188,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     ourExecutableFiles.invalidateAll();
   }
 
-  @NotNull
-  private static String getIdForCache(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration configuration) {
+  private static @NotNull String getIdForCache(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration configuration) {
     var builder = new StringBuilder(fullPath);
     builder.append(" ");
     if (configuration instanceof TargetConfigurationWithId) {
@@ -252,8 +248,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return result;
   }
 
-  @Nullable
-  public static PythonSdkFlavor<?> getFlavor(@NotNull final Sdk sdk) {
+  public static @Nullable PythonSdkFlavor<?> getFlavor(final @NotNull Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
       return ((PythonSdkAdditionalData)data).getFlavor();
@@ -268,10 +263,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead.
    * if you do not have sdk yet, and you want to guess the flavor, use {@link #tryDetectFlavorByLocalPath(Path)}
    */
+  //No warning yet as there are usages: to be fixed
   @Deprecated
-  @Nullable
-  @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
-  public static PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static @Nullable PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
     if (sdkPath == null || PythonSdkUtil.isCustomPythonSdkHomePath(sdkPath)) return null;
     return tryDetectFlavorByLocalPath(sdkPath);
   }
@@ -295,8 +290,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead
    */
   @Deprecated
-  @Nullable
-  public static PythonSdkFlavor<?> getPlatformIndependentFlavor(@Nullable final String sdkPath) {
+  public static @Nullable PythonSdkFlavor<?> getPlatformIndependentFlavor(final @Nullable String sdkPath) {
     if (sdkPath == null) {
       return null;
     }
@@ -332,16 +326,16 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @param sdkHome
    * @return
    */
+  //because of process output
   @Deprecated(forRemoval = true)
-  @Nullable
-  @RequiresBackgroundThread(generateAssertion = false) //because of process output
-  public String getVersionString(@Nullable String sdkHome) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public @Nullable String getVersionString(@Nullable String sdkHome) {
     return getVersionStringStatic(sdkHome);
   }
 
-  @Nullable
-  @RequiresBackgroundThread(generateAssertion = false) //because of process output
-  public static String getVersionStringStatic(@Nullable String sdkHome) {
+  //because of process output
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static @Nullable String getVersionStringStatic(@Nullable String sdkHome) {
     if (sdkHome == null) {
       return null;
     }
@@ -350,8 +344,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getVersionStringFromOutput(processOutput);
   }
 
-  @Nullable
-  public static String getVersionStringFromOutput(@NotNull ProcessOutput processOutput) {
+  public static @Nullable String getVersionStringFromOutput(@NotNull ProcessOutput processOutput) {
     if (processOutput.getExitCode() != 0) {
       String errors = processOutput.getStderr();
       if (StringUtil.isEmpty(errors)) {
@@ -367,8 +360,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getVersionStringFromOutput(processOutput.getStdout());
   }
 
-  @Nullable
-  public static String getVersionStringFromOutput(@NotNull String output) {
+  public static @Nullable String getVersionStringFromOutput(@NotNull String output) {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
@@ -388,25 +380,22 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
 
-  @NotNull
-  public abstract String getName();
+  public abstract @NotNull String getName();
 
   /**
    * Unique flavor name to be stored in persistence storage. Do not change value not to break compatibility.
    */
-  @NotNull
-  public String getUniqueId() {
+  public @NotNull String getUniqueId() {
     return getClass().getSimpleName();
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
+  public @NotNull LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
     return getLanguageLevelFromVersionStringStatic(sdk.getVersionString());
   }
 
-  @NotNull
-  @RequiresBackgroundThread(generateAssertion = false) //because of process output
-  public LanguageLevel getLanguageLevel(@NotNull String sdkHome) {
+  //because of process output
+  @RequiresBackgroundThread(generateAssertion = false)
+  public @NotNull LanguageLevel getLanguageLevel(@NotNull String sdkHome) {
     return getLanguageLevelFromVersionStringStatic(getVersionString(sdkHome));
   }
 
@@ -418,8 +407,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @deprecated use {@link #getLanguageLevelFromVersionStringStatic(String)}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
+  public @NotNull LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
     return getLanguageLevelFromVersionStringStatic(version);
   }
 
@@ -427,8 +415,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * Returns wrong language level when argument is null which isn't probably what you except.
    * Be sure to check argument for null
    */
-  @NotNull
-  public static LanguageLevel getLanguageLevelFromVersionStringStatic(@Nullable String version) {
+  public static @NotNull LanguageLevel getLanguageLevelFromVersionStringStatic(@Nullable String version) {
     if (version != null && version.startsWith(PYTHON_VERSION_STRING_PREFIX)) {
       return LanguageLevel.fromPythonVersion(version.substring(PYTHON_VERSION_STRING_PREFIX.length()));
     }
@@ -447,8 +434,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return path;
   }
 
-  @Nullable
-  public CommandLinePatcher commandLinePatcher() {
+  public @Nullable CommandLinePatcher commandLinePatcher() {
     return null;
   }
 
@@ -459,7 +445,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   public void dropCaches() {
   }
 
-  public final static class UnknownFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
+  public static final class UnknownFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
 
     public static final UnknownFlavor INSTANCE = new UnknownFlavor();
 

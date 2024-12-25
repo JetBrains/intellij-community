@@ -28,14 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public final class TypeAssertionIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.insert.assertion");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.insert.assertion");
   }
 

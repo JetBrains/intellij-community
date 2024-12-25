@@ -6,16 +6,14 @@ import org.jetbrains.annotations.NotNull;
 
 class PyTypeHintFileElementType extends PyFileElementType {
 
-  @NotNull
-  public static final PyTypeHintFileElementType INSTANCE = new PyTypeHintFileElementType();
+  public static final @NotNull PyTypeHintFileElementType INSTANCE = new PyTypeHintFileElementType();
 
   private PyTypeHintFileElementType() {
     super(PyTypeHintDialect.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     return "PyTypeHint.ID";
   }
 }

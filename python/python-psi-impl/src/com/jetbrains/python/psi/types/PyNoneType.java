@@ -21,11 +21,10 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   }
 
   @Override
-  @Nullable
-  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(final @NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
     return null;
   }
 

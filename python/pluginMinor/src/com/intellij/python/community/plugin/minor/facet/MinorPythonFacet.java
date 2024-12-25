@@ -5,8 +5,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.Module;
-import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil;
+import com.jetbrains.python.facet.LibraryContributingFacet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 public final class MinorPythonFacet extends LibraryContributingFacet<PythonFacetConfiguration> {
   public static final FacetTypeId<MinorPythonFacet> ID = new FacetTypeId<>("python");
 
-  MinorPythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final PythonFacetConfiguration configuration,
-                          Facet underlyingFacet) {
+  MinorPythonFacet(final @NotNull FacetType facetType, final @NotNull Module module, final @NotNull String name, final @NotNull PythonFacetConfiguration configuration,
+                   Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
   }
 

@@ -14,18 +14,16 @@ import org.jetbrains.annotations.Nullable;
 public final class PyIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet COMMENTS = TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT, PyTokenTypes.DOCSTRING);
 
-  @Nullable
   @Override
-  public Lexer getIndexingLexer(@NotNull PsiFile file) {
+  public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {
     if (file instanceof PyFile) {
       return new PythonLexer();
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public TokenSet getCommentTokenSet(@NotNull PsiFile file) {
+  public @Nullable TokenSet getCommentTokenSet(@NotNull PsiFile file) {
     if (file instanceof PyFile) {
       return COMMENTS;
     }
@@ -46,9 +44,8 @@ public final class PyIndexPatternBuilder implements IndexPatternBuilder {
     return tokenType == PyTokenTypes.DOCSTRING ? 3 : 0;
   }
 
-  @NotNull
   @Override
-  public String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
+  public @NotNull String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
     return tokenType == PyTokenTypes.END_OF_LINE_COMMENT ? "#" : "";
   }
 }

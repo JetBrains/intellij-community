@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PyJavaSuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
+  public boolean execute(final @NotNull PySuperMethodsSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiElement> consumer) {
     PyFunction func = queryParameters.getDerivedMethod();
     PyClass containingClass = func.getContainingClass();
     if (containingClass != null) {

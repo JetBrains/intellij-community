@@ -41,10 +41,8 @@ import java.util.*;
  * @author Mikhail Golubev
  */
 public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable");
   }
 
@@ -62,8 +60,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     return true;
   }
 
-  @NotNull
-  private static List<PyTargetExpression> findSuitableTargetsUnderCaret(@NotNull Project project, Editor editor, PsiFile file) {
+  private static @NotNull List<PyTargetExpression> findSuitableTargetsUnderCaret(@NotNull Project project, Editor editor, PsiFile file) {
     final int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     final PyReferenceOwner elementAtCaret = PsiTreeUtil.getParentOfType(file.findElementAt(offset),
                                                                         PyReferenceExpression.class, PyTargetExpression.class);
@@ -86,10 +83,9 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
       .toList();
   }
 
-  @NotNull
-  private static StreamEx<PsiElement> resolveReferenceAugAssignmentsAware(@NotNull PyReferenceOwner element,
-                                                                          @NotNull PyResolveContext resolveContext,
-                                                                          @NotNull Set<PyReferenceOwner> alreadyVisited) {
+  private static @NotNull StreamEx<PsiElement> resolveReferenceAugAssignmentsAware(@NotNull PyReferenceOwner element,
+                                                                                   @NotNull PyResolveContext resolveContext,
+                                                                                   @NotNull Set<PyReferenceOwner> alreadyVisited) {
     alreadyVisited.add(element);
     return StreamEx.of(PyUtil.multiResolveTopPriority(element, resolveContext))
                    .filter(resolved -> resolved instanceof PyTargetExpression || !alreadyVisited.contains(resolved))
@@ -97,10 +93,9 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
                    .distinct();
   }
 
-  @NotNull
-  private static StreamEx<PsiElement> expandResolveAugAssignments(@NotNull PsiElement element,
-                                                                  @NotNull PyResolveContext context,
-                                                                  @NotNull Set<PyReferenceOwner> alreadyVisited) {
+  private static @NotNull StreamEx<PsiElement> expandResolveAugAssignments(@NotNull PsiElement element,
+                                                                           @NotNull PyResolveContext context,
+                                                                           @NotNull Set<PyReferenceOwner> alreadyVisited) {
     if (element instanceof PyReferenceExpression && PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
       return StreamEx.of(resolveReferenceAugAssignmentsAware((PyReferenceOwner)element, context, alreadyVisited));
     }
@@ -155,8 +150,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     return false;
   }
 
-  @NotNull
-  private static List<PyTargetExpression> findClassLevelDefinitions(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+  private static @NotNull List<PyTargetExpression> findClassLevelDefinitions(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     assert target.getContainingClass() != null;
     assert target.getName() != null;
     final PyClassTypeImpl classType = new PyClassTypeImpl(target.getContainingClass(), true);
@@ -256,8 +250,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     }
   }
 
-  @NotNull
-  private static AnnotationInfo generateNestedTypeHint(@NotNull PyTargetExpression target, TypeEvalContext context) {
+  private static @NotNull AnnotationInfo generateNestedTypeHint(@NotNull PyTargetExpression target, TypeEvalContext context) {
     final PyElement validTargetParent = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
     assert validTargetParent != null;
     final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetParent, target);
@@ -300,8 +293,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     }
   }
 
-  @Nullable
-  private static PyType getInferredTypeOrObject(@NotNull PyTypedElement target, @NotNull TypeEvalContext context) {
+  private static @Nullable PyType getInferredTypeOrObject(@NotNull PyTypedElement target, @NotNull TypeEvalContext context) {
     final PyType inferred = context.getType(target);
     return inferred != null ? inferred : PyBuiltinCache.getInstance(target).getObjectType();
   }

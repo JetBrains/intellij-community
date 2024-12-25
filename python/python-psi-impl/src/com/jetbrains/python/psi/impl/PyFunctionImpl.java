@@ -45,7 +45,8 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -316,7 +317,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return myYieldExpressions;
     }
 
-    final private List<PyYieldExpression> myYieldExpressions = new ArrayList<>();
+    private final List<PyYieldExpression> myYieldExpressions = new ArrayList<>();
     
     @Override
     public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
@@ -410,8 +411,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return extractDeprecationMessage();
   }
 
-  @Nullable
-  public String extractDeprecationMessage() {
+  public @Nullable String extractDeprecationMessage() {
     String deprecationMessageFromDecorator = extractDeprecationMessageFromDecorator(this);
     if (deprecationMessageFromDecorator != null) {
       return deprecationMessageFromDecorator;

@@ -34,11 +34,10 @@ public sealed interface PyVariadicType extends PyType permits PyPositionalVariad
   }
 
   @Override
-  @Nullable
-  default List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                           @Nullable PyExpression location,
-                                                           @NotNull AccessDirection direction,
-                                                           @NotNull PyResolveContext resolveContext) {
+  default @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                     @Nullable PyExpression location,
+                                                                     @NotNull AccessDirection direction,
+                                                                     @NotNull PyResolveContext resolveContext) {
     return null;
   }
 

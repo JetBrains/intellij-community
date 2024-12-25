@@ -35,9 +35,8 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
-  @NotNull
   @Override
-  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
+  public @NotNull PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
   }
 
@@ -71,8 +70,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       .collect(PyTypeUtil.toUnion());
   }
 
-  @Nullable
-  private static Ref<PyType> getGeneratorReturnType(@Nullable PyType type) {
+  private static @Nullable Ref<PyType> getGeneratorReturnType(@Nullable PyType type) {
     if (type instanceof PyCollectionType) {
       if (PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
         return Ref.create(((PyCollectionType)type).getIteratedItemType());

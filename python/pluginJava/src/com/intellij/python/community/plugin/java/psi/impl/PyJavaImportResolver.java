@@ -19,8 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PyJavaImportResolver implements PyImportResolver {
   @Override
-  @Nullable
-  public PsiElement resolveImportReference(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context, boolean withRoots) {
+  public @Nullable PsiElement resolveImportReference(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context, boolean withRoots) {
     String fqn = name.toString();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
     final PsiPackage aPackage = psiFacade.findPackage(fqn);

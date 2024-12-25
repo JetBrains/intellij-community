@@ -6,7 +6,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ContributedReferenceHost;
+import com.intellij.psi.PsiLiteralValue;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -28,9 +30,9 @@ import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
 
-  @Nullable private volatile String myStringValue;
-  @Nullable private volatile List<TextRange> myValueTextRanges;
-  @Nullable private volatile List<Pair<TextRange, String>> myDecodedFragments;
+  private volatile @Nullable String myStringValue;
+  private volatile @Nullable List<TextRange> myValueTextRanges;
+  private volatile @Nullable List<Pair<TextRange, String>> myDecodedFragments;
 
   public PyStringLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -50,8 +52,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public List<TextRange> getStringValueTextRanges() {
+  public @NotNull List<TextRange> getStringValueTextRanges() {
     List<TextRange> result = myValueTextRanges;
     if (result == null) {
       myValueTextRanges = result = PyStringLiteralExpression.super.getStringValueTextRanges();
@@ -60,8 +61,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public List<Pair<TextRange, String>> getDecodedFragments() {
+  public @NotNull List<Pair<TextRange, String>> getDecodedFragments() {
     List<Pair<TextRange, String>> result = myDecodedFragments;
     if (result == null) {
       myDecodedFragments = result = PyStringLiteralExpression.super.getDecodedFragments();
@@ -82,9 +82,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       .anyMatch(element -> !element.getFragments().isEmpty());
   }
 
-  @NotNull
   @Override
-  public String getStringValue() {
+  public @NotNull String getStringValue() {
     //ASTNode child = getNode().getFirstChildNode();
     //assert child != null;
     String result = myStringValue;
@@ -94,9 +93,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return result;
   }
 
-  @Nullable
   @Override
-  public Object getValue() {
+  public @Nullable Object getValue() {
     return getStringValue();
   }
 
@@ -154,9 +152,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         return getStringValue();
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
+      public @Nullable String getLocationString() {
         String packageForFile = PyElementPresentation.getPackageForFile(getContainingFile());
         return packageForFile != null ? String.format("(%s)", packageForFile) : null;
       }

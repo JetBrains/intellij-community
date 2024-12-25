@@ -30,14 +30,12 @@ public class UnresolvedReferenceAddSelfQuickFix extends PsiUpdateModCommandQuick
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.unresolved.reference", myAttributeName, myQualifier);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.add.qualifier");
   }
 

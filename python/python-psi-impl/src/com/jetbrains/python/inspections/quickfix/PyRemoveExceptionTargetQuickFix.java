@@ -25,9 +25,8 @@ import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveExceptionTargetQuickFix extends PsiUpdateModCommandQuickFix {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.exception.target");
   }
 

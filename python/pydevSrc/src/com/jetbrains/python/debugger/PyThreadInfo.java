@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
@@ -15,7 +15,7 @@ public class PyThreadInfo {
   }
 
   private final String myId;
-  private @NonNls final String myName;
+  private final @NonNls String myName;
   private List<PyStackFrameInfo> myFrames;
   private State myState;
   private int myStopReason;
@@ -45,8 +45,7 @@ public class PyThreadInfo {
     return myName;
   }
 
-  @Nullable
-  public String getMessage() {
+  public @Nullable String getMessage() {
     return myMessage;
   }
 
@@ -54,8 +53,7 @@ public class PyThreadInfo {
     this.myMessage = message;
   }
 
-  @Nullable
-  public synchronized List<PyStackFrameInfo> getFrames() {
+  public synchronized @Nullable List<PyStackFrameInfo> getFrames() {
     return myFrames;
   }
 

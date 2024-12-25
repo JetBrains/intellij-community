@@ -8,7 +8,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStubElementType;
@@ -30,9 +29,8 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     super(debugName);
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PyImportElementImpl(node);
   }
 
@@ -41,9 +39,8 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     return new PyImportElementImpl(stub);
   }
 
-  @NotNull
   @Override
-  public PyImportElementStub createStub(@NotNull PyImportElement psi, StubElement parentStub) {
+  public @NotNull PyImportElementStub createStub(@NotNull PyImportElement psi, StubElement parentStub) {
     final PyTargetExpression asName = psi.getAsNameElement();
     return new PyImportElementStubImpl(psi.getImportedQName(), asName != null ? asName.getName() : "", parentStub, getStubElementType());
   }
@@ -55,8 +52,7 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
   }
 
   @Override
-  @NotNull
-  public PyImportElementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyImportElementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     QualifiedName qName = QualifiedName.deserialize(dataStream);
     String asName = dataStream.readNameString();
     return new PyImportElementStubImpl(qName, asName, parentStub, getStubElementType());

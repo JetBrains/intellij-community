@@ -27,24 +27,20 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
     myScopeOwner = scopeOwner;
   }
 
-  @NotNull
-  public PyTypeVarTupleTypeImpl withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
+  public @NotNull PyTypeVarTupleTypeImpl withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
     return new PyTypeVarTupleTypeImpl(myName, myDeclarationElement, myDefaultType, scopeOwner);
   }
 
-  @NotNull
-  public PyTypeVarTupleTypeImpl withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
+  public @NotNull PyTypeVarTupleTypeImpl withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
     return new PyTypeVarTupleTypeImpl(myName, declarationElement, myDefaultType, myScopeOwner);
   }
 
-  @NotNull
-  public PyTypeVarTupleTypeImpl withDefaultType(@Nullable PyPositionalVariadicType defaultType) {
+  public @NotNull PyTypeVarTupleTypeImpl withDefaultType(@Nullable PyPositionalVariadicType defaultType) {
     return new PyTypeVarTupleTypeImpl(myName, myDeclarationElement, defaultType, myScopeOwner);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "*" + myName;
   }
 

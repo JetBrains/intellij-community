@@ -131,14 +131,12 @@ public class PyBlock implements ASTBlock {
   }
 
   @Override
-  @NotNull
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return myNode;
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
@@ -150,8 +148,7 @@ public class PyBlock implements ASTBlock {
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlockByNode = buildSubBlocks();
       mySubBlocks = new ArrayList<>(mySubBlockByNode.values());
@@ -159,18 +156,15 @@ public class PyBlock implements ASTBlock {
     return Collections.unmodifiableList(mySubBlocks);
   }
 
-  @Nullable
-  private PyBlock getSubBlockByNode(@NotNull ASTNode node) {
+  private @Nullable PyBlock getSubBlockByNode(@NotNull ASTNode node) {
     return mySubBlockByNode.get(node);
   }
 
-  @Nullable
-  private PyBlock getSubBlockByIndex(int index) {
+  private @Nullable PyBlock getSubBlockByIndex(int index) {
     return mySubBlocks.get(index);
   }
 
-  @NotNull
-  private Map<ASTNode, PyBlock> buildSubBlocks() {
+  private @NotNull Map<ASTNode, PyBlock> buildSubBlocks() {
     final Map<ASTNode, PyBlock> blocks = new LinkedHashMap<>();
     for (ASTNode child: getSubBlockNodes()) {
 
@@ -187,8 +181,7 @@ public class PyBlock implements ASTBlock {
     return Collections.unmodifiableMap(blocks);
   }
 
-  @NotNull
-  protected Iterable<ASTNode> getSubBlockNodes() {
+  protected @NotNull Iterable<ASTNode> getSubBlockNodes() {
     if (myNode.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
       final ArrayList<ASTNode> result = new ArrayList<>();
       collectChildrenOperatorAndOperandNodes(myNode, result);
@@ -208,8 +201,7 @@ public class PyBlock implements ASTBlock {
     }
   }
 
-  @NotNull
-  private PyBlock buildSubBlock(@NotNull ASTNode child) {
+  private @NotNull PyBlock buildSubBlock(@NotNull ASTNode child) {
     final IElementType parentType = myNode.getElementType();
 
     final ASTNode grandParentNode = myNode.getTreeParent();
@@ -524,8 +516,7 @@ public class PyBlock implements ASTBlock {
     return conditionalStatement != null && conditionalStatement.getCondition() == element;
   }
 
-  @Nullable
-  private PyBlock findTopmostBinaryExpressionBlock(@NotNull ASTNode child) {
+  private @Nullable PyBlock findTopmostBinaryExpressionBlock(@NotNull ASTNode child) {
     assert child.getElementType() != PyElementTypes.BINARY_EXPRESSION;
     PyBlock parentBlock = this;
     PyBlock alignmentOwner = null;
@@ -637,8 +628,7 @@ public class PyBlock implements ASTBlock {
     }
   }
 
-  @Nullable
-  private static PsiElement getFirstItem(@NotNull PsiElement elem) {
+  private static @Nullable PsiElement getFirstItem(@NotNull PsiElement elem) {
     PsiElement[] items = PsiElement.EMPTY_ARRAY;
     if (elem instanceof PyAstSequenceExpression) {
       items = ((PyAstSequenceExpression)elem).getElements();
@@ -705,8 +695,7 @@ public class PyBlock implements ASTBlock {
     return getControlStatementHeader(myNode) != null;
   }
 
-  @Nullable
-  private static PsiElement getControlStatementHeader(@NotNull ASTNode node) {
+  private static @Nullable PsiElement getControlStatementHeader(@NotNull ASTNode node) {
     final PyAstStatementPart statementPart = PsiTreeUtil.getParentOfType(node.getPsi(), PyAstStatementPart.class, false, PyAstStatementList.class);
     if (statementPart != null) {
       return statementPart;
@@ -788,8 +777,7 @@ public class PyBlock implements ASTBlock {
     return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasHangingIndent(myNode.getPsi());
   }
 
-  @Nullable
-  private static ASTNode findPrevNonSpaceNode(@NotNull ASTNode node) {
+  private static @Nullable ASTNode findPrevNonSpaceNode(@NotNull ASTNode node) {
     do {
       node = node.getTreePrev();
     }
@@ -845,27 +833,23 @@ public class PyBlock implements ASTBlock {
   }
 
   @Override
-  @Nullable
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return myWrap;
   }
 
   @Override
-  @Nullable
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     assert myIndent != null;
     return myIndent;
   }
 
   @Override
-  @Nullable
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return myAlignment;
   }
 
   @Override
-  @Nullable
-  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     final CommonCodeStyleSettings settings = myContext.getSettings();
     final PyCodeStyleSettings pySettings = myContext.getPySettings();
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
@@ -982,8 +966,7 @@ public class PyBlock implements ASTBlock {
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
 
-  @NotNull
-  private Spacing getBlankLinesForOption(int minBlankLines) {
+  private @NotNull Spacing getBlankLinesForOption(int minBlankLines) {
     final int lineFeeds = minBlankLines + 1;
     return Spacing.createSpacing(0, 0, lineFeeds,
                                  myContext.getSettings().KEEP_LINE_BREAKS,
@@ -1008,8 +991,7 @@ public class PyBlock implements ASTBlock {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     int statementListsBelow = 0;
 
     if (newChildIndex > 0) {
@@ -1119,8 +1101,7 @@ public class PyBlock implements ASTBlock {
     return false;
   }
 
-  @Nullable
-  private Alignment getChildAlignment() {
+  private @Nullable Alignment getChildAlignment() {
     // TODO merge it with needListAlignment(ASTNode)
     final IElementType nodeType = myNode.getElementType();
     if (ourListElementTypes.contains(nodeType) ||
@@ -1157,8 +1138,7 @@ public class PyBlock implements ASTBlock {
     return null;
   }
 
-  @NotNull
-  private Indent getChildIndent(int newChildIndex) {
+  private @NotNull Indent getChildIndent(int newChildIndex) {
     final IElementType parentType = myNode.getElementType();
     final ASTNode afterNode = getAfterNode(newChildIndex);
     final ASTNode lastChild = getLastNonSpaceChild(myNode, false);
@@ -1216,8 +1196,7 @@ public class PyBlock implements ASTBlock {
     return Indent.getNoneIndent();
   }
 
-  @Nullable
-  private ASTNode getAfterNode(int newChildIndex) {
+  private @Nullable ASTNode getAfterNode(int newChildIndex) {
     if (newChildIndex == 0) {  // block text contains backslash line wrappings, child block list not built
       return null;
     }

@@ -69,8 +69,7 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     });
   }
 
-  @NotNull
-  public static Path getDefaultLocation() {
+  public static @NotNull Path getDefaultLocation() {
     return VirtualEnvReader.getInstance().getVEnvRootDir();
   }
 

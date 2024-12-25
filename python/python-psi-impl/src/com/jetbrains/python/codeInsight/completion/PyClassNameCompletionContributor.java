@@ -19,7 +19,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
@@ -240,8 +243,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     return ContainerUtil.exists(fqn.getComponents(), c -> c.startsWith("_"));
   }
 
-  @NotNull
-  private static GlobalSearchScope createScope(@NotNull PsiFile originalFile) {
+  private static @NotNull GlobalSearchScope createScope(@NotNull PsiFile originalFile) {
     class HavingLegalImportPathScope extends QualifiedNameFinder.QualifiedNameBasedScope {
       private HavingLegalImportPathScope(@NotNull Project project) {
         super(project);

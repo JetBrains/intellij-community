@@ -27,7 +27,7 @@ import java.util.List;
 
 public class PyJavaPackageType implements PyType {
   private final PsiPackage myPackage;
-  @Nullable private final Module myModule;
+  private final @Nullable Module myModule;
 
   public PyJavaPackageType(PsiPackage aPackage, @Nullable Module module) {
     myPackage = aPackage;

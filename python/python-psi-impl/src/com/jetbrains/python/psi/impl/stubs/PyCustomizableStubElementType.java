@@ -15,8 +15,7 @@ interface PyCustomizableStubElementType<Psi extends PyElement, Stub extends PyCu
   @NotNull
   List<StubType> getExtensions();
 
-  @Nullable
-  default Stub createCustomStub(@NotNull Psi psi) {
+  default @Nullable Stub createCustomStub(@NotNull Psi psi) {
     for (StubType type : getExtensions()) {
       final Stub stub = type.createStub(psi);
       if (stub != null) return stub;
@@ -35,8 +34,7 @@ interface PyCustomizableStubElementType<Psi extends PyElement, Stub extends PyCu
     }
   }
 
-  @Nullable
-  default Stub deserializeCustomStub(@NotNull StubInputStream stream) throws IOException {
+  default @Nullable Stub deserializeCustomStub(@NotNull StubInputStream stream) throws IOException {
     if (stream.readBoolean()) {
       final String typeName = stream.readNameString();
       for (StubType type : getExtensions()) {

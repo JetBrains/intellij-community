@@ -42,9 +42,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
-  @Nullable
   @Override
-  public PsiElement getGotoDeclarationTarget(@Nullable final PsiElement sourceElement, final Editor editor) {
+  public @Nullable PsiElement getGotoDeclarationTarget(final @Nullable PsiElement sourceElement, final Editor editor) {
     if (sourceElement == null) {
       return null;
     }
@@ -77,8 +76,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     return null;
   }
 
-  @Nullable
-  private static PsiElement findProvidedReferenceAndResolve(@NotNull final PsiElement sourceElement) {
+  private static @Nullable PsiElement findProvidedReferenceAndResolve(final @NotNull PsiElement sourceElement) {
     for (final PsiReference reference : sourceElement.getReferences()) {
       if (reference instanceof PyUserInitiatedResolvableReference) {
         final PsiElement element = ((PyUserInitiatedResolvableReference)reference).userInitiatedResolve();

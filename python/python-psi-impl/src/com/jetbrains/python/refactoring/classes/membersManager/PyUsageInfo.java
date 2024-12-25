@@ -26,16 +26,14 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 class PyUsageInfo extends UsageInfo {
-  @NotNull
-  private final PyClass myTo;
+  private final @NotNull PyClass myTo;
 
-  PyUsageInfo(@NotNull final PyClass to) {
+  PyUsageInfo(final @NotNull PyClass to) {
     super(to, true); //TODO: Make super generic and get rid of field?
     myTo = to;
   }
 
-  @NotNull
-  public PyClass getTo() {
+  public @NotNull PyClass getTo() {
     return myTo;
   }
 }

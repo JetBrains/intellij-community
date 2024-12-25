@@ -25,15 +25,13 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface PyAstTryExceptStatement extends PyAstCompoundStatement, PyAstStatementWithElse {
-  @NotNull
-  default PyAstTryPart getTryPart() {
+  default @NotNull PyAstTryPart getTryPart() {
     return childToPsiNotNull(PyElementTypes.TRY_PART);
   }
 
   PyAstExceptPart @NotNull [] getExceptParts();
 
-  @Nullable
-  default PyAstFinallyPart getFinallyPart() {
+  default @Nullable PyAstFinallyPart getFinallyPart() {
     return childToPsi(PyElementTypes.FINALLY_PART);
   }
 

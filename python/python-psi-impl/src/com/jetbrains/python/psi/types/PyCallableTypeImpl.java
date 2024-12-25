@@ -20,10 +20,10 @@ import java.util.Map;
 import java.util.Objects;
 
 public class PyCallableTypeImpl implements PyCallableType {
-  @Nullable private final List<PyCallableParameter> myParameters;
-  @Nullable private final PyType myReturnType;
-  @Nullable private final PyCallable myCallable;
-  @Nullable private final PyFunction.Modifier myModifier;
+  private final @Nullable List<PyCallableParameter> myParameters;
+  private final @Nullable PyType myReturnType;
+  private final @Nullable PyCallable myCallable;
+  private final @Nullable PyFunction.Modifier myModifier;
   private final int myImplicitOffset;
 
   public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters, @Nullable PyType returnType) {
@@ -41,15 +41,13 @@ public class PyCallableTypeImpl implements PyCallableType {
     myImplicitOffset = offset;
   }
 
-  @Nullable
   @Override
-  public PyType getReturnType(@NotNull TypeEvalContext context) {
+  public @Nullable PyType getReturnType(@NotNull TypeEvalContext context) {
     return myReturnType;
   }
 
-  @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (!PyTypeChecker.hasGenerics(myReturnType, context)) {
       return PyNarrowedType.Companion.bindIfNeeded(myReturnType, callSite);
     }
@@ -61,13 +59,12 @@ public class PyCallableTypeImpl implements PyCallableType {
     return analyzeCallType(myReturnType, actualParameters, allParameters, receiver, callSite, context);
   }
 
-  @Nullable
-  private static PyType analyzeCallType(@Nullable PyType type,
-                                        @NotNull Map<PyExpression, PyCallableParameter> actualParameters,
-                                        @NotNull Collection<PyCallableParameter> allParameters,
-                                        @Nullable PyExpression receiver,
-                                        @NotNull PyCallSiteExpression callsite,
-                                        @NotNull TypeEvalContext context) {
+  private static @Nullable PyType analyzeCallType(@Nullable PyType type,
+                                                  @NotNull Map<PyExpression, PyCallableParameter> actualParameters,
+                                                  @NotNull Collection<PyCallableParameter> allParameters,
+                                                  @Nullable PyExpression receiver,
+                                                  @NotNull PyCallSiteExpression callsite,
+                                                  @NotNull TypeEvalContext context) {
     final var substitutions = PyTypeChecker.unifyGenericCall(receiver, actualParameters, context);
     final var substitutionsWithUnresolvedReturnGenerics =
       PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(allParameters, type, substitutions, context);
@@ -75,18 +72,16 @@ public class PyCallableTypeImpl implements PyCallableType {
     return PyNarrowedType.Companion.bindIfNeeded(typeAfterSubstitution, callsite);
   }
 
-  @Nullable
   @Override
-  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  public @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return myParameters;
   }
 
-  @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
     return null;
   }
 
@@ -95,9 +90,8 @@ public class PyCallableTypeImpl implements PyCallableType {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(null);
     return String.format("(%s) -> %s",
                          myParameters != null ?
@@ -133,14 +127,12 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
-  @Nullable
-  public PyCallable getCallable() {
+  public @Nullable PyCallable getCallable() {
     return myCallable;
   }
 
   @Override
-  @Nullable
-  public PyFunction.Modifier getModifier() {
+  public @Nullable PyFunction.Modifier getModifier() {
     return myModifier;
   }
 

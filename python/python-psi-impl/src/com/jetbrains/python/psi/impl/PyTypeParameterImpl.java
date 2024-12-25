@@ -35,8 +35,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     PyTypeParameterStub stub = getStub();
 
     if (stub != null) {
@@ -48,8 +47,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @Nullable
-  public String getBoundExpressionText() {
+  public @Nullable String getBoundExpressionText() {
     PyTypeParameterStub stub = getStub();
     if (stub != null) {
       return stub.getBoundExpressionText();
@@ -69,8 +67,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @NotNull
-  public PyTypeParameter.Kind getKind() {
+  public @NotNull PyTypeParameter.Kind getKind() {
     PyTypeParameterStub stub = getStub();
 
     if (stub != null) {
@@ -94,8 +91,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
-  @Nullable
-  public PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
     PyPsiFacade facade = PyPsiFacade.getInstance(this.getProject());
     Kind kind = this.getKind();
     PyClass pyClass = switch (kind) {

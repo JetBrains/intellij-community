@@ -42,11 +42,10 @@ import static com.intellij.codeInspection.options.OptPane.*;
  */
 public final class PyMandatoryEncodingInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -83,14 +82,12 @@ public final class PyMandatoryEncodingInspection extends PyInspection {
     );
   }
 
-  @NotNull
-  static OptDropdown defaultEncodingDropDown() {
+  static @NotNull OptDropdown defaultEncodingDropDown() {
     return dropdown("myDefaultEncoding", PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding"),
                     Arrays.asList(PyEncodingUtil.POSSIBLE_ENCODINGS), Function.identity(), Function.identity());
   }
 
-  @NotNull
-  static OptDropdown encodingFormatDropDown() {
+  static @NotNull OptDropdown encodingFormatDropDown() {
     return dropdown("myEncodingFormatIndex", PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format"),
                     EntryStream.of(PyEncodingUtil.ENCODING_FORMAT).mapKeyValue((idx, format) -> option(String.valueOf(idx), format))
                       .toArray(OptDropdown.Option.class));

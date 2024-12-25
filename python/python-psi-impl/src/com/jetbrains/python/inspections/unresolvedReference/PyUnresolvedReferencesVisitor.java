@@ -252,7 +252,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
   }
 
-  private void registerUnresolvedReferenceProblem(@NotNull PyElement node, @NotNull final PsiReference reference,
+  private void registerUnresolvedReferenceProblem(@NotNull PyElement node, final @NotNull PsiReference reference,
                                                   @NotNull HighlightSeverity severity) {
     if (reference instanceof DocStringTypeReference) {
       return;
@@ -736,8 +736,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return Collections.unmodifiableCollection(myUsedImports);
   }
 
-  @Nullable
-  private static PyExceptPart getImportErrorGuard(PyElement node) {
+  private static @Nullable PyExceptPart getImportErrorGuard(PyElement node) {
     final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class);
     if (importStatement != null) {
       final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
@@ -789,8 +788,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return !canEscapeGuard.get();
   }
 
-  @Nullable
-  private static PyExpression getReferenceQualifier(@NotNull PsiReference reference) {
+  private static @Nullable PyExpression getReferenceQualifier(@NotNull PsiReference reference) {
     final PsiElement element = reference.getElement();
 
     if (element instanceof PyQualifiedExpression) {
@@ -817,8 +815,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
    * Return the canonical qualified names for a reference (even for an unresolved one).
    * If reference is qualified and its qualifier has union type, all possible canonical names will be returned.
    */
-  @NotNull
-  private static List<QualifiedName> getCanonicalNames(@NotNull PsiReference reference, @NotNull TypeEvalContext context) {
+  private static @NotNull List<QualifiedName> getCanonicalNames(@NotNull PsiReference reference, @NotNull TypeEvalContext context) {
     final PsiElement element = reference.getElement();
     final List<QualifiedName> result = new SmartList<>();
     if (reference instanceof PyOperatorReference && element instanceof PyQualifiedExpression) {
@@ -1071,9 +1068,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return Collections.emptyList();
   }
 
-  private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType type,
+  private static boolean hasUnresolvedDynamicMember(final @NotNull PyClassType type,
                                                     PsiReference reference,
-                                                    @NotNull final String name, TypeEvalContext typeEvalContext) {
+                                                    final @NotNull String name, TypeEvalContext typeEvalContext) {
 
     final List<PyClassType> types = new ArrayList<>(Collections.singletonList(type));
     types.addAll(FluentIterable.from(type.getAncestorTypes(typeEvalContext)).filter(PyClassType.class).toList());

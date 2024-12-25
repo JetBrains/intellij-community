@@ -264,8 +264,7 @@ public final class PyInterpreterInspection extends PyInspection {
       return null;
     }
 
-    @Unmodifiable
-    private static @NotNull List<Sdk> getExistingSdks() {
+    private static @Unmodifiable @NotNull List<Sdk> getExistingSdks() {
       final ProjectSdksModel model = new ProjectSdksModel();
       model.reset(null);
       return ContainerUtil.filter(model.getSdks(), it -> it.getSdkType() instanceof PythonSdkType);

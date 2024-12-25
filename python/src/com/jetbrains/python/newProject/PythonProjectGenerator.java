@@ -61,8 +61,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   protected Consumer<String> myErrorCallback;
 
-  @Nullable
-  private final PythonInterpreterSelectionMode preferredEnvironmentType;
+  private final @Nullable PythonInterpreterSelectionMode preferredEnvironmentType;
 
   /**
    * @param allowRemoteProjectCreation if project of this type could be created remotely

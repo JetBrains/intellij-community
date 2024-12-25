@@ -67,8 +67,7 @@ public class PyFunctionInsertHandler extends ParenthesesInsertHandler<LookupElem
     return function.getParameterList().getParameters().length > implicitArgsCount;
   }
 
-  @Nullable
-  private static PyFunction getFunction(@NotNull LookupElement item) {
+  private static @Nullable PyFunction getFunction(@NotNull LookupElement item) {
     return PyUtil.as(item.getPsiElement(), PyFunction.class);
   }
 }

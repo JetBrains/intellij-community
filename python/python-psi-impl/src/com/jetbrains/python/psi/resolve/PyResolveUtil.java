@@ -151,8 +151,7 @@ public final class PyResolveUtil {
    * Resolves the passed expression in its containing file.
    * Does not go outside this file.
    */
-  @NotNull
-  public static Collection<PsiElement> resolveLocally(@NotNull PyReferenceExpression referenceExpression) {
+  public static @NotNull Collection<PsiElement> resolveLocally(@NotNull PyReferenceExpression referenceExpression) {
     final String referenceName = referenceExpression.getName();
 
     if (referenceName == null || referenceExpression.isQualified()) {
@@ -169,8 +168,7 @@ public final class PyResolveUtil {
    * Resolves the passed name in its containing file starting from the passed scope.
    * Does not go outside this file.
    */
-  @NotNull
-  public static Collection<PsiElement> resolveLocally(@NotNull ScopeOwner scopeOwner, @NotNull String name) {
+  public static @NotNull Collection<PsiElement> resolveLocally(@NotNull ScopeOwner scopeOwner, @NotNull String name) {
     final PyResolveProcessor processor = new PyResolveProcessor(name, true);
     scopeCrawlUp(processor, scopeOwner, name, null);
 
@@ -181,8 +179,7 @@ public final class PyResolveUtil {
    * If the passed expression resolves to import elements, returns their qualified names.
    * Does not go outside the file containing this expression.
    */
-  @NotNull
-  public static List<QualifiedName> resolveImportedElementQNameLocally(@NotNull PyReferenceExpression expression) {
+  public static @NotNull List<QualifiedName> resolveImportedElementQNameLocally(@NotNull PyReferenceExpression expression) {
     // SUPPORTED CASES:
 
     // import six
@@ -223,8 +220,7 @@ public final class PyResolveUtil {
     }
   }
 
-  @Nullable
-  private static QualifiedName getImportedElementQName(@NotNull PyImportElement element) {
+  private static @Nullable QualifiedName getImportedElementQName(@NotNull PyImportElement element) {
     final PyStatement importStatement = element.getContainingImportStatement();
 
     if (importStatement instanceof PyFromImportStatement) {
@@ -250,8 +246,7 @@ public final class PyResolveUtil {
    * @param scopeOwner    scope which serves as a starting point for resolve
    * @return all possible candidates that can be found by the given qualified name
    */
-  @NotNull
-  public static List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
+  public static @NotNull List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
                                                              @NotNull ScopeOwner scopeOwner,
                                                              @NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), (param) -> {
@@ -259,10 +254,9 @@ public final class PyResolveUtil {
     });
   }
 
-  @NotNull
-  private static List<PsiElement> doResolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
-                                                                @NotNull ScopeOwner scopeOwner,
-                                                                @NotNull TypeEvalContext context) {
+  private static @NotNull List<PsiElement> doResolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
+                                                                         @NotNull ScopeOwner scopeOwner,
+                                                                         @NotNull TypeEvalContext context) {
     final String firstName = qualifiedName.getFirstComponent();
     if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
 
@@ -352,8 +346,7 @@ public final class PyResolveUtil {
     }
   }
 
-  @Nullable
-  public static String resolveStrArgument(@NotNull PyCallExpression callExpression, int index, @NotNull String keyword) {
+  public static @Nullable String resolveStrArgument(@NotNull PyCallExpression callExpression, int index, @NotNull String keyword) {
     // SUPPORTED CASES:
 
     // name = "Point"
@@ -369,8 +362,7 @@ public final class PyResolveUtil {
     return resolveStrArgument(argument);
   }
 
-  @Nullable
-  public static String resolveStrArgument(@Nullable PyExpression argument) {
+  public static @Nullable String resolveStrArgument(@Nullable PyExpression argument) {
     final PyExpression expression = PyPsiUtils.flattenParens(argument);
 
     if (expression instanceof PyReferenceExpression) {
@@ -387,8 +379,7 @@ public final class PyResolveUtil {
    * @param referenceExpression expression to resolve
    * @return resolved assigned value.
    */
-  @Nullable
-  public static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
+  public static @Nullable PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
     return fullMultiResolveLocally(referenceExpression, new HashSet<>()).select(PyExpression.class).findFirst().orElse(null);
   }
 
@@ -401,8 +392,7 @@ public final class PyResolveUtil {
    * @return resolved assigned values.
    * <i>Note: the returned stream could contain null values.</i>
    */
-  @NotNull
-  private static StreamEx<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
+  private static @NotNull StreamEx<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
                                                               @NotNull Set<PyReferenceExpression> visited) {
     return StreamEx
       .of(resolveLocally(referenceExpression))
@@ -441,8 +431,7 @@ public final class PyResolveUtil {
     return false;
   }
 
-  @Nullable
-  public static ScopeOwner parentScopeForUnresolvedClassLevelName(@NotNull PyClass cls, @NotNull String name) {
+  public static @Nullable ScopeOwner parentScopeForUnresolvedClassLevelName(@NotNull PyClass cls, @NotNull String name) {
     // com.jetbrains.python.codeInsight.dataflow.scope.Scope.containsDeclaration could not be used
     // because it runs resolve on imports that is forbidden during indexing
     return containsDeclaration(cls, name) ? PyUtil.as(cls.getContainingFile(), PyFile.class) : ScopeUtil.getScopeOwner(cls);
@@ -527,8 +516,7 @@ public final class PyResolveUtil {
     return rate;
   }
 
-  @Nullable
-  public static PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+  public static @Nullable PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final PsiElement element = reference.getElement();
 
     final var context = resolveContext.getTypeEvalContext();
@@ -553,9 +541,8 @@ public final class PyResolveUtil {
     return reference.resolve();
   }
 
-  @NotNull
-  private static List<RatedResolveResult> resolveTypeParameters(@NotNull PyTypeParameterListOwner typeParameterListOwner,
-                                                                @NotNull String name) {
+  private static @NotNull List<RatedResolveResult> resolveTypeParameters(@NotNull PyTypeParameterListOwner typeParameterListOwner,
+                                                                         @NotNull String name) {
     if (typeParameterListOwner.getTypeParameterList() != null) {
       return StreamEx.of(typeParameterListOwner.getTypeParameterList().getTypeParameters())
         .filter(it -> name.equals(it.getName()))

@@ -45,9 +45,8 @@ public class GoogleCodeStyleDocStringUpdater extends SectionBasedDocStringUpdate
     insert(nameSubstring.getEndOffset(), " (" + type + ")");
   }
 
-  @NotNull
   @Override
-  protected SectionBasedDocStringBuilder createBuilder() {
+  protected @NotNull SectionBasedDocStringBuilder createBuilder() {
     return new GoogleCodeStyleDocStringBuilder(myFallbackSectionIndent);
   }
 }

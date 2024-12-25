@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
@@ -12,20 +12,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PySingleStarParameter extends PyAstSingleStarParameter, PyParameter, StubBasedPsiElement<PySingleStarParameterStub> {
   @Override
-  @Nullable
-  default PyNamedParameter getAsNamed() {
+  default @Nullable PyNamedParameter getAsNamed() {
     return (PyNamedParameter)PyAstSingleStarParameter.super.getAsNamed();
   }
 
   @Override
-  @Nullable
-  default PyTupleParameter getAsTuple() {
+  default @Nullable PyTupleParameter getAsTuple() {
     return (PyTupleParameter)PyAstSingleStarParameter.super.getAsTuple();
   }
 
   @Override
-  @Nullable
-  default PyExpression getDefaultValue() {
+  default @Nullable PyExpression getDefaultValue() {
     return (PyExpression)PyAstSingleStarParameter.super.getDefaultValue();
   }
 }

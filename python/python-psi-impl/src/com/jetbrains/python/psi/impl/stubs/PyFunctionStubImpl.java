@@ -42,33 +42,28 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
     myAnnotation = annotation;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
-  @Nullable
   @Override
-  public String getDocString() {
+  public @Nullable String getDocString() {
     return myDocString;
   }
 
-  @Nullable
   @Override
-  public String getDeprecationMessage() {
+  public @Nullable String getDeprecationMessage() {
     return myDeprecationMessage;
   }
 
-  @Nullable
   @Override
-  public String getTypeComment() {
+  public @Nullable String getTypeComment() {
     return myTypeComment;
   }
 
-  @Nullable
   @Override
-  public String getAnnotation() {
+  public @Nullable String getAnnotation() {
     return myAnnotation;
   }
 

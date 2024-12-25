@@ -182,10 +182,9 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
     return new Pair<>(result, usesNamedFormat);
   }
 
-  @NotNull
-  public static String convertFormatSpec(@NotNull String modifier,
-                                         @Nullable String widthAndPrecision,
-                                         @Nullable String conversionChar) {
+  public static @NotNull String convertFormatSpec(@NotNull String modifier,
+                                                  @Nullable String widthAndPrecision,
+                                                  @Nullable String conversionChar) {
     final StringBuilder result = new StringBuilder();
     // in strict order
     if (has(modifier, '-')) {
@@ -210,8 +209,7 @@ public final class ConvertFormatOperatorToMethodIntention extends PyBaseIntentio
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.format.operator.to.method");
   }
 

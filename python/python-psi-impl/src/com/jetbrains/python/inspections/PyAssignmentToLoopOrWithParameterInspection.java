@@ -31,16 +31,15 @@ import java.util.List;
  * @author link
  */
 public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull final LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static final class Visitor extends PyInspectionVisitor {
-    private Visitor(@Nullable final ProblemsHolder holder,
+    private Visitor(final @Nullable ProblemsHolder holder,
                     @NotNull TypeEvalContext context) {
       super(holder, context);
     }
@@ -59,7 +58,7 @@ public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspect
      * Finds first parent of specific type (See {@link #isRequiredStatement(PsiElement)})
      * that declares one of names, declared in this statement
      */
-    private void checkNotReDeclaringUpperLoopOrStatement(@NotNull final PsiElement statement) {
+    private void checkNotReDeclaringUpperLoopOrStatement(final @NotNull PsiElement statement) {
       for (PyExpression declaredVar : getNamedElementsOfForAndWithStatements(statement)) {
         final Filter filter = new Filter(handleSubscriptionsAndResolveSafely(declaredVar));
         final PsiElement firstParent = PsiTreeUtil.findFirstParent(statement, true, filter);
@@ -82,7 +81,7 @@ public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspect
    * @param forStatement   statement to obtain "else" part from
    * @return true if declared in "Else" block
    */
-  private static boolean isDeclaredInElse(@NotNull final PsiElement elementToCheck, @NotNull final PyForStatement forStatement) {
+  private static boolean isDeclaredInElse(final @NotNull PsiElement elementToCheck, final @NotNull PyForStatement forStatement) {
     final PyElsePart elsePart = forStatement.getElsePart();
     if (elsePart != null) {
       if (PsiTreeUtil.isAncestor(elsePart, elementToCheck, false)) {
@@ -131,8 +130,7 @@ public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspect
    * @param element element to open and resolve
    * @return opened and resolved element
    */
-  @NotNull
-  private static PsiElement handleSubscriptionsAndResolveSafely(@NotNull PyExpression element) {
+  private static @NotNull PsiElement handleSubscriptionsAndResolveSafely(@NotNull PyExpression element) {
     if (element instanceof PySubscriptionExpression) {
       element = ((PySubscriptionExpression)element).getRootOperand();
     }
@@ -150,8 +148,7 @@ public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspect
     return (element instanceof PyWithStatement) || (element instanceof PyForStatement);
   }
 
-  @NotNull
-  private static List<PyExpression> getNamedElementsOfForAndWithStatements(@NotNull PsiElement element) {
+  private static @NotNull List<PyExpression> getNamedElementsOfForAndWithStatements(@NotNull PsiElement element) {
     if (element instanceof PyForStatement forStatement) {
       final PyExpression target = forStatement.getForPart().getTarget();
 
@@ -173,8 +170,7 @@ public final class PyAssignmentToLoopOrWithParameterInspection extends PyInspect
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static List<PyExpression> dropUnderscores(@NotNull List<PyExpression> expressions) {
+  private static @NotNull List<PyExpression> dropUnderscores(@NotNull List<PyExpression> expressions) {
     return ContainerUtil.filter(expressions,
                                 expression -> !PyNames.UNDERSCORE.equals(expression.getText()));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.project.Project;
@@ -30,8 +30,7 @@ public final class TypeEvalContext {
     }
   }
 
-  @NotNull
-  private final TypeEvalConstraints myConstraints;
+  private final @NotNull TypeEvalConstraints myConstraints;
 
   private List<String> myTrace;
   private String myTraceIndent = "";
@@ -69,8 +68,7 @@ public final class TypeEvalContext {
    * It is as detailed as {@link TypeEvalContext#userInitiated(Project, PsiFile)}, but allows inferring types based on the context in which
    * the analyzed code was called or may be called. Since this is basically guesswork, the results should be used only for code completion.
    */
-  @NotNull
-  public static TypeEvalContext codeCompletion(@NotNull final Project project, @Nullable final PsiFile origin) {
+  public static @NotNull TypeEvalContext codeCompletion(final @NotNull Project project, final @Nullable PsiFile origin) {
     return getContextFromCache(project, new TypeEvalContext(true, true, true, origin));
   }
 
@@ -81,7 +79,7 @@ public final class TypeEvalContext {
    * <p/>
    * For code completion see {@link TypeEvalContext#codeCompletion(Project, PsiFile)}.
    */
-  public static TypeEvalContext userInitiated(@NotNull final Project project, @Nullable final PsiFile origin) {
+  public static TypeEvalContext userInitiated(final @NotNull Project project, final @Nullable PsiFile origin) {
     return getContextFromCache(project, new TypeEvalContext(true, true, false, origin));
   }
 
@@ -91,7 +89,7 @@ public final class TypeEvalContext {
    * <p/>
    * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
    */
-  public static TypeEvalContext codeAnalysis(@NotNull final Project project, @Nullable final PsiFile origin) {
+  public static TypeEvalContext codeAnalysis(final @NotNull Project project, final @Nullable PsiFile origin) {
     return getContextFromCache(project, new TypeEvalContext(false, false, false, origin));
   }
 
@@ -102,7 +100,7 @@ public final class TypeEvalContext {
    * @param project pass project here to enable cache. Pass null if you do not have any project.
    *                <strong>Always</strong> do your best to pass project here: it increases performance!
    */
-  public static TypeEvalContext codeInsightFallback(@Nullable final Project project) {
+  public static TypeEvalContext codeInsightFallback(final @Nullable Project project) {
     final TypeEvalContext anchor = new TypeEvalContext(false, false, false, null);
     if (project != null) {
       return getContextFromCache(project, anchor);
@@ -115,7 +113,7 @@ public final class TypeEvalContext {
    * <p/>
    * Should be used only when normal code insight context is not enough for getting good results.
    */
-  public static TypeEvalContext deepCodeInsight(@NotNull final Project project) {
+  public static TypeEvalContext deepCodeInsight(final @NotNull Project project) {
     return getContextFromCache(project, new TypeEvalContext(false, true, false, null));
   }
 
@@ -127,8 +125,7 @@ public final class TypeEvalContext {
    * @return context to use
    * @see TypeEvalContextCache#getContext(TypeEvalContext)
    */
-  @NotNull
-  private static TypeEvalContext getContextFromCache(@NotNull final Project project, @NotNull final TypeEvalContext context) {
+  private static @NotNull TypeEvalContext getContextFromCache(final @NotNull Project project, final @NotNull TypeEvalContext context) {
     return project.getService(TypeEvalContextCache.class).getContext(context);
   }
 
@@ -165,8 +162,7 @@ public final class TypeEvalContext {
     return myTrace != null;
   }
 
-  @Nullable
-  public PyType getType(@NotNull final PyTypedElement element) {
+  public @Nullable PyType getType(final @NotNull PyTypedElement element) {
     return RecursionManager.doPreventingRecursion(
       Pair.create(element, this),
       false,
@@ -188,8 +184,7 @@ public final class TypeEvalContext {
     );
   }
 
-  @Nullable
-  public PyType getReturnType(@NotNull final PyCallable callable) {
+  public @Nullable PyType getReturnType(final @NotNull PyCallable callable) {
     return RecursionManager.doPreventingRecursion(
       Pair.create(callable, this),
       false,
@@ -235,8 +230,7 @@ public final class TypeEvalContext {
     return myConstraints.myAllowStubToAST || inOrigin(element);
   }
 
-  @Nullable
-  public PsiFile getOrigin() {
+  public @Nullable PsiFile getOrigin() {
     return myConstraints.myOrigin;
   }
 

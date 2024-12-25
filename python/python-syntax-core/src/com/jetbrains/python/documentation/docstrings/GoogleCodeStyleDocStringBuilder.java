@@ -27,13 +27,11 @@ import org.jetbrains.annotations.Nullable;
 public class GoogleCodeStyleDocStringBuilder extends SectionBasedDocStringBuilder {
   public static final String DEFAULT_CONTINUATION_INDENT = PyIndentUtil.FOUR_SPACES;
 
-  @NotNull
-  public static String getDefaultSectionIndent(@NotNull PsiFile settingsAnchor) {
+  public static @NotNull String getDefaultSectionIndent(@NotNull PsiFile settingsAnchor) {
     return PyIndentUtil.getIndentFromSettings(settingsAnchor);
   }
 
-  @NotNull
-  public static GoogleCodeStyleDocStringBuilder forSettings(@NotNull PsiFile settingsAnchor) {
+  public static @NotNull GoogleCodeStyleDocStringBuilder forSettings(@NotNull PsiFile settingsAnchor) {
     return new GoogleCodeStyleDocStringBuilder(getDefaultSectionIndent(settingsAnchor));
   }
 
@@ -42,28 +40,24 @@ public class GoogleCodeStyleDocStringBuilder extends SectionBasedDocStringBuilde
   }
 
   @Override
-  @NotNull
-  protected String getDefaultParametersHeader() {
+  protected @NotNull String getDefaultParametersHeader() {
     return "Args";
   }
 
   @Override
-  @NotNull
-  protected String getDefaultReturnsHeader() {
+  protected @NotNull String getDefaultReturnsHeader() {
     return "Returns";
   }
 
-  @NotNull
   @Override
-  protected SectionBasedDocStringBuilder startSection(@NotNull String title) {
+  protected @NotNull SectionBasedDocStringBuilder startSection(@NotNull String title) {
     super.startSection(title);
     addLine(StringUtil.capitalize(title) + ":");
     return this;
   }
 
-  @NotNull
   @Override
-  public SectionBasedDocStringBuilder addParameter(@NotNull String name, @Nullable String type, @NotNull String description) {
+  public @NotNull SectionBasedDocStringBuilder addParameter(@NotNull String name, @Nullable String type, @NotNull String description) {
     if (type != null) {
       addSectionLine(String.format("%s (%s): %s", name, type, description));
     }
@@ -73,9 +67,8 @@ public class GoogleCodeStyleDocStringBuilder extends SectionBasedDocStringBuilde
     return this;
   }
 
-  @NotNull
   @Override
-  public SectionBasedDocStringBuilder addReturnValue(@Nullable String name, @NotNull String type, @NotNull String description) {
+  public @NotNull SectionBasedDocStringBuilder addReturnValue(@Nullable String name, @NotNull String type, @NotNull String description) {
     if (name != null) {
       addSectionLine(String.format("%s (%s): %s", name, type, description));
     }

@@ -48,7 +48,7 @@ import java.util.Objects;
 
 
 public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
-  @Nullable private volatile QualifiedName myQualifiedName;
+  private volatile @Nullable QualifiedName myQualifiedName;
 
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -72,9 +72,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return PyTargetExpression.super.getTextOffset();
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
       return stub.getName();
@@ -92,8 +91,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return this;
   }
 
-  @Nullable
-  private PyType getTargetExpressionType(@NotNull TypeEvalContext context) {
+  private @Nullable PyType getTargetExpressionType(@NotNull TypeEvalContext context) {
     if (PyNames.ALL.equals(getName())) {
       // no type for __all__, to avoid unresolved reference errors for expressions where a qualifier is a name
       // imported via __all__
@@ -207,9 +205,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
   @Override
-  public String getAnnotationValue() {
+  public @Nullable String getAnnotationValue() {
     final PyAnnotationOwnerStub stub = getStub();
     if (stub != null) {
       return stub.getAnnotation();
@@ -217,8 +214,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return PyTargetExpression.super.getAnnotationValue();
   }
 
-  @Nullable
-  private static PyType getWithItemVariableType(@NotNull PyWithItem item, @NotNull TypeEvalContext context) {
+  private static @Nullable PyType getWithItemVariableType(@NotNull PyWithItem item, @NotNull TypeEvalContext context) {
     final PyExpression withExpression = item.getExpression();
     final PyType withType = context.getType(withExpression);
     final PyWithStatement withStatement = PsiTreeUtil.getParentOfType(item, PyWithStatement.class);
@@ -231,11 +227,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       .collect(PyTypeUtil.toUnion());
   }
 
-  @Nullable
-  private static PyType getEnterTypeFromPyClass(@NotNull PyExpression withExpression,
-                                                @NotNull PyClassType withType,
-                                                boolean isAsync,
-                                                @NotNull TypeEvalContext context) {
+  private static @Nullable PyType getEnterTypeFromPyClass(@NotNull PyExpression withExpression,
+                                                          @NotNull PyClassType withType,
+                                                          boolean isAsync,
+                                                          @NotNull TypeEvalContext context) {
     final PyClass cls = withType.getPyClass();
     final PyFunction enter = cls.findMethodByName(isAsync ? PyNames.AENTER : PyNames.ENTER, true, context);
     if (enter != null) {
@@ -255,8 +250,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
-  public PyType getTypeFromDocString() {
+  public @Nullable PyType getTypeFromDocString() {
     String typeName = null;
     final String name = getName();
     final StructuredDocString targetDocString = getStructuredDocString();
@@ -281,8 +275,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
-  public static PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
+  public static @Nullable PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
     String docComment = DocStringUtil.getAttributeDocComment(targetExpression);
     if (docComment != null) {
       StructuredDocString structuredDocString = DocStringUtil.parse(docComment, targetExpression);
@@ -297,8 +290,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
-  private PyType getTypeFromIteration(@NotNull TypeEvalContext context) {
+  private @Nullable PyType getTypeFromIteration(@NotNull TypeEvalContext context) {
     PyExpression target = null;
     PyExpression source = null;
     final PyForPart forPart = PsiTreeUtil.getParentOfType(this, PyForPart.class);
@@ -333,9 +325,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
-  public static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
-                                        @NotNull TypeEvalContext context) {
+  public static @Nullable PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
+                                                  @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType tupleType) {
       return tupleType.getIteratedItemType();
     }
@@ -367,12 +358,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
-  private static PyType getIteratedItemType(@Nullable PyType type,
-                                            @Nullable PyExpression source,
-                                            @NotNull PsiElement anchor,
-                                            @NotNull TypeEvalContext context,
-                                            boolean async) {
+  private static @Nullable PyType getIteratedItemType(@Nullable PyType type,
+                                                      @Nullable PyExpression source,
+                                                      @NotNull PsiElement anchor,
+                                                      @NotNull TypeEvalContext context,
+                                                      boolean async) {
     final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
     if (nextMethodCallType != null && !nextMethodCallType.isNull()) {
       if (async) {
@@ -386,12 +376,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
-  private static Ref<PyType> getNextMethodCallType(@Nullable PyType type,
-                                                   @Nullable PyExpression source,
-                                                   @NotNull PsiElement anchor,
-                                                   @NotNull TypeEvalContext context,
-                                                   boolean async) {
+  private static @Nullable Ref<PyType> getNextMethodCallType(@Nullable PyType type,
+                                                             @Nullable PyExpression source,
+                                                             @NotNull PsiElement anchor,
+                                                             @NotNull TypeEvalContext context,
+                                                             boolean async) {
     if (type == null) return null;
 
     final String nextMethodName = async
@@ -406,8 +395,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
-  private static PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+  private static @Nullable PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final PyType actualType;
     if (type instanceof PyClassType classType && classType.isDefinition()) {
@@ -442,16 +430,14 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return PyTypeChecker.match(selfParameterType, receiverType, context);
   }
 
-  @Nullable
-  public static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
-                                               @Nullable PyExpression source) {
+  public static @Nullable PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
+                                                         @Nullable PyExpression source) {
     return function.getCallType(source, null, buildArgumentsToParametersMap(source, function, context), context);
   }
 
-  @NotNull
-  private static Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
-                                                                                      @NotNull PyCallable callable,
-                                                                                      @NotNull TypeEvalContext context) {
+  private static @NotNull Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
+                                                                                               @NotNull PyCallable callable,
+                                                                                               @NotNull TypeEvalContext context) {
     if (receiver == null) return Collections.emptyMap();
 
     final PyCallableParameter firstParameter = ContainerUtil.getFirstItem(callable.getParameters(context));
@@ -460,8 +446,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return Map.of(receiver, firstParameter);
   }
 
-  @Nullable
-  private PyType getTypeFromExcept() {
+  private @Nullable PyType getTypeFromExcept() {
     PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(this, PyExceptPart.class);
     if (exceptPart == null || exceptPart.getTarget() != this) {
       return null;
@@ -476,9 +461,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  @Nullable
   @Override
-  public QualifiedName asQualifiedName() {
+  public @Nullable QualifiedName asQualifiedName() {
     if (myQualifiedName == null) {
       myQualifiedName = PyPsiUtils.asQualifiedName(this);
     }
@@ -507,9 +491,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return getQualifier() != null;
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> multiResolveAssignedValue(@NotNull PyResolveContext resolveContext) {
+  public @NotNull List<PsiElement> multiResolveAssignedValue(@NotNull PyResolveContext resolveContext) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
 
     if (context.maySwitchToAST(this)) {
@@ -532,9 +515,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
   }
 
-  @Nullable
   @Override
-  public QualifiedName getAssignedQName() {
+  public @Nullable QualifiedName getAssignedQName() {
     return Ref.deref(getAssignedReferenceQualifiedName(this));
   }
 
@@ -543,24 +525,21 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return Ref.deref(getAssignedCallCalleeQualifiedName(this));
   }
 
-  @NotNull
   @Override
-  public PsiReference getReference() {
+  public @NotNull PsiReference getReference() {
     return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
-  @NotNull
   @Override
-  public PsiPolyVariantReference getReference(@NotNull final PyResolveContext resolveContext) {
+  public @NotNull PsiPolyVariantReference getReference(final @NotNull PyResolveContext resolveContext) {
     if (isQualified()) {
       return new PyQualifiedReference(this, resolveContext);
     }
     return new PyTargetReference(this, resolveContext);
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     if (isQualified()) {
       return super.getUseScope();
     }
@@ -622,9 +601,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return new PyElementPresentation(this);
   }
 
-  @Nullable
   @Override
-  public String getDocStringValue() {
+  public @Nullable String getDocStringValue() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
       return stub.getDocString();
@@ -632,9 +610,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return PyTargetExpression.super.getDocStringValue();
   }
 
-  @Nullable
   @Override
-  public StructuredDocString getStructuredDocString() {
+  public @Nullable StructuredDocString getStructuredDocString() {
     return DocStringUtil.getStructuredDocString(this);
   }
 
@@ -644,15 +621,13 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     myQualifiedName = null;
   }
 
-  @Nullable
   @Override
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     return QualifiedNameFinder.getQualifiedName(this);
   }
 
-  @Nullable
   @Override
-  public String getTypeCommentAnnotation() {
+  public @Nullable String getTypeCommentAnnotation() {
     return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 
@@ -665,8 +640,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return findAssignedValue() != null;
   }
 
-  @Nullable
-  public static Ref<QualifiedName> getAssignedReferenceQualifiedName(@NotNull PyTargetExpression psi) {
+  public static @Nullable Ref<QualifiedName> getAssignedReferenceQualifiedName(@NotNull PyTargetExpression psi) {
     final PyTargetExpressionStub stub = psi.getStub();
     if (stub != null) {
       if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
@@ -678,8 +652,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return value instanceof PyReferenceExpression ? Ref.create(((PyReferenceExpression)value).asQualifiedName()) : null;
   }
 
-  @Nullable
-  public static Ref<QualifiedName> getAssignedCallCalleeQualifiedName(@NotNull PyTargetExpression psi) {
+  public static @Nullable Ref<QualifiedName> getAssignedCallCalleeQualifiedName(@NotNull PyTargetExpression psi) {
     final PyTargetExpressionStub stub = psi.getStub();
     if (stub != null) {
       final PyTargetExpressionStub.InitializerType initializerType = stub.getInitializerType();
@@ -699,8 +672,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return value instanceof PyCallExpression ? Ref.create(PyPsiUtils.asQualifiedName(((PyCallExpression)value).getCallee())) : null;
   }
 
-  @Nullable
-  private static PyLiteralKind getAssignedLiteralKind(@NotNull PyTargetExpression psi) {
+  private static @Nullable PyLiteralKind getAssignedLiteralKind(@NotNull PyTargetExpression psi) {
     final PyTargetExpressionStub stub = psi.getStub();
     if (stub != null) {
       if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.Other) {

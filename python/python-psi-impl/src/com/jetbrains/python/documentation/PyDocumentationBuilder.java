@@ -67,8 +67,7 @@ public class PyDocumentationBuilder {
     myContext = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
   }
 
-  @Nullable
-  public @Nls String build() {
+  public @Nullable @Nls String build() {
     final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
 
     PsiElement elementDefinition = resolveToDocStringOwner();
@@ -281,8 +280,7 @@ public class PyDocumentationBuilder {
     return output != null ? HtmlChunk.raw(output.getBody()) : HtmlChunk.text(description);
   }
 
-  @Nullable
-  private PsiElement buildFromProperty(@NotNull PsiElement elementDefinition, @Nullable PsiElement outerElement) {
+  private @Nullable PsiElement buildFromProperty(@NotNull PsiElement elementDefinition, @Nullable PsiElement outerElement) {
     if (myOriginalElement == null) {
       return null;
     }
@@ -358,8 +356,7 @@ public class PyDocumentationBuilder {
     }
   }
 
-  @NotNull
-  private static String getAccessorKind(@NotNull final AccessDirection dir) {
+  private static @NotNull String getAccessorKind(final @NotNull AccessDirection dir) {
     final String accessorKind;
     if (dir == AccessDirection.READ) {
       accessorKind = "Getter";
@@ -373,7 +370,7 @@ public class PyDocumentationBuilder {
     return accessorKind;
   }
 
-  private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
+  private void buildFromDocstring(final @NotNull PyDocStringOwner elementDefinition, boolean isProperty) {
     final PyStringLiteralExpression ownDocstring = getEffectiveDocStringExpression(elementDefinition);
     final PyStringLiteralExpression effectiveDocstring = modifyDocStringByOwnerType(ownDocstring, elementDefinition, isProperty);
 
@@ -570,8 +567,7 @@ public class PyDocumentationBuilder {
     return myElement instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)myElement);
   }
 
-  @NotNull
-  private PsiElement resolveToDocStringOwner() {
+  private @NotNull PsiElement resolveToDocStringOwner() {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     if (myElement instanceof PyTargetExpression && ((PyTargetExpression)myElement).getDocStringValue() == null) {
       final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
@@ -606,15 +602,13 @@ public class PyDocumentationBuilder {
     return myElement;
   }
 
-  @Nullable
-  private PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element) {
+  private @Nullable PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(myContext);
     final QualifiedResolveResult resolveResult = element.followAssignmentsChain(resolveContext);
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
 
-  @Nullable
-  private PyStringLiteralExpression addFunctionInheritedDocString(@NotNull PyFunction pyFunction, @NotNull PyClass pyClass) {
+  private @Nullable PyStringLiteralExpression addFunctionInheritedDocString(@NotNull PyFunction pyFunction, @NotNull PyClass pyClass) {
     final String methodName = pyFunction.getName();
     if (methodName == null) {
       return null;
@@ -657,8 +651,7 @@ public class PyDocumentationBuilder {
     return null;
   }
 
-  @Nullable
-  private PyStringLiteralExpression addPredefinedMethodDoc(@NotNull PyFunction fun, @NotNull String methodName) {
+  private @Nullable PyStringLiteralExpression addPredefinedMethodDoc(@NotNull PyFunction fun, @NotNull String methodName) {
     final PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objectType != null) {
       final PyClass objectClass = objectType.getPyClass();
@@ -676,8 +669,7 @@ public class PyDocumentationBuilder {
     return null;
   }
 
-  @NotNull
-  private static HtmlChunk safeRunFormatterService(@NotNull PsiElement element, @NotNull String docstring) {
+  private static @NotNull HtmlChunk safeRunFormatterService(@NotNull PsiElement element, @NotNull String docstring) {
     final DocstringFormatterRequest formatted =
       PyStructuredDocstringFormatter.formatDocstring(element, new DocstringFormatterRequest(docstring), Collections.emptyList());
     if (formatted != null) {
@@ -686,8 +678,7 @@ public class PyDocumentationBuilder {
     return updateLines(element, docstring);
   }
 
-  @NotNull
-  private static HtmlChunk updateLines(@NotNull PsiElement element, @NotNull String docstring) {
+  private static @NotNull HtmlChunk updateLines(@NotNull PsiElement element, @NotNull String docstring) {
     final List<String> origLines = LineTokenizer.tokenizeIntoList(docstring.trim(), false, false);
     final List<String> updatedLines = StreamEx.of(PyIndentUtil.removeCommonIndent(origLines, true))
       .takeWhile(line -> !line.startsWith(">>>")) //TODO: PyConsoleUtil.ORDINARY_PROMPT
@@ -735,14 +726,13 @@ public class PyDocumentationBuilder {
         }
       }
       else {
-        @NonNls final String path = file.getPath();
+        final @NonNls String path = file.getPath();
         myBody.append(HtmlChunk.raw(path).wrapWith(HtmlChunk.tag("span").attr("path", path)));
       }
     }
   }
 
-  @Nullable
-  private static HtmlChunk getLinkToModule(@NotNull PyFile module) {
+  private static @Nullable HtmlChunk getLinkToModule(@NotNull PyFile module) {
     final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(module, null);
     if (name != null) {
       return PyDocumentationLink.toModule(name.toString(), name.toString());
@@ -757,8 +747,7 @@ public class PyDocumentationBuilder {
     }
   }
 
-  @Nullable
-  private HtmlChunk getLinkToClass(@NotNull PyClass pyClass, boolean preferQualifiedName) {
+  private @Nullable HtmlChunk getLinkToClass(@NotNull PyClass pyClass, boolean preferQualifiedName) {
     final String qualifiedName = pyClass.getQualifiedName();
     final String shortName = pyClass.getName();
 
@@ -776,8 +765,7 @@ public class PyDocumentationBuilder {
     return HtmlChunk.raw(linkText);
   }
 
-  @Nullable
-  private static HtmlChunk getLinkToFunction(@NotNull PyFunction function, boolean preferQualifiedName) {
+  private static @Nullable HtmlChunk getLinkToFunction(@NotNull PyFunction function, boolean preferQualifiedName) {
     final String qualifiedName = function.getQualifiedName();
     final PyClass pyClass = function.getContainingClass();
     // Preserve name of a containing class even if the whole qualified name can't be constructed
@@ -794,8 +782,7 @@ public class PyDocumentationBuilder {
     return HtmlChunk.raw(linkText);
   }
 
-  @Nullable
-  private static HtmlChunk getLinkToTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement) {
+  private static @Nullable HtmlChunk getLinkToTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement) {
     final String linkText = typeAliasStatement.getQualifiedName();
     final PsiFile file = typeAliasStatement.getContainingFile();
     if (linkText == null || typeAliasStatement.getName() == null || file == null) {
@@ -804,8 +791,7 @@ public class PyDocumentationBuilder {
     return PyDocumentationLink.toTypeAliasStatement(linkText, typeAliasStatement);
   }
 
-  @Nullable
-  static PyStringLiteralExpression getEffectiveDocStringExpression(@NotNull PyDocStringOwner owner) {
+  static @Nullable PyStringLiteralExpression getEffectiveDocStringExpression(@NotNull PyDocStringOwner owner) {
     final PyStringLiteralExpression expression = owner.getDocStringExpression();
     if (expression != null) {
       return expression;
@@ -820,8 +806,8 @@ public class PyDocumentationBuilder {
   }
 
   static final class DocstringFormatterRequest {
-    @NotNull private final @NlsSafe String body;
-    @NotNull private final List<FormatterDocFragment> fragments;
+    private final @NotNull @NlsSafe String body;
+    private final @NotNull List<FormatterDocFragment> fragments;
 
     DocstringFormatterRequest() {
       body = "";

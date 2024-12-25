@@ -149,8 +149,7 @@ public class PyStatementListElementType extends PyReparseableElementType impleme
     return parser.parseLazyElement(this, builder, languageLevel, PyLazyParser::parseStatementList);
   }
 
-  @NotNull
-  private static PsiBuilder createBuilder(@NotNull PsiElement parentPsi, @NotNull ASTNode chameleon, @NotNull Lexer lexer) {
+  private static @NotNull PsiBuilder createBuilder(@NotNull PsiElement parentPsi, @NotNull ASTNode chameleon, @NotNull Lexer lexer) {
     Language languageForParser = PythonLanguage.INSTANCE;
     return PsiBuilderFactory.getInstance().createBuilder(parentPsi.getProject(), chameleon, lexer, languageForParser, chameleon.getChars());
   }

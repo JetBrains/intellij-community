@@ -42,9 +42,8 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     pyVisitor.visitPySubscriptionExpression(this);
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression indexExpression = getIndexExpression();
     final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
     if (type instanceof PyTupleType tupleType) {
@@ -74,9 +73,8 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
-  @NotNull
   @Override
-  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
+  public @NotNull PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
   }
 }

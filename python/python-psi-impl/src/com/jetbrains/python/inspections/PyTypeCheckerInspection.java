@@ -37,9 +37,8 @@ public class PyTypeCheckerInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyTypeCheckerInspection.class.getName());
   private static final Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (LOG.isDebugEnabled()) {
       session.putUserData(TIME_KEY, System.nanoTime());
     }
@@ -187,8 +186,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
 
-    @Nullable
-    public static PyType getExpectedReturnStatementType(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {
+    public static @Nullable PyType getExpectedReturnStatementType(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {
       final PyType returnType = typeEvalContext.getReturnType(function);
       if (function.isGenerator()) {
         final var generatorDesc = GeneratorTypeDescriptor.create(returnType);
@@ -289,8 +287,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       return true;
     }
 
-    @Nullable
-    private PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected) {
+    private @Nullable PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected) {
       final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext, null);
       if (promotedToLiteral != null) return promotedToLiteral;
       return myTypeEvalContext.getType(value);
@@ -386,9 +383,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteExpression callSite,
-                                               @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+    private @Nullable AnalyzeCalleeResults analyzeCallee(@NotNull PyCallSiteExpression callSite,
+                                                         @NotNull PyCallExpression.PyArgumentsMapping mapping) {
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType == null) return null;
 
@@ -516,10 +512,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    @NotNull
-    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyCallableParameter container,
-                                                                @NotNull List<PyExpression> arguments,
-                                                                @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+    private @NotNull List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyCallableParameter container,
+                                                                         @NotNull List<PyExpression> arguments,
+                                                                         @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       final PyType expected = container.getArgumentType(myTypeEvalContext);
 
       if (container.isPositionalContainer() && expected instanceof PyPositionalVariadicType) {
@@ -558,9 +553,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private PyParamSpecType getParamSpecTypeFromContainerParameters(@Nullable PyCallableParameter positionalContainer,
-                                                                    @Nullable PyCallableParameter keywordContainer) {
+    private @Nullable PyParamSpecType getParamSpecTypeFromContainerParameters(@Nullable PyCallableParameter positionalContainer,
+                                                                              @Nullable PyCallableParameter keywordContainer) {
       if (positionalContainer == null && keywordContainer == null) return null;
       PyCallableParameter container = Objects.requireNonNullElse(positionalContainer, keywordContainer);
       return as(container.getType(myTypeEvalContext), PyParamSpecType.class);
@@ -578,8 +572,7 @@ public class PyTypeCheckerInspection extends PyInspection {
              !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }
 
-    @Nullable
-    private PyType substituteGenerics(@Nullable PyType expectedArgumentType, @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+    private @Nullable PyType substituteGenerics(@Nullable PyType expectedArgumentType, @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       return PyTypeChecker.hasGenerics(expectedArgumentType, myTypeEvalContext)
              ? PyTypeChecker.substitute(expectedArgumentType, substitutions, myTypeEvalContext)
              : null;
@@ -594,8 +587,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       );
     }
 
-    @NotNull
-    private static List<PyType> getArgumentTypes(@NotNull List<AnalyzeCalleeResults> calleesResults) {
+    private static @NotNull List<PyType> getArgumentTypes(@NotNull List<AnalyzeCalleeResults> calleesResults) {
       return ContainerUtil.map(
         calleesResults
           .stream()
@@ -621,23 +613,17 @@ public class PyTypeCheckerInspection extends PyInspection {
 
   static class AnalyzeCalleeResults {
 
-    @NotNull
-    private final PyCallableType myCallableType;
+    private final @NotNull PyCallableType myCallableType;
 
-    @Nullable
-    private final PyCallable myCallable;
+    private final @Nullable PyCallable myCallable;
 
-    @NotNull
-    private final List<AnalyzeArgumentResult> myResults;
+    private final @NotNull List<AnalyzeArgumentResult> myResults;
 
-    @NotNull
-    private final List<UnexpectedArgumentForParamSpec> myUnexpectedArgumentForParamSpecs;
+    private final @NotNull List<UnexpectedArgumentForParamSpec> myUnexpectedArgumentForParamSpecs;
 
-    @NotNull
-    private final List<UnfilledParameterFromParamSpec> myUnfilledParameterFromParamSpecs;
+    private final @NotNull List<UnfilledParameterFromParamSpec> myUnfilledParameterFromParamSpecs;
     
-    @NotNull
-    private final List<UnfilledPositionalVararg> myUnfilledPositionalVarargs;
+    private final @NotNull List<UnfilledPositionalVararg> myUnfilledPositionalVarargs;
 
     AnalyzeCalleeResults(@NotNull PyCallableType callableType,
                          @Nullable PyCallable callable,
@@ -653,18 +639,15 @@ public class PyTypeCheckerInspection extends PyInspection {
       myUnfilledPositionalVarargs = unfilledPositionalVarargs;
     }
 
-    @NotNull
-    public PyCallableType getCallableType() {
+    public @NotNull PyCallableType getCallableType() {
       return myCallableType;
     }
 
-    @Nullable
-    public PyCallable getCallable() {
+    public @Nullable PyCallable getCallable() {
       return myCallable;
     }
 
-    @NotNull
-    public List<AnalyzeArgumentResult> getResults() {
+    public @NotNull List<AnalyzeArgumentResult> getResults() {
       return myResults;
     }
 
@@ -686,17 +669,13 @@ public class PyTypeCheckerInspection extends PyInspection {
 
   static class AnalyzeArgumentResult {
 
-    @NotNull
-    private final PyExpression myArgument;
+    private final @NotNull PyExpression myArgument;
 
-    @Nullable
-    private final PyType myExpectedType;
+    private final @Nullable PyType myExpectedType;
 
-    @Nullable
-    private final PyType myExpectedTypeAfterSubstitution;
+    private final @Nullable PyType myExpectedTypeAfterSubstitution;
 
-    @Nullable
-    private final PyType myActualType;
+    private final @Nullable PyType myActualType;
 
     private final boolean myIsMatched;
 
@@ -712,23 +691,19 @@ public class PyTypeCheckerInspection extends PyInspection {
       myIsMatched = isMatched;
     }
 
-    @NotNull
-    public PyExpression getArgument() {
+    public @NotNull PyExpression getArgument() {
       return myArgument;
     }
 
-    @Nullable
-    public PyType getExpectedType() {
+    public @Nullable PyType getExpectedType() {
       return myExpectedType;
     }
 
-    @Nullable
-    public PyType getExpectedTypeAfterSubstitution() {
+    public @Nullable PyType getExpectedTypeAfterSubstitution() {
       return myExpectedTypeAfterSubstitution;
     }
 
-    @Nullable
-    public PyType getActualType() {
+    public @Nullable PyType getActualType() {
       return myActualType;
     }
 
@@ -738,16 +713,15 @@ public class PyTypeCheckerInspection extends PyInspection {
   }
 
   static class UnfilledParameterFromParamSpec {
-    final private PyCallableParameter myParameter;
-    final private PyParamSpecType myParamSpecType;
+    private final PyCallableParameter myParameter;
+    private final PyParamSpecType myParamSpecType;
 
     UnfilledParameterFromParamSpec(@NotNull PyCallableParameter parameter, @NotNull PyParamSpecType paramSpecType) {
       myParameter = parameter;
       myParamSpecType = paramSpecType;
     }
 
-    @NotNull
-    public PyCallableParameter getParameter() {
+    public @NotNull PyCallableParameter getParameter() {
       return myParameter;
     }
 
@@ -758,8 +732,8 @@ public class PyTypeCheckerInspection extends PyInspection {
   }
 
   static class UnexpectedArgumentForParamSpec {
-    final private PyExpression myArgument;
-    final private PyParamSpecType myParamSpecType;
+    private final PyExpression myArgument;
+    private final PyParamSpecType myParamSpecType;
 
     UnexpectedArgumentForParamSpec(@NotNull PyExpression argument, @NotNull PyParamSpecType paramSpecType) {
       myArgument = argument;

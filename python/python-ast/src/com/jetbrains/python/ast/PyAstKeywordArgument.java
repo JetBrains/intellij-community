@@ -12,26 +12,21 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PyAstKeywordArgument extends PyAstExpression, PsiNamedElement {
-  @NonNls
-  @Nullable
-  default String getKeyword() {
+  default @NonNls @Nullable String getKeyword() {
     ASTNode node = getKeywordNode();
     return node != null ? node.getText() : null;
   }
 
-  @Nullable
-  default PyAstExpression getValueExpression() {
+  default @Nullable PyAstExpression getValueExpression() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
 
-  @Nullable
-  default ASTNode getKeywordNode() {
+  default @Nullable ASTNode getKeywordNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
   @Override
-  @Nullable
-  default String getName() {
+  default @Nullable String getName() {
     return getKeyword();
   }
 

@@ -43,17 +43,13 @@ import java.util.function.Predicate;
  */
 public abstract class CompatibilityVisitor extends PyAnnotator {
 
-  @NotNull
-  private static final Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
+  private static final @NotNull Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
 
-  @NotNull
-  private static final Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+  private static final @NotNull Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
 
-  @NotNull
-  private static final Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
+  private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
 
-  @NotNull
-  protected List<LanguageLevel> myVersionsToProcess;
+  protected @NotNull List<LanguageLevel> myVersionsToProcess;
 
   public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -279,8 +275,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  @NotNull
-  private static Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
+  private static @NotNull Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
     if (level.isPython2()) {
       return PYTHON2_PREFIXES;
     }
@@ -871,8 +866,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       expression.replace(newExpression);
     }
 
-    @Unmodifiable
-    private static @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
+    private static @Unmodifiable @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
       if (expression == null) return Collections.emptyList();
       if (expression instanceof PyBinaryExpression) {
         final List<String> leftTypes = collectUnionTypes(((PyBinaryExpression)expression).getLeftExpression());

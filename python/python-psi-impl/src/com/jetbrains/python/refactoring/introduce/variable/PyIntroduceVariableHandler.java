@@ -31,8 +31,8 @@ public class PyIntroduceVariableHandler extends IntroduceHandler {
   }
 
   @Override
-  protected PsiElement addDeclaration(@NotNull final PsiElement expression,
-                                      @NotNull final PsiElement declaration,
+  protected PsiElement addDeclaration(final @NotNull PsiElement expression,
+                                      final @NotNull PsiElement declaration,
                                       @NotNull IntroduceOperation operation) {
     return doIntroduceVariable(expression, declaration, operation.getOccurrences(), operation.isReplaceAll());
   }

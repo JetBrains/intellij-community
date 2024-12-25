@@ -44,8 +44,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -291,8 +291,7 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
     return super.createBasePanel();
   }
 
-  @NotNull
-  private JPanel createInterpretersPanel(final @Nullable PythonInterpreterSelectionMode preferredEnvironment) {
+  private @NotNull JPanel createInterpretersPanel(final @Nullable PythonInterpreterSelectionMode preferredEnvironment) {
     final JPanel container = new JPanel(new BorderLayout());
     final JPanel decoratorPanel = new JPanel(new VerticalFlowLayout());
 

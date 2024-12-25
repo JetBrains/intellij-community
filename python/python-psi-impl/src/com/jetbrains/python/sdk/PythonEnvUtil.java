@@ -67,8 +67,7 @@ public final class PythonEnvUtil {
    * @return modified path-like string
    */
 
-  @NotNull
-  public static String addToPathEnvVar(@Nullable String source, @NotNull String value, boolean asPrefix) {
+  public static @NotNull String addToPathEnvVar(@Nullable String source, @NotNull String value, boolean asPrefix) {
     if (StringUtil.isEmpty(source)) return value;
     Set<String> paths = Sets.newHashSet(source.split(File.pathSeparator));
     if (!paths.contains(value)) {
@@ -117,8 +116,7 @@ public final class PythonEnvUtil {
     }
   }
 
-  @NotNull
-  public static Map<String, String> setPythonDontWriteBytecode(@NotNull Map<String, String> env) {
+  public static @NotNull Map<String, String> setPythonDontWriteBytecode(@NotNull Map<String, String> env) {
     env.put(PYTHONDONTWRITEBYTECODE, "1");
     return env;
   }

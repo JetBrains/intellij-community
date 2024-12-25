@@ -17,9 +17,8 @@ public class SimplePyUnresolvedReferencesInspection extends PyUnresolvedReferenc
     return new Visitor(holder, this, PyInspectionVisitor.getContext(session));
   }
 
-  @Nullable
   @Override
-  public String getStaticDescription() {
+  public @Nullable String getStaticDescription() {
     return null;
   }
 

@@ -51,11 +51,10 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
  */
 public final class PyRedeclarationInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -99,7 +98,7 @@ public final class PyRedeclarationInspection extends PyInspection {
       return isDecorated;
     }
 
-    private void processElement(@NotNull final PsiNameIdentifierOwner element) {
+    private void processElement(final @NotNull PsiNameIdentifierOwner element) {
       final String name = element.getName();
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
       if (owner != null && name != null) {

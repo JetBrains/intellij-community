@@ -39,11 +39,9 @@ import java.util.*;
  */
 public class PyEvaluator {
 
-  @NotNull
-  private final Set<PyExpression> myVisited = new HashSet<>();
+  private final @NotNull Set<PyExpression> myVisited = new HashSet<>();
 
-  @Nullable
-  private Map<String, Object> myNamespace = null;
+  private @Nullable Map<String, Object> myNamespace = null;
 
   /**
    * if true, collection items or dict values will be evaluated
@@ -85,9 +83,8 @@ public class PyEvaluator {
     myEnableResolve = enableResolve;
   }
 
-  @Nullable
   @Contract("null -> null")
-  public Object evaluate(@Nullable PyExpression expression) {
+  public @Nullable Object evaluate(@Nullable PyExpression expression) {
     if (expression == null || myVisited.contains(expression)) {
       return null;
     }
@@ -124,8 +121,7 @@ public class PyEvaluator {
     return null;
   }
 
-  @Nullable
-  private static Object evaluateNumeric(@NotNull PyNumericLiteralExpression expression) {
+  private static @Nullable Object evaluateNumeric(@NotNull PyNumericLiteralExpression expression) {
     if (expression.isIntegerLiteral()) {
       final BigInteger value = expression.getBigIntegerValue();
       return fromBigInteger(value);
@@ -134,8 +130,7 @@ public class PyEvaluator {
     return null;
   }
 
-  @Nullable
-  protected Object evaluateBinary(@NotNull PyBinaryExpression expression) {
+  protected @Nullable Object evaluateBinary(@NotNull PyBinaryExpression expression) {
     final PyElementType op = expression.getOperator();
     final Object lhs = evaluate(expression.getLeftExpression());
     final Object rhs = evaluate(expression.getRightExpression());
@@ -185,8 +180,7 @@ public class PyEvaluator {
     return null;
   }
 
-  @Nullable
-  private static Boolean evaluateBoolean(@NotNull PyExpression expression) {
+  private static @Nullable Boolean evaluateBoolean(@NotNull PyExpression expression) {
     if (expression instanceof PyBoolLiteralExpression) {
       if (PyNames.DEBUG.equals(expression.getText())) {
         return null;
@@ -206,8 +200,7 @@ public class PyEvaluator {
     return null;
   }
 
-  @Nullable
-  private Object evaluatePrefix(@NotNull PyPrefixExpression expression) {
+  private @Nullable Object evaluatePrefix(@NotNull PyPrefixExpression expression) {
     if (expression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
       final Boolean value = PyUtil.as(evaluate(expression.getOperand()), Boolean.class);
       if (value != null) {
@@ -230,8 +223,7 @@ public class PyEvaluator {
    * @param expression sequence expression
    * @return evaluated sequence
    */
-  @NotNull
-  protected Object evaluateSequence(@NotNull PySequenceExpression expression) {
+  protected @NotNull Object evaluateSequence(@NotNull PySequenceExpression expression) {
     if (expression instanceof PyDictLiteralExpression) {
       final Map<Object, Object> result = new HashMap<>();
       for (final PyKeyValueExpression keyValue : ((PyDictLiteralExpression)expression).getElements()) {
@@ -243,8 +235,7 @@ public class PyEvaluator {
     return ContainerUtil.map(expression.getElements(), element -> myEvaluateCollectionItems ? evaluate(element) : element);
   }
 
-  @Nullable
-  public Object applyPlus(@Nullable Object lhs, @Nullable Object rhs) {
+  public @Nullable Object applyPlus(@Nullable Object lhs, @Nullable Object rhs) {
     if (lhs instanceof String && rhs instanceof String) {
       return (String)lhs + rhs;
     }
@@ -259,8 +250,7 @@ public class PyEvaluator {
     return null;
   }
 
-  @Nullable
-  protected Object evaluateReference(@NotNull PyReferenceExpression expression) {
+  protected @Nullable Object evaluateReference(@NotNull PyReferenceExpression expression) {
     if (!expression.isQualified()) {
       if (myNamespace != null) {
         return myNamespace.get(expression.getReferencedName());
@@ -284,8 +274,7 @@ public class PyEvaluator {
     return null;
   }
 
-  @Nullable
-  protected Object evaluateCall(@NotNull PyCallExpression expression) {
+  protected @Nullable Object evaluateCall(@NotNull PyCallExpression expression) {
     final PyExpression[] args = expression.getArguments();
     if (expression.isCalleeText(PyNames.REPLACE) && args.length == 2) {
       final PyExpression callee = expression.getCallee();
@@ -348,8 +337,7 @@ public class PyEvaluator {
     result.put(key, myEvaluateCollectionItems ? evaluateOrGet(value) : value);
   }
 
-  @NotNull
-  private static BigInteger toBigInteger(@NotNull Number value) {
+  private static @NotNull BigInteger toBigInteger(@NotNull Number value) {
     // don't forget to update fromBigInteger() after changing this method
 
     return value instanceof Integer
@@ -359,8 +347,7 @@ public class PyEvaluator {
              : (BigInteger)value;
   }
 
-  @NotNull
-  private static Number fromBigInteger(@NotNull BigInteger value) {
+  private static @NotNull Number fromBigInteger(@NotNull BigInteger value) {
     // don't forget to update toBigInteger() after changing this method
 
     final int intValue = value.intValue();
@@ -384,8 +371,7 @@ public class PyEvaluator {
    * @param resultType expected type
    * @return value if expression is evaluated to this type, null otherwise
    */
-  @Nullable
-  public static <T> T evaluate(@Nullable PyExpression expression, @NotNull Class<T> resultType) {
+  public static @Nullable <T> T evaluate(@Nullable PyExpression expression, @NotNull Class<T> resultType) {
     return PyUtil.as(new PyEvaluator().evaluate(expression), resultType);
   }
 
@@ -397,8 +383,7 @@ public class PyEvaluator {
    * @param resultType expected type
    * @return value if expression is evaluated to this type, null otherwise
    */
-  @Nullable
-  public static <T> T evaluateNoResolve(@Nullable PyExpression expression, @NotNull Class<T> resultType) {
+  public static @Nullable <T> T evaluateNoResolve(@Nullable PyExpression expression, @NotNull Class<T> resultType) {
     final PyEvaluator evaluator = new PyEvaluator();
     evaluator.enableResolve(false);
     return PyUtil.as(evaluator.evaluate(expression), resultType);
@@ -410,8 +395,7 @@ public class PyEvaluator {
    * @param expression expression to evaluate
    * @return true if expression is evaluated to value so `bool` returns true for it
    */
-  @Nullable
-  public static Boolean evaluateAsBoolean(@Nullable PyExpression expression) {
+  public static @Nullable Boolean evaluateAsBoolean(@Nullable PyExpression expression) {
     return evaluateAsBoolean(prepareEvaluatorForBoolean(true), expression);
   }
 
@@ -421,8 +405,7 @@ public class PyEvaluator {
    * @param expression expression to evaluate
    * @return true if expression is evaluated to value so `bool` returns true for it
    */
-  @Nullable
-  public static Boolean evaluateAsBooleanNoResolve(@Nullable PyExpression expression) {
+  public static @Nullable Boolean evaluateAsBooleanNoResolve(@Nullable PyExpression expression) {
     return evaluateAsBoolean(prepareEvaluatorForBoolean(false), expression);
   }
 
@@ -434,8 +417,7 @@ public class PyEvaluator {
     return ObjectUtils.notNull(evaluateAsBooleanNoResolve(expression), defaultValue);
   }
 
-  @NotNull
-  private static PyEvaluator prepareEvaluatorForBoolean(boolean enableResolve) {
+  private static @NotNull PyEvaluator prepareEvaluatorForBoolean(boolean enableResolve) {
     final PyEvaluator evaluator = new PyEvaluator();
     evaluator.setEvaluateCollectionItems(false);
     evaluator.setEvaluateKeys(false);
@@ -443,8 +425,7 @@ public class PyEvaluator {
     return evaluator;
   }
 
-  @Nullable
-  private static Boolean evaluateAsBoolean(@NotNull PyEvaluator evaluator, @Nullable PyExpression expression) {
+  private static @Nullable Boolean evaluateAsBoolean(@NotNull PyEvaluator evaluator, @Nullable PyExpression expression) {
     final Object result = evaluator.evaluate(expression);
 
     if (result instanceof Boolean) {
@@ -466,8 +447,7 @@ public class PyEvaluator {
     return null;
   }
 
-  @Nullable
-  private Object evaluateOrGet(@Nullable final PyExpression expression) {
+  private @Nullable Object evaluateOrGet(final @Nullable PyExpression expression) {
     final Object result = evaluate(expression);
     if (result != null) {
       return result;

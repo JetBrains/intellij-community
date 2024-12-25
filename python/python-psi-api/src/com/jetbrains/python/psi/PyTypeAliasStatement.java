@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -15,8 +15,7 @@ public interface PyTypeAliasStatement extends PyAstTypeAliasStatement, PyStateme
                                               StubBasedPsiElement<PyTypeAliasStatementStub>, PyQualifiedNameOwner, ScopeOwner {
 
   @Override
-  @Nullable
-  default PyExpression getTypeExpression() {
+  default @Nullable PyExpression getTypeExpression() {
     return (PyExpression)PyAstTypeAliasStatement.super.getTypeExpression();
   }
 

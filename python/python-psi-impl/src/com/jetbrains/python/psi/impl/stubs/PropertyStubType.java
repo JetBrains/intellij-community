@@ -25,9 +25,8 @@ import java.io.IOException;
 
 
 public final class PropertyStubType extends CustomTargetExpressionStubType<PropertyStubStorage> {
-  @Nullable
   @Override
-  public PropertyStubStorage createStub(@NotNull PyTargetExpression psi) {
+  public @Nullable PropertyStubStorage createStub(@NotNull PyTargetExpression psi) {
     return PropertyStubStorage.fromCall(psi.findAssignedValue());
   }
 

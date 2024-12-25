@@ -30,8 +30,7 @@ public class CreateClassQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     PsiFile targetFile = myTargetFile.getElement();
     if (targetFile != null) {
       return PyPsiBundle.message("QFIX.create.class.in.module", myClassName, targetFile.getName());
@@ -40,8 +39,7 @@ public class CreateClassQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.create.class");
   }
 

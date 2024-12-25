@@ -22,11 +22,11 @@ import java.util.List;
 import java.util.Map;
 
 public class PyResolveProcessor implements PsiScopeProcessor {
-  @NotNull private final String myName;
+  private final @NotNull String myName;
   private final boolean myLocalResolve;
-  @NotNull private final Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
-  @NotNull private final Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
-  @Nullable protected ScopeOwner myOwner;
+  private final @NotNull Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
+  private final @NotNull Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
+  protected @Nullable ScopeOwner myOwner;
 
   public PyResolveProcessor(@NotNull String name) {
     this(name, false);
@@ -67,23 +67,19 @@ public class PyResolveProcessor implements PsiScopeProcessor {
     return myOwner == null || myOwner == ScopeUtil.getScopeOwner(element);
   }
 
-  @NotNull
-  public Map<PsiElement, PyImportedNameDefiner> getResults() {
+  public @NotNull Map<PsiElement, PyImportedNameDefiner> getResults() {
     return myResults.isEmpty() ? myImplicitlyImportedResults : myResults;
   }
 
-  @NotNull
-  public Collection<PsiElement> getElements() {
+  public @NotNull Collection<PsiElement> getElements() {
     return getResults().keySet();
   }
 
-  @Nullable
-  public ScopeOwner getOwner() {
+  public @Nullable ScopeOwner getOwner() {
     return myOwner;
   }
 
-  @NotNull
-  private List<RatedResolveResult> resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
+  private @NotNull List<RatedResolveResult> resolveInImportedNameDefiner(@NotNull PyImportedNameDefiner definer) {
     if (myLocalResolve) {
       final PyImportElement importElement = PyUtil.as(definer, PyImportElement.class);
       if (importElement != null) {

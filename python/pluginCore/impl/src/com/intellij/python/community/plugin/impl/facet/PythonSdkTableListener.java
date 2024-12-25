@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonSdkTableListener implements ProjectJdkTable.Listener {
 
   @Override
-  public void jdkAdded(@NotNull final Sdk sdk) {
+  public void jdkAdded(final @NotNull Sdk sdk) {
     if (sdk.getSdkType() instanceof PythonSdkType) {
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
         final ModifiableModelsProvider provider = ModifiableModelsProvider.getInstance();
@@ -35,14 +35,14 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
   }
 
   @Override
-  public void jdkRemoved(@NotNull final Sdk sdk) {
+  public void jdkRemoved(final @NotNull Sdk sdk) {
     if (sdk.getSdkType() instanceof PythonSdkType) {
       removeLibrary(sdk);
     }
   }
 
   @Override
-  public void jdkNameChanged(@NotNull final Sdk sdk, @NotNull final String previousName) {
+  public void jdkNameChanged(final @NotNull Sdk sdk, final @NotNull String previousName) {
     if (sdk.getSdkType() instanceof PythonSdkType) {
       renameLibrary(sdk, previousName);
     }

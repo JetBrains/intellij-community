@@ -13,7 +13,7 @@ public final class PyDiffPreviewProvider extends DiffPreviewProvider {
     return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, PythonFileType.INSTANCE);
   }
 
-  @NonNls private static final String LEFT_TEXT = """
+  private static final @NonNls String LEFT_TEXT = """
     class MyClass
       value = 123
 
@@ -32,7 +32,7 @@ public final class PyDiffPreviewProvider extends DiffPreviewProvider {
 
 
     """;
-  @NonNls private static final String CENTER_TEXT = """
+  private static final @NonNls String CENTER_TEXT = """
     class MyClass
       value = 123
 
@@ -50,7 +50,7 @@ public final class PyDiffPreviewProvider extends DiffPreviewProvider {
 
 
     """;
-  @NonNls private static final String RIGHT_TEXT = """
+  private static final @NonNls String RIGHT_TEXT = """
     class MyClass
       value = -123
 

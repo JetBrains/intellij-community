@@ -24,8 +24,7 @@ public class PyTypeAliasStatementElementType extends PyStubElementType<PyTypeAli
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PyTypeAliasStatementImpl(node);
   }
 
@@ -35,8 +34,7 @@ public class PyTypeAliasStatementElementType extends PyStubElementType<PyTypeAli
   }
 
   @Override
-  @NotNull
-  public PyTypeAliasStatementStub createStub(@NotNull PyTypeAliasStatement psi, StubElement<? extends PsiElement> parentStub) {
+  public @NotNull PyTypeAliasStatementStub createStub(@NotNull PyTypeAliasStatement psi, StubElement<? extends PsiElement> parentStub) {
     return new PyTypeAliasStatementStubImpl(psi.getName(), (psi.getTypeExpression() != null ? psi.getTypeExpression().getText() : null),
                                             parentStub, getStubElementType(), PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi));
   }
@@ -49,8 +47,7 @@ public class PyTypeAliasStatementElementType extends PyStubElementType<PyTypeAli
   }
 
   @Override
-  @NotNull
-  public PyTypeAliasStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyTypeAliasStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     String typeExpressionText = dataStream.readNameString();
     RangeSet<Version> versions = PyVersionSpecificStubBaseKt.deserializeVersions(dataStream);
@@ -58,8 +55,7 @@ public class PyTypeAliasStatementElementType extends PyStubElementType<PyTypeAli
     return new PyTypeAliasStatementStubImpl(name, typeExpressionText, parentStub, getStubElementType(), versions);
   }
 
-  @NotNull
-  protected IStubElementType getStubElementType() {
+  protected @NotNull IStubElementType getStubElementType() {
     return PyStubElementTypes.TYPE_ALIAS_STATEMENT;
   }
 }

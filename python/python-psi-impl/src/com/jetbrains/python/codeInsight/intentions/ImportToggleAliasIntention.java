@@ -78,8 +78,7 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
       return true;
     }
 
-    @NotNull
-    public @IntentionName String getText() {
+    public @NotNull @IntentionName String getText() {
       String add_name = PyPsiBundle.message("INTN.add.import.alias");
       if (myImportElement != null) {
         PyReferenceExpression refex = myImportElement.getImportReferenceExpression();
@@ -92,8 +91,7 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.toggle.import.alias");
   }
 
@@ -114,13 +112,12 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  @Nullable
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
   @Override
-  public void doInvoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // sanity check: isAvailable must have set it.
     final IntentionState state = IntentionState.fromContext(editor, file);
     //

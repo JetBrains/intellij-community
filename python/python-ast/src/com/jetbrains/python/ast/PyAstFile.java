@@ -52,15 +52,13 @@ public interface PyAstFile extends PyAstElement, PsiFile, PyAstDocStringOwner, A
     return true;
   }
 
-  @Nullable
   @Override
-  default String getDocStringValue() {
+  default @Nullable String getDocStringValue() {
     return DocStringUtilCore.getDocStringValue(this);
   }
 
-  @Nullable
   @Override
-  default PyAstStringLiteralExpression getDocStringExpression() {
+  default @Nullable PyAstStringLiteralExpression getDocStringExpression() {
     return DocStringUtilCore.findDocStringExpression(this);
   }
 }

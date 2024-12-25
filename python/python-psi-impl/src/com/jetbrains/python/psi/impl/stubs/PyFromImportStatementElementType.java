@@ -30,9 +30,8 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     super(debugName);
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PyFromImportStatementImpl(node);
   }
 
@@ -41,9 +40,8 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     return new PyFromImportStatementImpl(stub);
   }
 
-  @NotNull
   @Override
-  public PyFromImportStatementStub createStub(@NotNull PyFromImportStatement psi, StubElement parentStub) {
+  public @NotNull PyFromImportStatementStub createStub(@NotNull PyFromImportStatement psi, StubElement parentStub) {
     final RangeSet<Version> versions = PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi);
     return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub,
                                              getStubElementType(), versions);
@@ -59,8 +57,7 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
   }
 
   @Override
-  @NotNull
-  public PyFromImportStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyFromImportStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     QualifiedName qName = QualifiedName.deserialize(dataStream);
     boolean isStarImport = dataStream.readBoolean();
     int relativeLevel = dataStream.readVarInt();

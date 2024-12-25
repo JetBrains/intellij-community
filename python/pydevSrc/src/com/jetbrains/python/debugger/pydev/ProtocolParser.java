@@ -1,3 +1,5 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -176,8 +178,7 @@ public final class ProtocolParser {
     return new PyIo(s, ctx);
   }
 
-  @NotNull
-  public static PyThreadInfo parseThread(final String text, final PyPositionConverter positionConverter) throws PyDebuggerException {
+  public static @NotNull PyThreadInfo parseThread(final String text, final PyPositionConverter positionConverter) throws PyDebuggerException {
     final XppReader reader = openReader(text, true);
     reader.moveDown();
     if (!"thread".equals(reader.getNodeName())) {
@@ -202,8 +203,7 @@ public final class ProtocolParser {
     return new PyThreadInfo(id, name, frames, stopReason, message);
   }
 
-  @NotNull
-  public static String getThreadId(@NotNull String payload) {
+  public static @NotNull String getThreadId(@NotNull String payload) {
     return payload.split("\t")[0];
   }
 
@@ -221,15 +221,13 @@ public final class ProtocolParser {
     return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));
   }
 
-  @NotNull
-  public static PyDebugValue parseValue(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+  public static @NotNull PyDebugValue parseValue(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final XppReader reader = openReader(text, true);
     reader.moveDown();
     return parseValue(reader, frameAccessor);
   }
 
-  @NotNull
-  public static List<PyDebugValue> parseReferrers(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+  public static @NotNull List<PyDebugValue> parseReferrers(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final List<PyDebugValue> values = new LinkedList<>();
 
     final XppReader reader = openReader(text, false);
@@ -254,8 +252,7 @@ public final class ProtocolParser {
   }
 
 
-  @NotNull
-  public static List<PyDebugValue> parseValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
+  public static @NotNull List<PyDebugValue> parseValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final List<PyDebugValue> values = new LinkedList<>();
 
     final XppReader reader = openReader(text, false);

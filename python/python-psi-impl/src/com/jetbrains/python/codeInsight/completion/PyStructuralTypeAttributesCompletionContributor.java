@@ -134,10 +134,9 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
       return Collections.unmodifiableSet(suitableClasses);
     }
 
-    @NotNull
-    private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
-                                                             @NotNull TypeEvalContext context,
-                                                             @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+    private static @NotNull Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
+                                                                      @NotNull TypeEvalContext context,
+                                                                      @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<String> availableAttrs = Sets.newHashSet(PyClassAttributesIndex.getAllDeclaredAttributeNames(candidate));
       for (PyClass parent : getAncestorClassesFast(candidate, context, ancestorsCache)) {
         availableAttrs.addAll(PyClassAttributesIndex.getAllDeclaredAttributeNames(parent));
@@ -150,8 +149,7 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
      * The approach used here does not require proper MRO order of ancestors and its performance is greatly improved by reusing
      * intermediate results in case of a large class hierarchy.
      */
-    @NotNull
-    private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
+    private static @NotNull Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
                                                        @NotNull TypeEvalContext context,
                                                        @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<PyClass> ancestors = ancestorsCache.get(pyClass);
@@ -179,8 +177,7 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
       return result;
     }
 
-    @NotNull
-    private static String debugClassCoordinates(PyClass cls) {
+    private static @NotNull String debugClassCoordinates(PyClass cls) {
       return cls.getQualifiedName() + " (" + cls.getContainingFile().getVirtualFile().getPath() + ")";
     }
   }

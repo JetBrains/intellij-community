@@ -45,9 +45,8 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyDocStringOwner) {
       final StructuredDocString docString = ((PyDocStringOwner)callable).getStructuredDocString();
       if (docString != null) {
@@ -65,8 +64,7 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @NotNull
-  private Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
+  private @NotNull Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
     final PyType type = PyTypeParser.getTypeByName(callable, typeText, context);
     if (type != null) {
       type.assertValid("from docstring");
@@ -78,9 +76,8 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
   /**
    * Unify generics in the constructor according to the legacy type hints syntax.
    */
-  @Nullable
   @Override
-  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public @Nullable PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     PyFunction init = cls.findInitOrNew(true, context);
     if (init != null) {
       PyType returnType = Ref.deref(getReturnType(init, context));

@@ -96,8 +96,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     if (myUseQualifiedImport) return PyPsiBundle.message("ACT.qualify.with.module");
     else if (myImports.size() == 1) {
       return PyPsiBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText());
@@ -108,13 +107,11 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.auto.import");
   }
 
-  @NotNull
-  public ImportFromExistingAction createAction(PsiElement element) {
+  public @NotNull ImportFromExistingAction createAction(PsiElement element) {
     final ImportFromExistingAction action =
       new ImportFromExistingAction(element, myImports, myInitialName, null, myUseQualifiedImport, false);
     action.onDone(() -> myExpended = true);
@@ -152,8 +149,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     myExpended = true;
   }
 
-  @Nullable
-  protected ImportFromExistingAction createAction() {
+  protected @Nullable ImportFromExistingAction createAction() {
     return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, null, myUseQualifiedImport, false);
   }
 
@@ -161,8 +157,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     Collections.sort(myImports);
   }
 
-  @NotNull
-  public List<ImportCandidateHolder> getCandidates() {
+  public @NotNull List<ImportCandidateHolder> getCandidates() {
     return Collections.unmodifiableList(myImports);
   }
 
@@ -187,13 +182,11 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     return false;
   }
 
-  @NotNull
-  public AutoImportQuickFix forLocalImport() {
+  public @NotNull AutoImportQuickFix forLocalImport() {
     return new AutoImportLocallyQuickFix(getStartElement(), myReferenceType, this.myInitialName, myUseQualifiedImport, myImports);
   }
 
-  @NotNull
-  public String getNameToImport() {
+  public @NotNull String getNameToImport() {
     return myInitialName;
   }
 
@@ -252,21 +245,18 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       super(element, type, name, qualify, imports);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.NAME.local.auto.import");
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return PyPsiBundle.message("QFIX.local.auto.import.import.locally", super.getText());
     }
 
-    @NotNull
     @Override
-    protected ImportFromExistingAction createAction() {
+    protected @NotNull ImportFromExistingAction createAction() {
       return new ImportFromExistingAction(getStartElement(), getCandidates(), getNameToImport(), null, isUseQualifiedImport(), true);
     }
   }

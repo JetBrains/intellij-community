@@ -51,8 +51,7 @@ public final class PyShadowingBuiltinsInspection extends PyInspection {
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();
 
-  @NotNull
-  private static LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
+  private static @NotNull LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement);
     if (qf != null) {
@@ -67,24 +66,22 @@ public final class PyShadowingBuiltinsInspection extends PyInspection {
     return pane(OptPane.stringList("ignoredNames", PyPsiBundle.message("INSP.shadowing.builtins.ignore.built.ins.label")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session), ignoredNames);
   }
 
   private static final class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
-    @NotNull private final @NlsSafe String myName;
+    private final @NotNull @NlsSafe String myName;
 
     private PyIgnoreBuiltinQuickFix(@NotNull String name) {
       myName = name;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return PyPsiBundle.message("QFIX.ignore.shadowed.built.in.name", myName);
     }
 
@@ -93,9 +90,8 @@ public final class PyShadowingBuiltinsInspection extends PyInspection {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.NAME.ignore.shadowed.built.in.name");
     }
 

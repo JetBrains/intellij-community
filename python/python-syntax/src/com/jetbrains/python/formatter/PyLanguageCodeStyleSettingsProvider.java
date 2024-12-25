@@ -18,9 +18,8 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
 
 
 public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return PythonLanguage.getInstance();
   }
 
@@ -163,15 +162,13 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
   }
 
-  @NotNull
   @Override
-  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings,
                                              PySyntaxBundle.message("configurable.PyLanguageCodeStyleSettingsProvider.display.name")) {
       @Override

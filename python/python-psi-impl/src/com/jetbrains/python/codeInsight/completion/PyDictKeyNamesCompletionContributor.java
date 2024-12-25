@@ -72,8 +72,8 @@ public final class PyDictKeyNamesCompletionContributor extends CompletionContrib
    *
    * @return true if an operand is a TypedDict
    */
-  private static boolean addCompletionIfOperandIsTypedDict(@NotNull final PyExpression operand,
-                                                           @NotNull final DictKeyCompletionResultSet dictCompletion) {
+  private static boolean addCompletionIfOperandIsTypedDict(final @NotNull PyExpression operand,
+                                                           final @NotNull DictKeyCompletionResultSet dictCompletion) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(operand.getProject(), operand.getContainingFile());
     final PyType type = typeEvalContext.getType(operand);
     if (type instanceof PyTypedDictType dictType && !dictType.isInferred()) {

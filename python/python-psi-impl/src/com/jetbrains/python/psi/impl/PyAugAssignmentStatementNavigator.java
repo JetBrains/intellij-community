@@ -24,8 +24,7 @@ public final class PyAugAssignmentStatementNavigator {
   private PyAugAssignmentStatementNavigator() {
   }
 
-  @Nullable
-  public static PyAugAssignmentStatement getStatementByTarget(final PsiElement element){
+  public static @Nullable PyAugAssignmentStatement getStatementByTarget(final PsiElement element){
     final PyAugAssignmentStatement statement = PsiTreeUtil.getParentOfType(element, PyAugAssignmentStatement.class);
     if (statement == null){
       return null;

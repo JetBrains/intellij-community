@@ -20,8 +20,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.PyStringFormatParser;
+import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import org.jetbrains.annotations.NotNull;
@@ -102,16 +102,13 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
     expressionToReplace.replace(fString);
   }
 
-  @NotNull
-  protected abstract List<T> extractAllSubstitutionChunks();
+  protected abstract @NotNull List<T> extractAllSubstitutionChunks();
 
-  @NotNull
-  protected List<T> extractTopLevelSubstitutionChunks() {
+  protected @NotNull List<T> extractTopLevelSubstitutionChunks() {
     return extractAllSubstitutionChunks();
   }
 
-  @NotNull
-  protected abstract PySubstitutionChunkReference createReference(@NotNull T chunk);
+  protected abstract @NotNull PySubstitutionChunkReference createReference(@NotNull T chunk);
 
   protected abstract boolean checkChunk(@NotNull T chunk);
 
@@ -119,8 +116,7 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
 
   protected abstract void processLiteralChunk(@NotNull String chunk, @NotNull StringBuilder fStringText);
 
-  @Nullable
-  protected PsiElement adjustQuotesInsideInjectedExpression(@NotNull PsiElement expression) {
+  protected @Nullable PsiElement adjustQuotesInsideInjectedExpression(@NotNull PsiElement expression) {
     final PsiElement copied = expression.copy();
 
     final char hostQuote = myNodeInfo.getSingleQuote();
@@ -159,14 +155,11 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
     return copied;
   }
 
-  @NotNull
-  protected abstract PyExpression getWholeExpressionToReplace();
+  protected abstract @NotNull PyExpression getWholeExpressionToReplace();
 
-  @Nullable
-  protected abstract PsiElement getValuesSource();
+  protected abstract @Nullable PsiElement getValuesSource();
 
-  @Nullable
-  protected PsiElement prepareExpressionToInject(@NotNull PyExpression expression, @NotNull T chunk) {
+  protected @Nullable PsiElement prepareExpressionToInject(@NotNull PyExpression expression, @NotNull T chunk) {
     final PsiElement quoted = adjustQuotesInsideInjectedExpression(expression);
     if (quoted == null) return null;
 
@@ -176,14 +169,12 @@ public abstract class BaseConvertToFStringProcessor<T extends PyStringFormatPars
     return quoted;
   }
 
-  @Nullable
-  protected final PsiElement wrapExpressionInParentheses(@NotNull PsiElement expression) {
+  protected final @Nullable PsiElement wrapExpressionInParentheses(@NotNull PsiElement expression) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(myPyString.getProject());
     return generator.createExpressionFromText(LanguageLevel.forElement(myPyString), "(" + expression.getText() + ")");
   }
 
-  @Nullable
-  protected static PyExpression adjustResolveResult(@Nullable PsiElement resolveResult) {
+  protected static @Nullable PyExpression adjustResolveResult(@Nullable PsiElement resolveResult) {
     if (resolveResult == null) return null;
     final PyKeywordArgument argument = as(resolveResult, PyKeywordArgument.class);
     if (argument != null) {

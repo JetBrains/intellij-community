@@ -29,8 +29,7 @@ import java.util.List;
 public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.add.type.hints.for.function");
   }
 
@@ -72,8 +71,7 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
     return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
   }
 

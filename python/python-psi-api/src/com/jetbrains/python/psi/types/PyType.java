@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Key;
@@ -27,8 +27,7 @@ public interface PyType {
    * Typical examples are target expressions in LHS of assignments in {@code TypeVar} and named tuple definitions, as well as
    * class definitions themselves for plain class and generic types.
    */
-  @Nullable
-  default PyQualifiedNameOwner getDeclarationElement() {
+  default @Nullable PyQualifiedNameOwner getDeclarationElement() {
     return null;
   }
 
@@ -42,8 +41,8 @@ public interface PyType {
    *         or a list of elements that define the name, a la multiResolve().
    */
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull String name, @Nullable final PyExpression location,
-                                                   @NotNull final AccessDirection direction, @NotNull final PyResolveContext resolveContext);
+  List<? extends RatedResolveResult> resolveMember(@NotNull String name, final @Nullable PyExpression location,
+                                                   final @NotNull AccessDirection direction, final @NotNull PyResolveContext resolveContext);
 
   /**
    * Proposes completion variants from type's attributes.

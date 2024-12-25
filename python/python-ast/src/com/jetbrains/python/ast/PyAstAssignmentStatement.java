@@ -102,9 +102,8 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
     }
   }
 
-  @Nullable
   @Override
-  default PyAstAnnotation getAnnotation() {
+  default @Nullable PyAstAnnotation getAnnotation() {
     return findChildByClass(this, PyAstAnnotation.class);
   }
 
@@ -124,8 +123,7 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
   /**
    * @return rightmost expression in statement, which is supposedly the assigned value, or null.
    */
-  @Nullable
-  default PyAstExpression getAssignedValue() {
+  default @Nullable PyAstExpression getAssignedValue() {
     PsiElement child = getLastChild();
     while (child != null && !(child instanceof PyAstExpression)) {
       if (child instanceof PsiErrorElement) return null; // incomplete assignment operator can't be analyzed properly, bail out.
@@ -148,8 +146,7 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
    * If source is severely incorrect, the returned mapping is empty.
    * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
    */
-  @NotNull
-  default List<? extends Pair<? extends PyAstExpression, ? extends PyAstExpression>> getTargetsToValuesMapping() {
+  default @NotNull List<? extends Pair<? extends PyAstExpression, ? extends PyAstExpression>> getTargetsToValuesMapping() {
     List<Pair<PyAstExpression, PyAstExpression>> ret = new SmartList<>();
     if (!PsiTreeUtil.hasErrorElements(this)) { // no parse errors
       PyAstExpression[] constituents = PsiTreeUtil.getChildrenOfType(this, PyAstExpression.class); // "a = b = c" -> [a, b, c]
@@ -210,8 +207,7 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
     }
   }
 
-  @Nullable
-  default PyAstExpression getLeftHandSideExpression() {
+  default @Nullable PyAstExpression getLeftHandSideExpression() {
     PsiElement child = getFirstChild();
     while (child != null && !(child instanceof PyAstExpression)) {
       if (child instanceof PsiErrorElement) return null; // incomplete assignment operator can't be analyzed properly, bail out.
@@ -226,8 +222,7 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
   }
 
   @Override
-  @NotNull
-  default List<PsiNamedElement> getNamedElements() {
+  default @NotNull List<PsiNamedElement> getNamedElements() {
     final List<PyAstExpression> expressions = PyUtilCore.flattenedParensAndStars(getTargets());
     List<PsiNamedElement> result = new ArrayList<>();
     for (PyAstExpression expression : expressions) {

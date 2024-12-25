@@ -25,8 +25,7 @@ public final class PyExceptPartNavigator {
   private PyExceptPartNavigator() {
   }
 
-  @Nullable
-  public static PyExceptPart getPyExceptPartByTarget(final PsiElement element){
+  public static @Nullable PyExceptPart getPyExceptPartByTarget(final PsiElement element){
     final PyExceptPart pyExceptPart = PsiTreeUtil.getParentOfType(element, PyExceptPart.class, false);
     if (pyExceptPart == null){
       return null;

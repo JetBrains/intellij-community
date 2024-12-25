@@ -36,8 +36,7 @@ public final class PySelfType implements PyTypeParameterType {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "Self";
   }
 
@@ -46,8 +45,7 @@ public final class PySelfType implements PyTypeParameterType {
     return myScopeClassType.getPyClass();
   }
 
-  @NotNull
-  public PyClassLikeType getScopeClassType() {
+  public @NotNull PyClassLikeType getScopeClassType() {
     return myScopeClassType;
   }
 

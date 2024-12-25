@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
 public class JavaPythonFacet extends LibraryContributingFacet<JavaPythonFacetConfiguration> {
   public static final FacetTypeId<JavaPythonFacet> ID = new FacetTypeId<>("python");
 
-  public JavaPythonFacet(@NotNull final FacetType facetType,
-                         @NotNull final Module module,
-                         @NotNull final String name,
-                         @NotNull final JavaPythonFacetConfiguration configuration,
+  public JavaPythonFacet(final @NotNull FacetType facetType,
+                         final @NotNull Module module,
+                         final @NotNull String name,
+                         final @NotNull JavaPythonFacetConfiguration configuration,
                          Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
   }

@@ -41,14 +41,11 @@ import java.util.stream.Collectors;
 
 public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
-  @Nullable
-  private final QualifiedName myCalleeName;
+  private final @Nullable QualifiedName myCalleeName;
 
-  @NotNull
-  private final String myName;
+  private final @NotNull String myName;
 
-  @NotNull
-  private final LinkedHashMap<String, Optional<String>> myFields;
+  private final @NotNull LinkedHashMap<String, Optional<String>> myFields;
 
   private PyNamedTupleStubImpl(@Nullable QualifiedName calleeName,
                                @NotNull String name,
@@ -58,8 +55,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     myFields = fields;
   }
 
-  @Nullable
-  public static PyNamedTupleStub create(@NotNull PyTargetExpression expression) {
+  public static @Nullable PyNamedTupleStub create(@NotNull PyTargetExpression expression) {
     final PyExpression assignedValue = expression.findAssignedValue();
 
     if (assignedValue instanceof PyCallExpression) {
@@ -69,8 +65,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return null;
   }
 
-  @Nullable
-  public static PyNamedTupleStub create(@NotNull PyCallExpression expression) {
+  public static @Nullable PyNamedTupleStub create(@NotNull PyCallExpression expression) {
     final PyReferenceExpression calleeReference = PyUtil.as(expression.getCallee(), PyReferenceExpression.class);
 
     if (calleeReference == null) {
@@ -98,8 +93,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return null;
   }
 
-  @Nullable
-  public static PyNamedTupleStub deserialize(@NotNull StubInputStream stream) throws IOException {
+  public static @Nullable PyNamedTupleStub deserialize(@NotNull StubInputStream stream) throws IOException {
     final String calleeName = stream.readNameString();
     final String name = stream.readNameString();
     final LinkedHashMap<String, Optional<String>> fields = deserializeFields(stream, stream.readVarInt());
@@ -111,9 +105,8 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return new PyNamedTupleStubImpl(QualifiedName.fromDottedString(calleeName), name, fields);
   }
 
-  @NotNull
   @Override
-  public Class<PyNamedTupleStubType> getTypeClass() {
+  public @NotNull Class<PyNamedTupleStubType> getTypeClass() {
     return PyNamedTupleStubType.class;
   }
 
@@ -129,26 +122,22 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     }
   }
 
-  @Nullable
   @Override
-  public QualifiedName getCalleeName() {
+  public @Nullable QualifiedName getCalleeName() {
     return myCalleeName;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public Map<String, Optional<String>> getFields() {
+  public @NotNull Map<String, Optional<String>> getFields() {
     return myFields;
   }
 
-  @Nullable
-  private static Pair<QualifiedName, NamedTupleModule> getCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
+  private static @Nullable Pair<QualifiedName, NamedTupleModule> getCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
     final QualifiedName calleeName = PyPsiUtils.asQualifiedName(referenceExpression);
     if (calleeName == null) return null;
 
@@ -164,17 +153,15 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return null;
   }
 
-  @Nullable
-  private static LinkedHashMap<String, Optional<String>> resolveTupleFields(@NotNull PyCallExpression callExpression,
-                                                                            @NotNull NamedTupleModule module) {
+  private static @Nullable LinkedHashMap<String, Optional<String>> resolveTupleFields(@NotNull PyCallExpression callExpression,
+                                                                                      @NotNull NamedTupleModule module) {
     return switch (module) {
       case TYPING -> resolveTypingNTFields(callExpression);
       case COLLECTIONS -> resolveCollectionsNTFields(callExpression);
     };
   }
 
-  @NotNull
-  private static LinkedHashMap<String, Optional<String>> deserializeFields(@NotNull StubInputStream stream, int fieldsSize)
+  private static @NotNull LinkedHashMap<String, Optional<String>> deserializeFields(@NotNull StubInputStream stream, int fieldsSize)
     throws IOException {
     final LinkedHashMap<String, Optional<String>> fields = new LinkedHashMap<>(fieldsSize);
 
@@ -190,8 +177,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return fields;
   }
 
-  @Nullable
-  private static LinkedHashMap<String, Optional<String>> resolveCollectionsNTFields(@NotNull PyCallExpression callExpression) {
+  private static @Nullable LinkedHashMap<String, Optional<String>> resolveCollectionsNTFields(@NotNull PyCallExpression callExpression) {
     // SUPPORTED CASES:
 
     // fields = ["x", "y"]
@@ -227,8 +213,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
       .collect(toFieldsOfUnknownType);
   }
 
-  @Nullable
-  private static LinkedHashMap<String, Optional<String>> resolveTypingNTFields(@NotNull PyCallExpression callExpression) {
+  private static @Nullable LinkedHashMap<String, Optional<String>> resolveTypingNTFields(@NotNull PyCallExpression callExpression) {
     // SUPPORTED CASES:
 
     // fields = [("x", str), ("y", int)]
@@ -256,13 +241,11 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     }
   }
 
-  @Nullable
-  private static PyExpression getFieldsArgumentValue(@NotNull PyCallExpression callExpression, @NotNull String possibleKeyword) {
+  private static @Nullable PyExpression getFieldsArgumentValue(@NotNull PyCallExpression callExpression, @NotNull String possibleKeyword) {
     return PyPsiUtils.flattenParens(callExpression.getArgument(1, possibleKeyword, PyExpression.class));
   }
 
-  @Nullable
-  private static LinkedHashMap<String, Optional<String>> getTypingNTFieldsFromKwArguments(@NotNull List<PyExpression> arguments) {
+  private static @Nullable LinkedHashMap<String, Optional<String>> getTypingNTFieldsFromKwArguments(@NotNull List<PyExpression> arguments) {
     final LinkedHashMap<String, Optional<String>> result = new LinkedHashMap<>();
 
     for (PyExpression argument : arguments) {
@@ -277,8 +260,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return result;
   }
 
-  @Nullable
-  private static LinkedHashMap<String, Optional<String>> getTypingNTFieldsFromIterable(@NotNull PySequenceExpression fields) {
+  private static @Nullable LinkedHashMap<String, Optional<String>> getTypingNTFieldsFromIterable(@NotNull PySequenceExpression fields) {
     final LinkedHashMap<String, Optional<String>> result = new LinkedHashMap<>();
 
     for (PyExpression element : fields.getElements()) {
@@ -297,8 +279,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return result;
   }
 
-  @Nullable
-  private static String textIfPresent(@Nullable PsiElement element) {
+  private static @Nullable String textIfPresent(@Nullable PsiElement element) {
     return element == null ? null : element.getText();
   }
 

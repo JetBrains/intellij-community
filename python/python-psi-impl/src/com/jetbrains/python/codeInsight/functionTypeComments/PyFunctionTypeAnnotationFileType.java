@@ -30,22 +30,18 @@ public class PyFunctionTypeAnnotationFileType extends PythonFileType {
     super(PyFunctionTypeAnnotationDialect.INSTANCE);
   }
 
-  @NotNull
   @Override
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "PythonFunctionTypeComment";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return PyPsiBundle.message("filetype.python.function.type.annotation.description");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "functionTypeComment";
   }
 }

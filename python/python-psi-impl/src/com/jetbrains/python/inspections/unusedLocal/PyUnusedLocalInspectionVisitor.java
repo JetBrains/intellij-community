@@ -3,7 +3,9 @@ package com.jetbrains.python.inspections.unusedLocal;
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -120,8 +122,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
   }
 
-  @Nullable
-  private static PsiElement getControlFlowAnchorForString(@NotNull PyStringLiteralExpression host) {
+  private static @Nullable PsiElement getControlFlowAnchorForString(@NotNull PyStringLiteralExpression host) {
     final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, element -> {
       // Any comprehension component and its result are represented as children expressions of the comprehension element.
       // Only they have respective nodes in CFG and thus can be used as anchors
@@ -507,8 +508,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   private static class ReplaceWithWildCard extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard");
     }
 

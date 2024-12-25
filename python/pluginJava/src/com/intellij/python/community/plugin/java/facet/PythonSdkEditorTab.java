@@ -45,14 +45,12 @@ public class PythonSdkEditorTab extends FacetEditorTab {
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return PyBundle.message("configurable.PythonSdkEditorTab.display.name");
   }
 
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     return myMainPanel;
   }
 

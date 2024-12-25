@@ -19,9 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public abstract class CPythonSdkFlavor<T extends PyFlavorData> extends PythonSdkFlavor<T> {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Python";
   }
 }

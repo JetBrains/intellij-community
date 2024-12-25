@@ -39,16 +39,13 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     myAsync = prefixExpression != null && prefixExpression.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", myFunctionName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.unresolved.reference.create.function");
   }
 

@@ -16,8 +16,7 @@ public final class PyTypeDeclarationStatementNavigator {
     return getStatementByTarget(element) != null;
   }
 
-  @Nullable
-  public static PyTypeDeclarationStatement getStatementByTarget(@NotNull PsiElement element) {
+  public static @Nullable PyTypeDeclarationStatement getStatementByTarget(@NotNull PsiElement element) {
     final PyTypeDeclarationStatement statement = as(element.getParent(), PyTypeDeclarationStatement.class);
     return statement != null && statement.getTarget() == element ? statement : null;
   }

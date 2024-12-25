@@ -50,35 +50,32 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   }
 
 
-  @NotNull
   @Override
-  protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
+  protected @NotNull Collection<PyElement> getDependencies(final @NotNull MultiMap<PyClass, PyElement> usedElements) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  protected MultiMap<PyClass, PyElement> getDependencies(@NotNull final PyElement member) {
+  protected @NotNull MultiMap<PyClass, PyElement> getDependencies(final @NotNull PyElement member) {
     final PyRecursiveElementVisitorWithResult visitor = new MyPyRecursiveElementVisitor();
     member.accept(visitor);
     return visitor.myResult;
   }
 
   @Override
-  protected Collection<? extends PyElement> getElementsToStoreReferences(@NotNull final Collection<PyTargetExpression> elements) {
+  protected Collection<? extends PyElement> getElementsToStoreReferences(final @NotNull Collection<PyTargetExpression> elements) {
     // We need to save references from assignments
     return Collections2.transform(elements, ASSIGNMENT_TRANSFORM);
   }
 
-  @NotNull
   @Override
-  protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
+  protected @NotNull List<PyElement> getMembersCouldBeMoved(final @NotNull PyClass pyClass) {
     return Lists.newArrayList(Collections2.filter(getFieldsByClass(pyClass), SIMPLE_ASSIGNMENTS_ONLY));
   }
 
   @Override
-  protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
-                                              @NotNull final Collection<PyMemberInfo<PyTargetExpression>> members,
+  protected Collection<PyElement> moveMembers(final @NotNull PyClass from,
+                                              final @NotNull Collection<PyMemberInfo<PyTargetExpression>> members,
                                               final PyClass @NotNull ... to) {
     return moveAssignments(from, Collections2
       .filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
@@ -104,19 +101,16 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
    * @param pyClass class to check
    * @return list of fields in target expression (declaration) form
    */
-  @NotNull
-  protected abstract Collection<PyTargetExpression> getFieldsByClass(@NotNull PyClass pyClass);
+  protected abstract @NotNull Collection<PyTargetExpression> getFieldsByClass(@NotNull PyClass pyClass);
 
 
-  @NotNull
   @Override
-  public PyMemberInfo<PyTargetExpression> apply(@NotNull final PyTargetExpression input) {
+  public @NotNull PyMemberInfo<PyTargetExpression> apply(final @NotNull PyTargetExpression input) {
     var parent = ObjectUtils.tryCast(input.getParent(), PyAssignmentStatement.class);
     return new PyMemberInfo<>(input, parent != null ? parent : input, myStatic, input.getText(), isOverrides(input), this, false);
   }
 
-  @Nullable
-  private Boolean isOverrides(@NotNull final PyTargetExpression input) {
+  private @Nullable Boolean isOverrides(final @NotNull PyTargetExpression input) {
     final PyClass aClass = input.getContainingClass();
     final String name = input.getName();
     if (name == null) {
@@ -133,7 +127,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
     //Support only simplest cases like CLASS_VAR = 42.
     //Tuples (CLASS_VAR_1, CLASS_VAR_2) = "spam", "eggs" are not supported by now
     @Override
-    public boolean applyNotNull(@NotNull final PyTargetExpression input) {
+    public boolean applyNotNull(final @NotNull PyTargetExpression input) {
       final PsiElement parent = input.getParent();
       return (parent != null) && PyAssignmentStatement.class.isAssignableFrom(parent.getClass());
     }
@@ -142,9 +136,8 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
 
   //Transforms expressions to its assignment step
   private static class AssignmentTransform implements Function<PyTargetExpression, PyAssignmentStatement> {
-    @Nullable
     @Override
-    public PyAssignmentStatement apply(@NotNull final PyTargetExpression input) {
+    public @Nullable PyAssignmentStatement apply(final @NotNull PyTargetExpression input) {
       return PsiTreeUtil.getParentOfType(input, PyAssignmentStatement.class);
     }
   }

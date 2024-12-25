@@ -53,15 +53,13 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
                                                                                  PyElementTypes.STRING_LITERAL_EXPRESSION,
                                                                                  PyElementTypes.NONE_LITERAL_EXPRESSION);
 
-  @Nullable
   @Override
-  public PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {
+  public @Nullable PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {
     final PyExpression value = getAssignedValueIfTypeAliasLike(psi, true);
     return value != null ? new PyTypingTypeAliasStubImpl(value.getText()) : null;
   }
 
-  @Nullable
-  private static PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
+  private static @Nullable PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
     if (!PyUtil.isTopLevel(target) || !looksLikeTypeAliasTarget(target)) {
       return null;
     }
@@ -153,9 +151,8 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
     });
   }
 
-  @Nullable
   @Override
-  public PyTypingAliasStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
+  public @Nullable PyTypingAliasStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
     String ref = stream.readNameString();
     return ref != null ? new PyTypingTypeAliasStubImpl(ref) : null;
   }
@@ -169,8 +166,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
    *
    * @see PyTypingAliasStub
    */
-  @Nullable
-  public static PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
+  public static @Nullable PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
     final PyTargetExpressionStub stub = target.getStub();
     PyExpression result = null;
     if (stub != null) {

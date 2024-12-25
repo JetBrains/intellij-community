@@ -17,11 +17,9 @@ public final class PyDefaultProjectAwareServiceClasses<
   APP_SERVICE extends SERVICE,
   MODULE_SERVICE extends SERVICE> {
 
-  @NotNull
-  private final Class<APP_SERVICE> myAppServiceClass;
+  private final @NotNull Class<APP_SERVICE> myAppServiceClass;
 
-  @NotNull
-  private final Class<MODULE_SERVICE> myModuleServiceClass;
+  private final @NotNull Class<MODULE_SERVICE> myModuleServiceClass;
 
   public PyDefaultProjectAwareServiceClasses(@NotNull Class<APP_SERVICE> appServiceClass, @NotNull Class<MODULE_SERVICE> moduleServiceClass) {
     myAppServiceClass = appServiceClass;
@@ -36,8 +34,7 @@ public final class PyDefaultProjectAwareServiceClasses<
     return getModuleService(module);
   }
 
-  @NotNull
-  public APP_SERVICE getAppService() {
+  public @NotNull APP_SERVICE getAppService() {
     return ApplicationManager.getApplication().getService(myAppServiceClass);
   }
 

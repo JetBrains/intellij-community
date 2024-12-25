@@ -42,8 +42,7 @@ public class PyTypeModelBuilder {
   abstract static class TypeModel {
     abstract void accept(@NotNull TypeVisitor visitor);
 
-    @NotNull
-    public String asString() {
+    public @NotNull String asString() {
       final TypeToStringVisitor visitor = new TypeToStringVisitor();
       accept(visitor);
       return visitor.getString();
@@ -54,22 +53,19 @@ public class PyTypeModelBuilder {
       accept(visitor);
     }
 
-    @NotNull
-    public String asDescription() {
+    public @NotNull String asDescription() {
       final TypeToDescriptionVisitor visitor = new TypeToDescriptionVisitor();
       accept(visitor);
       return visitor.getDescription();
     }
 
-    @NotNull
-    public String asPep484TypeHint() {
+    public @NotNull String asPep484TypeHint() {
       final TypeToStringVisitor visitor = new TypeToPep484TypeHintVisitor();
       accept(visitor);
       return visitor.getString();
     }
 
-    @NotNull
-    public String asStringWithAdditionalInfo() {
+    public @NotNull String asStringWithAdditionalInfo() {
       TypeToStringVisitor visitor = new VerboseTypeInfoVisitor();
       accept(visitor);
       return visitor.getString();
@@ -128,11 +124,9 @@ public class PyTypeModelBuilder {
 
   static final class NamedType extends TypeModel {
 
-    @NotNull
-    private static final NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
+    private static final @NotNull NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
 
-    @Nullable
-    private final @NlsSafe String name;
+    private final @Nullable @NlsSafe String name;
 
     private NamedType(@Nullable String name) {
       this.name = name;
@@ -143,8 +137,7 @@ public class PyTypeModelBuilder {
       visitor.name(name);
     }
 
-    @NotNull
-    private static NamedType nameOrAny(@Nullable PyType type) {
+    private static @NotNull NamedType nameOrAny(@Nullable PyType type) {
       return type == null ? ANY : new NamedType(type.getName());
     }
   }
@@ -197,8 +190,8 @@ public class PyTypeModelBuilder {
   }
 
   static final class FunctionType extends TypeModel {
-    @NotNull private final TypeModel returnType;
-    @Nullable private final Collection<TypeModel> parameters;
+    private final @NotNull TypeModel returnType;
+    private final @Nullable Collection<TypeModel> parameters;
 
     private FunctionType(@Nullable TypeModel returnType, @Nullable Collection<TypeModel> parameters) {
       this.returnType = returnType != null ? returnType : NamedType.ANY;
@@ -212,8 +205,8 @@ public class PyTypeModelBuilder {
   }
 
   static final class ParamType extends TypeModel {
-    @Nullable private final @NlsSafe String name;
-    @Nullable private final TypeModel type;
+    private final @Nullable @NlsSafe String name;
+    private final @Nullable TypeModel type;
 
     private ParamType(@Nullable String name, @Nullable TypeModel type) {
       this.name = name;
@@ -256,8 +249,7 @@ public class PyTypeModelBuilder {
 
   private static final class OneOfLiterals extends TypeModel {
 
-    @NotNull
-    private final List<PyLiteralType> literals;
+    private final @NotNull List<PyLiteralType> literals;
 
     private OneOfLiterals(@NotNull List<PyLiteralType> literals) {
       this.literals = literals;
@@ -394,8 +386,7 @@ public class PyTypeModelBuilder {
     return result;
   }
 
-  @Nullable
-  private static Ref<PyType> getOptionalType(@NotNull PyUnionType type) {
+  private static @Nullable Ref<PyType> getOptionalType(@NotNull PyUnionType type) {
     final Collection<PyType> members = type.getMembers();
     if (members.size() == 2) {
       boolean foundNone = false;
@@ -611,15 +602,14 @@ public class PyTypeModelBuilder {
       return HtmlChunk.raw(StringUtil.notNullize(expressionText));
     }
 
-    @NotNull
-    public String getDescription() {
+    public @NotNull String getDescription() {
       return myBody.toString();
     }
   }
 
   private abstract static class TypeNameVisitor implements TypeVisitor {
     private int myDepth = 0;
-    private final static int MAX_DEPTH = 6;
+    private static final int MAX_DEPTH = 6;
     private boolean switchBuiltinToTyping = false;
     protected HtmlBuilder myBody = new HtmlBuilder();
 

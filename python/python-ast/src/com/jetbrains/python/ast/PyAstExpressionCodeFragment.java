@@ -31,8 +31,7 @@ public interface PyAstExpressionCodeFragment extends PyAstFile, PsiCodeFragment 
    *
    * @return the real context of the element, or null if there is no context
    */
-  @Nullable
-  default PsiElement getRealContext() {
+  default @Nullable PsiElement getRealContext() {
     return getContext();
   }
 

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 final class PyCharmNewProjectAction extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final PyCharmNewProjectDialog dlg = new PyCharmNewProjectDialog();
     dlg.show();
   }

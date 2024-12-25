@@ -43,11 +43,10 @@ public final class PySimplifyBooleanCheckInspection extends PyInspection {
 
   public boolean ignoreComparisonToZero = true;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, ignoreComparisonToZero, PyInspectionVisitor.getContext(session));
   }
 

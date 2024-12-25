@@ -14,13 +14,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddGlobalQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.add.global");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull final ModPsiUpdater updater) {
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
     if (element instanceof PyReferenceExpression expression) {
       final String name = expression.getReferencedName();
       final ScopeOwner owner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);

@@ -35,19 +35,17 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyClassImpl(node);
   }
 
   @Override
-  public PyClass createPsi(@NotNull final PyClassStub stub) {
+  public PyClass createPsi(final @NotNull PyClassStub stub) {
     return new PyClassImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
+  public @NotNull PyClassStub createStub(final @NotNull PyClass psi, final StubElement parentStub) {
     return new PyClassStubImpl(psi.getName(),
                                parentStub,
                                getSuperClassQNames(psi),
@@ -61,8 +59,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                createCustomStub(psi));
   }
 
-  @NotNull
-  public static Map<QualifiedName, QualifiedName> getSuperClassQNames(@NotNull final PyClass pyClass) {
+  public static @NotNull Map<QualifiedName, QualifiedName> getSuperClassQNames(final @NotNull PyClass pyClass) {
     final Map<QualifiedName, QualifiedName> result = new LinkedHashMap<>();
 
     for (PyExpression expression : PyClassImpl.getUnfoldedSuperClassExpressions(pyClass)) {
@@ -80,8 +77,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
    * their saved text chunks into {@link PyExpressionCodeFragment} and extracting top-level expressions
    * from them. Otherwise, get superclass expressions directly from AST.
    */
-  @NotNull
-  public static List<PyExpression> getSuperClassExpressions(@NotNull PyClass pyClass) {
+  public static @NotNull List<PyExpression> getSuperClassExpressions(@NotNull PyClass pyClass) {
     final PyClassStub classStub = pyClass.getStub();
     if (classStub == null) {
       return List.of(pyClass.getSuperClassExpressions());
@@ -90,8 +86,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                     x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()));
   }
 
-  @Nullable
-  private static QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
+  private static @Nullable QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
     if (superClassExpression instanceof PyReferenceExpression reference) {
       final String referenceName = reference.getName();
 
@@ -114,7 +109,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
   }
 
   @Override
-  public void serialize(@NotNull final PyClassStub pyClassStub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(final @NotNull PyClassStub pyClassStub, final @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(pyClassStub.getName());
 
     final Map<QualifiedName, QualifiedName> superClasses = pyClassStub.getSuperClasses();
@@ -144,8 +139,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
   }
 
   @Override
-  @NotNull
-  public PyClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyClassStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
     final String name = dataStream.readNameString();
 
     final int superClassCount = dataStream.readByte();
@@ -179,7 +173,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
   }
 
   @Override
-  public void indexStub(@NotNull final PyClassStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull PyClassStub stub, final @NotNull IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);
@@ -201,14 +195,12 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
       .forEach(className -> sink.occurrence(PySuperClassIndex.KEY, className));
   }
 
-  @NotNull
-  protected IStubElementType getStubElementType() {
+  protected @NotNull IStubElementType getStubElementType() {
     return PyStubElementTypes.CLASS_DECLARATION;
   }
 
-  @NotNull
   @Override
-  public List<PyCustomClassStubType<? extends PyCustomClassStub>> getExtensions() {
+  public @NotNull List<PyCustomClassStubType<? extends PyCustomClassStub>> getExtensions() {
     return PyCustomClassStubType.EP_NAME.getExtensionList();
   }
 }

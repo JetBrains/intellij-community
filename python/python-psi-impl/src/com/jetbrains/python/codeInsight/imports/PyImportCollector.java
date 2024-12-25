@@ -186,10 +186,9 @@ public class PyImportCollector {
     return true;
   }
 
-  @NotNull
-  private Collection<PsiFileSystemItem> findImportableModules(@NotNull String name,
-                                                              boolean matchQualifiedName,
-                                                              @NotNull GlobalSearchScope scope) {
+  private @NotNull Collection<PsiFileSystemItem> findImportableModules(@NotNull String name,
+                                                                       boolean matchQualifiedName,
+                                                                       @NotNull GlobalSearchScope scope) {
     List<PsiFileSystemItem> result = new ArrayList<>();
     QualifiedName qualifiedName = QualifiedName.fromDottedString(name);
     List<PyFile> matchingModules = matchQualifiedName ? PyModuleNameIndex.findByQualifiedName(qualifiedName, myNode.getProject(), scope)

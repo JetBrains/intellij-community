@@ -26,15 +26,14 @@ public final class PyRefactoringUtil {
   private PyRefactoringUtil() {
   }
 
-  @NotNull
-  public static List<PsiElement> getOccurrences(@NotNull final PsiElement pattern, @Nullable final PsiElement context) {
+  public static @NotNull List<PsiElement> getOccurrences(final @NotNull PsiElement pattern, final @Nullable PsiElement context) {
     if (context == null) {
       return Collections.emptyList();
     }
     final List<PsiElement> occurrences = new ArrayList<>();
     final PyElementVisitor visitor = new PyElementVisitor() {
       @Override
-      public void visitElement(@NotNull final PsiElement element) {
+      public void visitElement(final @NotNull PsiElement element) {
         if (element instanceof PyParameter) {
           return;
         }
@@ -65,11 +64,10 @@ public final class PyRefactoringUtil {
     return occurrences;
   }
 
-  @Nullable
-  public static PyExpression getSelectedExpression(@NotNull final Project project,
-                                                   @NotNull PsiFile file,
-                                                   @NotNull final PsiElement element1,
-                                                   @NotNull final PsiElement element2) {
+  public static @Nullable PyExpression getSelectedExpression(final @NotNull Project project,
+                                                             @NotNull PsiFile file,
+                                                             final @NotNull PsiElement element1,
+                                                             final @NotNull PsiElement element2) {
     PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
     if (parent != null && !(parent instanceof PyElement)) {
       parent = PsiTreeUtil.getParentOfType(parent, PyElement.class);
@@ -119,8 +117,7 @@ public final class PyRefactoringUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiElement findExpressionInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
+  public static @Nullable PsiElement findExpressionInRange(final @NotNull PsiFile file, int startOffset, int endOffset) {
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
     if (element1 instanceof PsiWhiteSpace) {
@@ -137,7 +134,7 @@ public final class PyRefactoringUtil {
     return getSelectedExpression(file.getProject(), file, element1, element2);
   }
 
-  public static PsiElement @NotNull [] findStatementsInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
+  public static PsiElement @NotNull [] findStatementsInRange(final @NotNull PsiFile file, int startOffset, int endOffset) {
     ArrayList<PsiElement> array = new ArrayList<>();
 
     PsiElement element1 = file.findElementAt(startOffset);
@@ -260,8 +257,7 @@ public final class PyRefactoringUtil {
    * @param scopeAnchor PSI element used to determine correct scope
    * @return unique name in the scope of scopeAnchor
    */
-  @NotNull
-  public static String selectUniqueNameFromType(@NotNull String typeName, @NotNull PsiElement scopeAnchor) {
+  public static @NotNull String selectUniqueNameFromType(@NotNull String typeName, @NotNull PsiElement scopeAnchor) {
     return selectUniqueName(typeName, true, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
@@ -273,18 +269,15 @@ public final class PyRefactoringUtil {
    * @param scopeAnchor  PSI element used to determine correct scope
    * @return unique name in the scope of scopeAnchor
    */
-  @NotNull
-  public static String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor) {
+  public static @NotNull String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor) {
     return selectUniqueName(templateName, false, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
-  @NotNull
-  public static String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+  public static @NotNull String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
     return selectUniqueName(templateName, false, scopeAnchor, isValid);
   }
 
-  @NotNull
-  private static String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+  private static @NotNull String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
     final Collection<String> suggestions;
     if (templateIsType) {
       suggestions = NameSuggesterUtil.generateNamesByType(templateName);
@@ -310,8 +303,7 @@ public final class PyRefactoringUtil {
    * @param predicate used to test if suggested name is valid
    * @return unique name in the scope probably with number suffix appended
    */
-  @NotNull
-  public static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> predicate) {
+  public static @NotNull String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> predicate) {
     int counter = 1;
     String candidate = name;
     while (!predicate.test(candidate, scopeAnchor)) {
@@ -325,9 +317,8 @@ public final class PyRefactoringUtil {
     return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
   }
 
-  @Nullable
-  public static <T extends PsiElement> T findSameElementForPreview(@Nullable SmartPsiElementPointer<T> pointer,
-                                                                   @NotNull PsiFile previewFile) {
+  public static @Nullable <T extends PsiElement> T findSameElementForPreview(@Nullable SmartPsiElementPointer<T> pointer,
+                                                                             @NotNull PsiFile previewFile) {
     if (pointer == null) return null;
     T element = pointer.getElement();
     if (element == null) return null;
