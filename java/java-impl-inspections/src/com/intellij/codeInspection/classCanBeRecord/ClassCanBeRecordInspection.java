@@ -117,14 +117,13 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       if (classIdentifier == null) return;
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
-      if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
-          myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly()) {
-        if (!ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) {
-          if (isOnTheFly()) {
-            registerError(classIdentifier, ProblemHighlightType.INFORMATION, true, aClass);
-          }
-          return;
+      boolean necessaryCheckConflicts = myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
+                  myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly();
+      if (necessaryCheckConflicts && !ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) {
+        if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST) {
+          registerError(classIdentifier, ProblemHighlightType.INFORMATION, true, aClass);
         }
+        return;
       }
       registerError(classIdentifier, isOnTheFly(), aClass);
     }
