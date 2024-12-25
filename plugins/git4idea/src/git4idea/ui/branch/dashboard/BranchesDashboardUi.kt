@@ -38,8 +38,13 @@ internal class BranchesDashboardUi(private val logUi: BranchesVcsLogUi) : Dispos
 
   init {
     val toolbar = ActionManager.getInstance().createActionToolbar("Git.Log.Branches", BranchesDashboardTreeComponent.createActionGroup(), false)
+    val model = BranchesDashboardTreeModelImpl(logUi.logData, logUi.filterUi).also {
+      Disposer.register(this, it)
+    }
+
     val treePanel = BranchesDashboardTreeComponent.create(this,
-                                                          logUi.logData,
+                                                          logUi.logData.project,
+                                                          model,
                                                           logUi.properties,
                                                           logUi.filterUi,
                                                           ::navigateToSelection,

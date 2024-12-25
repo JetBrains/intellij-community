@@ -13,14 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
-import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.ui.ProgressStripe
 import git4idea.GitLocalBranch
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -31,22 +27,33 @@ import git4idea.repo.GitTagLoaderListener
 import git4idea.ui.branch.GitBranchManager
 import kotlin.properties.Delegates
 
-internal class BranchesDashboardTreeHandler(
+internal interface BranchesDashboardTreeModel : BranchesTreeModel {
+  var showOnlyMy: Boolean
+
+  fun launchFetch()
+}
+
+internal class BranchesDashboardTreeModelImpl(
   private val logData: VcsLogData,
   private val logFilterUi: VcsLogFilterUiEx,
-  private val tree: FilteringBranchesTree,
-  private val branchesProgressStripe: ProgressStripe,
-) : Disposable {
+) : BranchesTreeModelBase(), BranchesDashboardTreeModel, Disposable {
 
   private val project: Project = logData.project
 
   private val refs = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf<BranchInfo>(), hashSetOf<RefInfo>())
 
-  var showOnlyMy: Boolean by AtomicObservableProperty(false) { old, new -> if (old != new) updateBranchesIsMyState() }
+  override val groupingConfig = with(project.service<GitBranchManager>()) {
+    hashMapOf(
+      GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
+      GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+    )
+  }.toMutableMap()
+
+  override var showOnlyMy: Boolean by AtomicObservableProperty(false) { old, new -> if (old != new) updateBranchesIsMyState() }
 
   private var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
     if (new != null && old != null && old != new) {
-      updateBranchesTree(false)
+      updateBranchesTree()
     }
   }
 
@@ -60,20 +67,20 @@ internal class BranchesDashboardTreeHandler(
 
       override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
         runInEdt {
-          tree.toggleGrouping(key, state)
+          groupingConfig[key] = state
           refreshTree()
         }
       }
 
       override fun showTagsSettingsChanged(state: Boolean) {
         runInEdt {
-          updateBranchesTree(false)
+          updateBranchesTree()
         }
       }
     })
     project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
       runInEdt {
-        updateBranchesTree(false)
+        updateBranchesTree()
       }
     })
     project.messageBus.connect(this)
@@ -81,7 +88,7 @@ internal class BranchesDashboardTreeHandler(
         runInEdt { updateBranchesIncomingOutgoingState() }
       })
 
-    val changeListener = DataPackChangeListener { updateBranchesTree(false) }
+    val changeListener = DataPackChangeListener { updateBranchesTree() }
     logData.addDataPackChangeListener(changeListener)
     Disposer.register(this) {
       logData.removeDataPackChangeListener(changeListener)
@@ -97,17 +104,6 @@ internal class BranchesDashboardTreeHandler(
       }
     }
     logFilterUi.addFilterListener(logUiFilterListener)
-
-
-    UiNotifyConnector.installOn(tree.component, object : Activatable {
-      private var initial = true
-
-      override fun showNotify() {
-        updateBranchesTree(initial)
-        initial = false
-      }
-    })
-
     logUiFilterListener.onFiltersChanged()
   }
 
@@ -116,57 +112,52 @@ internal class BranchesDashboardTreeHandler(
     rootsToFilter = null
   }
 
-  private fun startLoadingBranches() {
-    tree.component.emptyText.text = message("action.Git.Loading.Branches.progress")
-    branchesProgressStripe.startLoading()
-  }
-
-  private fun stopLoadingBranches() {
-    tree.component.emptyText.text = StatusText.getDefaultEmptyText()
-    branchesProgressStripe.stopLoading()
-  }
-
-  fun launchFetch() {
-    startLoadingBranches()
+  override fun launchFetch() {
+    startLoading()
     GitFetch.performFetch(project) {
-      stopLoadingBranches()
+      finishLoading()
     }
   }
 
   private fun refreshTree() {
-    tree.refreshTree(refs, showOnlyMy)
+    setTree(NodeDescriptorsModel.buildTreeNodes(
+      project,
+      refs,
+      if (showOnlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
+      groupingConfig,
+    ))
   }
 
-  private fun updateBranchesTree(initial: Boolean) {
-    if (!tree.component.isShowing) return
-
-    val forceReload = tree.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+  private fun updateBranchesTree() {
+    val forceReload = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] == true
     val changed = reloadBranches(forceReload)
     if (changed) {
       if (showOnlyMy) {
         updateBranchesIsMyState()
       }
       else {
-        tree.refreshNodeDescriptorsModel(refs, showOnlyMy)
+        refreshTree()
       }
     }
-    tree.update(initial, changed)
   }
 
   private fun reloadBranches(force: Boolean): Boolean {
-    startLoadingBranches()
+    startLoading()
 
-    val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project, rootsToFilter)
-    val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project, rootsToFilter)
-    val newTags = BranchesDashboardUtil.getTags(project, rootsToFilter)
+    try {
+      val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project, rootsToFilter)
+      val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project, rootsToFilter)
+      val newTags = BranchesDashboardUtil.getTags(project, rootsToFilter)
 
-    val reloadedLocal = updateIfChanged(refs.localBranches, newLocalBranches, force)
-    val reloadedRemote = updateIfChanged(refs.remoteBranches, newRemoteBranches, force)
-    val reloadedTags = updateIfChanged(refs.tags, newTags, force)
+      val reloadedLocal = updateIfChanged(refs.localBranches, newLocalBranches, force)
+      val reloadedRemote = updateIfChanged(refs.remoteBranches, newRemoteBranches, force)
+      val reloadedTags = updateIfChanged(refs.tags, newTags, force)
 
-    stopLoadingBranches()
-
-    return reloadedLocal || reloadedRemote || reloadedTags
+      return reloadedLocal || reloadedRemote || reloadedTags
+    }
+    finally {
+      finishLoading()
+    }
   }
 
   private fun <T : RefInfo> updateIfChanged(currentState: MutableCollection<T>, newState: Set<T>, force: Boolean) =
@@ -203,7 +194,7 @@ internal class BranchesDashboardTreeHandler(
   private fun updateBranchesIsMyState() {
     val allBranches = refs.localBranches + refs.remoteBranches
     val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
-    startLoadingBranches()
+    startLoading()
     calculateMyBranchesInBackground(
       run = { indicator ->
         BranchesDashboardUtil.checkIsMyBranchesSynchronously(logData, branchesToCheck, indicator)
@@ -214,7 +205,7 @@ internal class BranchesDashboardTreeHandler(
         refreshTree()
       },
       onFinished = {
-        stopLoadingBranches()
+        finishLoading()
       })
   }
 

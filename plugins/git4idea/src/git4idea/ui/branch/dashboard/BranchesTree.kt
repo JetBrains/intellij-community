@@ -23,16 +23,19 @@ import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.ThreeState
 import com.intellij.util.containers.FList
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.branch.calcTooltip
+import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
@@ -180,13 +183,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 }
 
-internal abstract class FilteringBranchesTreeBase(
-  tree: Tree,
-  protected val project: Project,
-) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, BranchTreeNode(BranchNodeDescriptor.Root())) {
-  private val nodeDescriptorsModel = NodeDescriptorsModel(root.getNodeDescriptor() as BranchNodeDescriptor.Root, project)
-
-  protected abstract val groupingConfig: Map<GroupingKey, Boolean>
+internal abstract class FilteringBranchesTreeBase(val model: BranchesTreeModel, tree: Tree)
+  : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, BranchTreeNode(model.root)) {
 
   final override fun getNodeClass() = BranchTreeNode::class.java
 
@@ -209,22 +207,52 @@ internal abstract class FilteringBranchesTreeBase(
   fun isEmptyModel() = root.children().asSequence().all {
     searchModel.isLeaf(it)
   }
-
-  internal fun refreshNodeDescriptorsModel(refs: RefsCollection, showOnlyMy: Boolean) {
-    nodeDescriptorsModel.rebuildFrom(
-      refs,
-      if (showOnlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
-      groupingConfig,
-    )
-  }
 }
 
 internal class FilteringBranchesTree(
-  project: Project,
+  private val project: Project,
+  model: BranchesTreeModel,
   val component: BranchesTreeComponent,
   place: @NonNls String,
-  private val disposable: Disposable
-) : FilteringBranchesTreeBase(component, project) {
+  private val disposable: Disposable,
+) : FilteringBranchesTreeBase(model, component) {
+
+  init {
+    UiNotifyConnector.installOn(tree, object : Activatable {
+      private val listener = object : BranchesTreeModel.Listener {
+        override fun onTreeChange() {
+          updateTree()
+        }
+
+        override fun onLoadingStateChange() {
+          if (model.isLoading) {
+            component.emptyText.text = message("action.Git.Loading.Branches.progress")
+          }
+          else {
+            component.emptyText.text = StatusText.getDefaultEmptyText()
+          }
+        }
+      }
+
+      override fun showNotify() {
+        updateTree()
+        model.addListener(listener)
+      }
+
+      override fun hideNotify() {
+        model.removeListener(listener)
+      }
+
+      private fun updateTree() {
+        runPreservingTreeState(!initialUpdateDone) {
+          searchModel.updateStructure()
+        }
+        initialUpdateDone = true
+      }
+    })
+  }
+
+  private var initialUpdateDone = false
 
   private val expandedPaths = HashSet<TreePath>()
 
@@ -232,20 +260,6 @@ internal class FilteringBranchesTree(
 
   private val treeStateHolder: BranchesTreeStateHolder get() =
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Supplier { project.service() })
-
-  override val groupingConfig: MutableMap<GroupingKey, Boolean> =
-    with(project.service<GitBranchManager>()) {
-      hashMapOf(
-        GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
-        GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
-      )
-    }
-
-  fun toggleGrouping(key: GroupingKey, state: Boolean) {
-    groupingConfig[key] = state
-  }
-
-  fun isGroupingEnabled(key: GroupingKey) = groupingConfig[key] == true
 
   init {
     runInEdt {
@@ -336,14 +350,6 @@ internal class FilteringBranchesTree(
     }
     else {
       TreeUtil.expandAll(tree)
-    }
-  }
-
-  fun refreshTree(refs: RefsCollection, showOnlyMy: Boolean) {
-    runPreservingTreeState(false) {
-      tree.selectionModel.clearSelection()
-      refreshNodeDescriptorsModel(refs, showOnlyMy)
-      searchModel.updateStructure()
     }
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -21,7 +21,6 @@ import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.ui.ProgressStripe
@@ -41,17 +40,18 @@ import javax.swing.*
 internal object BranchesDashboardTreeComponent {
   fun create(
     parentDisposable: Disposable,
-    logData: VcsLogData,
+    project: Project,
+    model: BranchesDashboardTreeModel,
     logProperties: VcsLogUiProperties,
     logFilterUi: VcsLogFilterUiEx,
     logNavigator: (BranchNodeDescriptor.LogNavigatable, focus: Boolean) -> Unit,
     searchHeightReferent: JComponent? = null,
   ): JComponent {
-    val project = logData.project
     val tree = BranchesTreeComponent(project).apply {
       accessibleContext.accessibleName = message("git.log.branches.tree.accessible.name")
     }
-    val filteringTree = FilteringBranchesTree(project, tree, place = VCS_LOG_BRANCHES_PLACE, disposable = parentDisposable).apply {
+
+    val filteringTree = FilteringBranchesTree(project, model, tree, place = VCS_LOG_BRANCHES_PLACE, disposable = parentDisposable).apply {
       installPasteAction()
     }
 
@@ -69,14 +69,20 @@ internal object BranchesDashboardTreeComponent {
       setVerticalSizeReferent(searchHeightReferent)
     }
 
-    val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(filteringTree.component, true), parentDisposable)
-
-    val treeHandler = BranchesDashboardTreeHandler(logData, logFilterUi, filteringTree, progressStripe).also {
-      Disposer.register(parentDisposable, it)
-    }
+    val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(tree, true), parentDisposable)
+    model.addListener(object : BranchesTreeModel.Listener {
+      override fun onLoadingStateChange() {
+        if (model.isLoading) {
+          progressStripe.startLoading()
+        }
+        else {
+          progressStripe.stopLoading()
+        }
+      }
+    })
 
     val uiController = BranchesDashboardTreeController(
-      project, logProperties, logFilterUi, logNavigator, filteringTree, treeHandler
+      project, logProperties, logFilterUi, logNavigator, model, tree
     )
 
     return simplePanel().withBorder(createBorder(SideBorder.LEFT))
@@ -85,17 +91,17 @@ internal object BranchesDashboardTreeComponent {
       .apply {
         isFocusTraversalPolicyProvider = true
         focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
-          override fun getDefaultComponent(aContainer: Container): Component? = filteringTree.component
+          override fun getDefaultComponent(aContainer: Container): Component? = tree
         }
       }
       .let {
-        val treeExpander = DefaultTreeExpander(filteringTree.component)
+        val treeExpander = DefaultTreeExpander(tree)
         UiDataProvider.wrapComponent(it) { sink ->
           uiController.uiDataSnapshot(sink)
           sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
           sink[QuickActionProvider.KEY] = object : QuickActionProvider {
             override fun getName(): @NlsActions.ActionText String? = null
-            override fun getComponent(): JComponent = filteringTree.component
+            override fun getComponent(): JComponent = tree
             override fun isCycleRoot(): Boolean = true
             override fun getActions(originalProvider: Boolean): List<AnAction> = listOf(createActionGroup())
           }
@@ -107,7 +113,7 @@ internal object BranchesDashboardTreeComponent {
         actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL).registerCustomShortcutSet(it, parentDisposable)
         ShowBranchDiffAction().registerCustomShortcutSet(it, null)
         DeleteBranchAction().registerCustomShortcutSet(it, null)
-        createFocusFilterFieldAction(branchesSearchField, filteringTree.component)
+        createFocusFilterFieldAction(branchesSearchField, tree)
           .registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_FIND), it)
       }
   }

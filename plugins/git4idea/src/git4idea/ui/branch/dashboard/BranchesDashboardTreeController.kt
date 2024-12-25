@@ -26,30 +26,30 @@ internal class BranchesDashboardTreeController(
   private val logProperties: VcsLogUiProperties,
   private val logFilterUi: VcsLogFilterUiEx,
   private val logNavigator: (BranchNodeDescriptor.LogNavigatable, focus: Boolean) -> Unit,
-  private val tree: FilteringBranchesTree,
-  private val handler: BranchesDashboardTreeHandler
+  private val model: BranchesDashboardTreeModel,
+  private val tree: BranchesTreeComponent,
 ) : UiDataProvider {
 
-  var showOnlyMy: Boolean by handler::showOnlyMy
+  var showOnlyMy: Boolean by model::showOnlyMy
 
   init {
     val treeSelectionListener = TreeSelectionListener {
-      if (!tree.component.isShowing) return@TreeSelectionListener
+      if (!tree.isShowing) return@TreeSelectionListener
 
       if (logProperties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) {
         updateLogBranchFilter()
       }
       else if (logProperties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY]) {
-        tree.component.getSelection().logNavigatableNodeDescriptor?.let { logNavigatableSelection ->
+        tree.getSelection().logNavigatableNodeDescriptor?.let { logNavigatableSelection ->
           logNavigator(logNavigatableSelection, false)
         }
       }
     }
-    tree.component.addTreeSelectionListener(treeSelectionListener)
+    tree.addTreeSelectionListener(treeSelectionListener)
   }
 
   fun updateLogBranchFilter() {
-    val selectedFilters = tree.component.getSelection().selectedBranchFilters
+    val selectedFilters = tree.getSelection().selectedBranchFilters
     val oldFilters = logFilterUi.filters
     val newFilters = if (selectedFilters.isNotEmpty()) {
       oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(selectedFilters))
@@ -65,11 +65,11 @@ internal class BranchesDashboardTreeController(
   }
 
   fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
-    val selectedRemotes = tree.component.getSelection().selectedRemotes
+    val selectedRemotes = tree.getSelection().selectedRemotes
     if (selectedRemotes.isEmpty()) return emptyMap()
 
     val result = hashMapOf<GitRepository, MutableSet<GitRemote>>()
-    if (tree.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)) {
+    if (model.groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] == true) {
       for (selectedRemote in selectedRemotes) {
         val repository = selectedRemote.repository ?: continue
         val remote = repository.remotes.find { it.name == selectedRemote.remoteName } ?: continue
@@ -89,11 +89,11 @@ internal class BranchesDashboardTreeController(
     return result
   }
 
-  fun launchFetch() = handler.launchFetch()
+  fun launchFetch() = model.launchFetch()
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[BRANCHES_UI_CONTROLLER] = this
-    snapshotSelectionActionsKeys(sink, tree.component.selectionPaths)
+    snapshotSelectionActionsKeys(sink, tree.selectionPaths)
     sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = logProperties
   }
 
