@@ -850,10 +850,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             }
             return false;
           }
+
+          // Make sure that condition for forceUpdate is not more restrictive than condition for indexUnsavedDocuments,
+          // because indexUnsavedDocuments builds a diff of in-memory/on-the-disc state.
+          // Also make sure that if forceUpdate is invoked, it is invoked before indexUnsavedDocuments
+          boolean includeFilesFromOtherProjects = restrictedFile == null && project == null;
+          ProjectFilesCondition projectFilterCondition = new ProjectFilesCondition(
+            projectIndexableFiles(project),
+            // Index everything for performance reasons: unindexed project files will trigger "indexUnsavedDocument" too often
+            project == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.everythingScope(project),
+            restrictedFile,
+            includeFilesFromOtherProjects);
+
           if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
-            forceUpdate(project, filter, restrictedFile);
+            forceUpdate(project, projectFilterCondition, restrictedFile);
           }
-          indexUnsavedDocuments(indexId, project, filter, restrictedFile);
+          indexUnsavedDocuments(indexId, project, projectFilterCondition, restrictedFile);
         }
         catch (RuntimeException e) {
           final Throwable cause = e.getCause();
@@ -986,7 +998,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private void indexUnsavedDocuments(final @NotNull ID<?, ?> indexId,
                                      @Nullable("All projects") Project project,
-                                     @Nullable GlobalSearchScope filter,
+                                     @NotNull ProjectFilesCondition filter,
                                      @Nullable VirtualFile restrictedFile) {
     if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
       return; // no need to index unsaved docs        // todo: we only index files for a project, but this service is app-wide
@@ -1004,13 +1016,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     documents.addAll(transactedDocuments);
     Collections.addAll(documents, uncommittedDocuments);
 
-    LOG.assertTrue(project == null || filter == null || filter.getProject() == null || project.equals(filter.getProject()),
-                   "filter should filter files in provided project. ref: 50cf572587cf");
-    Collection<Document> documentsToProcessForProject = project == null ? documents :
-                                                        ContainerUtil.filter(documents,
-                                                                             document -> belongsToScope(
-                                                                               myFileDocumentManager.getFile(document), restrictedFile,
-                                                                               GlobalSearchScope.everythingScope(project)));
+    Condition<Document> docFilter = doc -> filter.acceptsFile(myFileDocumentManager.getFile(doc));
+    Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents, docFilter);
 
     if (!documentsToProcessForProject.isEmpty()) {
       UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
@@ -1757,15 +1764,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
 
-  private void forceUpdate(@Nullable Project project, final @Nullable GlobalSearchScope filter, final @Nullable VirtualFile restrictedTo) {
+  private void forceUpdate(@Nullable Project project, ProjectFilesCondition filter, final @Nullable VirtualFile restrictedTo) {
     Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
 
     if (!allFilesToUpdate.isEmpty()) {
-      boolean includeFilesFromOtherProjects = restrictedTo == null && project == null;
-      List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(
-        allFilesToUpdate,
-        new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo, includeFilesFromOtherProjects)
-      );
+      List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
 
       if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
         myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
