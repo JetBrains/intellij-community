@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -45,8 +45,7 @@ public final class JCiPUtil {
       CachedValueProvider.Result.create(PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, "Immutable"), file));
   }
 
-  @Nullable
-  public static String findGuardForMember(@NotNull PsiMember member) {
+  public static @Nullable String findGuardForMember(@NotNull PsiMember member) {
     List<String> annotations = ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations();
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, annotations);
     if (annotation != null) {
@@ -81,8 +80,7 @@ public final class JCiPUtil {
     return tag.getText().startsWith("@GuardedBy");
   }
 
-  @Nullable
-  static String getGuardValue(PsiAnnotation annotation) {
+  static @Nullable String getGuardValue(PsiAnnotation annotation) {
     final PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
     if (psiAnnotationMemberValue instanceof PsiLiteralExpression) {
       final Object value = ((PsiLiteralExpression)psiAnnotationMemberValue).getValue();
@@ -93,8 +91,7 @@ public final class JCiPUtil {
     return null;
   }
 
-  @Nullable
-  static String getGuardValue(PsiDocTag tag) {
+  static @Nullable String getGuardValue(PsiDocTag tag) {
     if ("GuardedBy".equals(tag.getName())) {
       final PsiDocTagValue value = tag.getValueElement();
       if (value == null) return "";

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.ui;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -20,7 +21,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.debugger.JavaDebuggerBundle;
 
 import javax.swing.tree.TreeNode;
 import java.util.HashSet;
@@ -72,8 +72,7 @@ public class PathsToClosestGcRootsDialog extends MemoryAgentDialog {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "#javadebugger.PathsToClosestGcRootsDialog";
   }
 

@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -22,9 +22,8 @@ import java.util.Map;
  */
 public final class ParameterTypePreventsOverridingInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final String qualifiedName1 = (String)infos[0];
     final String packageName = StringUtil.getPackageName(qualifiedName1);
     final String qualifiedName2 = (String)infos[1];
@@ -32,9 +31,8 @@ public final class ParameterTypePreventsOverridingInspection extends BaseInspect
     return InspectionGadgetsBundle.message("parameter.type.prevents.overriding.problem.descriptor", packageName, superPackageName);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new ParameterTypePreventsOverridingFix((String)infos[1]);
   }
 
@@ -46,15 +44,13 @@ public final class ParameterTypePreventsOverridingInspection extends BaseInspect
       myNewTypeText = newTypeText;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("parameter.type.prevents.overriding.quickfix", myNewTypeText);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("parameter.type.prevents.overriding.family.quickfix");
     }
 

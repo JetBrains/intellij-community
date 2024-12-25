@@ -142,9 +142,7 @@ public enum LanguageLevel {
     return Objects.requireNonNull(ourStandardVersions.get(myVersion.feature));
   }
 
-  @NotNull
-  @Nls
-  public String getPresentableText() {
+  public @NotNull @Nls String getPresentableText() {
     return myPresentableText.get();
   }
 
@@ -169,8 +167,7 @@ public enum LanguageLevel {
   /**
    * @return the {@link JavaVersion} object that corresponds to this language level 
    */
-  @NotNull
-  public JavaVersion toJavaVersion() {
+  public @NotNull JavaVersion toJavaVersion() {
     return myVersion;
   }
 
@@ -196,8 +193,7 @@ public enum LanguageLevel {
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */
-  @Nullable
-  public static LanguageLevel parse(@Nullable String compilerComplianceOption) {
+  public static @Nullable LanguageLevel parse(@Nullable String compilerComplianceOption) {
     if (compilerComplianceOption != null) {
       JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(compilerComplianceOption);
       if (sdkVersion != null) {

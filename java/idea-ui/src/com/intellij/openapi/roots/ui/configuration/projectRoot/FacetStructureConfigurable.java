@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -30,8 +30,8 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<>();
@@ -148,9 +148,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return facetTypeNode;
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+  protected @NotNull Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     List<ProjectStructureElement> elements = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       Facet[] facets = FacetManager.getInstance(module).getAllFacets();
@@ -178,8 +177,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     sortDescendants(facetTypeNode);
   }
 
-  @Nullable
-  public FacetTypeEditor getFacetTypeEditor(@NotNull FacetType<?, ?> facetType) {
+  public @Nullable FacetTypeEditor getFacetTypeEditor(@NotNull FacetType<?, ?> facetType) {
     return myFacetTypeEditors.get(facetType);
   }
 
@@ -235,8 +233,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  @NotNull
-  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
+  protected @NotNull ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<>();
     actions.add(new AbstractAddGroup(CommonBundle.message("button.add")) {
       @Override
@@ -292,7 +289,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  protected void updateSelection(@Nullable final NamedConfigurable configurable) {
+  protected void updateSelection(final @Nullable NamedConfigurable configurable) {
     disposeMultipleSettingsEditor();
     if (configurable instanceof FacetTypeConfigurable) {
       ((FacetTypeConfigurable)configurable).updateComponent();
@@ -308,8 +305,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  @Nullable
-  protected AbstractAddGroup createAddAction(boolean fromPopup) {
+  protected @Nullable AbstractAddGroup createAddAction(boolean fromPopup) {
     return null;
   }
 
@@ -350,8 +346,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "project.facets";
   }
 
@@ -383,8 +378,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       FacetConfigurable facetConfigurable = (FacetConfigurable)getConfigurable();
       String moduleName = myContext.getRealName(facetConfigurable.getEditableObject().getModule());
       return facetConfigurable.getDisplayName() + " (" + moduleName + ")";
@@ -398,7 +392,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       e.getPresentation().setEnabled(selected instanceof FacetConfigurable);
     }
@@ -408,7 +402,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       return ActionUpdateThread.EDT;
     }
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       if (selected instanceof FacetConfigurable) {
         myProjectStructureConfigurable.select(((FacetConfigurable)selected).getEditableObject(), true);

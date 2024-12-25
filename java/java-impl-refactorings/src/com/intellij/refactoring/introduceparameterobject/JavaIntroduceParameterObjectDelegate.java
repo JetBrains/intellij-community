@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -79,9 +79,8 @@ public final class JavaIntroduceParameterObjectDelegate
     final String classTypeText = descriptor.createFakeClassTypeText();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     return new ParameterInfoImpl(NEW_PARAMETER, paramName, facade.getElementFactory().createTypeFromText(classTypeText, method), null) {
-      @Nullable
       @Override
-      public PsiElement getActualValue(PsiElement exp, Object substitutor) {
+      public @Nullable PsiElement getActualValue(PsiElement exp, Object substitutor) {
         final IntroduceParameterObjectDelegate<PsiNamedElement, ParameterInfo, IntroduceParameterObjectClassDescriptor<PsiNamedElement, ParameterInfo>> delegate = findDelegate(exp);
         return delegate != null ? delegate.createNewParameterInitializerAtCallSite(exp, descriptor, oldMethodParameters, substitutor) : null;
       }
@@ -151,8 +150,7 @@ public final class JavaIntroduceParameterObjectDelegate
     return newExpression.toString();
   }
 
-  @Nullable
-  private static String getArgument(PsiElement[] args, int i, List<? extends ParameterInfo> oldParameters) {
+  private static @Nullable String getArgument(PsiElement[] args, int i, List<? extends ParameterInfo> oldParameters) {
     if (i < args.length) {
       return args[i].getText();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.project.Project;
@@ -37,8 +37,7 @@ public abstract class ArtifactManager implements ArtifactModel {
 
   public abstract PackagingElementResolvingContext getResolvingContext();
 
-  @NotNull
-  public abstract Artifact addArtifact(@NonNls @NotNull String name, @NotNull ArtifactType type, @Nullable CompositePackagingElement<?> root);
+  public abstract @NotNull Artifact addArtifact(@NonNls @NotNull String name, @NotNull ArtifactType type, @Nullable CompositePackagingElement<?> root);
 
   public abstract void addElementsToDirectory(@NotNull Artifact artifact, @NotNull @NonNls String relativePath,
                                               @NotNull Collection<? extends PackagingElement<?>> elements);

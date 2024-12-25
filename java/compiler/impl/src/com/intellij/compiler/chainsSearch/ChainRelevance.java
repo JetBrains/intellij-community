@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public final class ChainRelevance implements Comparable<ChainRelevance> {
   }
 
   @Override
-  public int compareTo(@NotNull final ChainRelevance that) {
+  public int compareTo(final @NotNull ChainRelevance that) {
     int sub = Integer.compare(myChainSize, that.myChainSize);
     if (sub != 0) return sub;
     sub = Integer.compare(myUnreachableParameterCount, that.myUnreachableParameterCount);

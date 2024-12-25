@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.lang.java.JavaFindUsagesProvider;
@@ -106,8 +106,7 @@ public final class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  @NotNull
-  static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
+  static @NotNull PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
                                   @NotNull GlobalSearchScope scope,
                                   @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
@@ -263,8 +262,7 @@ public final class MoveClassesOrPackagesUtil {
     return newClass;
   }
 
-  @Nullable
-  private static PsiClass findClassByName(PsiClassOwner file, String name) {
+  private static @Nullable PsiClass findClassByName(PsiClassOwner file, String name) {
     PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
       if (name.equals(aClass.getName())) {
@@ -274,8 +272,7 @@ public final class MoveClassesOrPackagesUtil {
     return null;
   }
 
-  @NotNull
-  public static String getPackageName(@NotNull PackageWrapper aPackage) {
+  public static @NotNull String getPackageName(@NotNull PackageWrapper aPackage) {
     String name = aPackage.getQualifiedName();
     if (!name.isEmpty()) {
       return name;
@@ -287,8 +284,7 @@ public final class MoveClassesOrPackagesUtil {
    * @deprecated use CommonMoveClassesOrPackagesUtil.chooseSourceRoot
    */
   @Deprecated
-  @Nullable
-  public static VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
+  public static @Nullable VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
                                              @NotNull List<? extends VirtualFile> contentSourceRoots,
                                              @Nullable PsiDirectory initialDirectory) {
     return CommonMoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, initialDirectory);

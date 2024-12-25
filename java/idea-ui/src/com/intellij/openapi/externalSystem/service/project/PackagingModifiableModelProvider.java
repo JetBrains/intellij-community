@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.project.PackagingModifiableModel;
@@ -10,10 +10,9 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public final class PackagingModifiableModelProvider implements ModifiableModelsProviderExtension<PackagingModifiableModel> {
 
-  @NotNull
   @Override
-  public Pair<Class<PackagingModifiableModel>, PackagingModifiableModel> create(@NotNull Project project,
-                                                                                @NotNull IdeModifiableModelsProvider modelsProvider) {
+  public @NotNull Pair<Class<PackagingModifiableModel>, PackagingModifiableModel> create(@NotNull Project project,
+                                                                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
     return Pair.create(PackagingModifiableModel.class, new PackagingModifiableModelImpl(project, modelsProvider));
   }
 }

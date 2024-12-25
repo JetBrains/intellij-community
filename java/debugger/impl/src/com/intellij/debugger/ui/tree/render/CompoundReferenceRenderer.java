@@ -200,8 +200,7 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     return getLabelRenderer().isApplicable(type) && getChildrenRenderer().isApplicable(type);
   }
 
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return myProperties.getClassName();
   }
 

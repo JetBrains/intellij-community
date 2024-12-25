@@ -55,8 +55,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     final ObjectReference objectReference = getObjectReference();
     final String objRefString = objectReference != null ? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
@@ -97,8 +96,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   /**
    * @return a list of waiting ThreadReferenceProxies
    */
-  @Unmodifiable
-  public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
+  public @Unmodifiable List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
     return ContainerUtil.map(getObjectReference().waitingThreads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 

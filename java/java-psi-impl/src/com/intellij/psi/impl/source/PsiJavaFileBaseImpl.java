@@ -593,9 +593,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
-  @NotNull
-  @Unmodifiable
-  private List<PsiImportStatementBase> getImplicitImports() {
+  private @NotNull @Unmodifiable List<PsiImportStatementBase> getImplicitImports() {
     return ContainerUtil.map(getImplicitlyImportedElements(), element -> element.createImportStatement());
   }
 

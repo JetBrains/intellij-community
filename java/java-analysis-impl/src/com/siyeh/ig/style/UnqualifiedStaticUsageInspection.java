@@ -16,10 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -50,8 +50,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
   public boolean m_ignoreStaticAccessFromStaticContext = false;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     if (infos[0] instanceof PsiMethodCallExpression) {
       return InspectionGadgetsBundle.message(
         "unqualified.static.usage.problem.descriptor");
@@ -98,8 +97,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       if (m_fixField) {
         return InspectionGadgetsBundle.message(
           "unqualified.static.usage.qualify.field.quickfix");
@@ -110,9 +108,8 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
       }
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unqualified.static.access.fix.family.name");
     }
 

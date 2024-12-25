@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -278,7 +278,7 @@ public abstract class NullableNotNullManager {
     return getNotNulls();
   }
 
-  abstract protected @NotNull NullabilityAnnotationDataHolder getAllNullabilityAnnotationsWithNickNames();
+  protected abstract @NotNull NullabilityAnnotationDataHolder getAllNullabilityAnnotationsWithNickNames();
 
   protected boolean hasHardcodedContracts(@NotNull PsiElement element) {
     return false;
@@ -401,8 +401,7 @@ public abstract class NullableNotNullManager {
     return info == null ? Nullability.UNKNOWN : info.getNullability();
   }
 
-  @Unmodifiable
-  public abstract @NotNull List<String> getInstrumentedNotNulls();
+  public abstract @Unmodifiable @NotNull List<String> getInstrumentedNotNulls();
 
   public abstract void setInstrumentedNotNulls(@NotNull List<String> names);
 

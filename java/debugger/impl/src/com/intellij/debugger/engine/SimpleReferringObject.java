@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -16,15 +16,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public class SimpleReferringObject implements ReferringObject {
-  @NotNull private final ObjectReference myReference;
+  private final @NotNull ObjectReference myReference;
 
   public SimpleReferringObject(@NotNull ObjectReference reference) {
     myReference = reference;
   }
 
-  @NotNull
   @Override
-  public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
+  public @NotNull ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
     return new ValueDescriptorImpl(project, myReference) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
@@ -44,21 +43,18 @@ public class SimpleReferringObject implements ReferringObject {
     };
   }
 
-  @Nullable
   @Override
-  public String getNodeName(int order) {
+  public @Nullable String getNodeName(int order) {
     return "Referrer " + order;
   }
 
-  @NotNull
   @Override
-  public ObjectReference getReference() {
+  public @NotNull ObjectReference getReference() {
     return myReference;
   }
 
-  @NotNull
   @Override
-  public Function<XValueNode, XValueNode> getNodeCustomizer() {
+  public @NotNull Function<XValueNode, XValueNode> getNodeCustomizer() {
     return Function.identity();
   }
 }

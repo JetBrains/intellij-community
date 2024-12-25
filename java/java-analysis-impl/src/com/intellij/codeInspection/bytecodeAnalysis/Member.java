@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import org.jetbrains.annotations.NonNls;
@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
 
 public final class Member implements MemberDescriptor {
-  @NonNls final String internalClassName;
-  @NonNls final String methodName;
-  @NonNls final String methodDesc;
+  final @NonNls String internalClassName;
+  final @NonNls String methodName;
+  final @NonNls String methodDesc;
 
   /**
    * Primary constructor
@@ -50,9 +50,8 @@ public final class Member implements MemberDescriptor {
     return result;
   }
 
-  @NotNull
   @Override
-  public HMember hashed() {
+  public @NotNull HMember hashed() {
     return new HMember(this);
   }
 

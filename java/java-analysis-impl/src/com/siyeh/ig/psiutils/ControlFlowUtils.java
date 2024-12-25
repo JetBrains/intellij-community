@@ -84,7 +84,7 @@ public final class ControlFlowUtils {
       if (method.equals(psiMethod)) {
         return false;
       }
-      @NonNls final String methodName = method.getName();
+      final @NonNls String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return true;
       }
@@ -518,9 +518,8 @@ public final class ControlFlowUtils {
     }
   }
 
-  @Nullable
   @Contract("null -> null")
-  private static PsiElement getContainingStatementOrBlock(@Nullable PsiElement statement) {
+  private static @Nullable PsiElement getContainingStatementOrBlock(@Nullable PsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, PsiStatement.class, PsiCodeBlock.class);
   }
 
@@ -538,13 +537,11 @@ public final class ControlFlowUtils {
     return false;
   }
 
-  @Nullable
-  public static PsiStatement getFirstStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+  public static @Nullable PsiStatement getFirstStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
     return PsiTreeUtil.getChildOfType(codeBlock, PsiStatement.class);
   }
 
-  @Nullable
-  public static PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+  public static @Nullable PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
     if (codeBlock == null) return null;
     for (PsiElement child = codeBlock.getLastChild(); child != null; child = child.getPrevSibling()) {
       if (child instanceof PsiStatement) {
@@ -557,8 +554,7 @@ public final class ControlFlowUtils {
   /**
    * @return null, if zero or more than one statements in the specified code block.
    */
-  @Nullable
-  public static PsiStatement getOnlyStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+  public static @Nullable PsiStatement getOnlyStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
     return getOnlyChildOfType(codeBlock, PsiStatement.class);
   }
 
@@ -792,8 +788,7 @@ public final class ControlFlowUtils {
     return false;
   }
 
-  @Nullable
-  private static PsiStatement firstStatement(@Nullable PsiStatement statement) {
+  private static @Nullable PsiStatement firstStatement(@Nullable PsiStatement statement) {
     while (statement instanceof PsiBlockStatement) {
       PsiStatement[] statements = ((PsiBlockStatement)statement).getCodeBlock().getStatements();
       if (statements.length == 0) break;
@@ -803,8 +798,7 @@ public final class ControlFlowUtils {
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static PsiStatement nextExecutedStatement(PsiStatement statement) {
+  private static @Nullable PsiStatement nextExecutedStatement(PsiStatement statement) {
     if (statement == null) return null;
     PsiStatement next = firstStatement(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class));
     if (next == null) {
@@ -883,8 +877,7 @@ public final class ControlFlowUtils {
    * @param statement a statement where variable is used
    * @return initializer usage status for variable
    */
-  @NotNull
-  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement statement) {
+  public static @NotNull InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement statement) {
     if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
     if(isDeclarationJustBefore(var, statement)) return DECLARED_JUST_BEFORE;
     // Check that variable is declared in the same method or the same lambda expression
@@ -962,8 +955,7 @@ public final class ControlFlowUtils {
    * @param statement statement to find the return after
    * @return the found return statement or null.
    */
-  @Nullable
-  public static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
+  public static @Nullable PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
     while (true) {
       PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
       if (nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
@@ -1194,7 +1186,7 @@ public final class ControlFlowUtils {
       if (method == null) {
         return;
       }
-      @NonNls final String methodName = method.getName();
+      final @NonNls String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return;
       }

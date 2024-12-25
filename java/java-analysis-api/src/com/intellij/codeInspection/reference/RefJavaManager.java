@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.ex.EntryPointsManager;
@@ -19,13 +19,13 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
-  @NonNls public static final String CLASS = "class";
-  @NonNls public static final String METHOD = "method";
-  @NonNls static final String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
-  @NonNls public static final String FIELD = "field";
-  @NonNls static final String PARAMETER = "parameter";
-  @NonNls static final String JAVA_MODULE = "java.module";
-  @NonNls public static final String PACKAGE = "package";
+  public static final @NonNls String CLASS = "class";
+  public static final @NonNls String METHOD = "method";
+  static final @NonNls String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
+  public static final @NonNls String FIELD = "field";
+  static final @NonNls String PARAMETER = "parameter";
+  static final @NonNls String JAVA_MODULE = "java.module";
+  public static final @NonNls String PACKAGE = "package";
   static final String FUNCTIONAL_EXPRESSION = "functional.expression";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
   private final List<Language> myLanguages;
@@ -76,15 +76,13 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract EntryPointsManager getEntryPointsManager();
 
-  @NotNull
   @Override
-  public Collection<Language> getLanguages() {
+  public @NotNull Collection<Language> getLanguages() {
     return myLanguages;
   }
 
-  @NotNull
   @Override
-  public Key<RefJavaManager> getID() {
+  public @NotNull Key<RefJavaManager> getID() {
     return MANAGER;
   }
 }

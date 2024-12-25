@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
@@ -154,8 +154,7 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
         return outDecl >= range.length - 1 || VariableAccessUtils.variableIsUsed(output, range[range.length - 1]);
       }
 
-      @NotNull
-      private static BitSet getDeclarations(PsiStatement[] statements) {
+      private static @NotNull BitSet getDeclarations(PsiStatement[] statements) {
         BitSet declarations = new BitSet();
         for (int i = 0; i < statements.length; i++) {
           if (statements[i] instanceof PsiDeclarationStatement decl &&
@@ -180,8 +179,7 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
         return false;
       }
 
-      @NotNull
-      private static TextRange getRange(PsiStatement[] statements) {
+      private static @NotNull TextRange getRange(PsiStatement[] statements) {
         PsiElement start = statements[0];
         while (true) {
           PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(start);

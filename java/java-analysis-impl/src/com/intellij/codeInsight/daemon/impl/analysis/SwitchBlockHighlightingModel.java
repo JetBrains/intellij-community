@@ -32,12 +32,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class SwitchBlockHighlightingModel {
-  @NotNull final LanguageLevel myLevel;
-  @NotNull final PsiSwitchBlock myBlock;
-  @NotNull final PsiExpression mySelector;
-  @NotNull final PsiType mySelectorType;
-  @NotNull final PsiFile myFile;
-  @NotNull final Object myDefaultValue = new Object();
+  final @NotNull LanguageLevel myLevel;
+  final @NotNull PsiSwitchBlock myBlock;
+  final @NotNull PsiExpression mySelector;
+  final @NotNull PsiType mySelectorType;
+  final @NotNull PsiFile myFile;
+  final @NotNull Object myDefaultValue = new Object();
 
   SwitchBlockHighlightingModel(@NotNull LanguageLevel languageLevel,
                                @NotNull PsiSwitchBlock switchBlock,
@@ -49,10 +49,9 @@ public class SwitchBlockHighlightingModel {
     myFile = psiFile;
   }
 
-  @Nullable
-  static SwitchBlockHighlightingModel createInstance(@NotNull LanguageLevel languageLevel,
-                                                     @NotNull PsiSwitchBlock switchBlock,
-                                                     @NotNull PsiFile psiFile) {
+  static @Nullable SwitchBlockHighlightingModel createInstance(@NotNull LanguageLevel languageLevel,
+                                                               @NotNull PsiSwitchBlock switchBlock,
+                                                               @NotNull PsiFile psiFile) {
     PsiExpression selector = switchBlock.getExpression();
     if (selector == null) return null;
     PsiType selectorType = selector.getType();
@@ -270,8 +269,7 @@ public class SwitchBlockHighlightingModel {
     }
   }
 
-  @Nullable
-  static PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
+  static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
     if (element instanceof PsiReferenceExpression referenceExpression &&
         referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
       return enumConstant;
@@ -279,15 +277,13 @@ public class SwitchBlockHighlightingModel {
     return null;
   }
 
-  @Nullable
-  static String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
+  static @Nullable String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
     PsiEnumConstant enumConstant = getEnumConstant(expr);
     if (enumConstant != null) return enumConstant.getName();
     return null;
   }
 
-  @Nullable
-  static HighlightInfo.Builder createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
+  static @Nullable HighlightInfo.Builder createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
     if (PsiUtil.isAvailable(JavaFeature.ENUM_QUALIFIED_NAME_IN_SWITCH, expr)) return null;
     PsiElement qualifier = expr.getQualifier();
     if (qualifier == null) return null;
@@ -391,9 +387,8 @@ public class SwitchBlockHighlightingModel {
     errorSink.accept(info);
   }
 
-  @NotNull
-  static LinkedHashSet<PsiEnumConstant> findMissingEnumConstant(@NotNull PsiClass selectorClass,
-                                                                @NotNull List<PsiEnumConstant> enumElements) {
+  static @NotNull LinkedHashSet<PsiEnumConstant> findMissingEnumConstant(@NotNull PsiClass selectorClass,
+                                                                         @NotNull List<PsiEnumConstant> enumElements) {
     LinkedHashSet<PsiEnumConstant> missingConstants =
       StreamEx.of(selectorClass.getFields()).select(PsiEnumConstant.class).toCollection(LinkedHashSet::new);
     if (!enumElements.isEmpty()) {
@@ -435,8 +430,7 @@ public class SwitchBlockHighlightingModel {
     return null;
   }
 
-  @NotNull
-  static HighlightInfo.Builder createError(@NotNull PsiElement range, @NlsContexts.DetailedDescription @NotNull String message) {
+  static @NotNull HighlightInfo.Builder createError(@NotNull PsiElement range, @NlsContexts.DetailedDescription @NotNull String message) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
   }
 
@@ -468,8 +462,7 @@ public class SwitchBlockHighlightingModel {
     return null;
   }
 
-  @Nullable
-  private static HighlightInfo.Builder checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
+  private static @Nullable HighlightInfo.Builder checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
     if (guardingExpression != null && !TypeConversionUtil.isBooleanType(guardingExpression.getType())) {
       String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiTypes.booleanType()),
                                                JavaHighlightUtil.formatType(guardingExpression.getType()));

@@ -70,8 +70,7 @@ public class UnhandledExceptions {
    * @param other UnhandledExceptions container to merge with
    * @return merged container
    */
-  @NotNull
-  public UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
+  public @NotNull UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
     boolean unresolvedCalls = hasUnresolvedCalls || other.hasUnresolvedCalls;
     if (exceptions.isEmpty()) return other.withUnresolvedCalls(unresolvedCalls);
     if (other.exceptions.isEmpty()) return this.withUnresolvedCalls(unresolvedCalls);

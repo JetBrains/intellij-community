@@ -117,8 +117,7 @@ public interface PsiClass
    *
    * @return the permits list, or null if there's none.
    */
-  @Nullable
-  default PsiReferenceList getPermitsList() {
+  default @Nullable PsiReferenceList getPermitsList() {
     return null;
   }
 
@@ -388,15 +387,13 @@ public interface PsiClass
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
-  @NotNull
   @Override
-  default JvmClassKind getClassKind() {
+  default @NotNull JvmClassKind getClassKind() {
     return PsiJvmConversionHelper.getJvmClassKind(this);
   }
 
-  @Nullable
   @Override
-  default JvmReferenceType getSuperClassType() {
+  default @Nullable JvmReferenceType getSuperClassType() {
     return PsiJvmConversionHelper.getClassSuperType(this);
   }
 
@@ -409,8 +406,7 @@ public interface PsiClass
     return PsiRecordComponent.EMPTY_ARRAY;
   }
 
-  @Nullable
-  default PsiRecordHeader getRecordHeader() {
+  default @Nullable PsiRecordHeader getRecordHeader() {
     return null;
   }
 }

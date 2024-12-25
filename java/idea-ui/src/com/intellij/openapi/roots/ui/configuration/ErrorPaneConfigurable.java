@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -177,15 +177,14 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     private final @NotNull ConfigurationError myError;
     private final int myIdx;
 
-    private ConfigurationErrorWithIndex(@NotNull final ConfigurationError error, final int idx) {
+    private ConfigurationErrorWithIndex(final @NotNull ConfigurationError error, final int idx) {
       myError = error;
       myIdx = idx;
     }
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static HtmlChunk getErrorDescriptionTag(@NotNull final ConfigurationErrorWithIndex errorIndex) {
+  private static @NotNull HtmlChunk getErrorDescriptionTag(final @NotNull ConfigurationErrorWithIndex errorIndex) {
     final int index = errorIndex.myIdx;
     final ConfigurationError error = errorIndex.myError ;
 
@@ -202,8 +201,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static HtmlChunk getErrorDescription(final int index, @NotNull final ConfigurationError error) {
+  private static @NotNull HtmlChunk getErrorDescription(final int index, final @NotNull ConfigurationError error) {
     //todo pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
     if (!(error instanceof ProjectConfigurationProblem)) return error.getDescription();
 
@@ -225,15 +223,13 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
       .toFragment();
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaUiBundle.message("configurable.ErrorPaneConfigurable.display.name");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     return this;
   }
 

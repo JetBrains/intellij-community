@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.patterns;
 
@@ -12,10 +12,10 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
     super(aClass);
   }
 
-  public Self ofType(@NotNull final ElementPattern pattern) {
+  public Self ofType(final @NotNull ElementPattern pattern) {
     return with(new PatternCondition<T>("ofType") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         return pattern.accepts(t.getType(), context);
       }
     });

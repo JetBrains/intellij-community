@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -17,9 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class MathRandomCastToIntInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[1];
     return InspectionGadgetsBundle.message("math.random.cast.to.int.problem.descriptor", type.getPresentableText());
   }
@@ -45,8 +44,7 @@ public final class MathRandomCastToIntInspection extends BaseInspection {
 
   private static class MathRandomCastToIntegerFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("math.random.cast.to.int.quickfix");
     }
 
@@ -71,7 +69,7 @@ public final class MathRandomCastToIntInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      @NonNls final StringBuilder newExpression = new StringBuilder();
+      final @NonNls StringBuilder newExpression = new StringBuilder();
       CommentTracker commentTracker = new CommentTracker();
       newExpression.append("(").append(type.getCanonicalText()).append(")(");
       final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -119,8 +117,7 @@ public final class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      @NonNls
-      final String referenceName = methodExpression.getReferenceName();
+      final @NonNls String referenceName = methodExpression.getReferenceName();
       if (!"random".equals(referenceName)) {
         return;
       }

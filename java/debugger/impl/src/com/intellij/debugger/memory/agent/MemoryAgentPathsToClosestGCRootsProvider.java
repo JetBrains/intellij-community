@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.ReferringObject;
@@ -28,12 +28,10 @@ public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObject
     myDefaultProvider = defaultProvider;
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
-                                                   @NotNull ObjectReference value,
-                                                   long limit) throws EvaluateException {
+  public @NotNull @Unmodifiable List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                                          @NotNull ObjectReference value,
+                                                                          long limit) throws EvaluateException {
     if (myCachedRequests.containsKey(value)) {
       return myCachedRequests.get(value).getReferringObjects(value, limit);
     }

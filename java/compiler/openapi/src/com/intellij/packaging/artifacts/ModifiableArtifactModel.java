@@ -14,13 +14,11 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.NonExtendable
 public interface ModifiableArtifactModel extends ArtifactModel {
 
-  @NotNull
-  default ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType) {
+  default @NotNull ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType) {
     return addArtifact(name, artifactType, artifactType.createRootElement(name));
   }
 
-  @NotNull
-  default ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement) {
+  default @NotNull ModifiableArtifact addArtifact(final @NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement) {
     return addArtifact(name, artifactType, rootElement, null);
   }
 

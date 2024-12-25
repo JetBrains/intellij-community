@@ -277,8 +277,7 @@ public final class VariableAccessUtils {
    * @param variable  the variable to find references for
    * @return a list of references, empty list if no references were found.
    */
-  @Unmodifiable
-  public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
+  public static @Unmodifiable List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
     PsiFile file = variable.getContainingFile();
     if (file == null) return List.of();
     if (!file.isPhysical()) {
@@ -312,8 +311,7 @@ public final class VariableAccessUtils {
    * @param context  the context to find references in
    * @return a list of references. When the specified context is {@code null}, the result will always be an empty list.
    */
-  @Unmodifiable
-  public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
+  public static @Unmodifiable List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) return Collections.emptyList();
     PsiFile file = context.getContainingFile();
     PsiFile variableFile = variable.getContainingFile();
@@ -438,8 +436,7 @@ public final class VariableAccessUtils {
     return false;
   }
 
-  @Nullable
-  private static PsiElement getDirectChildWhichContainsElement(
+  private static @Nullable PsiElement getDirectChildWhichContainsElement(
     @NotNull PsiElement ancestor,
     @NotNull PsiElement descendant) {
     if (ancestor == descendant) {
@@ -457,8 +454,7 @@ public final class VariableAccessUtils {
     return child;
   }
 
-  @Unmodifiable
-  public static Set<PsiVariable> collectUsedVariables(PsiElement context) {
+  public static @Unmodifiable Set<PsiVariable> collectUsedVariables(PsiElement context) {
     if (context == null) {
       return Collections.emptySet();
     }

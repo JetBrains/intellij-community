@@ -42,8 +42,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
 
 
   @Override
-  @Unmodifiable
-  public @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  public @Unmodifiable @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
     try {
       String fieldName = getFieldName(aClass);

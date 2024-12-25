@@ -370,8 +370,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return TypeAnnotationProvider.Static.create(ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
   }
 
-  @Unmodifiable
-  private @NotNull List<PsiType> collectTypes() {
+  private @Unmodifiable @NotNull List<PsiType> collectTypes() {
     List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
     return ContainerUtil.map(typeElements, typeElement -> typeElement.getType());
   }

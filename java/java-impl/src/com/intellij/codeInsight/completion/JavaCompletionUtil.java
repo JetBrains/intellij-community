@@ -115,8 +115,7 @@ public final class JavaCompletionUtil {
     item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method)));
   }
 
-  @Unmodifiable
-  public static List<PsiMethod> getAllMethods(@NotNull LookupElement item) {
+  public static @Unmodifiable List<PsiMethod> getAllMethods(@NotNull LookupElement item) {
     List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
     if (pointers == null) return null;
 
@@ -567,8 +566,7 @@ public final class JavaCompletionUtil {
     return false;
   }
 
-  @Unmodifiable
-  static @NotNull Iterable<? extends LookupElement> createLookupElements(@NotNull CompletionElement completionElement, @NotNull PsiJavaReference reference) {
+  static @Unmodifiable @NotNull Iterable<? extends LookupElement> createLookupElements(@NotNull CompletionElement completionElement, @NotNull PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 

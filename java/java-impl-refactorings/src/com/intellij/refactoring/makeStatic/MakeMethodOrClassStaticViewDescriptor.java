@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
@@ -36,9 +36,8 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     return myProcessedElementsHeader;
   }
 
-  @NotNull
   @Override
-  public String getCodeReferencesText(int usagesCount, int filesCount) {
+  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 }

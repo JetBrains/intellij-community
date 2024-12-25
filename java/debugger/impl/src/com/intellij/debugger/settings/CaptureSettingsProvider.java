@@ -22,8 +22,7 @@ public final class CaptureSettingsProvider {
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
   private static final String ANY = "*";
 
-  @NotNull
-  public static Properties getPointsProperties(@Nullable Project project) {
+  public static @NotNull Properties getPointsProperties(@Nullable Project project) {
     Properties res = new Properties();
     if (Registry.is("debugger.capture.points.agent.annotations")) {
       int idx = 0;
@@ -78,7 +77,7 @@ public final class CaptureSettingsProvider {
     });
   }
 
-  private static abstract class AgentPoint {
+  private abstract static class AgentPoint {
     public final String myClassName;
     public final String myMethodName;
     public final String myMethodDesc;

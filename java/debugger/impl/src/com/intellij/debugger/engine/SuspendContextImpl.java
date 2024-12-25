@@ -124,8 +124,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
-  @NotNull
-  public VirtualMachineProxyImpl getVirtualMachineProxy() {
+  public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
     return myVirtualMachine;
   }
 
@@ -135,8 +134,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
    * The scope is canceled when this suspend context is resumed.
    */
   @ApiStatus.Experimental
-  @NotNull
-  public CoroutineScope getCoroutineScope() {
+  public @NotNull CoroutineScope getCoroutineScope() {
     return myCoroutineScope;
   }
 
@@ -192,8 +190,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myFrameCount;
   }
 
-  @Nullable
-  public Location getLocation() {
+  public @Nullable Location getLocation() {
     // getting location from the event set is much faster than obtaining the frame and getting it from there
     if ((myActiveExecutionStack == null || myActiveExecutionStack.getThreadProxy() == myThread) && myEventSet != null) {
       LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
@@ -259,14 +256,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   }
 
 
-  @Nullable
-  public EventSet getEventSet() {
+  public @Nullable EventSet getEventSet() {
     return myEventSet;
   }
 
   @Override
-  @NotNull
-  public DebugProcessImpl getDebugProcess() {
+  public @NotNull DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
   }
 
@@ -304,9 +299,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
-  @Nullable
   @Override
-  public ThreadReferenceProxyImpl getThread() {
+  public @Nullable ThreadReferenceProxyImpl getThread() {
     if (myActiveExecutionStack != null) {
       return myActiveExecutionStack.getThreadProxy();
     }
@@ -505,9 +499,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return myPostponedCommands.poll();
   }
 
-  @Nullable
   @Override
-  public JavaExecutionStack getActiveExecutionStack() {
+  public @Nullable JavaExecutionStack getActiveExecutionStack() {
     return myActiveExecutionStack;
   }
 

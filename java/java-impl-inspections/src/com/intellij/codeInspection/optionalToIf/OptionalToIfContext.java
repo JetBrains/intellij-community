@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.streamToLoop.ChainContext;
@@ -95,8 +95,7 @@ class OptionalToIfContext extends ChainContext {
     myLambdaNames.add(name);
   }
 
-  @Nullable
-  static OptionalToIfContext create(@NotNull PsiExpression chainExpression) {
+  static @Nullable OptionalToIfContext create(@NotNull PsiExpression chainExpression) {
     PsiStatement chainStatement = PsiTreeUtil.getParentOfType(chainExpression, PsiStatement.class);
     if (chainStatement == null) return null;
     ChainExpressionModel model = ChainExpressionModel.create(chainStatement, chainExpression);
@@ -104,16 +103,13 @@ class OptionalToIfContext extends ChainContext {
     return new OptionalToIfContext(chainExpression, model);
   }
 
-  private static abstract class ChainExpressionModel {
+  private abstract static class ChainExpressionModel {
 
-    @NotNull
-    abstract String createResult(@NotNull String expression);
+    abstract @NotNull String createResult(@NotNull String expression);
 
-    @NotNull
-    abstract String createInitializer(@NotNull String expression);
+    abstract @NotNull String createInitializer(@NotNull String expression);
 
-    @NotNull
-    abstract String addInitializer(@NotNull String initializer, @NotNull String code);
+    abstract @NotNull String addInitializer(@NotNull String initializer, @NotNull String code);
 
     boolean needsAdditionalVariable() {
       return false;
@@ -122,8 +118,7 @@ class OptionalToIfContext extends ChainContext {
     public void setVarName(@NotNull String name) {
     }
 
-    @Nullable
-    static ChainExpressionModel create(@NotNull PsiStatement chainStatement, @NotNull PsiExpression chainExpression) {
+    static @Nullable ChainExpressionModel create(@NotNull PsiStatement chainStatement, @NotNull PsiExpression chainExpression) {
       PsiReturnStatement returnStatement = tryCast(chainStatement, PsiReturnStatement.class);
       if (returnStatement != null) return ChainReturn.create(returnStatement, chainExpression);
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(chainStatement);
@@ -190,8 +185,7 @@ class OptionalToIfContext extends ChainContext {
       return code + initializer;
     }
 
-    @Nullable
-    private static ChainReturn create(@NotNull PsiReturnStatement chainReturn, @NotNull PsiExpression chainExpression) {
+    private static @Nullable ChainReturn create(@NotNull PsiReturnStatement chainReturn, @NotNull PsiExpression chainExpression) {
       if (PsiUtil.skipParenthesizedExprDown(chainReturn.getReturnValue()) != chainExpression) return null;
       Object mark = new Object();
       PsiTreeUtil.mark(chainExpression, mark);
@@ -229,8 +223,7 @@ class OptionalToIfContext extends ChainContext {
       return initializer + code;
     }
 
-    @Nullable
-    static ChainExpressionModel create(@NotNull PsiAssignmentExpression assignment, @NotNull PsiExpression chainExpression) {
+    static @Nullable ChainExpressionModel create(@NotNull PsiAssignmentExpression assignment, @NotNull PsiExpression chainExpression) {
       if (PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()) != chainExpression) return null;
       PsiReferenceExpression ref = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
       if (ref == null) return null;
@@ -295,8 +288,7 @@ class OptionalToIfContext extends ChainContext {
       return copy.getText();
     }
 
-    @Nullable
-    static ChainDeclaration create(@NotNull PsiDeclarationStatement declaration, @NotNull PsiExpression chainExpression) {
+    static @Nullable ChainDeclaration create(@NotNull PsiDeclarationStatement declaration, @NotNull PsiExpression chainExpression) {
       PsiElement[] elements = declaration.getDeclaredElements();
       if (elements.length != 1) return null;
       PsiLocalVariable variable = tryCast(elements[0], PsiLocalVariable.class);

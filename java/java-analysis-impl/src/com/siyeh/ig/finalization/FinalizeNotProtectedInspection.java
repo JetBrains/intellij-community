@@ -17,8 +17,8 @@ package com.siyeh.ig.finalization;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,8 +35,7 @@ import java.util.Objects;
 public final class FinalizeNotProtectedInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finalize.not.declared.protected.problem.descriptor");
   }
@@ -54,8 +53,7 @@ public final class FinalizeNotProtectedInspection extends BaseInspection impleme
   private static class ProtectedFinalizeFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("change.modifier.quickfix", PsiModifier.PROTECTED);
     }
 

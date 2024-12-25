@@ -58,20 +58,17 @@ public class BasicStatementParser {
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder) {
     return parseCodeBlock(builder, false);
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder, boolean isStatement) {
+  public @Nullable PsiBuilder.Marker parseCodeBlock(@NotNull PsiBuilder builder, boolean isStatement) {
     if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
     if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
     return parseBlockLazy(builder, JavaTokenType.LBRACE, JavaTokenType.RBRACE, myJavaElementTypeContainer.CODE_BLOCK);
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseCodeBlockDeep(@NotNull PsiBuilder builder, boolean parseUntilEof) {
+  public @Nullable PsiBuilder.Marker parseCodeBlockDeep(@NotNull PsiBuilder builder, boolean parseUntilEof) {
     if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
 
     PsiBuilder.Marker codeBlock = builder.mark();
@@ -121,8 +118,7 @@ public class BasicStatementParser {
     }
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseStatement(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseStatement(@NotNull PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IF_KEYWORD) {
       return parseIfStatement(builder);
@@ -325,8 +321,7 @@ public class BasicStatementParser {
     }
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseIfStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseIfStatement(PsiBuilder builder) {
     ArrayList<PsiBuilder.Marker> stack = null;
     PsiBuilder.Marker statement;
     while (true) {
@@ -361,8 +356,7 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseWhileStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseWhileStatement(PsiBuilder builder) {
     return parseExprInParenthWithBlock(builder, myJavaElementTypeContainer.WHILE_STATEMENT, false);
   }
 
@@ -404,8 +398,7 @@ public class BasicStatementParser {
     return isRecordPattern;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseForStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseForStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
@@ -447,8 +440,7 @@ public class BasicStatementParser {
     }
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseForLoopFromInitializer(PsiBuilder builder, PsiBuilder.Marker statement) {
+  private @NotNull PsiBuilder.Marker parseForLoopFromInitializer(PsiBuilder builder, PsiBuilder.Marker statement) {
     if (parseStatement(builder) == null) {
       error(builder, JavaPsiBundle.message("expected.statement"));
       if (!expect(builder, JavaTokenType.RPARENTH)) {
@@ -529,8 +521,7 @@ public class BasicStatementParser {
     expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement, IElementType foreachStatement) {
+  private @NotNull PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement, IElementType foreachStatement) {
     builder.advanceLexer();
 
     if (myParser.getExpressionParser().parse(builder) == null) {
@@ -549,8 +540,7 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseDoWhileStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseDoWhileStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
@@ -569,17 +559,15 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseSwitchStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseSwitchStatement(PsiBuilder builder) {
     return parseExprInParenthWithBlock(builder, myJavaElementTypeContainer.SWITCH_STATEMENT, true);
   }
 
   /**
    * @return marker and whether it contains expression inside
    */
-  @NotNull
   @ApiStatus.Internal
-  public Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
+  public @NotNull Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
     if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
       PsiBuilder.Marker defaultElement = builder.mark();
       builder.advanceLexer();
@@ -658,8 +646,7 @@ public class BasicStatementParser {
     }
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseBreakStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
     expect(builder, JavaTokenType.IDENTIFIER);
@@ -668,8 +655,7 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseYieldStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseYieldStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.remapCurrentToken(JavaTokenType.YIELD_KEYWORD);
     builder.advanceLexer();
@@ -685,8 +671,7 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseContinueStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseContinueStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
     expect(builder, JavaTokenType.IDENTIFIER);
@@ -695,8 +680,7 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseReturnStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseReturnStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
     myParser.getExpressionParser().parse(builder);
@@ -705,8 +689,7 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseThrowStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseThrowStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
@@ -721,13 +704,11 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseSynchronizedStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseSynchronizedStatement(PsiBuilder builder) {
     return parseExprInParenthWithBlock(builder, myJavaElementTypeContainer.SYNCHRONIZED_STATEMENT, true);
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseTryStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseTryStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
@@ -793,8 +774,7 @@ public class BasicStatementParser {
     return true;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseAssertStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseAssertStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
@@ -812,16 +792,14 @@ public class BasicStatementParser {
     return statement;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseBlockStatement(PsiBuilder builder) {
+  private @NotNull PsiBuilder.Marker parseBlockStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     parseCodeBlock(builder, true);
     done(statement, myJavaElementTypeContainer.BLOCK_STATEMENT, myWhiteSpaceAndCommentSetHolder);
     return statement;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseExprInParenthWithBlock(@NotNull PsiBuilder builder, @NotNull IElementType type, boolean block) {
+  public @NotNull PsiBuilder.Marker parseExprInParenthWithBlock(@NotNull PsiBuilder builder, @NotNull IElementType type, boolean block) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 

@@ -822,13 +822,11 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  @NotNull
-  public TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull Project project) {
+  public @NotNull TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull Project project) {
     return cancelPreloadedBuilds(getProjectPath(project));
   }
 
-  @NotNull
-  private TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull String projectPath) {
+  private @NotNull TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull String projectPath) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Cancel preloaded build for " + projectPath + "\n" + getThreadTrace(Thread.currentThread(), 50));
     }
@@ -1257,8 +1255,7 @@ public final class BuildManager implements Disposable {
       .orElseGet(() -> fallbackSdkProvider.apply(candidates.keySet()));
   }
 
-  @NotNull
-  private static Pair<Sdk, JavaSdkVersion> getIDERuntimeSdk() {
+  private static @NotNull Pair<Sdk, JavaSdkVersion> getIDERuntimeSdk() {
     @SuppressWarnings("removal")
     Sdk sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     return Pair.create(sdk, JavaSdk.getInstance().getVersion(sdk));

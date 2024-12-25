@@ -18,9 +18,9 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,14 +38,12 @@ public final class UnnecessaryBlockStatementInspection extends BaseInspection im
   public boolean ignoreSwitchBranches = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "UnnecessaryCodeBlock";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.block.statement.problem.descriptor");
   }
 
@@ -68,8 +66,7 @@ public final class UnnecessaryBlockStatementInspection extends BaseInspection im
   private static class UnnecessaryBlockFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.code.block.unwrap.quickfix");
     }

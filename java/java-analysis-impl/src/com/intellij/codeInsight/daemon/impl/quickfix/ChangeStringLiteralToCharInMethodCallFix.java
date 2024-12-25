@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -30,8 +30,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("fix.single.character.string.to.char.literal.family");
   }
 
@@ -67,8 +66,8 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
     return builder.toString();
   }
 
-  public static void registerFixes(final PsiMethod @NotNull [] candidates, @NotNull final PsiConstructorCall call,
-                                   @NotNull final HighlightInfo.Builder out, TextRange fixRange) {
+  public static void registerFixes(final PsiMethod @NotNull [] candidates, final @NotNull PsiConstructorCall call,
+                                   final @NotNull HighlightInfo.Builder out, TextRange fixRange) {
     final Set<PsiLiteralExpression> literals = new HashSet<>();
     if (call.getArgumentList() == null) {
       return;
@@ -83,8 +82,8 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
   }
 
   public static void registerFixes(final CandidateInfo @NotNull [] candidates,
-                                   @NotNull final PsiMethodCallExpression methodCall,
-                                   @Nullable final HighlightInfo.Builder info,
+                                   final @NotNull PsiMethodCallExpression methodCall,
+                                   final @Nullable HighlightInfo.Builder info,
                                    @Nullable TextRange fixRange) {
     if (info == null) return;
     final Set<PsiLiteralExpression> literals = new HashSet<>();
@@ -100,8 +99,8 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
     }
   }
 
-  private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
-                                      @NotNull final HighlightInfo.Builder info, TextRange fixRange) {
+  private static void processLiterals(final @NotNull Set<? extends PsiLiteralExpression> literals,
+                                      final @NotNull HighlightInfo.Builder info, TextRange fixRange) {
     for (PsiLiteralExpression literal : literals) {
       final ChangeStringLiteralToCharInMethodCallFix fix = new ChangeStringLiteralToCharInMethodCallFix(literal);
       info.registerFix(fix, null, null, fixRange, null);

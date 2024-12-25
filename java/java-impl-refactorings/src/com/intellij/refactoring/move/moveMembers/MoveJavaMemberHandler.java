@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -33,11 +33,10 @@ import static com.intellij.openapi.util.NlsContexts.DialogMessage;
  */
 public class MoveJavaMemberHandler implements MoveMemberHandler {
   @Override
-  @Nullable
-  public MoveMembersProcessor.MoveMembersUsageInfo getUsage(@NotNull PsiMember member,
-                                                            @NotNull PsiReference psiReference,
-                                                            @NotNull Set<PsiMember> membersToMove,
-                                                            @NotNull PsiClass targetClass) {
+  public @Nullable MoveMembersProcessor.MoveMembersUsageInfo getUsage(@NotNull PsiMember member,
+                                                                      @NotNull PsiReference psiReference,
+                                                                      @NotNull Set<PsiMember> membersToMove,
+                                                                      @NotNull PsiClass targetClass) {
     PsiElement ref = psiReference.getElement();
     if (ref instanceof PsiJavaCodeReferenceElement refExpr) {
       @Nullable PsiElement qualifier = refExpr.getQualifier();
@@ -235,8 +234,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   }
 
   @Override
-  @NotNull
-  public PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
+  public @NotNull PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
     if (member instanceof PsiVariable) {
       ((PsiVariable)member).normalizeDeclaration();
     }
@@ -283,8 +281,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   }
 
   @Override
-  @Nullable
-  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, final Set<PsiMember> membersToMove) {
+  public @Nullable PsiElement getAnchor(final @NotNull PsiMember member, final @NotNull PsiClass targetClass, final Set<PsiMember> membersToMove) {
     if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> afterFields = new ArrayList<>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();

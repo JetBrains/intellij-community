@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
@@ -111,8 +111,7 @@ public final class JarRepositoryManager {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
   }
 
-  @Nullable
-  public static NewLibraryConfiguration chooseLibraryAndDownload(@NotNull Project project, @Nullable String initialFilter, JComponent parentComponent) {
+  public static @Nullable NewLibraryConfiguration chooseLibraryAndDownload(@NotNull Project project, @Nullable String initialFilter, JComponent parentComponent) {
     RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, initialFilter, RepositoryAttachDialog.Mode.DOWNLOAD);
     if (!dialog.showAndGet()) {
       return null;
@@ -138,12 +137,11 @@ public final class JarRepositoryManager {
     return config;
   }
 
-  @Nullable
-  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
-                                                           @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                           Set<ArtifactKind> kinds,
-                                                           String copyTo,
-                                                           Collection<RemoteRepositoryDescription> repositories) {
+  public static @Nullable NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
+                                                                     @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                                     Set<ArtifactKind> kinds,
+                                                                     String copyTo,
+                                                                     Collection<RemoteRepositoryDescription> repositories) {
     final Collection<OrderRoot> roots = new ArrayList<>();
     if (descriptor.getMavenId() != null) {
       roots.addAll(loadDependenciesModal(project, descriptor, kinds, repositories, copyTo));
@@ -155,23 +153,21 @@ public final class JarRepositoryManager {
     return null;
   }
 
-  @Nullable
-  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
-                                                           String coord,
-                                                           boolean attachSources,
-                                                           boolean attachJavaDoc,
-                                                           boolean includeTransitiveDependencies,
-                                                           String copyTo,
-                                                           Collection<RemoteRepositoryDescription> repositories) {
+  public static @Nullable NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
+                                                                     String coord,
+                                                                     boolean attachSources,
+                                                                     boolean attachJavaDoc,
+                                                                     boolean includeTransitiveDependencies,
+                                                                     String copyTo,
+                                                                     Collection<RemoteRepositoryDescription> repositories) {
     JpsMavenRepositoryLibraryDescriptor libraryDescriptor = new JpsMavenRepositoryLibraryDescriptor(coord, includeTransitiveDependencies, Collections.emptyList());
     return resolveAndDownload(
       project, libraryDescriptor, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()), copyTo, repositories
     );
   }
 
-  @NotNull
-  private static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
-                                                                       Collection<OrderRoot> roots) {
+  private static @NotNull NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
+                                                                                Collection<OrderRoot> roots) {
     return new NewLibraryConfiguration(
       suggestLibraryName(props),
       RepositoryLibraryType.getInstance(),
@@ -194,8 +190,7 @@ public final class JarRepositoryManager {
 
 
   private static volatile File ourLocalRepositoryPath;
-  @NotNull
-  public static File getLocalRepositoryPath() {
+  public static @NotNull File getLocalRepositoryPath() {
     File repoPath = ourLocalRepositoryPath;
     if (repoPath != null) {
       return repoPath;
@@ -275,8 +270,7 @@ public final class JarRepositoryManager {
     return submitBackgroundJob(newOrderRootResolveJob(project, desc, artifactKinds, effectiveRepos, copyTo));
   }
 
-  @Nullable
-  public static List<OrderRoot> loadDependenciesSync(@NotNull Project project,
+  public static @Nullable List<OrderRoot> loadDependenciesSync(@NotNull Project project,
                                                                JpsMavenRepositoryLibraryDescriptor desc,
                                                                final Set<ArtifactKind> artifactKinds,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
@@ -289,8 +283,7 @@ public final class JarRepositoryManager {
    * Load dependencies within the caller thread with the progress being tracked by the directly provided {@code progressIndicator}.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static Collection<OrderRoot> loadDependenciesSync(@NotNull Project project,
+  public static @NotNull Collection<OrderRoot> loadDependenciesSync(@NotNull Project project,
                                                            @NotNull RepositoryLibraryProperties libraryProps,
                                                            boolean loadSources,
                                                            boolean loadJavadoc,
@@ -335,9 +328,8 @@ public final class JarRepositoryManager {
     return RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
   }
 
-  @Nullable
-  private static RemoteRepositoryDescription getRemoteRepositoryFromLibrary(@NotNull Project project,
-                                                                            @Nullable JpsMavenRepositoryLibraryDescriptor desc) {
+  private static @Nullable RemoteRepositoryDescription getRemoteRepositoryFromLibrary(@NotNull Project project,
+                                                                                      @Nullable JpsMavenRepositoryLibraryDescriptor desc) {
     if (desc == null) {
       return null;
     }
@@ -351,22 +343,19 @@ public final class JarRepositoryManager {
                               it -> it.getId().equals(repositoryId));
   }
 
-  @NotNull
-  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
-                                                                 @NotNull RepositoryLibraryDescription libraryDescription) {
+  public static @NotNull Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
+                                                                          @NotNull RepositoryLibraryDescription libraryDescription) {
     return getAvailableVersions(project, libraryDescription, Collections.emptyList());
   }
 
-  @NotNull
-  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
-                                                                 @NotNull RepositoryLibraryDescription libraryDescription,
-                                                                 @NotNull List<RemoteRepositoryDescription> repositories) {
+  public static @NotNull Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
+                                                                          @NotNull RepositoryLibraryDescription libraryDescription,
+                                                                          @NotNull List<RemoteRepositoryDescription> repositories) {
     List<RemoteRepositoryDescription> repos = selectRemoteRepositories(project, null, repositories).stream().toList();
     return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos));
   }
 
-  @Nullable
-  public static ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
+  public static @Nullable ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
     List<RemoteRepositoryDescription> repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitModalJob(project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 0),
                           new AetherJob<>(repositories) {
@@ -396,7 +385,7 @@ public final class JarRepositoryManager {
       sb.append("<p/>");
       sb.append(root.getFile().getName());
     }
-    @NlsSafe final String content = sb.toString();
+    final @NlsSafe String content = sb.toString();
     Notifications.Bus.notify(getNotificationGroup().createNotification(title, content, NotificationType.INFORMATION), project);
   }
 
@@ -488,8 +477,7 @@ public final class JarRepositoryManager {
     });
   }
 
-  @Nullable
-  private static <T> T submitSyncJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
+  private static @Nullable <T> T submitSyncJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     try {
       ourTasksInProgress.incrementAndGet();
       ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -502,8 +490,7 @@ public final class JarRepositoryManager {
     }
   }
 
-  @Nullable
-  private static <T> T submitModalJob(@Nullable Project project, @NlsContexts.DialogTitle String title, Function<? super ProgressIndicator, ? extends T> job) {
+  private static @Nullable <T> T submitModalJob(@Nullable Project project, @NlsContexts.DialogTitle String title, Function<? super ProgressIndicator, ? extends T> job) {
     Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override
@@ -520,8 +507,7 @@ public final class JarRepositoryManager {
     return result.get();
   }
 
-  @NotNull
-  public static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
+  public static @NotNull <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     DOWNLOADER_EXECUTOR.execute(() -> {
@@ -549,8 +535,7 @@ public final class JarRepositoryManager {
     return promise;
   }
 
-  @NotNull
-  private static Collection<String> lookupVersionsImpl(String groupId, String artifactId, @NotNull ArtifactRepositoryManager manager) throws Exception {
+  private static @NotNull Collection<String> lookupVersionsImpl(String groupId, String artifactId, @NotNull ArtifactRepositoryManager manager) throws Exception {
     try {
       List<Version> versions = new ArrayList<>(manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT));
       ArrayList<String> strings = new ArrayList<>(versions.size());
@@ -564,9 +549,8 @@ public final class JarRepositoryManager {
     }
   }
 
-  private static abstract class AetherJob<T> implements Function<ProgressIndicator, T> {
-    @NotNull
-    private final Collection<RemoteRepositoryDescription> myRepositories;
+  private abstract static class AetherJob<T> implements Function<ProgressIndicator, T> {
+    private final @NotNull Collection<RemoteRepositoryDescription> myRepositories;
 
     AetherJob(@NotNull Collection<RemoteRepositoryDescription> repositories) {
       myRepositories = repositories;
@@ -685,10 +669,8 @@ public final class JarRepositoryManager {
   }
 
   private static class LibraryResolveJob extends AetherJob<Collection<Artifact>> {
-    @NotNull
-    private final JpsMavenRepositoryLibraryDescriptor myDesc;
-    @NotNull
-    private final Set<ArtifactKind> myKinds;
+    private final @NotNull JpsMavenRepositoryLibraryDescriptor myDesc;
+    private final @NotNull Set<ArtifactKind> myKinds;
 
     LibraryResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc,
                       @NotNull Set<ArtifactKind> kinds,
@@ -766,8 +748,7 @@ public final class JarRepositoryManager {
       }
     }
 
-    @Nullable
-    private String resolveVersion(final ArtifactRepositoryManager manager, final String version) throws Exception {
+    private @Nullable String resolveVersion(final ArtifactRepositoryManager manager, final String version) throws Exception {
       final boolean isLatest = RepositoryLibraryDescription.LatestVersionId.equals(version);
       final boolean isRelease = RepositoryLibraryDescription.ReleaseVersionId.equals(version);
       if (isLatest || isRelease) {
@@ -787,8 +768,7 @@ public final class JarRepositoryManager {
   }
 
   private static class VersionResolveJob extends AetherJob<Collection<String>> {
-    @NotNull
-    private final RepositoryLibraryDescription myDescription;
+    private final @NotNull RepositoryLibraryDescription myDescription;
 
     VersionResolveJob(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, @NotNull List<RemoteRepositoryDescription> repositories) {
       super(repositories);

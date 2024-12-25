@@ -34,10 +34,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.unscramble.AnalyzeStacktraceUtil;
-import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.threadDumpParser.ThreadDumpParser;
 import com.intellij.threadDumpParser.ThreadState;
+import com.intellij.unscramble.AnalyzeStacktraceUtil;
+import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -70,7 +70,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
-  private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
+  private static final String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
   public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
 
@@ -79,8 +79,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   }
 
   @Override
-  @NotNull
-  public String getRunnerId() {
+  public @NotNull String getRunnerId() {
     return DEFAULT_JAVA_RUNNER_ID;
   }
 
@@ -148,9 +147,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
   }
 
-  @NotNull
-  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
-                                                                   @NotNull ExecutionEnvironment env)
+  protected @NotNull Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                            @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     boolean isLocal = !((TargetEnvironmentAwareRunProfile)env.getRunProfile()).needPrepareTarget();
@@ -230,7 +228,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(@NotNull final ProcessEvent event) {
+        public void processTerminated(final @NotNull ProcessEvent event) {
           processHandler.removeProcessListener(this);
           controlBreakAction.unregisterCustomShortcutSet(consoleComponent);
         }

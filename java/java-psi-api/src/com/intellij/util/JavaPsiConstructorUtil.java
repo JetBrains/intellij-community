@@ -22,8 +22,7 @@ public final class JavaPsiConstructorUtil {
    * @param constructor constructor to search in
    * @return found this/super constructor method call or null if not found or the supplied method is not a constructor
    */
-  @Nullable
-  public static PsiMethodCallExpression findThisOrSuperCallInConstructor(@NotNull PsiMethod constructor) {
+  public static @Nullable PsiMethodCallExpression findThisOrSuperCallInConstructor(@NotNull PsiMethod constructor) {
     if (!constructor.isConstructor()) return null;
     return CachedValuesManager.getCachedValue(constructor, () -> {
       PsiCodeBlock body = constructor.getBody();

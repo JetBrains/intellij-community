@@ -37,14 +37,12 @@ public final class ClassCouplingInspection
   public boolean m_includeLibraryClasses = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyCoupledClass";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer totalDependencies = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "overly.coupled.class.problem.descriptor", totalDependencies);

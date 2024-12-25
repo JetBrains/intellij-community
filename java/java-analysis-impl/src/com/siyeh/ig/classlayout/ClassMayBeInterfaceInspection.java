@@ -51,8 +51,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
   public boolean reportClassesWithNonAbstractMethods = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.may.be.interface.problem.descriptor");
   }
 
@@ -77,8 +76,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
   private static class ClassMayBeInterfaceFix extends ModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("class.may.be.interface.convert.quickfix");
     }
 

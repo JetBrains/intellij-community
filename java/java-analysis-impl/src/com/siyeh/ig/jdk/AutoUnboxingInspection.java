@@ -47,7 +47,7 @@ import java.util.Map;
 
 public final class AutoUnboxingInspection extends BaseInspection {
 
-  @NonNls static final Map<String, String> s_unboxingMethods = Map.of(
+  static final @NonNls Map<String, String> s_unboxingMethods = Map.of(
     "byte", "byteValue",
     "short", "shortValue",
     "int", "intValue",
@@ -59,14 +59,12 @@ public final class AutoUnboxingInspection extends BaseInspection {
   );
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("auto.unboxing.problem.descriptor");
   }
 
   @Override
-  @Nullable
-  public LocalQuickFix buildFix(Object... infos) {
+  public @Nullable LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 0 || !isFixApplicable((PsiExpression)infos[0])) {
       return null;
     }
@@ -112,8 +110,7 @@ public final class AutoUnboxingInspection extends BaseInspection {
   private static class AutoUnboxingFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
     }
 
@@ -291,8 +288,7 @@ public final class AutoUnboxingInspection extends BaseInspection {
               PsiTypes.floatType().equals(type));
     }
 
-    @NonNls
-    private static String computeConstantBooleanText(PsiExpression expression) {
+    private static @NonNls String computeConstantBooleanText(PsiExpression expression) {
       if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }

@@ -38,9 +38,8 @@ public class TypeEvaluator implements Evaluator {
   /**
    * @return ReferenceType in the target VM, with the given fully qualified name
    */
-  @NotNull
   @Override
-  public ReferenceType evaluate(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ReferenceType evaluate(EvaluationContextImpl context) throws EvaluateException {
     ClassLoaderReference classLoader = context.getClassLoader();
     ReferenceType lastRes = SoftReference.dereference(myLastResult);
     if (lastRes != null && classLoader == SoftReference.dereference(myLastClassLoader)) {

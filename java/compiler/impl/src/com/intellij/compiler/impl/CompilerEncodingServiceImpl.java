@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerEncodingService;
@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 public final class CompilerEncodingServiceImpl extends CompilerEncodingService {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final CachedValue<Map<Module, Set<Charset>>> myModuleFileEncodings;
 
   public CompilerEncodingServiceImpl(@NotNull Project project) {
@@ -37,8 +37,7 @@ public final class CompilerEncodingServiceImpl extends CompilerEncodingService {
     }, false);
   }
 
-  @NotNull
-  private Map<Module, Set<Charset>> computeModuleCharsetMap() {
+  private @NotNull Map<Module, Set<Charset>> computeModuleCharsetMap() {
     final Map<Module, Set<Charset>> map = new HashMap<>();
     final Map<? extends VirtualFile, ? extends Charset> mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getAllMappings();
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -95,16 +94,13 @@ public final class CompilerEncodingServiceImpl extends CompilerEncodingService {
   }
 
   @Override
-  @Nullable
-  public Charset getPreferredModuleEncoding(@NotNull Module module) {
+  public @Nullable Charset getPreferredModuleEncoding(@NotNull Module module) {
     final Set<Charset> encodings = myModuleFileEncodings.getValue().get(module);
     return ContainerUtil.getFirstItem(encodings, EncodingProjectManager.getInstance(myProject).getDefaultCharset());
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public Collection<Charset> getAllModuleEncodings(@NotNull Module module) {
+  public @NotNull @Unmodifiable Collection<Charset> getAllModuleEncodings(@NotNull Module module) {
     final Set<Charset> encodings = myModuleFileEncodings.getValue().get(module);
     if (encodings != null) {
       return encodings;

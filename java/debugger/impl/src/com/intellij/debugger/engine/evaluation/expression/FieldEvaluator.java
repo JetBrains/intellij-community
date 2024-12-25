@@ -44,8 +44,7 @@ public class FieldEvaluator implements Evaluator {
     myTargetClassFilter = filter;
   }
 
-  @NotNull
-  public static TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
+  public static @NotNull TargetClassFilter createClassFilter(@Nullable PsiType psiType) {
     if (psiType == null || psiType instanceof PsiArrayType) {
       return TargetClassFilter.ALL;
     }
@@ -67,8 +66,7 @@ public class FieldEvaluator implements Evaluator {
     return name != null ? new FQNameClassFilter(name) : TargetClassFilter.ALL;
   }
 
-  @Nullable
-  private Field findField(@Nullable Type t) {
+  private @Nullable Field findField(@Nullable Type t) {
     if (t instanceof ClassType cls) {
       if (myTargetClassFilter.acceptClass(cls)) {
         return DebuggerUtils.findField(cls, myFieldName);

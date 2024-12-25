@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 
 public abstract class CompositePackagingElement<S> extends PackagingElement<S> implements RenameablePackagingElement {
-  private final static Logger LOG = Logger.getInstance(CompositePackagingElement.class);
+  private static final Logger LOG = Logger.getInstance(CompositePackagingElement.class);
   private final List<PackagingElement<?>> myChildren = new ArrayList<>();
   private List<PackagingElement<?>> myUnmodifiableChildren;
 
@@ -150,8 +150,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     return added;
   }
 
-  @Nullable
-  public PackagingElement<?> moveChild(int index, int direction) {
+  public @Nullable PackagingElement<?> moveChild(int index, int direction) {
     return this.update(
       () -> myMove(index, direction, myChildren),
       (builder, packagingElementEntity) -> {
@@ -179,8 +178,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     );
   }
 
-  @Nullable
-  private static <T> T myMove(int index, int direction, List<T> elements) {
+  private static @Nullable <T> T myMove(int index, int direction, List<T> elements) {
     int target = index + direction;
     if (0 <= index && index < elements.size() && 0 <= target && target < elements.size()) {
       final T element1 = elements.get(index);
@@ -218,9 +216,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     );
   }
 
-  @NotNull
-  @Unmodifiable
-  public List<PackagingElement<?>> getChildren() {
+  public @NotNull @Unmodifiable List<PackagingElement<?>> getChildren() {
     if (myStorage == null) {
       return myGetChildren();
     }
@@ -281,8 +277,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     );
   }
 
-  @Nullable
-  public CompositePackagingElement<?> findCompositeChild(@NotNull String name) {
+  public @Nullable CompositePackagingElement<?> findCompositeChild(@NotNull String name) {
     for (PackagingElement<?> child : getChildren()) {
       if (child instanceof CompositePackagingElement && name.equals(((CompositePackagingElement<?>)child).getName())) {
         return (CompositePackagingElement)child;

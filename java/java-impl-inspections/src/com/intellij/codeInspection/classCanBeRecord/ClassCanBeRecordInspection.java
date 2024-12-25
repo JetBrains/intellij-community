@@ -134,8 +134,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
     SHOW_AFFECTED_MEMBERS("class.can.be.record.conversion.strategy.show.members"),
     SILENTLY("class.can.be.record.conversion.strategy.convert.silently");
 
-    @Nls
-    private final String messageKey;
+    private final @Nls String messageKey;
 
     ConversionStrategy(@Nls String messageKey) {
       this.messageKey = messageKey;

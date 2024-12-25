@@ -58,8 +58,7 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
       CallMatcher.staticCall("org.junit.Assert", "assertEquals").parameterTypes(CommonClassNames.JAVA_LANG_STRING, "long", "long")
     );
 
-  @NonNls
-  private static final Set<String> s_typesToCheck = Set.of(
+  private static final @NonNls Set<String> s_typesToCheck = Set.of(
     "int",
     "short",
     "byte",
@@ -79,8 +78,7 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final IElementType tokenType = (IElementType)infos[0];
     if (JavaTokenType.ASTERISK.equals(tokenType)) {
       return InspectionGadgetsBundle.message("integer.multiplication.implicit.cast.to.long.problem.descriptor");
@@ -156,10 +154,8 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
 
   private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("integer.multiplication.implicit.cast.to.long.quickfix");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.JavaTokenType;
@@ -59,8 +59,8 @@ public class OrderedBinaryExpression<F extends PsiExpression, S extends PsiExpre
    * @param firstClass the class representing the required expression type
    * @return the items of a binary expression in the order it is specified. It reverses the operator if needed.
    */
-  public static @Nullable <O extends PsiExpression> OrderedBinaryExpression<O, PsiExpression> from(@Nullable final PsiExpression node,
-                                                                                                   @Nullable final Class<O> firstClass) {
+  public static @Nullable <O extends PsiExpression> OrderedBinaryExpression<O, PsiExpression> from(final @Nullable PsiExpression node,
+                                                                                                   final @Nullable Class<O> firstClass) {
     PsiBinaryExpression expression = as(node, PsiBinaryExpression.class);
     if (expression == null || firstClass == null) return null;
     O leftOperand = as(expression.getLOperand(), firstClass);
@@ -89,9 +89,9 @@ public class OrderedBinaryExpression<F extends PsiExpression, S extends PsiExpre
    * @param secondClass the class representing the required expression type
    * @return the items of a binary expression in the order it is specified. It reverses the operator if needed.
    */
-  public static @Nullable <F extends PsiExpression, S extends PsiExpression> OrderedBinaryExpression<F, S> from(@Nullable final PsiExpression node,
-                                                                                                                @Nullable final Class<F> firstClass,
-                                                                                                                @Nullable final Class<S> secondClass) {
+  public static @Nullable <F extends PsiExpression, S extends PsiExpression> OrderedBinaryExpression<F, S> from(final @Nullable PsiExpression node,
+                                                                                                                final @Nullable Class<F> firstClass,
+                                                                                                                final @Nullable Class<S> secondClass) {
     PsiBinaryExpression expression = as(node, PsiBinaryExpression.class);
     if (expression == null || firstClass == null || secondClass == null) return null;
     F leftFirst = as(expression.getLOperand(), firstClass);

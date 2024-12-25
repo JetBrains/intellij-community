@@ -31,21 +31,18 @@ import java.util.Set;
 
 public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "PrimitiveArrayArgumentToVarargsMethod";
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "PrimitiveArrayArgumentToVariableArgMethod"; // keep old suppression working
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("primitive.array.argument.to.var.arg.method.problem.descriptor");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
@@ -116,8 +116,7 @@ abstract class ComparatorModel {
     }
   }
 
-  @NotNull
-  static ComparatorModel from(@Nullable PsiExpression expression) {
+  static @NotNull ComparatorModel from(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null || NULL_HOSTILE.matches(expression)) {
       return new NullHostile();

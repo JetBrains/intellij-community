@@ -86,7 +86,7 @@ public final class ParenthesesUtils {
     return text;
   }
 
-  @Nullable public static PsiElement getParentSkipParentheses(PsiElement element) {
+  public static @Nullable PsiElement getParentSkipParentheses(PsiElement element) {
     PsiElement parent = element.getParent();
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
       parent = parent.getParent();
@@ -99,8 +99,7 @@ public final class ParenthesesUtils {
    */
   @Deprecated
   @Contract("null -> null")
-  @Nullable
-  public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
+  public static @Nullable PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     return PsiUtil.skipParenthesizedExprDown(expression);
   }
 

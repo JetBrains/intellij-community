@@ -209,8 +209,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
     }, getRefactoringName(), null);
   }
 
-  @Nullable
-  private static PsiField getReferencedFinalField(PsiExpression argument) {
+  private static @Nullable PsiField getReferencedFinalField(PsiExpression argument) {
     if (argument instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiField field) {
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) {
@@ -252,8 +251,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
     return value1 != null && value1.equals(value2);
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String getCannotInlineMessage(PsiParameter psiParameter, PsiMethod method) {
+  private static @Nullable @NlsContexts.DialogMessage String getCannotInlineMessage(PsiParameter psiParameter, PsiMethod method) {
     if (psiParameter.isVarArgs()) {
       return JavaRefactoringBundle.message("inline.parameter.error.varargs");
     }

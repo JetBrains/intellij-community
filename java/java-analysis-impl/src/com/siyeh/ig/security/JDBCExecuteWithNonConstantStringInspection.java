@@ -32,8 +32,7 @@ public final class JDBCExecuteWithNonConstantStringInspection extends BaseInspec
   public boolean considerStaticFinalConstant = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("jdbc.execute.with.non.constant.string.problem.descriptor");
   }
 

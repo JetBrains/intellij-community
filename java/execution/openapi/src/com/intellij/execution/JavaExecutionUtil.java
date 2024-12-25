@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.util.ExecutionErrorDialog;
@@ -63,13 +63,11 @@ public final class JavaExecutionUtil {
     return contextModule;
   }
 
-  @Nullable
-  public static String getRuntimeQualifiedName(@NotNull final PsiClass aClass) {
+  public static @Nullable String getRuntimeQualifiedName(final @NotNull PsiClass aClass) {
     return ClassUtil.getJVMClassName(aClass);
   }
 
-  @Nullable
-  public static @NlsSafe String getPresentableClassName(@Nullable String rtClassName) {
+  public static @Nullable @NlsSafe String getPresentableClassName(@Nullable String rtClassName) {
     if (StringUtil.isEmpty(rtClassName)) {
       return null;
     }
@@ -78,17 +76,15 @@ public final class JavaExecutionUtil {
     return lastDot == -1 || lastDot == rtClassName.length() - 1 ? rtClassName : rtClassName.substring(lastDot + 1);
   }
 
-  public static Module findModule(@NotNull final PsiClass psiClass) {
+  public static Module findModule(final @NotNull PsiClass psiClass) {
     return ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile());
   }
 
-  @Nullable
-  public static PsiClass findMainClass(final Module module, final String mainClassName) {
+  public static @Nullable PsiClass findMainClass(final Module module, final String mainClassName) {
     return findMainClass(module.getProject(), mainClassName, module.getModuleRuntimeScope(true));
   }
 
-  @Nullable
-  public static PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
+  public static @Nullable PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
     if (project.isDefault() ||
         (DumbService.isDumb(project) &&
          FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null &&
@@ -113,7 +109,7 @@ public final class JavaExecutionUtil {
     return name == null || name.startsWith(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
   }
 
-  public static Location stepIntoSingleClass(@NotNull final Location location) {
+  public static Location stepIntoSingleClass(final @NotNull Location location) {
     PsiElement element = location.getPsiElement();
     TextRange elementTextRange = element.getTextRange();
     if (!(element instanceof PsiClassOwner)) {
@@ -140,29 +136,26 @@ public final class JavaExecutionUtil {
     ExecutionErrorDialog.show(e, title, project);
   }
 
-  @Nullable
-  public static String handleSpacesInAgentPath(@NotNull String agentPath,
-                                               @NotNull String copyDirName,
-                                               @Nullable String agentPathPropertyKey) {
+  public static @Nullable String handleSpacesInAgentPath(@NotNull String agentPath,
+                                                         @NotNull String copyDirName,
+                                                         @Nullable String agentPathPropertyKey) {
     return handleSpacesInAgentPath(agentPath, copyDirName, agentPathPropertyKey, null);
   }
 
-  @Nullable
-  public static String handleSpacesInAgentPath(@NotNull String agentPath,
-                                               @NotNull String copyDirName,
-                                               @Nullable String agentPathPropertyKey,
-                                               @Nullable FileFilter fileFilter) {
+  public static @Nullable String handleSpacesInAgentPath(@NotNull String agentPath,
+                                                         @NotNull String copyDirName,
+                                                         @Nullable String agentPathPropertyKey,
+                                                         @Nullable FileFilter fileFilter) {
     String agentName = new File(agentPath).getName();
     String containingDir = handleSpacesInContainingDir(agentPath, agentName, copyDirName, agentPathPropertyKey, fileFilter);
     return containingDir == null ? null : FileUtil.join(containingDir, agentName);
   }
 
-  @Nullable
-  private static String handleSpacesInContainingDir(@NotNull String agentPath,
-                                                    @NotNull String agentName,
-                                                    @NotNull String copyDirName,
-                                                    @Nullable String agentPathPropertyKey,
-                                                    @Nullable FileFilter fileFilter) {
+  private static @Nullable String handleSpacesInContainingDir(@NotNull String agentPath,
+                                                              @NotNull String agentName,
+                                                              @NotNull String copyDirName,
+                                                              @Nullable String agentPathPropertyKey,
+                                                              @Nullable FileFilter fileFilter) {
     String agentContainingDir;
     String userDefined = agentPathPropertyKey == null ? null : System.getProperty(agentPathPropertyKey);
     if (userDefined != null && new File(userDefined).exists()) {
@@ -193,11 +186,10 @@ public final class JavaExecutionUtil {
     return agentContainingDir;
   }
 
-  @Nullable
-  private static String tryCopy(@NotNull String agentDir,
-                                @NotNull String agentName,
-                                @NotNull File targetDir,
-                                @Nullable FileFilter fileFilter) {
+  private static @Nullable String tryCopy(@NotNull String agentDir,
+                                          @NotNull String agentName,
+                                          @NotNull File targetDir,
+                                          @Nullable FileFilter fileFilter) {
     if (targetDir.getAbsolutePath().contains(" ")) return null;
     try {
       if (fileFilter == null) {

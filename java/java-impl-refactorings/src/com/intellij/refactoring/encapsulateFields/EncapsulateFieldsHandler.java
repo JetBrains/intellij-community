@@ -55,7 +55,7 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
    * if elements.length > 1 the expected values are PsiField objects only
    */
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length == 0) {
       return;
     }
@@ -165,9 +165,8 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @NotNull
-  private static EncapsulateFieldsDialog.EncapsulateFieldsContainer prepare(@NotNull  PsiClass aClass,
-                                                                            @NotNull Set<PsiField> preselectedFields) {
+  private static @NotNull EncapsulateFieldsDialog.EncapsulateFieldsContainer prepare(@NotNull  PsiClass aClass,
+                                                                                     @NotNull Set<PsiField> preselectedFields) {
     return EncapsulateFieldsDialog.EncapsulateFieldsContainer.create(aClass, preselectedFields, new JavaEncapsulateFieldHelper());
   }
 
@@ -178,9 +177,8 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
     return getDialog(project, container);
   }
 
-  @NotNull
-  private static EncapsulateFieldsDialog getDialog(@Nullable  Project project,
-                                                   @NotNull EncapsulateFieldsDialog.EncapsulateFieldsContainer container) {
+  private static @NotNull EncapsulateFieldsDialog getDialog(@Nullable  Project project,
+                                                            @NotNull EncapsulateFieldsDialog.EncapsulateFieldsContainer container) {
     return new EncapsulateFieldsDialog(project, container);
   }
 
@@ -196,8 +194,7 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
     final EncapsulateFieldsDescriptor descriptor = new EncapsulateOnPreviewDescriptor(fieldDescriptor);
     final EncapsulateFieldsProcessor processor = new EncapsulateFieldsProcessor(project, descriptor) {
       @Override
-      @Unmodifiable
-      protected Iterable<PsiReferenceExpression> getFieldReferences(@NotNull PsiField field) {
+      protected @Unmodifiable Iterable<PsiReferenceExpression> getFieldReferences(@NotNull PsiField field) {
         return VariableAccessUtils.getVariableReferences(field);
       }
     };
@@ -209,7 +206,7 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
     return JavaRefactoringBundle.message("encapsulate.fields.title");
   }
 
-  static private class EncapsulateOnPreviewDescriptor implements EncapsulateFieldsDescriptor {
+  private static class EncapsulateOnPreviewDescriptor implements EncapsulateFieldsDescriptor {
     private final FieldDescriptor myFieldDescriptor;
 
     EncapsulateOnPreviewDescriptor(FieldDescriptor fieldDescriptor) {

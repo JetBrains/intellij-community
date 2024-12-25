@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -113,10 +113,9 @@ public final class VariableNameGenerator {
    * @param lookForward whether further conflicting declarations should be considered 
    * @return a generated variable name
    */
-  @NotNull
-  public String generate(boolean lookForward) {
+  public @NotNull String generate(boolean lookForward) {
     String suffixed = null;
-    @NonNls final Set<String> candidates = this.candidates.isEmpty() ? Collections.singleton("v") : this.candidates;
+    final @NonNls Set<String> candidates = this.candidates.isEmpty() ? Collections.singleton("v") : this.candidates;
     for (String candidate : candidates) {
       String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward, skipNames);
       if (name.equals(candidate)) return name;
@@ -127,8 +126,7 @@ public final class VariableNameGenerator {
     return suffixed;
   }
 
-  @NotNull
-  public List<String> generateAll(boolean lookForward) {
+  public @NotNull List<String> generateAll(boolean lookForward) {
     List<String> suffixed = new ArrayList<>();
     List<String> result = new ArrayList<>();
     final @NonNls String defaultVariableName = "v";

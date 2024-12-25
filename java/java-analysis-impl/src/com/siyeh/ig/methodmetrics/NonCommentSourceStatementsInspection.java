@@ -26,8 +26,7 @@ public final class NonCommentSourceStatementsInspection
   private static final int DEFAULT_LIMIT = 30;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyLongMethod";
   }
 
@@ -43,8 +42,7 @@ public final class NonCommentSourceStatementsInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer statementCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "non.comment.source.statements.problem.descriptor",

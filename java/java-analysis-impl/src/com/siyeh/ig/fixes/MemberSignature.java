@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.psi.PsiField;
@@ -11,15 +11,15 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.Modifier;
 
 public class MemberSignature implements Comparable<MemberSignature> {
-  @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
-  @NonNls private static final String INITIALIZER_SIGNATURE = "()V";
-  @NonNls private static final MemberSignature ASSERTIONS_DISABLED_FIELD =
+  private static final @NonNls String CONSTRUCTOR_NAME = "<init>";
+  private static final @NonNls String INITIALIZER_SIGNATURE = "()V";
+  private static final @NonNls MemberSignature ASSERTIONS_DISABLED_FIELD =
     new MemberSignature("$assertionsDisabled", Modifier.STATIC | Modifier.FINAL, "Z");
-  @NonNls private static final MemberSignature PACKAGE_PRIVATE_CONSTRUCTOR =
+  private static final @NonNls MemberSignature PACKAGE_PRIVATE_CONSTRUCTOR =
     new MemberSignature(CONSTRUCTOR_NAME, 0, INITIALIZER_SIGNATURE);
-  @NonNls private static final MemberSignature PUBLIC_CONSTRUCTOR =
+  private static final @NonNls MemberSignature PUBLIC_CONSTRUCTOR =
     new MemberSignature(CONSTRUCTOR_NAME, Modifier.PUBLIC, INITIALIZER_SIGNATURE);
-  @NonNls private static final MemberSignature STATIC_INITIALIZER =
+  private static final @NonNls MemberSignature STATIC_INITIALIZER =
     new MemberSignature("<clinit>", Modifier.STATIC, INITIALIZER_SIGNATURE);
 
   private final int modifiers;

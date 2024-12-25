@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -69,7 +69,7 @@ public class ThrowExceptionAction extends DebuggerAction {
   private static void throwException(final Value value,
                                      final ThreadReferenceProxyImpl thread,
                                      final DebugProcessImpl debugProcess,
-                                     @Nullable final DialogWrapper dialog) {
+                                     final @Nullable DialogWrapper dialog) {
     debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() {
@@ -112,7 +112,7 @@ public class ThrowExceptionAction extends DebuggerAction {
                            }
 
                            @Override
-                           public void errorOccurred(@NotNull final String errorMessage) {
+                           public void errorOccurred(final @NotNull String errorMessage) {
                              showError(project, JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + ": " + errorMessage);
                            }
                          }, stackFrame.getSourcePosition());

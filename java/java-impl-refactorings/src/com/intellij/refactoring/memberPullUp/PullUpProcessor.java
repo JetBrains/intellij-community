@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.memberPullUp;
 
@@ -38,8 +38,7 @@ import java.util.*;
 
 public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpData {
   private static final Logger LOG = Logger.getInstance(PullUpProcessor.class);
-  @NotNull
-  private final PsiClass mySourceClass;
+  private final @NotNull PsiClass mySourceClass;
   private final PsiClass myTargetSuperClass;
   private final MemberInfo[] myMembersToMove;
   private final DocCommentPolicy myJavaDocPolicy;
@@ -56,8 +55,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new PullUpUsageViewDescriptor();
   }
 
@@ -75,24 +73,21 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     return result.isEmpty() ? UsageInfo.EMPTY_ARRAY : result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.pull.up";
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(mySourceClass);
     data.addMembers(myMembersToMove, info -> info.getMember());
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(myTargetSuperClass);
     return data;
@@ -139,9 +134,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     }), MethodDuplicatesHandler.getRefactoringName(), true, myProject);
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return RefactoringBundle.message("pullUp.command", DescriptiveNameUtil.getDescriptiveName(mySourceClass));
   }
 
@@ -179,14 +173,12 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     }
   }
 
-  @Nullable
-  private PullUpHelper<MemberInfo> getProcessor(@NotNull PsiElement element) {
+  private @Nullable PullUpHelper<MemberInfo> getProcessor(@NotNull PsiElement element) {
     Language language = element.getLanguage();
     return getProcessor(language);
   }
 
-  @Nullable
-  private PullUpHelper<MemberInfo> getProcessor(Language language) {
+  private @Nullable PullUpHelper<MemberInfo> getProcessor(Language language) {
     PullUpHelper<MemberInfo> helper = myProcessors.get(language);
     if (helper == null) {
       PullUpHelperFactory helperFactory = PullUpHelper.INSTANCE.forLanguage(language);
@@ -199,8 +191,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     return helper;
   }
 
-  @Nullable
-  private PullUpHelper<MemberInfo> getProcessor(@NotNull MemberInfo info) {
+  private @Nullable PullUpHelper<MemberInfo> getProcessor(@NotNull MemberInfo info) {
     PsiReferenceList refList = info.getSourceReferenceList();
     if (refList != null) {
       return getProcessor(refList.getLanguage());
@@ -255,9 +246,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     return false;
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     return Collections.singletonList(mySourceClass);
   }
 
@@ -302,9 +292,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       return ContainerUtil.map(myMembersToMove, info -> info.getMember(), PsiElement.EMPTY_ARRAY);
     }
 
-    @NotNull
     @Override
-    public String getCodeReferencesText(int usagesCount, int filesCount) {
+    public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
       return JavaBundle.message("pull.up.members.usage.view.description.code.references.node", RefactoringUIUtil.getDescription(myTargetSuperClass, true));
     }
   }

@@ -121,8 +121,7 @@ public final class ClassInitializerInspection extends BaseInspection {
       }
     }
 
-    @Unmodifiable
-    private static @NotNull Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
+    private static @Unmodifiable @NotNull Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
       PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
         AddDefaultConstructorFix.addDefaultConstructor(aClass);

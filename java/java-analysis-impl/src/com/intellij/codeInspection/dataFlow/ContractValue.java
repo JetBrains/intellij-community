@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -28,8 +28,7 @@ public abstract class ContractValue {
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
 
-  @NotNull
-  public DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
+  public @NotNull DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
     return DfaCondition.getUnknown();
   }
 
@@ -377,9 +376,8 @@ public abstract class ContractValue {
       return factory.getUnknown();
     }
 
-    @NotNull
     @Override
-    public DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
+    public @NotNull DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
       if (left.getDfType() instanceof DfPrimitiveType primitiveType) {

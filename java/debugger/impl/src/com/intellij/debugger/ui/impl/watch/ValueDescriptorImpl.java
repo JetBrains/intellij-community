@@ -73,8 +73,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private String myCompactValueText;
   private boolean myFullValue = false;
 
-  @Nullable
-  private Icon myValueIcon;
+  private @Nullable Icon myValueIcon;
 
   protected boolean myIsNew = true;
   private boolean myIsDirty = false;
@@ -265,10 +264,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myInitFuture;
   }
 
-  @Nullable
-  private static ObjectReference getTargetExceptionWithStackTraceFilled(@Nullable EvaluationContextImpl evaluationContext,
-                                                                        EvaluateException ex,
-                                                                        boolean printToConsole) {
+  private static @Nullable ObjectReference getTargetExceptionWithStackTraceFilled(@Nullable EvaluationContextImpl evaluationContext,
+                                                                                  EvaluateException ex,
+                                                                                  boolean printToConsole) {
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null && evaluationContext != null) {
       try {
@@ -338,11 +336,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return "";
   }
 
-  @NotNull
-  private String calcRepresentation(EvaluationContextImpl context,
-                                    DescriptorLabelListener labelListener,
-                                    DebugProcessImpl debugProcess,
-                                    NodeRenderer renderer) {
+  private @NotNull String calcRepresentation(EvaluationContextImpl context,
+                                             DescriptorLabelListener labelListener,
+                                             DebugProcessImpl debugProcess,
+                                             NodeRenderer renderer) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     EvaluateException valueException = myValueException;
@@ -449,8 +446,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myCompactValueText = label;
   }
 
-  @Nullable
-  public String getCompactValueText() {
+  public @Nullable String getCompactValueText() {
     return myCompactValueText;
   }
 
@@ -466,8 +462,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValueIcon = icon;
   }
 
-  @Nullable
-  public Icon getValueIcon() {
+  public @Nullable Icon getValueIcon() {
     return myValueIcon;
   }
 
@@ -480,8 +475,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return name;
   }
 
-  @Nullable
-  public String getDeclaredType() {
+  public @Nullable String getDeclaredType() {
     return null;
   }
 
@@ -544,8 +538,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
 
   //returns expression that evaluates tree to this descriptor
-  @NotNull
-  public CompletableFuture<PsiElement> getTreeEvaluation(JavaValue value, DebuggerContextImpl context) throws EvaluateException {
+  public @NotNull CompletableFuture<PsiElement> getTreeEvaluation(JavaValue value, DebuggerContextImpl context) throws EvaluateException {
     JavaValue parent = value.getParent();
     if (parent != null) {
       ValueDescriptorImpl vDescriptor = parent.getDescriptor();
@@ -659,8 +652,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return calcIdLabel(objRef, null, null);
   }
 
-  @Nullable
-  public static String calcIdLabel(ValueDescriptor descriptor, @NotNull DescriptorLabelListener labelListener) {
+  public static @Nullable String calcIdLabel(ValueDescriptor descriptor, @NotNull DescriptorLabelListener labelListener) {
     Value value = descriptor.getValue();
     if (!(value instanceof ObjectReference)) {
       return null;
@@ -668,10 +660,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return calcIdLabel((ObjectReference)value, descriptor, labelListener);
   }
 
-  @Nullable
-  private static String calcIdLabel(ObjectReference objRef,
-                                    @Nullable ValueDescriptor descriptor,
-                                    @Nullable DescriptorLabelListener labelListener) {
+  private static @Nullable String calcIdLabel(ObjectReference objRef,
+                                              @Nullable ValueDescriptor descriptor,
+                                              @Nullable DescriptorLabelListener labelListener) {
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
     if (objRef instanceof StringReference && !classRenderer.SHOW_STRINGS_TYPE) {
       return null;
@@ -757,8 +748,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return getValueText();
   }
 
-  @NotNull
-  public String getValueText() {
+  public @NotNull String getValueText() {
     return StringUtil.notNullize(myValueText);
   }
 
@@ -781,8 +771,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myProject;
   }
 
-  @NotNull
-  public String getDeclaredTypeLabel() {
+  public @NotNull String getDeclaredTypeLabel() {
     ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
     if (classRenderer.SHOW_DECLARED_TYPE) {
       String declaredType = getDeclaredType();

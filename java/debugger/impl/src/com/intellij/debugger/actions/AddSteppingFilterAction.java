@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddSteppingFilterAction extends DebuggerAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     DebugProcessImpl process = debuggerContext.getDebugProcess();
     if (process == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -129,8 +129,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
     return false;
   }
 
-  @Nullable
-  public Modifier getModifier() {
+  public @Nullable Modifier getModifier() {
     return myModifier;
   }
 
@@ -160,9 +159,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
               update(debuggerContext);
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+            public @NotNull Type getLType() throws EvaluateException, ClassNotLoadedException {
               //noinspection ConstantConditions
               return evaluationDescriptor.getModifier().getExpectedType();
             }

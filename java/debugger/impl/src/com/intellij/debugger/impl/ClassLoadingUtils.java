@@ -80,8 +80,7 @@ public final class ClassLoadingUtils {
    * Finds and if necessary defines helper class
    * May modify class loader in evaluationContext
    */
-  @Nullable
-  public static ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext,
+  public static @Nullable ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext,
                                          String... additionalClassesToLoad) throws EvaluateException {
     String name = cls.getName();
     evaluationContext = evaluationContext.withAutoLoadClasses(true);

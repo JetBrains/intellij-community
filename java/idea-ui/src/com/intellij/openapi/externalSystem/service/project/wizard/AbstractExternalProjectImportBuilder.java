@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -57,9 +57,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   private static final Logger LOG = Logger.getInstance(AbstractExternalProjectImportBuilder.class);
 
-  @NotNull private final ProjectDataManager myProjectDataManager;
-  @NotNull private final NotNullLazyValue<C> myControlValue;
-  @NotNull private final ProjectSystemId myExternalSystemId;
+  private final @NotNull ProjectDataManager myProjectDataManager;
+  private final @NotNull NotNullLazyValue<C> myControlValue;
+  private final @NotNull ProjectSystemId myExternalSystemId;
 
   private DataNode<ProjectData> myExternalProjectNode;
 
@@ -85,8 +85,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   public void setOpenProjectSettingsAfter(boolean on) {
   }
 
-  @NotNull
-  public C getControl(@Nullable Project currentProject) {
+  public @NotNull C getControl(@Nullable Project currentProject) {
     C control = getControl();
     control.setCurrentProject(currentProject);
     return control;
@@ -104,8 +103,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     doPrepare(context);
   }
 
-  @Nullable
-  protected Sdk resolveProjectJdk(@NotNull WizardContext context) {
+  protected @Nullable Sdk resolveProjectJdk(@NotNull WizardContext context) {
     Project project = context.getProject() != null ? context.getProject() : ProjectManager.getInstance().getDefaultProject();
     final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
     if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
@@ -150,9 +148,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         }
       }
     } : new IdeModifiableModelsProviderImpl(project){
-      @NotNull
       @Override
-      protected ModifiableRootModel doGetModifiableRootModel(@NotNull Module module) {
+      protected @NotNull ModifiableRootModel doGetModifiableRootModel(@NotNull Module module) {
         ModifiableRootModel modifiableRootModel = super.doGetModifiableRootModel(module);
         moduleMap.put(modifiableRootModel, module);
         return modifiableRootModel;
@@ -232,7 +229,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                                                                      @NotNull ExternalProjectSettings projectSettings) {
     return new ExternalProjectRefreshCallback() {
       @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
         if (externalProject == null) {
           return;
         }
@@ -241,8 +238,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     };
   }
 
-  @NotNull
-  private ExternalProjectSettings getCurrentExternalProjectSettings() {
+  private @NotNull ExternalProjectSettings getCurrentExternalProjectSettings() {
     ExternalProjectSettings result = getControl().getProjectSettings().clone();
     File externalProjectConfigFile = getExternalProjectConfigToUse(new File(result.getExternalProjectPath()));
     final String linkedProjectPath = FileUtil.toCanonicalPath(externalProjectConfigFile.getPath());
@@ -253,8 +249,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   protected abstract void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project);
 
-  @Nullable
-  private File getProjectFile() {
+  private @Nullable File getProjectFile() {
     String path = getControl().getProjectSettings().getExternalProjectPath();
     return path == null ? null : new File(path);
   }
@@ -357,11 +352,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param file  base external project config file
    * @return      external project config file to use
    */
-  @NotNull
-  protected abstract File getExternalProjectConfigToUse(@NotNull File file);
+  protected abstract @NotNull File getExternalProjectConfigToUse(@NotNull File file);
 
-  @Nullable
-  public DataNode<ProjectData> getExternalProjectNode() {
+  public @Nullable DataNode<ProjectData> getExternalProjectNode() {
     return myExternalProjectNode;
   }
 
@@ -390,8 +383,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param wizardContext   current wizard context
    * @return                {@link Project} instance to use
    */
-  @NotNull
-  public Project getProject(@NotNull WizardContext wizardContext) {
+  public @NotNull Project getProject(@NotNull WizardContext wizardContext) {
     Project result = wizardContext.getProject();
     if (result == null) {
       result = ProjectManager.getInstance().getDefaultProject();
@@ -399,9 +391,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     return result;
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public @Nullable Project createProject(String name, String path) {
     Project project = super.createProject(name, path);
     if (project != null) {
       project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
@@ -409,8 +400,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     return project;
   }
 
-  @NotNull
-  private C getControl() {
+  private @NotNull C getControl() {
     return myControlValue.getValue();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -32,7 +32,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   private JavaParameters myParams;
   private TargetEnvironmentRequest myTargetEnvironmentRequest;
   private TargetedCommandLineBuilder myCommandLine;
-  @Nullable private volatile TargetDebuggerConnection myTargetDebuggerConnection;
+  private volatile @Nullable TargetDebuggerConnection myTargetDebuggerConnection;
 
   protected JavaCommandLineState(@NotNull ExecutionEnvironment environment) {
     super(environment);
@@ -55,8 +55,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   }
 
   @Override
-  @NotNull
-  protected OSProcessHandler startProcess() throws ExecutionException {
+  protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
     return JavaCommandLineStateUtil.startProcess(createCommandLine(), ansiColoringEnabled());
   }
 
@@ -79,9 +78,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public static EelTargetEnvironmentRequest.Configuration checkCreateNonLocalConfiguration(@Nullable Sdk jdk) {
+  public static @Nullable EelTargetEnvironmentRequest.Configuration checkCreateNonLocalConfiguration(@Nullable Sdk jdk) {
     if (jdk == null) {
       return null;
     }
@@ -163,9 +161,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     }
   }
 
-  @Nullable
   @Override
-  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+  public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
     TargetDebuggerConnection targetDebuggerConnection = myTargetDebuggerConnection;
     if (targetDebuggerConnection != null) {
       return targetDebuggerConnection.getResolvedRemoteConnection();
@@ -184,8 +181,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return myTargetEnvironmentRequest;
   }
 
-  @NotNull
-  protected synchronized TargetedCommandLineBuilder getTargetedCommandLine() {
+  protected synchronized @NotNull TargetedCommandLineBuilder getTargetedCommandLine() {
     if (myCommandLine != null) {
       // In a correct implementation that uses the new API this condition is always true.
       return myCommandLine;
@@ -208,8 +204,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     }
   }
 
-  @NotNull
-  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+  protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {

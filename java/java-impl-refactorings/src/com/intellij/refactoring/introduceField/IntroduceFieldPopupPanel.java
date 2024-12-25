@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -179,8 +179,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     return groupPanel;
   }
 
-  @Nullable
-  private static String getPresentableText(BaseExpressionToFieldHandler.InitializationPlace value) {
+  private static @Nullable String getPresentableText(BaseExpressionToFieldHandler.InitializationPlace value) {
     if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD) {
       return "current method";
     } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) {

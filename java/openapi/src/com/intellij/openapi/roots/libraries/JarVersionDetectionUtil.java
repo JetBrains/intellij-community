@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,8 +24,7 @@ import java.util.jar.Manifest;
 public final class JarVersionDetectionUtil {
   private JarVersionDetectionUtil() { }
 
-  @Nullable
-  public static String detectJarVersion(@NotNull String detectionClass, @NotNull Module module) {
+  public static @Nullable String detectJarVersion(@NotNull String detectionClass, @NotNull Module module) {
     for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (library instanceof LibraryOrderEntry) {
         VirtualFile jar = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
@@ -38,15 +37,13 @@ public final class JarVersionDetectionUtil {
     return null;
   }
 
-  @Nullable
-  public static @NlsSafe String detectJarVersion(@NotNull String detectionClass, @NotNull List<? extends VirtualFile> files) {
+  public static @Nullable @NlsSafe String detectJarVersion(@NotNull String detectionClass, @NotNull List<? extends VirtualFile> files) {
     VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
     return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
            getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;
   }
 
-  @Nullable
-  public static String getMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
+  public static @Nullable String getMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
     VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
     if (manifestFile != null) {
       try (InputStream stream = manifestFile.getInputStream()) {
@@ -60,13 +57,11 @@ public final class JarVersionDetectionUtil {
     return null;
   }
 
-  @Nullable
-  public static String getBundleVersion(@NotNull File jar) {
+  public static @Nullable String getBundleVersion(@NotNull File jar) {
     return JarUtil.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
   }
 
-  @Nullable
-  public static String getImplementationVersion(@NotNull File jar) {
+  public static @Nullable String getImplementationVersion(@NotNull File jar) {
     return JarUtil.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
   }
 }

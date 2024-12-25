@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
 import static com.intellij.psi.util.PsiFormatUtilBase.*;
-import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_INITIALIZER;
 
 abstract class JavaVariableBaseTreeElement<T extends PsiVariable> extends JavaClassTreeElementBase<T> implements SortableTreeElement {
   protected JavaVariableBaseTreeElement(boolean isInherited, T element) {
@@ -32,8 +31,7 @@ abstract class JavaVariableBaseTreeElement<T extends PsiVariable> extends JavaCl
   }
 
   @Override
-  @NotNull
-  public String getAlphaSortKey() {
+  public @NotNull String getAlphaSortKey() {
     final T element = getElement();
     if (element != null) {
       String name = element.getName();

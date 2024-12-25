@@ -492,8 +492,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
     }
 
     @Override
-    @Unmodifiable
-    protected List<String> parseString(@NotNull String string) {
+    protected @Unmodifiable List<String> parseString(@NotNull String string) {
       return CodeStylePropertiesUtil.getValueList(string);
     }
 

@@ -124,8 +124,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   /**
    * handles rename of refs
    */
-  @Nullable
-  protected PsiElement processRef(PsiReference ref, String newName) {
+  protected @Nullable PsiElement processRef(PsiReference ref, String newName) {
     return ref.handleElementRename(newName);
   }
 
@@ -153,11 +152,10 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  @NotNull
   @Override
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
-                                                 @NotNull SearchScope searchScope,
-                                                 boolean searchInCommentsAndStrings) {
+  public @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                          @NotNull SearchScope searchScope,
+                                                          boolean searchInCommentsAndStrings) {
     return MethodReferencesSearch.search((PsiMethod)element, searchScope, true).findAll();
   }
 
@@ -270,8 +268,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public void prepareRenaming(@NotNull PsiElement element,
-                              @NotNull final String newName,
-                              @NotNull final Map<PsiElement, String> allRenames,
+                              final @NotNull String newName,
+                              final @NotNull Map<PsiElement, String> allRenames,
                               @NotNull SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
     PsiMethod[] siblings = method.getUserData(SuperMethodWarningUtil.SIBLINGS);
@@ -314,8 +312,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  @NonNls
-  public String getHelpID(PsiElement element) {
+  public @NonNls String getHelpID(PsiElement element) {
     return HelpID.RENAME_METHOD;
   }
 
@@ -330,8 +327,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  @Nullable
-  public PsiElement substituteElementToRename(@NotNull PsiElement element, Editor editor) {
+  public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, Editor editor) {
     PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
       PsiClass containingClass = psiMethod.getContainingClass();
@@ -415,9 +411,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = enabled;
   }
 
-  @NotNull
   @Override
-  public UsageInfo createUsageInfo(@NotNull PsiElement element, @NotNull PsiReference ref, @NotNull PsiElement referenceElement) {
+  public @NotNull UsageInfo createUsageInfo(@NotNull PsiElement element, @NotNull PsiReference ref, @NotNull PsiElement referenceElement) {
     return new MoveRenameUsageInfo(referenceElement, ref,
                                    ref.getRangeInElement().getStartOffset(),
                                    ref.getRangeInElement().getEndOffset(),

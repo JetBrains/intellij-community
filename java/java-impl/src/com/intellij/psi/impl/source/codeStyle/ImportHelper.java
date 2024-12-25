@@ -167,8 +167,7 @@ public final class ImportHelper {
    * @param list       a list of import objects representing the imports from which class names need to be collected.
    * @return a map of class names and used module imports.
    */
-  @NotNull
-  private static Map<String, PsiImportModuleStatement> collectNamesImportedByModules(@NotNull PsiJavaFile file,
+  private static @NotNull Map<String, PsiImportModuleStatement> collectNamesImportedByModules(@NotNull PsiJavaFile file,
                                                                                      @NotNull List<PsiImportModuleStatement> statements,
                                                                                      @NotNull List<Import> list) {
     List<PsiImportStatementBase> implicitImports = ImportsUtil.getAllImplicitImports(file);
@@ -204,8 +203,7 @@ public final class ImportHelper {
    * @param settings the code style settings that determine whether module imports should be preserved.
    * @return a list of module import statements present in the Java file.
    */
-  @NotNull
-  private static List<PsiImportModuleStatement> collectModuleImports(@NotNull PsiJavaFile file, JavaCodeStyleSettings settings) {
+  private static @NotNull List<PsiImportModuleStatement> collectModuleImports(@NotNull PsiJavaFile file, JavaCodeStyleSettings settings) {
     if (!settings.isPreserveModuleImports()) return Collections.emptyList();
     PsiImportList importList = file.getImportList();
     if (importList == null) return Collections.emptyList();

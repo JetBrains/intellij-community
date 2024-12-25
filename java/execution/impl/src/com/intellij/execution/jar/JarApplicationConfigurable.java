@@ -42,7 +42,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   }
 
   @Override
-  public void applyEditorTo(@NotNull final JarApplicationConfiguration configuration) throws ConfigurationException {
+  public void applyEditorTo(final @NotNull JarApplicationConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
@@ -51,7 +51,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   }
 
   @Override
-  public void resetEditorFrom(@NotNull final JarApplicationConfiguration configuration) {
+  public void resetEditorFrom(final @NotNull JarApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myJarPathComponent.getComponent().setText(FileUtil.toSystemDependentName(configuration.getJarPath()));
     myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled()
@@ -60,8 +60,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 

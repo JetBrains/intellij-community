@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
@@ -183,7 +183,7 @@ public final class ConditionalExpressionGenerator {
                                         PsiType type) {
     thenValue = expandDiamondsWhenNeeded(thenValue, type);
     elseValue = expandDiamondsWhenNeeded(elseValue, type);
-    @NonNls final StringBuilder conditional = new StringBuilder();
+    final @NonNls StringBuilder conditional = new StringBuilder();
     final String conditionText = ct.text(condition, ParenthesesUtils.CONDITIONAL_PRECEDENCE);
     if (condition instanceof PsiConditionalExpression) {
       conditional.append('(').append(conditionText).append(')');

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.java.inst;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class AssignInstruction extends ExpressionPushingInstruction {
   private final PsiExpression myRExpression;
   private final PsiExpression myLExpression;
-  @Nullable private final DfaValue myAssignedValue;
+  private final @Nullable DfaValue myAssignedValue;
 
   public AssignInstruction(PsiExpression rExpression, @Nullable DfaValue assignedValue) {
     this(getLeftHandOfAssignment(rExpression), rExpression, assignedValue);
@@ -40,8 +40,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     myAssignedValue = assignedValue;
   }
 
-  @Nullable
-  private static DfaAnchor getAnchor(PsiExpression lExpression) {
+  private static @Nullable DfaAnchor getAnchor(PsiExpression lExpression) {
     if (lExpression == null) return null;
     if (lExpression.getParent() instanceof PsiExpression expression &&
         (expression instanceof PsiAssignmentExpression || PsiUtil.isIncrementDecrementOperation(expression))) {
@@ -100,18 +99,15 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     return nextStates(interpreter, stateBefore);
   }
 
-  @Nullable
-  public PsiExpression getRExpression() {
+  public @Nullable PsiExpression getRExpression() {
     return myRExpression;
   }
 
-  @Nullable
-  public PsiExpression getLExpression() {
+  public @Nullable PsiExpression getLExpression() {
     return myLExpression;
   }
 
-  @Nullable
-  public DfaValue getAssignedValue() {
+  public @Nullable DfaValue getAssignedValue() {
     return myAssignedValue;
   }
 
@@ -120,8 +116,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static PsiExpression getLeftHandOfAssignment(PsiExpression rExpression) {
+  private static @Nullable PsiExpression getLeftHandOfAssignment(PsiExpression rExpression) {
     if(rExpression == null) return null;
     if(rExpression.getParent() instanceof PsiAssignmentExpression) {
       return ((PsiAssignmentExpression)rExpression.getParent()).getLExpression();

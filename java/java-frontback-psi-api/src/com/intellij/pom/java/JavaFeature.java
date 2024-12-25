@@ -126,8 +126,7 @@ public enum JavaFeature {
 
   private final @NotNull LanguageLevel myLevel;
   
-  @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) 
-  private final @NotNull String myKey;
+  private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) @NotNull String myKey;
   private final boolean myCanBeCustomized;
   private final Set<LanguageLevel> myObsoletePreviewLevels;
 
@@ -200,9 +199,8 @@ public enum JavaFeature {
   }
 
   // Should correspond to jdk.internal.javac.PreviewFeature.Feature enum
-  @Nullable
   @Contract(pure = true)
-  public static JavaFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
+  public static @Nullable JavaFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
     switch (feature) {
       case "PATTERN_MATCHING_IN_INSTANCEOF":
         return PATTERNS;

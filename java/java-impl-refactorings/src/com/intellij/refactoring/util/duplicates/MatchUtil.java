@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class MatchUtil {
-  @Nullable
-  public static String getChangedSignature(Match match, final PsiMethod method, final boolean shouldBeStatic, String visibility) {
+  public static @Nullable String getChangedSignature(Match match, final PsiMethod method, final boolean shouldBeStatic, String visibility) {
     final PsiType returnType = match.getChangedReturnType(method);
     if (!match.myChangedParams.isEmpty() || returnType != null) {
       @NonNls StringBuilder buffer = new StringBuilder();

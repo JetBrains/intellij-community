@@ -103,11 +103,10 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public Value getJdiValueForDfaVariable(@NotNull StackFrameProxyEx proxy,
-                                         @NotNull DfaVariableValue var,
-                                         @NotNull PsiElement anchor) throws EvaluateException {
+  public @Nullable Value getJdiValueForDfaVariable(@NotNull StackFrameProxyEx proxy,
+                                                   @NotNull DfaVariableValue var,
+                                                   @NotNull PsiElement anchor) throws EvaluateException {
     if (var.getQualifier() != null) {
       VariableDescriptor descriptor = var.getDescriptor();
       if (descriptor instanceof SpecialField) {
@@ -185,8 +184,7 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
   }
 
   @Override
-  @NotNull
-  public DebuggerDfaListener createListener() {
+  public @NotNull DebuggerDfaListener createListener() {
     return new JavaDebuggerDfaListener();
   }
 

@@ -51,8 +51,7 @@ public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalI
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ClassEscapesDefinedScope";
   }
 
@@ -64,9 +63,8 @@ public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalI
       checkbox("checkPackageLocal", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.package.option")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     List<VisibilityChecker> checkers = new ArrayList<>(2);
     if (checkModuleApi) {
       PsiFile file = holder.getFile();
@@ -150,7 +148,7 @@ public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static abstract class VisibilityChecker {
+  private abstract static class VisibilityChecker {
     static final VisibilityChecker[] EMPTY_ARRAY = new VisibilityChecker[0];
     final ProblemsHolder myHolder;
 

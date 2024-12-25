@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -281,8 +281,7 @@ public final class IOStreamConstructorInspection extends AbstractBaseJavaLocalIn
       return HighlightControlFlowUtil.isEffectivelyFinal(target, context, null);
     }
 
-    @Nullable
-    private static ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
+    private static @Nullable ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
       try {
         LocalsOrMyInstanceFieldsControlFlowPolicy flowPolicy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
         return ControlFlowFactory.getInstance(block.getProject()).getControlFlow(block, flowPolicy);

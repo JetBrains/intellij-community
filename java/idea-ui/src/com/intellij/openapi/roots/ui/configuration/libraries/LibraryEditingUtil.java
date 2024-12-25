@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.ide.JavaUiBundle;
@@ -156,9 +156,8 @@ public final class LibraryEditingUtil {
   public static BaseListPopupStep<TypeForNewLibrary> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final ParameterizedRunnable<? super LibraryType> action) {
     return new BaseListPopupStep<>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
-      @NotNull
       @Override
-      public String getTextFor(TypeForNewLibrary value) {
+      public @NotNull String getTextFor(TypeForNewLibrary value) {
         //noinspection HardCodedStringLiteral
         return value.getCreateActionName();
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.analysis.AnalysisScope;
@@ -85,7 +85,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
     final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
@@ -114,8 +114,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     }
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String getCannotRefactorMessage(PsiMember member) {
+  private static @Nullable @NlsContexts.DialogMessage String getCannotRefactorMessage(PsiMember member) {
     if (member == null) {
       return JavaRefactoringBundle.message("locate.caret.inside.a.method");
     }
@@ -192,7 +191,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
 
     scope.accept(new PsiRecursiveElementVisitor() {
       private int myFileCount;
-      @Override public void visitFile(@NotNull final PsiFile file) {
+      @Override public void visitFile(final @NotNull PsiFile file) {
         if (progressIndicator != null){
           if (progressIndicator.isCanceled()) return;
           progressIndicator.setFraction(((double)myFileCount++)/fileCount);
@@ -274,8 +273,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     return duplicatesFinder.findDuplicates(file);
   }
 
-  @Nullable
-  private static DuplicatesFinder createDuplicatesFinder(PsiMember member) {
+  private static @Nullable DuplicatesFinder createDuplicatesFinder(PsiMember member) {
     PsiElement[] pattern;
     ReturnValue matchedReturnValue = null;
     if (member instanceof PsiMethod) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -433,10 +433,10 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   private static void encodeRef(final PsiClass aClass,
-                                @Nullable final PsiElement resolved,
-                                @NotNull final Set<PsiMember> movedMembers,
-                                @NotNull final PsiElement toPut,
-                                @Nullable final PsiElement qualifier) {
+                                final @Nullable PsiElement resolved,
+                                final @NotNull Set<PsiMember> movedMembers,
+                                final @NotNull PsiElement toPut,
+                                final @Nullable PsiElement qualifier) {
 
     for (PsiMember movedMember : movedMembers) {
       if (movedMember.equals(resolved)) {

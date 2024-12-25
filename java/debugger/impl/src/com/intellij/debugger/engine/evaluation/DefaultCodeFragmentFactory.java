@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionService;
@@ -11,7 +11,6 @@ import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
@@ -115,8 +114,7 @@ public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory 
   }
 
   @Override
-  @NotNull
-  public LanguageFileType getFileType() {
+  public @NotNull LanguageFileType getFileType() {
     return JavaFileType.INSTANCE;
   }
 

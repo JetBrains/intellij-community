@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -59,9 +59,8 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     return STABLE_METHODS.methodMatches(getter);
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return myGetter.getName();
   }
 
@@ -71,9 +70,8 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     return getSubstitutor(myGetter, qualifier).substitute(myGetter.getReturnType());
   }
 
-  @NotNull
   @Override
-  public PsiMethod getPsiElement() {
+  public @NotNull PsiMethod getPsiElement() {
     return myGetter;
   }
 
@@ -87,9 +85,8 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     return true;
   }
 
-  @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+  public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
       return factory.getVarFactory().createVariableValue(this);
     }

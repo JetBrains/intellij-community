@@ -1546,8 +1546,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @NotNull
-  private InstructionTransfer createTransfer(PsiElement exitedStatement, PsiElement blockToFlush) {
+  private @NotNull InstructionTransfer createTransfer(PsiElement exitedStatement, PsiElement blockToFlush) {
     List<VariableDescriptor> varsToFlush = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(blockToFlush, PsiVariable.class),
                                                              PlainDescriptor::new);
     return new InstructionTransfer(getEndOffset(exitedStatement), varsToFlush);
@@ -2690,8 +2689,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param useInliners whether to use inliners
    * @return resulting control flow; null if it cannot be built (e.g. if the code block contains unrecoverable errors)
    */
-  @Nullable
-  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, @NotNull DfaValueFactory targetFactory, boolean useInliners) {
+  public static @Nullable ControlFlow buildFlow(@NotNull PsiElement psiBlock, @NotNull DfaValueFactory targetFactory, boolean useInliners) {
     if (!useInliners) {
       return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }

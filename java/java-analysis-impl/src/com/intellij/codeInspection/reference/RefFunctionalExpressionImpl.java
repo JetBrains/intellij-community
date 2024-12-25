@@ -82,8 +82,7 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
   }
 
   @Override
-  @NotNull
-  public Collection<? extends RefOverridable> getDerivedReferences() {
+  public @NotNull Collection<? extends RefOverridable> getDerivedReferences() {
     return Collections.emptyList();
   }
 
@@ -92,17 +91,14 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
     throw new AssertionError("Should not be called!");
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public synchronized List<RefParameter> getParameters() {
+  public synchronized @NotNull @Unmodifiable List<RefParameter> getParameters() {
     LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefParameter.class);
   }
 
-  @Nullable
   @Override
-  public UExpression getUastElement() {
+  public @Nullable UExpression getUastElement() {
     return UastContextKt.toUElement(getPsiElement(), UExpression.class);
   }
 

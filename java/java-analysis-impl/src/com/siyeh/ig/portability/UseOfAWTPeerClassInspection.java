@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public final class UseOfAWTPeerClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.of.awt.peer.class.problem.descriptor");
   }

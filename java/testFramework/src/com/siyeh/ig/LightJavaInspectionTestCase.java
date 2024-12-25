@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -24,8 +24,6 @@ import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * @author Bas Leijdekkers
@@ -64,8 +62,7 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     }
   }
 
-  @Nullable
-  protected abstract InspectionProfileEntry getInspection();
+  protected abstract @Nullable InspectionProfileEntry getInspection();
 
   @Language("JAVA")
   protected String[] getEnvironmentClasses() {

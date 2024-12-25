@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -74,15 +74,12 @@ public class AdjustFunctionContextFix extends PsiUpdateModCommandAction<PsiMetho
       PriorityAction.Priority.HIGH).withFixAllOption(this);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.family.name");
   }
 
-  @Nullable
-  public static IntentionAction createFix(@NotNull PsiElement context) {
+  public static @Nullable IntentionAction createFix(@NotNull PsiElement context) {
     if (!(context instanceof PsiExpression expression)) return null;
     PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(context, PsiFunctionalExpression.class, false);
     if (fn == null) return null;

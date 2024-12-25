@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.Disposable;
@@ -94,18 +94,15 @@ public final class StructureConfigurableContext implements Disposable, LibraryEd
     myLibraryEditorListeners.getMulticaster().libraryRenamed(library, oldName, newName);
   }
 
-  @NotNull
-  public StructureLibraryTableModifiableModelProvider getGlobalLibrariesProvider() {
+  public @NotNull StructureLibraryTableModifiableModelProvider getGlobalLibrariesProvider() {
     return createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
-  @NotNull
-  public StructureLibraryTableModifiableModelProvider createModifiableModelProvider(@NotNull String level) {
+  public @NotNull StructureLibraryTableModifiableModelProvider createModifiableModelProvider(@NotNull String level) {
     return new StructureLibraryTableModifiableModelProvider(level, this);
   }
 
-  @NotNull
-  public StructureLibraryTableModifiableModelProvider getProjectLibrariesProvider() {
+  public @NotNull StructureLibraryTableModifiableModelProvider getProjectLibrariesProvider() {
     return createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
   }
 
@@ -118,15 +115,13 @@ public final class StructureConfigurableContext implements Disposable, LibraryEd
     return myLevel2Providers.get(tableLevel);
   }
 
-  @Nullable
-  public Library getLibrary(final String libraryName, @NotNull String libraryLevel) {
+  public @Nullable Library getLibrary(final String libraryName, @NotNull String libraryLevel) {
 /* the null check is added only to prevent NPE when called from getLibrary */
     final LibrariesModifiableModel model = myLevel2Providers.get(libraryLevel);
     return model == null ? null : findLibraryModel(libraryName, model);
   }
 
-  @Nullable
-  private static Library findLibraryModel(@NotNull final String libraryName, @NotNull LibrariesModifiableModel model) {
+  private static @Nullable Library findLibraryModel(final @NotNull String libraryName, @NotNull LibrariesModifiableModel model) {
     for (Library library : model.getLibraries()) {
       final Library libraryModel = findLibraryModel(library, model);
       if (libraryModel != null && libraryName.equals(libraryModel.getName())) {
@@ -136,8 +131,7 @@ public final class StructureConfigurableContext implements Disposable, LibraryEd
     return null;
   }
 
-  @Nullable
-  public Library getLibraryModel(@NotNull Library library) {
+  public @Nullable Library getLibraryModel(@NotNull Library library) {
     final LibraryTable libraryTable = library.getTable();
     if (libraryTable != null) {
       return findLibraryModel(library, myLevel2Providers.get(libraryTable.getTableLevel()));
@@ -145,8 +139,7 @@ public final class StructureConfigurableContext implements Disposable, LibraryEd
     return library;
   }
 
-  @Nullable
-  private static Library findLibraryModel(final Library library, LibrariesModifiableModel tableModel) {
+  private static @Nullable Library findLibraryModel(final Library library, LibrariesModifiableModel tableModel) {
     if (tableModel == null) return library;
     if (tableModel.wasLibraryRemoved(library)) return null;
     return tableModel.hasLibraryEditor(library) ? (Library)tableModel.getLibraryEditor(library).getModel() : library;

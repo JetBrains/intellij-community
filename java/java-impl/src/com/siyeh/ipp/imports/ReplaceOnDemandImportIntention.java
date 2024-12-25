@@ -95,10 +95,8 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
 
   private static class ClassCollector extends JavaRecursiveElementWalkingVisitor {
 
-    @Nullable
-    private final String importedPackageName;
-    @Nullable
-    private final PsiImportModuleStatement importModuleStatement;
+    private final @Nullable String importedPackageName;
+    private final @Nullable PsiImportModuleStatement importModuleStatement;
     private final Set<PsiClass> importedClasses = new HashSet<>();
 
     ClassCollector(@NotNull String importedPackageName) {
@@ -141,8 +139,7 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
       return importedClasses.toArray(PsiClass.EMPTY_ARRAY);
     }
 
-    @Nullable
-    static ClassCollector create(@NotNull PsiImportStatementBase statementBase) {
+    static @Nullable ClassCollector create(@NotNull PsiImportStatementBase statementBase) {
       if (statementBase instanceof PsiImportModuleStatement moduleStatement) {
         return new ClassCollector(moduleStatement);
       }

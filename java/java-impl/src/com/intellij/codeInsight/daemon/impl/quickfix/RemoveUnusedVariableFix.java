@@ -165,8 +165,7 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
     }
   }
 
-  @Unmodifiable
-  private static List<PsiReferenceExpression> collectReferences(@NotNull PsiVariable variable) {
+  private static @Unmodifiable List<PsiReferenceExpression> collectReferences(@NotNull PsiVariable variable) {
     List<PsiReferenceExpression> references = new ArrayList<>(VariableAccessUtils.getVariableReferences(variable));
     references.removeIf(ref -> !PsiUtil.isAccessedForWriting(ref));
     return ContainerUtil.filter(references, r1 ->

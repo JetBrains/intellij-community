@@ -146,13 +146,11 @@ public class JavaExecutionStack extends XExecutionStack {
     }
   }
 
-  @NotNull
-  public List<XStackFrame> createStackFrames(@NotNull StackFrameProxyImpl stackFrameProxy) {
+  public @NotNull List<XStackFrame> createStackFrames(@NotNull StackFrameProxyImpl stackFrameProxy) {
     return createFrames(new StackFrameDescriptorImpl(stackFrameProxy, myTracker));
   }
 
-  @NotNull
-  private CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
+  private @NotNull CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
     if (!Registry.is("debugger.async.frames")) {
       return CompletableFuture.completedFuture(createStackFrames(stackFrameProxy));
     }
@@ -161,8 +159,7 @@ public class JavaExecutionStack extends XExecutionStack {
       .thenApply(this::createFrames);
   }
 
-  @NotNull
-  private List<XStackFrame> createFrames(StackFrameDescriptorImpl descriptor) {
+  private @NotNull List<XStackFrame> createFrames(StackFrameDescriptorImpl descriptor) {
     XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
     if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
       Method method = descriptor.getMethod();
@@ -179,9 +176,8 @@ public class JavaExecutionStack extends XExecutionStack {
     return Collections.singletonList(new JavaStackFrame(descriptor, true));
   }
 
-  @Nullable
   @Override
-  public XStackFrame getTopFrame() {
+  public @Nullable XStackFrame getTopFrame() {
     assert myTopFramesReady : "Top frame must be already calculated here";
     return ContainerUtil.getFirstItem(myTopFrames);
   }

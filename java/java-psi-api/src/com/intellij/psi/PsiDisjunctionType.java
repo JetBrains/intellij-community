@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,42 +40,35 @@ public class PsiDisjunctionType extends PsiType.Stub {
     }, false);
   }
 
-  @NotNull
-  public static PsiType createDisjunction(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
+  public static @NotNull PsiType createDisjunction(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
     assert !types.isEmpty();
     return types.size() == 1 ? types.get(0) : new PsiDisjunctionType(types, psiManager);
   }
 
-  @NotNull
-  public PsiType getLeastUpperBound() {
+  public @NotNull PsiType getLeastUpperBound() {
     return myLubCache.getValue();
   }
 
-  @NotNull
-  public List<PsiType> getDisjunctions() {
+  public @NotNull List<PsiType> getDisjunctions() {
     return myTypes;
   }
 
-  @NotNull
-  public PsiDisjunctionType newDisjunctionType(final List<PsiType> types) {
+  public @NotNull PsiDisjunctionType newDisjunctionType(final List<PsiType> types) {
     return new PsiDisjunctionType(types, myManager);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(final boolean annotated) {
+  public @NotNull String getPresentableText(final boolean annotated) {
     return StringUtil.join(myTypes, psiType -> psiType.getPresentableText(annotated), " | ");
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(final boolean annotated) {
+  public @NotNull String getCanonicalText(final boolean annotated) {
     return StringUtil.join(myTypes, psiType -> psiType.getCanonicalText(annotated), " | ");
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return StringUtil.join(myTypes, psiType -> psiType.getInternalCanonicalText(), " | ");
   }
 
@@ -88,12 +81,12 @@ public class PsiDisjunctionType extends PsiType.Stub {
   }
 
   @Override
-  public boolean equalsToText(@NotNull @NonNls final String text) {
+  public boolean equalsToText(final @NotNull @NonNls String text) {
     return Objects.equals(text, getCanonicalText());
   }
 
   @Override
-  public <A> A accept(@NotNull final PsiTypeVisitor<A> visitor) {
+  public <A> A accept(final @NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitDisjunctionType(this);
   }
 

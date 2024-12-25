@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -91,8 +91,7 @@ public final class JavaParametersUtil {
            : JavaParameters.JDK_AND_CLASSES_AND_TESTS;
   }
 
-  @Nullable("null if class not found")
-  public static Boolean isClassInProductionSources(@NotNull String mainClassName, @NotNull Module module) {
+  public static @Nullable("null if class not found") Boolean isClassInProductionSources(@NotNull String mainClassName, @NotNull Module module) {
     final PsiClass psiClass = JavaExecutionUtil.findMainClass(module, mainClassName);
     if (psiClass == null) {
       return null;
@@ -149,11 +148,11 @@ public final class JavaParametersUtil {
     return jreHome == null ? JavaParameters.getValidJdkToRunModule(module, productionOnly) : createAlternativeJdk(module.getProject(), jreHome);
   }
 
-  public static Sdk createProjectJdk(@NotNull final Project project, @Nullable String jreHome) throws CantRunException {
+  public static Sdk createProjectJdk(final @NotNull Project project, @Nullable String jreHome) throws CantRunException {
     return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(project, jreHome);
   }
 
-  private static Sdk createProjectJdk(@NotNull final Project project) throws CantRunException {
+  private static Sdk createProjectJdk(final @NotNull Project project) throws CantRunException {
     final Sdk jdk = PathUtilEx.getAnyJdk(project);
     if (jdk == null) {
       throw CantRunException.noJdkConfigured();
@@ -203,8 +202,7 @@ public final class JavaParametersUtil {
     }
   }
 
-  @NotNull
-  public static Predicate<Field> getFilter(@NotNull CommonJavaRunConfigurationParameters parameters) {
+  public static @NotNull Predicate<Field> getFilter(@NotNull CommonJavaRunConfigurationParameters parameters) {
     return field -> {
       String name = field.getName();
       if ((name.equals("ALTERNATIVE_JRE_PATH_ENABLED") && !parameters.isAlternativeJrePathEnabled()) ||

@@ -249,8 +249,7 @@ public final class JavaPsiPatternUtil {
    * @param patternType the pattern type to compare with
    * @return the promoted type, or the original type if no promotion is necessary
    */
-  @NotNull
-  public static PsiType getExactlyPromotedType(@NotNull PsiElement context, @NotNull PsiType type, @NotNull PsiType patternType) {
+  public static @NotNull PsiType getExactlyPromotedType(@NotNull PsiElement context, @NotNull PsiType type, @NotNull PsiType patternType) {
     if (type.equals(patternType)) return type;
     if ((type.equals(PsiTypes.byteType()) ||
          type.equals(PsiTypes.shortType())) &&

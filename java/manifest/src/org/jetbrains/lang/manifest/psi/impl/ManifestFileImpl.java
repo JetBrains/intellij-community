@@ -47,35 +47,28 @@ public class ManifestFileImpl extends PsiFileBase implements ManifestFile {
     super(viewProvider, ManifestLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return ManifestFileType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<Section> getSections() {
+  public @NotNull @Unmodifiable List<Section> getSections() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, Section.class);
   }
 
-  @Nullable
   @Override
-  public Section getMainSection() {
+  public @Nullable Section getMainSection() {
     return findChildByClass(Section.class);
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<Header> getHeaders() {
+  public @NotNull @Unmodifiable List<Header> getHeaders() {
     return PsiTreeUtil.getChildrenOfTypeAsList(getFirstChild(), Header.class);
   }
 
-  @Nullable
   @Override
-  public Header getHeader(@NotNull String name) {
+  public @Nullable Header getHeader(@NotNull String name) {
     Header child = PsiTreeUtil.findChildOfType(getFirstChild(), Header.class);
     while (child != null) {
       if (name.equals(child.getName())) {

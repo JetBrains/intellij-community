@@ -40,14 +40,12 @@ public final class InstanceVariableInitializationInspection extends BaseInspecti
   public boolean m_ignorePrimitives = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "InstanceVariableMayNotBeInitialized";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Boolean junitTestCase = (Boolean)infos[0];
     if (junitTestCase.booleanValue()) {
       return InspectionGadgetsBundle.message(

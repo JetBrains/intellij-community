@@ -50,8 +50,7 @@ import java.util.stream.Stream;
 public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefactoringProcessor {
   private final PsiMethod[] myConstructors;
   private final Map<String, ParameterData> myParametersMap;
-  @NotNull
-  private final @NlsSafe String myClassName;
+  private final @NotNull @NlsSafe String myClassName;
   private final @NlsSafe String myPackageName;
   private final boolean myCreateNewBuilderClass;
   private final PsiElementFactory myElementFactory;
@@ -78,8 +77,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new ReplaceConstructorWithBuilderViewDescriptor();
   }
 
@@ -100,8 +98,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     }
   }
 
-  @Nullable
-  private PsiClass createBuilderClass() {
+  private @Nullable PsiClass createBuilderClass() {
     final PsiClass psiClass = myConstructors[0].getContainingClass();
     assert psiClass != null;
     final PsiTypeParameterList typeParameterList = psiClass.getTypeParameterList();
@@ -279,8 +276,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return constructor;
   }
 
-  @Nullable
-  private PsiMethod getMostCommonConstructor() {
+  private @Nullable PsiMethod getMostCommonConstructor() {
     if (myConstructors.length == 1) return myConstructors[0];
     PsiMethod commonConstructor = null;
     for (PsiMethod constructor : myConstructors) {
@@ -334,8 +330,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("replace.constructor.with.builder");
   }
 }

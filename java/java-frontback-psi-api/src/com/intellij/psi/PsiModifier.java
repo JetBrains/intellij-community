@@ -7,8 +7,7 @@ import org.intellij.lang.annotations.MagicConstant;
 /**
  * Provides a list of possible modifier keywords for Java classes, methods and fields.
  */
-@NlsSafe
-public interface PsiModifier {
+public @NlsSafe interface PsiModifier {
   String PUBLIC = "public";
   String PROTECTED = "protected";
   String PRIVATE = "private";

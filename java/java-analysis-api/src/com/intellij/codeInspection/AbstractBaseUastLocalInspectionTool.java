@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.Condition;
@@ -65,8 +65,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitClass(@NotNull UClass node) {
@@ -103,7 +102,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   }
 
   @Override
-  public PsiNamedElement getProblemElement(@NotNull final PsiElement psiElement) {
+  public PsiNamedElement getProblemElement(final @NotNull PsiElement psiElement) {
     return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
   }
 }

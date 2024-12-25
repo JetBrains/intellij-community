@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -19,18 +19,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RepositoryLibraryDescription {
-  @NotNull @NonNls
-  public static final String LatestVersionId = "LATEST";
-  @NotNull @NonNls
-  public static final String LatestVersionDisplayName = "Latest";
-  @NotNull @NonNls
-  public static final String ReleaseVersionId = "RELEASE";
-  @NotNull @NonNls
-  public static final String DefaultVersionId = ReleaseVersionId;
-  @NotNull @NonNls
-  public static final String ReleaseVersionDisplayName = "Release";
-  @NotNull @NonNls
-  public static final String SnapshotVersionSuffix = "-SNAPSHOT";
+  public static final @NotNull @NonNls String LatestVersionId = "LATEST";
+  public static final @NotNull @NonNls String LatestVersionDisplayName = "Latest";
+  public static final @NotNull @NonNls String ReleaseVersionId = "RELEASE";
+  public static final @NotNull @NonNls String DefaultVersionId = ReleaseVersionId;
+  public static final @NotNull @NonNls String ReleaseVersionDisplayName = "Release";
+  public static final @NotNull @NonNls String SnapshotVersionSuffix = "-SNAPSHOT";
 
   public static final Icon DEFAULT_ICON = OpenapiIcons.RepositoryLibraryLogo;
 
@@ -56,14 +50,12 @@ public class RepositoryLibraryDescription {
       this(groupId, artifactId, libraryName, null, false);
   }
 
-  @NotNull
-  public static RepositoryLibraryDescription findDescription(@Nullable final String groupId, @Nullable final String artifactId) {
+  public static @NotNull RepositoryLibraryDescription findDescription(final @Nullable String groupId, final @Nullable String artifactId) {
     return findDescription(groupId, artifactId, null, false);
   }
 
-  @NotNull
-  public static RepositoryLibraryDescription findDescription(@Nullable final String groupId, @Nullable final String artifactId,
-                                                             String bindToRemoteRepository, boolean sha256sumCheckEnabled) {
+  public static @NotNull RepositoryLibraryDescription findDescription(final @Nullable String groupId, final @Nullable String artifactId,
+                                                                      String bindToRemoteRepository, boolean sha256sumCheckEnabled) {
     if (ourStaticallyDefinedLibraries == null) {
       final HashMap<String, RepositoryLibraryDescription> map = new HashMap<>();
       for (RepositoryLibraryDefinition def : RepositoryLibraryDefinition.EP_NAME.getExtensionList()) {
@@ -72,43 +64,36 @@ public class RepositoryLibraryDescription {
       }
       ourStaticallyDefinedLibraries = Collections.unmodifiableMap(Collections.synchronizedMap(map));
     }
-    @NlsSafe
-    final String id = groupId == null && artifactId == null ? CodeInsightBundle.message("unknown.node.text") : groupId + ":" + artifactId;
+    final @NlsSafe String id = groupId == null && artifactId == null ? CodeInsightBundle.message("unknown.node.text") : groupId + ":" + artifactId;
     final RepositoryLibraryDescription description = ourStaticallyDefinedLibraries.get(id);
     return description != null? description : new RepositoryLibraryDescription(groupId, artifactId, id, bindToRemoteRepository,
                                                                                sha256sumCheckEnabled);
   }
 
-  @NotNull
-  public static RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
+  public static @NotNull RepositoryLibraryDescription findDescription(final @NotNull RepositoryLibraryProperties properties) {
     return findDescription(properties.getGroupId(), properties.getArtifactId(), properties.getJarRepositoryId(),
                            properties.isEnableSha256Checksum());
   }
 
-  @NotNull
-  public static RepositoryLibraryDescription findDescription(@NotNull final JpsMavenRepositoryLibraryDescriptor descriptor) {
+  public static @NotNull RepositoryLibraryDescription findDescription(final @NotNull JpsMavenRepositoryLibraryDescriptor descriptor) {
     return findDescription(descriptor.getGroupId(), descriptor.getArtifactId(),
                            descriptor.getJarRepositoryId(),
                            descriptor.isVerifySha256Checksum());
   }
 
-  @NotNull
-  public String getGroupId() {
+  public @NotNull String getGroupId() {
     return groupId;
   }
 
-  @NotNull
-  public String getArtifactId() {
+  public @NotNull String getArtifactId() {
     return artifactId;
   }
 
-  @NotNull
-  public @NlsContexts.DialogTitle String getDisplayName() {
+  public @NotNull @NlsContexts.DialogTitle String getDisplayName() {
     return libraryName;
   }
 
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     if (sha256sumCheckEnabled && jarRemoteRepositoryId != null) {
       return OpenapiIcons.MavenBindChecksum;
     }
@@ -124,8 +109,7 @@ public class RepositoryLibraryDescription {
     return OpenapiIcons.RepositoryLibraryLogo;
   }
 
-  @Nullable
-  public DependencyScope getSuggestedScope() {
+  public @Nullable DependencyScope getSuggestedScope() {
     return null;
   }
 

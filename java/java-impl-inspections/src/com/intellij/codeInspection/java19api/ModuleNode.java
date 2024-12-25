@@ -23,13 +23,13 @@ import java.util.*;
 import static org.jetbrains.jps.model.java.JavaSourceRootType.SOURCE;
 
 class ModuleNode implements Comparable<ModuleNode> {
-  @Nullable private final Module myModule;
-  @NotNull private final Set<String> myDeclaredPackages;
-  @NotNull private final Set<String> myRequiredPackages;
-  @NotNull private final Map<ModuleNode, Set<DependencyType>> myDependencies = new TreeMap<>();
-  @NotNull private final Set<String> myExports = new TreeSet<>();
-  @Nullable private final PsiJavaModule myDescriptor;
-  @NotNull private final String myName;
+  private final @Nullable Module myModule;
+  private final @NotNull Set<String> myDeclaredPackages;
+  private final @NotNull Set<String> myRequiredPackages;
+  private final @NotNull Map<ModuleNode, Set<DependencyType>> myDependencies = new TreeMap<>();
+  private final @NotNull Set<String> myExports = new TreeSet<>();
+  private final @Nullable PsiJavaModule myDescriptor;
+  private final @NotNull String myName;
 
   ModuleNode(@NotNull Module module,
              @NotNull Set<String> declaredPackages,
@@ -91,8 +91,7 @@ class ModuleNode implements Comparable<ModuleNode> {
     return myDescriptor;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -152,8 +151,7 @@ class ModuleNode implements Comparable<ModuleNode> {
     return !javaProperties.isForGeneratedSources();
   }
 
-  @Nullable
-  private static PsiJavaModule findDescriptor(@NotNull Module module, @Nullable VirtualFile root) {
+  private static @Nullable PsiJavaModule findDescriptor(@NotNull Module module, @Nullable VirtualFile root) {
     return JavaModuleGraphUtil.findDescriptorByFile(root, module.getProject());
   }
 

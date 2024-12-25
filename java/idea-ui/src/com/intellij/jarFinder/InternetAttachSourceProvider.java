@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
 import com.intellij.ide.JavaUiBundle;
@@ -157,7 +157,7 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
       public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
         final Task task = new Task.Modal(psiFile.getProject(), JavaUiBundle.message("progress.title.searching.source"), true) {
           @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
+          public void run(final @NotNull ProgressIndicator indicator) {
             String artifactUrl = null;
 
             SourceSearcher[] searchers = {new MavenCentralSourceSearcher(), new SonatypeSourceSearcher()};

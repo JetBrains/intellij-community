@@ -28,14 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public final class IncompatibleMaskInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "IncompatibleBitwiseMaskOperation";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiBinaryExpression binaryExpression =
       (PsiBinaryExpression)infos[0];
     final IElementType tokenType = binaryExpression.getOperationTokenType();

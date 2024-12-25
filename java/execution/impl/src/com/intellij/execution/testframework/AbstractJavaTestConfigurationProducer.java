@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -334,13 +334,11 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return null;
   }
 
-  @Nullable
-  public String getQName(PsiElement psiMember) {
+  public @Nullable String getQName(PsiElement psiMember) {
     return getQName(psiMember, null);
   }
 
-  @Nullable
-  public String getQName(PsiElement psiMember, @Nullable Location location) {
+  public @Nullable String getQName(PsiElement psiMember, @Nullable Location location) {
     if (psiMember instanceof PsiClass) {
       return ClassUtil.getJVMClassName((PsiClass)psiMember);
     }
@@ -388,8 +386,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
   }
 
-  @Nullable
-  public static PsiPackage checkPackage(final PsiElement element) {
+  public static @Nullable PsiPackage checkPackage(final PsiElement element) {
     if (element == null || !element.isValid()) return null;
     final Project project = element.getProject();
     DumbService dumbService = DumbService.getInstance(project);

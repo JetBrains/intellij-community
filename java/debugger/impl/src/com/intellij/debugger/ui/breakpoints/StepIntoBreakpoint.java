@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
@@ -23,8 +23,8 @@ import java.util.List;
  */
 public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   private static final Logger LOG = Logger.getInstance(StepIntoBreakpoint.class);
-  @NotNull private final BreakpointStepMethodFilter myFilter;
-  @Nullable private RequestHint myHint;
+  private final @NotNull BreakpointStepMethodFilter myFilter;
+  private @Nullable RequestHint myHint;
 
   protected StepIntoBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, @NotNull BreakpointStepMethodFilter filter) {
     super(project, pos, false);
@@ -99,8 +99,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     return true;
   }
 
-  @Nullable
-  protected static StepIntoBreakpoint create(@NotNull Project project, @NotNull BreakpointStepMethodFilter filter) {
+  protected static @Nullable StepIntoBreakpoint create(@NotNull Project project, @NotNull BreakpointStepMethodFilter filter) {
     final SourcePosition pos = filter.getBreakpointPosition();
     if (pos != null) {
       final StepIntoBreakpoint breakpoint = new StepIntoBreakpoint(project, pos, filter);

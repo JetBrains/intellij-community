@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache.ui;
 
 import com.intellij.compiler.cache.CompilerCacheLoadingSettings;
@@ -39,8 +39,7 @@ public class CompilerCacheConfigurable implements SearchableConfigurable, Config
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "reference.projectsettings.compiler.compilercache";
   }
 

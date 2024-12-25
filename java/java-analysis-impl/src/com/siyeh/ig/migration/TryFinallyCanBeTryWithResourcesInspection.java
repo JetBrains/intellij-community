@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -43,9 +43,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     return true;
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.problem.descriptor");
   }
 
@@ -55,10 +54,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   }
 
   private static class TryFinallyCanBeTryWithResourcesFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");
     }
 
@@ -466,8 +463,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     return false;
   }
 
-  @Nullable
-  private static PsiVariable findAutoCloseableVariable(PsiStatement statement) {
+  private static @Nullable PsiVariable findAutoCloseableVariable(PsiStatement statement) {
     Set<PsiVariable> variables = new HashSet<>(1);
     if (!findAutoCloseableVariables(statement, variables)) return null;
     if (variables.isEmpty()) {
@@ -534,7 +530,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   private static class VariableUsedOutsideContextVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private boolean used;
-    @NotNull private final PsiVariable variable;
+    private final @NotNull PsiVariable variable;
     private final PsiElement skipContext;
 
     VariableUsedOutsideContextVisitor(@NotNull PsiVariable variable, PsiElement skipContext) {

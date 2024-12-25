@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -129,7 +129,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     // make SPACE check/uncheck selected rows
     @NonNls InputMap inputMap = myTable.getInputMap();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
-    @NonNls final ActionMap actionMap = myTable.getActionMap();
+    final @NonNls ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {

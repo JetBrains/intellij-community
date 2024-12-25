@@ -85,8 +85,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
-  @NotNull
-  protected PsiResolveHelper getResolveHelper(@NotNull Project project) {
+  protected @NotNull PsiResolveHelper getResolveHelper(@NotNull Project project) {
     return PsiResolveHelper.getInstance(project);
   }
 
@@ -97,8 +96,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private boolean hasErrorResults() {
     return myHasError;
   }
-  @NotNull
-  private Project getProject() {
+  private @NotNull Project getProject() {
     return myHolder.getProject();
   }
 
@@ -130,8 +128,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   protected HighlightVisitorImpl(@NotNull PsiResolveHelper psiResolveHelper) {
   }
 
-  @NotNull
-  private MostlySingularMultiMap<MethodSignature, PsiMethod> getDuplicateMethods(@NotNull PsiClass aClass) {
+  private @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> getDuplicateMethods(@NotNull PsiClass aClass) {
     MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = myDuplicateMethods.get(aClass);
     if (signatures == null) {
       signatures = new MostlySingularMultiMap<>();
@@ -146,10 +143,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return signatures;
   }
 
-  @NotNull
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
-  public HighlightVisitorImpl clone() {
+  public @NotNull HighlightVisitorImpl clone() {
     return new HighlightVisitorImpl();
   }
 
@@ -228,8 +224,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Nullable
-  public static JavaResolveResult resolveJavaReference(@NotNull PsiReference reference) {
+  public static @Nullable JavaResolveResult resolveJavaReference(@NotNull PsiReference reference) {
     return reference instanceof PsiJavaReference psiJavaReference ? psiJavaReference.advancedResolve(false) : null;
   }
 
@@ -1266,8 +1261,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return result;
   }
 
-  @Nullable
-  static JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
+  static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     try {
       if (ref instanceof PsiReferenceExpressionImpl) {
         PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
@@ -2032,8 +2026,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     add(checkFeature(pattern, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES));
   }
 
-  @Nullable
-  private HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
+  private @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
 

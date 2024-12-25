@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ClassLoaderInstantiationInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.loader.instantiation.problem.descriptor");
   }

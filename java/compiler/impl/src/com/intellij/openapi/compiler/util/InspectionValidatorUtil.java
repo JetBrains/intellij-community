@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler.util;
 
 import com.intellij.compiler.impl.FileSetCompileScope;
@@ -22,13 +22,13 @@ public final class InspectionValidatorUtil {
   private InspectionValidatorUtil() {
   }
 
-  public static void addDescriptor(@NotNull final Collection<? super VirtualFile> result, @Nullable final ConfigFile configFile) {
+  public static void addDescriptor(final @NotNull Collection<? super VirtualFile> result, final @Nullable ConfigFile configFile) {
     if (configFile != null) {
       ContainerUtil.addIfNotNull(result, configFile.getVirtualFile());
     }
   }
 
-  public static void addFile(@NotNull final Collection<? super VirtualFile> result, @Nullable final PsiFile psiFile) {
+  public static void addFile(final @NotNull Collection<? super VirtualFile> result, final @Nullable PsiFile psiFile) {
     if (psiFile != null) {
       ContainerUtil.addIfNotNull(result, psiFile.getVirtualFile());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -46,17 +46,15 @@ public final class InlineUtil implements CommonJavaInlineUtil {
 
   private InlineUtil() {}
 
-  @NotNull
-  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
+  public static @NotNull PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
     return CommonJavaInlineUtil.getInstance().inlineVariable(variable, initializer, ref, null);
   }
 
   @Override
-  @NotNull
-  public PsiExpression inlineVariable(@NotNull PsiVariable variable,
-                                      @NotNull PsiExpression initializer,
-                                      @NotNull PsiJavaCodeReferenceElement ref,
-                                      @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
+  public @NotNull PsiExpression inlineVariable(@NotNull PsiVariable variable,
+                                               @NotNull PsiExpression initializer,
+                                               @NotNull PsiJavaCodeReferenceElement ref,
+                                               @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
     final PsiElement parent = ref.getParent();
     if (parent instanceof PsiResourceExpression) {
       LOG.error("Unable to inline resource reference");
@@ -204,7 +202,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return result && nonTailCallUsages.isEmpty();
   }
 
-  public static TailCallType getTailCallType(@NotNull final PsiReference psiReference) {
+  public static TailCallType getTailCallType(final @NotNull PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -395,8 +393,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
    * @param variable variable initialized
    * @return map of places where locals referenced in the initializer are changed before the last use of variable
    */
-  @NotNull
-  public static Map<PsiElement, PsiVariable> getChangedBeforeLastAccessMap(@NotNull PsiExpression initializer,
+  public static @NotNull Map<PsiElement, PsiVariable> getChangedBeforeLastAccessMap(@NotNull PsiExpression initializer,
                                                                            @NotNull PsiVariable variable) {
     Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
     if (referencedVars.isEmpty()) return Map.of();
@@ -413,8 +410,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
   }
 
-  @Nullable
-  private static ControlFlow createControlFlow(@NotNull PsiElement scope) {
+  private static @Nullable ControlFlow createControlFlow(@NotNull PsiElement scope) {
     ControlFlowFactory factory = ControlFlowFactory.getInstance(scope.getProject());
     ControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
 
@@ -922,15 +918,13 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }),
     Return((methodCopy, callSite, returnType) -> null);
 
-    @Nullable
-    private final InlineTransformer myTransformer;
+    private final @Nullable InlineTransformer myTransformer;
 
     TailCallType(@Nullable InlineTransformer transformer) {
       myTransformer = transformer;
     }
 
-    @Nullable
-    public InlineTransformer getTransformer() {
+    public @Nullable InlineTransformer getTransformer() {
       return myTransformer;
     }
   }

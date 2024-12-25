@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,8 +29,7 @@ public final class GenericsUtil {
     return PsiIntersectionType.createIntersection(type1, type2);
   }
 
-  @Nullable
-  public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
+  public static @Nullable PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2;
     if (TypeConversionUtil.isNullType(type2)) return type1;
@@ -38,8 +37,7 @@ public final class GenericsUtil {
     return getLeastUpperBound(type1, type2, new LinkedHashSet<>(), manager);
   }
 
-  @NotNull
-  private static PsiType getLeastUpperBound(PsiType type1, PsiType type2, Set<Couple<PsiType>> compared, PsiManager manager) {
+  private static @NotNull PsiType getLeastUpperBound(PsiType type1, PsiType type2, Set<Couple<PsiType>> compared, PsiManager manager) {
     if (type1 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(((PsiCapturedWildcardType)type1).getUpperBound(), type2, compared, manager);
     }
@@ -289,8 +287,7 @@ public final class GenericsUtil {
     return type == null ? null : getVariableTypeByExpressionType(type, true);
   }
 
-  @NotNull
-  public static PsiType getVariableTypeByExpressionType(@NotNull PsiType type, final boolean openCaptured) {
+  public static @NotNull PsiType getVariableTypeByExpressionType(@NotNull PsiType type, final boolean openCaptured) {
     PsiClass refClass = PsiUtil.resolveClassInType(type);
     if (refClass instanceof PsiAnonymousClass) {
       type = ((PsiAnonymousClass)refClass).getBaseClassType();
@@ -318,7 +315,7 @@ public final class GenericsUtil {
       }
 
       @Override
-      public PsiType visitWildcardType(@NotNull final PsiWildcardType wildcardType) {
+      public PsiType visitWildcardType(final @NotNull PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         PsiManager manager = wildcardType.getManager();
         if (bound != null) {
@@ -548,10 +545,9 @@ public final class GenericsUtil {
     }
   }
 
-  @NotNull
-  public static PsiClassType getExpectedGenericType(PsiElement context,
-                                                    PsiClass aClass,
-                                                    PsiClassType expectedType) {
+  public static @NotNull PsiClassType getExpectedGenericType(PsiElement context,
+                                                             PsiClass aClass,
+                                                             PsiClassType expectedType) {
     List<PsiType> arguments = getExpectedTypeArguments(context, aClass, Arrays.asList(aClass.getTypeParameters()), expectedType);
     return JavaPsiFacade.getElementFactory(context.getProject()).createType(aClass, arguments.toArray(PsiType.EMPTY_ARRAY));
   }
@@ -565,9 +561,7 @@ public final class GenericsUtil {
    * @param expectedType an expected supertype
    * @return a list of type arguments which correspond to passed type parameters
    */
-  @NotNull
-  @Unmodifiable
-  public static List<PsiType> getExpectedTypeArguments(PsiElement context,
+  public static @NotNull @Unmodifiable List<PsiType> getExpectedTypeArguments(PsiElement context,
                                                        PsiClass aClass,
                                                        @NotNull Iterable<? extends PsiTypeParameter> typeParams,
                                                        @NotNull PsiClassType expectedType) {
@@ -584,10 +578,9 @@ public final class GenericsUtil {
     return ContainerUtil.map(typeParams, p -> getExpectedTypeArg(context, resolve, substitutor, p));
   }
 
-  @Nullable
-  private static PsiType getExpectedTypeArg(PsiElement context,
-                                            PsiClassType.ClassResolveResult expectedType,
-                                            PsiSubstitutor superClassSubstitutor, PsiTypeParameter typeParam) {
+  private static @Nullable PsiType getExpectedTypeArg(PsiElement context,
+                                                      PsiClassType.ClassResolveResult expectedType,
+                                                      PsiSubstitutor superClassSubstitutor, PsiTypeParameter typeParam) {
     PsiClass expectedClass = expectedType.getElement();
     assert expectedClass != null;
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(expectedClass)) {

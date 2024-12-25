@@ -37,8 +37,7 @@ public final class RedundantCastUtil {
 
   private RedundantCastUtil() { }
 
-  @NotNull
-  public static List<PsiTypeCastExpression> getRedundantCastsInside(@NotNull PsiElement where) {
+  public static @NotNull List<PsiTypeCastExpression> getRedundantCastsInside(@NotNull PsiElement where) {
     HashSet<PsiTypeCastExpression> casts = new HashSet<>();
     JavaElementVisitor visitor = createRedundantCastVisitor(new CommonProcessors.CollectProcessor<>(casts));
     where.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -84,8 +83,7 @@ public final class RedundantCastUtil {
     };
   }
 
-  @Nullable
-  private static PsiExpression deparenthesizeExpression(PsiExpression arg) {
+  private static @Nullable PsiExpression deparenthesizeExpression(PsiExpression arg) {
     return PsiUtil.skipParenthesizedExprDown(arg);
   }
 
@@ -93,7 +91,7 @@ public final class RedundantCastUtil {
    * A visitor to help to implement the redundant cast inspection
    */
   @ApiStatus.Internal
-  public static abstract class RedundantCastVisitorBase extends JavaElementVisitor {
+  public abstract static class RedundantCastVisitorBase extends JavaElementVisitor {
     private void addToResults(@NotNull PsiTypeCastExpression typeCast) {
       if (!isTypeCastSemantic(typeCast)) {
         registerCast(typeCast);
@@ -543,8 +541,7 @@ public final class RedundantCastUtil {
       newArgs[i].replace(arg);
     }
 
-    @Nullable
-    private static PsiType calculateNewArgType(int i, JavaResolveResult newResult, PsiParameter[] parameters) {
+    private static @Nullable PsiType calculateNewArgType(int i, JavaResolveResult newResult, PsiParameter[] parameters) {
       final boolean varargs = newResult instanceof MethodCandidateInfo info && info.isVarargs();
       final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, i, varargs);
       PsiType newArgType = newResult.getSubstitutor().substitute(parameterType);
@@ -555,8 +552,7 @@ public final class RedundantCastUtil {
       return newArgType;
     }
 
-    @NotNull
-    private static JavaResolveResult resolveNewResult(PsiCall oldCall, PsiCall newCall) {
+    private static @NotNull JavaResolveResult resolveNewResult(PsiCall oldCall, PsiCall newCall) {
       final JavaResolveResult newResult;
       if (newCall instanceof PsiEnumConstant) {
         // do this manually, because PsiEnumConstantImpl.resolveMethodGenerics() will assert (no containing class for the copy)
@@ -572,8 +568,7 @@ public final class RedundantCastUtil {
       return newResult;
     }
 
-    @Nullable
-    private static PsiCall copyCallExpression(PsiCall expression, PsiType typeByParent) {
+    private static @Nullable PsiCall copyCallExpression(PsiCall expression, PsiType typeByParent) {
       PsiElement encoded = null;
       try {
         if (typeByParent != null && PsiTypesUtil.isDenotableType(typeByParent, expression)) {
@@ -618,8 +613,7 @@ public final class RedundantCastUtil {
       }
     }
 
-    @Nullable
-    private static RedundantCastUtil.RedundantCastVisitorBase.ParentPathContext getContextParent(@NotNull PsiCall expression) {
+    private static @Nullable RedundantCastUtil.RedundantCastVisitorBase.ParentPathContext getContextParent(@NotNull PsiCall expression) {
       PsiElement parent = expression.getParent();
       List<Integer> indexes = new ArrayList<>();
       PsiElement currentChild = expression;

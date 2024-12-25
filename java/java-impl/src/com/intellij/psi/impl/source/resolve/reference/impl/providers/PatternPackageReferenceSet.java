@@ -26,8 +26,7 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
   }
 
   @Override
-  @Unmodifiable
-  public Collection<PsiPackage> resolvePackageName(final @Nullable PsiPackage context, final String packageName) {
+  public @Unmodifiable Collection<PsiPackage> resolvePackageName(final @Nullable PsiPackage context, final String packageName) {
     if (context == null) return Collections.emptySet();
 
     if (packageName.contains("*")) {

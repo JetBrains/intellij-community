@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -50,9 +50,8 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
     myNodeConfigurator = nodeConfigurator;
   }
 
-  @Nullable
   @Override
-  public XReferrersProvider getReferrersProvider() {
+  public @Nullable XReferrersProvider getReferrersProvider() {
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
@@ -72,7 +71,7 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
   }
 
   @Override
-  public void computeChildren(@NotNull final XCompositeNode node) {
+  public void computeChildren(final @NotNull XCompositeNode node) {
     scheduleCommand(getEvaluationContext(), node, new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
         @Override
         public Priority getPriority() {
@@ -120,13 +119,12 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
   }
 
   @Override
-  public void computePresentation(@NotNull final XValueNode node, @NotNull final XValuePlace place) {
+  public void computePresentation(final @NotNull XValueNode node, final @NotNull XValuePlace place) {
     super.computePresentation(myNodeConfigurator == null ? node : myNodeConfigurator.apply(node), place);
   }
 
-  @Nullable
   @Override
-  public XValueModifier getModifier() {
+  public @Nullable XValueModifier getModifier() {
     return null;
   }
 }

@@ -64,8 +64,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     processor.run();
   }
 
-  @Nullable
-  private ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
+  private @Nullable ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return null;
     PsiClass psiClass = ObjectUtils.tryCast(psiElement.getParent(), PsiClass.class);
@@ -280,8 +279,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
       return visitor.existsSuperMethodCalls;
     }
 
-    @Nullable
-    private FieldAccessorCandidate createFieldAccessor(@NotNull PsiMethod psiMethod) {
+    private @Nullable FieldAccessorCandidate createFieldAccessor(@NotNull PsiMethod psiMethod) {
       if (!psiMethod.getParameterList().isEmpty()) return null;
       String methodName = psiMethod.getName();
       PsiField backingField = null;

@@ -391,8 +391,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       switchExpression.replace(newSwitchExpression);
     }
 
-    @Nullable
-    private static PsiStatement findOneYieldOrThrowStatement(@Nullable PsiElement switchBlockChild) {
+    private static @Nullable PsiStatement findOneYieldOrThrowStatement(@Nullable PsiElement switchBlockChild) {
       if (switchBlockChild == null) return null;
       boolean isOldOrThrow = switchBlockChild instanceof PsiYieldStatement ||
                              switchBlockChild instanceof PsiThrowStatement;
@@ -1117,8 +1116,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       }
     }
 
-    @Nullable
-    private PsiElement getElementForComments(@Nullable PsiStatement element, int i) {
+    private @Nullable PsiElement getElementForComments(@Nullable PsiStatement element, int i) {
       PsiElement current = element;
       if (myOriginalResultStatements != null &&
           myOriginalResultStatements.length > i &&
@@ -1191,8 +1189,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
     }
   }
 
-  @NotNull
-  private static String grubCommentsBefore(@NotNull PsiElement untilComment, @NotNull CommentTracker ct, SwitchBranch branch) {
+  private static @NotNull String grubCommentsBefore(@NotNull PsiElement untilComment, @NotNull CommentTracker ct, SwitchBranch branch) {
     List<String> comments = new ArrayList<>();
     PsiElement current =
       (untilComment instanceof PsiComment || untilComment instanceof PsiWhiteSpace) ? untilComment : PsiTreeUtil.prevLeaf(untilComment);

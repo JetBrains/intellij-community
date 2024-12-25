@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -36,19 +36,16 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   @Override
-  @NotNull
-  public Collection<TreeElement> getChildren() {
+  public @NotNull Collection<TreeElement> getChildren() {
     return myChildren;
   }
 
-  @Nullable
-  private PsiClass getSuperClass() {
+  private @Nullable PsiClass getSuperClass() {
     return (PsiClass)mySuperClassPointer.getElement();
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 

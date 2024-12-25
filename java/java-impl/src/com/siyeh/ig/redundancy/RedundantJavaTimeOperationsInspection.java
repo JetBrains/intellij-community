@@ -431,8 +431,7 @@ public class RedundantJavaTimeOperationsInspection extends AbstractBaseJavaLocal
         return true;
       }
 
-      @Nullable
-      private static PsiVariable resolveVariable(@Nullable PsiExpression expression) {
+      private static @Nullable PsiVariable resolveVariable(@Nullable PsiExpression expression) {
         if (expression == null) return null;
         PsiExpression unwrappedExpression = PsiUtil.skipParenthesizedExprDown(expression);
         if (!(unwrappedExpression instanceof PsiReferenceExpression referenceExpression)) return null;
@@ -530,9 +529,9 @@ public class RedundantJavaTimeOperationsInspection extends AbstractBaseJavaLocal
       REMOVE, SIMPLIFY
     }
 
-    @NotNull private final String myNewText;
-    @NotNull private final RedundantCreationFix.FixType myFixType;
-    @IntentionName @Nullable private final String myMessageError;
+    private final @NotNull String myNewText;
+    private final @NotNull RedundantCreationFix.FixType myFixType;
+    private final @IntentionName @Nullable String myMessageError;
 
     private RedundantCreationFix(@NotNull String text, @NotNull RedundantCreationFix.FixType type,
                                  @IntentionName @Nullable String messageError) {

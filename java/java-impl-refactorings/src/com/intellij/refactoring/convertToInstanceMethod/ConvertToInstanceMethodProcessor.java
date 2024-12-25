@@ -49,7 +49,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
 
   public ConvertToInstanceMethodProcessor(final Project project,
                                           final PsiMethod method,
-                                          @Nullable final PsiParameter targetParameter,
+                                          final @Nullable PsiParameter targetParameter,
                                           final String newVisibility) {
     super(project);
     myMethod = method;
@@ -76,8 +76,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetParameter, myTargetClass);
   }
 
@@ -207,8 +206,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     EditorHelper.openInEditor(doRefactoring(usages));
   }
 
-  @NotNull
-  private PsiMethod doRefactoring(UsageInfo[] usages) {
+  private @NotNull PsiMethod doRefactoring(UsageInfo[] usages) {
     myTypeParameterReplacements = buildTypeParameterReplacements();
     List<PsiClass> inheritors = new ArrayList<>();
 
@@ -497,13 +495,11 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return ConvertToInstanceMethodHandler.getRefactoringName();
   }
 
-  @Nullable
-  public Map<PsiTypeParameter, PsiTypeParameter> buildTypeParameterReplacements() {
+  public @Nullable Map<PsiTypeParameter, PsiTypeParameter> buildTypeParameterReplacements() {
     if (myTargetParameter == null) {
       return Collections.emptyMap();
     }
@@ -512,10 +508,9 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     return calculateReplacementMap(substitutor, myTargetClass, myMethod);
   }
 
-  @Nullable
-  private static Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
-                                                                                 final PsiClass targetClass,
-                                                                                 final PsiElement containingElement) {
+  private static @Nullable Map<PsiTypeParameter, PsiTypeParameter> calculateReplacementMap(final PsiSubstitutor substitutor,
+                                                                                           final PsiClass targetClass,
+                                                                                           final PsiElement containingElement) {
     final HashMap<PsiTypeParameter, PsiTypeParameter> result = new HashMap<>();
     for (PsiTypeParameter classTypeParameter : PsiUtil.typeParametersIterable(targetClass)) {
       if (!(substitutor.substitute(classTypeParameter) instanceof PsiClassType classType)) return null;
@@ -531,8 +526,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     return myMethod;
   }
 
-  @Nullable
-  public PsiParameter getTargetParameter() {
+  public @Nullable PsiParameter getTargetParameter() {
     return myTargetParameter;
   }
 }

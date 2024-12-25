@@ -36,9 +36,9 @@ import java.util.function.Function;
 
 class UnusedImportsVisitor extends JavaElementVisitor {
   private final LocalRefUseInfo myRefCountHolder;
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final PsiFile myFile;
-  @NotNull private final Document myDocument;
+  private final @NotNull Document myDocument;
   private IntentionAction myOptimizeImportsFix; // when not null, there are not-optimized imports in the file
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
@@ -110,8 +110,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
            !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
   }
 
-  @NotNull
-  private static InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
+  private static @NotNull InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
     Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;

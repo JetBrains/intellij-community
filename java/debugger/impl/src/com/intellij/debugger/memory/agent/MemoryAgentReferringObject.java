@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public abstract class MemoryAgentReferringObject implements ReferringObject {
-  @NotNull protected final ObjectReference myReference;
+  protected final @NotNull ObjectReference myReference;
   protected final boolean myIsWeakSoftReachable;
 
   public MemoryAgentReferringObject(@NotNull ObjectReference reference, boolean isWeakSoftReachable) {
@@ -21,22 +21,19 @@ public abstract class MemoryAgentReferringObject implements ReferringObject {
     this.myIsWeakSoftReachable = isWeakSoftReachable;
   }
 
-  @NotNull
   @Override
-  public final Function<XValueNode, XValueNode> getNodeCustomizer() {
+  public final @NotNull Function<XValueNode, XValueNode> getNodeCustomizer() {
     return node -> new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
       @Override
-      public void applyPresentation(@Nullable Icon icon, @NotNull final XValuePresentation valuePresenter, boolean hasChildren) {
+      public void applyPresentation(@Nullable Icon icon, final @NotNull XValuePresentation valuePresenter, boolean hasChildren) {
         node.setPresentation(icon, new XValuePresentation() {
-          @NotNull
           @Override
-          public String getSeparator() {
+          public @NotNull String getSeparator() {
             return MemoryAgentReferringObject.this.getSeparator();
           }
 
-          @Nullable
           @Override
-          public String getType() {
+          public @Nullable String getType() {
             return null;
           }
 
@@ -57,10 +54,8 @@ public abstract class MemoryAgentReferringObject implements ReferringObject {
     };
   }
 
-  @NotNull
   @Override
-  public ObjectReference getReference() { return myReference; }
+  public @NotNull ObjectReference getReference() { return myReference; }
 
-  @NotNull
-  public String getSeparator() { return " = "; }
+  public @NotNull String getSeparator() { return " = "; }
 }

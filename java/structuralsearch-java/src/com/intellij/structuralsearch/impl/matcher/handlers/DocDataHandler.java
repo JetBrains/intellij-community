@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.JavaDocTokenType;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Handler for doc nodes
  */
 public class DocDataHandler extends MatchingHandler {
-  @NonNls private static final String P_STR = "^\\s*((?:\\w|_|\\-|\\$)+)\\s*(?:=\\s*\"(.*)\"\\s*)?$";
+  private static final @NonNls String P_STR = "^\\s*((?:\\w|_|\\-|\\$)+)\\s*(?:=\\s*\"(.*)\"\\s*)?$";
   private static final Pattern p = Pattern.compile(
     P_STR,
     Pattern.CASE_INSENSITIVE

@@ -40,9 +40,8 @@ public final class PreviewFeatureUtil {
    * @see #JDK_INTERNAL_PREVIEW_FEATURE
    * @see #JDK_INTERNAL_JAVAC_PREVIEW_FEATURE
    */
-  @Nullable
   @Contract(value = "null -> null", pure = true)
-  public static JavaFeature fromPreviewFeatureAnnotation(@Nullable PsiAnnotation annotation) {
+  public static @Nullable JavaFeature fromPreviewFeatureAnnotation(@Nullable PsiAnnotation annotation) {
     if (annotation == null) return null;
     if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE) &&
         !annotation.hasQualifiedName(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)) {
@@ -61,9 +60,8 @@ public final class PreviewFeatureUtil {
     return JavaFeature.convertFromPreviewFeatureName(enumConstant.getName());
   }
 
-  @Nullable
   @Contract(value = "null -> null", pure = true)
-  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable PsiModifierListOwner owner) {
+  public static @Nullable PsiAnnotation getPreviewFeatureAnnotation(@Nullable PsiModifierListOwner owner) {
     if (owner == null) return null;
 
     PsiAnnotation annotation = getAnnotation(owner);

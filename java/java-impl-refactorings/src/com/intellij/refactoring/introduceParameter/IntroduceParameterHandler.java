@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -25,7 +25,10 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -72,8 +75,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase {
@@ -82,7 +85,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     ElementToWorkOn.processElementToWorkOn(editor, file, getRefactoringName(), HelpID.INTRODUCE_PARAMETER, project,
@@ -276,11 +279,10 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     highlighters.clear();
   }
 
-  @NotNull
-  static NameSuggestionsGenerator createNameSuggestionGenerator(final PsiExpression expr,
-                                                                final String propName,
-                                                                final Project project,
-                                                                final String enteredName) {
+  static @NotNull NameSuggestionsGenerator createNameSuggestionGenerator(final PsiExpression expr,
+                                                                         final String propName,
+                                                                         final Project project,
+                                                                         final String enteredName) {
     return type -> {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr != null && expr.isValid() ? expr : null, type);
@@ -656,8 +658,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       .introduceParameter(methodToIntroduceParameter, methodToSearchFor);
   }
 
-  @Nullable
-  private static PsiElement findCommonParent(PsiElement[] copyElements) {
+  private static @Nullable PsiElement findCommonParent(PsiElement[] copyElements) {
     if (copyElements.length > 1) {
       return PsiTreeUtil.findCommonParent(copyElements);
     }
@@ -720,9 +721,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     private class MyAbstractExtractDialog implements AbstractExtractDialog {
-      @NotNull
       @Override
-      public String getChosenMethodName() {
+      public @NotNull String getChosenMethodName() {
         return "name";
       }
 
@@ -740,9 +740,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         return datas.toArray(new VariableData[0]);
       }
 
-      @NotNull
       @Override
-      public String getVisibility() {
+      public @NotNull String getVisibility() {
         return PsiModifier.PUBLIC;
       }
 

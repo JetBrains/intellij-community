@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * A unary instruction that converts a primitive value from the stack to the desired type
  */
 public class PrimitiveConversionInstruction extends EvalInstruction {
-  @NotNull private final PsiPrimitiveType myTargetType;
+  private final @NotNull PsiPrimitiveType myTargetType;
 
   public PrimitiveConversionInstruction(@NotNull PsiPrimitiveType targetType, @Nullable DfaAnchor anchor) {
     super(anchor, 1);

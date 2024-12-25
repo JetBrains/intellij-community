@@ -58,8 +58,7 @@ public class ClassRenderer extends NodeRendererImpl {
     super(DEFAULT_NAME, true);
   }
 
-  @Nullable
-  public final String renderTypeName(@Nullable final String typeName) {
+  public final @Nullable String renderTypeName(final @Nullable String typeName) {
     if (SHOW_FQ_TYPE_NAMES || typeName == null) {
       return typeName;
     }
@@ -256,12 +255,11 @@ public class ClassRenderer extends NodeRendererImpl {
       });
   }
 
-  @NotNull
-  protected FieldDescriptor createFieldDescriptor(ValueDescriptorImpl parentDescriptor,
-                                                  NodeDescriptorFactory nodeDescriptorFactory,
-                                                  ObjectReference objRef,
-                                                  Field field,
-                                                  EvaluationContext evaluationContext) {
+  protected @NotNull FieldDescriptor createFieldDescriptor(ValueDescriptorImpl parentDescriptor,
+                                                           NodeDescriptorFactory nodeDescriptorFactory,
+                                                           ObjectReference objRef,
+                                                           Field field,
+                                                           EvaluationContext evaluationContext) {
     return nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field);
   }
 
@@ -353,8 +351,7 @@ public class ClassRenderer extends NodeRendererImpl {
     LOG.assertTrue(false);
   }
 
-  @Nullable
-  public static String getEnumConstantName(@NotNull ObjectReference objRef, ClassType classType) {
+  public static @Nullable String getEnumConstantName(@NotNull ObjectReference objRef, ClassType classType) {
     do {
       if (!classType.isPrepared()) {
         return null;

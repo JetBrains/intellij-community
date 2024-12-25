@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.settings;
 
 import com.intellij.ide.JavaUiBundle;
@@ -48,9 +48,9 @@ class DependencyExclusionEditor {
 
         Artifact artifact = node.getArtifact();
         boolean rejected = node.isRejected();
-        @NlsSafe final String groupArtifactFragment = artifact.getGroupId() + ":" + artifact.getArtifactId();
+        final @NlsSafe String groupArtifactFragment = artifact.getGroupId() + ":" + artifact.getArtifactId();
         getTextRenderer().append(groupArtifactFragment, !rejected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : STRIKEOUT_ATTRIBUTES, true);
-        @NlsSafe final String versionFragment = ":" + artifact.getVersion();
+        final @NlsSafe String versionFragment = ":" + artifact.getVersion();
         getTextRenderer().append(versionFragment, !rejected ? SimpleTextAttributes.GRAYED_ATTRIBUTES : STRIKEOUT_GRAYED_ATTRIBUTES, true);
         setToolTipText(rejected ? JavaUiBundle.message("tooltip.text.dependency.was.rejected") : null);
       }
@@ -97,8 +97,7 @@ class DependencyExclusionEditor {
     });
   }
 
-  @Nullable
-  public Set<String> selectExcludedDependencies(List<String> excludedDependencies) {
+  public @Nullable Set<String> selectExcludedDependencies(List<String> excludedDependencies) {
     uncheckExcludedNodes(myRootNode, new HashSet<>(excludedDependencies), false);
     TreeUtil.expandAll(myDependenciesTree);
     DialogBuilder dialogBuilder =
@@ -137,14 +136,12 @@ class DependencyExclusionEditor {
     return result;
   }
 
-  @NotNull
-  private static String getGroupAndArtifactId(CheckedTreeNode node) {
+  private static @NotNull String getGroupAndArtifactId(CheckedTreeNode node) {
     Artifact artifact = ((ArtifactDependencyNode)node.getUserObject()).getArtifact();
     return artifact.getGroupId() + ":" + artifact.getArtifactId();
   }
 
-  @NotNull
-  private static CheckedTreeNode createDependencyTreeNode(ArtifactDependencyNode node) {
+  private static @NotNull CheckedTreeNode createDependencyTreeNode(ArtifactDependencyNode node) {
     CheckedTreeNode treeNode = new CheckedTreeNode(node);
     for (ArtifactDependencyNode dependency : node.getDependencies()) {
       treeNode.add(createDependencyTreeNode(dependency));

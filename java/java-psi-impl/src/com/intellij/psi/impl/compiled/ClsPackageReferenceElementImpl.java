@@ -15,10 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class ClsPackageReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement, PsiQualifiedReferenceElement {
-  @NotNull
-  private final PsiElement myParent;
-  @NotNull
-  private final String myQualifiedName;
+  private final @NotNull PsiElement myParent;
+  private final @NotNull String myQualifiedName;
 
   public ClsPackageReferenceElementImpl(@NotNull PsiElement parent,
                                         @NotNull String canonicalText) {

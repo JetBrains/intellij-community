@@ -23,8 +23,8 @@ import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.*;
+import java.util.HashSet;
 
 /**
  * Contains the information about references used locally in a given file.
@@ -60,8 +60,7 @@ public final class LocalRefUseInfo {
     this.myUsedImports = myImportStatements;
   }
 
-  @NotNull
-  public GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
+  public @NotNull GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
     FileViewProvider viewProvider = file.getViewProvider();
     Project project = file.getProject();
 

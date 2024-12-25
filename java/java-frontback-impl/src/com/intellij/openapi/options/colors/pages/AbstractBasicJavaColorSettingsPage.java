@@ -81,7 +81,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
     new AttributesDescriptor(JavaOptionBundle.messagePointer("options.java.attribute.descriptor.annotation.attribute.name"), JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
-  @NonNls private static final Map<String, TextAttributesKey> ourTags = RainbowHighlighter.createRainbowHLM();
+  private static final @NonNls Map<String, TextAttributesKey> ourTags = RainbowHighlighter.createRainbowHLM();
   static {
     ourTags.put("field", JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
@@ -129,8 +129,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return JavaOptionBundle.message("options.java.display.name");
   }
 
@@ -153,8 +152,7 @@ public abstract class AbstractBasicJavaColorSettingsPage
    * Any changes you make here, you will probably want to do there as well.
    */
   @Override
-  @NotNull
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return
       """
         /* Block comment */

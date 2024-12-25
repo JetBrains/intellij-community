@@ -60,8 +60,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Override
-  @NotNull
-  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     try {
       return DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, position.getLine() + 1);
     }
@@ -71,14 +70,13 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+  public ClassPrepareRequest createPrepareRequest(final @NotNull ClassPrepareRequestor requestor, final @NotNull SourcePosition position)
     throws NoDataException {
     throw new IllegalStateException("This class implements MultiRequestPositionManager, corresponding createPrepareRequests version should be used");
   }
 
-  @NotNull
   @Override
-  public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+  public @NotNull List<ClassPrepareRequest> createPrepareRequests(final @NotNull ClassPrepareRequestor requestor, final @NotNull SourcePosition position)
     throws NoDataException {
     return ReadAction.compute(() -> {
       List<ClassPrepareRequest> res = new ArrayList<>();
@@ -114,8 +112,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Override
-  @Nullable
-  public SourcePosition getSourcePosition(final Location location) throws NoDataException {
+  public @Nullable SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (location == null) {
       return null;
@@ -194,8 +191,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
   }
 
-  @Nullable
-  public static SourcePosition adjustPositionForConditionalReturn(DebugProcess debugProcess, Location location, PsiFile file, int lineNumber) {
+  public static @Nullable SourcePosition adjustPositionForConditionalReturn(DebugProcess debugProcess, Location location, PsiFile file, int lineNumber) {
     if (location.virtualMachine().canGetBytecodes()) {
       PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber);
       if (ret != null) {
@@ -320,8 +316,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return res;
   }
 
-  @Nullable
-  protected PsiFile getPsiFileByLocation(final Project project, final Location location) {
+  protected @Nullable PsiFile getPsiFileByLocation(final Project project, final Location location) {
     if (location == null) {
       return null;
     }
@@ -395,8 +390,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return psiClass;
   }
 
-  @Nullable
-  public static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope, boolean fallbackToAllScope) {
+  public static @Nullable PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope, boolean fallbackToAllScope) {
     PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope, fallbackToAllScope); // try to lookup original name first
     if (psiClass == null) {
       int dollar = originalQName.indexOf('$');
@@ -407,8 +401,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return psiClass;
   }
 
-  @Nullable
-  private PsiFile findAlternativeJreSourceFile(ClsClassImpl psiClass) {
+  private @Nullable PsiFile findAlternativeJreSourceFile(ClsClassImpl psiClass) {
     String sourceFileName = psiClass.getSourceFileName();
     String packageName = ((PsiClassOwner)psiClass.getContainingFile()).getPackageName();
     String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
@@ -429,9 +422,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Override
-  @NotNull
-  @Unmodifiable
-  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
+  public @NotNull @Unmodifiable List<ReferenceType> getAllClasses(final @NotNull SourcePosition position) throws NoDataException {
     Set<PsiClass> lineClasses = ReadAction.compute(() -> getLineClasses(position.getFile(), position.getLine()));
     return ContainerUtil.flatMap(lineClasses, aClass -> getClassReferences(aClass, position));
   }
@@ -500,8 +491,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return Pair.create(enclosing, depth);
   }
 
-  @Nullable
-  private ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
+  private @Nullable ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
     final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
       // if the depth is still less than required - search nested classes recursively
@@ -570,8 +560,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return null;
   }
 
-  @Nullable
-  public PsiMethod findMethod(PsiElement container, String className, String methodName, String methodSignature) {
+  public @Nullable PsiMethod findMethod(PsiElement container, String className, String methodName, String methodSignature) {
     MethodFinder finder = new MethodFinder(className, methodName, methodSignature);
     container.accept(finder);
     return finder.getCompiledMethod();
@@ -638,8 +627,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    @Nullable
-    public PsiMethod getCompiledMethod() {
+    public @Nullable PsiMethod getCompiledMethod() {
       return myCompiledMethod;
     }
   }
@@ -662,8 +650,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
   }
 
-  @Nullable
-  private static SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
+  private static @Nullable SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
     int line = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, originalLine);
     if (line > -1) {
       return SourcePosition.createFromLine(psiFile, line);

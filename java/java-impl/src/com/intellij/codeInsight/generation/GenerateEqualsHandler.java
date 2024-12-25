@@ -116,8 +116,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   }
 
   @Override
-  @Unmodifiable
-  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) {
+  protected @Unmodifiable @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) {
     final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
     final boolean useAccessors = CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE;
 

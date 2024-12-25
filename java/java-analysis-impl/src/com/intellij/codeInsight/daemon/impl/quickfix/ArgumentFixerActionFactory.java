@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -19,8 +19,7 @@ import java.util.*;
 public abstract class ArgumentFixerActionFactory {
   private static final Logger LOG = Logger.getInstance(ArgumentFixerActionFactory.class);
 
-  @Nullable
-  protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
+  protected abstract @Nullable PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
   public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, @NotNull HighlightInfo.Builder highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;

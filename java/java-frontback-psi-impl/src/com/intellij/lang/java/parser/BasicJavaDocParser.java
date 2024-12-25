@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
@@ -606,13 +606,11 @@ public final class BasicJavaDocParser {
     tagData.done(javaDocElementTypeContainer.DOC_TAG_VALUE_ELEMENT);
   }
 
-  @Nullable
-  private static IElementType getTokenType(PsiBuilder builder) {
+  private static @Nullable IElementType getTokenType(PsiBuilder builder) {
     return getTokenType(builder, true);
   }
 
-  @Nullable
-  private static IElementType getTokenType(PsiBuilder builder, boolean skipWhitespace) {
+  private static @Nullable IElementType getTokenType(PsiBuilder builder, boolean skipWhitespace) {
     IElementType tokenType;
     while ((tokenType = builder.getTokenType()) == JavaDocTokenType.DOC_SPACE) {
       builder.remapCurrentToken(TokenType.WHITE_SPACE);

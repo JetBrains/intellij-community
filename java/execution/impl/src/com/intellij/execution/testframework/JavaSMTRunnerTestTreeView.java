@@ -23,8 +23,7 @@ import java.awt.event.MouseEvent;
 public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements SMTRunnerTestTreeViewProvider.CustomizedDurationProvider {
   private static final Key<Long> FIRST_CHILD_START = Key.create("JavaSMTRunnerTestTreeView.FIRST_CHILD_START");
 
-  @NotNull
-  private final TestConsoleProperties myTestConsoleProperties;
+  private final @NotNull TestConsoleProperties myTestConsoleProperties;
 
   public JavaSMTRunnerTestTreeView(@NotNull TestConsoleProperties testConsoleProperties) {
     myTestConsoleProperties = testConsoleProperties;
@@ -73,8 +72,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
         return testProxy.getDurationString(consoleProperties);
       }
 
-      @Nullable
-      private static Long getFirstChildStartedAt(@NotNull SMTestProxy testProxy) {
+      private static @Nullable Long getFirstChildStartedAt(@NotNull SMTestProxy testProxy) {
         Long data = testProxy.getUserData(FIRST_CHILD_START);
         if (data != null) {
           return data;

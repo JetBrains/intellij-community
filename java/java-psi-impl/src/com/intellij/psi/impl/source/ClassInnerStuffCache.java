@@ -119,8 +119,7 @@ public final class ClassInnerStuffCache {
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
-  @Unmodifiable
-  private @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
+  private @Unmodifiable @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
     return ContainerUtil.map(members, this::internMember);
   }
 

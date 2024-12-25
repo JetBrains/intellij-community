@@ -112,8 +112,7 @@ public class BasicFileParser {
     return false;
   }
 
-  @Nullable
-  protected PsiBuilder.Marker parseInitial(PsiBuilder builder) {
+  protected @Nullable PsiBuilder.Marker parseInitial(PsiBuilder builder) {
     return myParser.getDeclarationParser().parse(builder, BasicDeclarationParser.BaseContext.FILE);
   }
 
@@ -141,8 +140,7 @@ public class BasicFileParser {
     done(statement, myJavaElementTypeContainer.PACKAGE_STATEMENT, myWhiteSpaceAndCommentSetHolder);
   }
 
-  @NotNull
-  protected Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
+  protected @NotNull Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
     PsiBuilder.Marker list = builder.mark();
 
     boolean isEmpty = true;
@@ -186,8 +184,7 @@ public class BasicFileParser {
     return Pair.create(list, isEmpty);
   }
 
-  @Nullable
-  protected PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
+  protected @Nullable PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
     if (builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD) return null;
 
     PsiBuilder.Marker statement = builder.mark();
@@ -233,8 +230,7 @@ public class BasicFileParser {
     return myJavaElementTypeContainer.IMPORT_STATEMENT;
   }
 
-  @NotNull
-  private static @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
+  private static @NotNull @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
     return bundle.getMessage(errorMessageKey);
   }
 }

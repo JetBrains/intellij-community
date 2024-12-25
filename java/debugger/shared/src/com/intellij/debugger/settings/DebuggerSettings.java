@@ -33,17 +33,17 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
 
-  @NonNls public static final String SUSPEND_ALL = "SuspendAll";
-  @NonNls public static final String SUSPEND_THREAD = "SuspendThread";
-  @NonNls public static final String SUSPEND_NONE = "SuspendNone";
+  public static final @NonNls String SUSPEND_ALL = "SuspendAll";
+  public static final @NonNls String SUSPEND_THREAD = "SuspendThread";
+  public static final @NonNls String SUSPEND_NONE = "SuspendNone";
 
-  @NonNls public static final String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
-  @NonNls public static final String RUN_HOTSWAP_NEVER = "RunHotswapNever";
-  @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
+  public static final @NonNls String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
+  public static final @NonNls String RUN_HOTSWAP_NEVER = "RunHotswapNever";
+  public static final @NonNls String RUN_HOTSWAP_ASK = "RunHotswapAsk";
 
-  @NonNls public static final String EVALUATE_FINALLY_ALWAYS = "EvaluateFinallyAlways";
-  @NonNls public static final String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
-  @NonNls public static final String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
+  public static final @NonNls String EVALUATE_FINALLY_ALWAYS = "EvaluateFinallyAlways";
+  public static final @NonNls String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
+  public static final @NonNls String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
 
   private static final ClassFilter[] DEFAULT_STEPPING_FILTERS = new ClassFilter[]{
     new ClassFilter("com.sun.*"),
@@ -130,9 +130,8 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     resetToDefaults();
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     Element state = XmlSerializer.serialize(this);
     if (state == null) {
       state = new Element("state");

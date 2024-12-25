@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +22,7 @@ public class LeakingParameters {
     this.nullableParameters = nullableParameters;
   }
 
-  @NotNull
-  public static LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
+  public static @NotNull LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     Frame<ParamsValue>[] frames = jsr ? new Analyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode)
                                       : new LiteAnalyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
@@ -47,8 +46,7 @@ public class LeakingParameters {
     return new LeakingParameters(frames, notNullParameters, nullableParameters);
   }
 
-  @NotNull
-  public static LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
+  public static @NotNull LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
     Frame<?>[] frames = jsr ? new Analyzer<>(parametersUsage).analyze(className, methodNode)
                             : new LiteAnalyzer<>(parametersUsage).analyze(className, methodNode);

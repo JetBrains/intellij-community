@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -206,8 +206,7 @@ public final class ExtractSuperClassUtil {
     return factory.createReferenceElementByType(type);
   }
 
-  @Nullable
-  public static PsiTypeParameter findTypeParameterInDerived(final PsiClass aClass, final String name) {
+  public static @Nullable PsiTypeParameter findTypeParameterInDerived(final PsiClass aClass, final String name) {
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
       if (name.equals(typeParameter.getName())) return typeParameter;
     }

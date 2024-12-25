@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -41,18 +41,16 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return myRefactoringName;
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
   }
 
-  private void setClasses(@NotNull final PsiClass aClass, @NotNull final PsiClass aSuper) {
+  private void setClasses(final @NotNull PsiClass aClass, final @NotNull PsiClass aSuper) {
     myClass = aClass;
     mySuper = aSuper;
   }
@@ -139,8 +137,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @Override
-  @NotNull
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(final @NotNull UsageViewDescriptor descriptor) {
     return Collections.emptyList(); // neither myClass nor mySuper are subject to change, it's just references that are going to change
   }
 }

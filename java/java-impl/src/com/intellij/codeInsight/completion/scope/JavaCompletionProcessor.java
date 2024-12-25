@@ -348,8 +348,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     }
   }
 
-  @Unmodifiable
-  public Iterable<CompletionElement> getResults() {
+  public @Unmodifiable Iterable<CompletionElement> getResults() {
     if (mySecondRateResults.size() == myResults.size()) {
       return mySecondRateResults;
     }

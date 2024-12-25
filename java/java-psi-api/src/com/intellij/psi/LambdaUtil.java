@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -82,8 +82,7 @@ public final class LambdaUtil {
   /**
    * Extract functional interface from intersection
    */
-  @Nullable
-  public static PsiType normalizeFunctionalType(@Nullable PsiType functionalInterfaceType) {
+  public static @Nullable PsiType normalizeFunctionalType(@Nullable PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
       PsiType functionalConjunct = extractFunctionalConjunct((PsiIntersectionType)functionalInterfaceType);
       if (functionalConjunct != null) {
@@ -177,7 +176,7 @@ public final class LambdaUtil {
   }
 
   @Contract("null -> null")
-  public static @Nullable MethodSignature getFunction(@Nullable final PsiClass psiClass) {
+  public static @Nullable MethodSignature getFunction(final @Nullable PsiClass psiClass) {
     if (isPlainInterface(psiClass)) {
       return CachedValuesManager.getProjectPsiDependentCache(psiClass, LambdaUtil::calcFunction);
     }
@@ -571,10 +570,8 @@ public final class LambdaUtil {
 
 
   public static class TargetMethodContainer{
-    @NotNull
-    public final PsiMethod targetMethod;
-    @NotNull
-    public final PsiMethod inheritor;
+    public final @NotNull PsiMethod targetMethod;
+    public final @NotNull PsiMethod inheritor;
 
     private TargetMethodContainer(@NotNull PsiMethod method, @NotNull PsiMethod inheritor) {
       this.targetMethod = method;
@@ -590,8 +587,7 @@ public final class LambdaUtil {
    * @param baseType     the base type to resolve the class from
    * @return the target method if found, or null if not found
    */
-  @Nullable
-  public static TargetMethodContainer getTargetMethod(@NotNull PsiType type, @NotNull MethodSignature signature, @NotNull PsiType baseType) {
+  public static @Nullable TargetMethodContainer getTargetMethod(@NotNull PsiType type, @NotNull MethodSignature signature, @NotNull PsiType baseType) {
     PsiClass baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType);
     if (baseClass == null) {
       return null;
@@ -637,8 +633,7 @@ public final class LambdaUtil {
     return true;
   }
 
-  @NotNull
-  private static MethodSignature getSignatureWithSubstitutors(@NotNull PsiMethod method, @NotNull PsiType type) {
+  private static @NotNull MethodSignature getSignatureWithSubstitutors(@NotNull PsiMethod method, @NotNull PsiType type) {
     PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass aClass = classResolveResult.getElement();
     if (aClass == null) return method.getSignature(PsiSubstitutor.EMPTY);
@@ -1300,8 +1295,7 @@ public final class LambdaUtil {
    * @return {@link PsiClass} or {@link PsiLambdaExpression} which contains passed {@code element}. 
    *         {@link PsiAnonymousClass} is skipped if {@code element} is located in the corresponding expression list
    */
-  @Nullable
-  public static PsiElement getContainingClassOrLambda(@NotNull PsiElement element) {
+  public static @Nullable PsiElement getContainingClassOrLambda(@NotNull PsiElement element) {
     PsiElement currentClass;
     while (true) {
       currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, PsiLambdaExpression.class);

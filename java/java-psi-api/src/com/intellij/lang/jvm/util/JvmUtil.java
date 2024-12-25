@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -21,15 +21,12 @@ public final class JvmUtil {
 
   private JvmUtil() {}
 
-  @NotNull
-  @Unmodifiable
-  static Iterable<JvmClass> resolveClasses(JvmReferenceType @NotNull [] types) {
+  static @NotNull @Unmodifiable Iterable<JvmClass> resolveClasses(JvmReferenceType @NotNull [] types) {
     return mapNotNull(types, JvmUtil::resolveClass);
   }
 
   @Contract("null -> null")
-  @Nullable
-  public static JvmClass resolveClass(@Nullable JvmReferenceType type) {
+  public static @Nullable JvmClass resolveClass(@Nullable JvmReferenceType type) {
     if (type == null) return null;
     JvmTypeDeclaration resolved = type.resolve();
     return resolved instanceof JvmClass ? (JvmClass)resolved : null;
@@ -39,8 +36,7 @@ public final class JvmUtil {
    * JVM language version of {@link PsiUtil#getAccessModifier(int)}
    */
   @PsiModifier.ModifierConstant
-  @NotNull
-  public static JvmModifier getAccessModifier(@PsiUtil.AccessLevel int accessLevel) {
+  public static @NotNull JvmModifier getAccessModifier(@PsiUtil.AccessLevel int accessLevel) {
     assert accessLevel > 0 && accessLevel <= ACCESS_MODIFIERS.length : accessLevel;
     return ACCESS_MODIFIERS[accessLevel - 1];
   }

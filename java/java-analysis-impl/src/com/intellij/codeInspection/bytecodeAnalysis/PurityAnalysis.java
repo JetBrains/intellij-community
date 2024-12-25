@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -36,8 +36,7 @@ public final class PurityAnalysis {
    * @param jsr        whether jsr is possible in a current method
    * @return a purity equation or null for top result (either impure or unknown, impurity assumed)
    */
-  @Nullable
-  static Equation analyze(Member method, MethodNode methodNode, boolean stable, boolean jsr) {
+  static @Nullable Equation analyze(Member method, MethodNode methodNode, boolean stable, boolean jsr) {
     EKey key = new EKey(method, Direction.Pure, stable);
     Effects hardCodedSolution = HardCodedPurity.getInstance().getHardCodedSolution(method);
     if (hardCodedSolution != null) {
@@ -485,8 +484,7 @@ class DataInterpreter extends Interpreter<DataValue> {
     };
   }
 
-  @Nullable
-  private static EffectQuantum getChangeQuantum(DataValue value) {
+  private static @Nullable EffectQuantum getChangeQuantum(DataValue value) {
     if (value == DataValue.ThisDataValue || value == DataValue.OwnedDataValue) {
       return EffectQuantum.ThisChangeQuantum;
     }

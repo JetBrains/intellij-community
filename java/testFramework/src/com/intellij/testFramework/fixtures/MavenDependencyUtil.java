@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -116,8 +116,7 @@ public final class MavenDependencyUtil {
                                     "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
   );
 
-  @NotNull
-  public static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
+  public static @NotNull List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
     String repoForTesting = System.getProperty("maven.repo.for.testing");
     if (repoForTesting != null) {
       return List.of(new RemoteRepositoryDescription(

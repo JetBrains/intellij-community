@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -20,13 +20,13 @@ import org.jetbrains.annotations.NotNull;
 public final class InsertLiteralUnderscoresInspection extends LocalInspectionTool {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isAvailable(JavaFeature.UNDERSCORES, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLiteralExpression(@NotNull final PsiLiteralExpression literalExpression) {
+      public void visitLiteralExpression(final @NotNull PsiLiteralExpression literalExpression) {
         final PsiType type = literalExpression.getType();
         if (!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type) &&
             !PsiTypes.floatType().equals(type) && !PsiTypes.doubleType().equals(type)) return;

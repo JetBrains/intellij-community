@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -74,13 +74,11 @@ public class StackFrameItem {
     return myLocation;
   }
 
-  @NotNull
-  public String path() {
+  public @NotNull String path() {
     return myLocation.declaringType().name();
   }
 
-  @NotNull
-  public String method() {
+  public @NotNull String method() {
     return DebuggerUtilsEx.getLocationMethodName(myLocation);
   }
 
@@ -88,8 +86,7 @@ public class StackFrameItem {
     return DebuggerUtilsEx.getLineNumber(myLocation, false);
   }
 
-  @NotNull
-  public static List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
+  public static @NotNull List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
     ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
       List<StackFrameProxyImpl> frameProxies = threadReferenceProxy.forceFrames();
@@ -216,9 +213,8 @@ public class StackFrameItem {
                                                           : AllIcons.Debugger.Value;
       if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING + "@")) {
         node.setPresentation(icon, new XStringValuePresentation(myValue) {
-          @Nullable
           @Override
-          public String getType() {
+          public @Nullable String getType() {
             return classRenderer.SHOW_STRINGS_TYPE ? type : null;
           }
         }, false);
@@ -251,8 +247,7 @@ public class StackFrameItem {
     }
   }
 
-  @Nls
-  public static String getAsyncStacktraceMessage() {
+  public static @Nls String getAsyncStacktraceMessage() {
     return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
   }
 
@@ -288,9 +283,8 @@ public class StackFrameItem {
                      (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(location));
     }
 
-    @Nullable
     @Override
-    public XSourcePosition getSourcePosition() {
+    public @Nullable XSourcePosition getSourcePosition() {
       return mySourcePosition;
     }
 

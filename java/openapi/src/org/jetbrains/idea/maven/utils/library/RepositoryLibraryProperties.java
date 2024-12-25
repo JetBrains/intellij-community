@@ -190,8 +190,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     setExcludedDependencies(dependencyMavenIds);
   }
 
-  @NotNull
-  public JpsMavenRepositoryLibraryDescriptor getRepositoryLibraryDescriptor() {
+  public @NotNull JpsMavenRepositoryLibraryDescriptor getRepositoryLibraryDescriptor() {
     return myDescriptor != null ? myDescriptor : new JpsMavenRepositoryLibraryDescriptor(null, true, Collections.emptyList());
   }
 
@@ -223,8 +222,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Tag("artifact")
   public static class ArtifactVerificationProperties {
-    @NotNull
-    private ArtifactVerification myDescriptor;
+    private @NotNull ArtifactVerification myDescriptor;
 
     @SuppressWarnings("unused") //used by XmlSerializer
     private ArtifactVerificationProperties() {
@@ -254,8 +252,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
       myDescriptor = new ArtifactVerification(getUrl(), sha256sum);
     }
 
-    @NotNull
-    private ArtifactVerification getDescriptor() {
+    private @NotNull ArtifactVerification getDescriptor() {
       assert !myDescriptor.getUrl().isEmpty(); // Ensure we have read url value
       return myDescriptor;
     }

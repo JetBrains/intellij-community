@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailTypes;
@@ -182,9 +182,7 @@ public final class JavaPatternCompletionUtil {
       return new PatternModel(record, names, types, onlyDeconstructionList);
     }
 
-    @NotNull
-    @Unmodifiable
-    private static List<PsiType> findTypes(@Nullable PsiDeconstructionPattern pattern, @NotNull PsiClass record) {
+    private static @NotNull @Unmodifiable List<PsiType> findTypes(@Nullable PsiDeconstructionPattern pattern, @NotNull PsiClass record) {
       List<PsiType> recordComponentTypes = Arrays.stream(record.getRecordComponents()).map(t -> t.getType()).toList();
       if (pattern == null) {
         return recordComponentTypes;

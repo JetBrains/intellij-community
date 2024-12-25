@@ -70,8 +70,7 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
+  public @Unmodifiable @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object o = getValueFromNode(node);
     if (o instanceof PackageElement) {
       PsiPackage aPackage = ((PackageElement)o).getPackage();

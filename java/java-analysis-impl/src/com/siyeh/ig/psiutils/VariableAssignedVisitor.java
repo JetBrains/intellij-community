@@ -28,8 +28,7 @@ import java.util.function.Predicate;
 
 public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  @Unmodifiable
-  @NotNull private final Collection<? extends PsiVariable> variables;
+  private final @Unmodifiable @NotNull Collection<? extends PsiVariable> variables;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
   private final Predicate<? super PsiAssignmentExpression> mySkipFilter;

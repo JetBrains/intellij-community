@@ -79,8 +79,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     }
   }
 
-  @NotNull
-  private static String getRefactoringId(@NotNull PsiElement element) {
+  private static @NotNull String getRefactoringId(@NotNull PsiElement element) {
     return element instanceof PsiPatternVariable ? "refactoring.inline.pattern.variable" : "refactoring.inline.local.variable";
   }
 
@@ -153,10 +152,9 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     });
   }
 
-  @NotNull
-  private static ModCommand createChooser(@NotNull PsiVariable variable,
-                                               @Nullable PsiReferenceExpression refExpr,
-                                               @NotNull List<? extends PsiElement> allRefs) {
+  private static @NotNull ModCommand createChooser(@NotNull PsiVariable variable,
+                                                   @Nullable PsiReferenceExpression refExpr,
+                                                   @NotNull List<? extends PsiElement> allRefs) {
     return ModCommand.chooseAction(getRefactoringName(variable),
                                    new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ONE, allRefs),
                                    new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ALL_AND_DELETE, allRefs));
@@ -342,8 +340,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   private record InnerClassUsages(List<PsiElement> innerClassesWithUsages, List<PsiElement> innerClassUsages) {
-    @NotNull
-    private static InnerClassUsages getUsages(@NotNull PsiLocalVariable local, @NotNull List<PsiReferenceExpression> allRefs) {
+    private static @NotNull InnerClassUsages getUsages(@NotNull PsiLocalVariable local, @NotNull List<PsiReferenceExpression> allRefs) {
       final List<PsiElement> innerClassesWithUsages = new ArrayList<>();
       final List<PsiElement> innerClassUsages = new ArrayList<>();
       final PsiElement containingClass = LambdaUtil.getContainingClassOrLambda(local);
@@ -365,11 +362,10 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     }
   }
 
-  @NotNull
-  private static List<SmartPsiElementPointer<PsiExpression>> inlineOccurrences(@NotNull Project project,
-                                                                               @NotNull PsiVariable local,
-                                                                               PsiExpression defToInline,
-                                                                               @NotNull List<PsiElement> refsToInline) {
+  private static @NotNull List<SmartPsiElementPointer<PsiExpression>> inlineOccurrences(@NotNull Project project,
+                                                                                        @NotNull PsiVariable local,
+                                                                                        PsiExpression defToInline,
+                                                                                        @NotNull List<PsiElement> refsToInline) {
     List<SmartPsiElementPointer<PsiExpression>> pointers = new ArrayList<>();
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     for (PsiElement element : refsToInline) {
@@ -424,8 +420,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     parent.delete();
   }
 
-  @Nullable
-  static PsiElement checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, PsiElement defToInline) {
+  static @Nullable PsiElement checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, PsiElement defToInline) {
     for (PsiElement element : refsToInline) {
 
       PsiElement parent = element.getParent();
@@ -452,11 +447,10 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     return defToInline.getParent() instanceof PsiVariable;
   }
 
-  @Nullable
-  static PsiExpression getDefToInline(final PsiVariable local,
-                                      final PsiElement refExpr,
-                                      @NotNull PsiCodeBlock block,
-                                      final boolean rethrow) {
+  static @Nullable PsiExpression getDefToInline(final PsiVariable local,
+                                                final PsiElement refExpr,
+                                                @NotNull PsiCodeBlock block,
+                                                final boolean rethrow) {
     if (refExpr != null) {
       PsiElement def;
       if (refExpr instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)refExpr)) {
@@ -504,14 +498,12 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     return ContainerUtil.getOnlyItem(allDefs);
   }
 
-  @NotNull
   @Override
-  public String getActionName(PsiElement element) {
+  public @NotNull String getActionName(PsiElement element) {
     return getRefactoringName(element);
   }
 
-  @NotNull
-  private static @NlsContexts.DialogTitle String getRefactoringName(PsiElement variable) {
+  private static @NotNull @NlsContexts.DialogTitle String getRefactoringName(PsiElement variable) {
     return variable instanceof PsiPatternVariable
            ? JavaRefactoringBundle.message("inline.pattern.variable.title")
            : RefactoringBundle.message("inline.variable.title");

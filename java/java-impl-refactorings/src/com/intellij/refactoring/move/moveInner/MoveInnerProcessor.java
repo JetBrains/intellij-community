@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -74,14 +74,12 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("move.inner.class.command", myDescriptiveName);
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveInnerViewDescriptor(myInnerClass);
   }
 
@@ -319,8 +317,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @NotNull
-  private PsiField createOuterField(@NotNull PsiElementFactory factory) {
+  private @NotNull PsiField createOuterField(@NotNull PsiElementFactory factory) {
     PsiField field = factory.createField(myFieldNameOuterClass, factory.createType(myOuterClass));
 
     PsiModifierList modifierList = field.getModifierList();
@@ -451,7 +448,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
                     final String parameterName,
                     boolean searchInComments,
                     boolean searchInNonJava,
-                    @NotNull final PsiElement targetContainer) {
+                    final @NotNull PsiElement targetContainer) {
     myNewClassName = className;
     myInnerClass = innerClass;
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myInnerClass);
@@ -535,8 +532,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return statement;
   }
 
-  @Nullable
-  private static PsiElement getAnchorElement(PsiCodeBlock body) {
+  private static @Nullable PsiElement getAnchorElement(PsiCodeBlock body) {
     PsiStatement[] statements = body.getStatements();
     if (statements.length > 0) {
       PsiStatement first = statements[0];

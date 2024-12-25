@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.Nullability;
@@ -37,9 +37,8 @@ public final class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJa
     return Set.of(JavaFeature.OBJECTS_CLASS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -62,7 +61,7 @@ public final class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJa
               return;
             }
           }
-          @NlsSafe final String message = JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "equals()");
+          final @NlsSafe String message = JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "equals()");
           holder.registerProblem(nameElement, message,
                                  new ReplaceWithEqualsFix(false));
         }
@@ -88,10 +87,8 @@ public final class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJa
       myEquality = equality;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", "Objects.equals()", myEquality ? "==" : "equals()");
     }
 

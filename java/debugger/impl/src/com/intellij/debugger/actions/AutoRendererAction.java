@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -15,7 +15,7 @@ import java.util.List;
 
 public class AutoRendererAction extends AnAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
 
     final DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();

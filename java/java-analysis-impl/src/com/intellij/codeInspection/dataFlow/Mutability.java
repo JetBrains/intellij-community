@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -105,8 +105,7 @@ public enum Mutability {
     return this == MUTABLE || this == UNKNOWN;
   }
 
-  @NotNull
-  public Mutability join(@NotNull Mutability other) {
+  public @NotNull Mutability join(@NotNull Mutability other) {
     if (this == other) return this;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
     if (this == MUTABLE || other == MUTABLE) return UNKNOWN;
@@ -119,8 +118,7 @@ public enum Mutability {
    * @param other mutability to meet
    * @return resulting mutability; null if bottom
    */
-  @Nullable
-  public Mutability meet(@NotNull Mutability other) {
+  public @Nullable Mutability meet(@NotNull Mutability other) {
     if (this == other) return this;
     if (this == UNKNOWN) return other;
     if (other == UNKNOWN) return this;
@@ -130,8 +128,7 @@ public enum Mutability {
     return MUST_NOT_MODIFY;
   }
 
-  @Nullable
-  public PsiAnnotation asAnnotation(Project project) {
+  public @Nullable PsiAnnotation asAnnotation(Project project) {
     if (myAnnotation == null) return null;
     return CachedValuesManager.getManager(project).getCachedValue(project, myKey, () -> {
       PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + myAnnotation, null);
@@ -149,15 +146,13 @@ public enum Mutability {
    * @param owner an element to check the mutability
    * @return a Mutability enum value; {@link #UNKNOWN} if cannot be determined or specified element type is not supported.
    */
-  @NotNull
-  public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
+  public static @NotNull Mutability getMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof LightElement) return UNKNOWN;
     return CachedValuesManager.getCachedValue(owner, () ->
       CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @NotNull
-  private static Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
+  private static @NotNull Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList list) {
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
       if (method != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -209,13 +209,12 @@ public final class SuspiciousMethodCallUtil {
            MethodSignatureUtil.findMethodBySignature(bClass, inheritorCandidate.getSignature(substitutor), false) == base;
   }
 
-  @Nullable
-  public static @InspectionMessage String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
-                                                                         PsiExpression arg,
-                                                                         PsiType argType,
-                                                                         boolean reportConvertibleMethodCalls,
-                                                                         @NotNull List<PatternMethod> patternMethods,
-                                                                         int idx) {
+  public static @Nullable @InspectionMessage String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
+                                                                                   PsiExpression arg,
+                                                                                   PsiType argType,
+                                                                                   boolean reportConvertibleMethodCalls,
+                                                                                   @NotNull List<PatternMethod> patternMethods,
+                                                                                   int idx) {
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
 
     if (arg instanceof PsiConditionalExpression &&
@@ -227,12 +226,11 @@ public final class SuspiciousMethodCallUtil {
     return getSuspiciousMethodCallMessage(methodExpression, argType, reportConvertibleMethodCalls, patternMethods, idx);
   }
 
-  @Nullable
-  static @InspectionMessage String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
-                                                                  PsiType argType,
-                                                                  boolean reportConvertibleMethodCalls,
-                                                                  @NotNull List<PatternMethod> patternMethods,
-                                                                  int argIdx) {
+  static @Nullable @InspectionMessage String getSuspiciousMethodCallMessage(PsiReferenceExpression methodExpression,
+                                                                            PsiType argType,
+                                                                            boolean reportConvertibleMethodCalls,
+                                                                            @NotNull List<PatternMethod> patternMethods,
+                                                                            int argIdx) {
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return null;
     if (argType instanceof PsiPrimitiveType) {

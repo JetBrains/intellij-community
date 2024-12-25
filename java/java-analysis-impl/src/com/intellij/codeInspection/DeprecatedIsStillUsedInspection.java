@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
@@ -15,11 +15,10 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
 public final class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull final LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
       public void visitIdentifier(@NotNull PsiIdentifier identifier) {

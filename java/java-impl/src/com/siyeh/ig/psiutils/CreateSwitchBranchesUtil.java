@@ -54,8 +54,7 @@ public final class CreateSwitchBranchesUtil {
    *                      thus some kind of normalization could be necessary.
    * @return a list of created branches
    */
-  @Unmodifiable
-  public static List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
+  public static @Unmodifiable List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
                                                                         @NotNull List<String> allNames,
                                                                         @NotNull @Unmodifiable Collection<String> missingNames,
                                                                         @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends @Unmodifiable List<String>> caseExtractor) {

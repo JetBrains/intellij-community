@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,18 +16,13 @@ public abstract class OrderEntryAppearanceService {
     return ApplicationManager.getApplication().getService(OrderEntryAppearanceService.class);
   }
 
-  @NotNull
-  public abstract CellAppearanceEx forOrderEntry(Project project, @NotNull OrderEntry orderEntry, boolean selected);
+  public abstract @NotNull CellAppearanceEx forOrderEntry(Project project, @NotNull OrderEntry orderEntry, boolean selected);
 
-  @NotNull
-  public abstract CellAppearanceEx forLibrary(Project project, @NotNull Library library, boolean hasInvalidRoots);
+  public abstract @NotNull CellAppearanceEx forLibrary(Project project, @NotNull Library library, boolean hasInvalidRoots);
 
-  @NotNull
-  public abstract CellAppearanceEx forJdk(@Nullable Sdk jdk, boolean isInComboBox, boolean selected, boolean showVersion);
+  public abstract @NotNull CellAppearanceEx forJdk(@Nullable Sdk jdk, boolean isInComboBox, boolean selected, boolean showVersion);
 
-  @NotNull
-  public abstract CellAppearanceEx forContentFolder(@NotNull ContentFolder folder);
+  public abstract @NotNull CellAppearanceEx forContentFolder(@NotNull ContentFolder folder);
 
-  @NotNull
-  public abstract CellAppearanceEx forModule(@NotNull Module module);
+  public abstract @NotNull CellAppearanceEx forModule(@NotNull Module module);
 }

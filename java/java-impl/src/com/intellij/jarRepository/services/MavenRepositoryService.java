@@ -23,8 +23,7 @@ import java.util.Map;
 public abstract class MavenRepositoryService {
   public abstract @NotNull String getDisplayName();
 
-  @Unmodifiable
-  public abstract @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException;
+  public abstract @Unmodifiable @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException;
 
   public abstract @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException;

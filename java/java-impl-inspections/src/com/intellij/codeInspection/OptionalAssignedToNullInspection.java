@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -47,9 +47,8 @@ public final class OptionalAssignedToNullInspection extends AbstractBaseJavaLoca
     return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
@@ -181,18 +180,14 @@ public final class OptionalAssignedToNullInspection extends AbstractBaseJavaLoca
       myMethodName = myTypeName.equals(OptionalUtil.GUAVA_OPTIONAL) ? "absent" : "empty";
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x",
                                        StringUtil.getShortName(myTypeName) + "." + myMethodName + "()");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.null.value.for.optional.fix.family.name");
     }
 
@@ -215,10 +210,8 @@ public final class OptionalAssignedToNullInspection extends AbstractBaseJavaLoca
       return CommonQuickFixBundle.message("fix.replace.with.x", myUseIsEmpty ? "isEmpty" : "isPresent()");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "isPresent()");
     }
 

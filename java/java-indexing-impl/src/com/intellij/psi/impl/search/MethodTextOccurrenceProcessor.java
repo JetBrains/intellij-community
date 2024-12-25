@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.CachedSingletonsRegistry;
@@ -22,7 +22,7 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   protected final PsiClass myContainingClass;
   private final boolean myStrictSignatureSearch;
 
-  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass,
+  public MethodTextOccurrenceProcessor(final @NotNull PsiClass aClass,
                                        final boolean strictSignatureSearch,
                                        PsiMethod @NotNull ... methods) {
     super(strictSignatureSearch, Arrays.asList(methods));
@@ -34,7 +34,7 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   @Override
   public final boolean processTextOccurrence(@NotNull PsiElement element,
                                              int offsetInElement,
-                                             @NotNull final Processor<? super PsiReference> consumer) {
+                                             final @NotNull Processor<? super PsiReference> consumer) {
     for (PsiReference ref : ourReferenceService.get().getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && !processReference(consumer, ref)) {
         return false;

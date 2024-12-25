@@ -36,14 +36,12 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MismatchedReadAndWriteOfArray";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final boolean written = ((Boolean)infos[0]).booleanValue();
     if (written) {
       return InspectionGadgetsBundle.message(
@@ -152,7 +150,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
         if (CloneUtils.isClone(method)) {
           return false;
         }
-        @NonNls final String name = method.getName();
+        final @NonNls String name = method.getName();
         if ("copyOf".equals(name) || "copyOfRange".equals(name)) {
           final PsiClass aClass = method.getContainingClass();
           if (aClass != null && CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName())) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -44,9 +44,8 @@ public final class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspect
   private static final CallMatcher MAP_ENTRY =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "entry");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new OverwrittenKeyVisitor(holder);
   }
 

@@ -27,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public final class SynchronizeOnThisInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final boolean syncOnClass = ((Boolean)infos[0]).booleanValue();
     return InspectionGadgetsBundle.message(
       syncOnClass ? "synchronize.on.class.problem.descriptor" : "synchronize.on.this.problem.descriptor");

@@ -134,8 +134,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   /**
    * @return list of accessors which have not record-compatible names and need to be renamed separately.
    */
-  @NotNull
-  private List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
+  private @NotNull List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
     //noinspection UnnecessaryLocalVariable
     List<FieldAccessorCandidate> list = ContainerUtil.filter(
       myRecordCandidate.getFieldAccessors().values(),
@@ -148,8 +147,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
    * @param accessor a declaration to find supers methods for
    * @return a list of direct super methods, or the declaration itself if no super methods are found
    */
-  @NotNull
-  private static List<@NotNull PsiMethod> substituteWithSuperMethodsIfPossible(@NotNull PsiMethod accessor) {
+  private static @NotNull List<@NotNull PsiMethod> substituteWithSuperMethodsIfPossible(@NotNull PsiMethod accessor) {
     PsiMethod[] superMethods = accessor.findSuperMethods();
     if (superMethods.length == 0) {
       return List.of(accessor);
@@ -159,8 +157,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @NotNull
-  static List<UsageInfo> findConflicts(@NotNull RecordCandidate recordCandidate) {
+  static @NotNull List<UsageInfo> findConflicts(@NotNull RecordCandidate recordCandidate) {
     List<UsageInfo> result = new SmartList<>();
     for (var entry : recordCandidate.getFieldAccessors().entrySet()) {
       PsiField psiField = entry.getKey();
@@ -510,9 +507,8 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
                                   VisibilityUtil.getVisibilityModifier(second.getModifierList())) < 0;
   }
 
-  @Nullable
-  private static FieldAccessorCandidate getFieldAccessorCandidate(@NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors,
-                                                                  @NotNull PsiMethod psiMethod) {
+  private static @Nullable FieldAccessorCandidate getFieldAccessorCandidate(@NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors,
+                                                                            @NotNull PsiMethod psiMethod) {
     return ContainerUtil.find(fieldAccessors.values(), value -> value != null && psiMethod.equals(value.getAccessor()));
   }
 }

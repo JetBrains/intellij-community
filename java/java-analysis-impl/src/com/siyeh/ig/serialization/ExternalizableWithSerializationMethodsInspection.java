@@ -26,14 +26,12 @@ import org.jetbrains.annotations.NotNull;
 public final class ExternalizableWithSerializationMethodsInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ExternalizableClassWithSerializationMethods";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
     final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
     final int ordinal = ClassUtils.getTypeOrdinal((PsiClass)infos[2]);

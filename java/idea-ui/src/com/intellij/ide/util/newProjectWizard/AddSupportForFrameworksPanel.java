@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.newProjectWizard;
 
@@ -43,12 +43,12 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class AddSupportForFrameworksPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(AddSupportForFrameworksPanel.class);
-  @NonNls private static final String EMPTY_CARD = "empty";
+  private static final @NonNls String EMPTY_CARD = "empty";
   private JPanel myMainPanel;
   private JPanel myFrameworksPanel;
   private JLabel myLabel;
@@ -65,8 +65,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private FrameworkSupportNodeBase<?> myLastSelectedNode;
 
   private Collection<FrameworkSupportNodeBase<?>> myAssociatedFrameworks;
-  @Nullable
-  private final JPanel myAssociatedFrameworksPanel;
+  private final @Nullable JPanel myAssociatedFrameworksPanel;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportInModuleProvider> providers,
                                       final FrameworkSupportModelBase model, boolean vertical, @Nullable JPanel associatedFrameworksPanel) {
@@ -228,8 +227,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return panel;
   }
 
-  @Nullable
-  public FrameworkSupportNodeBase<?> getSelectedNode() {
+  public @Nullable FrameworkSupportNodeBase<?> getSelectedNode() {
     final FrameworkSupportNodeBase<?>[] nodes = myFrameworksTree.getSelectedNodes(FrameworkSupportNodeBase.class, null);
     return nodes.length == 1 ? nodes[0] : null;
   }
@@ -276,8 +274,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return list;
   }
 
-  @Nullable
-  private LibraryCompositionSettings getLibraryCompositionSettings(FrameworkSupportNode node) {
+  private @Nullable LibraryCompositionSettings getLibraryCompositionSettings(FrameworkSupportNode node) {
     final FrameworkSupportOptionsComponent optionsComponent = myInitializedOptionsComponents.get(node);
     return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
@@ -299,14 +296,13 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return associatedNodes.values();
   }
 
-  @Nullable
-  private FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider,
-                                          final Map<String, FrameworkSupportNode> nodes,
-                                          final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
-                                          List<? super FrameworkSupportNodeBase<?>> roots,
-                                          List<? extends FrameworkSupportInModuleProvider> providers,
-                                          Set<String> associated,
-                                          Map<String, FrameworkSupportNodeBase<?>> associatedNodes) {
+  private @Nullable FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider,
+                                                    final Map<String, FrameworkSupportNode> nodes,
+                                                    final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
+                                                    List<? super FrameworkSupportNodeBase<?>> roots,
+                                                    List<? extends FrameworkSupportInModuleProvider> providers,
+                                                    Set<String> associated,
+                                                    Map<String, FrameworkSupportNodeBase<?>> associatedNodes) {
     String id = provider.getFrameworkType().getId();
     FrameworkSupportNode node = nodes.get(id);
     if (node != null || associatedNodes.containsKey(id)) {
@@ -382,7 +378,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
+  public boolean downloadLibraries(final @NotNull JComponent parentComponent) {
     applyLibraryOptionsForSelected();
     for (LibraryCompositionSettings compositionSettings : getLibrariesCompositionSettingsList()) {
       if (!compositionSettings.downloadFiles(parentComponent)) {
@@ -451,8 +447,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  @Unmodifiable
-  private List<? extends FrameworkSupportNode> sortFrameworks(@Unmodifiable List<? extends FrameworkSupportNode> nodes) {
+  private @Unmodifiable List<? extends FrameworkSupportNode> sortFrameworks(@Unmodifiable List<? extends FrameworkSupportNode> nodes) {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
     return ContainerUtil.sorted(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -19,8 +19,7 @@ public final class IteratorUtils {
    *                null to check for "this" as target variable.
    * @return an illegal call expression, like iterator.next() or listIterator.previous()
    */
-  @Nullable
-  public static PsiMethodCallExpression getIllegalCallInHasNext(PsiElement context, PsiVariable target, boolean checkTarget) {
+  public static @Nullable PsiMethodCallExpression getIllegalCallInHasNext(PsiElement context, PsiVariable target, boolean checkTarget) {
     final CallsIteratorNextVisitor visitor =
       new CallsIteratorNextVisitor(target, checkTarget, false);
     context.accept(visitor);
@@ -85,8 +84,7 @@ public final class IteratorUtils {
       stopWalking();
     }
 
-    @Nullable
-    private PsiMethodCallExpression getIllegalCall() {
+    private @Nullable PsiMethodCallExpression getIllegalCall() {
       return illegalCall;
     }
   }

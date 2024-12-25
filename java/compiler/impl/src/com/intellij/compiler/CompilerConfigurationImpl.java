@@ -99,8 +99,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   // the map is calculated by module processor profiles list for faster access to module settings
   private Map<Module, ProcessorConfigProfile> myProcessorsProfilesMap = null;
 
-  @Nullable
-  private String myBytecodeTargetLevel = null;  // null means same as effective language level
+  private @Nullable String myBytecodeTargetLevel = null;  // null means same as effective language level
   private final Map<String, String> myModuleBytecodeTarget = new HashMap<>();
 
   public CompilerConfigurationImpl(@NotNull Project project) {
@@ -139,8 +138,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }, project);
   }
 
-  @NotNull
-  private static ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+  private static @NotNull ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
     Disposer.register(project, cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
@@ -168,8 +166,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
     public boolean USE_RELEASE_OPTION = true;
-    @Nullable
-    public ParallelCompilationOption PARALLEL_COMPILATION_OPTION = null;
+    public @Nullable ParallelCompilationOption PARALLEL_COMPILATION_OPTION = null;
   }
 
   @Override
@@ -343,8 +340,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
-  @NotNull
-  public ParallelCompilationOption getParallelCompilationOption() {
+  public @NotNull ParallelCompilationOption getParallelCompilationOption() {
     if (myState.PARALLEL_COMPILATION_OPTION == null) migrateParallelCompilationOption();
     return myState.PARALLEL_COMPILATION_OPTION;
   }
@@ -359,8 +355,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
-  @Nullable
-  public String getProjectBytecodeTarget() {
+  public @Nullable String getProjectBytecodeTarget() {
     return myBytecodeTargetLevel;
   }
 
@@ -402,8 +397,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
-  @Nullable
-  public String getBytecodeTargetLevel(Module module) {
+  public @Nullable String getBytecodeTargetLevel(Module module) {
     final String level = myModuleBytecodeTarget.get(module.getName());
     if (level != null) {
       return level.isEmpty() ? null : level;
@@ -425,9 +419,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
   }
 
-  @NotNull
   @Override
-  public List<String> getAdditionalOptions(@NotNull Module module) {
+  public @NotNull List<String> getAdditionalOptions(@NotNull Module module) {
     JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
       String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
@@ -488,8 +481,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     return JAVAC_EXTERNAL_BACKEND;
   }
 
-  @NotNull
-  private List<BackendCompiler> collectCompilers() {
+  private @NotNull List<BackendCompiler> collectCompilers() {
     final List<BackendCompiler> compilers = new ArrayList<>();
     compilers.add(JAVAC_EXTERNAL_BACKEND);
     if (EclipseCompiler.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -571,8 +563,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myAddNotNullAssertions = enabled;
   }
 
-  @NotNull
-  public ProcessorConfigProfile getDefaultProcessorProfile() {
+  public @NotNull ProcessorConfigProfile getDefaultProcessorProfile() {
     return myDefaultProcessorsProfile;
   }
 
@@ -580,8 +571,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myDefaultProcessorsProfile.initFrom(profile);
   }
 
-  @NotNull
-  public List<ProcessorConfigProfile> getModuleProcessorProfiles() {
+  public @NotNull List<ProcessorConfigProfile> getModuleProcessorProfiles() {
     return Collections.unmodifiableList(myModuleProcessorProfiles);
   }
 
@@ -593,8 +583,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myProcessorsProfilesMap = null;
   }
 
-  @Nullable
-  public ProcessorConfigProfile findModuleProcessorProfile(@NotNull String name) {
+  public @Nullable ProcessorConfigProfile findModuleProcessorProfile(@NotNull String name) {
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
       if (name.equals(profile.getName())) {
         return profile;
@@ -622,8 +611,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
-  @NotNull
-  public ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
+  public @NotNull ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {
     Map<Module, ProcessorConfigProfile> map = myProcessorsProfilesMap;
     if (map == null) {
       map = new HashMap<>();
@@ -660,7 +648,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     return false;
   }
 
-  private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
+  private void addWildcardResourcePattern(final @NonNls String wildcardPattern) throws MalformedPatternException {
     final CompiledPattern pattern = convertToRegexp(wildcardPattern);
     myWildcardPatterns.add(wildcardPattern);
     if (isPatternNegated(wildcardPattern)) {

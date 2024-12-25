@@ -165,8 +165,7 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
   }
 
 
-  @Nullable
-  public static PsiCall findCallToInline(final Editor editor) {
+  public static @Nullable PsiCall findCallToInline(final Editor editor) {
     PsiCall callToInline = null;
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor) : null;
     if (reference != null) {
@@ -178,8 +177,7 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
     return callToInline;
   }
 
-  @Nullable
-  public static @Nls String getCannotInlineMessage(final PsiClass psiClass) {
+  public static @Nullable @Nls String getCannotInlineMessage(final PsiClass psiClass) {
     if (psiClass instanceof PsiTypeParameter) {
       return JavaBundle.message("type.parameters.cannot.be.inlined");
     }
@@ -292,7 +290,7 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
     return getCannotInlineDueToUsagesMessage(psiClass);
   }
 
-  static boolean isRedundantImplements(@NotNull final PsiClass superClass, final PsiClassType interfaceType) {
+  static boolean isRedundantImplements(final @NotNull PsiClass superClass, final PsiClassType interfaceType) {
     boolean redundantImplements = false;
     PsiClassType[] superClassInterfaces = superClass.getImplementsListTypes();
     for (PsiClassType superClassInterface: superClassInterfaces) {
@@ -304,8 +302,7 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
     return redundantImplements;
   }
 
-  @Nullable
-  private static @Nls String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
+  private static @Nullable @Nls String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
     boolean hasUsages = false;
     for (PsiReference reference : ReferencesSearch.search(aClass, GlobalSearchScope.projectScope(aClass.getProject()))) {
       final PsiElement element = reference.getElement();

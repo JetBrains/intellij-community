@@ -19,9 +19,8 @@ public final class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
 
   static final Set<String> dateTimeNames = Set.of("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone");
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("use.of.obsolete.date.time.api.problem.descriptor");
   }
 

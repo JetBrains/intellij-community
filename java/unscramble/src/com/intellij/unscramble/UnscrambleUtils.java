@@ -19,7 +19,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.regex.Pattern;
 
-final public class UnscrambleUtils {
+public final class UnscrambleUtils {
   private static final Condition<ThreadState> DEADLOCK_CONDITION = state -> state.isDeadlocked();
   private static final Pattern STACKTRACE_LINE =
     Pattern.compile(

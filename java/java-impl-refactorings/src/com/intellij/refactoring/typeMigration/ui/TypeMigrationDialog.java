@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -82,8 +82,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules, true));
   }
 
-  @NotNull
-  protected abstract Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction();
+  protected abstract @NotNull Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction();
 
   protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints cs) {
   }
@@ -257,8 +256,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return Functions.constant(getMigrationType());
     }
 
-    @Nullable
-    public PsiType getMigrationType() {
+    public @Nullable PsiType getMigrationType() {
       try {
         return myTypeCodeFragment.getType();
       }
@@ -268,8 +266,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       }
     }
 
-    @Nullable
-    private PsiType getRootType() {
+    private @Nullable PsiType getRootType() {
       return TypeMigrationLabeler.getElementType(myRoots[0]);
     }
 

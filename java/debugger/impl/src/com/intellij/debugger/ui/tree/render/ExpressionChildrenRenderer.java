@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -77,8 +77,7 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
     });
   }
 
-  @Nullable
-  public static NodeRenderer getLastChildrenRenderer(ValueDescriptor descriptor) {
+  public static @Nullable NodeRenderer getLastChildrenRenderer(ValueDescriptor descriptor) {
     return descriptor.getUserData(LAST_CHILDREN_RENDERER);
   }
 

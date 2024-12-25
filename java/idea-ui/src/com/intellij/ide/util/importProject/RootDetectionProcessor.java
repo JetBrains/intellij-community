@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
@@ -35,8 +35,7 @@ public class RootDetectionProcessor {
   private final FileTypeManager myTypeManager;
   private final ProgressIndicator myProgressIndicator;
 
-  @NotNull
-  public static List<DetectedRootData> detectRoots(@NotNull File baseProjectFile) {
+  public static @NotNull List<DetectedRootData> detectRoots(@NotNull File baseProjectFile) {
     return new RootDetectionProcessor(baseProjectFile, ProjectStructureDetector.EP_NAME.getExtensions()).detectRoots();
   }
 
@@ -108,7 +107,7 @@ public class RootDetectionProcessor {
       if (myProgressIndicator.isCanceled()) {
         return parentsToSkip;
       }
-      @NlsSafe final String path = dir.getPath();
+      final @NlsSafe String path = dir.getPath();
       myProgressIndicator.setText2(path);
     }
 

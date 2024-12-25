@@ -50,7 +50,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackageInSources((PsiDirectory)element) != null;
   }
 
-  public static boolean isReferenceInAnonymousClass(@Nullable final PsiReference reference) {
+  public static boolean isReferenceInAnonymousClass(final @Nullable PsiReference reference) {
     if (reference instanceof PsiJavaCodeReferenceElement &&
        ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnonymousClass) {
       return true;
@@ -67,9 +67,8 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return targetContainer == null || super.canMove(elements, targetContainer, reference);
   }
 
-  @Nullable
   @Override
-  public String getActionName(PsiElement @NotNull [] elements) {
+  public @Nullable String getActionName(PsiElement @NotNull [] elements) {
     int classCount = 0, directoryCount = 0;
     for (PsiElement element : elements) {
       if (element instanceof PsiClass) classCount++;
@@ -174,10 +173,9 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     MoveClassesOrPackagesImpl.doMove(project, adjustedElements, initialTargetElement, moveCallback);
   }
 
-  @NotNull
-  protected DialogWrapper createMoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory,
-                                                                       PsiElement[] elementsToMove,
-                                                                       final MoveCallback moveCallback) {
+  protected @NotNull DialogWrapper createMoveClassesOrPackagesToNewDirectoryDialog(final @NotNull PsiDirectory directory,
+                                                                                   PsiElement[] elementsToMove,
+                                                                                   final MoveCallback moveCallback) {
     return new MoveClassesOrPackagesToNewDirectoryDialog(directory, elementsToMove, moveCallback);
   }
 
@@ -219,7 +217,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], directories, false, callback) {
           @Override
           protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
-                                                                        @NotNull final PsiDirectory targetDirectory,
+                                                                        final @NotNull PsiDirectory targetDirectory,
                                                                         @NotNull PsiPackage aPackage,
                                                                         boolean searchInComments,
                                                                         boolean searchForTextOccurences) {
@@ -235,9 +233,8 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
               return null;
             }
             return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments, searchForTextOccurences, true, callback) {
-              @NotNull
               @Override
-              public TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
+              public @NotNull TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
                 final PsiDirectory targetDirectory = destination.getTargetDirectory(dir);
                 return new TargetDirectoryWrapper(targetDirectory);
               }

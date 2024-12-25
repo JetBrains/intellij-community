@@ -35,9 +35,8 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
     return Set.of(JavaFeature.IMPLICIT_CLASSES);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
@@ -163,10 +162,8 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
 
   private static class ReplaceWithImplicitClassFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.explicit.to.implicit.class.migration.fix.name");
     }
 

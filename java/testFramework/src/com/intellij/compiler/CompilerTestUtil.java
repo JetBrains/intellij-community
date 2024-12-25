@@ -47,8 +47,7 @@ public final class CompilerTestUtil {
     store.saveComponent((PersistentStateComponent<?>)PathMacros.getInstance());
   }
 
-  @NotNull
-  public static IComponentStore getApplicationStore() {
+  public static @NotNull IComponentStore getApplicationStore() {
     return IComponentStoreKt.getStateStore(ApplicationManager.getApplication());
   }
 
@@ -69,7 +68,7 @@ public final class CompilerTestUtil {
   }
 
   @TestOnly
-  public static void disableExternalCompiler(@NotNull  final Project project) {
+  public static void disableExternalCompiler(final @NotNull Project project) {
     EdtTestUtil.runInEdtAndWait(() -> {
       final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
       ApplicationManager.getApplication().runWriteAction(() -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -32,16 +32,14 @@ class StaticInheritanceFix extends ModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     String scope =
       myReplaceInWholeProject ? InspectionGadgetsBundle.message("the.whole.project") : InspectionGadgetsBundle.message("this.class");
     return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix", scope);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("static.inheritance.fix.family.name");
   }
 
@@ -81,10 +79,9 @@ class StaticInheritanceFix extends ModCommandQuickFix {
     });
   }
 
-  @NotNull
-  private Map<PsiReferenceExpression, PsiClass> findReplacements(@NotNull PsiField @NotNull [] allFields,
-                                                                 @NotNull PsiClass implementingClass,
-                                                                 @NotNull ModPsiUpdater updater) {
+  private @NotNull Map<PsiReferenceExpression, PsiClass> findReplacements(@NotNull PsiField @NotNull [] allFields,
+                                                                          @NotNull PsiClass implementingClass,
+                                                                          @NotNull ModPsiUpdater updater) {
     Map<PsiReferenceExpression, PsiClass> replacements = new LinkedHashMap<>();
     for (final PsiField field : allFields) {
       SearchScope scope = implementingClass.getUseScope();

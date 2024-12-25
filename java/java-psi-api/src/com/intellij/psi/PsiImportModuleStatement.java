@@ -44,7 +44,7 @@ public interface PsiImportModuleStatement extends PsiImportStatementBase {
   }
 
   @Override
-  @Nullable default PsiJavaCodeReferenceElement getImportReference() {
+  default @Nullable PsiJavaCodeReferenceElement getImportReference() {
     return null;
   }
 

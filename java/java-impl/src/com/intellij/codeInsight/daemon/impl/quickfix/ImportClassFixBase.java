@@ -110,13 +110,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected abstract PsiElement getReferenceNameElement(@NotNull R reference);
   protected abstract boolean hasTypeParameters(@NotNull R reference);
 
-  @Unmodifiable
-  public @NotNull List<? extends PsiClass> getClassesToImport() {
+  public @Unmodifiable @NotNull List<? extends PsiClass> getClassesToImport() {
     return getClassesToImport(false);
   }
 
-  @Unmodifiable
-  public @NotNull List<? extends PsiClass> getClassesToImport(boolean acceptWrongNumberOfTypeParams) {
+  public @Unmodifiable @NotNull List<? extends PsiClass> getClassesToImport(boolean acceptWrongNumberOfTypeParams) {
     if (!acceptWrongNumberOfTypeParams && hasTypeParameters(myReference)) {
       return ContainerUtil.findAll(myClassesToImport, PsiTypeParameterListOwner::hasTypeParameters);
     }
@@ -301,8 +299,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return null;
   }
 
-  @Unmodifiable
-  protected @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull T referenceElement) {
+  protected @Unmodifiable @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull T referenceElement) {
     return candidates;
   }
 
@@ -310,8 +307,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   protected abstract String getQualifiedName(@NotNull T referenceElement);
 
-  @Unmodifiable
-  protected static @NotNull Collection<PsiClass> filterAssignableFrom(@NotNull PsiType type, @NotNull Collection<PsiClass> candidates) {
+  protected static @Unmodifiable @NotNull Collection<PsiClass> filterAssignableFrom(@NotNull PsiType type, @NotNull Collection<PsiClass> candidates) {
     PsiClass actualClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (actualClass != null) {
       return ContainerUtil.findAll(candidates, psiClass -> InheritanceUtil.isInheritorOrSelf(actualClass, psiClass, true));

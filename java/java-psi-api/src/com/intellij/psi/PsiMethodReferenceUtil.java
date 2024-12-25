@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.core.JavaPsiBundle;
@@ -62,8 +62,7 @@ public final class PsiMethodReferenceUtil {
            isSecondSearchPossible(functionalMethodParameterTypes, qualifierResolveResult, methodRef);
   }
 
-  @Nullable
-  public static PsiType getQualifierType(PsiMethodReferenceExpression expression) {
+  public static @Nullable PsiType getQualifierType(PsiMethodReferenceExpression expression) {
     final PsiTypeElement typeElement = expression.getQualifierType();
     if (typeElement != null) {
       return typeElement.getType();
@@ -92,8 +91,7 @@ public final class PsiMethodReferenceUtil {
    * @param expression a method reference to get the return type of
    * @return an actual method reference return type
    */
-  @Nullable
-  public static PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression) {
+  public static @Nullable PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression) {
     return getMethodReferenceReturnType(expression, expression.advancedResolve(false));
   }
 
@@ -104,8 +102,7 @@ public final class PsiMethodReferenceUtil {
    * @param result the result of method reference resolution
    * @return an actual method reference return type
    */
-  @Nullable
-  private static PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression, @NotNull JavaResolveResult result) {
+  private static @Nullable PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression, @NotNull JavaResolveResult result) {
     PsiSubstitutor subst = result.getSubstitutor();
 
     PsiType methodReturnType = null;
@@ -188,8 +185,7 @@ public final class PsiMethodReferenceUtil {
       myReferenceTypeQualified = referenceTypeQualified;
     }
 
-    @Nullable
-    public PsiClass getContainingClass() {
+    public @Nullable PsiClass getContainingClass() {
       return myContainingClass;
     }
 
@@ -216,8 +212,7 @@ public final class PsiMethodReferenceUtil {
     return false;
   }
 
-  @NotNull
-  public static QualifierResolveResult getQualifierResolveResult(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
+  public static @NotNull QualifierResolveResult getQualifierResolveResult(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     PsiClass containingClass = null;
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final PsiExpression expression = methodReferenceExpression.getQualifierExpression();

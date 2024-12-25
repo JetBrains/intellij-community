@@ -26,9 +26,8 @@ import java.util.Objects;
 public final class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration>
   implements DumbAware {
 
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return JavaScratchConfigurationType.getInstance();
   }
 

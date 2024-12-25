@@ -27,9 +27,8 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
   @SuppressWarnings("PublicField")
   public boolean ignoreNonStringLiterals = true;
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.concatenation.missing.whitespace.problem.descriptor");
   }
 
@@ -71,7 +70,7 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
     }
 
     private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs, boolean formatCall) {
-      @NonNls final String lhsLiteral = computeStringValue(lhs);
+      final @NonNls String lhsLiteral = computeStringValue(lhs);
       if (lhsLiteral != null) {
         final int length = lhsLiteral.length();
         if (length == 0 || formatCall && lhsLiteral.endsWith("%n")) {
@@ -85,7 +84,7 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
       else if (ignoreNonStringLiterals && ExpressionUtils.hasStringType(lhs)) {
         return false;
       }
-      @NonNls final String rhsLiteral = computeStringValue(rhs);
+      final @NonNls String rhsLiteral = computeStringValue(rhs);
       if (rhsLiteral != null) {
         if (rhsLiteral.isEmpty() || formatCall && rhsLiteral.startsWith("%n")) {
           return false;
@@ -101,8 +100,7 @@ public final class StringConcatenationMissingWhitespaceInspection extends BaseIn
       return true;
     }
 
-    @Nullable
-    public String computeStringValue(@Nullable PsiExpression expression) {
+    public @Nullable String computeStringValue(@Nullable PsiExpression expression) {
       final Object value = ExpressionUtils.computeConstantExpression(expression);
       return value == null ? null : value.toString();
     }

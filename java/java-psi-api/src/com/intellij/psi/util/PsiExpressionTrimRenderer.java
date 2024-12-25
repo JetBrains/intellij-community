@@ -251,9 +251,8 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   public static class RenderFunction implements NotNullFunction<PsiExpression, String> {
-    @NotNull
     @Override
-    public String fun(@NotNull PsiExpression psiExpression) {
+    public @NotNull String fun(@NotNull PsiExpression psiExpression) {
       return render(psiExpression);
     }
   }

@@ -38,9 +38,8 @@ public final class DebuggerSettingsStatisticsCollector extends ApplicationUsages
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     Set<MetricEvent> set = new HashSet<>();
 
     DebuggerSettings settings = DebuggerSettings.getInstance();

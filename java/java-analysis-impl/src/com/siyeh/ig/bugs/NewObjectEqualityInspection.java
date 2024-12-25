@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -28,8 +28,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class NewObjectEqualityInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     Object sign = infos[1];
     return InspectionGadgetsBundle.message("inspection.new.object.equality.message", sign);
   }

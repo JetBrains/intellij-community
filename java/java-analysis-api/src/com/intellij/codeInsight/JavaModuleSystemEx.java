@@ -30,8 +30,7 @@ public interface JavaModuleSystemEx extends JavaModuleSystem {
     }
   }
 
-  @Nullable
-  default ErrorWithFixes checkAccess(@NotNull PsiClass target, @NotNull PsiElement place) {
+  default @Nullable ErrorWithFixes checkAccess(@NotNull PsiClass target, @NotNull PsiElement place) {
     String packageName = PsiUtil.getPackageName(target);
     return packageName != null ? checkAccess(packageName, target.getContainingFile(), place) : null;
   }

@@ -630,8 +630,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     return (RequestHint)event.request().getProperty("hint");
   }
 
-  @Nullable
-  private static Object getCommandToken(Event event) {
+  private static @Nullable Object getCommandToken(Event event) {
     return event.request().getProperty("commandToken");
   }
 
@@ -926,8 +925,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       .notify(getProject());
   }
 
-  @Nullable
-  private static LocatableEvent getLocatableEvent(EventSet eventSet) {
+  private static @Nullable LocatableEvent getLocatableEvent(EventSet eventSet) {
     return StreamEx.of(eventSet).select(LocatableEvent.class).findFirst().orElse(null);
   }
 

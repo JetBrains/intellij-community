@@ -143,8 +143,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return PositionUtil.getContextElement(context);
   }
 
-  @NotNull
-  public static Pair<PsiElement, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
+  public static @NotNull Pair<PsiElement, PsiType> getPsiClassAndType(@Nullable String className, Project project) {
     PsiElement contextClass = null;
     PsiType contextType = null;
     if (!StringUtil.isEmpty(className)) {
@@ -373,8 +372,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return !allScope.equals(scope) ? allScope : null;
   }
 
-  @NotNull
-  public static String getIdeaRtPath() {
+  public static @NotNull String getIdeaRtPath() {
     if (PluginManagerCore.isRunningFromSources()) {
       Class<?> aClass = CommandLineWrapper.class;
       try {
@@ -427,14 +425,12 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     });
   }
 
-  @NotNull
-  public static CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<NodeRenderer> renderers, Type type) {
+  public static @NotNull CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<NodeRenderer> renderers, Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return getFirstApplicableRenderer(ContainerUtil.map(renderers, r -> r.isApplicableAsync(type)), 0, renderers);
   }
 
-  @NotNull
-  public static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<? extends NodeRenderer> renderers, Type type) {
+  public static @NotNull CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<? extends NodeRenderer> renderers, Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     CompletableFuture<Boolean>[] futures = renderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
     return CompletableFuture.allOf(futures).thenApply(__ -> {
@@ -453,8 +449,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     });
   }
 
-  @Nullable
-  public static XValueMarkers<?, ?> getValueMarkers(@Nullable DebugProcess process) {
+  public static @Nullable XValueMarkers<?, ?> getValueMarkers(@Nullable DebugProcess process) {
     if (process instanceof DebugProcessImpl) {
       XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
       if (session instanceof XDebugSessionImpl) {
@@ -548,8 +543,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return invokeHelperMethod(evaluationContext, cls, methodName, arguments, true);
   }
 
-  @Nullable
-  public static String getExceptionText(EvaluationContextImpl evaluationContext, @NotNull ObjectReference exceptionObject)
+  public static @Nullable String getExceptionText(EvaluationContextImpl evaluationContext, @NotNull ObjectReference exceptionObject)
     throws EvaluateException {
     try {
       Value value = invokeHelperMethod(evaluationContext,
@@ -565,10 +559,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return MethodInvokeUtils.getExceptionTextViaArray(evaluationContext, exceptionObject);
   }
 
-  @Nullable
-  public static ArrayReference invokeThrowableGetStackTrace(@NotNull ObjectReference exceptionObj,
-                                                   @NotNull EvaluationContextImpl evaluationContext,
-                                                   boolean keepResult) throws EvaluateException {
+  public static @Nullable ArrayReference invokeThrowableGetStackTrace(@NotNull ObjectReference exceptionObj,
+                                                                      @NotNull EvaluationContextImpl evaluationContext,
+                                                                      boolean keepResult) throws EvaluateException {
     if (instanceOf(exceptionObj.type(), "java.lang.Throwable")) {
       Method method = findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
       DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();

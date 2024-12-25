@@ -35,14 +35,12 @@ public final class InstanceofChainInspection extends BaseInspection {
   public boolean ignoreInstanceofOnLibraryClasses = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ChainOfInstanceofChecks";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Check check = (Check)infos[0];
     if (check == Check.CLASS_EQUALITY) {
       return InspectionGadgetsBundle.message("chain.of.class.equality.checks.problem.descriptor");

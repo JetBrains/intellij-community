@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.WriteAction;
@@ -48,24 +48,20 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     }
   }
 
-  @NotNull
-  protected PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
+  protected @NotNull PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
     FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(myProject).createFileFromText(fileName, type, text);
   }
 
-  @NotNull
-  protected PsiFile createFile(@NonNls @NotNull String fileName, @NotNull String text) throws Exception {
+  protected @NotNull PsiFile createFile(@NonNls @NotNull String fileName, @NotNull String text) throws Exception {
     return createFile(myModule, fileName, text);
   }
 
-  @NotNull
-  protected PsiFile createFile(@NotNull Module module, @NotNull String fileName, @NotNull String text) throws Exception {
+  protected @NotNull PsiFile createFile(@NotNull Module module, @NotNull String fileName, @NotNull String text) throws Exception {
     return createFile(module, getTempDir().createVirtualDir(), fileName, text);
   }
 
-  @NotNull
-  protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text)
+  protected @NotNull PsiFile createFile(final @NotNull Module module, final @NotNull VirtualFile vDir, final @NotNull String fileName, final @NotNull String text)
     throws IOException {
     VirtualFile virtualFile = WriteAction.computeAndWait(() -> {
       if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
@@ -99,13 +95,11 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     return myFile.findElementAt(offset);
   }
 
-  @NotNull
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
   }
 
-  @NotNull
-  protected String loadFile(@NotNull String name) throws Exception {
+  protected @NotNull String loadFile(@NotNull String name) throws Exception {
     String result = FileUtil.loadFile(new File(getTestDataPath() + File.separatorChar + name));
     return StringUtil.convertLineSeparators(result);
   }

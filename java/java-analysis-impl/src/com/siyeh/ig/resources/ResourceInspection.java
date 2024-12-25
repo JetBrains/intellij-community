@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -55,8 +55,7 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiType type = expression.getType();
     assert type != null;
@@ -122,8 +121,7 @@ public abstract class ResourceInspection extends BaseInspection {
     return false;
   }
 
-  @Nullable
-  public static PsiVariable getVariable(@NotNull PsiExpression expression) {
+  public static @Nullable PsiVariable getVariable(@NotNull PsiExpression expression) {
     final PsiElement parent = getParent(expression);
     if (parent instanceof PsiAssignmentExpression assignment) {
       final PsiExpression lhs = assignment.getLExpression();
@@ -469,8 +467,7 @@ public abstract class ResourceInspection extends BaseInspection {
   private class EscapeVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable boundVariable;
-    @Nullable
-    private final PsiLoopStatement loopStatement;
+    private final @Nullable PsiLoopStatement loopStatement;
     private boolean escaped;
 
     EscapeVisitor(@NotNull PsiVariable boundVariable, @NotNull PsiExpression creationExpression) {

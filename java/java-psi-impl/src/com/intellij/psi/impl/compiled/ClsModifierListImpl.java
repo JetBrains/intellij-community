@@ -184,8 +184,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     });
   }
 
-  @NotNull
-  private static Map<String, PsiAnnotation> getAnnotationByShortName(@NotNull PsiAnnotation @NotNull [] annotations) {
+  private static @NotNull Map<String, PsiAnnotation> getAnnotationByShortName(@NotNull PsiAnnotation @NotNull [] annotations) {
     HashMap<String, PsiAnnotation> result = new HashMap<>();
     for (@NotNull PsiAnnotation annotation : annotations) {
       result.put(getAnnotationReferenceShortName(annotation), annotation);

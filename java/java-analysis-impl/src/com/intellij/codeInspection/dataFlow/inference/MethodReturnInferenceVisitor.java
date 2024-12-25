@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.Nullability;
@@ -64,8 +64,7 @@ class MethodReturnInferenceVisitor {
     }
   }
 
-  @NotNull
-  private ReturnValue getExpressionValue(@Nullable LighterASTNode expr) {
+  private @NotNull ReturnValue getExpressionValue(@Nullable LighterASTNode expr) {
     expr = skipParenthesesCastsDown(tree, expr);
     if (expr == null) {
       return ReturnValue.UNKNOWN;
@@ -104,8 +103,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.UNKNOWN;
   }
 
-  @NotNull
-  private ReturnValue findValueInSwitchExpression(@NotNull LighterASTNode expr) {
+  private @NotNull ReturnValue findValueInSwitchExpression(@NotNull LighterASTNode expr) {
     if (expr.getTokenType() != SWITCH_EXPRESSION) return ReturnValue.UNKNOWN;
     LighterASTNode block = firstChildOfType(tree, expr, CODE_BLOCK);
     if (block == null) return ReturnValue.UNKNOWN;
@@ -127,8 +125,7 @@ class MethodReturnInferenceVisitor {
       .orElse(ReturnValue.UNKNOWN);
   }
 
-  @NotNull
-  private List<ReturnValue> findValueInSwitchBlock(@NotNull LighterASTNode expr) {
+  private @NotNull List<ReturnValue> findValueInSwitchBlock(@NotNull LighterASTNode expr) {
     var visitor = new RecursiveLighterASTNodeWalkingVisitor(tree) {
       private final List<ReturnValue> values = new ArrayList<>();
 
@@ -148,8 +145,7 @@ class MethodReturnInferenceVisitor {
     return visitor.values;
   }
 
-  @Nullable
-  private ReturnValue findValueInRule(@NotNull LighterASTNode rule) {
+  private @Nullable ReturnValue findValueInRule(@NotNull LighterASTNode rule) {
     LighterASTNode body = firstChildOfType(tree, rule, PsiSwitchLabeledRuleStatementImpl.BODY_STATEMENTS);
     if (body == null) {
       return ReturnValue.UNKNOWN;
@@ -169,8 +165,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.UNKNOWN;
   }
 
-  @NotNull
-  private ReturnValue findVariableValue(LighterASTNode expr, LighterASTNode target) {
+  private @NotNull ReturnValue findVariableValue(LighterASTNode expr, LighterASTNode target) {
     LighterASTNode parent;
     while (true) {
       parent = tree.getParent(expr);
@@ -204,8 +199,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.UNKNOWN;
   }
 
-  @NotNull
-  private ReturnValue findValueBeforeStatement(LighterASTNode statement, LighterASTNode target) {
+  private @NotNull ReturnValue findValueBeforeStatement(LighterASTNode statement, LighterASTNode target) {
     LighterASTNode parent = tree.getParent(statement);
     if (parent == null) {
       return ReturnValue.UNKNOWN;
@@ -256,8 +250,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.UNKNOWN;
   }
 
-  @Nullable
-  private ReturnValue findValueInStatement(LighterASTNode statement, LighterASTNode target) {
+  private @Nullable ReturnValue findValueInStatement(LighterASTNode statement, LighterASTNode target) {
     if (statement == null) return null;
     IElementType tokenType = statement.getTokenType();
     if (tokenType == EXPRESSION_STATEMENT) {
@@ -302,8 +295,7 @@ class MethodReturnInferenceVisitor {
     return null;
   }
 
-  @Nullable
-  private ReturnValue findValueInIfStatement(LighterASTNode statement, LighterASTNode target) {
+  private @Nullable ReturnValue findValueInIfStatement(LighterASTNode statement, LighterASTNode target) {
     List<LighterASTNode> branches = getChildrenOfType(tree, statement, ElementType.JAVA_STATEMENT_BIT_SET);
     LighterASTNode condition = findExpressionChild(tree, statement);
     LighterASTNode thenBranch = ContainerUtil.getFirstItem(branches);
@@ -340,8 +332,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.merge(thenValue, elseValue);
   }
 
-  @Nullable
-  private ReturnValue findValueInExpression(LighterASTNode expression, LighterASTNode target) {
+  private @Nullable ReturnValue findValueInExpression(LighterASTNode expression, LighterASTNode target) {
     if (expression == null) return null;
     IElementType type = expression.getTokenType();
     if (type == ASSIGNMENT_EXPRESSION) {

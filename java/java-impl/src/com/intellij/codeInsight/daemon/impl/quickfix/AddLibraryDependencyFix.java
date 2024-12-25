@@ -39,8 +39,7 @@ import java.util.Map;
 
 class AddLibraryDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
-  @Unmodifiable
-  private final Map<Library, String> myLibraries;
+  private final @Unmodifiable Map<Library, String> myLibraries;
   private final DependencyScope myScope;
   private final boolean myExported;
 

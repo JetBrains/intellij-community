@@ -133,8 +133,7 @@ public final class HighlightFixUtil {
     }
   }
 
-  @Nullable
-  static PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
+  static @Nullable PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
     if (place instanceof PsiReferenceExpression expression) {
       // check for package-private classes in the middle
       while (true) {
@@ -261,8 +260,7 @@ public final class HighlightFixUtil {
    * @param itemType a desired variable type
    * @return a list of created fix actions
    */
-  @NotNull
-  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, @Nullable PsiType itemType) {
+  public static @NotNull List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, @Nullable PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return Collections.emptyList();
     List<IntentionAction> result = new ArrayList<>();
     if (itemType != null && PsiTypesUtil.allTypeParametersResolved(variable, itemType)) {
@@ -288,8 +286,7 @@ public final class HighlightFixUtil {
     return result;
   }
 
-  @Nullable
-  private static IntentionAction getChangeParameterClassFix(@NotNull PsiType lType, @NotNull PsiType rType) {
+  private static @Nullable IntentionAction getChangeParameterClassFix(@NotNull PsiType lType, @NotNull PsiType rType) {
     PsiClass lClass = PsiUtil.resolveClassInClassTypeOnly(lType);
     PsiClass rClass = PsiUtil.resolveClassInClassTypeOnly(rType);
 
@@ -388,10 +385,9 @@ public final class HighlightFixUtil {
     return switchForAll;
   }
 
-  @Nullable
-  static IntentionAction createInsertSwitchDefaultFix(@NotNull PsiVariable variable,
-                                                      @NotNull PsiElement topBlock,
-                                                      @NotNull PsiElement readPoint) {
+  static @Nullable IntentionAction createInsertSwitchDefaultFix(@NotNull PsiVariable variable,
+                                                                @NotNull PsiElement topBlock,
+                                                                @NotNull PsiElement readPoint) {
     PsiSwitchStatement switchStatement = findInitializingSwitch(variable, topBlock, readPoint);
     if (switchStatement != null) {
       String message = QuickFixBundle.message("add.default.branch.to.variable.initializing.switch.fix.name", variable.getName());

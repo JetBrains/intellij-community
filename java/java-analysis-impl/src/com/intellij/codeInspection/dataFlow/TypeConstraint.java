@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -376,8 +376,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     }
 
     @Override
-    @NotNull
-    default Exact convert(TypeConstraintFactory factory) {
+    default @NotNull Exact convert(TypeConstraintFactory factory) {
       return this;
     }
   }

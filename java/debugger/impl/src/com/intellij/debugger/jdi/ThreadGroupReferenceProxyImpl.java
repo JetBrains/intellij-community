@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -60,13 +60,11 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     getThreadGroupReference().resume();
   }
 
-  @Unmodifiable
-  public List<ThreadReferenceProxyImpl> threads() {
+  public @Unmodifiable List<ThreadReferenceProxyImpl> threads() {
     return ContainerUtil.map(getThreadGroupReference().threads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
-  @Unmodifiable
-  public List<ThreadGroupReferenceProxyImpl> threadGroups() {
+  public @Unmodifiable List<ThreadGroupReferenceProxyImpl> threadGroups() {
     return ContainerUtil.map(getThreadGroupReference().threadGroups(), getVirtualMachineProxy()::getThreadGroupReferenceProxy);
   }
 

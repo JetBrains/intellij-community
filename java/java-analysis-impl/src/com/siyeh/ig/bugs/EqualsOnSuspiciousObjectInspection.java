@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.Nullability;
@@ -39,9 +39,8 @@ public final class EqualsOnSuspiciousObjectInspection extends BaseInspection {
       Map.entry("java.util.concurrent.atomic.LongAccumulator", ReplaceInfo.notAvailable()),
       Map.entry("java.util.concurrent.atomic.LongAdder", ReplaceInfo.notAvailable()));
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     String typeName = (String)infos[0];
     return InspectionGadgetsBundle.message("equals.called.on.suspicious.object.problem.descriptor", StringUtil.getShortName(typeName));
   }
@@ -129,9 +128,9 @@ public final class EqualsOnSuspiciousObjectInspection extends BaseInspection {
 
     static ReplaceInfo stringBuilders() {
       return new ComplexReplaceInfo() {
-        private final static String COMPARE_TO = "compareTo";
+        private static final String COMPARE_TO = "compareTo";
 
-        private final static SimpleReplaceInfo fallback = ReplaceInfo.available(true, "toString");
+        private static final SimpleReplaceInfo fallback = ReplaceInfo.available(true, "toString");
 
         @Override
         public String valueMethod() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -28,8 +28,7 @@ public final class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspe
   public boolean ignoreIterators = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final boolean entireCondition = ((Boolean)infos[0]).booleanValue();
     if (entireCondition) {
       return InspectionGadgetsBundle.message("loop.condition.not.updated.inside.loop.problem.descriptor");

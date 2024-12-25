@@ -66,7 +66,7 @@ public final class ImportUtils {
       return;
     }
     final String containingPackageName = javaFile.getPackageName();
-    @NonNls final String packageName = ClassUtil.extractPackageName(qualifiedName);
+    final @NonNls String packageName = ClassUtil.extractPackageName(qualifiedName);
 
     if (containingPackageName.equals(packageName) || importList.findSingleClassImportStatement(qualifiedName) != null) {
       return;
@@ -301,8 +301,7 @@ public final class ImportUtils {
    * @return an OnDemandImportConflicts object that contains information about whether there are
    *         conflicts for on-demand imports and module imports
    */
-  @NotNull
-  public static ImportUtils.OnDemandImportConflict findOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context) {
+  public static @NotNull ImportUtils.OnDemandImportConflict findOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context) {
     if(PsiUtil.isAvailable(JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS, context)) {
       boolean onDemandConflict = hasOnDemandImportConflict(fqName, context, false, true, false);
       boolean moduleConflict = hasOnDemandImportConflict(fqName, context, false, false, true);
@@ -571,8 +570,7 @@ public final class ImportUtils {
     return true;
   }
 
-  @Nullable
-  private static PsiImportStaticStatement findOnDemandImportStaticStatement(PsiImportList importList, String qualifierClass) {
+  private static @Nullable PsiImportStaticStatement findOnDemandImportStaticStatement(PsiImportList importList, String qualifierClass) {
     final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
     List<PsiImportStaticStatement> additionalOnDemandImports = new ArrayList<>();
     if (importList.getContainingFile() instanceof PsiJavaFile javaFile) {
@@ -672,12 +670,9 @@ public final class ImportUtils {
    */
   public static class ImplicitImportChecker {
 
-    @NotNull
-    private final Map<String, PsiImportStaticStatement> myStaticImportStatements = new HashMap<>();
-    @NotNull
-    private final Set<PsiImportModuleStatement> myModulesStatements = new HashSet<>();
-    @NotNull
-    private final Map<String, PsiImportStatement> myPackageStatements = new HashMap<>();
+    private final @NotNull Map<String, PsiImportStaticStatement> myStaticImportStatements = new HashMap<>();
+    private final @NotNull Set<PsiImportModuleStatement> myModulesStatements = new HashSet<>();
+    private final @NotNull Map<String, PsiImportStatement> myPackageStatements = new HashMap<>();
 
     private ImplicitImportChecker(@NotNull PsiJavaFile file) {
       for (PsiImportStatementBase anImport : getAllImplicitImports(file)) {

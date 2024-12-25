@@ -26,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class UncheckedExceptionClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unchecked.exception.class.problem.descriptor");
   }

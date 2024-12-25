@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -27,9 +27,8 @@ public class QualifyWithThisFix extends PsiUpdateModCommandAction<PsiReferenceEx
     return myContainingClass.isValid() ? Presentation.of(getFamilyName()) : null;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("qualify.with.0.this", myContainingClass.getName());
   }
 

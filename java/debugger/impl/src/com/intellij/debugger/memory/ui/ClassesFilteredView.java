@@ -213,9 +213,8 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     suspendContext.getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
   }
 
-  @Nullable
   @Override
-  protected TrackerForNewInstances getStrategy(@NotNull TypeInfo ref) {
+  protected @Nullable TrackerForNewInstances getStrategy(@NotNull TypeInfo ref) {
     JavaTypeInfo javaTypeInfo = (JavaTypeInfo)ref;
     return myConstructorTrackedClasses.getOrDefault(javaTypeInfo.getReferenceType(), null);
   }
@@ -256,9 +255,8 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     }
   }
 
-  @Nullable
   @Override
-  protected XDebugSessionListener getAdditionalSessionListener() {
+  protected @Nullable XDebugSessionListener getAdditionalSessionListener() {
     return additionalSessionListener;
   }
 

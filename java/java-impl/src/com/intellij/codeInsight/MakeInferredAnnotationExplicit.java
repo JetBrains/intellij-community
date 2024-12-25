@@ -67,8 +67,7 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     return false;
   }
 
-  @Unmodifiable
-  private List<PsiAnnotation> filterAnnotations(PsiFile file, List<PsiAnnotation> annotations) {
+  private @Unmodifiable List<PsiAnnotation> filterAnnotations(PsiFile file, List<PsiAnnotation> annotations) {
     if (annotations.isEmpty() || !needToAddDependency(file, annotations)) return annotations;
     if (InferNullityAnnotationsAction.maySuggestAnnotationDependency(file.getProject())) {
       myNeedToAddDependency = true;
@@ -160,8 +159,7 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
                                                () -> doMakeAnnotationExplicit(project, owner, annotations)), file);
   }
 
-  @Unmodifiable
-  private @NotNull List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
+  private @Unmodifiable @NotNull List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
     List<PsiAnnotation> allAnnotations = StreamEx.of(InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner))
       .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)
       .map(MakeInferredAnnotationExplicit::correctAnnotation)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.CommonBundle;
@@ -32,15 +32,13 @@ public class InstancesWindow extends InstancesWindowBase {
     root.setDefaultButton(myInstancesView.getFilterButton());
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myInstancesView;
   }
 
-  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
+  protected @Nullable JComponent createSouthPanel() {
     JComponent comp = super.createSouthPanel();
     if (comp != null) {
       comp.add(myInstancesView.getProgress(), BorderLayout.WEST);

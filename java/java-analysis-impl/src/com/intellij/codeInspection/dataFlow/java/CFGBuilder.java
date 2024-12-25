@@ -960,8 +960,7 @@ public class CFGBuilder {
    * @param type a type of variable to create
    * @return newly created variable
    */
-  @NotNull
-  public DfaVariableValue createTempVariable(@Nullable PsiType type) {
+  public @NotNull DfaVariableValue createTempVariable(@Nullable PsiType type) {
     return myAnalyzer.createTempVariable(type);
   }
 

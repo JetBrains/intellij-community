@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
@@ -49,7 +49,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   public MoveClassToInnerProcessor(Project project,
                                    final PsiClass[] classesToMove,
-                                   @NotNull final PsiClass targetClass,
+                                   final @NotNull PsiClass targetClass,
                                    boolean searchInComments,
                                    boolean searchInNonJavaFiles,
                                    MoveCallback moveCallback) {
@@ -74,8 +74,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveMultipleElementsViewDescriptor(myClassesToMove, myTargetClass.getQualifiedName());
   }
 
@@ -91,7 +90,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
     return showConflicts(getConflicts(usages), usages);
   }
@@ -199,8 +198,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("move.class.to.inner.command.name",
                                      myClassesToMove.length,
                                      StringUtil.join(myClassesToMove, psiClass -> psiClass.getName(), ", "),
@@ -208,8 +206,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(final @NotNull UsageViewDescriptor descriptor) {
     List<PsiElement> result = new ArrayList<>(super.getElementsToWrite(descriptor));
     result.add(myTargetClass);
     return result;

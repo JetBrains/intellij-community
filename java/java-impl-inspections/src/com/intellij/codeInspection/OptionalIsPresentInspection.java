@@ -108,14 +108,12 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     return type instanceof PsiClassType && ((PsiClassType)type).isRaw();
   }
 
-  @Nullable
-  private static PsiStatement extractThenStatement(@NotNull PsiIfStatement ifStatement, boolean invert) {
+  private static @Nullable PsiStatement extractThenStatement(@NotNull PsiIfStatement ifStatement, boolean invert) {
     if (invert) return extractElseStatement(ifStatement, false);
     return ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
   }
 
-  @Nullable
-  private static PsiStatement extractElseStatement(@NotNull PsiIfStatement ifStatement, boolean invert) {
+  private static @Nullable PsiStatement extractElseStatement(@NotNull PsiIfStatement ifStatement, boolean invert) {
     if (invert) return extractThenStatement(ifStatement, false);
     PsiStatement statement = ControlFlowUtils.stripBraces(ifStatement.getElseBranch());
     if (statement == null) {
@@ -130,9 +128,8 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     return statement;
   }
 
-  @Nullable
   @Contract("null -> null")
-  private static PsiReferenceExpression extractOptionalFromPresenceCheck(PsiExpression condition) {
+  private static @Nullable PsiReferenceExpression extractOptionalFromPresenceCheck(PsiExpression condition) {
     while (condition != null && BoolUtils.isNegation(condition)) {
       condition = BoolUtils.getNegated(condition);
     }
@@ -168,10 +165,9 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     return qualifier != null && areElementsEquivalent(qualifier, optionalRef);
   }
 
-  @NotNull
-  static ProblemType getTypeByLambdaCandidate(@NotNull PsiReferenceExpression optionalRef,
-                                              @Nullable PsiElement lambdaCandidate,
-                                              @Nullable PsiExpression falseExpression) {
+  static @NotNull ProblemType getTypeByLambdaCandidate(@NotNull PsiReferenceExpression optionalRef,
+                                                       @Nullable PsiElement lambdaCandidate,
+                                                       @Nullable PsiExpression falseExpression) {
     if (lambdaCandidate == null) return ProblemType.NONE;
     if (lambdaCandidate instanceof PsiReferenceExpression &&
         areElementsEquivalent(lambdaCandidate, optionalRef) && OptionalUtil.isOptionalEmptyCall(falseExpression)) {
@@ -255,11 +251,10 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     return null;
   }
 
-  @NotNull
-  static String generateOptionalLambda(@NotNull PsiElementFactory factory,
-                                       @NotNull CommentTracker ct,
-                                       PsiReferenceExpression optionalRef,
-                                       PsiElement trueValue) {
+  static @NotNull String generateOptionalLambda(@NotNull PsiElementFactory factory,
+                                                @NotNull CommentTracker ct,
+                                                PsiReferenceExpression optionalRef,
+                                                PsiElement trueValue) {
     PsiType type = optionalRef.getType();
     String paramName = new VariableNameGenerator(trueValue, VariableKind.PARAMETER)
       .byType(OptionalUtil.getOptionalElementType(type))
@@ -320,10 +315,8 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
       myScenario = scenario;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("intention.family.replace.optional.ispresent.condition.with.functional.style.expression");
     }
 
@@ -365,11 +358,10 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
 
   enum OptionalIsPresentCase {
     RETURN_CASE {
-      @NotNull
       @Override
-      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
-                                        @Nullable PsiElement trueElement,
-                                        @Nullable PsiElement falseElement) {
+      public @NotNull ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
+                                                 @Nullable PsiElement trueElement,
+                                                 @Nullable PsiElement falseElement) {
         if (!(trueElement instanceof PsiReturnStatement trueReturn) || !(falseElement instanceof PsiReturnStatement falseReturn)) {
           return ProblemType.NONE;
         }
@@ -379,12 +371,11 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
         return getTypeByLambdaCandidate(optionalRef, trueValue, falseValue);
       }
 
-      @NotNull
       @Override
-      public String generateReplacement(@NotNull PsiElementFactory factory,
-                                        @NotNull CommentTracker ct, @NotNull PsiReferenceExpression optionalVariable,
-                                        PsiElement trueElement,
-                                        PsiElement falseElement) {
+      public @NotNull String generateReplacement(@NotNull PsiElementFactory factory,
+                                                 @NotNull CommentTracker ct, @NotNull PsiReferenceExpression optionalVariable,
+                                                 PsiElement trueElement,
+                                                 PsiElement falseElement) {
         PsiExpression trueValue = ((PsiReturnStatement)trueElement).getReturnValue();
         PsiExpression falseValue = ((PsiReturnStatement)falseElement).getReturnValue();
         LOG.assertTrue(trueValue != null);
@@ -397,11 +388,10 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     },
 
     ASSIGNMENT_CASE {
-      @NotNull
       @Override
-      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
-                                        @Nullable PsiElement trueElement,
-                                        @Nullable PsiElement falseElement) {
+      public @NotNull ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
+                                                 @Nullable PsiElement trueElement,
+                                                 @Nullable PsiElement falseElement) {
         PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
         PsiAssignmentExpression falseAssignment = ExpressionUtils.getAssignment(falseElement);
         if (trueAssignment == null || falseAssignment == null) return ProblemType.NONE;
@@ -414,13 +404,12 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
         return ProblemType.NONE;
       }
 
-      @NotNull
       @Override
-      public String generateReplacement(@NotNull PsiElementFactory factory,
-                                        @NotNull CommentTracker ct,
-                                        @NotNull PsiReferenceExpression optionalRef,
-                                        PsiElement trueElement,
-                                        PsiElement falseElement) {
+      public @NotNull String generateReplacement(@NotNull PsiElementFactory factory,
+                                                 @NotNull CommentTracker ct,
+                                                 @NotNull PsiReferenceExpression optionalRef,
+                                                 PsiElement trueElement,
+                                                 PsiElement falseElement) {
         PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
         PsiAssignmentExpression falseAssignment = ExpressionUtils.getAssignment(falseElement);
         LOG.assertTrue(trueAssignment != null);
@@ -435,11 +424,10 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     },
 
     TERNARY_CASE {
-      @NotNull
       @Override
-      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
-                                        @Nullable PsiElement trueElement,
-                                        @Nullable PsiElement falseElement) {
+      public @NotNull ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
+                                                 @Nullable PsiElement trueElement,
+                                                 @Nullable PsiElement falseElement) {
         if (!(trueElement instanceof PsiExpression trueExpression) || !(falseElement instanceof PsiExpression falseExpression)) {
           return ProblemType.NONE;
         }
@@ -451,13 +439,12 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
         return getTypeByLambdaCandidate(optionalVariable, trueExpression, falseExpression);
       }
 
-      @NotNull
       @Override
-      public String generateReplacement(@NotNull PsiElementFactory factory,
-                                        @NotNull CommentTracker ct,
-                                        @NotNull PsiReferenceExpression optionalVariable,
-                                        PsiElement trueElement,
-                                        PsiElement falseElement) {
+      public @NotNull String generateReplacement(@NotNull PsiElementFactory factory,
+                                                 @NotNull CommentTracker ct,
+                                                 @NotNull PsiReferenceExpression optionalVariable,
+                                                 PsiElement trueElement,
+                                                 PsiElement falseElement) {
         PsiExpression ternary = PsiTreeUtil.getParentOfType(trueElement, PsiConditionalExpression.class);
         LOG.assertTrue(ternary != null);
         PsiExpression trueExpression = (PsiExpression)trueElement;
@@ -467,11 +454,10 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     },
 
     CONSUMER_CASE {
-      @NotNull
       @Override
-      public ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
-                                        @Nullable PsiElement trueElement,
-                                        @Nullable PsiElement falseElement) {
+      public @NotNull ProblemType getProblemType(@NotNull PsiReferenceExpression optionalRef,
+                                                 @Nullable PsiElement trueElement,
+                                                 @Nullable PsiElement falseElement) {
         if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return ProblemType.NONE;
         if (!(trueElement instanceof PsiStatement)) return ProblemType.NONE;
         if (trueElement instanceof PsiExpressionStatement expressionStmt) {
@@ -482,27 +468,24 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
         return getTypeByLambdaCandidate(optionalRef, trueElement, null);
       }
 
-      @NotNull
       @Override
-      public String generateReplacement(@NotNull PsiElementFactory factory,
-                                        @NotNull CommentTracker ct,
-                                        @NotNull PsiReferenceExpression optionalRef,
-                                        PsiElement trueElement,
-                                        PsiElement falseElement) {
+      public @NotNull String generateReplacement(@NotNull PsiElementFactory factory,
+                                                 @NotNull CommentTracker ct,
+                                                 @NotNull PsiReferenceExpression optionalRef,
+                                                 PsiElement trueElement,
+                                                 PsiElement falseElement) {
         return optionalRef.getText() + ".ifPresent(" + generateOptionalLambda(factory, ct, optionalRef, trueElement) + ");";
       }
     };
 
-    @NotNull
-    abstract ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
-                                        @Nullable PsiElement trueElement,
-                                        @Nullable PsiElement falseElement);
+    abstract @NotNull ProblemType getProblemType(@NotNull PsiReferenceExpression optionalVariable,
+                                                 @Nullable PsiElement trueElement,
+                                                 @Nullable PsiElement falseElement);
 
-    @NotNull
-    abstract String generateReplacement(@NotNull PsiElementFactory factory,
-                                        @NotNull CommentTracker ct,
-                                        @NotNull PsiReferenceExpression optionalVariable,
-                                        PsiElement trueElement,
-                                        PsiElement falseElement);
+    abstract @NotNull String generateReplacement(@NotNull PsiElementFactory factory,
+                                                 @NotNull CommentTracker ct,
+                                                 @NotNull PsiReferenceExpression optionalVariable,
+                                                 PsiElement trueElement,
+                                                 PsiElement falseElement);
   }
 }

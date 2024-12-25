@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.ui.breakpoints;
 
@@ -44,10 +44,10 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
   public boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters = InstanceFilter.EMPTY_ARRAY;
 
-  @NonNls private static final String FILTER_OPTION_NAME = "filter";
-  @NonNls private static final String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
-  @NonNls private static final String INSTANCE_ID_OPTION_NAME = "instance_id";
-  @NonNls private static final String CONDITION_OPTION_NAME = "CONDITION";
+  private static final @NonNls String FILTER_OPTION_NAME = "filter";
+  private static final @NonNls String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
+  private static final @NonNls String INSTANCE_ID_OPTION_NAME = "instance_id";
+  private static final @NonNls String CONDITION_OPTION_NAME = "CONDITION";
   protected final Project myProject;
 
   public FilteredRequestorImpl(@NotNull Project project) {

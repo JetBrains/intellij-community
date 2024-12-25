@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -45,8 +43,7 @@ public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("remove.annotation");
   }
 
@@ -95,8 +92,7 @@ public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
     }).andThen(deannotateExternal(project, qualifiedName, externalOwners));
   }
 
-  @NotNull
-  private static ModCommand deannotateExternal(@NotNull Project project, String qualifiedName, List<PsiModifierListOwner> externalOwners) {
+  private static @NotNull ModCommand deannotateExternal(@NotNull Project project, String qualifiedName, List<PsiModifierListOwner> externalOwners) {
     if (ExternalAnnotationsManager.getInstance(project) instanceof ModCommandAwareExternalAnnotationsManager manager &&
         qualifiedName != null) {
       return manager.deannotateModCommand(externalOwners, List.of(qualifiedName));

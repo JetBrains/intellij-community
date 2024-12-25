@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.CommonBundle;
@@ -37,9 +37,8 @@ public class ViewTextAction extends XFetchValueActionBase {
   @Override
   protected void handle(Project project, String value, XDebuggerTree tree) { }
 
-  @NotNull
   @Override
-  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+  protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
     XValueNodeImpl node = getStringNode(e);
     return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {
       MyDialog dialog = null;
@@ -139,9 +138,8 @@ public class ViewTextAction extends XFetchValueActionBase {
       return myStringNode != null ? new Action[]{getOKAction(), getCancelAction()} : new Action[]{getCancelAction()};
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myTextViewer;
     }
 

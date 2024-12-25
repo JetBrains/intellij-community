@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -10,13 +10,9 @@ public class JavaFieldBreakpointProperties extends JavaBreakpointProperties<Java
   public boolean WATCH_MODIFICATION = true;
   public boolean WATCH_ACCESS = false;
 
-  @Attribute("field")
-  @NlsSafe
-  public String myFieldName;
+  @Attribute("field") public @NlsSafe String myFieldName;
 
-  @Attribute("class")
-  @NlsSafe
-  public String myClassName;
+  @Attribute("class") public @NlsSafe String myClassName;
 
   public JavaFieldBreakpointProperties(String fieldName, String className) {
     myFieldName = fieldName;
@@ -26,9 +22,8 @@ public class JavaFieldBreakpointProperties extends JavaBreakpointProperties<Java
   public JavaFieldBreakpointProperties() {
   }
 
-  @Nullable
   @Override
-  public JavaFieldBreakpointProperties getState() {
+  public @Nullable JavaFieldBreakpointProperties getState() {
     return this;
   }
 

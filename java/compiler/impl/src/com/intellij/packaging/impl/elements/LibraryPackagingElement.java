@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity;
@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPackagingElement> {
-  @NonNls public static final String LIBRARY_NAME_ATTRIBUTE = "name";
-  @NonNls public static final String MODULE_NAME_ATTRIBUTE = "module-name";
-  @NonNls public static final String LIBRARY_LEVEL_ATTRIBUTE = "level";
+  public static final @NonNls String LIBRARY_NAME_ATTRIBUTE = "name";
+  public static final @NonNls String MODULE_NAME_ATTRIBUTE = "module-name";
+  public static final @NonNls String LIBRARY_LEVEL_ATTRIBUTE = "level";
   private String myLevel;
   private String myLibraryName;
   private String myModuleName;
@@ -73,16 +73,14 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return null;
   }
 
-  @NotNull
   @Override
-  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+  public @NotNull PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
     final Library library = findLibrary(context);
     return library != null ? getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     if (myStorage == null) {
       return new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
     }
@@ -254,8 +252,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return getBuilder(diff, entity);
   }
 
-  @Nullable
-  public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
+  public @Nullable Library findLibrary(@NotNull PackagingElementResolvingContext context) {
     return findLibrary(
       context.getModulesProvider(),
       (level, libraryName) -> {
@@ -263,9 +260,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       });
   }
 
-  @Nullable
-  public Library findLibrary(@NotNull ModulesProvider modulesProvider,
-                             @NotNull PackagingElementResolvingContext.LibraryFinder libraryFinder) {
+  public @Nullable Library findLibrary(@NotNull ModulesProvider modulesProvider,
+                                       @NotNull PackagingElementResolvingContext.LibraryFinder libraryFinder) {
     String level = myLevel;
     String myLibraryName1 = myLibraryName;
     String moduleName = myModuleName;

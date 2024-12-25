@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler {
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     ExtractMethodHandler.selectAndPass(project, editor, file, elements-> {
         if (elements.length == 0) {
           String message = RefactoringBundle
@@ -286,9 +286,8 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           }
         }
 
-        @NotNull
         @Override
-        public String getVisibility() {
+        public @NotNull String getVisibility() {
           return PsiModifier.PUBLIC;
         }
       };

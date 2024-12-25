@@ -477,10 +477,9 @@ public final class AnnotationsHighlightUtil {
     return null;
   }
 
-  @NotNull
-  private static HighlightInfo.Builder createNotApplicableTargetInfo(@NotNull PsiAnnotation annotation,
-                                                                     PsiJavaCodeReferenceElement nameRef,
-                                                                     PsiAnnotation.TargetType[] targets) {
+  private static @NotNull HighlightInfo.Builder createNotApplicableTargetInfo(@NotNull PsiAnnotation annotation,
+                                                                              PsiJavaCodeReferenceElement nameRef,
+                                                                              PsiAnnotation.TargetType[] targets) {
     String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
     String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
     HighlightInfo.Builder info = createAnnotationError(annotation, message);
@@ -493,17 +492,15 @@ public final class AnnotationsHighlightUtil {
     return info;
   }
 
-  @NotNull
-  private static HighlightInfo.Builder createAnnotationError(@NotNull PsiAnnotation annotation, @NotNull @NlsContexts.DetailedDescription String message) {
+  private static @NotNull HighlightInfo.Builder createAnnotationError(@NotNull PsiAnnotation annotation, @NotNull @NlsContexts.DetailedDescription String message) {
     LocalQuickFixAndIntentionActionOnPsiElement fix = QuickFixFactory.getInstance()
       .createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
     return createAnnotationError(annotation, message, fix);
   }
 
-  @NotNull
-  private static HighlightInfo.Builder createAnnotationError(@NotNull PsiAnnotation annotation,
-                                                             @NotNull @NlsContexts.DetailedDescription String message,
-                                                             @NotNull IntentionAction fix) {
+  private static @NotNull HighlightInfo.Builder createAnnotationError(@NotNull PsiAnnotation annotation,
+                                                                      @NotNull @NlsContexts.DetailedDescription String message,
+                                                                      @NotNull IntentionAction fix) {
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(annotation)
       .descriptionAndTooltip(message);
@@ -511,8 +508,7 @@ public final class AnnotationsHighlightUtil {
     return info;
   }
 
-  @Nullable
-  private static HighlightInfo.Builder checkReferenceTarget(@NotNull PsiAnnotation annotation, @Nullable PsiJavaCodeReferenceElement ref) {
+  private static @Nullable HighlightInfo.Builder checkReferenceTarget(@NotNull PsiAnnotation annotation, @Nullable PsiJavaCodeReferenceElement ref) {
     if (ref == null) return null;
     PsiElement refTarget = ref.resolve();
     if (refTarget == null) return null;
@@ -797,16 +793,14 @@ public final class AnnotationsHighlightUtil {
     return getMissedAnnotationError(psiClass, container, Documented.class.getName());
   }
 
-  @Nls
-  private static String getMissedAnnotationError(PsiClass target, PsiClass container, String annotationFqn) {
+  private static @Nls String getMissedAnnotationError(PsiClass target, PsiClass container, String annotationFqn) {
     if (AnnotationUtil.isAnnotated(target, annotationFqn, 0) && !AnnotationUtil.isAnnotated(container, annotationFqn, 0)) {
       return JavaErrorBundle.message("annotation.container.missed.annotation", container.getQualifiedName(), StringUtil.getShortName(annotationFqn));
     }
     return null;
   }
 
-  @Nullable
-  private static PsiClass getRepeatableContainer(@NotNull PsiAnnotation annotation) {
+  private static @Nullable PsiClass getRepeatableContainer(@NotNull PsiAnnotation annotation) {
     PsiAnnotationMemberValue containerRef = PsiImplUtil.findAttributeValue(annotation, null);
     if (!(containerRef instanceof PsiClassObjectAccessExpression expression)) return null;
     PsiType containerType = expression.getOperand().getType();
@@ -903,8 +897,7 @@ public final class AnnotationsHighlightUtil {
     return modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  @Nullable
-  public static RetentionPolicy getRetentionPolicy(@NotNull PsiClass annotation) {
+  public static @Nullable RetentionPolicy getRetentionPolicy(@NotNull PsiClass annotation) {
     PsiModifierList modifierList = annotation.getModifierList();
     if (modifierList != null) {
       PsiAnnotation retentionAnno = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);

@@ -101,8 +101,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    @NotNull
-    private static @NlsSafe String createText(@NotNull PsiClass aClass) {
+    private static @NotNull @NlsSafe String createText(@NotNull PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {

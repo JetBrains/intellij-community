@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -7,9 +7,8 @@ import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 
 public interface DfFloatType extends DfFloatingPointType {
-  @NotNull
   @Override
-  default PsiPrimitiveType getPsiType() {
+  default @NotNull PsiPrimitiveType getPsiType() {
     return PsiTypes.floatType();
   }
 
@@ -22,9 +21,8 @@ public interface DfFloatType extends DfFloatingPointType {
   }
 
   @Override
-  @NotNull
-  default DfType meetRelation(@NotNull RelationType relationType,
-                              @NotNull DfType other) {
+  default @NotNull DfType meetRelation(@NotNull RelationType relationType,
+                                       @NotNull DfType other) {
     DfType result = meet(other.fromRelation(relationType));
     if (result == DfType.BOTTOM && relationType != RelationType.NE) {
       if (!isSuperType(DfTypes.FLOAT_NAN) && other.isSuperType(DfTypes.FLOAT_NAN)) {

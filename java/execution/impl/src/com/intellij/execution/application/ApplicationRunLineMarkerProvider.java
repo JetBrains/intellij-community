@@ -22,7 +22,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   }
 
   @Override
-  public final @Nullable Info getInfo(@NotNull final PsiElement element) {
+  public final @Nullable Info getInfo(final @NotNull PsiElement element) {
     return getInfoInner(element);
   }
 

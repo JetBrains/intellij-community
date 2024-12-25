@@ -371,9 +371,8 @@ public final class ExceptionUtil {
     return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY));
   }
 
-  @Unmodifiable
-  private static List<Pair<PsiMethod, PsiSubstitutor>> getMethodCallTargets(@NotNull PsiMethodCallExpression call,
-                                                                            @NotNull PsiMethod method) {
+  private static @Unmodifiable List<Pair<PsiMethod, PsiSubstitutor>> getMethodCallTargets(@NotNull PsiMethodCallExpression call,
+                                                                                          @NotNull PsiMethod method) {
     PsiFile containingFile = call.getContainingFile();
     MethodResolverProcessor processor = new MethodResolverProcessor(call, containingFile);
     try {

@@ -135,8 +135,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  @Unmodifiable
-  public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
+  public @Unmodifiable List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
     return getExternalJavaDocUrl(element);
   }
 
@@ -916,8 +915,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     sb.append("<br>");
   }
 
-  @Unmodifiable
-  public static @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
+  public static @Unmodifiable @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
     List<String> urls = null;
 
     if (element instanceof PsiClass) {
@@ -1003,8 +1001,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return PsiTreeUtil.getChildOfType(packageInfoFile, PsiDocComment.class);
   }
 
-  @Unmodifiable
-  public static @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
+  public static @Unmodifiable @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName != null) {
       PsiFile file = aClass.getContainingFile();
@@ -1035,8 +1032,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  @Unmodifiable
-  public static @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
+  public static @Unmodifiable @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     Module module = fileIndex.getModuleForFile(virtualFile);

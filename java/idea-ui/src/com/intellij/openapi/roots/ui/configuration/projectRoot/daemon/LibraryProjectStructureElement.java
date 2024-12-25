@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.ide.JavaUiBundle;
@@ -93,8 +93,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     return buffer.toFragment();
   }
 
-  @NotNull
-  private PlaceInProjectStructure createPlace() {
+  private @NotNull PlaceInProjectStructure createPlace() {
     final Project project = myContext.getProject();
     Place place = myContext.getModulesConfigurator().getProjectStructureConfigurable().createProjectOrGlobalLibraryPlace(myLibrary);
     return new PlaceInProjectStructureBase(project, place, this);
@@ -117,8 +116,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     return createPlace().navigate();
   }
 
-  @NotNull
-  private Library getSourceOrThis() {
+  private @NotNull Library getSourceOrThis() {
     final InvocationHandler invocationHandler = Proxy.isProxyClass(myLibrary.getClass()) ? Proxy.getInvocationHandler(myLibrary) : null;
     final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor ?
                                 (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler).getDelegate() : myLibrary;

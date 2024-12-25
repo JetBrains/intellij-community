@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -72,8 +72,7 @@ public final class Match {
                    .toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public List<PsiElement> getParameterValues(PsiVariable parameter) {
+  public @Nullable List<PsiElement> getParameterValues(PsiVariable parameter) {
     return myParameterValues.get(parameter);
   }
 
@@ -328,8 +327,7 @@ public final class Match {
     return new TextRange(startRange.getStartOffset(), endRange.getEndOffset());
   }
 
-  @Nullable
-  public PsiType getChangedReturnType(final PsiMethod psiMethod) {
+  public @Nullable PsiType getChangedReturnType(final PsiMethod psiMethod) {
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType != null) {
       PsiElement parent = getMatchEnd().getParent();
@@ -401,7 +399,7 @@ public final class Match {
     return null;
   }
 
-  private static boolean weakerType(final PsiMethod psiMethod, final PsiType returnType, @NotNull final PsiType currentType) {
+  private static boolean weakerType(final PsiMethod psiMethod, final PsiType returnType, final @NotNull PsiType currentType) {
     final PsiTypeParameter[] typeParameters = psiMethod.getTypeParameters();
     final PsiSubstitutor substitutor =
         JavaPsiFacade.getInstance(psiMethod.getProject()).getResolveHelper().inferTypeArguments(typeParameters, new PsiType[]{returnType}, new PsiType[]{currentType}, PsiUtil.getLanguageLevel(psiMethod));
@@ -421,8 +419,7 @@ public final class Match {
     myExtractedParameters.add(parameter);
   }
 
-  @NotNull
-  public List<ExtractedParameter> getExtractedParameters() {
+  public @NotNull List<ExtractedParameter> getExtractedParameters() {
     return myExtractedParameters;
   }
 
@@ -432,8 +429,7 @@ public final class Match {
     myFoldedExpressionMappings.computeIfAbsent(parameter, unused -> new ArrayList<>()).add(Pair.createNonNull(pattern, candidate));
   }
 
-  @Nullable
-  public List<Pair.NonNull<PsiExpression, PsiExpression>> getFoldedExpressionMappings(@NotNull DuplicatesFinder.Parameter parameter) {
+  public @Nullable List<Pair.NonNull<PsiExpression, PsiExpression>> getFoldedExpressionMappings(@NotNull DuplicatesFinder.Parameter parameter) {
     return myFoldedExpressionMappings.get(parameter);
   }
 }

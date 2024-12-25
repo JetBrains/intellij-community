@@ -143,8 +143,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.saveElementProperties();
   }
 
-  @Nullable
-  private String getConfiguredOutputPath() {
+  private @Nullable String getConfiguredOutputPath() {
     String outputPath = FileUtil.toSystemIndependentName(myOutputDirectoryField.getText().trim());
     if (outputPath.length() == 0) {
       outputPath = null;
@@ -156,7 +155,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return mySourceItemsTree;
   }
 
-  public void addListener(@NotNull final ArtifactEditorListener listener) {
+  public void addListener(final @NotNull ArtifactEditorListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -165,7 +164,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myContext;
   }
 
-  public void removeListener(@NotNull final ArtifactEditorListener listener) {
+  public void removeListener(final @NotNull ArtifactEditorListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -402,14 +401,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   @Override
-  public void removePackagingElement(@NotNull final String pathToParent, @NotNull final PackagingElement<?> element) {
+  public void removePackagingElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element) {
     doReplaceElement(pathToParent, element, null);
   }
 
   @Override
-  public void replacePackagingElement(@NotNull final String pathToParent,
-                                      @NotNull final PackagingElement<?> element,
-                                      @NotNull final PackagingElement<?> replacement) {
+  public void replacePackagingElement(final @NotNull String pathToParent,
+                                      final @NotNull PackagingElement<?> element,
+                                      final @NotNull PackagingElement<?> replacement) {
     doReplaceElement(pathToParent, element, replacement);
   }
 
@@ -430,8 +429,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.rebuildTree();
   }
 
-  @Nullable
-  private CompositePackagingElement<?> findCompositeElementByPath(String pathToElement) {
+  private @Nullable CompositePackagingElement<?> findCompositeElementByPath(String pathToElement) {
     CompositePackagingElement<?> element = getRootElement();
     for (String name : StringUtil.split(pathToElement, "/")) {
       element = element.findCompositeChild(name);
@@ -463,7 +461,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return myLayoutTreeComponent;
   }
 
-  public void updateOutputPath(@NotNull String oldArtifactName, @NotNull final String newArtifactName) {
+  public void updateOutputPath(@NotNull String oldArtifactName, final @NotNull String newArtifactName) {
     final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
     if (Objects.equals(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));

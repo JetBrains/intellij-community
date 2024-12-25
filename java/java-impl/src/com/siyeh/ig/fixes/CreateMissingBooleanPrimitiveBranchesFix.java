@@ -22,8 +22,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     super(block, names);
   }
 
-  @Nullable
-  public static CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
+  public static @Nullable CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
     PsiExpression selectorExpression = block.getExpression();
     if (selectorExpression == null) return null;
     PsiType selectorExpressionType = selectorExpression.getType();
@@ -57,8 +56,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     return new CreateMissingBooleanPrimitiveBranchesFix(block, new LinkedHashSet<>(missed));
   }
 
-  @Nullable
-  public static PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
+  public static @Nullable PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
     return createWithNull(block, () -> createFix(block));
   }
 

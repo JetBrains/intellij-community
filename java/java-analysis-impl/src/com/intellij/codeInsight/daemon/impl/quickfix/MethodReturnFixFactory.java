@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -16,9 +16,8 @@ public final class MethodReturnFixFactory extends ArgumentFixerActionFactory {
 
   private MethodReturnFixFactory() {}
 
-  @Nullable
   @Override
-  protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
+  protected @Nullable PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
     PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
     if (call == null) return null;
     PsiMethod method = call.resolveMethod();
@@ -31,9 +30,9 @@ public final class MethodReturnFixFactory extends ArgumentFixerActionFactory {
   }
 
   @Override
-  public boolean areTypesConvertible(@NotNull final PsiType exprType,
-                                     @NotNull final PsiType parameterType,
-                                     @NotNull final PsiElement context) {
+  public boolean areTypesConvertible(final @NotNull PsiType exprType,
+                                     final @NotNull PsiType parameterType,
+                                     final @NotNull PsiElement context) {
     return true;
   }
 

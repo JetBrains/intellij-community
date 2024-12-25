@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.Language;
@@ -45,8 +45,7 @@ public final class CompositeShortNamesCache extends PsiShortNamesCache {
     return new CompositeShortNamesCache(myProject, newExcludeLanguages);
   }
 
-  @NotNull
-  private List<PsiShortNamesCache> getCaches() {
+  private @NotNull List<PsiShortNamesCache> getCaches() {
     if (myProject.isDefault()) return Collections.emptyList();
 
     List<@NotNull PsiShortNamesCache> extensionList = EP_NAME.getExtensionList(myProject);
@@ -165,7 +164,7 @@ public final class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public @NotNull PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
+  public @NotNull PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(final @NonNls @NotNull String name, final @NotNull GlobalSearchScope scope, final int maxCount) {
     Merger<PsiMethod> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, maxCount);

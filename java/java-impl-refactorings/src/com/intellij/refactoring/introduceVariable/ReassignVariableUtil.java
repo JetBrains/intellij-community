@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -104,8 +104,7 @@ public final class ReassignVariableUtil {
     return false;
   }
 
-  @Nullable
-  static PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
+  static @Nullable PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
     if (declaration != null) {
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       if (declaredElements.length > 0 && declaredElements[0] instanceof PsiVariable) {

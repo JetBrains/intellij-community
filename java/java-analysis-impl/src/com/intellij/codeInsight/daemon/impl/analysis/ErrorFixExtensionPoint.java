@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -61,8 +61,7 @@ public final class ErrorFixExtensionPoint implements PluginAware {
     this.pluginDescriptor = pluginDescriptor;
   }
 
-  @NotNull
-  private static Map<String, List<ErrorFixExtensionPoint>> getCodeToFixMap() {
+  private static @NotNull Map<String, List<ErrorFixExtensionPoint>> getCodeToFixMap() {
     Map<String, List<ErrorFixExtensionPoint>> map = ourCodeToFix;
     if (map == null) {
       ourCodeToFix = map = StreamEx.of(ERROR_FIX_EXTENSION_POINT.getExtensionList()).groupingBy(fix -> fix.errorCode);

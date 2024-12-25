@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import org.jetbrains.annotations.Nls;
@@ -25,12 +11,9 @@ public class CompilationException extends Exception {
   private final Collection<? extends Message> myMessages;
 
   public static class Message {
-    @NotNull
-    private final CompilerMessageCategory myCategory;
-    @NotNull
-    private final @Nls String myMessage;
-    @Nullable
-    private final String myUrl;
+    private final @NotNull CompilerMessageCategory myCategory;
+    private final @NotNull @Nls String myMessage;
+    private final @Nullable String myUrl;
     private final int myLine;
     private final int myColumn;
 
@@ -42,18 +25,15 @@ public class CompilationException extends Exception {
       myColumn = column;
     }
 
-    @NotNull
-    public CompilerMessageCategory getCategory() {
+    public @NotNull CompilerMessageCategory getCategory() {
       return myCategory;
     }
 
-    @NotNull @Nls
-    public String getText() {
+    public @NotNull @Nls String getText() {
       return myMessage;
     }
 
-    @Nullable
-    public String getUrl() {
+    public @Nullable String getUrl() {
       return myUrl;
     }
 
@@ -71,8 +51,7 @@ public class CompilationException extends Exception {
     myMessages = messages;
   }
 
-  @NotNull
-  public Collection<? extends Message> getMessages() {
+  public @NotNull Collection<? extends Message> getMessages() {
     return myMessages;
   }
 }

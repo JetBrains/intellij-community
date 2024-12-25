@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
@@ -35,8 +35,7 @@ class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
-  @Unmodifiable
-  protected List<ModuleDescriptor> getEntries() {
+  protected @Unmodifiable List<ModuleDescriptor> getEntries() {
     final List<ModuleDescriptor> modules = getInsight().getSuggestedModules();
     return modules != null? modules : Collections.emptyList();
   }
@@ -54,8 +53,7 @@ class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
-  @Nullable
-  protected ModuleDescriptor merge(final List<? extends ModuleDescriptor> entries) {
+  protected @Nullable ModuleDescriptor merge(final List<? extends ModuleDescriptor> entries) {
     final ModuleInsight insight = getInsight();
     ModuleDescriptor mainDescr = null;
     for (ModuleDescriptor entry : entries) {

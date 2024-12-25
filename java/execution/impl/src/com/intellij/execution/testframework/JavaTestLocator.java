@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -47,12 +47,11 @@ public class JavaTestLocator implements SMTestLocator, DumbAware {
 
   public static final JavaTestLocator INSTANCE = new JavaTestLocator();
 
-  @NotNull
   @Override
-  public List<Location> getLocation(@NotNull String protocol,
-                                    @NotNull String sourcePath,
-                                    @NotNull Project project,
-                                    @NotNull GlobalSearchScope scope) {
+  public @NotNull List<Location> getLocation(@NotNull String protocol,
+                                             @NotNull String sourcePath,
+                                             @NotNull Project project,
+                                             @NotNull GlobalSearchScope scope) {
     DumbService dumbService = DumbService.getInstance(project);
     try {
       return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<List<Location>, Throwable>)() -> {
@@ -89,13 +88,12 @@ public class JavaTestLocator implements SMTestLocator, DumbAware {
     }
   }
 
-  @NotNull
   @Override
-  public List<Location> getLocation(@NotNull String protocol,
-                                    @NotNull String path,
-                                    @Nullable String metainfo,
-                                    @NotNull Project project,
-                                    @NotNull GlobalSearchScope scope) {
+  public @NotNull List<Location> getLocation(@NotNull String protocol,
+                                             @NotNull String path,
+                                             @Nullable String metainfo,
+                                             @NotNull Project project,
+                                             @NotNull GlobalSearchScope scope) {
     List<Location> locations = getLocation(protocol, path, project, scope);
     if (metainfo != null) {
       for (Location location : locations) {
@@ -127,9 +125,8 @@ public class JavaTestLocator implements SMTestLocator, DumbAware {
     return locations;
   }
 
-  @NotNull
   @Override
-  public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @NotNull List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     StackTraceLine line = new StackTraceLine(project, stacktraceLine);
     return getLocation(TEST_PROTOCOL, line.getClassName() + "/" + line.getMethodName(), project, scope);
   }

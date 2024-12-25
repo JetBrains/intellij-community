@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -225,8 +225,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     }
 
     @Override
-    @Unmodifiable
-    protected List<PsiMethod> computeCallers() {
+    protected @Unmodifiable List<PsiMethod> computeCallers() {
       if (getTopMember().equals(getMember())) {
         List<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
         return ContainerUtil.map(items, info -> info.getCallerMethod());

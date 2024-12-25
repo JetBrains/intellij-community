@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -38,21 +38,18 @@ public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties>
     return true;
   }
 
-  @NotNull
   @Override
-  public final XBreakpointCustomPropertiesPanel<XBreakpoint<T>> createCustomRightPropertiesPanel(@NotNull Project project) {
+  public final @NotNull XBreakpointCustomPropertiesPanel<XBreakpoint<T>> createCustomRightPropertiesPanel(@NotNull Project project) {
     return new JavaBreakpointFiltersPanel<>(project);
   }
 
-  @NotNull
   @Override
-  public final XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<T> breakpoint, @NotNull Project project) {
+  public final @NotNull XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<T> breakpoint, @NotNull Project project) {
     return new JavaDebuggerEditorsProvider();
   }
 
-  @Nullable
   @Override
-  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<T> breakpoint) {
+  public @Nullable XSourcePosition getSourcePosition(@NotNull XBreakpoint<T> breakpoint) {
     Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
       PsiClass aClass = javaBreakpoint.getPsiClass();

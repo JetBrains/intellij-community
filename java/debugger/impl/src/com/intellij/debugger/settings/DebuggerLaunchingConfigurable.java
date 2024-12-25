@@ -64,9 +64,8 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     return !debuggerSettings.equals(currentSettings);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     myCbShowAlternativeSource = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.show.alternative.source"));
     myRbSocket = new JRadioButton(JavaDebuggerBundle.message("label.debugger.launching.configurable.socket"));
     myRbShmem = new JRadioButton(JavaDebuggerBundle.message("label.debugger.launching.configurable.shmem"));

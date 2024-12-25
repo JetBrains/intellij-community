@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInspection.DeprecationUtil;
@@ -25,8 +25,7 @@ public class DeprecationInspection extends DeprecationInspectionBase {
   public boolean IGNORE_METHODS_OF_DEPRECATED = true;
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if(!Registry.is("kotlin.deprecation.inspection.enabled", false) && holder.getFile().getLanguage().getID().equals("kotlin"))
       return PsiElementVisitor.EMPTY_VISITOR;
 
@@ -38,21 +37,18 @@ public class DeprecationInspection extends DeprecationInspectionBase {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
-  @NotNull
   @SuppressWarnings("PatternOverriddenByNonAnnotatedMethod")
-  public String getID() {
+  public @NotNull String getID() {
     return ID;
   }
 

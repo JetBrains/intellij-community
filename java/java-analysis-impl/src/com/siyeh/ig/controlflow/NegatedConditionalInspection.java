@@ -16,9 +16,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
@@ -51,14 +51,12 @@ public final class NegatedConditionalInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ConditionalExpressionWithNegatedCondition";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "negated.conditional.problem.descriptor");
   }
@@ -89,8 +87,7 @@ public final class NegatedConditionalInspection extends BaseInspection {
   private static class NegatedConditionalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("negated.conditional.invert.quickfix");
     }
 

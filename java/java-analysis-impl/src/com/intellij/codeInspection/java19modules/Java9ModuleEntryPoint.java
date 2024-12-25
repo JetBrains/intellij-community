@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
@@ -32,9 +32,8 @@ public final class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
     return ID;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return JavaAnalysisBundle.message("html.classes.exposed.with.code.module.info.code.html");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.history.LocalHistory;
@@ -46,14 +46,12 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return ChangeClassSignatureDialog.getRefactoringName();
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ChangeClassSigntaureViewDescriptor(myClass);
   }
 
@@ -117,21 +115,18 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.changeClassSignature";
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     return ExtractSuperClassUtil.createAfterData(myClass);
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     return ExtractSuperClassUtil.createAfterData(myClass);
   }
 

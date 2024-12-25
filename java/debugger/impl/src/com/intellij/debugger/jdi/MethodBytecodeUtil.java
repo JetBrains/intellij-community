@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -12,8 +12,8 @@ import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -212,8 +212,7 @@ public final class MethodBytecodeUtil {
     };
   }
 
-  @Nullable
-  public static Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
+  public static @Nullable Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
       if (applicableMethods.size() == 1) {
@@ -223,8 +222,7 @@ public final class MethodBytecodeUtil {
     return null;
   }
 
-  @Nullable
-  public static Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
+  public static @Nullable Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
     return method.isBridge() ? getFirstCalledMethod(method, classesByName) : null;
   }
 

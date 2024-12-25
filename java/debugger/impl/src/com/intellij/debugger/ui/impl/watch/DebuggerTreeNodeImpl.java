@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerTreeNodeImpl
@@ -220,15 +220,13 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     myProperties.put(key, data);
   }
 
-  @NotNull
-  public static DebuggerTreeNodeImpl createNodeNoUpdate(DebuggerTree tree, NodeDescriptor descriptor) {
+  public static @NotNull DebuggerTreeNodeImpl createNodeNoUpdate(DebuggerTree tree, NodeDescriptor descriptor) {
     DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     node.updateCaches();
     return node;
   }
 
-  @NotNull
-  protected static DebuggerTreeNodeImpl createNode(DebuggerTree tree, NodeDescriptorImpl descriptor, EvaluationContextImpl evaluationContext) {
+  protected static @NotNull DebuggerTreeNodeImpl createNode(DebuggerTree tree, NodeDescriptorImpl descriptor, EvaluationContextImpl evaluationContext) {
     final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     descriptor.updateRepresentationNoNotify(evaluationContext, new DescriptorLabelListener() {
       @Override

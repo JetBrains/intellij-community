@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -27,9 +27,8 @@ import java.util.Set;
  */
 public final class UtilityClassCanBeEnumInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("utility.class.code.can.be.enum.problem.descriptor");
   }
 
@@ -40,10 +39,8 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
 
   private static class UtilityClassCanBeEnumFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.code.can.be.enum.quickfix");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
@@ -40,18 +40,15 @@ public abstract class ProjectImportProvider {
     return doGetBuilder();
   }
 
-  @NonNls @NotNull
-  public String getId(){
+  public @NonNls @NotNull String getId(){
     return getBuilder().getName();
   }
 
-  @NotNull
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getName(){
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getName(){
     return getBuilder().getName();
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return getBuilder().getIcon();
   }
 
@@ -101,9 +98,8 @@ public abstract class ProjectImportProvider {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Language("HTML")
-  public @Nls String getFileSample() {
+  public @Nullable @Nls String getFileSample() {
     return null;
   }
 }

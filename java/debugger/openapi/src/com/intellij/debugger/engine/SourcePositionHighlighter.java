@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -20,8 +20,7 @@ public abstract class SourcePositionHighlighter implements PossiblyDumbAware {
 
   public abstract TextRange getHighlightRange(SourcePosition sourcePosition);
 
-  @Nullable
-  public static TextRange getHighlightRangeFor(SourcePosition sourcePosition) {
+  public static @Nullable TextRange getHighlightRangeFor(SourcePosition sourcePosition) {
     for (SourcePositionHighlighter provider : DumbService.getDumbAwareExtensions(sourcePosition.getFile().getProject(), EP_NAME)) {
       TextRange range = provider.getHighlightRange(sourcePosition);
       if (range != null) {

@@ -96,8 +96,7 @@ class DescriptorsGenerator {
     }
   }
 
-  @NotNull
-  private Map<String, Set<ModuleNode>> collectDependencies(@NotNull List<ModuleFiles> modulesFiles) {
+  private @NotNull Map<String, Set<ModuleNode>> collectDependencies(@NotNull List<ModuleFiles> modulesFiles) {
     PackageNamesCache packageNamesCache = new PackageNamesCache(myProject);
     Map<String, Set<ModuleNode>> packagesDeclaredInModules = new HashMap<>();
 
@@ -131,8 +130,7 @@ class DescriptorsGenerator {
     return packagesDeclaredInModules;
   }
 
-  @NotNull
-  private Set<ModuleNode> prepareModulesWithDependencies(@NotNull Map<String, Set<ModuleNode>> packagesDeclaredInModules) {
+  private @NotNull Set<ModuleNode> prepareModulesWithDependencies(@NotNull Map<String, Set<ModuleNode>> packagesDeclaredInModules) {
     // get indexes
     final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myProject);
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
@@ -215,11 +213,10 @@ class DescriptorsGenerator {
     return modules;
   }
 
-  @Nullable
-  private static ModuleNode findLibraryNode(@NotNull Map<String, Set<ModuleNode>> packagesDeclaredInModules,
-                                            @NotNull Map<PsiJavaModule, ModuleNode> nodeByDescriptor,
-                                            @NotNull Project project,
-                                            @NotNull Library library) {
+  private static @Nullable ModuleNode findLibraryNode(@NotNull Map<String, Set<ModuleNode>> packagesDeclaredInModules,
+                                                      @NotNull Map<PsiJavaModule, ModuleNode> nodeByDescriptor,
+                                                      @NotNull Project project,
+                                                      @NotNull Library library) {
     final PsiJavaModule descriptor = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, project));
     if (descriptor == null) return null;
 
@@ -231,8 +228,7 @@ class DescriptorsGenerator {
     return node;
   }
 
-  @NotNull
-  private List<ModuleInfo> prepareModuleInfos(@NotNull Set<ModuleNode> modules) {
+  private @NotNull List<ModuleInfo> prepareModuleInfos(@NotNull Set<ModuleNode> modules) {
     Set<String> requiredPackages = modules.stream()
       .map(ModuleNode::getRequiredPackages)
       .flatMap(Collection::stream)
@@ -302,8 +298,7 @@ class DescriptorsGenerator {
     return JavaRefactoringBundle.message("generate.module.descriptors.command.title");
   }
 
-  @Nullable
-  private static <T> Set<T> merge(@Nullable Set<T> first, @Nullable Set<T> second, @NotNull Supplier<Set<T>> initializer) {
+  private static @Nullable <T> Set<T> merge(@Nullable Set<T> first, @Nullable Set<T> second, @NotNull Supplier<Set<T>> initializer) {
     if (second == null || second.isEmpty()) return first;
     if (first == null || first.isEmpty()) return second;
     final Set<T> result = initializer.get();
@@ -320,8 +315,7 @@ class DescriptorsGenerator {
       myPsiFacade = JavaPsiFacade.getInstance(project);
     }
 
-    @Nullable
-    private String getPackageName(@NotNull String className) {
+    private @Nullable String getPackageName(@NotNull String className) {
       int dotPos;
       while ((dotPos = className.lastIndexOf('.')) > 0) {
         className = className.substring(0, dotPos);

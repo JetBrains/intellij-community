@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,8 +24,7 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
     myBuildDir = buildDir;
   }
 
-  @NotNull
-  public NameEnumerator getNameEnumerator() {
+  public @NotNull NameEnumerator getNameEnumerator() {
     return myIndex.getByteSeqEum();
   }
 
@@ -40,20 +39,17 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
     return myIndex;
   }
 
-  @Nullable
-  public abstract Set<VirtualFile> findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
+  public abstract @Nullable Set<VirtualFile> findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
 
   public abstract @Nullable Set<VirtualFile> findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException;
 
-  @Nullable
-  public abstract Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
-                                                                   @NotNull GlobalSearchScope searchScope,
-                                                                   @NotNull GlobalSearchScope dirtyScope,
-                                                                   @NotNull FileType fileType,
-                                                                   @NotNull CompilerHierarchySearchType searchType) throws StorageException;
+  public abstract @Nullable Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
+                                                                             @NotNull GlobalSearchScope searchScope,
+                                                                             @NotNull GlobalSearchScope dirtyScope,
+                                                                             @NotNull FileType fileType,
+                                                                             @NotNull CompilerHierarchySearchType searchType) throws StorageException;
 
-  @Nullable
-  public abstract Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions);
+  public abstract @Nullable Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions);
 
   public abstract int getOccurrenceCount(@NotNull CompilerRef element);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -39,9 +39,9 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   //    If more elements requested for this iterator, the processMoreSubclasses() is called which tries to populate 'subClasses' with more inheritors.
   private final HashSetQueue<@NotNull T> subClasses = new HashSetQueue<>(); // guarded by lock
   private final Object lock = new Object(); // MUST NOT acquire read action inside this lock
-  @NotNull private final Function<? super T, ? extends V> myAnchorToValueConvertor;
-  @NotNull private final MoreElementsGenerator<? extends T, ? super V> myGenerator;
-  @NotNull private final Predicate<? super V> myApplicableForGenerationFilter;
+  private final @NotNull Function<? super T, ? extends V> myAnchorToValueConvertor;
+  private final @NotNull MoreElementsGenerator<? extends T, ? super V> myGenerator;
+  private final @NotNull Predicate<? super V> myApplicableForGenerationFilter;
   private final Semaphore currentlyProcessingClasses = new Semaphore();
 
   /**
@@ -70,9 +70,8 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
     void generateMoreElementsFor(@NotNull V element, @NotNull Consumer<? super @NotNull T> processor);
   }
 
-  @NotNull
   @Override
-  public Iterator<V> iterator() {
+  public @NotNull Iterator<V> iterator() {
     return new Iterator<>() {
       private final Iterator<T> subClassIterator = subClasses.iterator(); // guarded by lock
 
@@ -185,7 +184,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
     }
   }
 
-  private boolean waitForOtherThreadsToFinishProcessing(@NotNull final Iterator<T> subClassIterator) {
+  private boolean waitForOtherThreadsToFinishProcessing(final @NotNull Iterator<T> subClassIterator) {
     // Found nothing, have to wait for other threads because:
     // The first thread comes and takes a class off the queue to search for inheritors,
     // the second thread comes and sees there is no classes in the queue.

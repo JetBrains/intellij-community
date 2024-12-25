@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -81,7 +81,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

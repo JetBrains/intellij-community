@@ -34,8 +34,7 @@ public class PackageViewModuleGroupNode extends ModuleGroupNode {
   }
 
   @Override
-  @Unmodifiable
-  protected @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
+  protected @Unmodifiable @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = fileIndex.getModuleForFile(file, false);
     if (module != null) {

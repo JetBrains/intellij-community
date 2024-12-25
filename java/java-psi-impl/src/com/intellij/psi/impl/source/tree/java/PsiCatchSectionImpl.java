@@ -68,8 +68,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     );
   }
 
-  @Unmodifiable
-  private List<PsiType> computePreciseCatchTypes(final @Nullable PsiParameter parameter) {
+  private @Unmodifiable List<PsiType> computePreciseCatchTypes(final @Nullable PsiParameter parameter) {
     if (parameter == null) {
       return ContainerUtil.emptyList();
     }

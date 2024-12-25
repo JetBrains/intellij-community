@@ -75,21 +75,18 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.idesettings.debugger.capture";
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     myTableModel = new MyTableModel();
 
     JBTable table = new JBTable(myTableModel);
@@ -216,7 +213,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = !c.myEnabled);
         table.repaint();
       }
@@ -226,7 +223,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
                                                  JavaDebuggerBundle.messagePointer("action.AnActionButton.description.import"),
                                                  AllIcons.Actions.Install) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         var descriptor = new FileChooserDescriptor(true, false, true, false, true, true)
           .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("XML"))
           .withTitle(JavaDebuggerBundle.message("import.capture.points"))
@@ -261,7 +258,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
                                                  JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
                                                  AllIcons.ToolbarDecorator.Export) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
           .createSaveFileDialog(new FileSaverDescriptor(JavaDebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
           .save((Path)null, null);
@@ -458,9 +455,8 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     myTableModel.fireTableDataChanged();
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaDebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 

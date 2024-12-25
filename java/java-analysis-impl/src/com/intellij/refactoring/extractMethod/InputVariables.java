@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethod;
 
@@ -44,8 +30,7 @@ public class InputVariables {
   private final ParametersFolder myFolding;
   private boolean myFoldingAvailable;
 
-  @NotNull
-  private final Set<? extends PsiField> myUsedInstanceFields;
+  private final @NotNull Set<? extends PsiField> myUsedInstanceFields;
   private boolean myPassFields;
 
   public InputVariables(@NotNull List<? extends PsiVariable> inputVariables,
@@ -99,8 +84,7 @@ public class InputVariables {
     return myPassFields;
   }
 
-  @NotNull
-  private List<VariableData> wrapInputVariables(@NotNull List<? extends PsiVariable> inputVariables) {
+  private @NotNull List<VariableData> wrapInputVariables(@NotNull List<? extends PsiVariable> inputVariables) {
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     List<VariableData> inputData = new ArrayList<>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
@@ -171,8 +155,7 @@ public class InputVariables {
     return inputData;
   }
 
-  @NotNull
-  private String getParameterName(@NotNull PsiVariable var) {
+  private @NotNull String getParameterName(@NotNull PsiVariable var) {
     if (var instanceof PsiParameter) {
       return ((PsiParameter)var).getName();
     }
@@ -183,8 +166,7 @@ public class InputVariables {
     return name;
   }
 
-  @Nullable
-  private static PsiType checkTopLevelInstanceOf(PsiType currentType, @NotNull LocalSearchScope localSearchScope) {
+  private static @Nullable PsiType checkTopLevelInstanceOf(PsiType currentType, @NotNull LocalSearchScope localSearchScope) {
     final PsiElement[] scope = localSearchScope.getScope();
     if (scope.length == 1 && scope[0] instanceof PsiIfStatement) {
       final PsiExpression condition = ((PsiIfStatement)scope[0]).getCondition();
@@ -208,8 +190,7 @@ public class InputVariables {
     return checkType != null && checkType.getType().equals(currentType);
   }
 
-  @Nullable
-  private static PsiType getBroaderType(PsiType currentType, PsiType castType) {
+  private static @Nullable PsiType getBroaderType(PsiType currentType, PsiType castType) {
     if (currentType != null) {
       if (castType != null) {
         if (TypeConversionUtil.isAssignable(castType, currentType)) {
@@ -231,8 +212,7 @@ public class InputVariables {
     return currentType;
   }
 
-  @NotNull
-  public List<VariableData> getInputVariables() {
+  public @NotNull List<VariableData> getInputVariables() {
     return myInputVariables;
   }
 
@@ -289,13 +269,11 @@ public class InputVariables {
   }
 
 
-  @NotNull
-  public InputVariables copy() {
+  public @NotNull InputVariables copy() {
     return new InputVariables(myInputVariables, myProject, myScope, myFoldingAvailable, myFolding, myInitialParameters, Collections.emptySet());
   }
 
-  @NotNull
-  public InputVariables copyWithoutFolding() {
+  public @NotNull InputVariables copyWithoutFolding() {
     return new InputVariables(myInitialParameters, myProject, myScope, false, Collections.emptySet());
   }
 
@@ -311,8 +289,7 @@ public class InputVariables {
     }
   }
 
-  @NotNull
-  public ParametersFolder getFolding() {
+  public @NotNull ParametersFolder getFolding() {
     return myFolding;
   }
 

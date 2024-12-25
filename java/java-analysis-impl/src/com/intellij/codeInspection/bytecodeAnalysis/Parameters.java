@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
@@ -145,7 +145,7 @@ class MakeResult implements PendingAction {
 }
 
 class NonNullInAnalysis extends Analysis<PResult> {
-  final private ExpandableArray<PendingAction> pendingActions;
+  private final ExpandableArray<PendingAction> pendingActions;
   private final ExpandableArray<PResult> results;
   private final NotNullInterpreter interpreter = new NotNullInterpreter();
 
@@ -190,8 +190,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
   private PResult subResult;
 
   @Override
-  @NotNull
-  protected Equation analyze() throws AnalyzerException {
+  protected @NotNull Equation analyze() throws AnalyzerException {
     pendingPush(new ProceedState(createStartState()));
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
@@ -371,7 +370,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 }
 
 class NullableInAnalysis extends Analysis<PResult> {
-  final private ExpandableArray<State> pending;
+  private final ExpandableArray<State> pending;
 
   private final NullableInterpreter interpreter = new NullableInterpreter();
 
@@ -402,8 +401,7 @@ class NullableInAnalysis extends Analysis<PResult> {
   private boolean top;
 
   @Override
-  @NotNull
-  protected Equation analyze() throws AnalyzerException {
+  protected @NotNull Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {

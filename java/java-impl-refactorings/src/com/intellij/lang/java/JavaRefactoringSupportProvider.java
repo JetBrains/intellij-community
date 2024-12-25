@@ -52,7 +52,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
   }
 
   @Override
-  public boolean isInplaceRenameAvailable(@NotNull final PsiElement element, final PsiElement context) {
+  public boolean isInplaceRenameAvailable(final @NotNull PsiElement element, final PsiElement context) {
     return mayRenameInplace(element, context);
   }
 
@@ -80,8 +80,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
   }
 
   @Override
-  @Nullable
-  public RefactoringActionHandler getExtractMethodHandler() {
+  public @Nullable RefactoringActionHandler getExtractMethodHandler() {
     return new ExtractMethodHandler();
   }
 
@@ -90,9 +89,8 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
     return new IntroduceParameterHandler();
   }
 
-  @Nullable
   @Override
-  public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
+  public @Nullable RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
     return new IntroduceFunctionalParameterHandler();
   }
 

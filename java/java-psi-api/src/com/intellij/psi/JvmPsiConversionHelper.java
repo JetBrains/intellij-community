@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmMethod;
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 @Experimental
 public interface JvmPsiConversionHelper {
-  @NotNull
-  static JvmPsiConversionHelper getInstance(@NotNull Project project) {
+  static @NotNull JvmPsiConversionHelper getInstance(@NotNull Project project) {
     return project.getService(JvmPsiConversionHelper.class);
   }
 

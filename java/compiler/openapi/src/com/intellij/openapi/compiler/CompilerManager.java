@@ -108,16 +108,14 @@ public abstract class CompilerManager {
    *
    * @return all tasks to be executed before compilation.
    */
-  @NotNull
-  public abstract List<CompileTask> getBeforeTasks();
+  public abstract @NotNull List<CompileTask> getBeforeTasks();
 
   /**
    * Returns the list of all tasks to be executed after compilation.
    *
    * @return all tasks to be executed after compilation.
    */
-  @NotNull
-  public abstract List<CompileTask> getAfterTaskList();
+  public abstract @NotNull List<CompileTask> getAfterTaskList();
 
   /**
    * Compile a set of files.
@@ -255,29 +253,23 @@ public abstract class CompilerManager {
   /*
    * Convenience methods for creating frequently-used compile scopes
    */
-  @NotNull
-  public abstract CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
+  public abstract @NotNull CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
 
-  @NotNull
-  public CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
+  public @NotNull CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
     return createModulesCompileScope(new Module[] {module}, includeDependentModules);
   }
 
-  @NotNull
-  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
     return createModulesCompileScope(modules, includeDependentModules, false);
   }
 
-  @NotNull
-  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
     return createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies, true);
   }
 
   public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests);
-  @NotNull
-  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
-  @NotNull
-  public abstract CompileScope createProjectCompileScope(@NotNull Project project);
+  public abstract @NotNull CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
+  public abstract @NotNull CompileScope createProjectCompileScope(@NotNull Project project);
 
   public abstract void setValidationEnabled(ModuleType<?> moduleType, boolean enabled);
 
@@ -292,6 +284,5 @@ public abstract class CompilerManager {
                                                           Collection<? extends File> files,
                                                           File outputDir) throws IOException, CompilationException;
 
-  @Nullable
-  public abstract File getJavacCompilerWorkingDir();
+  public abstract @Nullable File getJavacCompilerWorkingDir();
 }

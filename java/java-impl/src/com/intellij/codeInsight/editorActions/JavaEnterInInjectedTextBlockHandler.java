@@ -23,10 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JavaEnterInInjectedTextBlockHandler extends EnterHandlerDelegateAdapter {
-  @Nullable
-  private RangeMarker myRangeMarker;
-  @Nullable
-  private String myPreviousIndent;
+  private @Nullable RangeMarker myRangeMarker;
+  private @Nullable String myPreviousIndent;
 
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,

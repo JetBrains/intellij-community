@@ -66,16 +66,12 @@ public final class InconsistentLanguageLevelInspection extends GlobalInspectionT
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.modularization.issues");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "InconsistentLanguageLevel";
   }
 }

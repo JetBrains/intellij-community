@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,12 +50,11 @@ public final class AtomicConversionRule extends TypeConversionRule {
     return to instanceof PsiClassType && AtomicConversionType.getConversionType(from, (PsiClassType)to, context) != null;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor findDirectConversion(PsiElement context,
-                                                               PsiType to,
-                                                               PsiType from,
-                                                               AtomicConversionType type,
-                                                               TypeMigrationLabeler labeler) {
+  private static @Nullable TypeConversionDescriptor findDirectConversion(PsiElement context,
+                                                                         PsiType to,
+                                                                         PsiType from,
+                                                                         AtomicConversionType type,
+                                                                         TypeMigrationLabeler labeler) {
     final PsiClass toTypeClass = PsiUtil.resolveClassInType(to);
     LOG.assertTrue(toTypeClass != null);
     final String qualifiedName = toTypeClass.getQualifiedName();
@@ -162,12 +161,11 @@ public final class AtomicConversionRule extends TypeConversionRule {
            : findDirectConversionForAtomicReference(context, to, from, type, labeler);
   }
 
-  @Nullable
-  private static TypeConversionDescriptor findDirectConversionForAtomicReference(PsiElement context,
-                                                                                 PsiType to,
-                                                                                 PsiType from,
-                                                                                 AtomicConversionType type,
-                                                                                 TypeMigrationLabeler labeler) {
+  private static @Nullable TypeConversionDescriptor findDirectConversionForAtomicReference(PsiElement context,
+                                                                                           PsiType to,
+                                                                                           PsiType from,
+                                                                                           AtomicConversionType type,
+                                                                                           TypeMigrationLabeler labeler) {
     final PsiElement parent = context.getParent();
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
@@ -270,11 +268,10 @@ public final class AtomicConversionRule extends TypeConversionRule {
     return new AtomicConstructorConversionDescriptor("$val$", "new " + typeText + "($val$)", expression, type);
   }
 
-  @Nullable
-  private static TypeConversionDescriptor findDirectConversionForAtomicReferenceArray(PsiElement context,
-                                                                                      PsiType to,
-                                                                                      PsiType from,
-                                                                                      AtomicConversionType type) {
+  private static @Nullable TypeConversionDescriptor findDirectConversionForAtomicReferenceArray(PsiElement context,
+                                                                                                PsiType to,
+                                                                                                PsiType from,
+                                                                                                AtomicConversionType type) {
     LOG.assertTrue(from instanceof PsiArrayType);
     from = ((PsiArrayType)from).getComponentType();
     final PsiElement parent = context.getParent();
@@ -364,8 +361,7 @@ public final class AtomicConversionRule extends TypeConversionRule {
     return arg;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor findReverseConversion(PsiElement context) {
+  private static @Nullable TypeConversionDescriptor findReverseConversion(PsiElement context) {
     if (context instanceof PsiReferenceExpression) {
       if (context.getParent() instanceof PsiMethodCallExpression) {
         return findReverseConversionForMethodCall(context);
@@ -380,8 +376,7 @@ public final class AtomicConversionRule extends TypeConversionRule {
     return null;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor findReverseConversionForMethodCall(PsiElement context) {
+  private static @Nullable TypeConversionDescriptor findReverseConversionForMethodCall(PsiElement context) {
     final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
     if (resolved instanceof PsiMethod method) {
       final int parametersCount = method.getParameterList().getParametersCount();

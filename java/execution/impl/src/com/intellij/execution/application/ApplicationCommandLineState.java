@@ -31,7 +31,7 @@ public abstract class ApplicationCommandLineState<T extends
   CommonJavaRunConfigurationParameters &
   ConfigurationWithCommandLineShortener> extends BaseJavaApplicationCommandLineState<T> {
 
-  public ApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
+  public ApplicationCommandLineState(final @NotNull T configuration, final ExecutionEnvironment environment) {
     super(environment, configuration);
   }
 
@@ -90,9 +90,8 @@ public abstract class ApplicationCommandLineState<T extends
     return params;
   }
 
-  @NotNull
   @Override
-  protected OSProcessHandler startProcess() throws ExecutionException {
+  protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
     OSProcessHandler processHandler = super.startProcess();
     if (processHandler instanceof KillableProcessHandler && DebuggerSettings.getInstance().KILL_PROCESS_IMMEDIATELY) {
       ((KillableProcessHandler)processHandler).setShouldKillProcessSoftly(false);

@@ -16,9 +16,9 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -47,14 +47,12 @@ public final class DeclareCollectionAsInterfaceInspection extends BaseInspection
   public boolean ignorePrivateMethodsAndFields = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CollectionDeclaredAsConcreteClass";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final String type = (String)infos[0];
     return InspectionGadgetsBundle.message(
       "collection.declared.by.class.problem.descriptor",
@@ -84,15 +82,13 @@ public final class DeclareCollectionAsInterfaceInspection extends BaseInspection
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message(
         "declare.collection.as.interface.quickfix", typeString);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("declare.collection.as.interface.fix.family.name");
     }
 

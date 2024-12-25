@@ -82,13 +82,13 @@ public class JavaDebugProcess extends XDebugProcess {
     process -> new JavaBreakpointHandler.JavaCollectionBreakpointHandler(process)
   };
 
-  public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
+  public static JavaDebugProcess create(final @NotNull XDebugSession session, final @NotNull DebuggerSession javaSession) {
     JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
     javaSession.getProcess().setXDebugProcess(res);
     return res;
   }
 
-  protected JavaDebugProcess(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
+  protected JavaDebugProcess(final @NotNull XDebugSession session, final @NotNull DebuggerSession javaSession) {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();
@@ -109,7 +109,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(@NotNull final DebuggerContextImpl newContext, DebuggerSession.Event event) {
+      public void changeEvent(final @NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
         if (event == DebuggerSession.Event.PAUSE
             || event == DebuggerSession.Event.CONTEXT
             || event == DebuggerSession.Event.REFRESH
@@ -150,9 +150,8 @@ public class JavaDebugProcess extends XDebugProcess {
     });
 
     myNodeManager = new NodeManagerImpl(session.getProject(), null) {
-      @NotNull
       @Override
-      public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
+      public @NotNull DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
@@ -161,9 +160,8 @@ public class JavaDebugProcess extends XDebugProcess {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
-      @NotNull
       @Override
-      public DebuggerTreeNodeImpl createMessageNode(String message) {
+      public @NotNull DebuggerTreeNodeImpl createMessageNode(String message) {
         return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
       }
     };
@@ -240,9 +238,8 @@ public class JavaDebugProcess extends XDebugProcess {
     return myJavaSession;
   }
 
-  @NotNull
   @Override
-  public XDebuggerEditorsProvider getEditorsProvider() {
+  public @NotNull XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
   }
 
@@ -297,23 +294,20 @@ public class JavaDebugProcess extends XDebugProcess {
     return false;
   }
 
-  @Nullable
   @Override
-  protected ProcessHandler doGetProcessHandler() {
+  protected @Nullable ProcessHandler doGetProcessHandler() {
     return myJavaSession.getProcess().getProcessHandler();
   }
 
-  @NotNull
   @Override
-  public ExecutionConsole createConsole() {
+  public @NotNull ExecutionConsole createConsole() {
     ExecutionConsole console = myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
     if (console != null) return console;
     return super.createConsole();
   }
 
-  @NotNull
   @Override
-  public XDebugTabLayouter createTabLayouter() {
+  public @NotNull XDebugTabLayouter createTabLayouter() {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
@@ -322,9 +316,8 @@ public class JavaDebugProcess extends XDebugProcess {
         registerOverheadMonitor(ui);
       }
 
-      @NotNull
       @Override
-      public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+      public @NotNull Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
         Content content = null;
         if (console instanceof ExecutionConsoleEx) {
           ((ExecutionConsoleEx)console).buildUi(ui);
@@ -469,7 +462,7 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       DebugProcessImpl process = getCurrentDebugProcess(e);
@@ -503,8 +496,7 @@ public class JavaDebugProcess extends XDebugProcess {
     }
   }
 
-  @Nullable
-  public static DebugProcessImpl getCurrentDebugProcess(@NotNull AnActionEvent e) {
+  public static @Nullable DebugProcessImpl getCurrentDebugProcess(@NotNull AnActionEvent e) {
     XDebugSession session = DebuggerUIUtil.getSession(e);
     if (session != null) {
       XDebugProcess process = session.getDebugProcess();
@@ -525,9 +517,8 @@ public class JavaDebugProcess extends XDebugProcess {
     return description != null ? description : super.getCurrentStateMessage();
   }
 
-  @Nullable
   @Override
-  public XValueMarkerProvider<?, ?> createValueMarkerProvider() {
+  public @Nullable XValueMarkerProvider<?, ?> createValueMarkerProvider() {
     return new JavaValueMarker();
   }
 
@@ -536,9 +527,8 @@ public class JavaDebugProcess extends XDebugProcess {
     return true;
   }
 
-  @Nullable
   @Override
-  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+  public @Nullable XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return mySmartStepIntoActionHandler;
   }
 

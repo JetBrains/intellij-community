@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
@@ -49,35 +49,31 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MakeMethodOrClassStaticViewDescriptor(myMember);
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.makeStatic";
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
-    RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myMember);
-    return data;
-  }
-
-  @Nullable
-  @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myMember);
     return data;
   }
 
   @Override
-  protected final boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myMember);
+    return data;
+  }
+
+  @Override
+  protected final boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     if (ApplicationManager.getApplication().isUnitTestMode() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
       MultiMap<PsiElement, @Nls String> conflictDescriptions = getConflictDescriptions(usagesIn);
@@ -270,8 +266,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("make.static.command", DescriptiveNameUtil.getDescriptiveName(myMember));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
@@ -55,8 +55,7 @@ public class LayoutTreeSelection {
     return myNode2Path.get(node);
   }
 
-  @Nullable
-  public CompositePackagingElement<?> getCommonParentElement() {
+  public @Nullable CompositePackagingElement<?> getCommonParentElement() {
     CompositePackagingElement<?> commonParent = null;
     for (PackagingElementNode<?> selectedNode : mySelectedNodes) {
       final PackagingElement<?> element = selectedNode.getElementIfSingle();
@@ -71,13 +70,11 @@ public class LayoutTreeSelection {
     return commonParent;
   }
 
-  @Nullable
-  public PackagingElement<?> getElementIfSingle() {
+  public @Nullable PackagingElement<?> getElementIfSingle() {
     return mySelectedElements.size() == 1 ? mySelectedElements.get(0) : null;
   }
 
-  @Nullable
-  public PackagingElementNode<?> getNodeIfSingle() {
+  public @Nullable PackagingElementNode<?> getNodeIfSingle() {
     return mySelectedNodes.size() == 1 ? mySelectedNodes.get(0) : null;
   }
 }

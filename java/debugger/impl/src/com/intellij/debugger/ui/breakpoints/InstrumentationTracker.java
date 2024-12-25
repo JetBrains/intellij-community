@@ -28,7 +28,7 @@ public final class InstrumentationTracker {
 
   @SuppressWarnings("FieldCanBeLocal") private final InstrumentationMethodBreakpoint myRedefineBreakpoint;
   @SuppressWarnings("FieldCanBeLocal") private final InstrumentationMethodBreakpoint myRetransformBreakpoint;
-  @NotNull private final DebugProcessImpl myDebugProcess;
+  private final @NotNull DebugProcessImpl myDebugProcess;
 
   private static final java.lang.reflect.Method ourNoticeRedefineClassMethod;
 

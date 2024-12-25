@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -28,8 +28,7 @@ public abstract class TestCompilerHierarchyBaseAction extends TestCompilerRefere
     InternalCompilerRefServiceView.showHierarchyInfo(hierarchyTestInfo, element);
   }
 
-  @Nullable
-  protected abstract CompilerReferenceHierarchyTestInfo getHierarchy(@NotNull PsiElement element,
-                                                                     @NotNull CompilerReferenceServiceImpl refService,
-                                                                     @NotNull GlobalSearchScope scope);
+  protected abstract @Nullable CompilerReferenceHierarchyTestInfo getHierarchy(@NotNull PsiElement element,
+                                                                               @NotNull CompilerReferenceServiceImpl refService,
+                                                                               @NotNull GlobalSearchScope scope);
 }

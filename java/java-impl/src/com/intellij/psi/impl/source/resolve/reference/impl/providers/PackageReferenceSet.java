@@ -40,8 +40,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     return new PsiPackageReference(this, range, index);
   }
 
-  @Unmodifiable
-  public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
+  public @Unmodifiable Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
     if (context != null) {
       return ContainerUtil.filter(context.getSubPackages(getResolveScope()), aPackage -> Objects.equals(aPackage.getName(), packageName));
     }
@@ -52,8 +51,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     return mySearchScope;
   }
 
-  @Unmodifiable
-  public Collection<PsiPackage> resolvePackage() {
+  public @Unmodifiable Collection<PsiPackage> resolvePackage() {
     final PsiPackageReference packageReference = getLastReference();
     if (packageReference == null) {
       return Collections.emptyList();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.module.Module;
@@ -28,11 +28,10 @@ public final class PsiSuperMethodUtil {
     return false;
   }
 
-  @NotNull
-  public static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass superClass,
-                                                      @NotNull PsiSubstitutor superSubstitutor,
-                                                      @NotNull PsiSubstitutor derivedSubstitutor,
-                                                      boolean inRawContext) {
+  public static @NotNull PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass superClass,
+                                                               @NotNull PsiSubstitutor superSubstitutor,
+                                                               @NotNull PsiSubstitutor derivedSubstitutor,
+                                                               boolean inRawContext) {
     if (inRawContext) {
       Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());
@@ -51,8 +50,7 @@ public final class PsiSuperMethodUtil {
     return map == null ? PsiSubstitutor.EMPTY : JavaPsiFacade.getElementFactory(superClass.getProject()).createSubstitutor(map);
   }
 
-  @NotNull
-  public static Map<MethodSignature, Set<PsiMethod>> collectOverrideEquivalents(@NotNull PsiClass aClass) {
+  public static @NotNull Map<MethodSignature, Set<PsiMethod>> collectOverrideEquivalents(@NotNull PsiClass aClass) {
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent = MethodSignatureUtil.createErasedMethodSignatureMap();
     final GlobalSearchScope resolveScope = aClass.getResolveScope();
     PsiClass[] supers = aClass.getSupers();
@@ -99,8 +97,7 @@ public final class PsiSuperMethodUtil {
    * @param resolveScope   scope where class should be found
    * @return               remapped class or same, if no other candidates were found
    */
-  @Nullable
-  public static PsiClass correctClassByScope(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope resolveScope) {
+  public static @Nullable PsiClass correctClassByScope(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope resolveScope) {
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
       return psiClass;

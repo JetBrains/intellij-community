@@ -164,8 +164,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     BY_OS,
     BY_ROOT;
 
-    @NotNull
-    static FsCompilerReferenceType from(@Nullable String text) {
+    static @NotNull FsCompilerReferenceType from(@Nullable String text) {
       for (FsCompilerReferenceType type : values()) {
         if (type.name().equalsIgnoreCase(text)) {
           return type;

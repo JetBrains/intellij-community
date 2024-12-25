@@ -38,14 +38,12 @@ public final class NonProtectedConstructorInAbstractClassInspection extends Base
   public boolean m_ignoreNonPublicClasses = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ConstructorNotProtectedInAbstractClass";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.protected.constructor.in.abstract.class.problem.descriptor");
   }

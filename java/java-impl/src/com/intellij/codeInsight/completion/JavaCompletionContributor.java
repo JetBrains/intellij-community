@@ -930,8 +930,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return null;
   }
 
-  @Unmodifiable
-  private static Collection<LookupElement> getInnerScopeVariables(CompletionParameters parameters, PsiElement position) {
+  private static @Unmodifiable Collection<LookupElement> getInnerScopeVariables(CompletionParameters parameters, PsiElement position) {
     PsiElement container = BringVariableIntoScopeFix.getContainer(position);
     if (container == null) return Collections.emptyList();
     Map<String, Optional<PsiLocalVariable>> variableMap =
@@ -1010,8 +1009,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
            LambdaHighlightingUtil.insertSemicolon(position.getParent().getParent());
   }
 
-  @Unmodifiable
-  private static List<LookupElement> processLabelReference(PsiLabelReference reference) {
+  private static @Unmodifiable List<LookupElement> processLabelReference(PsiLabelReference reference) {
     return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s),
                                                                                       TailTypes.semicolonType()));
   }
@@ -1507,8 +1505,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
    * @param lookup the {@link LookupElement} to be marked as inaccessible
    * @return the modified {@link LookupElement} marked as inaccessible
    */
-  @NotNull
-  private static LookupElement markAsInaccessible(@NotNull LookupElement lookup) {
+  private static @NotNull LookupElement markAsInaccessible(@NotNull LookupElement lookup) {
     return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(lookup, new LookupElementRenderer<>() {
       @Override
       public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
@@ -1555,9 +1552,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return result;
   }
 
-  @Nullable
-  private static LookupElement getAutoModuleReference(@NotNull String name, @NotNull PsiElement parent,
-                                                      @NotNull Set<? super String> filter) {
+  private static @Nullable LookupElement getAutoModuleReference(@NotNull String name, @NotNull PsiElement parent,
+                                                                @NotNull Set<? super String> filter) {
     if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
       LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
       return TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());

@@ -31,8 +31,7 @@ import java.util.Set;
 public final class ExtendsAnnotationInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ClassExplicitlyAnnotation";
   }
 
@@ -42,8 +41,7 @@ public final class ExtendsAnnotationInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass containingClass = (PsiClass)infos[0];
     return containingClass.isInterface()
            ? InspectionGadgetsBundle.message("extends.annotation.interface.problem.descriptor", containingClass.getName())

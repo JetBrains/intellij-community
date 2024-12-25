@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -307,9 +307,8 @@ public final class DfaUtil {
     return value;
   }
 
-  @Unmodifiable
-  public static @NotNull List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
-                                                                          @NotNull List<? extends MethodContract> contracts) {
+  public static @Unmodifiable @NotNull List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
+                                                                                        @NotNull List<? extends MethodContract> contracts) {
     if (method == null) return contracts;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     List<MethodContract> rangeContracts = new ArrayList<>();

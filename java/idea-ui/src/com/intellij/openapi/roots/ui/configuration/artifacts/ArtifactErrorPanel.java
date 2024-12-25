@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.icons.AllIcons;
@@ -52,9 +52,8 @@ public final class ArtifactErrorPanel {
           }
           else {
             JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationErrorQuickFix>(null, myCurrentQuickFixes) {
-              @NotNull
               @Override
-              public String getTextFor(ConfigurationErrorQuickFix value) {
+              public @NotNull String getTextFor(ConfigurationErrorQuickFix value) {
                 return value.getActionName();
               }
 

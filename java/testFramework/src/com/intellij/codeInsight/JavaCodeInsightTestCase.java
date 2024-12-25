@@ -314,8 +314,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
-  @Unmodifiable
-  protected final @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
+  protected final @Unmodifiable @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     return ContainerUtil.map(editorInfos.keySet(), newVFile -> {
       PsiFile file = myPsiManager.findFile(newVFile);
       if (myFile == null) myFile = file;

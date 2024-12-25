@@ -11,8 +11,7 @@ import java.util.List;
 
 public final class JavaFocusModeProvider implements FocusModeProvider {
   @Override
-  @Unmodifiable
-  public @NotNull List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {
+  public @Unmodifiable @NotNull List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {
     return SyntaxTraverser.psiTraverser(file)
       .postOrderDfsTraversal()
       .filter(e -> e instanceof PsiClass || e instanceof PsiMethod || e instanceof PsiClassInitializer)

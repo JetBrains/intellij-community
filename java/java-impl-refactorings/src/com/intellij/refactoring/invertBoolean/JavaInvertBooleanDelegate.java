@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -226,7 +226,7 @@ public final class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   @Override
   public void collectRefElements(final PsiElement element,
                                  final RenameProcessor renameProcessor,
-                                 @NotNull final String newName,
+                                 final @NotNull String newName,
                                  final Collection<? super PsiElement> elementsToInvert) {
     collectRefsToInvert(element, elementsToInvert);
 

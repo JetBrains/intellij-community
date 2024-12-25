@@ -115,8 +115,7 @@ public class JavaMethodResolveHelper {
     NONE, STATIC, RESOLVE
   }
 
-  @Unmodifiable
-  public Collection<JavaMethodCandidateInfo> getMethods() {
+  public @Unmodifiable Collection<JavaMethodCandidateInfo> getMethods() {
     return ContainerUtil.mapNotNull(getCandidates(),
                                     (Function<JavaResolveResult, JavaMethodCandidateInfo>)javaResolveResult -> new JavaMethodCandidateInfo((PsiMethod)javaResolveResult.getElement(), javaResolveResult.getSubstitutor()));
   }

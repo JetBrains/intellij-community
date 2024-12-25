@@ -33,8 +33,7 @@ public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> impleme
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<PsiAnnotationStub> getAnnotations() {
+  public @Unmodifiable @NotNull List<PsiAnnotationStub> getAnnotations() {
     List<StubElement<?>> children = getChildrenStubs();
 
     return ContainerUtil.mapNotNull(children,

@@ -124,17 +124,13 @@ public final class PatternVariablesCanBeReplacedWithCastInspection extends Abstr
       this.tryToPreserveUnusedVariables = tryToPreserveUnusedVariables;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.message.pattern.variables.can.be.replaced.with.cast.fix.name", myName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.message.pattern.variables.can.be.replaced.with.cast.family.name");
     }
 
@@ -350,8 +346,7 @@ public final class PatternVariablesCanBeReplacedWithCastInspection extends Abstr
       BlockUtils.addBefore(statement, declarationStatement);
     }
 
-    @Nullable
-    private static String getDeclarationStatement(@NotNull PsiPatternVariable variable) {
+    private static @Nullable String getDeclarationStatement(@NotNull PsiPatternVariable variable) {
       String text = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
       if (text == null) {
         return null;

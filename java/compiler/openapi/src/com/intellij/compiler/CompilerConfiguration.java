@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
@@ -29,8 +29,7 @@ public abstract class CompilerConfiguration {
   public abstract boolean useReleaseOption();
   public abstract void setUseReleaseOption(boolean useReleaseOption);
 
-  @Nullable
-  public abstract String getProjectBytecodeTarget();
+  public abstract @Nullable String getProjectBytecodeTarget();
   public abstract void setProjectBytecodeTarget(String level);
 
   public abstract boolean isParallelCompilationEnabled();
@@ -43,23 +42,19 @@ public abstract class CompilerConfiguration {
   @Deprecated
   public abstract void setParallelCompilationEnabled(boolean enabled);
 
-  @NotNull
-  public abstract ParallelCompilationOption getParallelCompilationOption();
+  public abstract @NotNull ParallelCompilationOption getParallelCompilationOption();
   public abstract void setParallelCompilationOption(@NotNull ParallelCompilationOption option);
 
-  @Nullable
-  public abstract String getBytecodeTargetLevel(Module module);
+  public abstract @Nullable String getBytecodeTargetLevel(Module module);
   public abstract void setBytecodeTargetLevel(Module module, String level);
 
   /**
    * Returns additional compiler options applicable to the given module, if any.
    */
-  @NotNull
-  public abstract List<String> getAdditionalOptions(@NotNull Module module);
+  public abstract @NotNull List<String> getAdditionalOptions(@NotNull Module module);
   public abstract void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options);
 
-  @NotNull
-  public abstract AnnotationProcessingConfiguration getAnnotationProcessingConfiguration(Module module);
+  public abstract @NotNull AnnotationProcessingConfiguration getAnnotationProcessingConfiguration(Module module);
 
   /**
    * Adds a new empty annotation processing profile with the given name and returns the created instance.

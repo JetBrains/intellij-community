@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -33,13 +33,11 @@ public abstract class ModuleInfoUsageDetector {
     mySourceClassesByDir = groupClassesByDir(elements);
   }
 
-  @NotNull
-  public static ModuleInfoUsageDetector createModifyUsageInstance(@NotNull Project project, PsiElement @NotNull [] elementsToMove, @NotNull MoveDestination moveDestination) {
+  public static @NotNull ModuleInfoUsageDetector createModifyUsageInstance(@NotNull Project project, PsiElement @NotNull [] elementsToMove, @NotNull MoveDestination moveDestination) {
     return new ModuleInfoModifyUsageDetector(project, elementsToMove, moveDestination);
   }
 
-  @NotNull
-  public static ModuleInfoUsageDetector createSafeDeleteUsageInstance(@NotNull Project project, PsiElement @NotNull [] elementsToDelete) {
+  public static @NotNull ModuleInfoUsageDetector createSafeDeleteUsageInstance(@NotNull Project project, PsiElement @NotNull [] elementsToDelete) {
     return new ModuleInfoSafeDeleteUsageDetector(project, elementsToDelete);
   }
 
@@ -49,11 +47,9 @@ public abstract class ModuleInfoUsageDetector {
    * Handling the absent directories which haven't been created yet during find usages operation.
    * Sample: we have a class pack1.A, we want to move it to pack1.pack2 which doesn't exist.
    */
-  @NotNull
-  public abstract List<UsageInfo> createUsageInfosForNewlyCreatedDirs();
+  public abstract @NotNull List<UsageInfo> createUsageInfosForNewlyCreatedDirs();
 
-  @NotNull
-  private static MultiMap<PsiDirectory, PsiClass> groupClassesByDir(PsiElement @NotNull [] elementsToMove) {
+  private static @NotNull MultiMap<PsiDirectory, PsiClass> groupClassesByDir(PsiElement @NotNull [] elementsToMove) {
     PsiElement firstElement = ArrayUtil.getFirstElement(elementsToMove);
     if (firstElement == null || !PsiUtil.isAvailable(JavaFeature.MODULES, firstElement)) return MultiMap.empty();
     MultiMap<PsiDirectory, PsiClass> result = new MultiMap<>();
@@ -71,8 +67,7 @@ public abstract class ModuleInfoUsageDetector {
     return result;
   }
 
-  @NotNull
-  protected static MultiMap<PsiJavaModule, PsiDirectory> groupDirsByModuleDescriptor(@NotNull Set<PsiDirectory> dirs) {
+  protected static @NotNull MultiMap<PsiJavaModule, PsiDirectory> groupDirsByModuleDescriptor(@NotNull Set<PsiDirectory> dirs) {
     MultiMap<PsiJavaModule, PsiDirectory> result = new MultiMap<>();
     for (PsiDirectory directory : dirs) {
       PsiJavaModule moduleDescriptor = JavaModuleGraphUtil.findDescriptorByElement(directory);
@@ -83,8 +78,7 @@ public abstract class ModuleInfoUsageDetector {
     return result;
   }
 
-  @NotNull
-  protected static MultiMap<PsiPackage, PsiPackageAccessibilityStatement> collectModuleStatements(@NotNull Iterable<? extends PsiPackageAccessibilityStatement> statements) {
+  protected static @NotNull MultiMap<PsiPackage, PsiPackageAccessibilityStatement> collectModuleStatements(@NotNull Iterable<? extends PsiPackageAccessibilityStatement> statements) {
     MultiMap<PsiPackage, PsiPackageAccessibilityStatement> result = new MultiMap<>();
     for (PsiPackageAccessibilityStatement pkgStatement : statements) {
       PsiJavaCodeReferenceElement packageReference = pkgStatement.getPackageReference();
@@ -96,10 +90,9 @@ public abstract class ModuleInfoUsageDetector {
     return result;
   }
 
-  @NotNull
-  protected static List<PsiPackageAccessibilityStatement> findModuleStatementsForPkg(@NotNull PsiPackage psiPackage,
-                                                                                     @NotNull MultiMap<PsiPackage, PsiPackageAccessibilityStatement> exports,
-                                                                                     @NotNull MultiMap<PsiPackage, PsiPackageAccessibilityStatement> opens) {
+  protected static @NotNull List<PsiPackageAccessibilityStatement> findModuleStatementsForPkg(@NotNull PsiPackage psiPackage,
+                                                                                              @NotNull MultiMap<PsiPackage, PsiPackageAccessibilityStatement> exports,
+                                                                                              @NotNull MultiMap<PsiPackage, PsiPackageAccessibilityStatement> opens) {
     List<PsiPackageAccessibilityStatement> result = new SmartList<>();
     result.addAll(exports.get(psiPackage));
     result.addAll(opens.get(psiPackage));

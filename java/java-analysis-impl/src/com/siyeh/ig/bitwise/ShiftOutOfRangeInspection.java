@@ -35,8 +35,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ShiftOutOfRangeInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     LongRangeSet range = (LongRangeSet)infos[0];
     Long val = range.getConstantValue();
     if (val == null) {
@@ -73,15 +72,13 @@ public final class ShiftOutOfRangeInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       final int newValue = (int)(myValue & (myLong ? 63 : 31));
       return CommonQuickFixBundle.message("fix.replace.x.with.y", myValue, newValue);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("shift.out.of.range.fix.family.name");
     }
 

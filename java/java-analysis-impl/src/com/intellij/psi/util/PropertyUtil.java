@@ -19,18 +19,15 @@ public final class PropertyUtil extends PropertyUtilBase {
   private PropertyUtil() {
   }
 
-  @Nullable
-  public static PsiField getFieldOfGetter(@NotNull PsiMethod method) {
+  public static @Nullable PsiField getFieldOfGetter(@NotNull PsiMethod method) {
     return getFieldOfGetter(method, true);
   }
 
-  @Nullable
-  private static PsiField getFieldOfGetter(@NotNull PsiMethod method, boolean useIndex) {
+  private static @Nullable PsiField getFieldOfGetter(@NotNull PsiMethod method, boolean useIndex) {
     return getFieldOfGetter(method, () -> getGetterReturnExpression(method), useIndex);
   }
 
-  @Nullable
-  public static PsiField getFieldOfGetter(@NotNull PsiMethod method, Supplier<? extends PsiExpression> returnExprSupplier, boolean useIndex) {
+  public static @Nullable PsiField getFieldOfGetter(@NotNull PsiMethod method, Supplier<? extends PsiExpression> returnExprSupplier, boolean useIndex) {
     PsiField field = getFieldImpl(method, returnExprSupplier, useIndex);
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
@@ -66,13 +63,11 @@ public final class PropertyUtil extends PropertyUtilBase {
     return getFieldOfGetter(method, useIndex) != null;
   }
 
-  @Nullable
-  public static PsiField getFieldOfSetter(@Nullable PsiMethod method) {
+  public static @Nullable PsiField getFieldOfSetter(@Nullable PsiMethod method) {
     return getFieldOfSetter(method, true);
   }
 
-  @Nullable
-  private static PsiField getFieldOfSetter(@Nullable PsiMethod method, boolean useIndex) {
+  private static @Nullable PsiField getFieldOfSetter(@Nullable PsiMethod method, boolean useIndex) {
     if (method == null) {
       return null;
     }
@@ -132,8 +127,7 @@ public final class PropertyUtil extends PropertyUtilBase {
     return getFieldOfSetter(method, useIndex) != null;
   }
 
-  @Nullable
-  public static PsiMethod getReversePropertyMethod(PsiMethod propertyMethod) {
+  public static @Nullable PsiMethod getReversePropertyMethod(PsiMethod propertyMethod) {
     if (propertyMethod == null) {
       return null;
     }

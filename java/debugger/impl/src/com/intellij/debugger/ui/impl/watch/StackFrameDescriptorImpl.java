@@ -122,19 +122,16 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   @Override
-  @NotNull
-  public StackFrameProxyImpl getFrameProxy() {
+  public @NotNull StackFrameProxyImpl getFrameProxy() {
     return myFrame;
   }
 
-  @NotNull
   @Override
-  public DebugProcess getDebugProcess() {
+  public @NotNull DebugProcess getDebugProcess() {
     return myFrame.getVirtualMachine().getDebugProcess();
   }
 
-  @Nullable
-  public Method getMethod() {
+  public @Nullable Method getMethod() {
     return myMethodOccurrence.getMethod();
   }
 
@@ -150,8 +147,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return !myFrame.isBottom() && myMethodOccurrence.canDrop();
   }
 
-  @Nullable
-  public ValueMarkup getValueMarkup() {
+  public @Nullable ValueMarkup getValueMarkup() {
     Map<?, ValueMarkup> markers = getValueMarkers();
     if (!markers.isEmpty() && myThisObject != null) {
       return markers.get(myThisObject);
@@ -250,8 +246,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
            (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(getLocation()));
   }
 
-  @Nullable
-  public Location getLocation() {
+  public @Nullable Location getLocation() {
     return myLocation;
   }
 
@@ -278,8 +273,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myIcon;
   }
 
-  @Nullable
-  public ObjectReference getThisObject() {
+  public @Nullable ObjectReference getThisObject() {
     if (myThisObject == null) {
       try {
         myThisObject = myFrame.thisObject();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Pair;
@@ -41,7 +41,7 @@ public final class ListArrayConversionRule extends TypeConversionRule {
       TypeConversionDescriptor descriptor = changeCollectionCallsToArray(method, context, collectionType, arrayType);
       if (descriptor != null) return descriptor;
 
-      @NonNls final String memberName = member.getName();
+      final @NonNls String memberName = member.getName();
       assert memberName != null;
       descriptor = switch (memberName) {
         case "sort" -> {
@@ -98,8 +98,7 @@ public final class ListArrayConversionRule extends TypeConversionRule {
     return null;
   }
 
-  @Nullable
-  public static PsiType evaluateCollectionsType(PsiClassType classType, PsiExpression expression) {
+  public static @Nullable PsiType evaluateCollectionsType(PsiClassType classType, PsiExpression expression) {
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(classType);
     final PsiClass psiClass = classResolveResult.getElement();
     if (psiClass != null) {
@@ -143,12 +142,11 @@ public final class ListArrayConversionRule extends TypeConversionRule {
     return null;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor changeCollectionCallsToArray(final PsiMethod method,
-                                                                       final PsiElement context,
-                                                                       PsiType collectionType,
-                                                                       PsiArrayType arrayType) {
-    @NonNls final String methodName = method.getName();
+  private static @Nullable TypeConversionDescriptor changeCollectionCallsToArray(final PsiMethod method,
+                                                                                 final PsiElement context,
+                                                                                 PsiType collectionType,
+                                                                                 PsiArrayType arrayType) {
+    final @NonNls String methodName = method.getName();
     return switch (methodName) {
       case "toArray" -> {
         if (method.getParameterList().isEmpty()) {

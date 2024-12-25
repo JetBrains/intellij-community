@@ -106,8 +106,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     resetIgnoreStepFiltersFlag();
   }
 
-  @NotNull
-  public GlobalSearchScope getSearchScope() {
+  public @NotNull GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
@@ -144,9 +143,8 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       myDebuggerContext = SESSION_EMPTY_CONTEXT;
     }
 
-    @NotNull
     @Override
-    public DebuggerContextImpl getContext() {
+    public @NotNull DebuggerContextImpl getContext() {
       return myDebuggerContext;
     }
 
@@ -158,7 +156,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
      * In this case, assume that the latter setState is ignored since the thread was resumed.
      */
     @Override
-    public void setState(@NotNull final DebuggerContextImpl context,
+    public void setState(final @NotNull DebuggerContextImpl context,
                          final State state,
                          final Event event,
                          final @NlsContexts.Label String description) {
@@ -197,7 +195,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  static DebuggerSession create(@NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment)
+  static DebuggerSession create(final @NotNull DebugProcessImpl debugProcess, DebugEnvironment environment)
     throws ExecutionException {
     DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess, environment);
     try {
@@ -210,7 +208,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return session;
   }
 
-  private DebuggerSession(@Nls String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment) {
+  private DebuggerSession(@Nls String sessionName, final @NotNull DebugProcessImpl debugProcess, DebugEnvironment environment) {
     mySessionName = sessionName;
     myDebugProcess = debugProcess;
     SESSION_EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext(this, null, null, null);
@@ -238,13 +236,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     mySearchScope = scope;
   }
 
-  @NotNull
-  public DebuggerStateManager getContextManager() {
+  public @NotNull DebuggerStateManager getContextManager() {
     return myContextManager;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return getProcess().getProject();
   }
 
@@ -252,8 +248,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return mySessionName;
   }
 
-  @NotNull
-  public DebugProcessImpl getProcess() {
+  public @NotNull DebugProcessImpl getProcess() {
     return myDebugProcess;
   }
 
@@ -816,8 +811,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     if (session != null) session.sessionResumed();
   }
 
-  @Nullable
-  public XDebugSession getXDebugSession() {
+  public @Nullable XDebugSession getXDebugSession() {
     JavaDebugProcess process = myDebugProcess.getXdebugProcess();
     return process != null ? process.getSession() : null;
   }

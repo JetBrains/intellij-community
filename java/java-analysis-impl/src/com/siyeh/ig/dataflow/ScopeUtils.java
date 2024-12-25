@@ -27,9 +27,8 @@ final class ScopeUtils {
 
   private ScopeUtils() {}
 
-  @Nullable
-  public static PsiElement findTighterDeclarationLocation(@NotNull PsiElement sibling, @NotNull PsiVariable variable,
-                                                          boolean skipDeclarationStatements) {
+  public static @Nullable PsiElement findTighterDeclarationLocation(@NotNull PsiElement sibling, @NotNull PsiVariable variable,
+                                                                    boolean skipDeclarationStatements) {
     PsiElement prevSibling = sibling.getPrevSibling();
     while (prevSibling instanceof PsiWhiteSpace || prevSibling instanceof PsiComment) {
       prevSibling = prevSibling.getPrevSibling();
@@ -45,8 +44,7 @@ final class ScopeUtils {
     return prevSibling;
   }
 
-  @Nullable
-  public static PsiElement getChildWhichContainsElement(@NotNull PsiElement ancestor, @NotNull PsiElement element) {
+  public static @Nullable PsiElement getChildWhichContainsElement(@NotNull PsiElement ancestor, @NotNull PsiElement element) {
     PsiElement child = element;
     PsiElement parent = child.getParent();
     while (!parent.equals(ancestor)) {
@@ -59,8 +57,7 @@ final class ScopeUtils {
     return child;
   }
 
-  @Nullable
-  public static PsiElement getCommonParent(@NotNull List<? extends PsiElement> referenceElements) {
+  public static @Nullable PsiElement getCommonParent(@NotNull List<? extends PsiElement> referenceElements) {
     PsiElement commonParent = null;
     for (PsiElement referenceElement : referenceElements) {
       final PsiElement parent = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
@@ -122,8 +119,7 @@ final class ScopeUtils {
     return commonParent;
   }
 
-  @Nullable
-  public static PsiElement moveOutOfLoopsAndClasses(@NotNull PsiElement scope, @NotNull PsiElement maxScope) {
+  public static @Nullable PsiElement moveOutOfLoopsAndClasses(@NotNull PsiElement scope, @NotNull PsiElement maxScope) {
     PsiElement result = maxScope;
     if (result instanceof PsiLoopStatement) {
       return result;

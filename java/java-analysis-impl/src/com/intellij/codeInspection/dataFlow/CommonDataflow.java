@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.ReachabilityCountingInterpreter;
@@ -177,8 +177,7 @@ public final class CommonDataflow {
      * @param expression an expression to get its value
      * @return a set of possible values or empty set if not known
      */
-    @NotNull
-    public Set<Object> getExpressionValues(@Nullable PsiExpression expression) {
+    public @NotNull Set<Object> getExpressionValues(@Nullable PsiExpression expression) {
       if (expression == null) return Collections.emptySet();
       DataflowPoint point = myData.get(new JavaExpressionAnchor(expression));
       if (point == null) return Collections.emptySet();
@@ -192,21 +191,18 @@ public final class CommonDataflow {
      * May return {@link DfType#TOP} if no information from dataflow is known about this expression
      * @see #getDfTypeNoAssertions(PsiExpression)
      */
-    @NotNull
-    public DfType getDfType(PsiExpression expression) {
+    public @NotNull DfType getDfType(PsiExpression expression) {
       if (expression == null) return DfType.TOP;
       DataflowPoint point = myData.get(new JavaExpressionAnchor(expression));
       return point == null ? DfType.TOP : point.myDfType;
     }
 
-    @NotNull
-    public DfType getDfType(@NotNull JavaDfaAnchor anchor) {
+    public @NotNull DfType getDfType(@NotNull JavaDfaAnchor anchor) {
       DataflowPoint point = myData.get(anchor);
       return point == null ? DfType.TOP : point.myDfType;
     }
 
-    @NotNull
-    public DfType getDfTypeNoAssertions(@NotNull JavaDfaAnchor anchor) {
+    public @NotNull DfType getDfTypeNoAssertions(@NotNull JavaDfaAnchor anchor) {
       DataflowPoint point = myDataAssertionsDisabled.get(anchor);
       return point == null ? DfType.TOP : point.myDfType;
     }
@@ -217,16 +213,14 @@ public final class CommonDataflow {
      * May return {@link DfType#TOP} if no information from dataflow is known about this expression
      * @see #getDfType(PsiExpression)
      */
-    @NotNull
-    public DfType getDfTypeNoAssertions(PsiExpression expression) {
+    public @NotNull DfType getDfTypeNoAssertions(PsiExpression expression) {
       if (expression == null) return DfType.TOP;
       DataflowPoint point = myDataAssertionsDisabled.get(new JavaExpressionAnchor(expression));
       return point == null ? DfType.TOP : point.myDfType;
     }
   }
 
-  @NotNull
-  private static DataflowResult runDFA(@Nullable PsiElement block) {
+  private static @NotNull DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
     var listener = new CommonDataflowListener();
     var runner = new StandardDataFlowRunner(block.getProject(), ThreeState.UNSURE) {
@@ -275,8 +269,7 @@ public final class CommonDataflow {
    * @param context a context to get the dataflow result
    * @return the dataflow result or null if dataflow cannot be launched for this context (e.g. we are inside too complex method)
    */
-  @Nullable
-  public static DataflowResult getDataflowResult(@NotNull PsiElement context) {
+  public static @Nullable DataflowResult getDataflowResult(@NotNull PsiElement context) {
     PsiElement body = DfaUtil.getDataflowContext(context);
     if (body == null) return null;
     ConcurrentHashMap<PsiElement, DataflowResult> fileMap =
@@ -320,8 +313,7 @@ public final class CommonDataflow {
    * @param expression an expression to infer the DfType
    * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
    */
-  @NotNull
-  public static DfType getDfType(@NotNull PsiExpression expression) {
+  public static @NotNull DfType getDfType(@NotNull PsiExpression expression) {
     return getDfType(expression, false);
   }
 
@@ -330,8 +322,7 @@ public final class CommonDataflow {
    * @param ignoreAssertions whether to ignore assertion statement during the analysis
    * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
    */
-  @NotNull
-  public static DfType getDfType(@NotNull PsiExpression expression, boolean ignoreAssertions) {
+  public static @NotNull DfType getDfType(@NotNull PsiExpression expression, boolean ignoreAssertions) {
     DataflowResult result = getDataflowResult(expression);
     if (result == null) return DfType.TOP;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
@@ -347,8 +338,7 @@ public final class CommonDataflow {
    * @return long range set
    */
   @Contract("null -> null")
-  @Nullable
-  public static LongRangeSet getExpressionRange(@Nullable PsiExpression expression) {
+  public static @Nullable LongRangeSet getExpressionRange(@Nullable PsiExpression expression) {
     if (expression == null) return null;
     Object value = ExpressionUtils.computeConstantExpression(expression);
     LongRangeSet rangeSet = LongRangeSet.fromConstant(value);

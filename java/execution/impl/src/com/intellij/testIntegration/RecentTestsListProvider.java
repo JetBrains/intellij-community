@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -50,8 +50,7 @@ public final class RecentTestsListProvider {
     myConfigurationProvider = configurationProvider;
   }
 
-  @Unmodifiable
-  public List<RecentTestsPopupEntry> getTestsToShow() {
+  public @Unmodifiable List<RecentTestsPopupEntry> getTestsToShow() {
     if (myRecords == null) return ContainerUtil.emptyList();
 
     RecentTestsData data = new RecentTestsData();

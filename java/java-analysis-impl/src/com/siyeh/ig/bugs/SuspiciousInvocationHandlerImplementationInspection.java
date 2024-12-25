@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.Nullability;
@@ -188,10 +188,9 @@ public final class SuspiciousInvocationHandlerImplementationInspection extends A
     }
 
     @Override
-    @Unmodifiable
-    protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                                @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                                @NotNull ControlFlow flow) {
+    protected @Unmodifiable @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                                              @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                                              @NotNull ControlFlow flow) {
       if (psiBlock != myBody) {
         return super.createInitialInstructionStates(psiBlock, memStates, flow);
       }

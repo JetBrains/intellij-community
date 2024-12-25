@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationWithAlternativeJre;
@@ -47,8 +47,7 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
   }
 
   @Override
-  @Unmodifiable
-  default @NotNull List<EventPair<?>> getAdditionalUsageData() {
+  default @Unmodifiable @NotNull List<EventPair<?>> getAdditionalUsageData() {
     EventPair<Integer> data = getAlternativeJreUserData(getAlternativeJrePath());
     return ContainerUtil.createMaybeSingletonList(data);
   }

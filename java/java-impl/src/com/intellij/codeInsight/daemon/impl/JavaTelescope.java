@@ -33,8 +33,7 @@ final class JavaTelescope {
   static final int TOO_MANY_USAGES = -1;
 
   static class UsagesHint {
-    @Nls
-    public String hint;
+    public @Nls String hint;
     public int count;
     UsagesHint(@Nls String hint, int count) {
         this.hint = hint;
@@ -86,7 +85,7 @@ final class JavaTelescope {
 
   private static int usagesCount(@NotNull Project project,
                                  @NotNull PsiFile containingFile,
-                                 @NotNull final PsiMember member,
+                                 final @NotNull PsiMember member,
                                  @NotNull SearchScope scope) {
     SearchScope searchScope = getSearchScope(project, member, scope);
     AtomicInteger count = new AtomicInteger();
@@ -106,10 +105,9 @@ final class JavaTelescope {
     return count.get();
   }
 
-  private final static FileType[] ourFileTypesToIgnore =  new FileType[] { HtmlFileType.INSTANCE };
+  private static final FileType[] ourFileTypesToIgnore =  new FileType[] { HtmlFileType.INSTANCE };
 
-  @NotNull
-  private static SearchScope getSearchScope(@NotNull Project project, @NotNull PsiMember member, @NotNull SearchScope scope) {
+  private static @NotNull SearchScope getSearchScope(@NotNull Project project, @NotNull PsiMember member, @NotNull SearchScope scope) {
     SearchScope useScope = UnusedSymbolUtil.getUseScope(member);
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
     GlobalSearchScope restrictedScope = GlobalSearchScope.getScopeRestrictedByFileTypes(projectScope, ourFileTypesToIgnore);

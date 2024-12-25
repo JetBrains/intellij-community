@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.converters;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -42,11 +28,9 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     myDomMethodClass = domMethodClass;
   }
 
-  @NotNull
-  protected abstract Collection<PsiClass> getPsiClasses(final ParentType parent, final ConvertContext context);
+  protected abstract @NotNull Collection<PsiClass> getPsiClasses(final ParentType parent, final ConvertContext context);
 
-  @Nullable
-  protected abstract AbstractMethodParams getMethodParams(@NotNull ParentType parent);
+  protected abstract @Nullable AbstractMethodParams getMethodParams(@NotNull ParentType parent);
 
   @Override
   public void bindReference(final GenericDomValue<PsiMethod> genericValue, final ConvertContext context, final PsiElement element) {
@@ -70,15 +54,14 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
       .message("error.cannot.resolve.0.1", JavaPsiBundle.message("element.method"), getReferenceCanonicalText(s, getMethodParams(parent)));
   }
 
-  @NotNull
-  protected final ParentType getParent(final ConvertContext context) {
+  protected final @NotNull ParentType getParent(final ConvertContext context) {
     ParentType parent = context.getInvocationElement().getParentOfType(myDomMethodClass, true);
     assert parent != null: "Can't get parent of type " + myDomMethodClass + " for " + context.getInvocationElement();
     return parent;
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element, final String stringValue, final PsiMethod resolveResult,
+  public boolean isReferenceTo(final @NotNull PsiElement element, final String stringValue, final PsiMethod resolveResult,
                                final @NotNull ConvertContext context) {
     if (super.isReferenceTo(element, stringValue, resolveResult, context)) return true;
 
@@ -108,8 +91,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   }
 
   @Override
-  @NotNull
-  public Collection<? extends PsiMethod> getVariants(final @NotNull ConvertContext context) {
+  public @NotNull Collection<? extends PsiMethod> getVariants(final @NotNull ConvertContext context) {
     Set<PsiMethod> methodList = new LinkedHashSet<>();
     Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(Processors.cancelableCollectProcessor(methodList));
     processMethods(context, processor, s -> {
@@ -132,9 +114,8 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     return psiMethod.getContainingClass().isInterface() || (!psiMethod.hasModifierProperty(PsiModifier.FINAL) && !psiMethod.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  @NotNull
   @Override
-  public Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
+  public @NotNull Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
     return Collections.singleton(ALL_METHODS);
   }
 
@@ -159,7 +140,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     return method.getName();
   }
 
-  public static String getReferenceCanonicalText(final String name, @Nullable final AbstractMethodParams methodParams) {
+  public static String getReferenceCanonicalText(final String name, final @Nullable AbstractMethodParams methodParams) {
     StringBuilder sb = new StringBuilder(name);
     if (methodParams == null) {
       sb.append("()");
@@ -178,13 +159,12 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
     return sb.toString();
   }
 
-  @Nullable
-  public static PsiMethod findMethod(final PsiClass psiClass, final String methodName, @Nullable final AbstractMethodParams methodParameters) {
+  public static @Nullable PsiMethod findMethod(final PsiClass psiClass, final String methodName, final @Nullable AbstractMethodParams methodParameters) {
     if (psiClass == null || methodName == null) return null;
     return ContainerUtil.find(psiClass.findMethodsByName(methodName, true), object -> methodParamsMatchSignature(methodParameters, object));
   }
 
-  public static boolean methodParamsMatchSignature(@Nullable final AbstractMethodParams params, final PsiMethod psiMethod) {
+  public static boolean methodParamsMatchSignature(final @Nullable AbstractMethodParams params, final PsiMethod psiMethod) {
     if (params != null && params.getXmlTag() == null) return true;
 
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();

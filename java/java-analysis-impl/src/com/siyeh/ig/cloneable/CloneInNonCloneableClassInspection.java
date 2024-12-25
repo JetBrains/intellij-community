@@ -39,8 +39,7 @@ public final class CloneInNonCloneableClassInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean onlyWarnOnPublicClone = true;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass instanceof PsiAnonymousClass anonymousClass) {
       final String text = anonymousClass.getBaseClassType().getPresentableText();

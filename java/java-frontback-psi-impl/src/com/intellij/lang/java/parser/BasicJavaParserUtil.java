@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -46,8 +46,7 @@ public final class BasicJavaParserUtil {
     builder.putUserData(LANG_LEVEL_KEY, level);
   }
 
-  @NotNull
-  public static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
+  public static @NotNull LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;
@@ -72,8 +71,7 @@ public final class BasicJavaParserUtil {
     marker.setCustomEdgeTokenBinders(left, right);
   }
 
-  @Nullable
-  public static IElementType exprType(@Nullable final PsiBuilder.Marker marker) {
+  public static @Nullable IElementType exprType(final @Nullable PsiBuilder.Marker marker) {
     return marker != null ? marker.getTokenType() : null;
   }
 
@@ -84,7 +82,7 @@ public final class BasicJavaParserUtil {
 
   public static void error(final PsiBuilder builder,
                            @NotNull @NlsContexts.ParsingError String message,
-                           @Nullable final PsiBuilder.Marker before) {
+                           final @Nullable PsiBuilder.Marker before) {
     if (before == null) {
       error(builder, message);
     }
@@ -180,20 +178,18 @@ public final class BasicJavaParserUtil {
     };
   }
 
-  @Nullable
-  public static ASTNode parseFragment(final ASTNode chameleon, final BasicJavaParserUtil.ParserWrapper wrapper,
-                                      Function<LanguageLevel, JavaDocLexer> javaDocLexer,
-                                      Function<LanguageLevel, BasicJavaLexer> javaLexer) {
+  public static @Nullable ASTNode parseFragment(final ASTNode chameleon, final BasicJavaParserUtil.ParserWrapper wrapper,
+                                                Function<LanguageLevel, JavaDocLexer> javaDocLexer,
+                                                Function<LanguageLevel, BasicJavaLexer> javaLexer) {
     return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST, javaDocLexer, javaLexer);
   }
 
-  @Nullable
-  public static ASTNode parseFragment(final ASTNode chameleon,
-                                      final BasicJavaParserUtil.ParserWrapper wrapper,
-                                      final boolean eatAll,
-                                      final LanguageLevel level,
-                                      Function<LanguageLevel, JavaDocLexer> javaDocLexer,
-                                      Function<LanguageLevel, ? extends Lexer> javaLexer) {
+  public static @Nullable ASTNode parseFragment(final ASTNode chameleon,
+                                                final BasicJavaParserUtil.ParserWrapper wrapper,
+                                                final boolean eatAll,
+                                                final LanguageLevel level,
+                                                Function<LanguageLevel, JavaDocLexer> javaDocLexer,
+                                                Function<LanguageLevel, ? extends Lexer> javaLexer) {
     final PsiElement psi = chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
@@ -220,11 +216,10 @@ public final class BasicJavaParserUtil {
   }
 
 
-  @NotNull
-  public static PsiBuilder createBuilder(@NotNull final ASTNode chameleon,
-                                         @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
-                                         @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
-                                         @NotNull Function<PsiFile, TokenList> psiAsLexer) {
+  public static @NotNull PsiBuilder createBuilder(final @NotNull ASTNode chameleon,
+                                                  @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
+                                                  @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
+                                                  @NotNull Function<PsiFile, TokenList> psiAsLexer) {
     final PsiElement psi = chameleon.getPsi();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
@@ -251,10 +246,9 @@ public final class BasicJavaParserUtil {
     return builder;
   }
 
-  @NotNull
-  public static PsiBuilder createBuilder(@NotNull LighterLazyParseableNode chameleon,
-                                         @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
-                                         @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
+  public static @NotNull PsiBuilder createBuilder(@NotNull LighterLazyParseableNode chameleon,
+                                                  @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
+                                                  @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
     final PsiElement psi = chameleon.getContainingFile();
     assert psi != null : chameleon;
     final Project project = psi.getProject();

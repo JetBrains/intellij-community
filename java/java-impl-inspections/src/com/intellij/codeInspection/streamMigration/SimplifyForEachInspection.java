@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -34,10 +34,8 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "forEach", "forEachOrdered").parameterCount(1);
 
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -46,9 +44,8 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
     return Set.of(JavaFeature.ADVANCED_COLLECTIONS_API);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -68,8 +65,7 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
     };
   }
 
-  @NotNull
-  private static TextRange getRange(PsiMethodCallExpression call) {
+  private static @NotNull TextRange getRange(PsiMethodCallExpression call) {
     if(!InspectionProjectProfileManager.isInformationLevel("SimplifyForEach", call)) {
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       return new TextRange(methodExpression.getTextOffset(), call.getArgumentList().getTextOffset());
@@ -77,9 +73,8 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
     return call.getTextRange();
   }
 
-  @Nullable
-  static TerminalBlock extractTerminalBlock(@Nullable PsiElement lambdaBody,
-                                            @NotNull ExistingStreamSource source) {
+  static @Nullable TerminalBlock extractTerminalBlock(@Nullable PsiElement lambdaBody,
+                                                      @NotNull ExistingStreamSource source) {
     if (lambdaBody instanceof PsiCodeBlock) {
       return TerminalBlock.from(source, (PsiCodeBlock)lambdaBody);
     }
@@ -89,8 +84,7 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
     return null;
   }
 
-  @Nullable
-  static PsiLambdaExpression extractLambdaFromForEach(@NotNull PsiMethodCallExpression call) {
+  static @Nullable PsiLambdaExpression extractLambdaFromForEach(@NotNull PsiMethodCallExpression call) {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null || !(STREAM_FOREACH.test(call) || isCollectionForEach(call, qualifier))) return null;
     PsiExpression arg = call.getArgumentList().getExpressions()[0];
@@ -102,16 +96,15 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
   }
 
   static class LightExpressionStatement extends LightElement implements PsiExpressionStatement {
-    @NotNull private final PsiExpression myExpression;
+    private final @NotNull PsiExpression myExpression;
 
     protected LightExpressionStatement(@NotNull PsiExpression expression) {
       super(expression.getManager(), JavaLanguage.INSTANCE);
       myExpression = expression;
     }
 
-    @NotNull
     @Override
-    public PsiExpression getExpression() {
+    public @NotNull PsiExpression getExpression() {
       return myExpression;
     }
 
@@ -135,8 +128,7 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
       return myExpression.getText() + (myIsCollectionForEach? ".stream()" : "");
     }
 
-    @Nullable
-    static ExistingStreamSource extractSource(PsiMethodCallExpression call, PsiLambdaExpression lambda) {
+    static @Nullable ExistingStreamSource extractSource(PsiMethodCallExpression call, PsiLambdaExpression lambda) {
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 1) return null;
       PsiParameter parameter = parameters[0];
@@ -152,10 +144,10 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
   }
 
   static final class SimplifyForEachContext {
-    @NotNull private final TerminalBlock myTerminalBlock;
-    @NotNull private final PsiStatement myMainStatement;
-    @NotNull private final BaseStreamApiMigration myMigration;
-    @NotNull private final PsiElement myLambdaBody;
+    private final @NotNull TerminalBlock myTerminalBlock;
+    private final @NotNull PsiStatement myMainStatement;
+    private final @NotNull BaseStreamApiMigration myMigration;
+    private final @NotNull PsiElement myLambdaBody;
 
     private SimplifyForEachContext(@NotNull TerminalBlock terminalBlock,
                                    @NotNull PsiStatement mainStatement,
@@ -197,22 +189,19 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
   }
 
   public static class SimplifyForEachFix extends PsiUpdateModCommandQuickFix {
-    @NotNull private final @Nls String myCustomName;
+    private final @NotNull @Nls String myCustomName;
 
     protected SimplifyForEachFix(@NotNull @Nls String customName) {
       myCustomName = customName;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myCustomName;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.simplify.foreach.lambda");
     }
 
@@ -281,10 +270,8 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
       }
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.avoid.mutation.using.stream.api");
     }
   }

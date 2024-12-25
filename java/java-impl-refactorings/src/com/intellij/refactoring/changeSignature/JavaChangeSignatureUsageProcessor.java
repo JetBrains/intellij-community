@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -339,7 +339,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     }
   }
 
-  private static boolean callerSignatureIsAboutToChangeToo(@NotNull final PsiMethod caller, final UsageInfo[] usages) {
+  private static boolean callerSignatureIsAboutToChangeToo(final @NotNull PsiMethod caller, final UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof MethodCallUsageInfo &&
           MethodSignatureUtil.isSuperMethod(((MethodCallUsageInfo)usage).getReferencedMethod(), caller)) {
@@ -578,13 +578,12 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
   }
 
 
-  @Nullable
-  private static PsiExpression createActualArgument(JavaChangeInfo changeInfo,
-                                                    final PsiExpressionList list,
-                                                    final JavaParameterInfo info,
-                                                    final boolean toInsertDefaultValue,
-                                                    final PsiExpression[] args,
-                                                    PsiSubstitutor substitutor) throws IncorrectOperationException {
+  private static @Nullable PsiExpression createActualArgument(JavaChangeInfo changeInfo,
+                                                              final PsiExpressionList list,
+                                                              final JavaParameterInfo info,
+                                                              final boolean toInsertDefaultValue,
+                                                              final PsiExpression[] args,
+                                                              PsiSubstitutor substitutor) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(list.getProject());
     final int index = info.getOldIndex();
     if (index >= 0 && index < args.length) {
@@ -600,11 +599,10 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     }
   }
 
-  @Nullable
-  private static PsiExpression createDefaultValue(JavaChangeInfo changeInfo,
-                                                  final PsiElementFactory factory,
-                                                  final JavaParameterInfo info,
-                                                  final PsiExpressionList list, PsiSubstitutor substitutor)
+  private static @Nullable PsiExpression createDefaultValue(JavaChangeInfo changeInfo,
+                                                            final PsiElementFactory factory,
+                                                            final JavaParameterInfo info,
+                                                            final PsiExpressionList list, PsiSubstitutor substitutor)
     throws IncorrectOperationException {
     if (info.isUseAnySingleVariable()) {
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
@@ -966,7 +964,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     }
   }
 
-  final static class RecordHeaderProcessor extends Processor<PsiRecordHeader, VariableWrapper> {
+  static final class RecordHeaderProcessor extends Processor<PsiRecordHeader, VariableWrapper> {
 
     RecordHeaderProcessor(@NotNull JavaChangeInfo changeInfo, @NotNull PsiElementFactory factory, @NotNull PsiRecordHeader header) {
       super(changeInfo, factory, header);
@@ -997,7 +995,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     }
   }
 
-  final static class MethodParamsProcessor extends Processor<PsiParameterList, VariableWrapper> {
+  static final class MethodParamsProcessor extends Processor<PsiParameterList, VariableWrapper> {
     private final @Nullable PsiElement myMethodBody;
     private final @NotNull PsiSubstitutor mySubstitutor;
     private final @Nullable PsiMethod myBaseMethod;
@@ -1060,7 +1058,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     }
   }
 
-  final static class DeconstructionProcessor extends Processor<PsiDeconstructionList, PatternWrapper> {
+  static final class DeconstructionProcessor extends Processor<PsiDeconstructionList, PatternWrapper> {
     DeconstructionProcessor(@NotNull JavaChangeInfo changeInfo,
                             @NotNull PsiElementFactory factory,
                             @NotNull PsiDeconstructionList list) {
@@ -1726,8 +1724,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
   record PatternWrapper(@NotNull PsiPattern pattern) implements ChildWrapper {
 
     @Override
-    @Nullable
-    public String getName() {
+    public @Nullable String getName() {
       final PsiPatternVariable variable = JavaPsiPatternUtil.getPatternVariable(pattern);
       return variable != null ? variable.getName() : null;
     }

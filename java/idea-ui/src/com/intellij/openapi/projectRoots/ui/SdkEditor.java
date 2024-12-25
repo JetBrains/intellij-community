@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.ide.JavaUiBundle;
@@ -47,8 +47,8 @@ import java.awt.event.HierarchyListener;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author MYakovlev
@@ -57,8 +57,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance(SdkEditor.class);
   private static final String SDK_TAB = "sdkTab";
 
-  @NotNull
-  private final Sdk mySdk;
+  private final @NotNull Sdk mySdk;
   private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<>();
 
   private TextFieldWithBrowseButton myHomeComponent;
@@ -208,8 +207,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myModifiedName = name;
   }
 
-  @NlsSafe
-  public String getActualSdkName() {
+  public @NlsSafe String getActualSdkName() {
     return myModifiedName;
   }
 
@@ -428,13 +426,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
-  @NotNull
-  private List<AdditionalDataConfigurable> getAdditionalDataConfigurable() {
+  private @NotNull List<AdditionalDataConfigurable> getAdditionalDataConfigurable() {
     return initAdditionalDataConfigurable(mySdk);
   }
 
-  @NotNull
-  private List<AdditionalDataConfigurable> initAdditionalDataConfigurable(Sdk sdk) {
+  private @NotNull List<AdditionalDataConfigurable> initAdditionalDataConfigurable(Sdk sdk) {
     final SdkType sdkType = (SdkType)sdk.getSdkType();
     List<AdditionalDataConfigurable> configurables = myAdditionalDataConfigurables.get(sdkType);
     if (configurables == null) {
@@ -459,9 +455,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private class EditedSdkModificator implements SdkModificator {
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return mySdk.getName();
     }
 
@@ -539,14 +534,14 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   @Override
-  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
     if (place == null) return ActionCallback.DONE;
     myTabbedPane.setSelectedTitle((String)place.getPath(SDK_TAB));
     return ActionCallback.DONE;
   }
 
   @Override
-  public void queryPlace(@NotNull final Place place) {
+  public void queryPlace(final @NotNull Place place) {
     place.putPath(SDK_TAB, myTabbedPane.getSelectedTitle());
   }
 }

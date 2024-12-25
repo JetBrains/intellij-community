@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SingletonInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return (Boolean)infos[0] ?
            InspectionGadgetsBundle.message("enum.singleton.problem.descriptor") :
            InspectionGadgetsBundle.message("singleton.problem.descriptor");

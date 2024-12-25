@@ -260,8 +260,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return null;
   }
 
-  @Unmodifiable
-  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected @Unmodifiable @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<GenerationInfo> array = new ArrayList<>();
     for (ClassMember member : members) {
       GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);

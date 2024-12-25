@@ -43,8 +43,7 @@ public final class SwitchStatementWithTooManyBranchesInspection extends BaseInsp
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Integer branchCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "if.statement.with.too.many.branches.problem.descriptor",

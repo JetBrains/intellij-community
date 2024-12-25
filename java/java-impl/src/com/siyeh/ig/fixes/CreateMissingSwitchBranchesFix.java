@@ -13,8 +13,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
-  @Unmodifiable
-  protected final @NotNull Set<String> myNames;
+  protected final @Unmodifiable @NotNull Set<String> myNames;
 
   public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull @Unmodifiable Set<String> names) {
     super(block);
@@ -43,12 +42,10 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels, updater);
   }
 
-  @Unmodifiable
-  protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
+  protected @Unmodifiable @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     return myNames;
   }
 
-  @Unmodifiable
-  protected abstract @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock);
+  protected abstract @Unmodifiable @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock);
   protected abstract @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor();
 }

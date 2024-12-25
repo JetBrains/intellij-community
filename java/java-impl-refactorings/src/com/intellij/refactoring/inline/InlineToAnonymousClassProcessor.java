@@ -42,7 +42,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   public InlineToAnonymousClassProcessor(Project project,
                                          PsiClass psiClass,
-                                         @Nullable final PsiCall callToInline,
+                                         final @Nullable PsiCall callToInline,
                                          boolean inlineThisOnly,
                                          final boolean searchInComments,
                                          final boolean searchInNonJavaFiles) {
@@ -56,8 +56,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myClass);
   }
 
@@ -89,9 +88,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     if (!myInlineThisOnly && !myClass.isWritable()) {
       return Collections.emptyList();
     }
@@ -129,7 +127,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
       return showConflicts(conflicts, refUsages.get());
@@ -141,7 +139,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     final MultiMap<PsiElement, String> result = new MultiMap<>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       @Override
-      protected void checkAddMember(@NotNull final PsiMember member) {
+      protected void checkAddMember(final @NotNull PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {
           return;
         }
@@ -319,8 +317,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @Nullable
-  public static PsiClassType getSuperType(final PsiClass aClass) {
+  public static @Nullable PsiClassType getSuperType(final PsiClass aClass) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
     PsiClassType superType;
@@ -341,8 +338,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }
 }

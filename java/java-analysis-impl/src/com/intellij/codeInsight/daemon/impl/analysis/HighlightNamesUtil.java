@@ -48,11 +48,10 @@ public final class HighlightNamesUtil {
     visitor.analyze(file, false, holder, () -> consumer.accept(visitor));
   }
 
-  @Nullable
-  static HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
-                                           @NotNull PsiElement elementToHighlight,
-                                           boolean isDeclaration,
-                                           @NotNull TextAttributesScheme colorsScheme) {
+  static @Nullable HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
+                                                     @NotNull PsiElement elementToHighlight,
+                                                     boolean isDeclaration,
+                                                     @NotNull TextAttributesScheme colorsScheme) {
     boolean isInherited = false;
     boolean isStaticallyImported = false;
 
@@ -88,8 +87,7 @@ public final class HighlightNamesUtil {
     return null;
   }
 
-  @NotNull
-  private static HighlightInfo.Builder nameBuilder(@NotNull HighlightInfoType type) {
+  private static @NotNull HighlightInfo.Builder nameBuilder(@NotNull HighlightInfoType type) {
     return HighlightInfo.newHighlightInfo(type)/*.toolId(JavaNamesHighlightVisitor.class)*/;
   }
 
@@ -141,8 +139,7 @@ public final class HighlightNamesUtil {
     return basedAttributes;
   }
 
-  @NotNull
-  static HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
+  static @NotNull HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
     TextRange range = elementToHighlight.getTextRange();
     if (elementToHighlight instanceof PsiJavaCodeReferenceElement referenceElement) {
       PsiElement identifier = referenceElement.getReferenceNameElement();
@@ -169,10 +166,9 @@ public final class HighlightNamesUtil {
     return builder.createUnconditionally();
   }
 
-  @Nullable
-  static HighlightInfo highlightVariableName(@NotNull PsiVariable variable,
-                                             @NotNull PsiElement elementToHighlight,
-                                             @NotNull TextAttributesScheme colorsScheme) {
+  static @Nullable HighlightInfo highlightVariableName(@NotNull PsiVariable variable,
+                                                       @NotNull PsiElement elementToHighlight,
+                                                       @NotNull TextAttributesScheme colorsScheme) {
     HighlightInfoType varType = getVariableNameHighlightType(variable, elementToHighlight);
     if (varType == null) {
       return null;
@@ -213,8 +209,7 @@ public final class HighlightNamesUtil {
     return JavaHighlightInfoTypes.METHOD_CALL;
   }
 
-  @Nullable
-  private static HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, @NotNull PsiElement elementToHighlight) {
+  private static @Nullable HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, @NotNull PsiElement elementToHighlight) {
     if (var instanceof PsiLocalVariable
         || var instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiForeachStatement) {
       return JavaHighlightInfoTypes.LOCAL_VARIABLE;
@@ -244,8 +239,7 @@ public final class HighlightNamesUtil {
     return null;
   }
 
-  @NotNull
-  private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @NotNull PsiElement element) {
+  private static @NotNull HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @NotNull PsiElement element) {
     if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnonymousClass) {
       return JavaHighlightInfoTypes.ANONYMOUS_CLASS_NAME;
     }
@@ -286,8 +280,7 @@ public final class HighlightNamesUtil {
     return result;
   }
 
-  @NotNull
-  public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
+  public static @NotNull TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof SyntheticElement) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
     TextRange throwsRange = method.getThrowsList().getTextRange();
@@ -296,15 +289,13 @@ public final class HighlightNamesUtil {
     return new TextRange(start, end);
   }
 
-  @NotNull
-  public static TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
+  public static @NotNull TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
     int start = stripAnnotationsFromModifierList(field.getModifierList());
     int end = field.getNameIdentifier().getTextRange().getEndOffset();
     return new TextRange(start, end);
   }
 
-  @NotNull
-  public static TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
+  public static @NotNull TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
     if (aClass instanceof PsiEnumConstantInitializer initializer) {
       return initializer.getEnumConstant().getNameIdentifier().getTextRange();
     }

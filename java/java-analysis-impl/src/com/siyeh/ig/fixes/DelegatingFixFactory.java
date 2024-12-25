@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -15,8 +15,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DelegatingFixFactory {
 
-  @Nullable
-  public static LocalQuickFix createMakeSerializableFix(PsiClass aClass) {
+  public static @Nullable LocalQuickFix createMakeSerializableFix(PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
       return null;
     }
@@ -24,8 +23,7 @@ public final class DelegatingFixFactory {
     return QuickFixFactory.getInstance().createExtendsListFix(aClass, type, true);
   }
 
-  @Nullable
-  public static LocalQuickFix createMakeCloneableFix(PsiClass aClass) {
+  public static @Nullable LocalQuickFix createMakeCloneableFix(PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
       return null;
     }

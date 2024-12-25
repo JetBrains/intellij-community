@@ -1,7 +1,4 @@
-/*
- * Copyright (c) 2000-2019 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.mockJDI.types;
 
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
@@ -18,8 +15,7 @@ public class MockPsiInterfaceType extends MockPsiReferenceType implements Interf
   }
 
   @Override
-  @Unmodifiable
-  public List<InterfaceType> superinterfaces() {
+  public @Unmodifiable List<InterfaceType> superinterfaces() {
     return ContainerUtil.map(myClass.getInterfaces(), iFace -> (InterfaceType)myVirtualMachine.createReferenceType(iFace));
   }
 

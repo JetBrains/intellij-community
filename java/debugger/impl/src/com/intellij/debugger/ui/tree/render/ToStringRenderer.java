@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -101,9 +101,8 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return XDebuggerUIConstants.getCollectingDataMessage();
   }
 
-  @NotNull
   @Override
-  public String getLinkText() {
+  public @NotNull String getLinkText() {
     return JavaDebuggerBundle.message("message.node.toString");
   }
 

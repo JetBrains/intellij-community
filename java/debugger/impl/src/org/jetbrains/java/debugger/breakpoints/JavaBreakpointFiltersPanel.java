@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
@@ -106,9 +106,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     DebuggerUIUtil.focusEditorOnCheck(myCallerFiltersCheckBox, myCallerFilters);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myConditionsPanel;
   }
 

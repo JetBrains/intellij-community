@@ -74,14 +74,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     myEnabledInEditor = enabledInEditor;
   }
 
-  @NotNull
-  protected UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
+  protected @NotNull UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
     return new UnusedSymbolLocalInspection();
   }
 
-  @NotNull
   @Override
-  public UnusedSymbolLocalInspection getSharedLocalInspectionTool() {
+  public @NotNull UnusedSymbolLocalInspection getSharedLocalInspectionTool() {
     return myLocalInspectionBase;
   }
 
@@ -110,14 +108,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -309,8 +305,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return myEnabledInEditor;
   }
 
-  @NotNull
-  public static UnusedDeclarationInspectionBase findUnusedDeclarationInspection(@NotNull PsiElement element) {
+  public static @NotNull UnusedDeclarationInspectionBase findUnusedDeclarationInspection(@NotNull PsiElement element) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(SHORT_NAME, element);
     return tool == null ? new UnusedDeclarationInspectionBase() : tool;
@@ -623,8 +618,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  @NotNull
-  public List<EntryPoint> getExtensions() {
+  public @NotNull List<EntryPoint> getExtensions() {
     List<EntryPoint> extensions = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
     List<EntryPoint> deadCodeAddIns = new ArrayList<>(extensions.size());
     for (EntryPoint entryPoint : extensions) {

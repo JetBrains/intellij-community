@@ -99,8 +99,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  @Nullable
-  private PsiImportStatementBase findImport(@NotNull PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
+  private @Nullable PsiImportStatementBase findImport(@NotNull PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
     final String memberQualifiedName;
     final String memberPackageName;
     final PsiClass containingClass = member.getContainingClass();

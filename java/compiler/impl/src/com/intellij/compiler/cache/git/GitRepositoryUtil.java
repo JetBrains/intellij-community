@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache.git;
 
 import com.intellij.execution.ExecutionException;
@@ -25,8 +26,7 @@ public final class GitRepositoryUtil {
 
   private GitRepositoryUtil() {}
 
-  @Unmodifiable
-  public static @NotNull List<String> fetchRepositoryCommits(@NotNull Project project, @NotNull String latestCommit) {
+  public static @Unmodifiable @NotNull List<String> fetchRepositoryCommits(@NotNull Project project, @NotNull String latestCommit) {
     String projectBasePath = project.getBasePath();
     if (projectBasePath == null) return Collections.emptyList();
 

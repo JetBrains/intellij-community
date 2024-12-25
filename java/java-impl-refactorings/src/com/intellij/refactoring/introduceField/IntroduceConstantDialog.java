@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -57,8 +57,8 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 class IntroduceConstantDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(IntroduceConstantDialog.class);
-  @NonNls private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
-  @NonNls protected static final String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
+  private static final @NonNls String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
+  protected static final @NonNls String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
 
   private final Project myProject;
   private final PsiClass myParentClass;

@@ -68,8 +68,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
     return null;
   }
 
-  @Unmodifiable
-  private static @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
+  private static @Unmodifiable @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
     return ContainerUtil.filter(method.getParameterList().getParameters(), BindFieldsFromParametersAction::isAvailable);
   }
 
@@ -134,8 +133,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
   /**
    * Exclude parameters passed to super() or this() calls from initial selection
    */
-  @Unmodifiable
-  private static List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
+  private static @Unmodifiable List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
                                                                 List<@NotNull ParameterClassMember> members) {
     Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
     PsiCodeBlock body = method.getBody();

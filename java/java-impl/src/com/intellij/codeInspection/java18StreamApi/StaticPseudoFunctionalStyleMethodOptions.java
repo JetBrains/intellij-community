@@ -33,8 +33,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
     elements.add(new PipelineElement(guavaLists, "transform", PseudoLambdaReplaceTemplate.MAP));
   }
 
-  @Unmodifiable
-  public @NotNull Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
+  public @Unmodifiable @NotNull Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
     return ContainerUtil.filter(myElements, element -> methodName.equals(element.methodName()));
   }
 

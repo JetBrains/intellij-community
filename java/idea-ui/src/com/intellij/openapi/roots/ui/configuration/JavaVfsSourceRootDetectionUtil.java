@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -33,9 +33,7 @@ public final class JavaVfsSourceRootDetectionUtil {
    * @param dir a directory to scan
    * @return a list of found source roots within directory. If no source roots are found, a empty list is returned.
    */
-  @NotNull
-  @Unmodifiable
-  public static List<VirtualFile> suggestRoots(@NotNull VirtualFile dir, @NotNull final ProgressIndicator progressIndicator) {
+  public static @NotNull @Unmodifiable List<VirtualFile> suggestRoots(@NotNull VirtualFile dir, final @NotNull ProgressIndicator progressIndicator) {
     if (!dir.isDirectory()) {
       return ContainerUtil.emptyList();
     }
@@ -44,9 +42,8 @@ public final class JavaVfsSourceRootDetectionUtil {
     final ArrayList<VirtualFile> foundDirectories = new ArrayList<>();
     try {
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>() {
-        @NotNull
         @Override
-        public Result visitFileEx(@NotNull VirtualFile file) {
+        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
           progressIndicator.checkCanceled();
 
           if (file.isDirectory()) {
@@ -74,8 +71,7 @@ public final class JavaVfsSourceRootDetectionUtil {
     return foundDirectories;
   }
 
-  @Nullable
-  private static VirtualFile suggestRootForJavaFile(VirtualFile javaFile) {
+  private static @Nullable VirtualFile suggestRootForJavaFile(VirtualFile javaFile) {
     if (javaFile.isDirectory()) return null;
 
     CharSequence chars = LoadTextUtil.loadText(javaFile);

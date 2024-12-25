@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.java.JavaBundle;
@@ -50,8 +50,7 @@ final class IntroduceVariableTargetBlockChooser {
     }
   }
 
-  @NotNull
-  private static PsiElement takeNextContainer(List<? extends PsiElement> containers, PsiElement element) {
+  private static @NotNull PsiElement takeNextContainer(List<? extends PsiElement> containers, PsiElement element) {
     int i = containers.indexOf(element) + 1;
     if (i < containers.size()) {
       return containers.get(i);

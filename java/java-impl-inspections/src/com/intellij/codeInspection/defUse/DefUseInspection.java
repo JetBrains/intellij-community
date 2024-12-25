@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -49,8 +49,7 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
@@ -267,8 +266,7 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
     return false;
   }
 
-  @NotNull
-  private static List<PsiMethodCallExpression> collectMethodsBeforeAssignment(PsiField field, ControlFlow flow) {
+  private static @NotNull List<PsiMethodCallExpression> collectMethodsBeforeAssignment(PsiField field, ControlFlow flow) {
     List<PsiMethodCallExpression> results = new ArrayList<>();
     PsiManager manager = field.getManager();
     List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, 0);
@@ -315,8 +313,7 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
     return results;
   }
 
-  @NotNull
-  private static List<PsiAssignmentExpression> collectAssignments(@NotNull PsiField field, @NotNull PsiClassInitializer classInitializer) {
+  private static @NotNull List<PsiAssignmentExpression> collectAssignments(@NotNull PsiField field, @NotNull PsiClassInitializer classInitializer) {
     final List<PsiAssignmentExpression> assignmentExpressions = new ArrayList<>();
     classInitializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -346,14 +343,12 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -379,13 +374,11 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
       return myAssignments != null ? myAssignments : Collections.emptyList();
     }
 
-    @NotNull
-    public static FieldWrite createInitializer() {
+    public static @NotNull FieldWrite createInitializer() {
       return new FieldWrite(true, null);
     }
 
-    @NotNull
-    public static FieldWrite createAssignments(boolean definitely, @NotNull List<PsiAssignmentExpression> assignmentExpressions) {
+    public static @NotNull FieldWrite createAssignments(boolean definitely, @NotNull List<PsiAssignmentExpression> assignmentExpressions) {
       return new FieldWrite(definitely, assignmentExpressions);
     }
   }

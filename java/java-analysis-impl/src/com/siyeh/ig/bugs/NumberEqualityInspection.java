@@ -43,8 +43,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class NumberEqualityInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "number.comparison.problem.descriptor");
   }

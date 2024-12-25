@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.server.BuildManager;
@@ -47,8 +47,8 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
 
   private static void processRecursively(@NotNull VirtualFile fromFile, final boolean dbOnly, @NotNull Consumer<VirtualFile> processor) {
     VfsUtilCore.visitChildrenRecursively(fromFile, new VirtualFileVisitor<Void>() {
-      @NotNull @Override
-      public Result visitFileEx(@NotNull VirtualFile file) {
+      @Override
+      public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
         ProgressManager.checkCanceled();
         if (isIgnoredByBuild(file)) {
           return SKIP_CHILDREN;
@@ -60,9 +60,8 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         return CONTINUE;
       }
 
-      @Nullable
       @Override
-      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+      public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
         if (dbOnly) {
           return file.isDirectory()? ((NewVirtualFile)file).iterInDbChildren() : null;
         }
@@ -80,7 +79,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     return fileSystem instanceof LocalFileSystem && !(fileSystem instanceof TempFileSystemMarker);
   }
 
-  private static boolean isInContentOfOpenedProject(@NotNull final VirtualFile file) {
+  private static boolean isInContentOfOpenedProject(final @NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (!project.isInitialized() || !BuildManager.getInstance().isProjectWatched(project)) {
         continue;

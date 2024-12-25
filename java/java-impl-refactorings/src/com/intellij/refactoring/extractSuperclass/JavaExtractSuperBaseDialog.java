@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -152,17 +152,15 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     return DESTINATION_PACKAGE_RECENT_KEY;
   }
 
-  @Nullable
   @Override
-  protected String validateName(String name) {
+  protected @Nullable String validateName(String name) {
     return PsiNameHelper.getInstance(myProject).isIdentifier(name)
            ? null
            : RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
   }
 
-  @Nullable
   @Override
-  protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
+  protected @Nullable String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     if (StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName())) {
       return JavaRefactoringBundle.message("different.name.expected");
     }

@@ -28,8 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public final class PublicStaticArrayFieldInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "public.static.array.field.problem.descriptor");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.ide.IdeBundle;
@@ -309,8 +309,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     }
 
     @Override
-    @Nullable
-    public Class<?> getColumnClass(int columnIndex) {
+    public @Nullable Class<?> getColumnClass(int columnIndex) {
       return switch (columnIndex) {
         case CHECK_COLUMN -> Boolean.class;
         case OLD_NAME_COLUMN, NEW_NAME_COLUMN -> String.class;

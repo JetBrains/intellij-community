@@ -55,8 +55,7 @@ class InlineMethodHelper {
     return mySubstitutor;
   }
 
-  @NotNull
-  private PsiSubstitutor createSubstitutor() {
+  private @NotNull PsiSubstitutor createSubstitutor() {
     JavaResolveResult resolveResult = myCall.resolveMethodGenerics();
     PsiSubstitutor origSubstitutor = resolveResult.getSubstitutor();
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();

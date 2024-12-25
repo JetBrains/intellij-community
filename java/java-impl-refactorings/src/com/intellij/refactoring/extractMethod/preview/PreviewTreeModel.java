@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -66,8 +66,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     return methodNode;
   }
 
-  @NotNull
-  public List<DuplicateNode> getEnabledDuplicates() {
+  public @NotNull List<DuplicateNode> getEnabledDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
       for (int i = 0; i < myDuplicatesGroup.getChildCount(); i++) {
@@ -81,8 +80,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<DuplicateNode> getAllDuplicates() {
+  public @NotNull List<DuplicateNode> getAllDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
       for (int i = 0; i < myDuplicatesGroup.getChildCount(); i++) {
@@ -96,8 +94,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public PatternNode getPatternNode() {
+  public @NotNull PatternNode getPatternNode() {
     return myPatternNode;
   }
 

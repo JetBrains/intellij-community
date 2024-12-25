@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,8 +37,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
   public boolean ignoreVariables = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiMethod method) {
       return InspectionGadgetsBundle.message("cstyle.array.method.declaration.problem.descriptor", method.getName());

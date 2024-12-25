@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.DumbService;
@@ -33,11 +33,11 @@ class ConstructorReferencesSearchHelper {
    * 2. Exception avoidance. Project is needed outside of read action (to run it via DumbService in the first place),
    *    and so getProject would fail with an assertion that read action is required but not present.
    */
-  boolean processConstructorReferences(@NotNull final Processor<? super PsiReference> processor,
-                                       @NotNull final PsiMethod constructor,
-                                       @NotNull final PsiClass containingClass,
-                                       @NotNull final SearchScope searchScope,
-                                       @NotNull final Project project,
+  boolean processConstructorReferences(final @NotNull Processor<? super PsiReference> processor,
+                                       final @NotNull PsiMethod constructor,
+                                       final @NotNull PsiClass containingClass,
+                                       final @NotNull SearchScope searchScope,
+                                       final @NotNull Project project,
                                        boolean ignoreAccessScope,
                                        final boolean isStrictSignatureSearch,
                                        @NotNull SearchRequestCollector collector) {
@@ -114,10 +114,10 @@ class ConstructorReferencesSearchHelper {
     return ClassInheritorsSearch.search(containingClass, searchScope, false).allowParallelProcessing().forEach(processor2);
   }
 
-  private static boolean processEnumReferences(@NotNull final Processor<? super PsiReference> processor,
-                                               @NotNull final PsiMethod constructor,
-                                               @NotNull final Project project,
-                                               @NotNull final PsiClass aClass) {
+  private static boolean processEnumReferences(final @NotNull Processor<? super PsiReference> processor,
+                                               final @NotNull PsiMethod constructor,
+                                               final @NotNull Project project,
+                                               final @NotNull PsiClass aClass) {
     return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       for (PsiField field : aClass.getFields()) {
         if (field instanceof PsiEnumConstant) {
@@ -133,9 +133,9 @@ class ConstructorReferencesSearchHelper {
     });
   }
 
-  private static boolean process18MethodPointers(@NotNull final Processor<? super PsiReference> processor,
-                                                 @NotNull final PsiMethod constructor,
-                                                 @NotNull final Project project,
+  private static boolean process18MethodPointers(final @NotNull Processor<? super PsiReference> processor,
+                                                 final @NotNull PsiMethod constructor,
+                                                 final @NotNull Project project,
                                                  @NotNull PsiClass aClass, SearchScope searchScope) {
     return ReferencesSearch.search(aClass, searchScope).forEach(reference -> {
       final PsiElement element = reference.getElement();
@@ -199,11 +199,11 @@ class ConstructorReferencesSearchHelper {
     return true;
   }
 
-  private boolean processImplicitConstructorCall(@NotNull final PsiMember usage,
-                                                 @NotNull final Processor<? super PsiReference> processor,
-                                                 @NotNull final PsiMethod constructor,
-                                                 @NotNull final Project project,
-                                                 @NotNull final PsiClass containingClass) {
+  private boolean processImplicitConstructorCall(final @NotNull PsiMember usage,
+                                                 final @NotNull Processor<? super PsiReference> processor,
+                                                 final @NotNull PsiMethod constructor,
+                                                 final @NotNull Project project,
+                                                 final @NotNull PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) return true;
 
     PsiClass ctrClass = constructor.getContainingClass();
@@ -224,15 +224,13 @@ class ConstructorReferencesSearchHelper {
       return true;
     }
     return processor.process(new LightMemberReference(myManager, usage, PsiSubstitutor.EMPTY) {
-      @NotNull
       @Override
-      public PsiElement getElement() {
+      public @NotNull PsiElement getElement() {
         return usage;
       }
 
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         if (usage instanceof PsiNameIdentifierOwner) {
           PsiElement identifier = ((PsiNameIdentifierOwner)usage).getNameIdentifier();
           if (identifier != null) {

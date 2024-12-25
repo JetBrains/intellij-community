@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -32,10 +32,9 @@ public interface JavaLanguageLevelPusherCustomizer {
     return null;
   }
 
-  @Nullable
-  static @NlsContexts.DetailedDescription String getInconsistencyLanguageLevelMessageImpl(@NotNull String message,
-                                                                                          @NotNull LanguageLevel level,
-                                                                                          @NotNull PsiFile file) {
+  static @Nullable @NlsContexts.DetailedDescription String getInconsistencyLanguageLevelMessageImpl(@NotNull String message,
+                                                                                                    @NotNull LanguageLevel level,
+                                                                                                    @NotNull PsiFile file) {
     for (JavaLanguageLevelPusherCustomizer customizer : EP_NAME.getExtensionList()) {
       String customizedMsg = customizer.getInconsistencyLanguageLevelMessage(message, level, file);
       if (customizedMsg != null) return customizedMsg;

@@ -54,11 +54,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return ourInstance;
   }
 
-  @NotNull
-  public static ExpressionEvaluator build(final TextWithImports text,
-                                          @Nullable PsiElement contextElement,
-                                          @Nullable final SourcePosition position,
-                                          @NotNull Project project) throws EvaluateException {
+  public static @NotNull ExpressionEvaluator build(final TextWithImports text,
+                                                   @Nullable PsiElement contextElement,
+                                                   final @Nullable SourcePosition position,
+                                                   @NotNull Project project) throws EvaluateException {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
     PsiCodeFragment codeFragment = factory.createPsiCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
@@ -80,7 +79,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
     private final Set<JavaCodeFragment> myVisitedFragments = new HashSet<>();
-    @Nullable private final PsiClass myPositionPsiClass;
+    private final @Nullable PsiClass myPositionPsiClass;
 
     private Builder(@Nullable SourcePosition position) {
       myPositionPsiClass = JVMNameUtil.getClassAt(position);
@@ -370,8 +369,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
     }
 
-    @Nullable
-    private Evaluator accept(@Nullable PsiElement element) {
+    private @Nullable Evaluator accept(@Nullable PsiElement element) {
       if (element == null || element instanceof PsiEmptyStatement) {
         return null;
       }
@@ -464,8 +462,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
     }
 
-    @Nullable
-    private PatternLabelEvaluator getPatternLabelEvaluator(@NotNull PsiPattern element) {
+    private @Nullable PatternLabelEvaluator getPatternLabelEvaluator(@NotNull PsiPattern element) {
       PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class);
       if (switchBlock == null) return null;
       PsiExpression selector = switchBlock.getExpression();
@@ -697,8 +694,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     /**
      * @return promotion type to cast to or null if no casting needed
      */
-    @Nullable
-    private static PsiType calcUnaryNumericPromotionType(PsiPrimitiveType type) {
+    private static @Nullable PsiType calcUnaryNumericPromotionType(PsiPrimitiveType type) {
       if (PsiTypes.byteType().equals(type) || PsiTypes.shortType().equals(type) || PsiTypes.charType().equals(type) || PsiTypes.intType()
         .equals(type)) {
         return PsiTypes.intType();
@@ -1129,7 +1125,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       final IElementType operation = expression.getOperationTokenType();
       final PsiType operandType = operandExpression.getType();
-      @Nullable final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
+      final @Nullable PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
 
       Evaluator incrementImpl = createBinaryEvaluator(
         operandEvaluator, operandType,
@@ -1160,7 +1156,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       // handle unboxing issues
       final PsiType operandType = operandExpression.getType();
-      @Nullable final PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
+      final @Nullable PsiType unboxedOperandType = PsiPrimitiveType.getUnboxedType(operandType);
 
       final IElementType operation = expression.getOperationTokenType();
 
@@ -1688,14 +1684,12 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
                                                                 "", statement));
     }
 
-    @Nullable
-    private PsiClass getContainingClass(@NotNull PsiVariable variable) {
+    private @Nullable PsiClass getContainingClass(@NotNull PsiVariable variable) {
       PsiClass element = PsiTreeUtil.getParentOfType(variable.getParent(), PsiClass.class, false);
       return element == null ? myContextPsiClass : element;
     }
 
-    @Nullable
-    private PsiClass getPositionClass() {
+    private @Nullable PsiClass getPositionClass() {
       return myPositionPsiClass != null ? myPositionPsiClass : myContextPsiClass;
     }
 
@@ -1756,8 +1750,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
    * Contains a set of methods to ensure access to extracted generated class in compiling evaluator
    */
   private static class CompilingEvaluatorTypesUtil {
-    @NotNull
-    private static PsiType getVariableType(@NotNull PsiVariable variable) {
+    private static @NotNull PsiType getVariableType(@NotNull PsiVariable variable) {
       PsiType type = variable.getType();
       PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
       if (psiClass != null) {
@@ -1770,8 +1763,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       return type;
     }
 
-    @Nullable
-    private static PsiMethod getReferencedMethod(@NotNull JavaResolveResult resolveResult) {
+    private static @Nullable PsiMethod getReferencedMethod(@NotNull JavaResolveResult resolveResult) {
       PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
       PsiMethod methodToUseInstead = psiMethod == null ? null : psiMethod.getUserData(LightMethodObjectExtractedData.REFERENCE_METHOD);
       if (methodToUseInstead != null) {
@@ -1781,8 +1773,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       return psiMethod;
     }
 
-    @Nullable
-    private static PsiClass getClass(@NotNull PsiClassType classType) {
+    private static @Nullable PsiClass getClass(@NotNull PsiClassType classType) {
       PsiClass aClass = classType.resolve();
       PsiType type = aClass == null ? null : aClass.getUserData(LightMethodObjectExtractedData.REFERENCED_TYPE);
       if (type != null) {
@@ -1792,16 +1783,14 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       return aClass;
     }
 
-    @Nullable
     @Contract("null -> null")
-    private static PsiMethod getReferencedConstructor(@Nullable PsiMethod originalConstructor) {
+    private static @Nullable PsiMethod getReferencedConstructor(@Nullable PsiMethod originalConstructor) {
       if (originalConstructor == null) return null;
       PsiMethod methodToUseInstead = originalConstructor.getUserData(LightMethodObjectExtractedData.REFERENCE_METHOD);
       return methodToUseInstead == null ? originalConstructor : methodToUseInstead;
     }
 
-    @NotNull
-    private static PsiType getClassType(@NotNull PsiClassType expressionPsiType) {
+    private static @NotNull PsiType getClassType(@NotNull PsiClassType expressionPsiType) {
       PsiClass aClass = expressionPsiType.resolve();
       PsiType type = aClass == null ? null : aClass.getUserData(LightMethodObjectExtractedData.REFERENCED_TYPE);
       return type != null ? type : expressionPsiType;

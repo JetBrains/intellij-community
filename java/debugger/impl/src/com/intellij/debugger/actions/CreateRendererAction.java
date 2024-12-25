@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -38,7 +38,7 @@ public class CreateRendererAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent event) {
+  public void actionPerformed(final @NotNull AnActionEvent event) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final List<JavaValue> values = ViewAsGroup.getSelectedValues(event);
     if (values.size() != 1) {
@@ -66,9 +66,8 @@ public class CreateRendererAction extends AnAction {
               "reference.idesettings.debugger.typerenderers",
               JavaDebuggerBundle.message("user.renderers.configurable.display.name"),
               "reference.idesettings.debugger.typerenderers") {
-              @NotNull
               @Override
-              protected NodeRendererSettings getSettings() {
+              protected @NotNull NodeRendererSettings getSettings() {
                 return NodeRendererSettings.getInstance();
               }
 

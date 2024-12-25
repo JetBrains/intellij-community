@@ -52,14 +52,12 @@ public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   public boolean ignoreNonEmtpyLoops = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("while.loop.spins.on.field.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new SpinLoopFix((PsiField)infos[0], (boolean)infos[1]);
   }
 
@@ -116,8 +114,7 @@ public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
   }
 
-  @Nullable
-  private static PsiField getFieldIfSimpleFieldComparison(PsiExpression condition) {
+  private static @Nullable PsiField getFieldIfSimpleFieldComparison(PsiExpression condition) {
     condition = PsiUtil.deparenthesizeExpression(condition);
     if (condition == null) {
       return null;
@@ -149,8 +146,7 @@ public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     return null;
   }
 
-  @Nullable
-  private static PsiField getFieldIfSimpleFieldAccess(PsiExpression expression) {
+  private static @Nullable PsiField getFieldIfSimpleFieldAccess(PsiExpression expression) {
     expression = PsiUtil.deparenthesizeExpression(expression);
     if (expression == null) {
       return null;
@@ -185,10 +181,8 @@ public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       myAddVolatile = !field.hasModifierProperty(PsiModifier.VOLATILE);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       if(myAddOnSpinWait && myAddVolatile) {
         return InspectionGadgetsBundle.message("while.loop.spins.on.field.fix.volatile.spinwait", myFieldName);
       }
@@ -198,10 +192,8 @@ public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("while.loop.spins.on.field.fix.volatile", myFieldName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("while.loop.spins.on.field.fix.family.name");
     }
 
@@ -238,8 +230,7 @@ public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       CodeStyleManager.getInstance(element.getProject()).reformat(loop);
     }
 
-    @Nullable
-    private static PsiModifierList getFieldModifierList(PsiElement element) {
+    private static @Nullable PsiModifierList getFieldModifierList(PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiWhileStatement whileStatement)) return null;
       PsiExpression condition = whileStatement.getCondition();

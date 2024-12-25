@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +23,7 @@ public abstract class JavaClassSupers {
    * @see PsiClass#isInheritor(PsiClass, boolean)
    * @see InheritanceUtil#isInheritorOrSelf(PsiClass, PsiClass, boolean)
    */
-  @Nullable
-  public abstract PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
+  public abstract @Nullable PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
                                                           @NotNull PsiClass derivedClass,
                                                           @NotNull GlobalSearchScope resolveScope,
                                                           @NotNull PsiSubstitutor derivedSubstitutor);

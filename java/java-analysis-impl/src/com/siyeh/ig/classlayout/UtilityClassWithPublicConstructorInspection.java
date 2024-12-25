@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,8 +21,7 @@ public final class UtilityClassWithPublicConstructorInspection
 
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "utility.class.with.public.constructor.problem.descriptor");
   }
@@ -52,8 +51,7 @@ public final class UtilityClassWithPublicConstructorInspection
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return m_hasInheritors ?
         InspectionGadgetsBundle.message( "utility.class.with.public.constructor.make.protected.quickfix",
                                          Integer.valueOf(m_multipleConstructors ? 2 : 1)) :
@@ -61,9 +59,8 @@ public final class UtilityClassWithPublicConstructorInspection
                                          Integer.valueOf(m_multipleConstructors ? 2 : 1));
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.with.public.constructor.fix.family.name");
     }
 

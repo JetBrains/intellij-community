@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -232,8 +232,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
     }
   }
 
-  @NotNull
-  public static AnnotationPlace choosePlace(@NotNull String annotation, @NotNull PsiModifierListOwner modifierListOwner) {
+  public static @NotNull AnnotationPlace choosePlace(@NotNull String annotation, @NotNull PsiModifierListOwner modifierListOwner) {
     Project project = modifierListOwner.getProject();
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     if (BaseIntentionAction.canModify(modifierListOwner)) {
@@ -268,8 +267,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
    * @param owner an owner object to add the annotation to ({@link PsiModifierList} or {@link PsiType}).
    * @return added physical annotation; null if annotation already exists (in this case, no changes are performed)
    */
-  @Nullable
-  public static PsiAnnotation addPhysicalAnnotationIfAbsent(@NotNull String fqn,
+  public static @Nullable PsiAnnotation addPhysicalAnnotationIfAbsent(@NotNull String fqn,
                                                             @NotNull PsiNameValuePair @NotNull [] pairs,
                                                             @NotNull PsiAnnotationOwner owner) {
     if (owner.hasAnnotation(fqn)) return null;
@@ -305,21 +303,18 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
     return inserted;
   }
 
-  @Nullable
-  protected PsiAnnotation addAnnotation(PsiAnnotationOwner annotationOwner, String fqn) {
+  protected @Nullable PsiAnnotation addAnnotation(PsiAnnotationOwner annotationOwner, String fqn) {
     return expandParameterAndAddAnnotation(annotationOwner, fqn);
   }
 
-  @NotNull
-  public static PsiAnnotation expandParameterAndAddAnnotation(PsiAnnotationOwner annotationOwner, String fqn) {
+  public static @NotNull PsiAnnotation expandParameterAndAddAnnotation(PsiAnnotationOwner annotationOwner, String fqn) {
     if (annotationOwner instanceof PsiModifierList) {
       annotationOwner = expandParameterIfNecessary((PsiModifierList)annotationOwner);
     }
     return annotationOwner.addAnnotation(fqn);
   }
 
-  @NotNull
-  public static PsiModifierList expandParameterIfNecessary(PsiModifierList owner) {
+  public static @NotNull PsiModifierList expandParameterIfNecessary(PsiModifierList owner) {
     PsiParameter parameter = ObjectUtils.tryCast(owner.getParent(), PsiParameter.class);
     if (parameter != null && parameter.getTypeElement() == null) {
       PsiParameterList list = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);

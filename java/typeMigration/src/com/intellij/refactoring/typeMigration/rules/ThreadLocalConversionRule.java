@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -64,11 +64,10 @@ public final class ThreadLocalConversionRule extends TypeConversionRule {
     return false;
   }
 
-  @Nullable
-  private static TypeConversionDescriptor findDirectConversion(PsiElement context,
-                                                               PsiClassType to,
-                                                               PsiType from,
-                                                               TypeMigrationLabeler labeler) {
+  private static @Nullable TypeConversionDescriptor findDirectConversion(PsiElement context,
+                                                                         PsiClassType to,
+                                                                         PsiType from,
+                                                                         TypeMigrationLabeler labeler) {
     final PsiClass toTypeClass = to.resolve();
     LOG.assertTrue(toTypeClass != null);
 

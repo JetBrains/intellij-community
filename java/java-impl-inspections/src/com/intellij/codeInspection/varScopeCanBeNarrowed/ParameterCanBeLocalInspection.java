@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -34,17 +34,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
+  public static final @NonNls String SHORT_NAME = "ParameterCanBeLocal";
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.class.structure");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -70,10 +68,9 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static ProblemDescriptor createProblem(@NotNull InspectionManager manager,
-                                                 @NotNull PsiIdentifier identifier,
-                                                 boolean isOnTheFly) {
+  private static @NotNull ProblemDescriptor createProblem(@NotNull InspectionManager manager,
+                                                          @NotNull PsiIdentifier identifier,
+                                                          boolean isOnTheFly) {
     return manager.createProblemDescriptor(
       identifier,
       JavaBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
@@ -84,8 +81,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     );
   }
 
-  @NotNull
-  private static List<PsiParameter> filterFinal(PsiParameter[] parameters) {
+  private static @NotNull List<PsiParameter> filterFinal(PsiParameter[] parameters) {
     final List<PsiParameter> result = new ArrayList<>(parameters.length);
     for (PsiParameter parameter : parameters) {
       if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
@@ -130,8 +126,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     return SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
   }
 
-  @Nullable
-  private static ControlFlow getControlFlow(final PsiElement context) {
+  private static @Nullable ControlFlow getControlFlow(final PsiElement context) {
     try {
       return ControlFlowFactory.getInstance(context.getProject())
         .getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
@@ -150,8 +145,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       return IntentionPreviewInfo.DIFF;
     }
 
-    @NotNull
-    private static List<PsiElement> moveDeclaration(@NotNull Project project, @NotNull PsiParameter variable) {
+    private static @NotNull List<PsiElement> moveDeclaration(@NotNull Project project, @NotNull PsiParameter variable) {
       final Collection<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
       if (references.isEmpty()) return Collections.emptyList();
       final PsiElement scope = variable.getDeclarationScope();
@@ -182,8 +176,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.convert.to.local.quickfix");
     }
 
@@ -209,8 +202,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    @Nullable
-    private static PsiElement copyVariableToMethodBody(PsiParameter variable, Collection<? extends PsiReferenceExpression> references) {
+    private static @Nullable PsiElement copyVariableToMethodBody(PsiParameter variable, Collection<? extends PsiReferenceExpression> references) {
       final PsiCodeBlock anchorBlock = findAnchorBlock(references);
       if (anchorBlock == null) return null; // was assertion, but need to fix the case when obsolete inspection highlighting is left
       final PsiElement firstElement = getLowestOffsetElement(references);
@@ -261,8 +253,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    @Nullable
-    private static PsiLocalVariable extractDeclared(@NotNull PsiElement declaration) {
+    private static @Nullable PsiLocalVariable extractDeclared(@NotNull PsiElement declaration) {
       if (!(declaration instanceof PsiDeclarationStatement)) return null;
       final PsiElement[] declaredElements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
       if (declaredElements.length != 1) return null;
@@ -281,8 +272,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    @Nullable
-    private static PsiAssignmentExpression searchAssignmentExpression(@Nullable PsiElement anchor) {
+    private static @Nullable PsiAssignmentExpression searchAssignmentExpression(@Nullable PsiElement anchor) {
       if (!(anchor instanceof PsiExpressionStatement)) return null;
       final PsiExpression anchorExpression = ((PsiExpressionStatement)anchor).getExpression();
       if (!(anchorExpression instanceof PsiAssignmentExpression)) return null;
@@ -305,8 +295,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    @Nullable
-    private static PsiElement getAnchorElement(PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
+    private static @Nullable PsiElement getAnchorElement(PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
       PsiElement element = firstElement;
       while (element != null && element.getParent() != anchorBlock) {
         element = element.getParent();
@@ -314,8 +303,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       return element;
     }
 
-    @Nullable
-    private static PsiElement getLowestOffsetElement(@NotNull Collection<? extends PsiReference> refs) {
+    private static @Nullable PsiElement getLowestOffsetElement(@NotNull Collection<? extends PsiReference> refs) {
       PsiElement firstElement = null;
       for (PsiReference reference : refs) {
         final PsiElement element = reference.getElement();

@@ -93,8 +93,7 @@ final class SmartCastProvider {
     }
   }
 
-  @Unmodifiable
-  static @NotNull List<ExpectedTypeInfo> getParenthesizedCastExpectationByOperandType(PsiElement position) {
+  static @Unmodifiable @NotNull List<ExpectedTypeInfo> getParenthesizedCastExpectationByOperandType(PsiElement position) {
     PsiElement parenthesisOwner = getParenthesisOwner(position);
     PsiExpression operand = getCastedExpression(parenthesisOwner);
     if (operand == null || !(parenthesisOwner.getParent() instanceof PsiParenthesizedExpression)) return Collections.emptyList();

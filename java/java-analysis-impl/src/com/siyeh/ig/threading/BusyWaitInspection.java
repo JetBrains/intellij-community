@@ -31,8 +31,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class BusyWaitInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("busy.wait.problem.descriptor");
   }
 

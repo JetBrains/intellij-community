@@ -72,8 +72,7 @@ public final class HighlightMethodUtil {
 
   private HighlightMethodUtil() { }
 
-  @NotNull
-  static @NlsContexts.DetailedDescription String createClashMethodMessage(@NotNull PsiMethod method1, @NotNull PsiMethod method2, boolean showContainingClasses) {
+  static @NotNull @NlsContexts.DetailedDescription String createClashMethodMessage(@NotNull PsiMethod method1, @NotNull PsiMethod method2, boolean showContainingClasses) {
     if (showContainingClasses) {
       PsiClass class1 = method1.getContainingClass();
       PsiClass class2 = method2.getContainingClass();
@@ -241,13 +240,12 @@ public final class HighlightMethodUtil {
                                                description);
   }
 
-  @NotNull
-  private static HighlightInfo.Builder createIncompatibleReturnTypeMessage(@NotNull PsiMethod method,
-                                                             @NotNull PsiMethod superMethod,
-                                                             @NotNull PsiType substitutedSuperReturnType,
-                                                             @NotNull PsiType returnType,
-                                                             @NotNull @Nls String detailMessage,
-                                                             @NotNull TextRange textRange, @Nullable Ref<? super String> descriptionH) {
+  private static @NotNull HighlightInfo.Builder createIncompatibleReturnTypeMessage(@NotNull PsiMethod method,
+                                                                                    @NotNull PsiMethod superMethod,
+                                                                                    @NotNull PsiType substitutedSuperReturnType,
+                                                                                    @NotNull PsiType returnType,
+                                                                                    @NotNull @Nls String detailMessage,
+                                                                                    @NotNull TextRange textRange, @Nullable Ref<? super String> descriptionH) {
     String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
     if (descriptionH != null) {
       descriptionH.set(description);
@@ -819,11 +817,10 @@ public final class HighlightMethodUtil {
     }
   }
 
-  @NotNull
-  private static List<PsiExpression> mismatchedArgs(PsiExpression @NotNull [] expressions,
-                                                    PsiSubstitutor substitutor,
-                                                    PsiParameter @NotNull [] parameters,
-                                                    boolean varargs) {
+  private static @NotNull List<PsiExpression> mismatchedArgs(PsiExpression @NotNull [] expressions,
+                                                             PsiSubstitutor substitutor,
+                                                             PsiParameter @NotNull [] parameters,
+                                                             boolean varargs) {
     List<PsiExpression> result = new ArrayList<>();
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
       if (parameters.length == 0 || !assignmentCompatible(i, parameters, expressions, substitutor, varargs)) {
@@ -1032,8 +1029,7 @@ public final class HighlightMethodUtil {
     return builder;
   }
 
-  @NotNull
-  private static Pair<MethodCandidateInfo, MethodCandidateInfo> findCandidates(JavaResolveResult @NotNull [] resolveResults) {
+  private static @NotNull Pair<MethodCandidateInfo, MethodCandidateInfo> findCandidates(JavaResolveResult @NotNull [] resolveResults) {
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     for (JavaResolveResult result : resolveResults) {
@@ -1134,8 +1130,7 @@ public final class HighlightMethodUtil {
     }
   }
 
-  @NotNull
-  private static @NlsContexts.Tooltip String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo @NotNull [] methodCandidates) {
+  private static @NotNull @NlsContexts.Tooltip String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo @NotNull [] methodCandidates) {
     return JavaErrorBundle.message("ambiguous.method.html.tooltip",
                                      methodCandidates[0].getElement().getParameterList().getParametersCount() + 2,
                                    createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
@@ -1144,16 +1139,14 @@ public final class HighlightMethodUtil {
                                    getContainingClassName(methodCandidates[1]));
   }
 
-  @NotNull
-  private static String getContainingClassName(@NotNull MethodCandidateInfo methodCandidate) {
+  private static @NotNull String getContainingClassName(@NotNull MethodCandidateInfo methodCandidate) {
     PsiMethod method = methodCandidate.getElement();
     PsiClass containingClass = method.getContainingClass();
     return containingClass == null ? method.getContainingFile().getName() : HighlightUtil.formatClass(containingClass, false);
   }
 
   @Language("HTML")
-  @NotNull
-  private static String createAmbiguousMethodHtmlTooltipMethodRow(@NotNull MethodCandidateInfo methodCandidate) {
+  private static @NotNull String createAmbiguousMethodHtmlTooltipMethodRow(@NotNull MethodCandidateInfo methodCandidate) {
     PsiMethod method = methodCandidate.getElement();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiSubstitutor substitutor = methodCandidate.getSubstitutor();
@@ -1170,8 +1163,7 @@ public final class HighlightMethodUtil {
     return ms.toString();
   }
 
-  @NotNull
-  private static @NlsContexts.Tooltip String createMismatchedArgumentsHtmlTooltip(@NotNull MethodCandidateInfo info, @NotNull PsiExpressionList list) {
+  private static @NotNull @NlsContexts.Tooltip String createMismatchedArgumentsHtmlTooltip(@NotNull MethodCandidateInfo info, @NotNull PsiExpressionList list) {
     PsiMethod method = info.getElement();
     PsiSubstitutor substitutor = info.getSubstitutor();
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -1179,11 +1171,10 @@ public final class HighlightMethodUtil {
   }
 
   @Language("HTML")
-  @NotNull
-  private static @NlsContexts.Tooltip String createMismatchedArgumentsHtmlTooltip(@NotNull PsiExpressionList list,
-                                                                                  @Nullable MethodCandidateInfo info,
-                                                                                  PsiParameter @NotNull [] parameters,
-                                                                                  @NotNull PsiSubstitutor substitutor) {
+  private static @NotNull @NlsContexts.Tooltip String createMismatchedArgumentsHtmlTooltip(@NotNull PsiExpressionList list,
+                                                                                           @Nullable MethodCandidateInfo info,
+                                                                                           PsiParameter @NotNull [] parameters,
+                                                                                           @NotNull PsiSubstitutor substitutor) {
     PsiExpression[] expressions = list.getExpressions();
     if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) &&
         parameters.length != expressions.length) {
@@ -1198,13 +1189,11 @@ public final class HighlightMethodUtil {
     return message.wrapWithHtmlBody().toString();
   }
 
-  @NotNull
-  private static @NlsContexts.Tooltip String createMismatchedArgumentCountTooltip(int expected, int actual) {
+  private static @NotNull @NlsContexts.Tooltip String createMismatchedArgumentCountTooltip(int expected, int actual) {
     return HtmlChunk.text(JavaAnalysisBundle.message("arguments.count.mismatch", expected, actual)).wrapWith("html").toString();
   }
 
-  @NotNull
-  private static HtmlChunk getTypeMismatchErrorHtml(@Nls String errorMessage) {
+  private static @NotNull HtmlChunk getTypeMismatchErrorHtml(@Nls String errorMessage) {
     if (errorMessage == null) {
       return HtmlChunk.empty();
     }
@@ -1213,11 +1202,10 @@ public final class HighlightMethodUtil {
       .wrapWith("tr").wrapWith("table");
   }
 
-  @NotNull
-  private static HtmlChunk getTypeMismatchTable(@Nullable MethodCandidateInfo info,
-                                                @NotNull PsiSubstitutor substitutor,
-                                                PsiParameter @NotNull [] parameters,
-                                                PsiExpression[] expressions) {
+  private static @NotNull HtmlChunk getTypeMismatchTable(@Nullable MethodCandidateInfo info,
+                                                         @NotNull PsiSubstitutor substitutor,
+                                                         PsiParameter @NotNull [] parameters,
+                                                         PsiExpression[] expressions) {
     String greyedColor = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
     HtmlBuilder table = new HtmlBuilder();
     HtmlChunk.Element td = HtmlChunk.tag("td");
@@ -1272,15 +1260,13 @@ public final class HighlightMethodUtil {
     return table.wrapWith("table");
   }
 
-  @NotNull
-  private static @Nls HtmlChunk mismatchedExpressionType(PsiType parameterType, @NotNull PsiExpression expression) {
+  private static @NotNull @Nls HtmlChunk mismatchedExpressionType(PsiType parameterType, @NotNull PsiExpression expression) {
     return HtmlChunk.raw(HighlightUtil.createIncompatibleTypesTooltip(parameterType, expression.getType(), new HighlightUtil.IncompatibleTypesTooltipComposer() {
-      @NotNull
       @Override
-      public String consume(@NotNull @NlsSafe String lRawType,
-                            @NotNull @NlsSafe String lTypeArguments,
-                            @NotNull @NlsSafe String rRawType,
-                            @NotNull @NlsSafe String rTypeArguments) {
+      public @NotNull String consume(@NotNull @NlsSafe String lRawType,
+                                     @NotNull @NlsSafe String lTypeArguments,
+                                     @NotNull @NlsSafe String rRawType,
+                                     @NotNull @NlsSafe String rTypeArguments) {
         return rRawType + rTypeArguments;
       }
 
@@ -1800,8 +1786,7 @@ public final class HighlightMethodUtil {
     return highlightInfo;
   }
 
-  @NotNull
-  public static TextRange getFixRange(@NotNull PsiElement element) {
+  public static @NotNull TextRange getFixRange(@NotNull PsiElement element) {
     PsiElement nextSibling = element.getNextSibling();
     TextRange range = element.getTextRange();
     if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
@@ -2059,10 +2044,9 @@ public final class HighlightMethodUtil {
     RemoveRedundantArgumentsFix.registerIntentions(results, list, builder, fixRange);
   }
 
-  @NotNull
-  private static HighlightInfo.Builder buildAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
-                                                          @NotNull PsiJvmMember resolved,
-                                                          @NotNull JavaResolveResult result) {
+  private static @NotNull HighlightInfo.Builder buildAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
+                                                                   @NotNull PsiJvmMember resolved,
+                                                                   @NotNull JavaResolveResult result) {
     String description = HighlightUtil.accessProblemDescription(ref, resolved, result);
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).navigationShift(+1);
     if (result.isStaticsScopeCorrect()) {
@@ -2087,8 +2071,7 @@ public final class HighlightMethodUtil {
     }
   }
 
-  @NotNull
-  private static String buildArgTypesList(@NotNull PsiExpressionList list, boolean shortNames) {
+  private static @NotNull String buildArgTypesList(@NotNull PsiExpressionList list, boolean shortNames) {
     StringBuilder builder = new StringBuilder();
     builder.append("(");
     PsiExpression[] args = list.getExpressions();
@@ -2174,12 +2157,11 @@ public final class HighlightMethodUtil {
     return expectedType;
   }
 
-  @NotNull
-  private static PsiType lub(@Nullable PsiType currentType,
-                             @NotNull PsiType leastValueType,
-                             @NotNull PsiType valueType,
-                             @NotNull PsiMethod method,
-                             @NotNull PsiManager manager) {
+  private static @NotNull PsiType lub(@Nullable PsiType currentType,
+                                      @NotNull PsiType leastValueType,
+                                      @NotNull PsiType valueType,
+                                      @NotNull PsiMethod method,
+                                      @NotNull PsiManager manager) {
     if (currentType == null || PsiTypes.voidType().equals(currentType)) return valueType;
     if (currentType == valueType) return currentType;
 
@@ -2290,8 +2272,7 @@ public final class HighlightMethodUtil {
     }
   }
 
-  @Nullable
-  private static HighlightInfo.Builder checkRecordSpecialMethodDeclaration(@NotNull PsiMethod method, @NotNull @Nls String methodTitle) {
+  private static @Nullable HighlightInfo.Builder checkRecordSpecialMethodDeclaration(@NotNull PsiMethod method, @NotNull @Nls String methodTitle) {
     PsiIdentifier identifier = method.getNameIdentifier();
     if (identifier == null) return null;
     PsiTypeParameterList typeParameterList = method.getTypeParameterList();
@@ -2376,8 +2357,7 @@ public final class HighlightMethodUtil {
       myLeastType = leastType;
     }
 
-    @Nullable
-    private static ReturnModel create(@NotNull PsiReturnStatement statement) {
+    private static @Nullable ReturnModel create(@NotNull PsiReturnStatement statement) {
       PsiExpression value = statement.getReturnValue();
       if (value == null) return new ReturnModel(statement, PsiTypes.voidType());
       if (ExpressionUtils.nonStructuralChildren(value).anyMatch(c -> c instanceof PsiFunctionalExpression)) return null;
@@ -2386,8 +2366,7 @@ public final class HighlightMethodUtil {
       return new ReturnModel(statement, type, getLeastValueType(value, type));
     }
 
-    @NotNull
-    private static PsiType getLeastValueType(@NotNull PsiExpression returnValue, @NotNull PsiType type) {
+    private static @NotNull PsiType getLeastValueType(@NotNull PsiExpression returnValue, @NotNull PsiType type) {
       if (type instanceof PsiPrimitiveType) {
         int rank = TypeConversionUtil.getTypeRank(type);
         if (rank < TypeConversionUtil.BYTE_RANK || rank > TypeConversionUtil.INT_RANK) return type;

@@ -124,8 +124,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return IntentionPreviewInfo.DIFF;
   }
 
-  @Unmodifiable
-  public static @NotNull List<PsiMethodMember> filterNonDefaultMethodMembers(Collection<CandidateInfo> overrideImplement) {
+  public static @Unmodifiable @NotNull List<PsiMethodMember> filterNonDefaultMethodMembers(Collection<CandidateInfo> overrideImplement) {
     return ContainerUtil.map(
       ContainerUtil.filter(overrideImplement,
                            t -> t.getElement() instanceof PsiMethod method && !method.hasModifierProperty(PsiModifier.DEFAULT)),

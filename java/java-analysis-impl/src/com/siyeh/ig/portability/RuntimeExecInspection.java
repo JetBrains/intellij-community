@@ -28,14 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public final class RuntimeExecInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToRuntimeExec";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "runtime.exec.call.problem.descriptor");
   }
@@ -54,7 +52,7 @@ public final class RuntimeExecInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      @NonNls final String exec = "exec";
+      final @NonNls String exec = "exec";
       if (!exec.equals(methodName)) {
         return;
       }

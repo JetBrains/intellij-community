@@ -20,8 +20,7 @@ import java.util.List;
 
 class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
-  @Nullable
-  private JCheckBox myCbPreserveModuleImports;
+  private @Nullable JCheckBox myCbPreserveModuleImports;
   private ListTableModel<InnerClassItem> doNotInsertInnerListModel;
 
   private static final ColumnInfo<?, ?>[] INNER_CLASS_COLUMNS = {

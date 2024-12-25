@@ -271,8 +271,7 @@ final class ModuleHighlightUtil {
     return null;
   }
 
-  @NotNull
-  private static HighlightInfo.Builder getUnresolvedJavaModuleReason(@NotNull PsiElement parent, @NotNull PsiJavaModuleReferenceElement refElement) {
+  private static @NotNull HighlightInfo.Builder getUnresolvedJavaModuleReason(@NotNull PsiElement parent, @NotNull PsiJavaModuleReferenceElement refElement) {
     PsiJavaModuleReference ref = refElement.getReference();
     assert ref != null : refElement.getParent();
 
@@ -516,8 +515,7 @@ final class ModuleHighlightUtil {
     return ObjectUtils.notNull(refElement.getReferenceNameElement(), refElement);
   }
 
-  @NotNull
-  private static HighlightInfo.Builder createDuplicateReference(@NotNull PsiElement refElement, @NotNull @NlsContexts.DetailedDescription String message) {
+  private static @NotNull HighlightInfo.Builder createDuplicateReference(@NotNull PsiElement refElement, @NotNull @NlsContexts.DetailedDescription String message) {
     HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message);
     IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text"));
     info.registerFix(action, null, null, null, null);

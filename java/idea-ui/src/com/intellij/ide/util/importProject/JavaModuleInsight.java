@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
@@ -38,7 +38,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   private static final Logger LOG = Logger.getInstance(JavaModuleInsight.class);
   private final Lexer myLexer;
 
-  public JavaModuleInsight(@Nullable final ProgressIndicator progress,
+  public JavaModuleInsight(final @Nullable ProgressIndicator progress,
                            Set<String> existingModuleNames,
                            Set<String> existingProjectLibraryNames) {
     super(progress, existingModuleNames, existingProjectLibraryNames);
@@ -95,17 +95,15 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  protected List<DetectedSourceRoot> getSourceRootsToScan() {
+  protected @NotNull @Unmodifiable List<DetectedSourceRoot> getSourceRootsToScan() {
     final List<DetectedSourceRoot> allRoots = super.getSourceRootsToScan();
     return ContainerUtil.filter(allRoots, r -> !(r instanceof JavaModuleSourceRoot) || !((JavaModuleSourceRoot)r).isWithModuleInfoFile());
   }
 
   private ModuleInfo scanModuleInfoFile(@NotNull File directory) {
     File file = new File(directory, PsiJavaModule.MODULE_INFO_FILE);
-    @NlsSafe final String name = file.getName();
+    final @NlsSafe String name = file.getName();
     myProgress.setText2(name);
     try {
       String text = FileUtil.loadFile(file);
@@ -201,8 +199,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
   }
 
-  @Nullable
-  private static String readPackageName(final CharSequence text, final Lexer lexer) {
+  private static @Nullable String readPackageName(final CharSequence text, final Lexer lexer) {
     final StringBuilder buffer = new StringBuilder();
     while (true) {
       if (lexer.getTokenType() != JavaTokenType.IDENTIFIER && lexer.getTokenType() != JavaTokenType.ASTERISK) {

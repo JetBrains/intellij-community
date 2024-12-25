@@ -85,24 +85,21 @@ final class PsiReflectionAccessUtil {
     return type == null || isAccessibleType(type);
   }
 
-  @Nullable
-  public static String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiType type) {
+  public static @Nullable String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiType type) {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
     return type != null ? nearestAccessibleType(type).getCanonicalText() : null;
   }
 
-  @Nullable
-  public static String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiClass psiClass) {
+  public static @Nullable String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiClass psiClass) {
     String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
     return nearestAccessibleBaseClassName(psiClass);
   }
 
-  @Nullable
-  private static String tryGetWeakestAccessibleExpectedType(@NotNull PsiExpression expression) {
+  private static @Nullable String tryGetWeakestAccessibleExpectedType(@NotNull PsiExpression expression) {
     PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
     PsiType realType = expression.getType();
     if (expectedType != null && realType != null) {
@@ -116,8 +113,7 @@ final class PsiReflectionAccessUtil {
     return null;
   }
 
-  @NotNull
-  private static List<PsiType> getAllAssignableSupertypes(@NotNull PsiType from, @NotNull PsiType to) {
+  private static @NotNull List<PsiType> getAllAssignableSupertypes(@NotNull PsiType from, @NotNull PsiType to) {
     Set<PsiType> types = new LinkedHashSet<>();
     Queue<PsiType> queue = new ArrayDeque<>();
     queue.offer(from);
@@ -134,14 +130,12 @@ final class PsiReflectionAccessUtil {
     return result;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static String classForName(@NotNull String typeName) {
+  public static @NotNull String classForName(@NotNull String typeName) {
     return TypeConversionUtil.isPrimitive(typeName) ? typeName + ".class" : "java.lang.Class.forName(\"" + typeName + "\")";
   }
 
-  @NotNull
-  public static String getUniqueMethodName(@NotNull PsiClass psiClass, @NotNull String prefix) {
+  public static @NotNull String getUniqueMethodName(@NotNull PsiClass psiClass, @NotNull String prefix) {
     if (!StringUtil.isJavaIdentifier(prefix)) throw new IllegalArgumentException("prefix must be a correct java identifier: " + prefix);
     int i = 1;
     String name;
@@ -165,8 +159,7 @@ final class PsiReflectionAccessUtil {
     return isAccessible(psiClass) && !hasInaccessibleGenerics(type);
   }
 
-  @NotNull
-  public static PsiType nearestAccessibleType(@NotNull PsiType type) {
+  public static @NotNull PsiType nearestAccessibleType(@NotNull PsiType type) {
     while (!isAccessibleType(type)) {
       PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
       boolean isAccessible = isAccessible(psiClass);
@@ -185,8 +178,7 @@ final class PsiReflectionAccessUtil {
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static String nearestAccessibleBaseClassName(@Nullable PsiClass psiClass) {
+  private static @Nullable String nearestAccessibleBaseClassName(@Nullable PsiClass psiClass) {
     while (psiClass != null && !isAccessible(psiClass)) {
       psiClass = psiClass.getSuperClass();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -60,19 +60,17 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return myEventRequestManager;
   }
 
-  @Nullable
-  public LightOrRealThreadInfo getFilterThread() {
+  public @Nullable LightOrRealThreadInfo getFilterThread() {
     return myFilterThread;
   }
 
-  @Nullable
-  public ThreadReference getFilterRealThread() {
+  public @Nullable ThreadReference getFilterRealThread() {
     return myFilterThread != null ? myFilterThread.getRealThread() : null;
   }
 
   /** @deprecated Use setThreadFilter instead */
   @Deprecated
-  public void setFilterThread(@Nullable final ThreadReference filterThread) {
+  public void setFilterThread(final @Nullable ThreadReference filterThread) {
     if (filterThread != null) {
       setThreadFilter(new RealThreadInfo(filterThread));
     }
@@ -80,7 +78,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       setThreadFilter(null);
     }
   }
-  public void setThreadFilter(@Nullable final LightOrRealThreadInfo filter) {
+  public void setThreadFilter(final @Nullable LightOrRealThreadInfo filter) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Thread filter is set to " + filter);
     }
@@ -96,8 +94,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return Collections.unmodifiableSet(requestSet);
   }
 
-  @Nullable
-  public static Requestor findRequestor(EventRequest request) {
+  public static @Nullable Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return request != null ? (Requestor)request.getProperty(REQUESTOR) : null;
   }
@@ -210,8 +207,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   // requests creation
   @Override
-  @Nullable
-  public ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
+  public @Nullable ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
     if (myEventRequestManager == null) { // detached already
       return null;
     }

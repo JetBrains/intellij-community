@@ -91,13 +91,11 @@ public final class ClassUtils {
 
   private ClassUtils() {}
 
-  @Nullable
-  public static PsiClass findClass(@NonNls String fqClassName, PsiElement context) {
+  public static @Nullable PsiClass findClass(@NonNls String fqClassName, PsiElement context) {
     return JavaPsiFacade.getInstance(context.getProject()).findClass(fqClassName, context.getResolveScope());
   }
 
-  @Nullable
-  public static PsiClass findObjectClass(PsiElement context) {
+  public static @Nullable PsiClass findObjectClass(PsiElement context) {
     return findClass(CommonClassNames.JAVA_LANG_OBJECT, context);
   }
 
@@ -226,9 +224,8 @@ public final class ClassUtils {
    * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
    * @deprecated use {@link PsiUtil#getContainingClass(PsiElement)}
    */
-  @Nullable
   @Deprecated
-  public static PsiClass getContainingClass(PsiElement element) {
+  public static @Nullable PsiClass getContainingClass(PsiElement element) {
     return PsiUtil.getContainingClass(element);
   }
 
@@ -245,8 +242,7 @@ public final class ClassUtils {
     }
   }
 
-  @Nullable
-  public static PsiClass getContainingStaticClass(PsiElement element) {
+  public static @Nullable PsiClass getContainingStaticClass(PsiElement element) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false, PsiFile.class);
     while (isNonStaticClass(aClass)) {
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true, PsiFile.class);
@@ -280,8 +276,7 @@ public final class ClassUtils {
    * @param aClass anonymous class to extract the "double brace" initializer from
    * @return "double brace" initializer or null if the class does not follow double brace initialization anti-pattern
    */
-  @Nullable
-  public static PsiClassInitializer getDoubleBraceInitializer(PsiAnonymousClass aClass) {
+  public static @Nullable PsiClassInitializer getDoubleBraceInitializer(PsiAnonymousClass aClass) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     if (initializers.length != 1) {
       return null;

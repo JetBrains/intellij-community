@@ -30,8 +30,7 @@ public final class ReadResolveAndWriteReplaceProtectedInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "readresolve.writereplace.protected.problem.descriptor");
   }

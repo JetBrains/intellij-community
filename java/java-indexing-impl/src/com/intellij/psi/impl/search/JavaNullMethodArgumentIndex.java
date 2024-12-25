@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -26,17 +26,15 @@ import static com.intellij.psi.JavaTokenType.*;
 public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
 
-  @NotNull
   @Override
-  public ID<MethodCallData, Void> getName() {
+  public @NotNull ID<MethodCallData, Void> getName() {
     return INDEX_ID;
   }
 
   private static final StringSearcher ourSearcher = new StringSearcher("null", true, true);
 
-  @NotNull
   @Override
-  public DataIndexer<MethodCallData, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<MethodCallData, Void, FileContent> getIndexer() {
     return inputData -> {
       if (ourSearcher.scan(inputData.getContentAsText()) < 0) return Map.of();
 
@@ -55,8 +53,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
     };
   }
 
-  @Nullable
-  private static MethodCallData findCallData(TokenList tokens, int nullIndex) {
+  private static @Nullable MethodCallData findCallData(TokenList tokens, int nullIndex) {
     if (!tokens.hasType(tokens.forwardWhile(nullIndex + 1, JavaParserUtil.WS_COMMENTS), RPARENTH, COMMA)) return null;
 
     int i = tokens.backWhile(nullIndex - 1, JavaParserUtil.WS_COMMENTS);
@@ -82,8 +79,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
     }
   }
 
-  @Nullable
-  private static String findMethodName(TokenList tokens, int lparenth) {
+  private static @Nullable String findMethodName(TokenList tokens, int lparenth) {
     int i = tokens.backWhile(lparenth - 1, JavaParserUtil.WS_COMMENTS);
     if (tokens.hasType(i, GT)) {
       i = tokens.backWhile(tokens.backWithBraceMatching(i, LT, GT), JavaParserUtil.WS_COMMENTS);
@@ -91,9 +87,8 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
     return tokens.getTokenType(i) == IDENTIFIER ? tokens.getTokenText(i).toString() : null;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<MethodCallData> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<MethodCallData> getKeyDescriptor() {
     return new KeyDescriptor<>() {
       @Override
       public int getHashCode(MethodCallData value) {
@@ -124,9 +119,8 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
     return 1;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
@@ -151,8 +145,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
   }
 
   public static final class MethodCallData {
-    @NotNull
-    private final String myMethodName;
+    private final @NotNull String myMethodName;
     private final int myNullParameterIndex;
 
     public MethodCallData(@NotNull String name, int index) {
@@ -160,8 +153,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
       myNullParameterIndex = index;
     }
 
-    @NotNull
-    public String getMethodName() {
+    public @NotNull String getMethodName() {
       return myMethodName;
     }
 

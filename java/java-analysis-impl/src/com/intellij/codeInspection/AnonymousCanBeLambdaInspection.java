@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -40,10 +40,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
 
   public boolean reportNotAnnotatedInterfaces = true;
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -52,9 +50,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "Convert2Lambda";
   }
 
@@ -70,9 +67,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
@@ -275,8 +271,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
    * @param forceIgnoreTypeCast if false, type cast might be added if necessary
    * @return newly-generated lambda expression (possibly with typecast)
    */
-  @NotNull
-  static PsiExpression generateLambdaByMethod(PsiAnonymousClass anonymousClass,
+  static @NotNull PsiExpression generateLambdaByMethod(PsiAnonymousClass anonymousClass,
                                               PsiMethod method,
                                               UnaryOperator<PsiLambdaExpression> replacer,
                                               boolean forceIgnoreTypeCast) {
@@ -340,9 +335,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     return (PsiExpression)javaCodeStyleManager.shortenClassReferences(typeCast);
   }
 
-  @NotNull
-  @Unmodifiable
-  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
+  static @NotNull @Unmodifiable Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
     final Collection<PsiComment> psiComments = ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class),
     comment -> !PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());
@@ -385,9 +378,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
   }
 
   private static class ReplaceWithLambdaFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("replace.with.lambda");
     }
 

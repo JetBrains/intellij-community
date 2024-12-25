@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -49,7 +49,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls private static final String SHORT_NAME = "DataFlowIssue";
+  private static final @NonNls String SHORT_NAME = "DataFlowIssue";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
   public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
   public boolean IGNORE_ASSERT_STATEMENTS;
@@ -350,8 +350,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     });
   }
 
-  @Nullable
-  protected LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+  protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
     return null;
   }
 

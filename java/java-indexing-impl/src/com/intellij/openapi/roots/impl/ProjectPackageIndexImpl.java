@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,9 +29,8 @@ final class ProjectPackageIndexImpl extends PackageIndex {
     return myDirectoryIndex.getDirectoriesByPackageName(packageName, scope);
   }
 
-  @NotNull
   @Override
-  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+  public @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 

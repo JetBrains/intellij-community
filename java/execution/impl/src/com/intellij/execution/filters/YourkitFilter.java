@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.ExecutionBundle;
@@ -29,12 +29,12 @@ public class YourkitFilter implements Filter{
 
   private static final Pattern PATTERN = Pattern.compile("\\s*(\\w*)\\(\\):(-?\\d*), (\\w*\\.java)\\n");
 
-  public YourkitFilter(@NotNull final Project project) {
+  public YourkitFilter(final @NotNull Project project) {
     myProject = project;
   }
 
   @Override
-  public Result applyFilter(@NotNull final String line, final int entireLength) {
+  public Result applyFilter(final @NotNull String line, final int entireLength) {
     if (!line.endsWith(".java\n")) {
       return null;
     }
@@ -106,8 +106,7 @@ public class YourkitFilter implements Filter{
     }
 
     @Override
-    @Nullable
-    protected String getContainerText(final PsiElement element, final String name) {
+    protected @Nullable String getContainerText(final PsiElement element, final String name) {
       final PsiDirectory parent = ((PsiFile)element).getParent();
       if (parent == null) return null;
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(parent);

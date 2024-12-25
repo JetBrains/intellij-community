@@ -95,8 +95,7 @@ public final class JavaModuleGraphUtil {
            : findDescriptorByModule(index.getModuleForFile(file), index.isInTestSourceContent(file));
   }
 
-  @Nullable
-  private static PsiJavaModule findDescriptorInLibrary(@NotNull Project project, @NotNull ProjectFileIndex index, @NotNull VirtualFile file) {
+  private static @Nullable PsiJavaModule findDescriptorInLibrary(@NotNull Project project, @NotNull ProjectFileIndex index, @NotNull VirtualFile file) {
     VirtualFile root = index.getClassRootForFile(file);
     if (root != null) {
       VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
@@ -153,17 +152,15 @@ public final class JavaModuleGraphUtil {
     return javaModule instanceof LightJavaModule ? null : javaModule;
   }
 
-  @NotNull
-  private static Result<PsiJavaModule> createModuleCacheResult(@NotNull Module module,
-                                                               boolean inTests) {
+  private static @NotNull Result<PsiJavaModule> createModuleCacheResult(@NotNull Module module,
+                                                                        boolean inTests) {
     Project project = module.getProject();
     return new Result<>(findDescriptionByModuleInner(module, inTests),
                         ProjectRootModificationTracker.getInstance(project),
                         PsiJavaModuleModificationTracker.getInstance(project));
   }
 
-  @Nullable
-  private static PsiJavaModule findDescriptionByModuleInner(@NotNull Module module, boolean inTests) {
+  private static @Nullable PsiJavaModule findDescriptionByModuleInner(@NotNull Module module, boolean inTests) {
     Project project = module.getProject();
     GlobalSearchScope moduleScope = module.getModuleScope();
     String virtualAutoModuleName = ManifestUtil.lightManifestAttributeValue(module, PsiJavaModule.AUTO_MODULE_NAME);
@@ -293,8 +290,7 @@ public final class JavaModuleGraphUtil {
     return true;
   }
 
-  @Nullable
-  private static PsiJavaModule findDependencyByName(@NotNull PsiJavaModule module, @NotNull String name) {
+  private static @Nullable PsiJavaModule findDependencyByName(@NotNull PsiJavaModule module, @NotNull String name) {
     for (PsiRequiresStatement require : module.getRequires()) {
       if (name.equals(require.getModuleName())) return require.resolve();
     }
@@ -384,8 +380,7 @@ public final class JavaModuleGraphUtil {
     return false;
   }
 
-  @Nullable
-  private static VirtualFile getVirtualFile(@NotNull PsiJavaModule module) {
+  private static @Nullable VirtualFile getVirtualFile(@NotNull PsiJavaModule module) {
     if (module instanceof LightJavaModule light) {
       return light.getRootVirtualFile();
     }
@@ -411,8 +406,7 @@ public final class JavaModuleGraphUtil {
    * Library/JDK modules are excluded in an assumption there can't be any lib -> src dependencies.
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
-  @Unmodifiable
-  private static @NotNull List<Set<PsiJavaModule>> findCycles(@NotNull Project project) {
+  private static @Unmodifiable @NotNull List<Set<PsiJavaModule>> findCycles(@NotNull Project project) {
     Set<PsiJavaModule> projectModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -461,8 +455,7 @@ public final class JavaModuleGraphUtil {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
+  private static @NotNull Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
     Map<String, Set<String>> map = new HashMap<>();
     for (PsiPackageAccessibilityStatement statement : source.getExports()) {
       String pkg = statement.getPackageName();
@@ -487,8 +480,7 @@ public final class JavaModuleGraphUtil {
    * Collects all module dependencies in the project.
    * The resulting graph is used for tracing readability and checking package conflicts.
    */
-  @NotNull
-  private static RequiresGraph buildRequiresGraph(@NotNull Project project) {
+  private static @NotNull RequiresGraph buildRequiresGraph(@NotNull Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = new HashSet<>();
 
@@ -529,8 +521,8 @@ public final class JavaModuleGraphUtil {
   }
 
   private static final class RequiresGraph {
-    @NotNull private final Graph<PsiJavaModule> myGraph;
-    @NotNull private final Set<String> myTransitiveEdges;
+    private final @NotNull Graph<PsiJavaModule> myGraph;
+    private final @NotNull Set<String> myTransitiveEdges;
 
     private RequiresGraph(@NotNull Graph<PsiJavaModule> graph, @NotNull Set<String> transitiveEdges) {
       myGraph = graph;
@@ -597,8 +589,7 @@ public final class JavaModuleGraphUtil {
       return null;
     }
 
-    @NotNull
-    public static String key(@NotNull PsiJavaModule module, @NotNull PsiJavaModule exporter) {
+    public static @NotNull String key(@NotNull PsiJavaModule module, @NotNull PsiJavaModule exporter) {
       return module.getName() + '/' + exporter.getName();
     }
 
@@ -651,7 +642,7 @@ public final class JavaModuleGraphUtil {
   }
 
   public static class JavaModuleScope extends GlobalSearchScope {
-    @NotNull private final MultiMap<String, PsiJavaModule> myModules;
+    private final @NotNull MultiMap<String, PsiJavaModule> myModules;
     private final boolean myIncludeLibraries;
     private final boolean myIsInTests;
 

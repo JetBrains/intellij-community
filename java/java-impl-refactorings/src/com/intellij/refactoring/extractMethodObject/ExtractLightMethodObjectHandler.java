@@ -32,12 +32,11 @@ import java.util.List;
 public final class ExtractLightMethodObjectHandler {
   private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);
 
-  @Nullable
-  public static LightMethodObjectExtractedData extractLightMethodObject(final Project project,
-                                                                        @Nullable PsiElement originalContext,
-                                                                        @NotNull final PsiCodeFragment fragment,
-                                                                        @NotNull String methodName,
-                                                                        @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
+  public static @Nullable LightMethodObjectExtractedData extractLightMethodObject(final Project project,
+                                                                                  @Nullable PsiElement originalContext,
+                                                                                  final @NotNull PsiCodeFragment fragment,
+                                                                                  @NotNull String methodName,
+                                                                                  @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
@@ -259,8 +258,7 @@ public final class ExtractLightMethodObjectHandler {
                                               originalAnchor, useMagicAccessor);
   }
 
-  @Nullable
-  private static PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
+  private static @Nullable PsiMethodCallExpression findCallExpression(@NotNull PsiFile copy, @NotNull PsiMethod method) {
     PsiMethodCallExpression[] result = new PsiMethodCallExpression[1];
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -313,17 +311,15 @@ public final class ExtractLightMethodObjectHandler {
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;
-    @NotNull
-    private final String myMethodName;
+    private final @NotNull String myMethodName;
 
     LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, @NotNull String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }
 
-    @NotNull
     @Override
-    public String getChosenMethodName() {
+    public @NotNull String getChosenMethodName() {
       return myMethodName;
     }
 
@@ -333,9 +329,8 @@ public final class ExtractLightMethodObjectHandler {
       return inputVariables.getInputVariables().toArray(new VariableData[0]);
     }
 
-    @NotNull
     @Override
-    public String getVisibility() {
+    public @NotNull String getVisibility() {
       return PsiModifier.PACKAGE_LOCAL;
     }
 

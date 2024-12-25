@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -40,12 +40,11 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
 
   protected abstract void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor);
 
-  protected abstract void autoPopupJavadocLookup(@NotNull final Project project, @NotNull final Editor editor);
+  protected abstract void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor);
 
   protected abstract boolean isLanguageLevel5OrHigher(@NotNull PsiFile file);
 
-  @NotNull
-  protected abstract Result processWhileAndIfStatementBody(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  protected abstract @NotNull Result processWhileAndIfStatementBody(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
 
   /**
@@ -64,13 +63,12 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
 
   protected abstract boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
-  @NotNull
   @Override
-  public Result beforeCharTyped(final char c,
-                                @NotNull final Project project,
-                                @NotNull final Editor editor,
-                                @NotNull final PsiFile file,
-                                @NotNull final FileType fileType) {
+  public @NotNull Result beforeCharTyped(final char c,
+                                         final @NotNull Project project,
+                                         final @NotNull Editor editor,
+                                         final @NotNull PsiFile file,
+                                         final @NotNull FileType fileType) {
     if (!isJavaFile(file)) return Result.CONTINUE;
 
     if (c == '@') {
@@ -302,9 +300,8 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     return doc.getLineNumber(astNode.getTextRange().getStartOffset());
   }
 
-  @NotNull
   @Override
-  public Result charTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public @NotNull Result charTyped(final char c, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     if (!(isJavaFile(file))) return Result.CONTINUE;
 
     if (myJavaLTTyped) {

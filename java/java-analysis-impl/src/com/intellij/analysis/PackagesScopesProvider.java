@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.openapi.project.Project;
@@ -23,8 +23,7 @@ public final class PackagesScopesProvider extends CustomScopesProviderEx {
   }
 
   @Override
-  @NotNull
-  public List<NamedScope> getCustomScopes() {
+  public @NotNull List<NamedScope> getCustomScopes() {
     return myScopes;
   }
 

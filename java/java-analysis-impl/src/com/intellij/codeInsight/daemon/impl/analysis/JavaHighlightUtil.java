@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -81,19 +81,16 @@ public final class JavaHighlightUtil {
     return false;
   }
 
-  @NotNull
-  public static String formatType(@Nullable PsiType type) {
+  public static @NotNull String formatType(@Nullable PsiType type) {
     return type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
-  @Nullable
-  private static PsiType getArrayInitializerType(@NotNull PsiArrayInitializerExpression element) {
+  private static @Nullable PsiType getArrayInitializerType(@NotNull PsiArrayInitializerExpression element) {
     PsiType typeCheckResult = sameType(element.getInitializers());
     return typeCheckResult != null ? typeCheckResult.createArrayType() : null;
   }
 
-  @Nullable
-  public static PsiType sameType(PsiExpression @NotNull [] expressions) {
+  public static @Nullable PsiType sameType(PsiExpression @NotNull [] expressions) {
     PsiType type = null;
     for (PsiExpression expression : expressions) {
       PsiType currentType;
@@ -113,8 +110,7 @@ public final class JavaHighlightUtil {
     return type;
   }
 
-  @NotNull
-  public static @NlsSafe String formatMethod(@NotNull PsiMethod method) {
+  public static @NotNull @NlsSafe String formatMethod(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                       PsiFormatUtilBase.SHOW_TYPE);
   }
@@ -135,8 +131,7 @@ public final class JavaHighlightUtil {
    *  this (...) at the beginning of the constructor body
    * @return referring constructor
    */
-  @NotNull
-  public static List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
+  public static @NotNull List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
     ConstructorVisitorInfo info = new ConstructorVisitorInfo();
     visitConstructorChain(constructor, info);
     if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
@@ -160,8 +155,7 @@ public final class JavaHighlightUtil {
     }
   }
 
-  @Nullable
-  public static @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
+  public static @Nullable @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
     if (type instanceof PsiPrimitiveType) return null;
     if (type instanceof PsiArrayType arrayType) return checkPsiTypeUseInContext(arrayType.getComponentType(), context);
     if (PsiUtil.resolveClassInType(type) != null) return null;
@@ -169,14 +163,11 @@ public final class JavaHighlightUtil {
     return invalidJavaTypeMessage();
   }
 
-  @NotNull
-  @Nls
-  public static String invalidJavaTypeMessage() {
+  public static @NotNull @Nls String invalidJavaTypeMessage() {
     return JavaAnalysisBundle.message("error.message.invalid.java.type");
   }
 
-  @NotNull
-  private static @Nls String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
+  private static @NotNull @Nls String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
     String className = PsiNameHelper.getQualifiedClassName(type.getCanonicalText(false), true);
     if (classExists(context, className)) {
       return getClassInaccessibleMessage(context, className);
@@ -188,9 +179,7 @@ public final class JavaHighlightUtil {
     return JavaPsiFacade.getInstance(context.getProject()).findClass(className, GlobalSearchScope.allScope(context.getProject())) != null;
   }
 
-  @NotNull
-  @Nls
-  private static String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
+  private static @NotNull @Nls String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     if (module == null) {
       return JavaAnalysisBundle.message("message.class.inaccessible", className);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +57,7 @@ final class Component {
     return true;
   }
 
-  @NotNull
-  public Component copy() {
+  public @NotNull Component copy() {
     return new Component(value, ids.clone());
   }
 
@@ -68,8 +67,8 @@ final class Component {
 }
 
 final class Equation {
-  @NotNull final EKey key;
-  @NotNull final Result result;
+  final @NotNull EKey key;
+  final @NotNull Result result;
 
   Equation(@NotNull EKey key, @NotNull Result result) {
     this.key = key;
@@ -96,7 +95,7 @@ final class Equation {
 }
 
 class Equations {
-  @NotNull final List<? extends DirectionResultPair> results;
+  final @NotNull List<? extends DirectionResultPair> results;
   final boolean stable;
 
   Equations(@NotNull List<? extends DirectionResultPair> results, boolean stable) {
@@ -131,8 +130,7 @@ class Equations {
 
 final class DirectionResultPair {
   final int directionKey;
-  @NotNull
-  final Result result;
+  final @NotNull Result result;
 
   DirectionResultPair(int directionKey, @NotNull Result result) {
     this.directionKey = directionKey;
@@ -234,8 +232,8 @@ final class Effects implements Result {
   static final Set<EffectQuantum> TOP_EFFECTS = Set.of(EffectQuantum.TopEffectQuantum);
   static final Effects VOLATILE_EFFECTS = new Effects(DataValue.UnknownDataValue2, TOP_EFFECTS);
 
-  @NotNull final DataValue returnValue;
-  @NotNull final Set<EffectQuantum> effects;
+  final @NotNull DataValue returnValue;
+  final @NotNull Set<EffectQuantum> effects;
 
   Effects(@NotNull DataValue returnValue, @NotNull Set<EffectQuantum> effects) {
     this.returnValue = returnValue;

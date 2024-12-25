@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -36,8 +36,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
     myMethodPresentation = getMethodPresentation(expression, myExpectedType, myPrimitiveExpected);
   }
 
-  @Nullable
-  private static PsiClassType getClassType(PsiType type, PsiElement place) {
+  private static @Nullable PsiClassType getClassType(PsiType type, PsiElement place) {
     if (type instanceof PsiClassType) {
       return (PsiClassType)type;
     }
@@ -61,9 +60,8 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
     return null;
   }
 
-  @Nullable
-  private static PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType,
-                                       boolean primitiveExpected, @NotNull PsiElement context) {
+  private static @Nullable PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType,
+                                                 boolean primitiveExpected, @NotNull PsiElement context) {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
       PsiType expectedReturnType = expectedType;
@@ -98,8 +96,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("wrap.expression.using.static.accessor.family");
   }
 

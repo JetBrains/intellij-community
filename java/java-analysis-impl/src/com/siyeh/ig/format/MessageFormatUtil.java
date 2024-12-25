@@ -62,8 +62,7 @@ public final class MessageFormatUtil {
    * @param pattern MessageFormat-like formatting string
    * @return MessageFormatResult object that contains information about placeholders and possible syntax errors inside the pattern
    */
-  @NotNull
-  public static MessageFormatResult checkFormat(@NotNull String pattern) {
+  public static @NotNull MessageFormatResult checkFormat(@NotNull String pattern) {
     if (pattern.isEmpty()) {
       return new MessageFormatResult(true, List.of(), List.of());
     }
@@ -94,11 +93,10 @@ public final class MessageFormatUtil {
     return new MessageFormatResult(errors.isEmpty(), errors, placeholderIndexes);
   }
 
-  @NotNull
-  private static List<MessageFormatError> rearrangeErrors(@NotNull List<MessageFormatError> errors,
-                                                          @NotNull String fullPattern,
-                                                          @NotNull String string,
-                                                          int start) {
+  private static @NotNull List<MessageFormatError> rearrangeErrors(@NotNull List<MessageFormatError> errors,
+                                                                   @NotNull String fullPattern,
+                                                                   @NotNull String string,
+                                                                   int start) {
     if (errors.isEmpty()) {
       return errors;
     }
@@ -172,8 +170,7 @@ public final class MessageFormatUtil {
   }
 
   @VisibleForTesting
-  @NotNull
-  static List<MessageFormatError> checkQuote(@NotNull String string) {
+  static @NotNull List<MessageFormatError> checkQuote(@NotNull String string) {
     List<MessageFormatError> errors = new ArrayList<>();
     int fromIndex = 0;
     while (true) {
@@ -206,8 +203,7 @@ public final class MessageFormatUtil {
     return errors;
   }
 
-  @NotNull
-  private static String getStringWord(@NotNull String string, int from, @NotNull Int2IntFunction nextIntFun) {
+  private static @NotNull String getStringWord(@NotNull String string, int from, @NotNull Int2IntFunction nextIntFun) {
     StringBuilder builder = new StringBuilder();
     int nextInt = from;
     while (nextInt >= 0 && nextInt < string.length() && Character.isLetter(string.charAt(nextInt))) {
@@ -218,8 +214,7 @@ public final class MessageFormatUtil {
   }
 
   @VisibleForTesting
-  @NotNull
-  static MessageHolder parseMessageHolder(@NotNull String pattern) {
+  static @NotNull MessageHolder parseMessageHolder(@NotNull String pattern) {
     MessageHolder holder = new MessageHolder(pattern);
     while (!holder.hasRuntimeError && holder.hasNext()) {
       char ch = holder.nextPool();
@@ -349,8 +344,7 @@ public final class MessageFormatUtil {
     return -1;
   }
 
-  @NotNull
-  private static MessageHolder parseChoice(@NotNull String patten) {
+  private static @NotNull MessageHolder parseChoice(@NotNull String patten) {
     MessageHolder holder = new MessageHolder(patten);
     holder.parts.clear();
     holder.startNumberElement();
@@ -477,12 +471,9 @@ public final class MessageFormatUtil {
   }
 
   static class MessageFormatPart {
-    @NotNull
-    private final StringBuilder text = new StringBuilder();
-    @NotNull
-    private final MessageFormatParsedType parsedType;
-    @Nullable
-    private final MessageFormatUtil.MessageFormatElement messageFormatElement;
+    private final @NotNull StringBuilder text = new StringBuilder();
+    private final @NotNull MessageFormatParsedType parsedType;
+    private final @Nullable MessageFormatUtil.MessageFormatElement messageFormatElement;
     private int start;
 
     private MessageFormatPart(int start, @NotNull MessageFormatParsedType type, @Nullable MessageFormatElement element) {
@@ -524,10 +515,8 @@ public final class MessageFormatUtil {
     private int formatTypeSegmentStart = 0;
     private int formatStyleSegmentStart = 0;
 
-    @Nullable
-    private Integer index;
-    @Nullable
-    private MessageFormatType formatType;
+    private @Nullable Integer index;
+    private @Nullable MessageFormatType formatType;
 
     @Nullable Integer getIndex() {
       return index;
@@ -648,8 +637,7 @@ public final class MessageFormatUtil {
       parts.add(new MessageFormatPart(current, MessageFormatParsedType.NUMBER, null));
     }
 
-    @NotNull
-    private MessageFormatPart getLastPart() {
+    private @NotNull MessageFormatPart getLastPart() {
       return parts.get(parts.size() - 1);
     }
 

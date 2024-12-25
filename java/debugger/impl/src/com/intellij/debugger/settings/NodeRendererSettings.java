@@ -59,9 +59,9 @@ import java.util.function.BiFunction;
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(NodeRendererSettings.class);
 
-  @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
-  @NonNls public static final String RENDERER_TAG = "Renderer";
-  @NonNls private static final String RENDERER_ID = "ID";
+  private static final @NonNls String REFERENCE_RENDERER = "Reference renderer";
+  public static final @NonNls String RENDERER_TAG = "Renderer";
+  private static final @NonNls String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
   private final RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
@@ -91,9 +91,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", myArrayRenderer)
     )
   };
-  @NonNls private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
-  @NonNls private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
-  @NonNls private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
+  private static final @NonNls String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
+  private static final @NonNls String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
+  private static final @NonNls String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
 
   public NodeRendererSettings() {
     // default configuration
@@ -161,7 +161,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(@NotNull final Element root) {
+  public void loadState(final @NotNull Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
       myHexRenderer.setEnabled(Boolean.parseBoolean(hexEnabled));
@@ -330,8 +330,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return renderer;
   }
 
-  @NotNull
-  public Element writeRenderer(Renderer renderer) throws WriteExternalException {
+  public @NotNull Element writeRenderer(Renderer renderer) throws WriteExternalException {
     Element root = new Element(RENDERER_TAG);
     if (renderer != null) {
       root.setAttribute(RENDERER_ID, renderer.getUniqueId());
@@ -376,8 +375,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public CompoundReferenceRenderer createCompoundReferenceRenderer(
-    @NonNls final String rendererName,
-    @NonNls final String className,
+    final @NonNls String rendererName,
+    final @NonNls String className,
     final ValueLabelRenderer labelRenderer,
     final ChildrenRenderer childrenRenderer
   ) {
@@ -482,9 +481,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return "MapEntry renderer";
     }
 
-    @NotNull
     @Override
-    public String getLinkText() {
+    public @NotNull String getLinkText() {
       return JavaDebuggerBundle.message("message.node.evaluate");
     }
 
@@ -519,9 +517,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       }
     }
 
-    @NotNull
     @Override
-    public XValuePresentation getPresentation(ValueDescriptorImpl descriptor) {
+    public @NotNull XValuePresentation getPresentation(ValueDescriptorImpl descriptor) {
       boolean inCollection = descriptor instanceof ArrayElementDescriptor;
       return new JavaValuePresentation(descriptor) {
         @Override
@@ -548,9 +545,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
           }
         }
 
-        @NotNull
         @Override
-        public String getSeparator() {
+        public @NotNull String getSeparator() {
           return inCollection ? "" : super.getSeparator();
         }
 
@@ -559,9 +555,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
           return !inCollection;
         }
 
-        @Nullable
         @Override
-        public String getType() {
+        public @Nullable String getType() {
           return inCollection && !isMuted() ? null : super.getType();
         }
 

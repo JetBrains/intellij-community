@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -150,8 +150,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     bpts.add(breakpoint);
   }
 
-  @Nullable
-  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+  public static @Nullable List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
     if (ContainerUtil.isEmpty(capturedStacks)) {
@@ -189,8 +188,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     return null;
   }
 
-  @Nullable
-  public static List<StackFrameItem> getRelatedStack(@Nullable ObjectReference key, @Nullable DebugProcessImpl process) {
+  public static @Nullable List<StackFrameItem> getRelatedStack(@Nullable ObjectReference key, @Nullable DebugProcessImpl process) {
     if (process != null && key != null) {
       Map<Object, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
       if (data != null) {
@@ -258,9 +256,8 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
   }
 
   public static final class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
-    @Nullable
     @Override
-    public List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext) {
+    public @Nullable List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext) {
       return getRelatedStack(stackFrame.getStackFrameProxy(), suspendContext);
     }
   }

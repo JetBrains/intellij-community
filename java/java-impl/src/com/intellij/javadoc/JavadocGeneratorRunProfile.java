@@ -330,8 +330,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return argsFile;
     }
 
-    @Unmodifiable
-    private @NotNull List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
+    private @Unmodifiable @NotNull List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
       OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
       if (!myConfiguration.OPTION_INCLUDE_LIBS) {
         sourcePathEnumerator = sourcePathEnumerator.withoutSdk().withoutLibraries();
@@ -342,8 +341,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return sourcePathEnumerator.getSourcePathsList().getRootDirs();
     }
 
-    @Unmodifiable
-    private @NotNull List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
+    private @Unmodifiable @NotNull List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
       OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
       if (jdk.getSdkType() instanceof JavaSdk) {
         classPathEnumerator = classPathEnumerator.withoutSdk();

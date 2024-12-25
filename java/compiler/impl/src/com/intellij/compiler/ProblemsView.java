@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.progress.CompilerTask;
@@ -41,8 +41,7 @@ public abstract class ProblemsView {
     return project.getService(ProblemsView.class);
   }
 
-  @Nullable
-  public static ProblemsView getInstanceIfCreated(@NotNull Project project) {
+  public static @Nullable ProblemsView getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(ProblemsView.class);
   }
 

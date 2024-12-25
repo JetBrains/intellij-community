@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -96,8 +96,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     hideUnsupportedFieldsIfNeeded();
   }
 
-  @NotNull
-  private static String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
+  private static @NotNull String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
     return configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "";
   }
 
@@ -109,9 +108,8 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     return myCommonProgramParameters;
   }
 
-  @NotNull
   @Override
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 
@@ -120,8 +118,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myShortenClasspathModeCombo = new LabeledComponent<>();
   }
 
-  @NotNull
-  static JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
+  static @NotNull JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
     return (declaration, place) -> {
       if (declaration instanceof PsiClass aClass) {
         if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.completion.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -19,10 +19,8 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public class ChainCompletionNewVariableLookupElement extends LookupElement {
-  @NotNull
-  private final PsiClass myQualifierClass;
-  @NotNull
-  private final String myNewVarName;
+  private final @NotNull PsiClass myQualifierClass;
+  private final @NotNull String myNewVarName;
   private final boolean myField;
 
   public ChainCompletionNewVariableLookupElement(@NotNull PsiClass qualifierClass,
@@ -46,7 +44,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context) {
+  public void handleInsert(final @NotNull InsertionContext context) {
     final PsiFile file = context.getFile();
     final PsiElement caretElement = Objects.requireNonNull(file.findElementAt(context.getEditor().getCaretModel().getOffset()));
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
@@ -75,9 +73,8 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
   }
 
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myNewVarName;
   }
 }

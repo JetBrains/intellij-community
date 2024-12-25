@@ -26,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     boolean constructorCall = (boolean)infos[0];
     return constructorCall
            ? InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.problem.descriptor")

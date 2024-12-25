@@ -33,8 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public final class BadOddnessInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "bad.oddness.problem.descriptor");
   }

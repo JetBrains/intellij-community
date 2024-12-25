@@ -16,8 +16,8 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -33,8 +33,7 @@ import java.util.List;
 public final class PublicConstructorInNonPublicClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     return InspectionGadgetsBundle.message("public.constructor.in.non.public.class.problem.descriptor",
       method.getName());
@@ -59,9 +58,8 @@ public final class PublicConstructorInNonPublicClassInspection extends BaseInspe
 
   private static class MakeConstructorPrivateFix extends PsiUpdateModCommandQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("public.constructor.in.non.public.class.quickfix");
     }
 

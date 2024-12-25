@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ClassReferencesSubclassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiNamedElement element = (PsiNamedElement)infos[0];
     final String containingClassName = element.getName();
     final Boolean isAnonymous = (Boolean)infos[1];

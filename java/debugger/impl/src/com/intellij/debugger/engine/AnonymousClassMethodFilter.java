@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements BreakpointStepMethodFilter {
-  @Nullable
-  private final SourcePosition myBreakpointPosition;
+  private final @Nullable SourcePosition myBreakpointPosition;
   private final int myLastStatementLine;
 
   public AnonymousClassMethodFilter(PsiMethod psiMethod, Range<Integer> lines) {
@@ -41,8 +40,7 @@ public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements
   }
 
   @Override
-  @Nullable
-  public SourcePosition getBreakpointPosition() {
+  public @Nullable SourcePosition getBreakpointPosition() {
     return myBreakpointPosition;
   }
 

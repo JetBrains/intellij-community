@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -45,15 +45,13 @@ public final class EqualsReplaceableByObjectsCallInspection extends BaseInspecti
       checkbox("checkNotNull", InspectionGadgetsBundle.message("equals.replaceable.by.objects.check.not.null.option")));
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new EqualsReplaceableByObjectsCallFix((String)infos[0], (String)infos[1], (Boolean)infos[2]);
   }
 
@@ -69,10 +67,8 @@ public final class EqualsReplaceableByObjectsCallInspection extends BaseInspecti
       myEquals = equals;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Objects.equals()");
     }
 
@@ -225,8 +221,7 @@ public final class EqualsReplaceableByObjectsCallInspection extends BaseInspecti
      *
      * @return the expression matching the pattern, or the original expression if there's no match
      */
-    @NotNull
-    private PsiExpression checkEqualityBefore(@NotNull PsiExpression expression, boolean equal, PsiExpression part1, PsiExpression part2) {
+    private @NotNull PsiExpression checkEqualityBefore(@NotNull PsiExpression expression, boolean equal, PsiExpression part1, PsiExpression part2) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (parent instanceof PsiBinaryExpression binaryExpression) {
         final IElementType tokenType = binaryExpression.getOperationTokenType();
@@ -279,8 +274,7 @@ public final class EqualsReplaceableByObjectsCallInspection extends BaseInspecti
     return PsiUtil.isConstantExpression(expression);
   }
 
-  @Nullable
-  private static PsiExpression findFinalVariableDefinition(@NotNull PsiReferenceExpression expression) {
+  private static @Nullable PsiExpression findFinalVariableDefinition(@NotNull PsiReferenceExpression expression) {
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiVariable variable) {
       if (variable.hasModifierProperty(PsiModifier.FINAL)) {
@@ -301,8 +295,7 @@ public final class EqualsReplaceableByObjectsCallInspection extends BaseInspecti
 
   //<editor-fold desc="Helpers">
   private record Negated(@NotNull PsiExpression expression, boolean isEqual) {
-    @Nullable
-    static Negated create(@Nullable PsiExpression maybeNegatedExpression) {
+    static @Nullable Negated create(@Nullable PsiExpression maybeNegatedExpression) {
       boolean equal = true;
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(maybeNegatedExpression);
       if (expression instanceof PsiPrefixExpression prefixExpression) {
@@ -316,8 +309,7 @@ public final class EqualsReplaceableByObjectsCallInspection extends BaseInspecti
   }
 
   private record NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
-    @Nullable
-    private static NullCheck create(@Nullable PsiExpression maybeNullCheckExpression) {
+    private static @Nullable NullCheck create(@Nullable PsiExpression maybeNullCheckExpression) {
       final Negated n = Negated.create(maybeNullCheckExpression);
       if (n != null && n.expression instanceof PsiBinaryExpression binaryExpression) {
         PsiExpression comparedWithNull = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull(binaryExpression));
@@ -331,8 +323,7 @@ public final class EqualsReplaceableByObjectsCallInspection extends BaseInspecti
   }
 
   private record EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
-    @Nullable
-    private static EqualsCheck create(@Nullable PsiExpression maybeEqualsCheckExpression) {
+    private static @Nullable EqualsCheck create(@Nullable PsiExpression maybeEqualsCheckExpression) {
       final Negated n = Negated.create(maybeEqualsCheckExpression);
       if (n != null && n.expression instanceof PsiMethodCallExpression callExpression) {
         if (HardcodedMethodConstants.EQUALS.equals(callExpression.getMethodExpression().getReferenceName())) {

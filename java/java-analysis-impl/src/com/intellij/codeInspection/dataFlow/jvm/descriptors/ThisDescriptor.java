@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
@@ -23,8 +23,7 @@ import java.util.Objects;
  * A variable descriptor that represents 'this' reference
  */
 public final class ThisDescriptor extends PsiVarDescriptor {
-  @NotNull
-  private final PsiClass myQualifier;
+  private final @NotNull PsiClass myQualifier;
 
   /**
    * Creates a descriptor that represents accessible 'this' variable of a specific class type
@@ -35,9 +34,8 @@ public final class ThisDescriptor extends PsiVarDescriptor {
     myQualifier = psiClass;
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     if (myQualifier instanceof PsiAnonymousClass) {
       return "(anonymous " + ((PsiAnonymousClass)myQualifier).getBaseClassReference().getText() + ").this";
     }

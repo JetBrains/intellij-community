@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -492,8 +492,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   /**
    * @return error string if errors were found, or null if everything is ok
    */
-  @NlsContexts.DialogMessage
-  private String validateData() {
+  private @NlsContexts.DialogMessage String validateData() {
     PsiManager manager = PsiManager.getInstance(myProject);
     for (int idx = 0; idx < myFields.length; idx++) {
       if (myCheckedMarks[idx]) {
@@ -769,8 +768,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
                                             mySetterNames, mySetterPrototypes, mySetterPrototypesIcons);
     }
 
-    @NotNull
-    private static RowIcon getIcon(@Nullable PsiMethod prototype, @Nullable PsiClass psiClass) {
+    private static @NotNull RowIcon getIcon(@Nullable PsiMethod prototype, @Nullable PsiClass psiClass) {
       Icon methodIcon = IconUtil.getEmptyIcon(true);
       Icon overrideIcon = EmptyIcon.ICON_16;
 

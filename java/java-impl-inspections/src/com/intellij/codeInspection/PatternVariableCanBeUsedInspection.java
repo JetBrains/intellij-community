@@ -46,9 +46,8 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     return Set.of(JavaFeature.PATTERNS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -95,8 +94,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
                HighlightControlFlowUtil.isEffectivelyFinal(localVariable, scope, null);
       }
 
-      @Nullable
-      private static PsiTypeCastExpression getQualifierReferenceExpression(@NotNull PsiMethodCallExpression call) {
+      private static @Nullable PsiTypeCastExpression getQualifierReferenceExpression(@NotNull PsiMethodCallExpression call) {
         while (true) {
           if (!call.getArgumentList().isEmpty()) return null;
           PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
@@ -257,20 +255,16 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
       myPatternName = existingVariable.getName();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       if (myName != null) {
         return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.fix.name", myName, myPatternName);
       }
       return InspectionGadgetsBundle.message("inspection.pattern.variable.instead.of.cast.can.be.used.existing.fix.name", myPatternName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.fix.family.name");
     }
 
@@ -305,8 +299,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
 
   private static class CastExpressionsCanBeReplacedWithPatternVariableFix extends PsiUpdateModCommandQuickFix {
 
-    @NotNull
-    private final SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
+    private final @NotNull SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
 
     private CastExpressionsCanBeReplacedWithPatternVariableFix(@NotNull PsiInstanceOfExpression instanceOf) {
       myInstanceOfPointer = SmartPointerManager.createPointer(instanceOf);
@@ -443,27 +436,21 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
   }
 
   private static class PatternVariableCanBeUsedFix extends PsiUpdateModCommandQuickFix {
-    @NotNull
-    private final SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
-    @NotNull
-    private final String myName;
+    private final @NotNull SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
+    private final @NotNull String myName;
 
     private PatternVariableCanBeUsedFix(@NotNull String name, @NotNull PsiInstanceOfExpression instanceOf) {
       myName = name;
       myInstanceOfPointer = SmartPointerManager.createPointer(instanceOf);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.fix.name", myName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.fix.family.name");
     }
 

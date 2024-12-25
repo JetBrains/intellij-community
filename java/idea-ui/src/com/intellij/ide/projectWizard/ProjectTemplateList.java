@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -43,15 +43,13 @@ public class ProjectTemplateList extends JPanel {
     add(myPanel, BorderLayout.CENTER);
 
     GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<ProjectTemplate>() {
-      @NotNull
       @Override
-      public String getTextFor(ProjectTemplate value) {
+      public @NotNull String getTextFor(ProjectTemplate value) {
         return value.getName();
       }
 
-      @Nullable
       @Override
-      public Icon getIconFor(ProjectTemplate value) {
+      public @Nullable Icon getIconFor(ProjectTemplate value) {
         return value.getIcon();
       }
     }) {
@@ -104,8 +102,7 @@ public class ProjectTemplateList extends JPanel {
     updateSelection();
   }
 
-  @Nullable
-  public ProjectTemplate getSelectedTemplate() {
+  public @Nullable ProjectTemplate getSelectedTemplate() {
     return myList.getSelectedValue();
   }
 

@@ -56,9 +56,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
 
   private final DebugProcessImpl myDebugProcess;
-  @Nullable private final XSourcePosition myXSourcePosition;
+  private final @Nullable XSourcePosition myXSourcePosition;
   private final NodeManagerImpl myNodeManager;
-  @NotNull private final StackFrameDescriptorImpl myDescriptor;
+  private final @NotNull StackFrameDescriptorImpl myDescriptor;
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
 
@@ -70,23 +70,20 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     myXSourcePosition = DebuggerUtilsEx.toXSourcePosition(myDescriptor.getSourcePosition());
   }
 
-  @NotNull
-  public StackFrameDescriptorImpl getDescriptor() {
+  public @NotNull StackFrameDescriptorImpl getDescriptor() {
     return myDescriptor;
   }
 
-  @Nullable
   @Override
-  public XDebuggerEvaluator getEvaluator() {
+  public @Nullable XDebuggerEvaluator getEvaluator() {
     if (myEvaluator == null) {
       myEvaluator = new JavaDebuggerEvaluator(myDebugProcess, this);
     }
     return myEvaluator;
   }
 
-  @Nullable
   @Override
-  public XSourcePosition getSourcePosition() {
+  public @Nullable XSourcePosition getSourcePosition() {
     return myXSourcePosition;
   }
 
@@ -107,7 +104,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   @Override
-  public void computeChildren(@NotNull final XCompositeNode node) {
+  public void computeChildren(final @NotNull XCompositeNode node) {
     if (node.isObsolete()) return;
     ThreadReferenceProxyImpl thread = myDescriptor.getFrameProxy().threadProxy();
     DebuggerContextUtil.scheduleWithCorrectPausedDebuggerContext(myDebugProcess, thread, myDescriptor.getFrameProxy(),
@@ -161,8 +158,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return context;
   }
 
-  @Nullable
-  protected XNamedValue createThisNode(EvaluationContextImpl evaluationContext) {
+  protected @Nullable XNamedValue createThisNode(EvaluationContextImpl evaluationContext) {
     ObjectReference thisObjectReference = myDescriptor.getThisObject();
     if (thisObjectReference != null) {
       return JavaValue.create(myNodeManager.getThisDescriptor(null, thisObjectReference), evaluationContext, myNodeManager);
@@ -185,8 +181,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
   }
 
-  @NotNull
-  protected List<? extends XNamedValue> createReturnValueNodes(EvaluationContextImpl evaluationContext) {
+  protected @NotNull List<? extends XNamedValue> createReturnValueNodes(EvaluationContextImpl evaluationContext) {
     Pair<Method, Value> methodValuePair = myDebugProcess.getLastExecutedMethod();
     if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
       Value returnValue = methodValuePair.getSecond();
@@ -203,8 +198,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     return Collections.emptyList();
   }
 
-  @NotNull
-  protected List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
+  protected @NotNull List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
     if (myDescriptor.getUiIndex() != 0) {
       return Collections.emptyList();
     }
@@ -273,7 +267,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
-                              @NotNull final EvaluationContextImpl evaluationContext,
+                              final @NotNull EvaluationContextImpl evaluationContext,
                               @NotNull DebugProcessImpl debugProcess,
                               XValueChildrenList children,
                               ObjectReference thisObjectReference,
@@ -421,9 +415,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     @Override
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       node.setPresentation(myIcon, new XValuePresentation() {
-        @NotNull
         @Override
-        public String getSeparator() {
+        public @NotNull String getSeparator() {
           return "";
         }
 
@@ -444,14 +437,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     buildLocalVariables(evaluationContext, children, getVisibleVariables());
   }
 
-  @NotNull
-  public StackFrameProxyImpl getStackFrameProxy() {
+  public @NotNull StackFrameProxyImpl getStackFrameProxy() {
     return myDescriptor.getFrameProxy();
   }
 
-  @Nullable
   @Override
-  public Object getEqualityObject() {
+  public @Nullable Object getEqualityObject() {
     return myEqualityObject;
   }
 
@@ -486,7 +477,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitElement(@NotNull final PsiElement element) {
+    public void visitElement(final @NotNull PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }

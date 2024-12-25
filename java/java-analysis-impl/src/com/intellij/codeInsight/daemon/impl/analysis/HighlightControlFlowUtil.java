@@ -746,8 +746,7 @@ public final class HighlightControlFlowUtil {
     return checkFinalUsageInsideGuardedPattern(variable, context);
   }
 
-  @Nullable
-  private static HighlightInfo.Builder checkWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+  private static @Nullable HighlightInfo.Builder checkWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
     PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
     if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
       PsiElement parent = variable.getParent();
@@ -779,8 +778,7 @@ public final class HighlightControlFlowUtil {
    * 14.30.1 Kinds of Patterns
    * <p>Any variable that is used but not declared in the guarding expression of a guarded pattern must either be final or effectively final.
    */
-  @Nullable
-  private static HighlightInfo.Builder checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+  private static @Nullable HighlightInfo.Builder checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
     PsiSwitchLabelStatementBase refLabel = PsiTreeUtil.getParentOfType(context, PsiSwitchLabelStatementBase.class);
 
     if (refLabel == null) return null;

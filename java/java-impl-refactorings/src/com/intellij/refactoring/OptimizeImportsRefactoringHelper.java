@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -38,14 +38,13 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
   }
 
   @Override
-  @Unmodifiable
-  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements) {
+  public @Unmodifiable Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements) {
     Set<PsiJavaFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), PsiJavaFile.class));
     return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }
 
   @Override
-  public void performOperation(@NotNull final Project project, final Set<PsiJavaFile> javaFiles) {
+  public void performOperation(final @NotNull Project project, final Set<PsiJavaFile> javaFiles) {
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 

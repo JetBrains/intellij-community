@@ -30,8 +30,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  @Unmodifiable
-  protected @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
+  protected @Unmodifiable @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map(myAllNames, name -> mapToConvert.getOrDefault(name, name));
   }
@@ -81,8 +80,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  @Unmodifiable
-  protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
+  protected @Unmodifiable @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map2Set(myNames, name -> mapToConvert.getOrDefault(name, name));
   }
@@ -96,10 +94,9 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
     };
   }
 
-  @Nullable
-  public static PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block,
-                                                                        @NotNull Set<String> cases,
-                                                                        @NotNull List<String> names) {
+  public static @Nullable PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block,
+                                                                                  @NotNull Set<String> cases,
+                                                                                  @NotNull List<String> names) {
     return createWithNull(block, () -> new CreateSealedClassMissingSwitchBranchesFix(block, cases, names));
   }
 }

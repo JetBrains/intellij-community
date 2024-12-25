@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -40,8 +40,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
   public boolean ignoreDelegates = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     boolean delegatesToSuperMethod = (boolean)infos[0];
     return delegatesToSuperMethod
            ? InspectionGadgetsBundle.message("redundant.method.override.delegates.to.super.problem.descriptor")
@@ -135,8 +134,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
   private static class RedundantMethodOverrideFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("redundant.method.override.quickfix");
     }
 

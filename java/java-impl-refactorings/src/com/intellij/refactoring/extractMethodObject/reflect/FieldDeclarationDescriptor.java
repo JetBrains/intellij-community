@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.psi.PsiClass;
@@ -18,8 +18,7 @@ public final class FieldDeclarationDescriptor implements ItemToReplaceDescriptor
     myName = name;
   }
 
-  @Nullable
-  public static ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiField field) {
+  public static @Nullable ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiField field) {
     String fieldName = field.getName();
     if (!PsiReflectionAccessUtil.isAccessibleType(field.getType())) {
       return new FieldDeclarationDescriptor(field, fieldName);

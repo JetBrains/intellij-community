@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.JobScheduler;
@@ -54,10 +54,9 @@ public class ThreadBlockedMonitor {
     return Registry.intValue("debugger.evaluate.single.threaded.timeout", 1000);
   }
 
-  @Nullable
-  protected InvocationWatcher startInvokeWatching(int invokePolicy,
-                                                  @Nullable ThreadReferenceProxyImpl thread,
-                                                  @NotNull SuspendContextImpl context) {
+  protected @Nullable InvocationWatcher startInvokeWatching(int invokePolicy,
+                                                            @Nullable ThreadReferenceProxyImpl thread,
+                                                            @NotNull SuspendContextImpl context) {
     if (thread != null && getSingleThreadedEvaluationThreshold() > 0 &&
         context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
         BitUtil.isSet(invokePolicy, ObjectReference.INVOKE_SINGLE_THREADED)) {
@@ -102,8 +101,8 @@ public class ThreadBlockedMonitor {
     }
   }
 
-  private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
-                                      @NotNull final ThreadReference blockingThread,
+  private static void onThreadBlocked(final @NotNull ThreadReference blockedThread,
+                                      final @NotNull ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
     XDebuggerManagerImpl.getNotificationGroup()
       .createNotification(JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),

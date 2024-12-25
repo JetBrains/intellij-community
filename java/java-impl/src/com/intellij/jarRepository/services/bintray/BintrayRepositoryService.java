@@ -30,8 +30,7 @@ public class BintrayRepositoryService extends MavenRepositoryService {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+  public @Unmodifiable @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
     BintrayModel.Repository info = parseInfo(url);
     if (info != null) {
       BintrayEndpoint bintrayEndpoint = new BintrayEndpoint();

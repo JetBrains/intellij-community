@@ -42,10 +42,8 @@ public final class StringTemplateReverseMigrationInspection extends AbstractBase
 
   private static class ReplaceWithStringConcatenationFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.replace.with.string.concatenation.fix");
     }
 

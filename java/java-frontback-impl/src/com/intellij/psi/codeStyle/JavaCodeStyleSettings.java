@@ -593,9 +593,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     REPLACE_CAST = REPLACE_INSTANCEOF = false;
   }
 
-  @NotNull
   @Override
-  public List<String> getKnownTagNames() {
+  public @NotNull List<String> getKnownTagNames() {
     return Arrays.asList(getTagName(), REPEAT_ANNOTATIONS, DO_NOT_IMPORT_INNER);
   }
 

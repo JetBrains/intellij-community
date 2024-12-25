@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.java;
 
@@ -66,8 +66,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     }
   };
 
-  @NotNull
-  private static List<ReferenceChainLink> createCallChain(FileLocalResolver resolver, @Nullable LighterASTNode expr) {
+  private static @NotNull List<ReferenceChainLink> createCallChain(FileLocalResolver resolver, @Nullable LighterASTNode expr) {
     List<ReferenceChainLink> chain = new ArrayList<>();
     while (true) {
       if (expr == null) return reversedChain(chain);
@@ -96,8 +95,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     }
   }
 
-  @NotNull
-  private static List<ReferenceChainLink> reversedChain(List<ReferenceChainLink> chain) {
+  private static @NotNull List<ReferenceChainLink> reversedChain(List<ReferenceChainLink> chain) {
     Collections.reverse(chain);
     return chain;
   }
@@ -107,8 +105,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return args == null ? -1 : args.size();
   }
 
-  @Nullable
-  private static LighterASTNode getQualifier(LighterAST tree, LighterASTNode expr, boolean isCall) {
+  private static @Nullable LighterASTNode getQualifier(LighterAST tree, LighterASTNode expr, boolean isCall) {
     LighterASTNode qualifier = tree.getChildren(expr).get(0);
     if (isCall) {
       List<LighterASTNode> children = tree.getChildren(qualifier);
@@ -117,8 +114,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getTokenType()) ? qualifier : null;
   }
 
-  @Nullable
-  private static String getReferencedMemberName(LighterAST tree, LighterASTNode expr, boolean isCall) {
+  private static @Nullable String getReferencedMemberName(LighterAST tree, LighterASTNode expr, boolean isCall) {
     if (isCall) {
       return getCalledMethodName(tree, expr);
     }
@@ -128,11 +124,10 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return null;
   }
 
-  @Nullable
-  private static ReferenceChainLink createChainStart(FileLocalResolver resolver,
-                                                     LighterASTNode expr,
-                                                     boolean isCall,
-                                                     String referenceName) {
+  private static @Nullable ReferenceChainLink createChainStart(FileLocalResolver resolver,
+                                                               LighterASTNode expr,
+                                                               boolean isCall,
+                                                               String referenceName) {
     if (!isCall) {
       FileLocalResolver.LightResolveResult result = resolver.resolveLocally(expr);
       if (result == FileLocalResolver.LightResolveResult.UNKNOWN) return null;
@@ -146,8 +141,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return new ReferenceChainLink(referenceName, isCall, getArgCount(resolver.getLightTree(), expr));
   }
 
-  @NotNull
-  private static String calcExprType(LighterASTNode funExpr, FileLocalResolver resolver) {
+  private static @NotNull String calcExprType(LighterASTNode funExpr, FileLocalResolver resolver) {
     LighterAST tree = resolver.getLightTree();
     LighterASTNode scope = skipExpressionsUp(tree, funExpr, TokenSet.create(
       LOCAL_VARIABLE, FIELD, TYPE_CAST_EXPRESSION, RETURN_STATEMENT, ASSIGNMENT_EXPRESSION, ARRAY_INITIALIZER_EXPRESSION));
@@ -235,8 +229,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return returnsSomething.get() ? FunctionalExpressionKey.CoarseType.NON_VOID : FunctionalExpressionKey.CoarseType.VOID;
   }
 
-  @Nullable
-  private static LighterASTNode findExpressionChild(@NotNull LighterASTNode element, LighterAST tree) {
+  private static @Nullable LighterASTNode findExpressionChild(@NotNull LighterASTNode element, LighterAST tree) {
     return LightTreeUtil.firstChildOfType(tree, element, ElementType.EXPRESSION_BIT_SET);
   }
 
@@ -274,8 +267,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return LightTreeUtil.getChildrenOfType(tree, paramList, Constants.PARAMETER_BIT_SET).size();
   }
 
-  @Nullable
-  private static String getCalledMethodName(LighterAST tree, LighterASTNode call) {
+  private static @Nullable String getCalledMethodName(LighterAST tree, LighterASTNode call) {
     if (call.getTokenType() == NEW_EXPRESSION) {
       LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, JAVA_CODE_REFERENCE);
@@ -293,19 +285,16 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return JavaLightTreeUtil.getNameIdentifierText(tree, methodExpr);
   }
 
-  @Nullable
-  private static String getSuperClassName(LighterAST tree, LighterASTNode call) {
+  private static @Nullable String getSuperClassName(LighterAST tree, LighterASTNode call) {
     LighterASTNode aClass = findClass(tree, call);
     return getReferenceName(tree, LightTreeUtil.firstChildOfType(tree, aClass, EXTENDS_LIST));
   }
 
-  @Nullable
-  private static String getReferenceName(LighterAST tree, LighterASTNode refParent) {
+  private static @Nullable String getReferenceName(LighterAST tree, LighterASTNode refParent) {
     return JavaLightTreeUtil.getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, refParent, JAVA_CODE_REFERENCE));
   }
 
-  @Nullable
-  private static LighterASTNode getContainingCall(LighterAST tree, LighterASTNode node) {
+  private static @Nullable LighterASTNode getContainingCall(LighterAST tree, LighterASTNode node) {
     LighterASTNode expressionList = skipExpressionsUp(tree, node, TokenSet.create(EXPRESSION_LIST));
     if (expressionList != null) {
       LighterASTNode parent = tree.getParent(expressionList);
@@ -334,9 +323,8 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return JBIterable.generate(node, tree::getParent).find(n -> n.getTokenType() == CLASS);
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<FunctionalExpressionKey> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<FunctionalExpressionKey> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
@@ -345,9 +333,8 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return 6;
   }
 
-  @NotNull
   @Override
-  public ID<FunctionalExpressionKey, List<IndexEntry>> getName() {
+  public @NotNull ID<FunctionalExpressionKey, List<IndexEntry>> getName() {
     return INDEX_ID;
   }
 
@@ -356,9 +343,8 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return true;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<FunctionalExpressionKey, List<IndexEntry>, FileContent> getIndexer() {
+  public @NotNull DataIndexer<FunctionalExpressionKey, List<IndexEntry>, FileContent> getIndexer() {
     return inputData -> {
       CharSequence text = inputData.getContentAsText();
       int[] offsets = ArrayUtil.mergeArrays(
@@ -399,8 +385,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     };
   }
 
-  @NotNull
-  private static FunExprOccurrence createOccurrence(@NotNull LighterASTNode funExpr, FileLocalResolver resolver) {
+  private static @NotNull FunExprOccurrence createOccurrence(@NotNull LighterASTNode funExpr, FileLocalResolver resolver) {
     LighterAST tree = resolver.getLightTree();
     LighterASTNode containingCall = getContainingCall(tree, funExpr);
     List<LighterASTNode> args = JavaLightTreeUtil.getArgList(tree, containingCall);
@@ -417,9 +402,8 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     return new FunExprOccurrence(argIndex, createCallChain(resolver, chainExpr));
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<List<IndexEntry>> getValueExternalizer() {
+  public @NotNull DataExternalizer<List<IndexEntry>> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, List<IndexEntry> value) throws IOException {
@@ -433,9 +417,8 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
     };
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {

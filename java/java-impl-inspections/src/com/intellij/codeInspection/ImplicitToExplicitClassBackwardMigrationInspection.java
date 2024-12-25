@@ -27,9 +27,8 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
     return Set.of(JavaFeature.IMPLICIT_CLASSES);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitImplicitClass(@NotNull PsiImplicitClass aClass) {
@@ -57,10 +56,8 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
 
   private static class ReplaceWithExplicitClassFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.implicit.to.explicit.class.backward.migration.fix.name");
     }
 

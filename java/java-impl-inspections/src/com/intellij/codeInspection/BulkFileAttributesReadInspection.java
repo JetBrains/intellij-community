@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -69,8 +69,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
     return !ExceptionUtil.isHandled(ioExceptionType, anchor);
   }
 
-  @Nullable
-  private static PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
+  private static @Nullable PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
     PsiElement qualifier = call.getMethodExpression().getQualifier();
     if (qualifier instanceof PsiParenthesizedExpression) {
       qualifier = PsiUtil.skipParenthesizedExprDown((PsiExpression)qualifier);
@@ -303,8 +302,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
         return ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
       }
 
-      @NotNull
-      private static List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiElement scope) {
+      private static @NotNull List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiElement scope) {
         Collection<PsiMethodCallExpression> calls = ReferencesSearch.search(fileVar, new LocalSearchScope(scope))
           .filtering(ref -> scope == findScope(ref.getElement()))
           .mapping(ref -> ObjectUtils.tryCast(ref, PsiReferenceExpression.class))
@@ -324,8 +322,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
         return new FileVariableModel(attributeCalls, psiVariable, scope);
       }
 
-      @Nullable
-      private static PsiElement findScope(@NotNull PsiElement element) {
+      private static @Nullable PsiElement findScope(@NotNull PsiElement element) {
         PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLoopStatement.class);
         if (scope instanceof PsiLoopStatement) scope = ((PsiLoopStatement)scope).getBody();
         return scope;

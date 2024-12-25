@@ -18,7 +18,7 @@ import java.util.Objects;
 
 public class FreezeThreadAction extends DebuggerAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     if (selectedNode == null) {
       return;

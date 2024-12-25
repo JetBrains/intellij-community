@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -32,8 +32,7 @@ import static com.intellij.codeInspection.dataFlow.StandardMethodContract.parseC
 public final class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -93,8 +92,7 @@ public final class ContractInspection extends AbstractBaseJavaLocalInspectionToo
     };
   }
 
-  @Nullable
-  public static ParseException checkContract(PsiMethod method, String text) {
+  public static @Nullable ParseException checkContract(PsiMethod method, String text) {
     List<StandardMethodContract> contracts;
     try {
       contracts = parseContract(text);
@@ -144,10 +142,9 @@ public final class ContractInspection extends AbstractBaseJavaLocalInspectionToo
     return null;
   }
 
-  @Nullable
-  private static @InspectionMessage String getConstraintProblem(PsiMethod method,
-                                                                StandardMethodContract contract,
-                                                                ValueConstraint constraint, PsiParameter parameter) {
+  private static @Nullable @InspectionMessage String getConstraintProblem(PsiMethod method,
+                                                                          StandardMethodContract contract,
+                                                                          ValueConstraint constraint, PsiParameter parameter) {
     PsiType type = parameter.getType();
     switch (constraint) {
       case NULL_VALUE -> {

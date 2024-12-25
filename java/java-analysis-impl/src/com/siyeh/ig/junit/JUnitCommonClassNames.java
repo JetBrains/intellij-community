@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Collection;
 import java.util.List;
 
-@NonNls
-public final class JUnitCommonClassNames {
+public final @NonNls class JUnitCommonClassNames {
   public static final String ORG_JUNIT_ASSERT = "org.junit.Assert";
   public static final String ORG_JUNIT_ASSUME = "org.junit.Assume";
   public static final String JUNIT_FRAMEWORK_ASSERT = "junit.framework.Assert";

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
@@ -22,8 +22,7 @@ public abstract class LanguageLevelProjectExtension {
    * @return configured project language level.
    * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
    */
-  @NotNull
-  public abstract LanguageLevel getLanguageLevel();
+  public abstract @NotNull LanguageLevel getLanguageLevel();
 
   public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
@@ -33,8 +32,7 @@ public abstract class LanguageLevelProjectExtension {
    * Auto-detect language level from project JDK maximum possible level.
    * @return null if the property is not set yet (e.g. after migration).
    */
-  @Nullable
-  public Boolean getDefault() {
+  public @Nullable Boolean getDefault() {
     return myDefault;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmArrayType;
@@ -28,21 +28,18 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
     myComponentType = componentType;
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean annotated) {
+  public @NotNull String getPresentableText(boolean annotated) {
     return getText(getDeepComponentType().getPresentableText(annotated), "[]", false, annotated);
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getText(getDeepComponentType().getCanonicalText(annotated), "[]", true, annotated);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getText(getDeepComponentType().getInternalCanonicalText(), "[]", true, true);
   }
 
@@ -107,10 +104,9 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
    *
    * @return the component type instance.
    */
-  @NotNull
   @Override
   @Contract(pure = true)
-  public PsiType getComponentType() {
+  public @NotNull PsiType getComponentType() {
     return myComponentType;
   }
 

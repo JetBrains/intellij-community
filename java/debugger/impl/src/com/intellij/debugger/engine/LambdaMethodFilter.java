@@ -19,8 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   private final PsiLambdaExpression myLambda;
   private final int myLambdaOrdinal;
-  @Nullable
-  private final SourcePosition myFirstStatementPosition;
+  private final @Nullable SourcePosition myFirstStatementPosition;
   private final int myLastStatementLine;
   private final Range<Integer> myCallingExpressionLines;
 
@@ -55,8 +54,7 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   }
 
   @Override
-  @Nullable
-  public SourcePosition getBreakpointPosition() {
+  public @Nullable SourcePosition getBreakpointPosition() {
     return myFirstStatementPosition;
   }
 
@@ -77,9 +75,8 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
     return false;
   }
 
-  @Nullable
   @Override
-  public Range<Integer> getCallingExpressionLines() {
+  public @Nullable Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
   }
 }

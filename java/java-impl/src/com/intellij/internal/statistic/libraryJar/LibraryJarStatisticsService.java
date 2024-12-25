@@ -25,8 +25,7 @@ public final class LibraryJarStatisticsService implements DumbAware {
     return ourInstance;
   }
 
-  @Unmodifiable
-  public Set<String> getLibraryNames() {
+  public @Unmodifiable Set<String> getLibraryNames() {
     return ContainerUtil.map2Set(getTechnologyDescriptors(), descriptor -> descriptor.myName);
   }
 

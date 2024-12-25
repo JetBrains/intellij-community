@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.facade;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -16,8 +16,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public interface JvmFacade {
 
-  @NotNull
-  static JvmFacade getInstance(@NotNull Project project) {
+  static @NotNull JvmFacade getInstance(@NotNull Project project) {
     return project.getService(JvmFacade.class);
   }
 
@@ -29,8 +28,7 @@ public interface JvmFacade {
    * @param scope         the scope to search.
    * @return the PSI class, or null if no class with such name is found.
    */
-  @Nullable
-  default JvmClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  default @Nullable JvmClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressManager.checkCanceled();
     return getFirstItem(findClasses(qualifiedName, scope));
   }

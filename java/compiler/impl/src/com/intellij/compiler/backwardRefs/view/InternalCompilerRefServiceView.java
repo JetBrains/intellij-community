@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -64,8 +64,7 @@ public class InternalCompilerRefServiceView extends JPanel implements UiDataProv
         } else if (userObject instanceof PsiClass) {
           append(ClassPresentationUtil.getNameForClass((PsiClass)userObject, true));
         } else {
-          @NlsSafe
-          final String text = userObject.toString();
+          final @NlsSafe String text = userObject.toString();
           append(text);
         }
       }

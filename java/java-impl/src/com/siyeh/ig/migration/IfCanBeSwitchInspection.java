@@ -243,8 +243,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
-  @Unmodifiable
-  private static @NotNull List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
+  private static @Unmodifiable @NotNull List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
     return SyntaxTraverser.psiTraverser(expression)
       .filter(PsiTypeCastExpression.class)
       .filter(cast -> InstanceOfUtils.findPatternCandidate(cast) == targetInstanceOf)

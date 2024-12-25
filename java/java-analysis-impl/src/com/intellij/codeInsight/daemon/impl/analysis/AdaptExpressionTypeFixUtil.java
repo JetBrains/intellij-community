@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -271,8 +271,7 @@ final class AdaptExpressionTypeFixUtil {
     return PsiTypesUtil.mentionsTypeParameters(type, Set.of(method.getTypeParameters()));
   }
 
-  @Nls
-  private static String getRole(@NotNull PsiExpression expression) {
+  private static @Nls String getRole(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiExpressionList list) {
       int count = list.getExpressionCount();

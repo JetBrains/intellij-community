@@ -41,8 +41,7 @@ public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<Psi
       .withFixAllOption(this);
   }
 
-  @Unmodifiable
-  public static @NotNull List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
+  public static @Unmodifiable @NotNull List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value == null || pair.getName() != null) {
       return Collections.emptyList();

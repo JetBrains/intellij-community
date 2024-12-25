@@ -42,8 +42,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+  public @Unmodifiable @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     if (getSettings().isShowModules()) {
       return modulesAndGroups(moduleDescriptions(myProject));
     }

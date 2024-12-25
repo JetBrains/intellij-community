@@ -27,14 +27,12 @@ import org.jetbrains.annotations.NotNull;
 public final class OctalLiteralInspection extends BaseInspection {
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OctalInteger";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("octal.literal.problem.descriptor");
   }
 

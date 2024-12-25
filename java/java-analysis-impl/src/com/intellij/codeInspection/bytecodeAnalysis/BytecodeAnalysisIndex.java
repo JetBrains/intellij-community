@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -26,15 +26,13 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   private static final boolean IS_ENABLED = SystemProperties.getBooleanProperty("bytecodeAnalysis.index.enabled", true);
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
-  @NotNull
   @Override
-  public ID<HMember, Void> getName() {
+  public @NotNull ID<HMember, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<HMember, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<HMember, Void, FileContent> getIndexer() {
     return inputData -> {
       try {
         return collectKeys(inputData.getContent());
@@ -51,8 +49,7 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     };
   }
 
-  @NotNull
-  private static Map<HMember, Void> collectKeys(byte[] content) {
+  private static @NotNull Map<HMember, Void> collectKeys(byte[] content) {
     HashMap<HMember, Void> map = new HashMap<>();
     ClassReader reader = new ClassReader(content);
     String className = reader.getClassName();
@@ -75,9 +72,8 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     return map;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<HMember> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<HMember> getKeyDescriptor() {
     return HKeyDescriptor.INSTANCE;
   }
 
@@ -86,9 +82,8 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     return true;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return IS_ENABLED
            ? new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
            : new DefaultFileTypeSpecificInputFilter();
@@ -244,8 +239,7 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       return new Equations(results, stable);
     }
 
-    @NotNull
-    private static EKey readKey(@NotNull DataInput in) throws IOException {
+    private static @NotNull EKey readKey(@NotNull DataInput in) throws IOException {
       byte[] bytes = new byte[HMember.HASH_SIZE];
       in.readFully(bytes);
       int rawDirKey = DataInputOutputUtil.readINT(in);

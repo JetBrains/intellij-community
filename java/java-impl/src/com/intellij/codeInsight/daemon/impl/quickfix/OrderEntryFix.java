@@ -361,8 +361,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.emptyList(), scope);
   }
 
-  @Unmodifiable
-  public static @NotNull List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
+  public static @Unmodifiable @NotNull List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
     return ContainerUtil.map(jarPaths, OrderEntryFix::refreshAndConvertToUrl);
   }
 

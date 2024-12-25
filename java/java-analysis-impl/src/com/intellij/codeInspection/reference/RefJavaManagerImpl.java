@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -129,8 +129,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     return file != null && !ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
   }
 
-  @Nullable
-  private UnusedDeclarationInspectionBase getDeadCodeTool(RefElement element) {
+  private @Nullable UnusedDeclarationInspectionBase getDeadCodeTool(RefElement element) {
     PsiFile file = ((RefElementImpl)element).getContainingFile();
     if (file == null) return null;
 
@@ -211,7 +210,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void iterate(@NotNull final RefVisitor visitor) {
+  public void iterate(final @NotNull RefVisitor visitor) {
     Map<String, RefPackage> packages;
     synchronized (this) {
       packages = myPackages;
@@ -245,11 +244,10 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void removeReference(@NotNull final RefElement refElement) { }
+  public void removeReference(final @NotNull RefElement refElement) { }
 
   @Override
-  @Nullable
-  public RefElement createRefElement(@NotNull final PsiElement psi) {
+  public @Nullable RefElement createRefElement(final @NotNull PsiElement psi) {
     if (!getLanguages().contains(psi.getLanguage())) {
       return null;
     }
@@ -275,15 +273,13 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
+  public @Nullable PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
     return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
   }
 
   @Override
-  @Nullable
-  public RefEntity getReference(final String type, final String fqName) {
+  public @Nullable RefEntity getReference(final String type, final String fqName) {
     if (IMPLICIT_CONSTRUCTOR.equals(type)) {
       return getImplicitConstructor(fqName);
     }
@@ -309,8 +305,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  @Nullable
-  public String getType(@NotNull final RefEntity ref) {
+  public @Nullable String getType(final @NotNull RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return IMPLICIT_CONSTRUCTOR;
     }
@@ -338,9 +333,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     return null;
   }
 
-  @NotNull
   @Override
-  public RefEntity getRefinedElement(@NotNull final RefEntity ref) {
+  public @NotNull RefEntity getRefinedElement(final @NotNull RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return ((RefImplicitConstructor)ref).getOwnerClass();
     }
@@ -348,7 +342,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void visitElement(@NotNull final PsiElement element) {
+  public void visitElement(final @NotNull PsiElement element) {
     PsiElementVisitor projectIterator = myProjectIterator;
     if (projectIterator == null) {
       myProjectIterator = projectIterator = new UastVisitorAdapter(new MyJavaElementVisitor(), true) {
@@ -372,19 +366,18 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  @Nullable
-  public String getGroupName(@NotNull final RefEntity entity) {
+  public @Nullable String getGroupName(final @NotNull RefEntity entity) {
     if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 
   @Override
-  public boolean belongsToScope(@NotNull final PsiElement psiElement) {
+  public boolean belongsToScope(final @NotNull PsiElement psiElement) {
     return !(psiElement instanceof PsiTypeParameter);
   }
 
   @Override
-  public void export(@NotNull final RefEntity refEntity, @NotNull final Element element) {
+  public void export(final @NotNull RefEntity refEntity, final @NotNull Element element) {
     String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
     if (packageName != null) {
       final Element packageElement = new Element("package");
@@ -406,9 +399,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     return file instanceof PsiClassOwner;
   }
 
-  @NotNull
   @Override
-  public Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
+  public @NotNull Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
     return Arrays
       .stream(((PsiClassOwner)psiFile).getClasses())
       .flatMap(c -> Arrays.stream(c.getSuperTypes()))

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.library;
 
 import com.intellij.openapi.Disposable;
@@ -34,7 +34,7 @@ public final class JavaLibraryModificationTracker implements ModificationTracker
   private final ModificationTracker myDumbServiceModificationTracker;
   private final ModificationTracker myForcefulReparseModificationTracker;  // PsiClass from libraries may become invalid on reparse
   private final SimpleModificationTracker myOnContentReloadModificationTracker = new SimpleModificationTracker();
-  private final static ThrottledLogger THROTTLED_LOG = new ThrottledLogger(Logger.getInstance(JavaLibraryModificationTracker.class), SECONDS.toMillis(30));
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(Logger.getInstance(JavaLibraryModificationTracker.class), SECONDS.toMillis(30));
   private final Throwable creationStack = new Throwable();
 
   public JavaLibraryModificationTracker(Project project) {

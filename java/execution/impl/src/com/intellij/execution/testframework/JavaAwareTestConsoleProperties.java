@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
@@ -71,15 +71,13 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     return ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), isDebug());
   }
 
-  @Nullable
   @Override
-  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+  public @Nullable Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     //navigate to the first stack trace
     return getStackTraceErrorNavigatable(location, stacktrace);
   }
 
-  @Nullable
-  public static Navigatable getStackTraceErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+  public static @Nullable Navigatable getStackTraceErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     final PsiLocation<?> psiLocation = location.toPsiLocation();
     PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
     if (containingClass == null && location instanceof MethodLocation) {
@@ -121,8 +119,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     return null;
   }
 
-  @Nullable
-  public DebuggerSession getDebugSession() {
+  public @Nullable DebuggerSession getDebugSession() {
     final DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(getProject());
     final Collection<DebuggerSession> sessions = debuggerManager.getSessions();
     for (final DebuggerSession debuggerSession : sessions) {

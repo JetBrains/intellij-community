@@ -81,8 +81,7 @@ public final class HighlightClassUtil {
       return null;
     }
 
-    @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
-    final String messageKey;
+    final @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String messageKey;
     final String referenceName;
     if (aClass instanceof PsiEnumConstantInitializer enumConstant) {
       messageKey = "enum.constant.must.implement.method";
@@ -202,8 +201,7 @@ public final class HighlightClassUtil {
     return checkDuplicateClasses(aClass, classes);
   }
 
-  @Nullable
-  static HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiClass aClass,  @NotNull PsiClass @NotNull[] classes) {
+  static @Nullable HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiClass aClass, @NotNull PsiClass @NotNull[] classes) {
     PsiManager manager = aClass.getManager();
     Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
     if (module == null) return null;
@@ -377,10 +375,9 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  @Nullable
-  private static HighlightInfo.Builder createInfoAndRegisterRenameFix(@NotNull PsiClass aClass,
-                                                              @NotNull String name,
-                                                              @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
+  private static @Nullable HighlightInfo.Builder createInfoAndRegisterRenameFix(@NotNull PsiClass aClass,
+                                                                                @NotNull String name,
+                                                                                @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
     String message = JavaErrorBundle.message(key, name);
     PsiIdentifier identifier = aClass.getNameIdentifier();
     HighlightInfo.Builder info;
@@ -1375,8 +1372,7 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  @Unmodifiable
-  private static @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
+  private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();
     PsiJavaCodeReferenceElement[] classRefs = permitsList.getReferenceElements();

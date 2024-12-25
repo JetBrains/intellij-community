@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -18,26 +18,23 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class InnerClassReferencedViaSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass declaringClass = (PsiClass)infos[0];
     final PsiClass referencedClass = (PsiClass)infos[1];
     return InspectionGadgetsBundle.message("inner.class.referenced.via.subclass.problem.descriptor",
                                            declaringClass.getQualifiedName(), referencedClass.getQualifiedName());
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new InnerClassReferencedViaSubclassFix();
   }
 
   private static class InnerClassReferencedViaSubclassFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inner.class.referenced.via.subclass.quickfix");
     }
 

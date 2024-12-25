@@ -73,8 +73,7 @@ public abstract class DebuggerUtils {
     debugProcess.putUserData(TO_STRING_METHOD_KEY, null);
   }
 
-  @NonNls
-  public static String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
+  public static @NonNls String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
     try {
       if (value == null) {
         return "null";
@@ -176,8 +175,7 @@ public abstract class DebuggerUtils {
     return translateStringValue(str);
   }
 
-  @Nullable
-  public static Method findMethod(@NotNull ReferenceType refType, @NonNls String methodName, @Nullable @NonNls String methodSignature) {
+  public static @Nullable Method findMethod(@NotNull ReferenceType refType, @NonNls String methodName, @Nullable @NonNls String methodSignature) {
     if (refType instanceof ArrayType) {
       // for array types methodByName() in JDI always returns empty list
       Method method = findMethod(getObjectClassType(refType.virtualMachine()), methodName, methodSignature);
@@ -210,8 +208,7 @@ public abstract class DebuggerUtils {
    * Optimized version of {@link ClassType#concreteMethodByName(String, String)}.
    * It does not gather all visible methods before checking so can return early
    */
-  @Nullable
-  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature) {
+  private static @Nullable Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature) {
     Processor<Method> signatureChecker = signature != null ? m -> m.signature().equals(signature) : CommonProcessors.alwaysTrue();
     LinkedList<ReferenceType> types = new LinkedList<>();
     // first check classes
@@ -247,8 +244,7 @@ public abstract class DebuggerUtils {
    * Optimized version of {@link ReferenceType#fieldByName(String)}.
    * It does not gather all visible fields before checking so can return early
    */
-  @Nullable
-  public static Field findField(@NotNull ReferenceType type, @NotNull String name) {
+  public static @Nullable Field findField(@NotNull ReferenceType type, @NotNull String name) {
     LinkedList<ReferenceType> types = new LinkedList<>();
     // first check classes
     while (type != null) {
@@ -302,8 +298,7 @@ public abstract class DebuggerUtils {
     return buffer.toString();
   }
 
-  @Nullable
-  protected static ArrayClass getArrayClass(@NotNull String className) {
+  protected static @Nullable ArrayClass getArrayClass(@NotNull String className) {
     boolean searchBracket = false;
     int dims = 0;
     int pos;
@@ -375,8 +370,7 @@ public abstract class DebuggerUtils {
     return getSuperTypeInt(subType, superType) != null;
   }
 
-  @Nullable
-  public static Type getSuperType(@Nullable Type subType, @NotNull String superType) {
+  public static @Nullable Type getSuperType(@Nullable Type subType, @NotNull String superType) {
     if (subType == null || subType instanceof PrimitiveType || subType instanceof VoidType) {
       return null;
     }
@@ -459,16 +453,14 @@ public abstract class DebuggerUtils {
   // workaround to get an array class of needed language version for correct HL in array renderers expression
   protected abstract PsiClass createArrayClass(Project project, LanguageLevel level);
 
-  @Nullable
-  public static PsiClass findClass(@NotNull String className, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public static @Nullable PsiClass findClass(@NotNull String className, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return findClass(className, project, scope, true);
   }
 
-  @Nullable
-  public static PsiClass findClass(@NotNull String className,
-                                   @NotNull Project project,
-                                   @NotNull GlobalSearchScope scope,
-                                   boolean fallbackToAllScope) {
+  public static @Nullable PsiClass findClass(@NotNull String className,
+                                             @NotNull Project project,
+                                             @NotNull GlobalSearchScope scope,
+                                             boolean fallbackToAllScope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       if (getArrayClass(className) != null) {
@@ -497,11 +489,9 @@ public abstract class DebuggerUtils {
     }
   }
 
-  @Nullable
-  protected abstract GlobalSearchScope getFallbackAllScope(@NotNull GlobalSearchScope scope, @NotNull Project project);
+  protected abstract @Nullable GlobalSearchScope getFallbackAllScope(@NotNull GlobalSearchScope scope, @NotNull Project project);
 
-  @Nullable
-  public static PsiType getType(@NotNull String className, @NotNull Project project) {
+  public static @Nullable PsiType getType(@NotNull String className, @NotNull Project project) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     try {
@@ -541,7 +531,7 @@ public abstract class DebuggerUtils {
   }
 
   public static boolean hasSideEffectsOrReferencesMissingVars(@Nullable PsiElement element,
-                                                              @Nullable final Set<String> visibleLocalVariables) {
+                                                              final @Nullable Set<String> visibleLocalVariables) {
     if (element == null) {
       return false;
     }

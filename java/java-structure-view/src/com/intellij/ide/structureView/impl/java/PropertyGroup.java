@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public final class PropertyGroup implements Group, ColoredItemPresentation, AccessLevelProvider, WeighedItem {
-  @NotNull private final String myPropertyName;
-  @NotNull private final String myTypeText;
+  private final @NotNull String myPropertyName;
+  private final @NotNull String myTypeText;
 
   private SmartPsiElementPointer<?> myFieldPointer;
   private SmartPsiElementPointer<?> myGetterPointer;
@@ -78,14 +78,12 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
   }
 
   @Override
-  @NotNull
-  public Collection<TreeElement> getChildren() {
+  public @NotNull Collection<TreeElement> getChildren() {
     return myChildren;
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 
@@ -206,7 +204,7 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
     return isDeprecated(getField()) && isDeprecated(getGetter()) && isDeprecated(getSetter());
   }
 
-  private static boolean isDeprecated(@Nullable final PsiDocCommentOwner element) {
+  private static boolean isDeprecated(final @Nullable PsiDocCommentOwner element) {
     try {
       return element != null && element.isValid() && element.isDeprecated();
     }

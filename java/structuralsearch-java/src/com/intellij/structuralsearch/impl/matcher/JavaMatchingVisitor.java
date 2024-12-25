@@ -700,8 +700,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return 0;
   }
 
-  @NotNull
-  private static PsiTypeElement getInnermostComponentTypeElement(@NotNull PsiTypeElement typeElement) {
+  private static @NotNull PsiTypeElement getInnermostComponentTypeElement(@NotNull PsiTypeElement typeElement) {
     PsiElement child = typeElement.getFirstChild();
     while (child instanceof PsiTypeElement) {
       typeElement = (PsiTypeElement)child;
@@ -917,8 +916,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static String getText(@NotNull PsiElement element) {
+  private static @NotNull String getText(@NotNull PsiElement element) {
     String result;
     if (element instanceof PsiClass) {
       result = ((PsiClass)element).getQualifiedName();
@@ -1873,8 +1871,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  @Nullable
-  private <T extends PsiExpression> T getExpression(@NotNull Class<T> aClass, @NotNull PsiExpression patternExpression) {
+  private @Nullable <T extends PsiExpression> T getExpression(@NotNull Class<T> aClass, @NotNull PsiExpression patternExpression) {
     PsiExpression expression = myMatchingVisitor.getElement(PsiExpression.class);
     if (!(patternExpression.getParent() instanceof PsiExpressionStatement)) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);

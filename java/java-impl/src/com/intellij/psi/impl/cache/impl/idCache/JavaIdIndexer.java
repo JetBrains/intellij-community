@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.idCache;
 
-import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
@@ -31,7 +30,7 @@ import java.util.Map;
 import static com.intellij.psi.impl.cache.impl.BaseFilterLexerUtil.scanContentWithCheckCanceled;
 
 public final class JavaIdIndexer implements IdIndexer {
-  private final static Logger LOG = Logger.getInstance(JavaIdIndexer.class);
+  private static final Logger LOG = Logger.getInstance(JavaIdIndexer.class);
   static final String ENABLED_REGISTRY_KEY = "index.ids.from.java.sources.in.jar";
   static volatile boolean isEnabled = Registry.is("index.ids.from.java.sources.in.jar", true);
 
@@ -53,8 +52,7 @@ public final class JavaIdIndexer implements IdIndexer {
     return Map.of();
   }
 
-  @Nullable
-  private static Map<IdIndexEntry, Integer> calculateIdEntriesParsingConstantPool(@NotNull FileContent inputData) {
+  private static @Nullable Map<IdIndexEntry, Integer> calculateIdEntriesParsingConstantPool(@NotNull FileContent inputData) {
     IdDataConsumer consumer = new IdDataConsumer();
     // optimised to avoid creation of list for every UTF8 entry
     IntList startInclList = new IntArrayList();

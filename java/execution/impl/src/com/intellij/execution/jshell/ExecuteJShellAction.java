@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.icons.AllIcons;
@@ -96,8 +96,7 @@ final class ExecuteJShellAction extends AnAction{
     return false;
   }
 
-  @Nullable
-  private static PsiElement getSnippetFromContext(Project project, @NotNull AnActionEvent e) {
+  private static @Nullable PsiElement getSnippetFromContext(Project project, @NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

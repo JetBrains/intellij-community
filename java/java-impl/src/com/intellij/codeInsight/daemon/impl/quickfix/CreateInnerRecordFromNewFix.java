@@ -30,8 +30,7 @@ public class CreateInnerRecordFromNewFix extends CreateInnerClassFromNewFix {
   }
 
   @Override
-  @Unmodifiable
-  protected List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
+  protected @Unmodifiable List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
     return ContainerUtil.filter(super.filterTargetClasses(element, project), 
                                 cls -> cls.getContainingClass() == null || cls.hasModifierProperty(PsiModifier.STATIC));
   }

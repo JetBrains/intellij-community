@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -32,8 +32,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(EncapsulateFieldsProcessor.class);
 
   private PsiClass myClass;
-  @NotNull
-  private final EncapsulateFieldsDescriptor myDescriptor;
+  private final @NotNull EncapsulateFieldsDescriptor myDescriptor;
   private final FieldDescriptor[] myFieldDescriptors;
 
   private HashMap<String,PsiMethod> myNameToGetter;
@@ -58,15 +57,13 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.encapsulateFields";
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     final List<PsiElement> fields = new ArrayList<>();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
@@ -76,9 +73,8 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     List<PsiElement> elements = new ArrayList<>();
     if (myNameToGetter != null) {
@@ -92,14 +88,12 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new EncapsulateFieldsViewDescriptor(myFieldDescriptors.clone());
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("encapsulate.fields.command.name", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
@@ -250,8 +244,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  @Unmodifiable
-  protected Iterable<? extends PsiReference> getFieldReferences(@NotNull PsiField field) {
+  protected @Unmodifiable Iterable<? extends PsiReference> getFieldReferences(@NotNull PsiField field) {
     return ReferencesSearch.search(field);
   }
 

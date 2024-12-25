@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,8 +15,7 @@ public final class NameConverterUtil {
   private NameConverterUtil() {
   }
 
-  @NotNull
-  public static String convertModuleName(@NotNull String name) { // "public" is for testing
+  public static @NotNull String convertModuleName(@NotNull String name) { // "public" is for testing
     // All non-alphanumeric characters ([^A-Za-z0-9]) are replaced with a dot (".") ...
     name = NON_NAME.matcher(name).replaceAll(".");
     // ... all repeating dots are replaced with one dot ...

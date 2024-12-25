@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
@@ -33,7 +33,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   public boolean REPORT_PATTERN_VARIABLES = true;
 
   private final LocalQuickFix myQuickFix;
-  @NonNls public static final String SHORT_NAME = "LocalCanBeFinal";
+  public static final @NonNls String SHORT_NAME = "LocalCanBeFinal";
 
   public LocalCanBeFinal() {
     myQuickFix = new AcceptSuggested();
@@ -79,8 +79,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     return allProblems == null ? null : allProblems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private List<ProblemDescriptor> checkCodeBlock(final PsiCodeBlock body, final InspectionManager manager, final boolean onTheFly) {
+  private @Nullable List<ProblemDescriptor> checkCodeBlock(final PsiCodeBlock body, final InspectionManager manager, final boolean onTheFly) {
     if (body == null) return null;
     final ControlFlow flow = getControlFlow(body);
     if (flow == null) return null;
@@ -323,8 +322,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
    * @param body code block to search
    * @return ControlFlow or null if not properly initialized
    */
-  @Nullable
-  public static ControlFlow getControlFlow(final PsiCodeBlock body) {
+  public static @Nullable ControlFlow getControlFlow(final PsiCodeBlock body) {
     final ControlFlow flow;
     try {
       ControlFlowPolicy policy = new ControlFlowPolicy() {
@@ -384,21 +382,18 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.code.style.issues");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
   private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
     }
 

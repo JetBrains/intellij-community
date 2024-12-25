@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -286,8 +286,7 @@ public class OldReferenceResolver {
     return newExpr;
   }
 
-  @Nullable
-  private static PsiElement getClassContainingResolve(final JavaResolveResult result) {
+  private static @Nullable PsiElement getClassContainingResolve(final JavaResolveResult result) {
     final PsiElement elem = result.getElement();
     if (elem != null) {
       if (PsiUtil.isJvmLocalVariable(elem)) {

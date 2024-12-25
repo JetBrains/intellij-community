@@ -44,15 +44,13 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
     return WrapWithMutableCollectionFix.createFix(violation);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+  protected @Nullable LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
     return new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, anchor, problemType);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createUnwrapSwitchLabelFix() {
+  protected @Nullable LocalQuickFix createUnwrapSwitchLabelFix() {
     return new UnwrapSwitchLabelFix();
   }
 

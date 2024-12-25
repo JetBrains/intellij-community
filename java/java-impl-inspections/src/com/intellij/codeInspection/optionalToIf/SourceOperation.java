@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.streamToLoop.ChainVariable;
@@ -25,8 +25,7 @@ abstract class SourceOperation implements Operation {
     mySourceName = sourceName;
   }
 
-  @Nullable
-  static SourceOperation create(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
+  static @Nullable SourceOperation create(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
     if ("empty".equals(name) && args.length == 0) {
       return new Empty(type);
     }
@@ -40,9 +39,8 @@ abstract class SourceOperation implements Operation {
     return null;
   }
 
-  @NotNull
   @Override
-  public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+  public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
     return mySourceName == null ? new ChainVariable(myType) : new ChainVariable(myType, mySourceName);
   }
 
@@ -61,12 +59,11 @@ abstract class SourceOperation implements Operation {
       myArg = FunctionHelper.replaceVarReference(myArg, oldName, newVar.getName(), context);
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       if (SourceOperation.getSourceName(myArg) != null || myArg.getText().equals(outVar.getName())) {
         return "if(" + outVar.getName() + "==null)throw new java.lang.NullPointerException();" +
                code;
@@ -82,8 +79,7 @@ abstract class SourceOperation implements Operation {
     }
   }
 
-  @Nullable
-  private static String getSourceName(@NotNull PsiExpression source) {
+  private static @Nullable String getSourceName(@NotNull PsiExpression source) {
     PsiReference reference = tryCast(source, PsiReference.class);
     if (reference == null) return null;
     PsiVariable variable = tryCast(reference.resolve(), PsiVariable.class);
@@ -105,12 +101,11 @@ abstract class SourceOperation implements Operation {
       myArg = FunctionHelper.replaceVarReference(myArg, oldName, newVar.getName(), context);
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       if (SourceOperation.getSourceName(myArg) != null || myArg.getText().equals(outVar.getName())) {
         return context.generateNotNullCondition(outVar.getName(), code);
       }
@@ -133,12 +128,11 @@ abstract class SourceOperation implements Operation {
       outVar.addBestNameCandidate("empty");
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       return outVar.getDeclaration("null") +
              context.generateNotNullCondition(outVar.getName(), code);
     }

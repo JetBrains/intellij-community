@@ -14,7 +14,9 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
@@ -27,7 +29,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.xdebugger.impl.dfaassist.DfaResult;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.Value;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +63,7 @@ public class DebuggerDfaRunner {
     myModificationStamp = larva.myStamp;
   }
 
-  @NotNull
-  public DfaResult computeHints() {
+  public @NotNull DfaResult computeHints() {
     if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return DfaResult.EMPTY;
     }
@@ -149,8 +153,7 @@ public class DebuggerDfaRunner {
       return new DebuggerDfaRunner(myLarva, myInfoMap);
     }
 
-    @NotNull
-    private static Map<Value, JdiValueInfo> requestJdi(@NotNull StackFrameProxyEx proxy, @NotNull Map<Value, List<DfaVariableValue>> map)
+    private static @NotNull Map<Value, JdiValueInfo> requestJdi(@NotNull StackFrameProxyEx proxy, @NotNull Map<Value, List<DfaVariableValue>> map)
       throws EvaluateException {
       ClassLoaderReference classLoader = proxy.getClassLoader();
       Predicate<ClassLoaderReference> classLoaderFilter = new Predicate<>() {
@@ -162,8 +165,7 @@ public class DebuggerDfaRunner {
           return getParentLoaders().contains(loader);
         }
 
-        @NotNull
-        private List<ClassLoaderReference> getParentLoaders() {
+        private @NotNull List<ClassLoaderReference> getParentLoaders() {
           if (myParentLoaders == null) {
             List<ClassLoaderReference> loaders = Collections.emptyList();
             if (classLoader != null) {
@@ -193,10 +195,9 @@ public class DebuggerDfaRunner {
     }
   }
 
-  @NotNull
-  private DfaMemoryState createMemoryState(@NotNull DfaValueFactory factory,
-                                           @NotNull Map<Value, List<DfaVariableValue>> valueMap,
-                                           @NotNull Map<Value, JdiValueInfo> infoMap) {
+  private @NotNull DfaMemoryState createMemoryState(@NotNull DfaValueFactory factory,
+                                                    @NotNull Map<Value, List<DfaVariableValue>> valueMap,
+                                                    @NotNull Map<Value, JdiValueInfo> infoMap) {
     DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
     List<DfaVariableValue> distinctValues = new ArrayList<>();
     valueMap.forEach((jdiValue, vars) -> {

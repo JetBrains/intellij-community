@@ -218,8 +218,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<PsiReference> findReferencesToHighlight(final @NotNull PsiElement target, final @NotNull SearchScope searchScope) {
+  public @Unmodifiable @NotNull Collection<PsiReference> findReferencesToHighlight(final @NotNull PsiElement target, final @NotNull SearchScope searchScope) {
     if (target instanceof PsiMethod) {
       Set<PsiMethod> superTargets = new LinkedHashSet<>();
       PsiMethod[] superMethods = ((PsiMethod)target).findDeepestSuperMethods();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -38,9 +38,8 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
       checkbox("ADD_MATH_MAX", JavaBundle.message("label.add.math.max.0.count.to.avoid.possible.semantics.change")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_11)) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
@@ -63,8 +62,7 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
     };
   }
 
-  @Nullable
-  private static PsiMethodCallExpression findAppendCall(PsiForStatement statement) {
+  private static @Nullable PsiMethodCallExpression findAppendCall(PsiForStatement statement) {
     PsiExpressionStatement body = tryCast(ControlFlowUtils.stripBraces(statement.getBody()), PsiExpressionStatement.class);
     if (body == null) return null;
     PsiMethodCallExpression call = tryCast(body.getExpression(), PsiMethodCallExpression.class);
@@ -79,10 +77,8 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
       myAddMathMax = addMathMax;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "String.repeat()");
     }
 
@@ -127,8 +123,7 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
       }
     }
 
-    @NotNull
-    private static String getCountText(PsiExpression from, PsiExpression to, boolean including, CommentTracker ct) {
+    private static @NotNull String getCountText(PsiExpression from, PsiExpression to, boolean including, CommentTracker ct) {
       String countText = null;
       Number fromNumber = JavaPsiMathUtil.getNumberFromLiteral(from);
       if (fromNumber instanceof Integer) {
@@ -151,8 +146,7 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
       return countText;
     }
 
-    @NotNull
-    private static String getRepeatQualifier(PsiExpression arg, CommentTracker ct) {
+    private static @NotNull String getRepeatQualifier(PsiExpression arg, CommentTracker ct) {
       if (arg instanceof PsiLiteralExpression literal && !TypeUtils.isJavaLangString(arg.getType())) {
         Object value = literal.getValue();
         if (value instanceof Character) {

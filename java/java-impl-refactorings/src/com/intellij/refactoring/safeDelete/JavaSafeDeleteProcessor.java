@@ -73,10 +73,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   @Override
-  @Nullable
-  public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element,
-                                           PsiElement @NotNull [] allElementsToDelete,
-                                           @NotNull List<? super UsageInfo> usages) {
+  public @Nullable NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element,
+                                                     PsiElement @NotNull [] allElementsToDelete,
+                                                     @NotNull List<? super UsageInfo> usages) {
     Condition<PsiElement> insideDeletedCondition = getUsageInsideDeletedFilter(allElementsToDelete);
     if (element instanceof PsiClass aClass) {
       findClassUsages(aClass, allElementsToDelete, usages);
@@ -125,11 +124,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return new NonCodeUsageSearchInfo(insideDeletedCondition, element);
   }
 
-  @Nullable
   @Override
-  public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
-                                                              @Nullable Module module,
-                                                              @NotNull Collection<? extends PsiElement> allElementsToDelete) {
+  public @Nullable Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
+                                                                        @Nullable Module module,
+                                                                        @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     Project project = element.getProject();
     if (element instanceof PsiPackage aPackage && module != null) {
       PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope());
@@ -679,8 +677,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
   }
 
-  @Nullable
-  private static Condition<PsiElement> findMethodUsages(PsiMethod psiMethod, PsiElement[] allElementsToDelete, @NotNull List<? super UsageInfo> usages) {
+  private static @Nullable Condition<PsiElement> findMethodUsages(PsiMethod psiMethod, PsiElement[] allElementsToDelete, @NotNull List<? super UsageInfo> usages) {
     Collection<PsiReference> references = ReferencesSearch.search(psiMethod).findAll();
 
     if(psiMethod.isConstructor()) {
@@ -748,11 +745,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return list.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static Condition<PsiElement> findConstructorUsages(PsiMethod constructor,
-                                                             Collection<PsiReference> originalReferences,
-                                                             @NotNull List<? super UsageInfo> usages,
-                                                             PsiElement[] allElementsToDelete) {
+  private static @Nullable Condition<PsiElement> findConstructorUsages(PsiMethod constructor,
+                                                                       Collection<PsiReference> originalReferences,
+                                                                       @NotNull List<? super UsageInfo> usages,
+                                                                       PsiElement[] allElementsToDelete) {
     if (isTheOnlyEmptyDefaultConstructor(constructor)) return null;
 
     Set<PsiMethod> newConstructors = new HashSet<>();
@@ -869,8 +865,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return false;
   }
 
-  @Nullable
-  private static PsiMethod getOverridingConstructorOfSuperCall(PsiElement element) {
+  private static @Nullable PsiMethod getOverridingConstructorOfSuperCall(PsiElement element) {
     if(element instanceof PsiReferenceExpression && "super".equals(element.getText())) {
       PsiElement parent = element.getParent();
       if(parent instanceof PsiMethodCallExpression) {

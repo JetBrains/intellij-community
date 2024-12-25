@@ -32,8 +32,7 @@ import static com.intellij.psi.CommonClassNames.*;
 
 final class StreamConversion {
 
-  @Unmodifiable
-  static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
+  static @Unmodifiable List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null) return Collections.emptyList();
 
@@ -66,11 +65,10 @@ final class StreamConversion {
     return Collections.emptyList();
   }
 
-  @Unmodifiable
-  private static @NotNull List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
-                                                                        PsiExpression qualifier,
-                                                                        String changedQualifier,
-                                                                        Consumer<InsertionContext> beforeInsertion) {
+  private static @Unmodifiable @NotNull List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
+                                                                                      PsiExpression qualifier,
+                                                                                      String changedQualifier,
+                                                                                      Consumer<InsertionContext> beforeInsertion) {
     String refText = changedQualifier + ".x";
     PsiExpression expr = PsiElementFactory.getInstance(qualifier.getProject()).createExpressionFromText(refText, qualifier);
     if (!(expr instanceof PsiReferenceExpression)) {
@@ -237,8 +235,7 @@ final class StreamConversion {
     }
 
     @Override
-    @Unmodifiable
-    public Set<String> getAllLookupStrings() {
+    public @Unmodifiable Set<String> getAllLookupStrings() {
       return ContainerUtil.newHashSet(myLookupString, myMethodName);
     }
 

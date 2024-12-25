@@ -406,10 +406,9 @@ public final class CodeInsightUtil {
     return baseType.isAssignableFrom(result) ? result : null;
   }
 
-  @Unmodifiable
-  public static @NotNull List<PsiType> getExpectedTypeArgs(PsiElement context,
-                                                           PsiTypeParameterListOwner paramOwner,
-                                                           Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
+  public static @Unmodifiable @NotNull List<PsiType> getExpectedTypeArgs(PsiElement context,
+                                                                         PsiTypeParameterListOwner paramOwner,
+                                                                         Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
     if (paramOwner instanceof PsiClass) {
       return GenericsUtil.getExpectedTypeArguments(context, (PsiClass)paramOwner, typeParams, expectedType);
     }

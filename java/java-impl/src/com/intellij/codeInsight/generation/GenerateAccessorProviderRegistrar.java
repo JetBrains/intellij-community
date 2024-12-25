@@ -14,8 +14,7 @@ public final class GenerateAccessorProviderRegistrar {
 
   public static final ExtensionPointName<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> EP_NAME = ExtensionPointName.create("com.intellij.generateAccessorProvider");
 
-  @Unmodifiable
-  static synchronized List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
+  static synchronized @Unmodifiable List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
     return ContainerUtil.concat(EP_NAME.getExtensionList(), s -> s.fun(psiClass));
   }
 }

@@ -779,8 +779,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
+  public @Unmodifiable @NotNull List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
     return AddAnnotationAttributeNameFix.createFixes(pair);
   }
 

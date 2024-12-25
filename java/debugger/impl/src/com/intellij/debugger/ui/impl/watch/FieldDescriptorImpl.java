@@ -167,9 +167,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
-  @Nullable
   @Override
-  public String getDeclaredType() {
+  public @Nullable String getDeclaredType() {
     return myField.typeName();
   }
 
@@ -227,9 +226,8 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
               return field.declaringType().classLoader();
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws ClassNotLoadedException {
+            public @NotNull Type getLType() throws ClassNotLoadedException {
               return field.type();
             }
           });

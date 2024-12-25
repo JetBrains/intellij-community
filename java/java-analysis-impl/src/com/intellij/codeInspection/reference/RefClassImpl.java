@@ -388,8 +388,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  @Unmodifiable
-  public List<RefField> getFields() {
+  public @Unmodifiable List<RefField> getFields() {
     LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefField.class);
   }

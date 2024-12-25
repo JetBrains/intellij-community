@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.openapi.project.Project;
@@ -127,8 +127,7 @@ public final class PsiReplacementUtil {
     styleManager.shortenClassReferences(element);
   }
 
-  @NotNull
-  public static String getElementText(@NotNull PsiElement element, @Nullable PsiElement elementToReplace, @Nullable String replacement) {
+  public static @NotNull String getElementText(@NotNull PsiElement element, @Nullable PsiElement elementToReplace, @Nullable String replacement) {
     final StringBuilder out = new StringBuilder();
     getElementText(element, elementToReplace, replacement, out);
     return out.toString();

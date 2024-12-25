@@ -73,8 +73,7 @@ public final class HighlightImplicitClassUtil {
     return null;
   }
 
-  @Nullable
-  static HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiJavaFile file) {
+  static @Nullable HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiJavaFile file) {
     if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, file)) return null;
     PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
     if (implicitClass == null) return null;

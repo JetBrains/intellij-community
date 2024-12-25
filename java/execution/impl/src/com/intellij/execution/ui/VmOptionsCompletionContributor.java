@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.TailType;
@@ -161,8 +161,7 @@ public final class VmOptionsCompletionContributor extends CompletionContributor 
            (offset == xxPrefix.length() || Character.isWhitespace(sequence.charAt(offset - xxPrefix.length() - 1)));
   }
 
-  @Nullable
-  private static String getJrePathForVmOptionsDocument(Document document) {
+  private static @Nullable String getJrePathForVmOptionsDocument(Document document) {
     String path = document.getUserData(EditCustomVmOptionsAction.JRE_PATH_KEY);
     if (path != null) {
       return path;
@@ -172,8 +171,7 @@ public final class VmOptionsCompletionContributor extends CompletionContributor 
     return getJrePath(settings);
   }
 
-  @Nullable
-  private static String getJrePath(JavaRunConfigurationBase settings) {
+  private static @Nullable String getJrePath(JavaRunConfigurationBase settings) {
     String jrePath = null;
     Sdk sdk;
     if (settings.isAlternativeJrePathEnabled()) {

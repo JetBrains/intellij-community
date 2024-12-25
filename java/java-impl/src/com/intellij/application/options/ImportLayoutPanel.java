@@ -39,7 +39,7 @@ import java.util.List;
 public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
-  @Nullable private final JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst;
+  private final @Nullable JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst;
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -56,8 +56,7 @@ public abstract class ImportLayoutPanel extends JPanel {
     return myCbLayoutStaticImportsSeparately;
   }
 
-  @Nullable
-  public JBCheckBox getCbLayoutOnDemandImportsFromSamePackageFirst() {
+  public @Nullable JBCheckBox getCbLayoutOnDemandImportsFromSamePackageFirst() {
     return myCbLayoutOnDemandImportsFromSamePackageFirst;
   }
 

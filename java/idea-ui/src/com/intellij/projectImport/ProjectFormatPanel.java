@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport;
 
 import com.intellij.ide.JavaUiBundle;
@@ -35,8 +35,7 @@ public class ProjectFormatPanel {
     return myWholePanel;
   }
 
-  @NotNull
-  public JComboBox<StorageFormat> getStorageFormatComboBox() {
+  public @NotNull JComboBox<StorageFormat> getStorageFormatComboBox() {
     return myStorageFormatCombo;
   }
 
@@ -83,12 +82,12 @@ public class ProjectFormatPanel {
       return myTag;
     }
 
-    private static @NotNull StorageFormat of(@NotNull final String tag) {
+    private static @NotNull StorageFormat of(final @NotNull String tag) {
       if (DIR_BASED.getTag().equals(tag)) return DIR_BASED;
       return FILE_BASED;
     }
 
-    private static @NotNull StorageFormat of(@NotNull final StorageScheme id) {
+    private static @NotNull StorageFormat of(final @NotNull StorageScheme id) {
       return switch (id) {
         case DIRECTORY_BASED -> DIR_BASED;
         case DEFAULT -> FILE_BASED;

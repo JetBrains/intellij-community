@@ -339,8 +339,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return null;
   }
 
-  @Unmodifiable
-  private @NotNull List<String> filterNickNames(@NotNull Nullability nullability) {
+  private @Unmodifiable @NotNull List<String> filterNickNames(@NotNull Nullability nullability) {
     return ContainerUtil.mapNotNull(getAllNullabilityNickNames(), c -> Jsr305Support.getNickNamedNullability(c) == nullability ? c.getQualifiedName() : null);
   }
 

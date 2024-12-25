@@ -50,10 +50,10 @@ public final class CollectionUtils {
 
   /**
    */
-  @NonNls private static final Set<String> s_allCollectionClassesAndInterfaces;
+  private static final @NonNls Set<String> s_allCollectionClassesAndInterfaces;
   /**
    */
-  @NonNls private static final Map<String, String> s_interfaceForCollection =
+  private static final @NonNls Map<String, String> s_interfaceForCollection =
     new HashMap<>();
 
   static {
@@ -184,7 +184,7 @@ public final class CollectionUtils {
         !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_MAP)) {
       return false;
     }
-    @NonNls final String name = aClass.getQualifiedName();
+    final @NonNls String name = aClass.getQualifiedName();
     return name != null && name.startsWith("java.util.");
   }
 

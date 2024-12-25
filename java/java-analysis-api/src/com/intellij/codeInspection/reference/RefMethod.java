@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
@@ -167,10 +167,8 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  default Collection<? extends RefOverridable> getDerivedReferences() {
+  default @NotNull @Unmodifiable Collection<? extends RefOverridable> getDerivedReferences() {
     return getDerivedMethods();
   }
 

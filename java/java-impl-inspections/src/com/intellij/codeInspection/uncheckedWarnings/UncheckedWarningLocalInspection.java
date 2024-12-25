@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.uncheckedWarnings;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -40,8 +40,8 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
-  @NonNls private static final String ID = "unchecked";
+  public static final @NonNls String SHORT_NAME = "UNCHECKED_WARNING";
+  private static final @NonNls String ID = "unchecked";
   private static final Logger LOG = Logger.getInstance(UncheckedWarningLocalInspection.class);
   public boolean IGNORE_UNCHECKED_ASSIGNMENT;
   public boolean IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION;
@@ -78,23 +78,18 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
   @Pattern(VALID_ID_PATTERN)
-  @NotNull
-  @NonNls
-  public String getID() {
+  public @NotNull @NonNls String getID() {
     return ID;
   }
 
@@ -114,11 +109,10 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
     }
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(session.getFile());
     if (!JavaFeature.GENERICS.isSufficient(languageLevel)) return super.buildVisitor(holder, isOnTheFly, session);
 
@@ -165,7 +159,7 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
 
   private abstract class UncheckedWarningsVisitor extends JavaElementVisitor {
     private final boolean myOnTheFly;
-    @NotNull private final LanguageLevel myLanguageLevel;
+    private final @NotNull LanguageLevel myLanguageLevel;
 
     UncheckedWarningsVisitor(boolean onTheFly, @NotNull LanguageLevel level) {
       myOnTheFly = onTheFly;
@@ -449,8 +443,7 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
       }
     }
 
-    @Nullable
-    private static @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
+    private static @Nullable @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
       final PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiMethod method)) return null;
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();

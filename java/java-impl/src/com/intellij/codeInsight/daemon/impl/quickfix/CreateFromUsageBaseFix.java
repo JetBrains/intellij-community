@@ -68,8 +68,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  @Unmodifiable
-  protected List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
+  protected @Unmodifiable List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
     return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
   }
 

@@ -183,8 +183,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     LocalBuildCommandLineBuilder.setUnixProcessPriority(myCommandLine, priority);
   }
 
-  @Nullable
-  public static Path getWslBuildSystemDirectory(WSLDistribution distribution) {
+  public static @Nullable Path getWslBuildSystemDirectory(WSLDistribution distribution) {
     String pathsSelector = PathManager.getPathsSelector();
     String wslUserHome = distribution.getUserHome();
     if (wslUserHome == null) return null;

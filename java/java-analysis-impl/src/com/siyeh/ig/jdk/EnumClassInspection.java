@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public final class EnumClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "enumerated.class.problem.descriptor");
   }

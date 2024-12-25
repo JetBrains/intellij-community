@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
-  final static class ForSymbolNavigationContributor extends DefaultClassNavigationContributor {
+  static final class ForSymbolNavigationContributor extends DefaultClassNavigationContributor {
     ForSymbolNavigationContributor() {
       super(true);
     }

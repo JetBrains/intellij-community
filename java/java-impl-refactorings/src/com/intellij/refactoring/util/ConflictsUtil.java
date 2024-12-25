@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.JavaBundle;
@@ -20,8 +20,7 @@ public final class ConflictsUtil {
   private ConflictsUtil() {
   }
 
-  @NotNull
-  public static PsiElement getContainer(PsiElement place) {
+  public static @NotNull PsiElement getContainer(PsiElement place) {
     PsiElement parent = place;
     while (true) {
       if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter)) {

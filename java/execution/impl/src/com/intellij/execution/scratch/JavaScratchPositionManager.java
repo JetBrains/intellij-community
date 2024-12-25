@@ -33,25 +33,21 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     myScratchFile = scratchFile;
   }
 
-  @NotNull
   @Override
-  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
     return super.locationsOfLine(type, position);
   }
 
-  @NotNull
   @Override
-  public List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
-                                                         @NotNull SourcePosition position) throws NoDataException {
+  public @NotNull List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
+                                                                  @NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
     return super.createPrepareRequests(requestor, position);
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
+  public @NotNull @Unmodifiable List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
     return super.getAllClasses(position);
   }
@@ -62,9 +58,8 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     }
   }
 
-  @Nullable
   @Override
-  public SourcePosition getSourcePosition(Location location) throws NoDataException {
+  public @Nullable SourcePosition getSourcePosition(Location location) throws NoDataException {
     final SourcePosition position = super.getSourcePosition(location);
     if (position == null) {
       throw NoDataException.INSTANCE; // delegate to other managers
@@ -72,9 +67,8 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     return position;
   }
 
-  @Nullable
   @Override
-  protected PsiFile getPsiFileByLocation(Project project, Location location) {
+  protected @Nullable PsiFile getPsiFileByLocation(Project project, Location location) {
     if (location == null || !myScratchFile.isValid()) {
       return null;
     }

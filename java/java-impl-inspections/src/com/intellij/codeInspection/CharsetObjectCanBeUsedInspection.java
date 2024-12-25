@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -87,9 +87,8 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
       entry("UTF-16", "UTF_16"),
       entry("UTF16", "UTF_16"));
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
@@ -119,8 +118,7 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
                                new CharsetObjectCanBeUsedFix(charsetString));
       }
 
-      @Nullable
-      private static String getCharsetString(PsiExpression charsetExpression) {
+      private static @Nullable String getCharsetString(PsiExpression charsetExpression) {
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
         if (charsetString == null && charsetExpression instanceof PsiMethodCallExpression) {
@@ -152,8 +150,7 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
     };
   }
 
-  @NotNull
-  private static String sanitizeExpression(String expression) {
+  private static @NotNull String sanitizeExpression(String expression) {
     if (expression.startsWith("java.nio.charset.StandardCharsets.")) {
       return expression.substring("java.nio.charset.".length());
     }
@@ -161,7 +158,7 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
   }
 
   abstract static class CharsetCallMatcher {
-    @NotNull final String myClassName;
+    final @NotNull String myClassName;
     final String @NotNull [] myParameters;
     final int myCharsetParameterIndex;
 
@@ -200,8 +197,7 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
       return true;
     }
 
-    @Nullable
-    final CharsetMatch createMatch(LanguageLevel languageLevel, PsiMethod method, PsiExpressionList arguments) {
+    final @Nullable CharsetMatch createMatch(LanguageLevel languageLevel, PsiMethod method, PsiExpressionList arguments) {
       PsiExpression argument = arguments.getExpressions()[myCharsetParameterIndex];
       PsiClass aClass = method.getContainingClass();
       if (aClass == null) return null;
@@ -215,8 +211,7 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
       return new CharsetMatch(argument, method, charsetMethod);
     }
 
-    @Nullable
-    abstract CharsetMatch extractCharsetMatch(LanguageLevel languageLevel, PsiCallExpression call);
+    abstract @Nullable CharsetMatch extractCharsetMatch(LanguageLevel languageLevel, PsiCallExpression call);
   }
 
   static class CharsetConstructorMatcher extends CharsetCallMatcher {
@@ -236,7 +231,7 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
   }
 
   static class CharsetMethodMatcher extends CharsetCallMatcher {
-    @NotNull private final String myMethodName;
+    private final @NotNull String myMethodName;
 
     CharsetMethodMatcher(@NotNull String className, @NotNull String methodName, String @NotNull ... parameters) {
       super(className, parameters);
@@ -256,9 +251,9 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
   }
 
   static class CharsetMatch {
-    @NotNull final PsiExpression myStringCharset;
-    @NotNull final PsiMethod myStringMethod;
-    @NotNull final PsiMethod myCharsetMethod;
+    final @NotNull PsiExpression myStringCharset;
+    final @NotNull PsiMethod myStringMethod;
+    final @NotNull PsiMethod myCharsetMethod;
 
     CharsetMatch(@NotNull PsiExpression charset, @NotNull PsiMethod stringMethod, @NotNull PsiMethod charsetMethod) {
       myStringCharset = charset;
@@ -274,17 +269,13 @@ public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLoca
       myCharsetExpression = charsetExpression;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", sanitizeExpression(myCharsetExpression));
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.charset.object.can.be.used.fix.family.name");
     }
 

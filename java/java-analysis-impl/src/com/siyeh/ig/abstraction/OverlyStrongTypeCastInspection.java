@@ -16,9 +16,9 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -39,8 +39,7 @@ public final class OverlyStrongTypeCastInspection extends BaseInspection {
   public boolean ignoreInMatchingInstanceof = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiType expectedType = (PsiType)infos[0];
     final String typeText = expectedType.getPresentableText();
     return InspectionGadgetsBundle.message("overly.strong.type.cast.problem.descriptor", typeText);
@@ -61,8 +60,7 @@ public final class OverlyStrongTypeCastInspection extends BaseInspection {
   private static class OverlyStrongCastFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("overly.strong.type.cast.weaken.quickfix");
     }
 
@@ -81,8 +79,7 @@ public final class OverlyStrongTypeCastInspection extends BaseInspection {
         return;
       }
       CommentTracker commentTracker = new CommentTracker();
-      @NonNls
-      final String newExpression = '(' + expectedType.getCanonicalText() + ')' + commentTracker.text(operand);
+      final @NonNls String newExpression = '(' + expectedType.getCanonicalText() + ')' + commentTracker.text(operand);
       PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);
     }
   }

@@ -143,7 +143,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Deprecated
-  public static ReferenceType getSuperClass(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
+  public static ReferenceType getSuperClass(final @NotNull String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {
       return checkedType;
     }
@@ -307,8 +307,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return elementsEqual(root1, root2);
   }
 
-  @NotNull
-  public static List<Pair<Breakpoint, Event>> getEventDescriptors(@Nullable SuspendContextImpl suspendContext) {
+  public static @NotNull List<Pair<Breakpoint, Event>> getEventDescriptors(@Nullable SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (suspendContext != null) {
       EventSet events = suspendContext.getEventSet();
@@ -399,16 +398,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
   }
 
-  @NotNull
-  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+  public static @NotNull ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
-  @NotNull
-  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType,
-                                             @NotNull List<? extends Value> values,
-                                             @NotNull EvaluationContext context)
+  public static @NotNull ArrayReference mirrorOfArray(@NotNull ArrayType arrayType,
+                                                      @NotNull List<? extends Value> values,
+                                                      @NotNull EvaluationContext context)
     throws EvaluateException {
     ArrayReference res = context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, values.size()));
     try {
@@ -420,8 +417,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return res;
   }
 
-  @NotNull
-  public static ArrayReference mirrorOfByteArray(byte[] bytes, EvaluationContext context)
+  public static @NotNull ArrayReference mirrorOfByteArray(byte[] bytes, EvaluationContext context)
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     context = ((EvaluationContextImpl)context).withAutoLoadClasses(true);
     ArrayType arrayClass = (ArrayType)context.getDebugProcess().findClass(context, "byte[]", context.getClassLoader());
@@ -468,8 +464,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  @NotNull
-  public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
+  public static @NotNull CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
     DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     if (fileType == null) {
       if (context == null) {
@@ -488,8 +483,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return defaultFactory;
   }
 
-  @NotNull
-  public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
+  public static @NotNull CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
     CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
@@ -501,8 +495,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * {@link ThreeState#NO} means assertions are disabled
    * {@link ThreeState#UNSURE} means there are no assertions in the current class, so the status was not requested by the runtime
    */
-  @NotNull
-  public static ThreeState getEffectiveAssertionStatus(@NotNull Location location) {
+  public static @NotNull ThreeState getEffectiveAssertionStatus(@NotNull Location location) {
     ReferenceType type = location.declaringType();
     if (type instanceof ClassType) {
       Field field = DebuggerUtils.findField(type, "$assertionsDisabled");
@@ -552,8 +545,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return StreamEx.of(type.methods()).filter(m -> name.equals(m.name())).toList();
   }
 
-  @Nullable
-  public static List<Location> allLineLocations(Method method) {
+  public static @Nullable List<Location> allLineLocations(Method method) {
     try {
       return method.allLineLocations();
     }
@@ -562,8 +554,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  @Nullable
-  public static List<Location> allLineLocations(ReferenceType cls) {
+  public static @Nullable List<Location> allLineLocations(ReferenceType cls) {
     try {
       return DebuggerUtilsAsync.allLineLocationsSync(cls);
     }
@@ -593,13 +584,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  @Nullable
-  public static String getSourceName(Location location, @Nullable String defaultName) {
+  public static @Nullable String getSourceName(Location location, @Nullable String defaultName) {
     return getSourceName(location, e -> defaultName);
   }
 
-  @Nullable
-  public static String getSourceName(Location location, @NotNull Function<? super Throwable, String> defaultNameProvider) {
+  public static @Nullable String getSourceName(Location location, @NotNull Function<? super Throwable, String> defaultNameProvider) {
     try {
       return location.sourceName();
     }
@@ -636,8 +625,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     });
   }
 
-  @NotNull
-  public static List<Location> locationsOfLine(@NotNull Method method, int line) {
+  public static @NotNull List<Location> locationsOfLine(@NotNull Method method, int line) {
     try {
       return method.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line);
     }
@@ -777,14 +765,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     map.put(className, source);
   }
 
-  @Nullable
-  public static String getAlternativeSourceUrl(@Nullable String className, Project project) {
+  public static @Nullable String getAlternativeSourceUrl(@Nullable String className, Project project) {
     Map<String, String> map = project.getUserData(DEBUGGER_ALTERNATIVE_SOURCE_MAPPING);
     return map != null ? map.get(className) : null;
   }
 
-  @Nullable
-  public static XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
+  public static @Nullable XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
     if (position != null) {
       VirtualFile file = position.getFile().getVirtualFile();
       if (file == null) {
@@ -797,8 +783,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  @Nullable
-  public static SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
+  public static @Nullable SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
     if (position != null) {
       if (position instanceof JavaXSourcePosition) {
         return ((JavaXSourcePosition)position).mySourcePosition;
@@ -813,7 +798,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
-    @NotNull private final VirtualFile myFile;
+    private final @NotNull VirtualFile myFile;
 
     JavaXSourcePosition(@NotNull SourcePosition sourcePosition, @NotNull VirtualFile file) {
       mySourcePosition = sourcePosition;
@@ -830,21 +815,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return mySourcePosition.getOffset();
     }
 
-    @NotNull
     @Override
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return myFile;
     }
 
-    @NotNull
     @Override
-    public Navigatable createNavigatable(@NotNull Project project) {
+    public @NotNull Navigatable createNavigatable(@NotNull Project project) {
       return XDebuggerUtilImpl.createNavigatable(project, this);
     }
 
-    @Nullable
     @Override
-    public TextRange getHighlightRange() {
+    public @Nullable TextRange getHighlightRange() {
       return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
   }
@@ -856,8 +838,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * Also, whole line highlighting is represented by <code>null</code> return value.
    * @return highlighting range inside the line or null if the whole line should be highlighted
    */
-  @Nullable
-  public static TextRange getHighlightingRangeInsideLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+  public static @Nullable TextRange getHighlightingRangeInsideLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
     if (range != null && file != null) {
       Document document = file.getViewProvider().getDocument();
       if (document != null) {
@@ -870,8 +851,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @RequiresReadLock
-  @Nullable
-  public static PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
+  public static @Nullable PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
     if (position != null) {
       VirtualFile file = position.getFile();
       if (file.isValid()) {
@@ -884,8 +864,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   /**
    * Decompiler aware version
    */
-  @Nullable
-  public static PsiElement findElementAt(@Nullable PsiFile file, int offset) {
+  public static @Nullable PsiElement findElementAt(@Nullable PsiFile file, int offset) {
     return file != null ? file.findElementAt(offset) : null;
   }
 
@@ -922,8 +901,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return getLambdaBaseClassName(typeName) != null;
   }
 
-  @Nullable
-  public static String getLambdaBaseClassName(String typeName) {
+  public static @Nullable String getLambdaBaseClassName(String typeName) {
     return StringUtil.substringBefore(typeName, "$$Lambda");
   }
 
@@ -990,8 +968,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return lambdas;
   }
 
-  @Nullable
-  public static PsiElement getBody(PsiElement method) {
+  public static @Nullable PsiElement getBody(PsiElement method) {
     if (method instanceof PsiParameterListOwner) {
       return ((PsiParameterListOwner)method).getBody();
     }
@@ -1022,8 +999,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @RequiresReadLock
-  @Nullable
-  public static PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
+  public static @Nullable PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
     TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
@@ -1107,13 +1083,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
-  @Nullable
-  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
+  public static @Nullable PsiElement getContainingMethod(@Nullable PsiElement elem) {
     return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
   }
 
-  @Nullable
-  public static PsiElement getContainingMethod(@Nullable SourcePosition position) {
+  public static @Nullable PsiElement getContainingMethod(@Nullable SourcePosition position) {
     if (position == null) return null;
     return getContainingMethod(position.getElementAt());
   }
@@ -1174,19 +1148,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     });
   }
 
-  @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine, @NotNull StackTraceElement stackTraceElement) {
+  public static @NotNull Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine, @NotNull StackTraceElement stackTraceElement) {
     return findOrCreateLocation(virtualMachine,
                                 stackTraceElement.getClassName(),
                                 stackTraceElement.getMethodName(),
                                 stackTraceElement.getLineNumber());
   }
 
-  @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine,
-                                              @NotNull String className,
-                                              @NotNull String methodName,
-                                              int line) {
+  public static @NotNull Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine,
+                                                       @NotNull String className,
+                                                       @NotNull String methodName,
+                                                       int line) {
     ReferenceType classType = ContainerUtil.getFirstItem(virtualMachine.classesByName(className));
     if (classType == null) {
       classType = new GeneratedReferenceType(virtualMachine, className);

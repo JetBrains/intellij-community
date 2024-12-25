@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -26,9 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JavaResolveScopeProvider extends ResolveScopeProvider {
-  @Nullable
   @Override
-  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
+  public @Nullable GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     // For java only! For other languages resolve may be implemented with different rules, requiring larger scope.
     FileType type = file.getFileType();
     if (type instanceof LanguageFileType langType && langType.getLanguage() == JavaLanguage.INSTANCE) {
@@ -70,8 +69,7 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
     return null;
   }
 
-  @Nullable
-  private static JavaVersionBasedScope getClassFileScope(@NotNull VirtualFile file, @NotNull Project project) {
+  private static @Nullable JavaVersionBasedScope getClassFileScope(@NotNull VirtualFile file, @NotNull Project project) {
     LanguageLevel level = JavaMultiReleaseUtil.getVersion(file);
     if (level != null && !project.isDefault()) {
       GlobalSearchScope baseScope = LibraryScopeCache.getInstance(project).getLibraryScope(file);

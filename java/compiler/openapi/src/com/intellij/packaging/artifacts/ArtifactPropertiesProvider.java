@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,16 +25,13 @@ public abstract class ArtifactPropertiesProvider {
     return true;
   }
 
-  @NotNull
-  public abstract ArtifactProperties<?> createProperties(@NotNull ArtifactType artifactType);
+  public abstract @NotNull ArtifactProperties<?> createProperties(@NotNull ArtifactType artifactType);
 
-  @NotNull
-  public static List<ArtifactPropertiesProvider> getProviders() {
+  public static @NotNull List<ArtifactPropertiesProvider> getProviders() {
     return EP_NAME.getExtensionList();
   }
 
-  @Nullable
-  public static ArtifactPropertiesProvider findById(@NotNull @NonNls String id) {
+  public static @Nullable ArtifactPropertiesProvider findById(@NotNull @NonNls String id) {
     for (ArtifactPropertiesProvider provider : getProviders()) {
       if (provider.getId().equals(id)) {
         return provider;

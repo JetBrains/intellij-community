@@ -294,8 +294,7 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  @NotNull
-  private static String typeParameterListOwnerDescription(@NotNull PsiTypeParameterListOwner typeParameterListOwner) {
+  private static @NotNull String typeParameterListOwnerDescription(@NotNull PsiTypeParameterListOwner typeParameterListOwner) {
     if (typeParameterListOwner instanceof PsiClass psiClass) {
       return HighlightUtil.formatClass(psiClass);
     }
@@ -308,8 +307,7 @@ public final class GenericsHighlightUtil {
     }
   }
 
-  @NotNull
-  private static String typeParameterListOwnerCategoryDescription(@NotNull PsiTypeParameterListOwner typeParameterListOwner) {
+  private static @NotNull String typeParameterListOwnerCategoryDescription(@NotNull PsiTypeParameterListOwner typeParameterListOwner) {
     if (typeParameterListOwner instanceof PsiClass) {
       return JavaErrorBundle.message("generics.holder.type");
     }
@@ -470,8 +468,7 @@ public final class GenericsHighlightUtil {
    *
    * @return error message if class inherits 2 unrelated default methods or abstract and default methods which do not belong to one hierarchy
    */
-  @Nullable
-  public static @NlsContexts.DetailedDescription String getUnrelatedDefaultsMessage(@NotNull PsiClass aClass,
+  public static @Nullable @NlsContexts.DetailedDescription String getUnrelatedDefaultsMessage(@NotNull PsiClass aClass,
                                                                                     @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods,
                                                                                     boolean skipMethodInSelf) {
     if (overrideEquivalentSuperMethods.size() <= 1) return null;
@@ -1584,13 +1581,12 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  @Nullable
-  private static @NlsContexts.DetailedDescription String isTypeAccessible(@Nullable PsiType type,
-                                                                          @NotNull Set<? super PsiClass> classes,
-                                                                          boolean checkParameters, 
-                                                                          boolean checkSuperTypes,
-                                                                          @NotNull GlobalSearchScope resolveScope,
-                                                                          @NotNull JavaPsiFacade factory) {
+  private static @Nullable @NlsContexts.DetailedDescription String isTypeAccessible(@Nullable PsiType type,
+                                                                                    @NotNull Set<? super PsiClass> classes,
+                                                                                    boolean checkParameters,
+                                                                                    boolean checkSuperTypes,
+                                                                                    @NotNull GlobalSearchScope resolveScope,
+                                                                                    @NotNull JavaPsiFacade factory) {
     type = PsiClassImplUtil.correctType(type, resolveScope);
 
     PsiClass aClass = PsiUtil.resolveClassInType(type);

@@ -232,14 +232,12 @@ public abstract class MockReferenceType extends MockType implements ReferenceTyp
   protected abstract List<ReferenceType> getThisAndAllSupers();
 
   @Override
-  @Unmodifiable
-  public List<Method> methodsByName(String string) {
+  public @Unmodifiable List<Method> methodsByName(String string) {
     return ContainerUtil.filter(allMethods(), method -> method.name().equals(string));
   }
 
   @Override
-  @Unmodifiable
-  public List<Method> methodsByName(String string, String string1) {
+  public @Unmodifiable List<Method> methodsByName(String string, String string1) {
     return ContainerUtil.filter(allMethods(), method -> method.name().equals(string) && method.signature().equals(string1));
   }
 

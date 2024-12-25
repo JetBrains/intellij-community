@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.Module;
@@ -28,8 +29,7 @@ public abstract class HeaderHidingTabbedModuleEditor extends TabbedModuleEditor 
     }
   }
 
-  @Nullable
-  private ModuleConfigurationEditor getSingleEditor() {
+  private @Nullable ModuleConfigurationEditor getSingleEditor() {
     return myEditors.size() == 1 ? myEditors.get(0) : null;
   }
 
@@ -62,8 +62,7 @@ public abstract class HeaderHidingTabbedModuleEditor extends TabbedModuleEditor 
   }
 
   @Override
-  @Nullable
-  public ModuleConfigurationEditor getEditor(@NotNull String displayName) {
+  public @Nullable ModuleConfigurationEditor getEditor(@NotNull String displayName) {
     ModuleConfigurationEditor singleEditor = getSingleEditor();
     if (singleEditor != null) {
       if (displayName.equals(singleEditor.getDisplayName())) {

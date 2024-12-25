@@ -35,8 +35,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
-  @NotNull
-  private final Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
+  private final @NotNull Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
@@ -65,8 +64,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
   }
 
-  @NotNull
-  public VirtualMachine getVirtualMachine() {
+  public @NotNull VirtualMachine getVirtualMachine() {
     return myVirtualMachine;
   }
 
@@ -254,8 +252,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   /**
    * @return a list of threadGroupProxies
    */
-  @Unmodifiable
-  public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
+  public @Unmodifiable List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
     return ContainerUtil.map(getVirtualMachine().topLevelThreadGroups(), this::getThreadGroupReferenceProxy);
   }
 
@@ -438,9 +435,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.name();
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  public ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
+  public @Nullable ThreadReferenceProxyImpl getThreadReferenceProxy(@Nullable ThreadReference thread) {
     return getThreadReferenceProxy(thread, false);
   }
 

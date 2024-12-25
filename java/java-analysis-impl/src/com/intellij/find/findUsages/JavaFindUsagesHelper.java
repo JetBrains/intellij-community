@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -38,8 +38,7 @@ import java.util.*;
 public final class JavaFindUsagesHelper {
   private static final Logger LOG = Logger.getInstance(JavaFindUsagesHelper.class);
 
-  @NotNull
-  public static Set<String> getElementNames(@NotNull PsiElement element) {
+  public static @NotNull Set<String> getElementNames(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory psiDirectory) {  // normalize a directory to a corresponding package
       PsiPackage aPackage = ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackage(psiDirectory));
       return aPackage == null ? Collections.emptySet() : getElementNames(aPackage);
@@ -365,8 +364,7 @@ public final class JavaFindUsagesHelper {
     return true;
   }
 
-  @Nullable
-  private static PsiClass getFieldOrMethodAccessedClass(@NotNull PsiReferenceExpression ref, @NotNull PsiClass fieldOrMethodClass) {
+  private static @Nullable PsiClass getFieldOrMethodAccessedClass(@NotNull PsiReferenceExpression ref, @NotNull PsiClass fieldOrMethodClass) {
     PsiElement[] children = ref.getChildren();
     if (children.length > 1 && children[0] instanceof PsiExpression expr) {
       PsiType type = expr.getType();

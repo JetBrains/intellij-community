@@ -251,8 +251,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
     }
   }
 
-  @Unmodifiable
-  private @NotNull List<LineMarkerInfo<PsiElement>> collectSiblingInheritedMethods(@NotNull Collection<? extends PsiMethod> methods) {
+  private @Unmodifiable @NotNull List<LineMarkerInfo<PsiElement>> collectSiblingInheritedMethods(@NotNull Collection<? extends PsiMethod> methods) {
     if (!shouldSearchImplementedMethods() && !shouldSearchOverriddenMethods()) {
       return Collections.emptyList();
     }

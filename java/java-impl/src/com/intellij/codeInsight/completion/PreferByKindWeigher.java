@@ -115,8 +115,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return aClass -> MyResult.classNameOrGlobalStatic;
   }
 
-  @Unmodifiable
-  static List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
+  static @Unmodifiable List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
     PsiElement typeParent = typeElement.getParent();
     if (typeParent instanceof PsiReferenceParameterList) {
       int index = Arrays.asList(((PsiReferenceParameterList)typeParent).getTypeParameterElements()).indexOf(typeElement);

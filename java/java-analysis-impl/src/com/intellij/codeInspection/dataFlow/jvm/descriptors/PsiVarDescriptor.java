@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
@@ -25,8 +25,7 @@ import org.jetbrains.annotations.Nullable;
 abstract class PsiVarDescriptor extends JvmVariableDescriptor {
   abstract @Nullable PsiType getType(@Nullable DfaVariableValue qualifier);
 
-  @NotNull
-  static PsiSubstitutor getSubstitutor(PsiElement member, @Nullable DfaVariableValue qualifier) {
+  static @NotNull PsiSubstitutor getSubstitutor(PsiElement member, @Nullable DfaVariableValue qualifier) {
     if (member instanceof PsiMember && qualifier != null) {
       PsiClass fieldClass = ((PsiMember)member).getContainingClass();
       PsiVarDescriptor qualifierDescriptor = ObjectUtils.tryCast(qualifier.getDescriptor(), PsiVarDescriptor.class);
@@ -40,8 +39,7 @@ abstract class PsiVarDescriptor extends JvmVariableDescriptor {
   }
 
   @Override
-  @NotNull
-  public DfType getDfType(@Nullable DfaVariableValue qualifier) {
+  public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
     return DfTypes.typedObject(getType(qualifier), Nullability.UNKNOWN);
   }
 

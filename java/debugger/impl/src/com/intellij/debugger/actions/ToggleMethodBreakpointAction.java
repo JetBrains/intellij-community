@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -64,8 +64,7 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
     }
   }
 
-  @Nullable
-  private static PlaceInDocument getPlace(AnActionEvent event) {
+  private static @Nullable PlaceInDocument getPlace(AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return null;
@@ -105,14 +104,12 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
     return method != null ? new PlaceInDocument(document, method.getTextOffset()) : null;
   }
 
-  @Nullable
-  static Editor getEditor(AnActionEvent event) {
+  static @Nullable Editor getEditor(AnActionEvent event) {
     @Nullable FileEditor editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
     return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
   }
 
-  @Nullable
-  private static PsiMethod findMethod(Project project, Editor editor) {
+  private static @Nullable PsiMethod findMethod(Project project, Editor editor) {
     if (editor == null) {
       return null;
     }

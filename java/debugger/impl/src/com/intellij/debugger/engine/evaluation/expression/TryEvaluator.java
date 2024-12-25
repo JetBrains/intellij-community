@@ -11,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class TryEvaluator implements Evaluator {
-  @NotNull private final Evaluator myBodyEvaluator;
+  private final @NotNull Evaluator myBodyEvaluator;
   private final List<? extends CatchEvaluator> myCatchBlockEvaluators;
-  @Nullable private final Evaluator myFinallyEvaluator;
+  private final @Nullable Evaluator myFinallyEvaluator;
 
   public TryEvaluator(@NotNull Evaluator bodyEvaluator,
                       List<? extends CatchEvaluator> catchBlockEvaluators,

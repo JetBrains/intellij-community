@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -12,9 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -37,8 +36,7 @@ public final class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  @Nullable
-  private static PsiLocalVariable findIndexVariable(PsiExpression updateExpression) {
+  private static @Nullable PsiLocalVariable findIndexVariable(PsiExpression updateExpression) {
     if (updateExpression instanceof PsiUnaryExpression unaryExpression) {
       return ExpressionUtils.resolveLocalVariable(unaryExpression.getOperand());
     }

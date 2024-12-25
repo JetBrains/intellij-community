@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -30,9 +30,8 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
 
   private static final String INVOKE = "invoke";
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
@@ -127,10 +126,9 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
     }
   }
 
-  @Nullable
-  private static List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
-                                                                int argumentOffset,
-                                                                @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
+  private static @Nullable List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
+                                                                          int argumentOffset,
+                                                                          @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
     final PsiExpression definition = findDefinition(PsiUtil.skipParenthesizedExprDown(qualifier));
     if (definition instanceof PsiMethodCallExpression definitionCall && methodPredicate.test(definitionCall)) {
       return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
@@ -138,8 +136,7 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
     return null;
   }
 
-  @Nullable
-  static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean isVarArgCall) {
+  static @Nullable Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean isVarArgCall) {
     if (!isVarArgCall) {
       if (arguments.length == argumentOffset + 1) {
         final List<PsiExpression> expressions = getVarargs(arguments[argumentOffset]);
@@ -160,8 +157,7 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
     return null;
   }
 
-  @Nullable
-  private static PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
+  private static @Nullable PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
     if (expression instanceof PsiTypeCastExpression typeCast) {
       final PsiTypeElement castElement = typeCast.getCastType();
       if (castElement != null && castElement.getType().equalsToText(JAVA_LANG_OBJECT)) {

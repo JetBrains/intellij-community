@@ -54,20 +54,17 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     this(suspendContext, frameProxy, () -> frameProxy != null ? frameProxy.thisObject() : null);
   }
 
-  @Nullable
   @Override
-  public Value computeThisObject() throws EvaluateException {
+  public @Nullable Value computeThisObject() throws EvaluateException {
     return myThisObject.getValue();
   }
 
-  @NotNull
   @Override
-  public SuspendContextImpl getSuspendContext() {
+  public @NotNull SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
   }
 
-  @NotNull
-  public VirtualMachineProxyImpl getVirtualMachineProxy() {
+  public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
     return mySuspendContext.getVirtualMachineProxy();
   }
 
@@ -76,9 +73,8 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     return myFrameProxy;
   }
 
-  @NotNull
   @Override
-  public DebugProcessImpl getDebugProcess() {
+  public @NotNull DebugProcessImpl getDebugProcess() {
     return getSuspendContext().getDebugProcess();
   }
 
@@ -99,9 +95,8 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     return copy;
   }
 
-  @Nullable
   @Override
-  public ClassLoaderReference getClassLoader() throws EvaluateException {
+  public @Nullable ClassLoaderReference getClassLoader() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myClassLoader != null) {
       return myClassLoader;

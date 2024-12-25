@@ -141,10 +141,9 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     Type getLType() throws ClassNotLoadedException, EvaluateException;
   }
 
-  @Nullable
-  private static ExpressionEvaluator tryDirectAssignment(@NotNull XExpression expression,
-                                                         @Nullable Type varType,
-                                                         @NotNull EvaluationContextImpl evaluationContext) {
+  private static @Nullable ExpressionEvaluator tryDirectAssignment(@NotNull XExpression expression,
+                                                                   @Nullable Type varType,
+                                                                   @NotNull EvaluationContextImpl evaluationContext) {
     if (varType instanceof LongType) {
       try {
         return new ExpressionEvaluatorImpl(new IdentityEvaluator(
@@ -195,7 +194,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     }
   }
 
-  protected void set(@NotNull final XExpression expression,
+  protected void set(final @NotNull XExpression expression,
                      final XModificationCallback callback,
                      final DebuggerContextImpl debuggerContext,
                      final SetValueRunnable setValueRunnable) {
@@ -239,9 +238,8 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
               }
             }
 
-            @Nullable
             @Override
-            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+            public @Nullable Type getLType() throws EvaluateException, ClassNotLoadedException {
               return setValueRunnable.getLType();
             }
           });

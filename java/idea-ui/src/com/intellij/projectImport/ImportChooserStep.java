@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.projectImport;
 
@@ -33,8 +33,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
 
   private final List<? extends ProjectImportProvider> myProviders;
   private final StepSequence mySequence;
-  @Nullable
-  private ProjectImportProvider myFromSourcesProvider;
+  private @Nullable ProjectImportProvider myFromSourcesProvider;
   private JBList myList;
   private JPanel myPanel;
 
@@ -136,8 +135,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     }
   }
 
-  @Unmodifiable
-  private static List<ProjectImportProvider> sorted(@Unmodifiable List<? extends ProjectImportProvider> providers) {
+  private static @Unmodifiable List<ProjectImportProvider> sorted(@Unmodifiable List<? extends ProjectImportProvider> providers) {
     return ContainerUtil.sorted(providers, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
   }
 
@@ -179,8 +177,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
   }
 
   @Override
-  @NonNls
-  public String getHelpId() {
+  public @NonNls String getHelpId() {
     return "reference.dialogs.new.project.import";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.classpath;
 
 import com.intellij.ide.CommonActionsManager;
@@ -56,8 +56,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -116,12 +116,11 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     return myTree;
   }
 
-  @NotNull
-  public List<Library> getSelectedLibraries() {
+  public @NotNull List<Library> getSelectedLibraries() {
     return myResult == null ? Collections.emptyList() : myResult;
   }
 
-  protected void queueUpdateAndSelect(@NotNull final Library library) {
+  protected void queueUpdateAndSelect(final @NotNull Library library) {
     myModel.invalidateAsync().thenRun(() -> {
       ((TreeVisitor.Acceptor)myTree.getModel()).accept(path -> {
         return TreeVisitor.Action.CONTINUE; // traverse to update myParentsMap
@@ -158,8 +157,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     myModel = new StructureTreeModel<>(new MyStructure(getProject()), WeightBasedComparator.FULL_INSTANCE, myDisposable);
     myTree.setModel(new AsyncTreeModel(myModel, myDisposable));
 
@@ -191,8 +189,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     return pane;
   }
 
-  @NotNull
-  protected Project getProject() {
+  protected @NotNull Project getProject() {
     return ProjectManager.getInstance().getDefaultProject();
   }
 
@@ -341,9 +338,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       myProject = project;
     }
 
-    @NotNull
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       return ApplicationManager.getApplication();
     }
 
@@ -371,9 +367,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       throw new AssertionError();
     }
 
-    @NotNull
     @Override
-    public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+    public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       if (element instanceof Application) return new RootDescriptor(myProject);
       if (element instanceof Project project) return new ProjectDescriptor(myProject, project);
       if (element instanceof Module module) return new ModuleDescriptor(myProject, parentDescriptor, module);

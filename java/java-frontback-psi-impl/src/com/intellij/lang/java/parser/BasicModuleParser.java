@@ -33,8 +33,7 @@ public class BasicModuleParser {
     myJavaElementTypeContainer = parser.getJavaElementTypeFactory().getContainer();
   }
 
-  @Nullable
-  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     PsiBuilder.Marker module = builder.mark();
 
     PsiBuilder.Marker firstAnnotation = myParser.getDeclarationParser().parseAnnotations(builder);
@@ -211,8 +210,7 @@ public class BasicModuleParser {
     return parsePackageStatement(builder, statement, myJavaElementTypeContainer.OPENS_STATEMENT);
   }
 
-  @NotNull
-  private PsiBuilder.Marker parsePackageStatement(PsiBuilder builder, PsiBuilder.Marker statement, IElementType type) {
+  private @NotNull PsiBuilder.Marker parsePackageStatement(PsiBuilder builder, PsiBuilder.Marker statement, IElementType type) {
     boolean hasError = false;
 
     if (parseClassOrPackageRef(builder) != null) {

@@ -16,8 +16,8 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,8 +35,7 @@ public final class UnnecessaryLabelOnContinueStatementInspection
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.label.on.continue.statement.problem.descriptor");
   }
@@ -49,8 +48,7 @@ public final class UnnecessaryLabelOnContinueStatementInspection
   private static class UnnecessaryLabelOnContinueStatementFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.label.remove.quickfix");
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -57,11 +57,10 @@ public abstract class ArrayAction extends DebuggerAction {
       .onSuccess(newRenderer -> setArrayRenderer(newRenderer, node, debuggerContext));
   }
 
-  @NotNull
-  protected abstract Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
-                                                              ArrayRenderer original,
-                                                              @NotNull DebuggerContextImpl debuggerContext,
-                                                              String title);
+  protected abstract @NotNull Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
+                                                                       ArrayRenderer original,
+                                                                       @NotNull DebuggerContextImpl debuggerContext,
+                                                                       String title);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -78,8 +77,7 @@ public abstract class ArrayAction extends DebuggerAction {
     return ActionUpdateThread.BGT;
   }
 
-  @Nullable
-  public static ArrayRenderer getArrayRenderer(XValue value) {
+  public static @Nullable ArrayRenderer getArrayRenderer(XValue value) {
     if (value instanceof JavaValue) {
       ValueDescriptorImpl descriptor = ((JavaValue)value).getDescriptor();
       Renderer lastRenderer = descriptor.getLastRenderer();
@@ -165,12 +163,11 @@ public abstract class ArrayAction extends DebuggerAction {
   }
 
   public static class AdjustArrayRangeAction extends ArrayAction {
-    @NotNull
     @Override
-    protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
-                                                       ArrayRenderer original,
-                                                       @NotNull DebuggerContextImpl debuggerContext,
-                                                       @NlsContexts.ConfigurableName String title) {
+    protected @NotNull Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
+                                                                ArrayRenderer original,
+                                                                @NotNull DebuggerContextImpl debuggerContext,
+                                                                @NlsContexts.ConfigurableName String title) {
       ArrayRenderer clonedRenderer = original.clone();
       clonedRenderer.setForced(true);
       if (ShowSettingsUtil.getInstance().editConfigurable(debuggerContext.getProject(), new NamedArrayConfigurable(title, clonedRenderer))) {
@@ -181,12 +178,11 @@ public abstract class ArrayAction extends DebuggerAction {
   }
 
   public static class FilterArrayAction extends ArrayAction {
-    @NotNull
     @Override
-    protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
-                                                       ArrayRenderer original,
-                                                       @NotNull DebuggerContextImpl debuggerContext,
-                                                       String title) {
+    protected @NotNull Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
+                                                                ArrayRenderer original,
+                                                                @NotNull DebuggerContextImpl debuggerContext,
+                                                                String title) {
       ArrayFilterInplaceEditor.editParent(node);
       return Promises.rejectedPromise();
     }

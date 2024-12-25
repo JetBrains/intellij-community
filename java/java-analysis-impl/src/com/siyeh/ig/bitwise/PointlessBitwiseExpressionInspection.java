@@ -16,10 +16,10 @@
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -48,8 +48,7 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
   static final @NotNull TokenSet bitwiseTokens = TokenSet.create(AND, OR, XOR, LTLT, GTGT, GTGTGT);
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final String replacementExpression = calculateReplacementExpression(expression, new CommentTracker());
     return InspectionGadgetsBundle.message(
@@ -203,8 +202,7 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
   private class PointlessBitwiseFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "pointless.bitwise.expression.simplify.quickfix");
     }

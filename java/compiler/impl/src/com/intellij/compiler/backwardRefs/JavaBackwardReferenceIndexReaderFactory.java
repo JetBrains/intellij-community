@@ -41,8 +41,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
   }
 
   @Override
-  @Nullable
-  public BackwardReferenceReader create(Project project) {
+  public @Nullable BackwardReferenceReader create(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
 
     if (!CompilerReferenceIndex.exists(buildDir) || CompilerReferenceIndex.versionDiffers(buildDir, expectedIndexVersion())) {
@@ -117,8 +116,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
      * 2nd map: candidates. One need to check that these classes are really direct inheritors
      */
     @Override
-    @NotNull
-    public Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
+    public @NotNull Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
                                                             @NotNull GlobalSearchScope searchScope,
                                                             @NotNull GlobalSearchScope dirtyScope,
                                                             @NotNull FileType fileType,
@@ -147,8 +145,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     }
 
     @Override
-    @Nullable
-    public Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions) {
+    public @Nullable Integer getAnonymousCount(@NotNull CompilerRef.CompilerClassHierarchyElementDef classDef, boolean checkDefinitions) {
       try {
         if (checkDefinitions && getDefinitionCount(classDef) != DefCount.ONE) {
           return null;
@@ -326,8 +323,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
       return getDefinitionCount(def) == DefCount.MANY;
     }
 
-    @NotNull
-    private DefCount getDefinitionCount(CompilerRef def) throws StorageException {
+    private @NotNull DefCount getDefinitionCount(CompilerRef def) throws StorageException {
       DefCount[] result = new DefCount[]{DefCount.NONE};
       myIndex.get(JavaCompilerIndices.BACK_CLASS_DEF).withData(def, container -> container.forEach((id, value) -> {
         if (result[0] == DefCount.NONE) {

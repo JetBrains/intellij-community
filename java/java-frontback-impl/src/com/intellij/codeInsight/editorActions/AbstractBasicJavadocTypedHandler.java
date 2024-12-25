@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -30,9 +30,8 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
   protected AbstractBasicJavadocTypedHandler() {
   }
 
-  @NotNull
   @Override
-  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (isJavaFile(file)) {
       if (!insertClosingTagIfNecessary(c, project, editor, file)) {
         adjustStartIndent(c, editor, file);
@@ -122,8 +121,7 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
    * @param afterTagOffset offset that points after
    * @return tag name if the one is parsed; {@code null} otherwise
    */
-  @Nullable
-  public static String getTagName(@NotNull CharSequence text, int afterTagOffset) {
+  public static @Nullable String getTagName(@NotNull CharSequence text, int afterTagOffset) {
     if (afterTagOffset > text.length()) {
       return null;
     }
@@ -211,8 +209,7 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
     return paramRange.getEndOffset() == bracketOffset;
   }
 
-  @Nullable
-  private static ASTNode getDocumentingParameter(@NotNull ASTNode tag) {
+  private static @Nullable ASTNode getDocumentingParameter(@NotNull ASTNode tag) {
     for (ASTNode element = tag.getFirstChildNode(); element != null; element = element.getTreeNext()) {
       if (BasicJavaAstTreeUtil.is(element, BASIC_DOC_PARAMETER_REF)) {
         return element;

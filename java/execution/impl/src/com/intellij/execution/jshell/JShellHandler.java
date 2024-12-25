@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.ExecutionBundle;
@@ -8,8 +8,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleState;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewRunningState;
-import com.intellij.execution.jshell.protocol.Event;
 import com.intellij.execution.jshell.protocol.*;
+import com.intellij.execution.jshell.protocol.Event;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -50,8 +50,8 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
@@ -301,8 +301,7 @@ public final class JShellHandler {
     RunContentManager.getInstance(myProject).toFrontRunContent(EXECUTOR, myRunContent);
   }
 
-  @Nullable
-  public Future<Response> evaluate(@NotNull String code) {
+  public @Nullable Future<Response> evaluate(@NotNull String code) {
     return StringUtil.isEmptyOrSpaces(code) ? null : myTaskQueue.submit(() -> sendInput(new Request(nextUid(), Request.Command.EVAL, code)));
   }
 
@@ -314,8 +313,7 @@ public final class JShellHandler {
     return UUID.randomUUID().toString();
   }
 
-  @Nullable
-  private Response sendInput(final Request request) {
+  private @Nullable Response sendInput(final Request request) {
     final boolean alive = !myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated();
     if (alive) {
       // consume evaluation classpath, if any
@@ -485,9 +483,8 @@ public final class JShellHandler {
   private static class MyConsoleView extends ConsoleViewImpl {
     MyConsoleView(Project project) {
       super(project, GlobalSearchScope.allScope(project), true, new ConsoleState.NotStartedStated() {
-        @NotNull
         @Override
-        public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
+        public @NotNull ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
           // do not automatically display all the text that is sent/recieved between processes
           // the ootput from console will be formatted and sent to console view
           return new ConsoleViewRunningState(console, processHandler, this, false, false);

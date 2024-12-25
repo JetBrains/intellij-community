@@ -164,8 +164,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return result;
   }
 
-  @NotNull
-  private ClassInfo parseClassDescription(String superClass, String[] superInterfaces) {
+  private @NotNull ClassInfo parseClassDescription(String superClass, String[] superInterfaces) {
     ClassInfo result = new ClassInfo();
     result.typeParameters = TypeParametersDeclaration.EMPTY;
     if (superClass != null) {
@@ -512,8 +511,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static class ClassInfo {
     private TypeParametersDeclaration typeParameters;
     private TypeInfo superType;
-    @Unmodifiable
-    private List<TypeInfo> interfaces;
+    private @Unmodifiable List<TypeInfo> interfaces;
   }
 
   private static class MethodInfo {

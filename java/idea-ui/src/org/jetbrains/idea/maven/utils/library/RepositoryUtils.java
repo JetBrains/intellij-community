@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.jarRepository.JarHttpDownloaderJps;
@@ -107,8 +107,8 @@ public final class RepositoryUtils {
     return FileUtil.toSystemDependentName(PathUtil.getParentPath(trimmedStart));
   }
 
-  public static Promise<List<OrderRoot>> loadDependenciesToLibrary(@NotNull final Project project,
-                                                                   @NotNull final LibraryEx library,
+  public static Promise<List<OrderRoot>> loadDependenciesToLibrary(final @NotNull Project project,
+                                                                   final @NotNull LibraryEx library,
                                                                    boolean downloadSources,
                                                                    boolean downloadJavaDocs,
                                                                    @Nullable String copyTo) {
@@ -198,8 +198,7 @@ public final class RepositoryUtils {
       });
   }
 
-  @NotNull
-  private static Boolean libraryRootsEqual(@NotNull LibraryEx library, String[] annotationUrls, String[] excludedRootUrls, List<OrderRoot> roots) {
+  private static @NotNull Boolean libraryRootsEqual(@NotNull LibraryEx library, String[] annotationUrls, String[] excludedRootUrls, List<OrderRoot> roots) {
     List<String> allRootUrls = new ArrayList<>();
 
     Set<Pair<OrderRootType, String>> actualRoots = new HashSet<>();
@@ -235,7 +234,7 @@ public final class RepositoryUtils {
     return true;
   }
 
-  public static Promise<?> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
+  public static Promise<?> reloadDependencies(final @NotNull Project project, final @NotNull LibraryEx library) {
     if (JarHttpDownloaderJps.enabled()) {
       Promise<?> promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(library);
 
@@ -266,8 +265,8 @@ public final class RepositoryUtils {
     return mavenResolverPromise;
   }
 
-  public static Promise<?> deleteAndReloadDependencies(@NotNull final Project project,
-                                                                     @NotNull final LibraryEx library) throws IOException {
+  public static Promise<?> deleteAndReloadDependencies(final @NotNull Project project,
+                                                       final @NotNull LibraryEx library) throws IOException {
     LOG.debug("start deleting files in library " + library.getName());
     var filesToDelete = new ArrayList<VirtualFile>();
     for (var rootType : OrderRootType.getAllTypes()) {

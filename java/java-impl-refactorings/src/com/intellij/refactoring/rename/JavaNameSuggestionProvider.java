@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -20,8 +20,7 @@ import java.util.stream.Collectors;
 
 public final class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Override
-  @Nullable
-  public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
+  public @Nullable SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return null;
     String initialName = UsageViewUtil.getShortName(element);
     SuggestedNameInfo info = suggestNamesForElement(element, nameSuggestionContext);
@@ -63,8 +62,7 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
     return info;
   }
 
-  @Nullable
-  private static String getSuperMethodName(final PsiParameter psiParameter, final PsiMethod method) {
+  private static @Nullable String getSuperMethodName(final PsiParameter psiParameter, final PsiMethod method) {
     final int index = method.getParameterList().getParameterIndex(psiParameter);
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
@@ -117,8 +115,7 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
     return buffer.toString();
   }
 
-  @Nullable
-  private static SuggestedNameInfo suggestNamesForElement(final PsiElement element, PsiElement nameSuggestionContext) {
+  private static @Nullable SuggestedNameInfo suggestNamesForElement(final PsiElement element, PsiElement nameSuggestionContext) {
     PsiVariable var = null;
     if (element instanceof PsiVariable) {
       var = (PsiVariable)element;

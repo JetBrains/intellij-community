@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -31,9 +31,8 @@ public final class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLo
   private static final CallMatcher SET_REMOVE_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_SET, "removeAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -80,8 +79,7 @@ public final class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLo
    * @param collection a collection to get the range of possible values for its size
    * @return the set of possible values for the collection size
    */
-  @NotNull
-  public static LongRangeSet getSizeRangeOfCollection(PsiExpression collection) {
+  public static @NotNull LongRangeSet getSizeRangeOfCollection(PsiExpression collection) {
     final SpecialField lengthField = SpecialField.COLLECTION_SIZE;
     final DfType origType = CommonDataflow.getDfType(collection);
     final DfType length = lengthField.getFromQualifier(origType);
@@ -97,17 +95,13 @@ public final class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLo
       myExpressionText = string;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myExpressionText);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.slow.abstract.set.remove.all.fix.family.name");
     }
 

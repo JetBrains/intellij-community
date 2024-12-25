@@ -18,8 +18,8 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -31,14 +31,12 @@ import org.jetbrains.annotations.NotNull;
 public class LongLiteralsEndingWithLowercaseLInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "LongLiteralEndingWithLowercaseL";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "long.literals.ending.with.lowercase.l.problem.descriptor");
   }
@@ -56,8 +54,7 @@ public class LongLiteralsEndingWithLowercaseLInspection extends BaseInspection i
   private static class LongLiteralFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", "l", "L");
     }
 

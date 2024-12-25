@@ -41,8 +41,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
   public boolean ignoreAssignments = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.this.problem.descriptor");
   }
 
@@ -60,8 +59,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
   private static class UnnecessaryThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 

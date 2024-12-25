@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ModuleSourceSet;
@@ -159,8 +159,7 @@ public final class CompileScopeUtil {
     return allModules.isEmpty();
   }
 
-  @Unmodifiable
-  public static List<String> fetchFiles(CompileContextImpl context) {
+  public static @Unmodifiable List<String> fetchFiles(CompileContextImpl context) {
     if (context.isRebuild()) {
       return Collections.emptyList();
     }

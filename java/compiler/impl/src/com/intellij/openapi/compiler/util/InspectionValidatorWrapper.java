@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
@@ -64,8 +64,7 @@ public class InspectionValidatorWrapper implements Validator {
     myValidator = validator;
   }
 
-  @NotNull
-  public static InspectionValidatorWrapper create(@NotNull Project project, @NotNull InspectionValidator validator) {
+  public static @NotNull InspectionValidatorWrapper create(@NotNull Project project, @NotNull InspectionValidator validator) {
     return new InspectionValidatorWrapper(
       CompilerManager.getInstance(project),
       InspectionManager.getInstance(project),
@@ -80,8 +79,7 @@ public class InspectionValidatorWrapper implements Validator {
     return ourCompilationThreads.get().booleanValue();
   }
 
-  @Unmodifiable
-  private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file, @NotNull LocalInspectionTool inspectionTool) {
+  private static @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file, @NotNull LocalInspectionTool inspectionTool) {
     InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
     GlobalInspectionContext context = inspectionManager.createNewGlobalContext();
     return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
@@ -98,14 +96,12 @@ public class InspectionValidatorWrapper implements Validator {
     }
 
     @Override
-    @NotNull
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return myVirtualFile;
     }
 
     @Override
-    @Nullable
-    public ValidityState getValidityState() {
+    public @Nullable ValidityState getValidityState() {
       if (myValidityState == null) {
         myValidityState = computeValidityState();
       }
@@ -123,8 +119,7 @@ public class InspectionValidatorWrapper implements Validator {
       return state;
     }
 
-    @Nullable 
-    public PsiFile getPsiFile() {
+    public @Nullable PsiFile getPsiFile() {
       return myVirtualFile.isValid() ? myPsiManager.findFile(myVirtualFile) : null;
     }
   }
@@ -247,8 +242,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myValidator.getId();
   }
 
@@ -300,10 +294,9 @@ public class InspectionValidatorWrapper implements Validator {
     return errorsReported;
   }
 
-  @NotNull
-  private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(PsiFile file,
-                                                                                 LocalInspectionTool inspectionTool,
-                                                                                 HighlightDisplayLevel level) {
+  private static @NotNull Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(PsiFile file,
+                                                                                          LocalInspectionTool inspectionTool,
+                                                                                          HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new java.util.LinkedHashMap<>();
     for (ProblemDescriptor descriptor : runInspectionOnFile(file, inspectionTool)) {
       ProblemHighlightType highlightType = descriptor.getHighlightType();
@@ -370,9 +363,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @Override
-  @NotNull
-  @Nls
-  public String getDescription() {
+  public @NotNull @Nls String getDescription() {
     return myValidator.getDescription();
   }
 

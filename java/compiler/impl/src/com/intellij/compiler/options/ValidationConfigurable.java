@@ -70,8 +70,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "project.validation";
   }
 
@@ -137,8 +136,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     myExcludedConfigurable.reset();
   }
 
-  @Unmodifiable
-  private List<Validator> getMarkedValidators(@NotNull List<Validator> validators) {
+  private @Unmodifiable List<Validator> getMarkedValidators(@NotNull List<Validator> validators) {
     return ContainerUtil.mapNotNull(validators, (NullableFunction<Validator, Validator>)validator -> myConfiguration.isSelected(validator) ? validator : null);
   }
 
@@ -155,7 +153,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   private void createUIComponents() {
     myValidators = new ElementsChooser<>(true) {
       @Override
-      protected String getItemText(@NotNull final Validator validator) {
+      protected String getItemText(final @NotNull Validator validator) {
         return validator.getDescription();
       }
     };

@@ -106,8 +106,7 @@ final class Java9GenerateModuleDescriptorsAction extends AnAction {
       });
   }
 
-  @NotNull
-  private static List<ModuleFiles> collectClassFiles(@NotNull Project project) {
+  private static @NotNull List<ModuleFiles> collectClassFiles(@NotNull Project project) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setIndeterminate(true);
     indicator.setText(JavaRefactoringBundle.message("generate.module.descriptors.scanning.message"));
@@ -162,12 +161,11 @@ final class Java9GenerateModuleDescriptorsAction extends AnAction {
     return moduleFiles;
   }
 
-  private static boolean mayContainModuleInfo(@NotNull final Module module) {
+  private static boolean mayContainModuleInfo(final @NotNull Module module) {
     return ReadAction.compute(() -> JavaFeature.MODULES.isSufficient(LanguageLevelUtil.getEffectiveLanguageLevel(module)));
   }
 
-  @NotNull
-  private static List<Path> collectClassFiles(@Nullable Path file) throws IOException {
+  private static @NotNull List<Path> collectClassFiles(@Nullable Path file) throws IOException {
     if (file == null || !Files.exists(file)) return Collections.emptyList();
     try (Stream<Path> stream = Files.walk(file)) {
       final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(CLASS_FILE_PATTERN);

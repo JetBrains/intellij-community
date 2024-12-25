@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -75,8 +75,7 @@ public final class ReassignedVariableInspection extends AbstractBaseJavaLocalIns
       }
     }
 
-    @NotNull
-    private static String getReassignedMessage(PsiVariable variable) {
+    private static @NotNull String getReassignedMessage(PsiVariable variable) {
       return JavaBundle.message(
         variable instanceof PsiLocalVariable ? "tooltip.reassigned.local.variable" : "tooltip.reassigned.parameter");
     }

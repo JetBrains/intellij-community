@@ -60,8 +60,7 @@ public final class BoolUtils {
     return parent instanceof PsiExpression && isNegation((PsiExpression)parent);
   }
 
-  @Nullable
-  public static PsiExpression getNegated(PsiExpression expression) {
+  public static @Nullable PsiExpression getNegated(PsiExpression expression) {
     if (!(expression instanceof PsiPrefixExpression prefixExpression)) {
       return null;
     }
@@ -74,13 +73,11 @@ public final class BoolUtils {
     return stripped == null ? operand : stripped;
   }
 
-  @NotNull
-  public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
+  public static @NotNull String getNegatedExpressionText(@Nullable PsiExpression condition) {
     return getNegatedExpressionText(condition, new CommentTracker());
   }
 
-  @NotNull
-  public static String getNegatedExpressionText(@Nullable PsiExpression condition, CommentTracker tracker) {
+  public static @NotNull String getNegatedExpressionText(@Nullable PsiExpression condition, CommentTracker tracker) {
     return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES, tracker);
   }
 
@@ -158,10 +155,9 @@ public final class BoolUtils {
     return null;
   }
 
-  @NotNull
-  public static String getNegatedExpressionText(@Nullable PsiExpression expression,
-                                                int precedence,
-                                                CommentTracker tracker) {
+  public static @NotNull String getNegatedExpressionText(@Nullable PsiExpression expression,
+                                                         int precedence,
+                                                         CommentTracker tracker) {
     if (expression == null) {
       return "";
     }
@@ -261,8 +257,7 @@ public final class BoolUtils {
     return '!' + ParenthesesUtils.getText(tracker.markUnchanged(expression), ParenthesesUtils.PREFIX_PRECEDENCE);
   }
 
-  @Nullable
-  public static PsiExpression findNegation(PsiExpression expression) {
+  public static @Nullable PsiExpression findNegation(PsiExpression expression) {
     PsiExpression ancestor = expression;
     PsiElement parent = ancestor.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
@@ -283,7 +278,7 @@ public final class BoolUtils {
     if (!(expression instanceof PsiLiteralExpression literalExpression)) {
       return false;
     }
-    @NonNls final String text = literalExpression.getText();
+    final @NonNls String text = literalExpression.getText();
     return PsiKeyword.TRUE.equals(text) || PsiKeyword.FALSE.equals(text);
   }
 

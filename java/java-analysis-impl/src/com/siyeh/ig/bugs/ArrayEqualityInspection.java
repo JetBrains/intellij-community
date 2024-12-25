@@ -34,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ArrayEqualityInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "array.comparison.problem.descriptor");
   }
@@ -58,15 +57,13 @@ public final class ArrayEqualityInspection extends BaseInspection {
       this.deepEquals = deepEquals;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", deepEquals ? "Arrays.deepEquals()" : "Arrays.equals()");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Arrays.equals()");
     }
 
@@ -78,7 +75,7 @@ public final class ArrayEqualityInspection extends BaseInspection {
       }
       CommentTracker commentTracker = new CommentTracker();
       final IElementType tokenType = binaryExpression.getOperationTokenType();
-      @NonNls final StringBuilder newExpressionText = new StringBuilder();
+      final @NonNls StringBuilder newExpressionText = new StringBuilder();
       if (JavaTokenType.NE.equals(tokenType)) {
         newExpressionText.append('!');
       }

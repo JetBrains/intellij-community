@@ -37,8 +37,7 @@ public final class ExpectedTypeUtils {
 
   private ExpectedTypeUtils() {}
 
-  @Nullable
-  public static PsiType findExpectedType(@NotNull PsiExpression expression, boolean calculateTypeForComplexReferences) {
+  public static @Nullable PsiType findExpectedType(@NotNull PsiExpression expression, boolean calculateTypeForComplexReferences) {
     return findExpectedType(expression, calculateTypeForComplexReferences, false);
   }
 
@@ -70,7 +69,7 @@ public final class ExpectedTypeUtils {
                       JavaTokenType.OREQ, JavaTokenType.XOREQ, JavaTokenType.PERCEQ, JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ,
                       JavaTokenType.GTGTGTEQ);
 
-    @NotNull private final PsiExpression wrappedExpression;
+    private final @NotNull PsiExpression wrappedExpression;
     private final boolean calculateTypeForComplexReferences;
     private final boolean reportCasts;
     private PsiType expectedType = null;
@@ -447,8 +446,7 @@ public final class ExpectedTypeUtils {
       }
     }
 
-    @NotNull
-    private static JavaResolveResult findCalledMethod(PsiExpressionList expressionList) {
+    private static @NotNull JavaResolveResult findCalledMethod(PsiExpressionList expressionList) {
       final PsiElement parent = expressionList.getParent();
       if (parent instanceof PsiCall call) {
         return call.resolveMethodGenerics();
@@ -521,8 +519,7 @@ public final class ExpectedTypeUtils {
       }
     }
 
-    @Nullable
-    private static PsiMethod findDeepestVisibleSuperMethod(PsiMethod method, PsiType returnType, PsiElement element) {
+    private static @Nullable PsiMethod findDeepestVisibleSuperMethod(PsiMethod method, PsiType returnType, PsiElement element) {
       if (method.isConstructor()) {
         return null;
       }
@@ -619,8 +616,7 @@ public final class ExpectedTypeUtils {
       return ArrayUtil.indexOf(expressionList.getExpressions(), expression);
     }
 
-    @Nullable
-    private static PsiType getTypeOfParameter(@NotNull JavaResolveResult result, int parameterPosition) {
+    private static @Nullable PsiType getTypeOfParameter(@NotNull JavaResolveResult result, int parameterPosition) {
       if (parameterPosition < 0 ) {
         return null;
       }

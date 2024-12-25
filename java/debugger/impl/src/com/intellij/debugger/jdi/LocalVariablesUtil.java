@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.SourcePosition;
@@ -272,10 +272,9 @@ public final class LocalVariablesUtil {
     throw new NoSuchMethodException(aClass.getName() + "." + methodName);
   }
 
-  @NotNull
-  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(VirtualMachineProxyImpl vm,
-                                                                            Location location,
-                                                                            MultiMap<Integer, String> namesMap) {
+  private static @NotNull List<DecompiledLocalVariable> collectVariablesFromBytecode(VirtualMachineProxyImpl vm,
+                                                                                     Location location,
+                                                                                     MultiMap<Integer, String> namesMap) {
     if (!vm.canGetBytecodes() || !vm.canGetConstantPool()) {
       return Collections.emptyList();
     }
@@ -334,8 +333,7 @@ public final class LocalVariablesUtil {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
+  private static @NotNull MultiMap<Integer, String> calcNames(final @NotNull StackFrameContext context, final int firstLocalsSlot) {
     SourcePosition position = ContextUtil.getSourcePosition(context);
     if (position != null) {
       return ReadAction.compute(() -> {

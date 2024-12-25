@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
@@ -20,20 +20,17 @@ import static com.siyeh.ig.callMatcher.CallMatcher.exactInstanceCall;
 
 public final class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new RedundantArrayForVarargVisitor(holder);
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "RedundantArrayCreation";
   }
 
@@ -46,9 +43,9 @@ public final class RedundantArrayForVarargsCallInspection extends AbstractBaseJa
 
     private static final LocalQuickFix redundantArrayForVarargsCallFixAction = new RedundantArrayForVarargsCallFix();
 
-    private @NotNull final ProblemsHolder myHolder;
+    private final @NotNull ProblemsHolder myHolder;
 
-    private RedundantArrayForVarargVisitor(@NotNull final ProblemsHolder holder) {
+    private RedundantArrayForVarargVisitor(final @NotNull ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -100,8 +97,7 @@ public final class RedundantArrayForVarargsCallInspection extends AbstractBaseJa
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return JavaBundle.message("inspection.redundant.array.creation.quickfix");
       }
     }

@@ -140,8 +140,7 @@ public final class CompilerTester {
     });
   }
 
-  @Nullable
-  public File findClassFile(String className, Module module) {
+  public @Nullable File findClassFile(String className, Module module) {
     VirtualFile out = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
     assertNotNull(out);
     File cls = new File(out.getPath(), className.replace('.', '/') + ".class");
@@ -310,7 +309,7 @@ public final class CompilerTester {
     }
 
     @Override
-    public void finished(boolean aborted, int errors, int warnings, @NotNull final CompileContext compileContext) {
+    public void finished(boolean aborted, int errors, int warnings, final @NotNull CompileContext compileContext) {
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
@@ -347,8 +346,7 @@ public final class CompilerTester {
       }
     }
 
-    @NotNull
-    public List<CompilerMessage> getMessages() {
+    public @NotNull List<CompilerMessage> getMessages() {
       return myMessages;
     }
   }

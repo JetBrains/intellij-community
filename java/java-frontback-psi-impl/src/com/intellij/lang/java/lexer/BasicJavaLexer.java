@@ -395,9 +395,8 @@ public class BasicJavaLexer extends LexerBase {
     return (char)result;
   }
 
-  @NotNull
   @Override
-  public CharSequence getBufferSequence() {
+  public @NotNull CharSequence getBufferSequence() {
     return myBuffer;
   }
 

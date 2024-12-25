@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -74,7 +74,7 @@ public abstract class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  protected boolean setEnabledInitializationPlaces(@NotNull final PsiExpression initializer) {
+  protected boolean setEnabledInitializationPlaces(final @NotNull PsiExpression initializer) {
     final Set<PsiField> fields = new HashSet<>();
     final Ref<Boolean> refsLocal = new Ref<>(false);
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {

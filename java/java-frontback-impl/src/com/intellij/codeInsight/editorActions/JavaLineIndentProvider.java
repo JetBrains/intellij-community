@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2024 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -37,7 +23,7 @@ import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
 
 public final class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
-  private final static Map<IElementType, SemanticEditorPosition.SyntaxElement> SYNTAX_MAP = Map.ofEntries(
+  private static final Map<IElementType, SemanticEditorPosition.SyntaxElement> SYNTAX_MAP = Map.ofEntries(
     Map.entry(TokenType.WHITE_SPACE, Whitespace),
     Map.entry(JavaTokenType.SEMICOLON, Semicolon),
     Map.entry(JavaTokenType.LBRACE, BlockOpeningBrace),
@@ -62,9 +48,8 @@ public final class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider
     Map.entry(JavaTokenType.TRY_KEYWORD, TryKeyword)
   );
 
-  @Nullable
   @Override
-  protected SemanticEditorPosition.SyntaxElement mapType(@NotNull IElementType tokenType) {
+  protected @Nullable SemanticEditorPosition.SyntaxElement mapType(@NotNull IElementType tokenType) {
     return SYNTAX_MAP.get(tokenType);
   }
 
@@ -73,11 +58,10 @@ public final class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider
     return language.isKindOf(JavaLanguage.INSTANCE);
   }
 
-  @Nullable
   @Override
-  protected Indent getIndentInBlock(@NotNull Project project,
-                                    @Nullable Language language,
-                                    @NotNull SemanticEditorPosition blockStartPosition) {
+  protected @Nullable Indent getIndentInBlock(@NotNull Project project,
+                                              @Nullable Language language,
+                                              @NotNull SemanticEditorPosition blockStartPosition) {
     SemanticEditorPosition beforeStart = blockStartPosition.before().beforeOptional(Whitespace);
     if (beforeStart.isAt(JavaTokenType.EQ) ||
         beforeStart.isAt(JavaTokenType.RBRACKET) ||

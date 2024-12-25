@@ -25,8 +25,8 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
   private final AnnotationDependencyVisitor myAnnotationVisitor = new AnnotationDependencyVisitor();
   private final DependencySignatureVisitor mySignatureVisitor = new DependencySignatureVisitor();
   private final DependencyFieldVisitor myFieldVisitor = new DependencyFieldVisitor();
-  @Nullable private final JvmBytecodeDeclarationProcessor myDeclarationProcessor;
-  @Nullable private final JvmBytecodeReferenceProcessor myReferenceProcessor;
+  private final @Nullable JvmBytecodeDeclarationProcessor myDeclarationProcessor;
+  private final @Nullable JvmBytecodeReferenceProcessor myReferenceProcessor;
 
   private JvmClassBytecodeDeclaration myCurrentClass;
 

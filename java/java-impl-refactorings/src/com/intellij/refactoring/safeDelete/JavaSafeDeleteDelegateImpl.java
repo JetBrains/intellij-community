@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.psi.*;
@@ -60,7 +60,7 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
       String[] signature = ((PsiDocMethodOrFieldRef)element).getSignature();
       PsiElement nameElement = ((PsiDocMethodOrFieldRef)element).getNameElement();
       if (signature != null && nameElement != null) {
-        @NonNls final StringBuffer newText = new StringBuffer();
+        final @NonNls StringBuffer newText = new StringBuffer();
         newText.append("/** @see #").append(nameElement.getText()).append('(');
         boolean hasParams = false;
         for (int i = 0; i < signature.length; i++) {

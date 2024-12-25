@@ -48,9 +48,9 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   private final ServerSocket myServerSocket;
   private ProgressIndicator myProcessIndicator;
   private boolean myAllowIndexInDumbMode;
-  @NotNull private Runnable myIncompleteIndexUsageCallback = EmptyRunnable.getInstance();
+  private @NotNull Runnable myIncompleteIndexUsageCallback = EmptyRunnable.getInstance();
 
-  public SearchForTestsTask(@Nullable final Project project,
+  public SearchForTestsTask(final @Nullable Project project,
                             final ServerSocket socket) {
     super(project, ExecutionBundle.message("searching.test.progress.title"), true);
     myServerSocket = socket;
@@ -90,13 +90,13 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   public void attachTaskToProcess(final OSProcessHandler handler) {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
+      public void processTerminated(final @NotNull ProcessEvent event) {
         handler.removeProcessListener(this);
         ensureFinished();
       }
 
       @Override
-      public void startNotified(@NotNull final ProcessEvent event) {
+      public void startNotified(final @NotNull ProcessEvent event) {
         startSearch();
       }
     });

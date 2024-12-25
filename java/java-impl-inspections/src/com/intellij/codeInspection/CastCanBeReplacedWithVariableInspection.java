@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -27,9 +27,8 @@ import java.util.Objects;
 public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLocalInspectionTool
   implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression typeCastExpression) {
@@ -64,10 +63,9 @@ public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJ
     };
   }
 
-  @Nullable
-  private static PsiVariable findReplacement(@NotNull PsiMethod method,
-                                             @NotNull PsiVariable castedVar,
-                                             @NotNull PsiTypeCastExpression expression) {
+  private static @Nullable PsiVariable findReplacement(@NotNull PsiMethod method,
+                                                       @NotNull PsiVariable castedVar,
+                                                       @NotNull PsiTypeCastExpression expression) {
     if (InstanceOfUtils.isUncheckedCast(expression)) return null;
     PsiTypeElement expressionCastType = expression.getCastType();
     if (expressionCastType == null) return null;
@@ -161,10 +159,10 @@ public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJ
     return occurrence != expression && occurrenceTextRange.getEndOffset() < expressionTextRange.getStartOffset();
   }
 
-  public static boolean isChangedBetween(@NotNull final PsiVariable variable,
-                                          @NotNull final PsiElement scope,
-                                          @NotNull final PsiElement start,
-                                          @NotNull final PsiElement end) {
+  public static boolean isChangedBetween(final @NotNull PsiVariable variable,
+                                         final @NotNull PsiElement scope,
+                                         final @NotNull PsiElement start,
+                                         final @NotNull PsiElement end) {
     if (variable.hasModifierProperty(PsiModifier.FINAL) || HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) {
       return false;
     }
@@ -183,8 +181,7 @@ public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJ
     return ControlFlowUtil.getWrittenVariables(controlFlow, startOffset, endOffset, true).contains(variable);
   }
 
-  @NotNull
-  private static PsiElement getBroadEnd(@NotNull PsiElement scope, @NotNull PsiElement start, @NotNull PsiElement end) {
+  private static @NotNull PsiElement getBroadEnd(@NotNull PsiElement scope, @NotNull PsiElement start, @NotNull PsiElement end) {
     List<PsiElement> parentsOfStart = new ArrayList<>();
     PsiElement currentElement = start.getParent();
 
@@ -207,8 +204,7 @@ public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJ
     return broadEnd;
   }
 
-  @Nullable
-  private static PsiLocalVariable getVariable(@NotNull PsiTypeCastExpression occurrence) {
+  private static @Nullable PsiLocalVariable getVariable(@NotNull PsiTypeCastExpression occurrence) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(occurrence.getParent());
 
     if (parent instanceof PsiLocalVariable localVariable) {
@@ -224,8 +220,7 @@ public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJ
     return null;
   }
 
-  @Nullable
-  private static PsiLocalVariable getVariable(@NotNull PsiAssignmentExpression occurrence) {
+  private static @Nullable PsiLocalVariable getVariable(@NotNull PsiAssignmentExpression occurrence) {
     if (PsiUtil.skipParenthesizedExprDown(occurrence.getRExpression()) instanceof PsiReferenceExpression referenceExpression &&
         referenceExpression.resolve() instanceof PsiLocalVariable localVariable) {
       return localVariable;
@@ -243,17 +238,13 @@ public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJ
       myVariableName = Objects.requireNonNull(variable.getName());
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", myText, myVariableName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.cast.can.be.replaced.with.variable.family.name");
     }
 

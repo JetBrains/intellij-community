@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -30,9 +30,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class IfStatementMissingBreakInLoopInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("inspection.if.statement.missing.break.in.loop.description");
   }
 
@@ -41,9 +40,8 @@ public final class IfStatementMissingBreakInLoopInspection extends BaseInspectio
     return new IfStatementMissingBreakInLoopVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new IfStatementMissingBreakInLoopFix();
   }
 
@@ -143,8 +141,7 @@ public final class IfStatementMissingBreakInLoopInspection extends BaseInspectio
       return getStatements(branch);
     }
 
-    @Nullable
-    private static PsiAssignmentExpression getAssignment(@NotNull PsiStatement statement) {
+    private static @Nullable PsiAssignmentExpression getAssignment(@NotNull PsiStatement statement) {
       if (!(statement instanceof PsiExpressionStatement)) return null;
       PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
       if (!(expression instanceof PsiAssignmentExpression assignment)) return null;
@@ -263,15 +260,12 @@ public final class IfStatementMissingBreakInLoopInspection extends BaseInspectio
       CodeStyleManager.getInstance(project).reformat(ifStatement);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.if.statement.missing.break.in.loop.quickfix");
     }
 
-    @Nullable
-    private static PsiCodeBlock getBlock(@NotNull PsiStatement thenBranch) {
+    private static @Nullable PsiCodeBlock getBlock(@NotNull PsiStatement thenBranch) {
       if (thenBranch instanceof PsiBlockStatement) return ((PsiBlockStatement)thenBranch).getCodeBlock();
       PsiStatement statementInBlock = BlockUtils.expandSingleStatementToBlockStatement(thenBranch);
       return tryCast(statementInBlock.getParent(), PsiCodeBlock.class);

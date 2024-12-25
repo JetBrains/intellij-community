@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.inlineSuperClass;
 
@@ -72,8 +72,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new InlineSuperClassUsageViewDescriptor(mySuperClass);
   }
 
@@ -225,7 +224,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts)), 
@@ -285,8 +284,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
            PsiTreeUtil.isAncestor(mySuperClass, targetClass, false);
   }
 
-  @Nullable
-  private static PsiType getPlaceExpectedType(PsiElement parent) {
+  private static @Nullable PsiType getPlaceExpectedType(PsiElement parent) {
     PsiType type = PsiTypesUtil.getExpectedTypeByParent(parent);
     if (type == null) {
       final PsiElement arg = PsiUtil.skipParenthesizedExprUp(parent);
@@ -350,32 +348,28 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     }
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(mySuperClass);
     data.addElements(myTargetClasses);
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElements(myTargetClasses);
     return data;
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.inline.class";
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     return myCurrentInheritor != null ? Collections.emptyList()
                                       : super.getElementsToWrite(descriptor);
   }
@@ -453,8 +447,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("inline.super.class");
   }
 }

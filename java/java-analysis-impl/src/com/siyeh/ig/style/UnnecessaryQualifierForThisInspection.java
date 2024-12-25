@@ -32,8 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public final class UnnecessaryQualifierForThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(infos[0] instanceof PsiThisExpression
                                            ? "unnecessary.qualifier.for.this.problem.descriptor"
                                            : "unnecessary.qualifier.for.super.problem.descriptor");
@@ -52,8 +51,7 @@ public final class UnnecessaryQualifierForThisInspection extends BaseInspection 
   private static class UnnecessaryQualifierForThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.qualifier.for.this.remove.quickfix");
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
@@ -6,13 +6,14 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Comparator;
 
 /**
  * @author Eugene Zhuravlev
@@ -43,8 +44,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   }
 
   @Override
-  @NotNull
-  public LanguageFileType getFileType() {
+  public @NotNull LanguageFileType getFileType() {
     return myDelegate.getFileType();
   }
 

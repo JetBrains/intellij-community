@@ -27,14 +27,12 @@ import org.jetbrains.annotations.NotNull;
 public final class ThreadStartInConstructionInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToThreadStartDuringObjectConstruction";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "thread.start.in.construction.problem.descriptor");
   }
@@ -75,7 +73,7 @@ public final class ThreadStartInConstructionInspection extends BaseInspection {
 
         final PsiReferenceExpression methodExpression =
           expression.getMethodExpression();
-        @NonNls final String methodName =
+        final @NonNls String methodName =
           methodExpression.getReferenceName();
         if (!"start".equals(methodName)) {
           return;

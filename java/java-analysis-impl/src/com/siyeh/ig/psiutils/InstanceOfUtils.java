@@ -106,8 +106,7 @@ public final class InstanceOfUtils {
     return checker.getConflictingInstanceof();
   }
 
-  @Nullable
-  private static PsiElement findInterestingParent(@NotNull PsiElement context) {
+  private static @Nullable PsiElement findInterestingParent(@NotNull PsiElement context) {
     while (true) {
       PsiElement parent = context.getParent();
       if (parent == null) return null;
@@ -168,8 +167,7 @@ public final class InstanceOfUtils {
    * @param cast a cast expression to find parent instanceof for
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast) {
+  public static @Nullable PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast) {
     return findPatternCandidate(cast, null);
   }
 
@@ -179,8 +177,7 @@ public final class InstanceOfUtils {
    *                 a narrower instanceof that would keep the semantics on the replacement is also could be found
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
+  public static @Nullable PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
     if (isUncheckedCast(cast)) return null;
     return findCorrespondingInstanceOf(cast, variable);
   }
@@ -201,8 +198,7 @@ public final class InstanceOfUtils {
    * Unlike {@link #findPatternCandidate(PsiTypeCastExpression)}, this may find a corresponding instanceof,
    * even if the cast is unchecked.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
+  public static @Nullable PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
     return findCorrespondingInstanceOf(cast, null);
   }
 
@@ -214,8 +210,7 @@ public final class InstanceOfUtils {
    * Unlike {@link #findPatternCandidate(PsiTypeCastExpression)}, this may find a corresponding instanceof,
    * even if the cast is unchecked.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
+  public static @Nullable PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
     PsiElement context = PsiUtil.skipParenthesizedExprUp(cast.getContext());
     if (context instanceof PsiLocalVariable) {
       context = context.getContext();
@@ -268,11 +263,10 @@ public final class InstanceOfUtils {
     return walkBackAndUpToFindInstanceOf(parent, operandVariable, variable, cast);
   }
 
-  @NotNull
-  private static ResultOfInstanceOf processOfPreviousStatements(@Nullable PsiElement context,
-                                                                @Nullable PsiVariable operandVariable,
-                                                                @Nullable PsiVariable variable,
-                                                                @NotNull PsiTypeCastExpression cast) {
+  private static @NotNull ResultOfInstanceOf processOfPreviousStatements(@Nullable PsiElement context,
+                                                                         @Nullable PsiVariable operandVariable,
+                                                                         @Nullable PsiVariable variable,
+                                                                         @NotNull PsiTypeCastExpression cast) {
     if (context == null) return new ResultOfInstanceOf(null, null);
     PsiElement parent = context.getContext();
     if (parent instanceof PsiCodeBlock) {

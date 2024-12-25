@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -26,7 +26,7 @@ import java.awt.*;
 @ApiStatus.Experimental
 public class CollectionBreakpointPropertiesPanel
   extends XBreakpointCustomPropertiesPanel<XLineBreakpoint<JavaCollectionBreakpointProperties>> {
-  private final static int PREFERRED_PANEL_HEIGHT = 40;
+  private static final int PREFERRED_PANEL_HEIGHT = 40;
   private @Nullable String myClsName = null;
   private @Nullable String myFieldName = null;
   private JCheckBox mySaveCollectionHistoryCheckBox;

@@ -40,13 +40,11 @@ public final class ExceptionUtils {
     s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_ERROR);
   }
 
-  @NotNull
-  public static Set<PsiClassType> calculateExceptionsThrown(@Nullable PsiElement element) {
+  public static @NotNull Set<PsiClassType> calculateExceptionsThrown(@Nullable PsiElement element) {
     return calculateExceptionsThrown(element, new LinkedHashSet<>(5));
   }
 
-  @NotNull
-  public static Set<PsiClassType> calculateExceptionsThrown(@Nullable PsiElement element, @NotNull Set<PsiClassType> out) {
+  public static @NotNull Set<PsiClassType> calculateExceptionsThrown(@Nullable PsiElement element, @NotNull Set<PsiClassType> out) {
     if (element == null) return out;
     if (element instanceof PsiResourceList resourceList) {
       for (PsiResourceListElement resource : resourceList) {

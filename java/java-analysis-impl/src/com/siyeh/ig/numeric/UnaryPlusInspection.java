@@ -17,10 +17,10 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -44,8 +44,7 @@ public final class UnaryPlusInspection extends BaseInspection {
   public boolean onlyReportInsideBinaryExpression = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unary.plus.problem.descriptor");
   }
 
@@ -72,10 +71,8 @@ public final class UnaryPlusInspection extends BaseInspection {
 
   private static class UnaryPlusFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unary.plus.quickfix");
     }
 
@@ -153,8 +150,7 @@ public final class UnaryPlusInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("prefix.operation.quickfix.family.name");
     }
 
-    @Nullable
-    static LocalQuickFix createFix(@NotNull PsiPrefixExpression prefixExpr) {
+    static @Nullable LocalQuickFix createFix(@NotNull PsiPrefixExpression prefixExpr) {
       final PsiExpression operand = prefixExpr.getOperand();
       boolean increment;
       if (isDesiredPrefixExpression(prefixExpr, true)) {
@@ -186,8 +182,7 @@ public final class UnaryPlusInspection extends BaseInspection {
       return null;
     }
 
-    @Nullable
-    private static LocalQuickFix createFix(@NotNull PsiReferenceExpression refExpr, boolean increment) {
+    private static @Nullable LocalQuickFix createFix(@NotNull PsiReferenceExpression refExpr, boolean increment) {
       final String refName = refExpr.getReferenceName();
       if (refName == null) {
         return null;

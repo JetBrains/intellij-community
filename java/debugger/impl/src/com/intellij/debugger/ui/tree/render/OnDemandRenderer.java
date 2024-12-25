@@ -21,10 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface OnDemandRenderer extends FullValueEvaluatorProvider {
-  @Nullable
   @Override
-  default XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
-                                                    @NotNull ValueDescriptorImpl valueDescriptor) {
+  default @Nullable XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
+                                                              @NotNull ValueDescriptorImpl valueDescriptor) {
     if (isOnDemand(evaluationContext, valueDescriptor) && !isCalculated(valueDescriptor)) {
       return createFullValueEvaluator(getLinkText());
     }

@@ -19,9 +19,8 @@ import org.jetbrains.annotations.PropertyKey;
 public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(ExtendsListFix.class);
 
-  @Nullable
-  @SafeFieldForPreview // we don't modify this class
-  protected final SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
+  // we don't modify this class
+  @SafeFieldForPreview protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
   private final boolean myToAdd;
   @SafeFieldForPreview // we don't modify PSI referenced from this type
   private final PsiClassType myTypeToExtendFrom;
@@ -60,14 +59,12 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myName;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("change.extends.list.family");
   }
 
