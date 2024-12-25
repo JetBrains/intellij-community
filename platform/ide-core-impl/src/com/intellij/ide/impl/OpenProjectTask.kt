@@ -23,6 +23,8 @@ data class OpenProjectTask @Internal constructor(
   val callback: ProjectOpenedCallback?,
   val line: Int,
   val column: Int,
+  @Deprecated("Not used")
+  val isRefreshVfsNeeded: Boolean,
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
    *
@@ -64,6 +66,7 @@ data class OpenProjectTask @Internal constructor(
     callback = null,
     line = -1,
     column = -1,
+    isRefreshVfsNeeded = true,
 
     runConfigurators = false,
     runConversionBeforeOpen = true,
@@ -117,6 +120,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   var preventIprLookup: Boolean = false
 
   var projectToClose: Project? = null
+  var isRefreshVfsNeeded: Boolean = true
 
   @Internal
   var beforeOpen: (suspend (Project) -> Boolean)? = null
@@ -152,6 +156,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
       preloadServices = preloadServices,
 
       projectToClose = projectToClose,
+      isRefreshVfsNeeded = isRefreshVfsNeeded,
 
       projectName = projectName,
       isNewProject = isNewProject,
