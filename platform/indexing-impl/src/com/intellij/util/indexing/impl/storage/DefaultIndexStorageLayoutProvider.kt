@@ -28,7 +28,8 @@ private val LOG = logger<DefaultIndexStorageLayoutProvider>()
 @VisibleForTesting
 class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
 
-  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
+  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>,
+                                otherApplicableProviders: Iterable<FileBasedIndexLayoutProvider>): VfsAwareIndexStorageLayout<K, V> {
     if (extension is SingleEntryFileBasedIndexExtension<V>) {
       @Suppress("UNCHECKED_CAST")
       return SingleEntryStorageLayout(extension) as VfsAwareIndexStorageLayout<K, V>
@@ -176,7 +177,7 @@ private fun <K, V> createDefaultFactories(extension: FileBasedIndexExtension<K, 
     }
   }
   val forwardFactory = ThrowableNotNullFunction<Int, ForwardIndex, IOException> { shardNo ->
-    var shardStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name, shardNo)
+    val shardStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name, shardNo)
     PersistentMapBasedForwardIndex(shardStorageFile, false, false, storageLockContexts[shardNo])
   }
   return StorageFactories(storageFactory, forwardFactory)

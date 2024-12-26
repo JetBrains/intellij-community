@@ -35,7 +35,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 class FakeStorageLayoutProvider : FileBasedIndexLayoutProvider {
-  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
+  override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>,
+                                otherApplicableProviders: Iterable<FileBasedIndexLayoutProvider>): VfsAwareIndexStorageLayout<K, V> {
     return FakeStorageLayout(extension)
   }
 

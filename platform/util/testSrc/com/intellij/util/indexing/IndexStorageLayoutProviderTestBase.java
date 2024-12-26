@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.*;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.KeysGenerator;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.InputData;
@@ -74,7 +74,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     try (IndexStorage<K, V> indexStorage = storageLayout.openIndexStorage()) {
@@ -133,7 +133,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     try (IndexStorage<K, V> indexStorage = storageLayout.openIndexStorage()) {
@@ -168,7 +168,8 @@ public abstract class IndexStorageLayoutProviderTestBase {
             return true;
           });
           if (!foundRef[0]) {
-            inconsistencies.add("container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + ")");
+            inconsistencies.add(
+              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + ")");
           }
         }
       }
@@ -193,7 +194,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     try (IndexStorage<K, V> indexStorage = storageLayout.openIndexStorage()) {
@@ -260,7 +261,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     ForwardIndexAccessor<K, V> forwardIndexAccessor = storageLayout.getForwardIndexAccessor();
@@ -315,7 +316,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     ForwardIndexAccessor<K, V> forwardIndexAccessor = storageLayout.getForwardIndexAccessor();
@@ -673,7 +674,6 @@ public abstract class IndexStorageLayoutProviderTestBase {
              ']';
     }
   }
-
 
 
   public static class SingleEntryIntegerValueIndexExtension extends SingleEntryFileBasedIndexExtension<Integer> {

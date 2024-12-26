@@ -25,6 +25,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -120,7 +121,7 @@ public class IndexStorageLayoutBenchmark {
       Class<FileBasedIndexLayoutProvider> providerClass = (Class)Class.forName(storageLayoutProviderClassName);
       storageLayoutProviderToTest = providerClass.getDeclaredConstructor().newInstance();
 
-      storageLayout = storageLayoutProviderToTest.getLayout(extension);
+      storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     }
 
     @Setup(Level.Iteration)

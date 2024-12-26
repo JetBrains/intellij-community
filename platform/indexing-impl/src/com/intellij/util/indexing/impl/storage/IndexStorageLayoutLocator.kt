@@ -42,18 +42,22 @@ object IndexStorageLayoutLocator {
     val prioritizedLayoutProviders = prioritizedLayoutProviders(forceTopProviderBean = customIndexLayoutProviderBean)
     val applicableLayoutProviders = prioritizedLayoutProviders.filter { it.layoutProvider.isApplicable(indexExtension) }
 
-    val providerBeanForExtension = applicableLayoutProviders.firstOrNull()
-    if (providerBeanForExtension == null) {
+    val primaryProviderBeanForExtension = applicableLayoutProviders.firstOrNull()
+    if (primaryProviderBeanForExtension == null) {
       //default provider should be applicable to anything, so this is an exceptional case:
       throw UnsupportedOperationException(
         "${indexExtension}: no suitable index storage provider was found in a " + prioritizedLayoutProviders.joinToString(separator = "\n")
       )
     }
 
-    log.info("Layout '${providerBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
+    log.info("Layout '${primaryProviderBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
              "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}])" +
              ((indexExtension as? ShardableIndexExtension)?.let {", shards = ${it.shardsCount()}"} ?: ""))
-    return providerBeanForExtension.layoutProvider.getLayout(indexExtension)
+    
+    val otherApplicableProviders = applicableLayoutProviders
+      .filterNot { it === primaryProviderBeanForExtension }
+      .map { it.layoutProvider }
+    return primaryProviderBeanForExtension.layoutProvider.getLayout(indexExtension, otherApplicableProviders)
   }
 
   /** Layout providers beans supported on the current platform/IDE, ordered by priority (desc) */
