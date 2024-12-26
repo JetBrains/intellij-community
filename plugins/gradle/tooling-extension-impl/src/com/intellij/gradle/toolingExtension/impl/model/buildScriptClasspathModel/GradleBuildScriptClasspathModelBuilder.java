@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel;
 
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyTraverser;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyTraverser;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import org.gradle.api.Project;
@@ -34,9 +34,8 @@ public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilder
     return GradleBuildScriptClasspathModel.class.getName().equals(modelName);
   }
 
-  @Nullable
   @Override
-  public Object buildAll(@NotNull final String modelName, @NotNull final Project project, @NotNull ModelBuilderContext context) {
+  public @Nullable Object buildAll(final @NotNull String modelName, final @NotNull Project project, @NotNull ModelBuilderContext context) {
     DefaultGradleBuildScriptClasspathModel buildScriptClasspath = new DefaultGradleBuildScriptClasspathModel();
     buildScriptClasspath.setGradleHomeDir(project.getGradle().getGradleHomeDir());
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());

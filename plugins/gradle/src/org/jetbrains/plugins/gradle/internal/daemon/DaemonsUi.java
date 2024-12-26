@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.internal.daemon;
 
 import com.intellij.icons.AllIcons;
@@ -150,48 +150,41 @@ public class DaemonsUi implements Disposable {
   }
   protected ListTableModel<DaemonState> createListModel() {
     final ColumnInfo<DaemonState, String> pidColumn = new TableColumn(GradleBundle.message("column.name.daemon.PID"), 80) {
-      @Nullable
       @Override
-      public String valueOf(DaemonState daemonState) {
+      public @Nullable String valueOf(DaemonState daemonState) {
         return String.valueOf(daemonState.getPid());
       }
 
-      @Nullable
       @Override
-      public Comparator<DaemonState> getComparator() {
+      public @Nullable Comparator<DaemonState> getComparator() {
         return Comparator.comparing(DaemonState::getPid);
       }
     };
     final ColumnInfo<DaemonState, String> statusColumn = new TableColumn(GradleBundle.message("column.name.daemon.status"), 100) {
-      @Nullable
       @Override
-      public String valueOf(DaemonState daemonState) {
+      public @Nullable String valueOf(DaemonState daemonState) {
         return daemonState.getStatus();
       }
 
-      @Nullable
       @Override
-      public Comparator<DaemonState> getComparator() {
+      public @Nullable Comparator<DaemonState> getComparator() {
         return Comparator.comparing(DaemonState::getStatus);
       }
     };
     final ColumnInfo<DaemonState, String> timeColumn = new TableColumn(GradleBundle.message("column.name.daemon.timestamp"), 150) {
-      @NotNull
       @Override
-      public String valueOf(DaemonState daemonState) {
+      public @NotNull String valueOf(DaemonState daemonState) {
         return DateFormatUtil.formatPrettyDateTime(daemonState.getTimestamp());
       }
 
-      @Nullable
       @Override
-      public Comparator<DaemonState> getComparator() {
+      public @Nullable Comparator<DaemonState> getComparator() {
         return Comparator.comparing(DaemonState::getTimestamp);
       }
     };
     final ColumnInfo<DaemonState, String> infoColumn = new TableColumn(GradleBundle.message("column.name.daemon.info"), -1) {
-      @NotNull
       @Override
-      public String valueOf(DaemonState daemonState) {
+      public @NotNull String valueOf(DaemonState daemonState) {
         return daemonState.getVersion() != null ? daemonState.getVersion() : StringUtil.capitalize(daemonState.getReason());
       }
     };
@@ -204,7 +197,7 @@ public class DaemonsUi implements Disposable {
     private final int myWidth;
     private DefaultTableCellRenderer myRenderer;
 
-    TableColumn(@NlsContexts.ColumnName final String name, int width) {
+    TableColumn(final @NlsContexts.ColumnName String name, int width) {
       super(name);
       myWidth = width;
     }
@@ -328,9 +321,8 @@ public class DaemonsUi implements Disposable {
 
     MyDialogWrapper() {super(true);}
 
-    @Nullable
     @Override
-    protected JComponent createNorthPanel() {
+    protected @Nullable JComponent createNorthPanel() {
       JPanel panel = new JPanel(new BorderLayout());
       JLabel infoLabel = new JLabel(XmlStringUtil.wrapInHtml(
         GradleBundle.message("daemons.started.by.are.displayed", ApplicationNamesInfo.getInstance().getFullProductName())));

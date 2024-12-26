@@ -226,9 +226,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     myDefaultProjectSettingsControl.disposeUiResources();
   }
 
-  @NotNull
   @Override
-  public GradleSettings getInitialSettings() {
+  public @NotNull GradleSettings getInitialSettings() {
     return myInitialSettings;
   }
 
@@ -338,8 +337,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return label;
   }
 
-  @Nullable
-  private static String trimIfPossible(@Nullable String s) {
+  private static @Nullable String trimIfPossible(@Nullable String s) {
     return StringUtil.nullize(StringUtil.trim(s));
   }
 
@@ -402,8 +400,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private static final Pattern VM_OPTIONS_REGEX = Pattern.compile("^(\\s*\"?org\\.gradle\\.jvmargs\"?\\s*[=:]).*?(?<!\\\\)($)",
                                                                   Pattern.MULTILINE | Pattern.DOTALL);
 
-  @NotNull
-  public static String updateVMOptions(@NotNull String originalText, @NotNull String vmOptions) {
+  public static @NotNull String updateVMOptions(@NotNull String originalText, @NotNull String vmOptions) {
     Matcher matcher = VM_OPTIONS_REGEX.matcher(originalText);
 
     StringBuilder result = new StringBuilder(originalText.length() + vmOptions.length());

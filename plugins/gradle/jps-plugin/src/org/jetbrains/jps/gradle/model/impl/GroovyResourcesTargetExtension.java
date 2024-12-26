@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,9 +18,8 @@ import static org.jetbrains.jps.gradle.model.impl.GradleResourcesTargetType.buil
 
 public class GroovyResourcesTargetExtension implements GroovyBuilderExtension {
 
-  @NotNull
   @Override
-  public Collection<String> getCompilationClassPath(@NotNull CompileContext context, @NotNull ModuleChunk chunk) {
+  public @NotNull Collection<String> getCompilationClassPath(@NotNull CompileContext context, @NotNull ModuleChunk chunk) {
     return getModuleDependencies(chunk).stream()
       .flatMap(module -> buildModuleTargets(module, chunk.containsTests()).stream())
       .flatMap(target -> target.getOutputRoots(context).stream())
@@ -41,9 +38,8 @@ public class GroovyResourcesTargetExtension implements GroovyBuilderExtension {
       .collect(Collectors.toSet());
   }
 
-  @NotNull
   @Override
-  public Collection<String> getCompilationUnitPatchers(@NotNull CompileContext context, @NotNull ModuleChunk chunk) {
+  public @NotNull Collection<String> getCompilationUnitPatchers(@NotNull CompileContext context, @NotNull ModuleChunk chunk) {
     return Collections.emptyList();
   }
 }

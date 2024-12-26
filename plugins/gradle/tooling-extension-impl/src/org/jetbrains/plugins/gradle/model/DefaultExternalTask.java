@@ -1,20 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class DefaultExternalTask implements ExternalTask {
-  @NotNull
-  private String name;
-  @NotNull
-  private String qName;
-  @Nullable
-  private String description;
-  @Nullable
-  private String group;
-  @Nullable
-  private String type;
+  private @NotNull String name;
+  private @NotNull String qName;
+  private @Nullable String description;
+  private @Nullable String group;
+  private @Nullable String type;
 
   private boolean isJvm;
 
@@ -39,9 +34,8 @@ public final class DefaultExternalTask implements ExternalTask {
     isInherited = externalTask.isInherited();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
@@ -49,9 +43,8 @@ public final class DefaultExternalTask implements ExternalTask {
     this.name = name;
   }
 
-  @NotNull
   @Override
-  public String getQName() {
+  public @NotNull String getQName() {
     return qName;
   }
 
@@ -59,9 +52,8 @@ public final class DefaultExternalTask implements ExternalTask {
     qName = QName;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
@@ -69,9 +61,8 @@ public final class DefaultExternalTask implements ExternalTask {
     this.description = description;
   }
 
-  @Nullable
   @Override
-  public String getGroup() {
+  public @Nullable String getGroup() {
     return group;
   }
 
@@ -79,9 +70,8 @@ public final class DefaultExternalTask implements ExternalTask {
     this.group = group;
   }
 
-  @Nullable
   @Override
-  public String getType() {
+  public @Nullable String getType() {
     return type;
   }
 

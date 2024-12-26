@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -64,9 +64,8 @@ public class CppModelBuilder implements ModelBuilderService {
     return CppProject.class.getName().equals(modelName);
   }
 
-  @Nullable
   @Override
-  public Object buildAll(final String modelName, final Project project) {
+  public @Nullable Object buildAll(final String modelName, final Project project) {
     if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
       return null;
     }
@@ -222,8 +221,7 @@ public class CppModelBuilder implements ModelBuilderService {
     return Boolean.TRUE.equals(isWindowsNullable);
   }
 
-  @Nullable
-  private static File getExecutableFile(LinkExecutable linkExecutable) {
+  private static @Nullable File getExecutableFile(LinkExecutable linkExecutable) {
     File executableFile;
     RegularFileProperty binaryFile = null;
     if (GradleVersionUtil.isCurrentGradleAtLeast("4.7")) {
@@ -245,8 +243,7 @@ public class CppModelBuilder implements ModelBuilderService {
     return executableFile;
   }
 
-  @Nullable
-  private static File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
+  private static @Nullable File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
     Throwable throwable = null;
     try {
       if (cppBinary instanceof ConfigurableComponentWithExecutable) {
@@ -331,8 +328,7 @@ public class CppModelBuilder implements ModelBuilderService {
       .reportMessage(project);
   }
 
-  @Nullable
-  private static Object callByReflection(@NotNull Object receiver, @NotNull String methodName) {
+  private static @Nullable Object callByReflection(@NotNull Object receiver, @NotNull String methodName) {
     Object result = null;
     try {
       Method getMethod = receiver.getClass().getMethod(methodName);

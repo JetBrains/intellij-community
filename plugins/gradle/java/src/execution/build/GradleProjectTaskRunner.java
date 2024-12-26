@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.build.BuildViewManager;
@@ -235,8 +235,7 @@ public final class GradleProjectTaskRunner extends ProjectTaskRunner {
     return resultPromise;
   }
 
-  @Nullable
-  private static File createTempOutputPathsFileIfNeeded(@NotNull ProjectTaskContext context) {
+  private static @Nullable File createTempOutputPathsFileIfNeeded(@NotNull ProjectTaskContext context) {
     File outputFile = null;
     if (context.isCollectionOfGeneratedFilesEnabled()) {
       try {
@@ -249,10 +248,9 @@ public final class GradleProjectTaskRunner extends ProjectTaskRunner {
     return outputFile;
   }
 
-  @NotNull
-  private static Set<String> getAffectedOutputRoots(@Nullable File outputPathsFile,
-                                                    @NotNull ProjectTaskContext context,
-                                                    @NotNull TasksExecutionSettingsBuilder executionSettingsBuilder) {
+  private static @NotNull Set<String> getAffectedOutputRoots(@Nullable File outputPathsFile,
+                                                             @NotNull ProjectTaskContext context,
+                                                             @NotNull TasksExecutionSettingsBuilder executionSettingsBuilder) {
     Set<String> affectedRoots = null;
     if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
       try {

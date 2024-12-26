@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionDebuggerBridge;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionDebuggerBridge;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.util.*;
@@ -97,11 +97,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @NotNull
   Set<Class<?>> getExtraBuildModelClasses();
 
-  @Nullable
-  default ProjectImportModelProvider getModelProvider() { return null; }
+  default @Nullable ProjectImportModelProvider getModelProvider() { return null; }
 
-  @NotNull
-  default List<ProjectImportModelProvider> getModelProviders() {
+  default @NotNull List<ProjectImportModelProvider> getModelProviders() {
     ProjectImportModelProvider provider = getModelProvider();
     return provider == null ? Collections.emptyList() : List.of(provider);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -87,8 +87,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
     return getRootModel(modelClass);
   }
 
-  @Nullable
-  default <T> T getExtraProject(@Nullable IdeaModule module, @NotNull Class<T> modelClass) {
+  default @Nullable <T> T getExtraProject(@Nullable IdeaModule module, @NotNull Class<T> modelClass) {
     return module == null ? getRootModel(modelClass) : getProjectModel(module, modelClass);
   }
 

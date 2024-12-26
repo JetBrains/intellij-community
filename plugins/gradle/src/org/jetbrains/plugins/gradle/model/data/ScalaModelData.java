@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -14,8 +14,7 @@ import java.util.Set;
 public final class ScalaModelData extends AbstractExternalEntityData {
   private static final int PROCESSING_AFTER_BUILTIN_SERVICES = ProjectKeys.TASK.getProcessingWeight() + 1;
 
-  @NotNull
-  public static final Key<ScalaModelData> KEY = Key.create(ScalaModelData.class, PROCESSING_AFTER_BUILTIN_SERVICES);
+  public static final @NotNull Key<ScalaModelData> KEY = Key.create(ScalaModelData.class, PROCESSING_AFTER_BUILTIN_SERVICES);
   private Set<File> scalaClasspath;
   private Set<File> zincClasspath;
   private Set<File> scalaCompilerPlugins;

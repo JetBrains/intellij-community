@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.*;
@@ -24,18 +24,15 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     super(GradleConstants.SYSTEM_ID, project, new MyState());
   }
 
-  @NotNull
-  public static GradleLocalSettings getInstance(@NotNull Project project) {
+  public static @NotNull GradleLocalSettings getInstance(@NotNull Project project) {
     return project.getService(GradleLocalSettings.class);
   }
 
-  @Nullable
-  public String getGradleHome(String linkedProjectPath) {
+  public @Nullable String getGradleHome(String linkedProjectPath) {
     return ContainerUtil.notNullize(state.myGradleHomes).get(linkedProjectPath);
   }
 
-  @Nullable
-  public String getGradleVersion(String linkedProjectPath) {
+  public @Nullable String getGradleVersion(String linkedProjectPath) {
     return ContainerUtil.notNullize(state.myGradleVersions).get(linkedProjectPath);
   }
 
@@ -51,8 +48,7 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public String getGradleUserHome() {
+  public @Nullable String getGradleUserHome() {
     return state.myGradleUserHome;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -27,9 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
  */
 public final class GradleDocumentationProvider implements DocumentationProvider {
 
-  @Nullable
   @Override
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     PsiFile file = element.getContainingFile();
     if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
     if (element instanceof GrLightVariable var) {
@@ -39,31 +38,27 @@ public final class GradleDocumentationProvider implements DocumentationProvider 
     return null;
   }
 
-  @Nullable
   @Override
-  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     PsiFile file = element.getContainingFile();
     if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
     return element instanceof GrLiteral ? findDoc(element, ((GrLiteral)element).getValue()) : null;
   }
 
-  @Nullable
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public @Nullable PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
     final String doc = findDoc(element, object);
     return !StringUtil.isEmpty(doc) ? new GdslNamedParameter(String.valueOf(object), doc, element, null) : null;
   }
 
-  @Nullable
   @Override
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+  public @Nullable PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
-  @Nullable
-  private static @NlsSafe String findDoc(@Nullable PsiElement element, Object argValue) {
+  private static @Nullable @NlsSafe String findDoc(@Nullable PsiElement element, Object argValue) {
     String result = null;
     if (element instanceof GrLiteral grLiteral) {
       PsiElement stmt = PsiTreeUtil.findFirstParent(grLiteral, psiElement -> psiElement instanceof GrCall);

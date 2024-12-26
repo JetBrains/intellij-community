@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -8,14 +8,14 @@ import org.jetbrains.annotations.Nullable;
 
 public final class GradleEnvironment {
 
-  @NonNls public static final boolean DEBUG_GRADLE_HOME_PROCESSING = Boolean.getBoolean("gradle.debug.home.processing");
+  public static final @NonNls boolean DEBUG_GRADLE_HOME_PROCESSING = Boolean.getBoolean("gradle.debug.home.processing");
 
   public static final class Headless {
-    @NonNls public static final String GRADLE_DISTRIBUTION_TYPE = System.getProperty("idea.gradle.distributionType");
-    @NonNls public static final String GRADLE_HOME = System.getProperty("idea.gradle.home");
-    @NonNls public static final String GRADLE_VM_OPTIONS = System.getProperty("idea.gradle.vmOptions");
-    @NonNls public static final String GRADLE_OFFLINE = System.getProperty("idea.gradle.offline");
-    @NonNls public static final String GRADLE_SERVICE_DIRECTORY = System.getProperty("idea.gradle.serviceDirectory");
+    public static final @NonNls String GRADLE_DISTRIBUTION_TYPE = System.getProperty("idea.gradle.distributionType");
+    public static final @NonNls String GRADLE_HOME = System.getProperty("idea.gradle.home");
+    public static final @NonNls String GRADLE_VM_OPTIONS = System.getProperty("idea.gradle.vmOptions");
+    public static final @NonNls String GRADLE_OFFLINE = System.getProperty("idea.gradle.offline");
+    public static final @NonNls String GRADLE_SERVICE_DIRECTORY = System.getProperty("idea.gradle.serviceDirectory");
   }
 
   @ApiStatus.Internal

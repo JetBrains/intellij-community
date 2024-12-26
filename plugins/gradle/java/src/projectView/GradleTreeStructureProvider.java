@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -38,11 +38,10 @@ import static com.intellij.ui.SimpleTextAttributes.merge;
  * @author Vladislav.Soroka
  */
 public final class GradleTreeStructureProvider implements TreeStructureProvider, DumbAware {
-  @NotNull
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                             @NotNull Collection<AbstractTreeNode<?>> children,
-                                             ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                         @NotNull Collection<AbstractTreeNode<?>> children,
+                                                         ViewSettings settings) {
     Project project = parent.getProject();
     if (project == null) return children;
 
@@ -116,9 +115,8 @@ public final class GradleTreeStructureProvider implements TreeStructureProvider,
     return true;
   }
 
-  @NotNull
-  private static Collection<AbstractTreeNode<?>> getProjectNodeChildren(@NotNull Project project,
-                                                                     @NotNull Collection<AbstractTreeNode<?>> children) {
+  private static @NotNull Collection<AbstractTreeNode<?>> getProjectNodeChildren(@NotNull Project project,
+                                                                                 @NotNull Collection<AbstractTreeNode<?>> children) {
     Collection<AbstractTreeNode<?>> modifiedChildren = new SmartList<>();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (AbstractTreeNode child : children) {
@@ -171,20 +169,18 @@ public final class GradleTreeStructureProvider implements TreeStructureProvider,
   }
 
 
-  @Nullable
-  private static GradleProjectViewModuleNode getGradleModuleNode(@NotNull Project project,
-                                                                 @NotNull ProjectViewModuleNode moduleNode,
-                                                                 ViewSettings settings) {
+  private static @Nullable GradleProjectViewModuleNode getGradleModuleNode(@NotNull Project project,
+                                                                           @NotNull ProjectViewModuleNode moduleNode,
+                                                                           ViewSettings settings) {
     Module module = moduleNode.getValue();
     final String moduleShortName = getGradleModuleShortName(module);
     if (moduleShortName == null) return null;
     return new GradleProjectViewModuleNode(project, module, settings, moduleShortName);
   }
 
-  @Nullable
-  private static GradleModuleDirectoryNode getGradleModuleNode(@NotNull Project project,
-                                                               @NotNull PsiDirectoryNode directoryNode,
-                                                               ViewSettings settings) {
+  private static @Nullable GradleModuleDirectoryNode getGradleModuleNode(@NotNull Project project,
+                                                                         @NotNull PsiDirectoryNode directoryNode,
+                                                                         ViewSettings settings) {
 
     PsiDirectory psiDirectory = directoryNode.getValue();
     if (psiDirectory == null) return null;
@@ -199,8 +195,7 @@ public final class GradleTreeStructureProvider implements TreeStructureProvider,
     return new GradleModuleDirectoryNode(project, psiDirectory, settings, module, moduleShortName, directoryNode.getFilter());
   }
 
-  @Nullable
-  private static String getGradleModuleShortName(Module module) {
+  private static @Nullable String getGradleModuleShortName(Module module) {
     if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
 
     String moduleShortName;
@@ -268,9 +263,7 @@ public final class GradleTreeStructureProvider implements TreeStructureProvider,
   }
 
   private static class GradleProjectViewModuleNode extends ProjectViewModuleNode {
-    @NotNull
-    @NlsSafe
-    private final String myModuleShortName;
+    private final @NotNull @NlsSafe String myModuleShortName;
 
     GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {
       super(project, value, viewSettings);

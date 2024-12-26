@@ -41,25 +41,25 @@ import java.util.function.Supplier;
  */
 @ApiStatus.Internal
 public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
-  @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
-  @NotNull private final String myProjectPath;
-  @NotNull private final GradleExecutionSettings mySettings;
-  @NotNull private final ExternalSystemTaskNotificationListener myListener;
-  @NotNull private final GradleProjectResolverIndicator myProjectResolverIndicator;
-  @Nullable private GradleIdeaModelHolder myModels;
+  private final @NotNull ExternalSystemTaskId myExternalSystemTaskId;
+  private final @NotNull String myProjectPath;
+  private final @NotNull GradleExecutionSettings mySettings;
+  private final @NotNull ExternalSystemTaskNotificationListener myListener;
+  private final @NotNull GradleProjectResolverIndicator myProjectResolverIndicator;
+  private @Nullable GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
-  @Nullable private String myProjectGradleVersion;
+  private @Nullable String myProjectGradleVersion;
   private final boolean myBuildSrcProject;
-  @Nullable private String myBuildSrcGroup;
-  @Nullable private BuildEnvironment myBuildEnvironment;
-  @Nullable private final GradlePartialResolverPolicy myPolicy;
+  private @Nullable String myBuildSrcGroup;
+  private @Nullable BuildEnvironment myBuildEnvironment;
+  private final @Nullable GradlePartialResolverPolicy myPolicy;
 
-  @NotNull private final ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
+  private final @NotNull ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
 
   private @Nullable Boolean myPhasedSyncEnabled = null;
   private @Nullable Boolean myStreamingModelFetchingEnabled = null;
 
-  private final static Logger LOG = Logger.getInstance(DefaultProjectResolverContext.class);
+  private static final Logger LOG = Logger.getInstance(DefaultProjectResolverContext.class);
 
   public DefaultProjectResolverContext(
     @NotNull ExternalSystemTaskId externalSystemTaskId,
@@ -97,21 +97,18 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     resolverContext.copyUserDataTo(this);
   }
 
-  @NotNull
   @Override
-  public ExternalSystemTaskId getExternalSystemTaskId() {
+  public @NotNull ExternalSystemTaskId getExternalSystemTaskId() {
     return myExternalSystemTaskId;
   }
 
-  @Nullable
   @Override
-  public String getIdeProjectPath() {
+  public @Nullable String getIdeProjectPath() {
     return mySettings.getIdeProjectPath();
   }
 
-  @NotNull
   @Override
-  public String getProjectPath() {
+  public @NotNull String getProjectPath() {
     return myProjectPath;
   }
 
@@ -154,9 +151,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     }
   }
 
-  @NotNull
   @Override
-  public ExternalSystemTaskNotificationListener getListener() {
+  public @NotNull ExternalSystemTaskNotificationListener getListener() {
     return myListener;
   }
 
@@ -309,15 +305,13 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myBuildSrcGroup = groupId;
   }
 
-  @Nullable
   @Override
-  public String getBuildSrcGroup() {
+  public @Nullable String getBuildSrcGroup() {
     return myBuildSrcGroup;
   }
 
-  @Nullable
   @Override
-  public String getBuildSrcGroup(@NotNull String rootName, @NotNull BuildIdentifier buildIdentifier) {
+  public @Nullable String getBuildSrcGroup(@NotNull String rootName, @NotNull BuildIdentifier buildIdentifier) {
     if (!"buildSrc".equals(rootName)) {
       return myBuildSrcGroup;
     }

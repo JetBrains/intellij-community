@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.Executor;
@@ -39,7 +39,7 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
   public static final BooleanProperty SHOW_INTERNAL_TEST_NODES = new BooleanProperty("showInternalTestNodes", false);
   public static final SMTestLocator GRADLE_TEST_LOCATOR = JavaTestLocator.INSTANCE;
 
-  @Nullable private File gradleTestReport;
+  private @Nullable File gradleTestReport;
 
   public GradleConsoleProperties(final ExternalSystemRunConfiguration configuration, Executor executor) {
     this(configuration, configuration.getSettings().getExternalSystemId().getReadableName(), executor);
@@ -53,8 +53,7 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
     this.gradleTestReport = gradleTestReport;
   }
 
-  @Nullable
-  public File getGradleTestReport() {
+  public @Nullable File getGradleTestReport() {
     return gradleTestReport;
   }
 
@@ -79,15 +78,13 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
     actionGroup.add(createShowInternalNodesAction(target));
   }
 
-  @Nullable
   @Override
-  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+  public @Nullable Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     return JavaAwareTestConsoleProperties.getStackTraceErrorNavigatable(location, stacktrace);
   }
 
-  @Nullable
   @Override
-  public SMTestLocator getTestLocator() {
+  public @Nullable SMTestLocator getTestLocator() {
     return GRADLE_TEST_LOCATOR;
   }
 
@@ -96,8 +93,7 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
     return true;
   }
 
-  @NotNull
-  private ToggleBooleanProperty createShowInternalNodesAction(TestConsoleProperties target) {
+  private @NotNull ToggleBooleanProperty createShowInternalNodesAction(TestConsoleProperties target) {
     String text = GradleBundle.message("gradle.test.show.internal.nodes.action.name");
     setIfUndefined(SHOW_INTERNAL_TEST_NODES, false);
     String desc = GradleBundle.message("gradle.test.show.internal.nodes.action.text");

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,9 +41,8 @@ public final class GradleExcludeBuildFilesDataService extends AbstractProjectDat
 
   public static final String REGISTRY_KEY = "gradle.exclude.build.files.when.in.source.set";
 
-  @NotNull
   @Override
-  public Key<ContentRootData> getTargetDataKey() {
+  public @NotNull Key<ContentRootData> getTargetDataKey() {
     return ProjectKeys.CONTENT_ROOT;
   }
 
@@ -76,8 +75,8 @@ public final class GradleExcludeBuildFilesDataService extends AbstractProjectDat
   }
 
   private static void importData(@NotNull IdeModifiableModelsProvider modelsProvider,
-                                 @NotNull final Collection<? extends DataNode<ContentRootData>> data,
-                                 @NotNull final Module module) {
+                                 final @NotNull Collection<? extends DataNode<ContentRootData>> data,
+                                 final @NotNull Module module) {
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     for (final DataNode<ContentRootData> node : data) {
       final ContentRootData contentRoot = node.getData();
@@ -110,8 +109,7 @@ public final class GradleExcludeBuildFilesDataService extends AbstractProjectDat
     }
   }
 
-  @Nullable
-  private static ContentEntry findContentRoot(@NotNull ModifiableRootModel model, @NotNull String path) {
+  private static @Nullable ContentEntry findContentRoot(@NotNull ModifiableRootModel model, @NotNull String path) {
     ContentEntry[] entries = model.getContentEntries();
 
     for (ContentEntry entry : entries) {

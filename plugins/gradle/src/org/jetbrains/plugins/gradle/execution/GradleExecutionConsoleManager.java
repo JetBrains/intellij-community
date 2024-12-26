@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.filters.Filter;
@@ -24,18 +24,16 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
  */
 public class GradleExecutionConsoleManager extends DefaultExternalSystemExecutionConsoleManager {
 
-  @NotNull
   @Override
-  public ProjectSystemId getExternalSystemId() {
+  public @NotNull ProjectSystemId getExternalSystemId() {
     return GradleConstants.SYSTEM_ID;
   }
 
-  @Nullable
   @Override
-  public ExecutionConsole attachExecutionConsole(@NotNull Project project,
-                                                 @NotNull ExternalSystemTask task,
-                                                 @Nullable ExecutionEnvironment env,
-                                                 @Nullable ProcessHandler processHandler) {
+  public @Nullable ExecutionConsole attachExecutionConsole(@NotNull Project project,
+                                                           @NotNull ExternalSystemTask task,
+                                                           @Nullable ExecutionEnvironment env,
+                                                           @Nullable ProcessHandler processHandler) {
     ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
     executionConsole.attachToProcess(processHandler);
     Filter[] filters = getCustomExecutionFilters(project, task, env);

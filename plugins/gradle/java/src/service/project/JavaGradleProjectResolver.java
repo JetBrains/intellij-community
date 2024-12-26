@@ -57,8 +57,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     nextResolver.populateProjectExtraModels(gradleProject, ideProject);
   }
 
-  @NotNull
-  private String getCompileOutputPath() {
+  private @NotNull String getCompileOutputPath() {
     String projectDirPath = resolverCtx.getProjectPath();
     // Gradle API doesn't expose gradleProject compile output path yet.
     return projectDirPath + "/build/classes";
@@ -116,8 +115,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     }
   }
 
-  @NotNull
-  private static AnnotationProcessingData getMergedAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel) {
+  private static @NotNull AnnotationProcessingData getMergedAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel) {
 
     final Set<String> mergedAnnotationProcessorPath = new LinkedHashSet<>();
     for (AnnotationProcessingConfig config : apModel.allConfigs().values()) {
@@ -133,9 +131,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     return AnnotationProcessingData.create(mergedAnnotationProcessorPath, apArguments);
   }
 
-  @Nullable
-  private static AnnotationProcessingData getAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel,
-                                                                      @NotNull String sourceSetName) {
+  private static @Nullable AnnotationProcessingData getAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel,
+                                                                                @NotNull String sourceSetName) {
     AnnotationProcessingConfig config = apModel.bySourceSetName(sourceSetName);
     if (config == null) {
       return null;
@@ -173,9 +170,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     }
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getExtraProjectModelClasses() {
+  public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
     return Set.of(AnnotationProcessingModel.class, ProjectDependencies.class);
   }
 

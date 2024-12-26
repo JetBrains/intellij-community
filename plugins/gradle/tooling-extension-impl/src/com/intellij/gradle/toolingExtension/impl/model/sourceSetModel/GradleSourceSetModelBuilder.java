@@ -81,8 +81,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       .reportMessage(project);
   }
 
-  @NotNull
-  private static List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
+  private static @NotNull List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
     List<File> taskArtifacts = new ArrayList<>();
     GradleCollectionVisitor.accept(project.getTasks().withType(Jar.class), new GradleCollectionVisitor<Jar>() {
 

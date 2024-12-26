@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal;
 
 import com.amazon.ion.IonReader;
@@ -216,9 +216,9 @@ public final class IdeaProjectSerializationService implements SerializationServi
     });
   }
 
-  private static void writeJavaLanguageSettings(@NotNull final IonWriter writer,
-                                                @NotNull final WriteContext context,
-                                                @Nullable final IdeaJavaLanguageSettings languageSettings) throws IOException {
+  private static void writeJavaLanguageSettings(final @NotNull IonWriter writer,
+                                                final @NotNull WriteContext context,
+                                                final @Nullable IdeaJavaLanguageSettings languageSettings) throws IOException {
     writer.setFieldName("javaLanguageSettings");
     if (languageSettings == null) {
       writer.writeNull();
@@ -311,10 +311,10 @@ public final class IdeaProjectSerializationService implements SerializationServi
     });
   }
 
-  private static void writeGradleProject(@NotNull final IonWriter writer,
+  private static void writeGradleProject(final @NotNull IonWriter writer,
                                          @Nullable String fieldName,
-                                         @NotNull final WriteContext context,
-                                         @Nullable final GradleProject gradleProject) throws IOException {
+                                         final @NotNull WriteContext context,
+                                         final @Nullable GradleProject gradleProject) throws IOException {
     if (fieldName != null) {
       writer.setFieldName(fieldName);
     }
@@ -359,7 +359,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
 
   private static void writeGradleTask(final IonWriter writer,
                                       final WriteContext context,
-                                      @Nullable final GradleTask task)
+                                      final @Nullable GradleTask task)
     throws IOException {
     if (task == null) {
       writer.writeNull();
@@ -428,9 +428,8 @@ public final class IdeaProjectSerializationService implements SerializationServi
   }
 
 
-  @Nullable
-  private InternalIdeaProject readProject(@NotNull final IonReader reader,
-                                          @NotNull final ReadContext context) {
+  private @Nullable InternalIdeaProject readProject(final @NotNull IonReader reader,
+                                                    final @NotNull ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
@@ -469,8 +468,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     reader.stepOut();
   }
 
-  @Nullable
-  private InternalIdeaModule readModule(IonReader reader, ReadContext context) {
+  private @Nullable InternalIdeaModule readModule(IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     InternalIdeaModule ideaModule = new InternalIdeaModule();
@@ -546,8 +544,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     return dependency;
   }
 
-  @NotNull
-  private List<InternalIdeaContentRoot> readContentRoots(IonReader reader) {
+  private @NotNull List<InternalIdeaContentRoot> readContentRoots(IonReader reader) {
     reader.next();
     assertFieldName(reader, "contentRoots");
     reader.stepIn();
@@ -630,8 +627,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     return project;
   }
 
-  @Nullable
-  private static InternalGradleProject readGradleProject(final IonReader reader, final ReadContext context, final String fieldName) {
+  private static @Nullable InternalGradleProject readGradleProject(final IonReader reader, final ReadContext context, final String fieldName) {
     IonType ionType = reader.next();
     if (fieldName != null) {
       assertFieldName(reader, fieldName);
@@ -784,8 +780,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     return dependency;
   }
 
-  @Nullable
-  private static InternalInstalledJdk readJdk(IonReader reader) {
+  private static @Nullable InternalInstalledJdk readJdk(IonReader reader) {
     IonType ionType = reader.next();
     assertFieldName(reader, "jdk");
     if (ionType == IonType.NULL || ionType == null) {
@@ -926,7 +921,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
             return false;
           }
 
-          private int computeHashCode(@NotNull final IdeaModuleDependency object) {
+          private int computeHashCode(final @NotNull IdeaModuleDependency object) {
             return argsHashCode(new TargetModuleNameGetter(object, myGradleVersionComparator).get(), object.getScope().getScope());
           }
 
@@ -1023,13 +1018,11 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  @Nullable
-  private static String getJavaVersion(@Nullable JavaVersion javaVersion) {
+  private static @Nullable String getJavaVersion(@Nullable JavaVersion javaVersion) {
     return javaVersion == null ? null : javaVersion.name();
   }
 
-  @Nullable
-  private static JavaVersion getLanguageLevel(@NotNull IdeaJavaLanguageSettings languageSettings) {
+  private static @Nullable JavaVersion getLanguageLevel(@NotNull IdeaJavaLanguageSettings languageSettings) {
     try {
       return languageSettings.getLanguageLevel();
     }
@@ -1038,8 +1031,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  @Nullable
-  private static JavaVersion getTargetBytecodeVersion(@NotNull IdeaJavaLanguageSettings languageSettings) {
+  private static @Nullable JavaVersion getTargetBytecodeVersion(@NotNull IdeaJavaLanguageSettings languageSettings) {
     try {
       return languageSettings.getTargetBytecodeVersion();
     }
@@ -1048,8 +1040,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  @Nullable
-  private static JavaVersion getJavaVersion(@NotNull InstalledJdk jdk) {
+  private static @Nullable JavaVersion getJavaVersion(@NotNull InstalledJdk jdk) {
     try {
       return jdk.getJavaVersion();
     }
@@ -1096,8 +1087,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  @Nullable
-  private static <T> T nullizeUnsupported(@NotNull Supplier<T> getter) {
+  private static @Nullable <T> T nullizeUnsupported(@NotNull Supplier<T> getter) {
     try {
       return getter.get();
     }
@@ -1106,8 +1096,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  @NotNull
-  public static <T> DomainObjectSet<T> notNullize(@Nullable DomainObjectSet<T> set) {
+  public static @NotNull <T> DomainObjectSet<T> notNullize(@Nullable DomainObjectSet<T> set) {
     return set == null ? GradleContainerUtil.emptyDomainObjectSet() : set;
   }
 
@@ -1154,8 +1143,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  @NotNull
-  private static GradleVersion getBuildGradleVersion(@Nullable IdeaProject ideaProject) {
+  private static @NotNull GradleVersion getBuildGradleVersion(@Nullable IdeaProject ideaProject) {
     try {
       ClassLoader classLoader = new ProtocolToModelAdapter().unpack(ideaProject).getClass().getClassLoader();
       Class<?> gradleVersionClass = classLoader.loadClass("org.gradle.util.GradleVersion");

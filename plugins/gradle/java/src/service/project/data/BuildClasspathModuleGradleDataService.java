@@ -43,17 +43,16 @@ import java.util.*;
 public final class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
   private static final Logger LOG = Logger.getInstance(BuildClasspathModuleGradleDataService.class);
 
-  @NotNull
   @Override
-  public Key<BuildScriptClasspathData> getTargetDataKey() {
+  public @NotNull Key<BuildScriptClasspathData> getTargetDataKey() {
     return BuildScriptClasspathData.KEY;
   }
 
   @Override
   public void importData(final @NotNull Collection<? extends DataNode<BuildScriptClasspathData>> toImport,
-                         @Nullable final ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
+                         final @Nullable ProjectData projectData,
+                         final @NotNull Project project,
+                         final @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (projectData == null || toImport.isEmpty()) {
       return;
     }

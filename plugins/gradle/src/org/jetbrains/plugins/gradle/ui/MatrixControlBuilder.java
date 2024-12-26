@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.ui.ScrollPaneFactory;
@@ -107,8 +108,7 @@ public class MatrixControlBuilder {
     }
   }
   
-  @NotNull
-  public JComponent build() {
+  public @NotNull JComponent build() {
     final TableColumnModel columnModel = myTable.getColumnModel();
     for (int i = 0; i < myColumnWidths.length; i++) {
       columnModel.getColumn(i).setMinWidth(myColumnWidths[i] + 4);

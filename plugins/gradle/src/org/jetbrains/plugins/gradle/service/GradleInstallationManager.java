@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -68,7 +68,7 @@ public class GradleInstallationManager implements Disposable {
   public static final Pattern IVY_JAR_PATTERN = Pattern.compile("ivy(-(.*))?\\.jar");
 
   private static final String[] GRADLE_START_FILE_NAMES;
-  @NonNls private static final String GRADLE_ENV_PROPERTY_NAME;
+  private static final @NonNls String GRADLE_ENV_PROPERTY_NAME;
   private static final Path BREW_GRADLE_LOCATION = Paths.get("/usr/local/Cellar/gradle/");
   private static final String LIBEXEC = "libexec";
 
@@ -88,7 +88,7 @@ public class GradleInstallationManager implements Disposable {
     return ApplicationManager.getApplication().getService(GradleInstallationManager.class);
   }
 
-  @Nullable private Ref<File> myCachedGradleHomeFromPath;
+  private @Nullable Ref<File> myCachedGradleHomeFromPath;
   private final Map<String, BuildLayoutParameters> myBuildLayoutParametersCache = new ConcurrentHashMap<>();
 
   private static String getDefaultProjectKey(Project project) {
@@ -96,8 +96,7 @@ public class GradleInstallationManager implements Disposable {
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public static BuildLayoutParameters defaultBuildLayoutParameters(@NotNull Project project) {
+  public static @NotNull BuildLayoutParameters defaultBuildLayoutParameters(@NotNull Project project) {
     return getInstance().guessBuildLayoutParameters(project, null);
   }
 
@@ -106,8 +105,7 @@ public class GradleInstallationManager implements Disposable {
    * Returns default parameters if {@code projectPath} is not passed in.
    */
   @ApiStatus.Experimental
-  @NotNull
-  public BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @Nullable String projectPath) {
+  public @NotNull BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @Nullable String projectPath) {
     return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, getDefaultProjectKey(project)), p -> {
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
         if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
@@ -138,8 +136,7 @@ public class GradleInstallationManager implements Disposable {
    * @param gradleHome gradle sdk home
    * @return file handles for the gradle binaries; {@code null} if gradle is not discovered
    */
-  @Nullable
-  public Collection<File> getAllLibraries(@Nullable File gradleHome) {
+  public @Nullable Collection<File> getAllLibraries(@Nullable File gradleHome) {
 
     if (gradleHome == null || !gradleHome.isDirectory()) {
       return null;
@@ -169,8 +166,7 @@ public class GradleInstallationManager implements Disposable {
     return result.isEmpty() ? null : result;
   }
 
-  @Nullable
-  public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
+  public @Nullable File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
     if (project == null) return null;
     BuildLayoutParameters buildLayoutParameters = guessBuildLayoutParameters(project, linkedProjectPath);
     Path gradleHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleHome());
@@ -206,8 +202,7 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return gradle home deduced from the current environment (if any); {@code null} otherwise
    */
-  @Nullable
-  public File getAutodetectedGradleHome(@Nullable Project project) {
+  public @Nullable File getAutodetectedGradleHome(@Nullable Project project) {
     File result = getGradleHomeFromPath(project);
     if (result != null) return result;
 
@@ -220,8 +215,7 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  @Nullable
-  private static File getGradleHomeFromBrew() {
+  private static @Nullable File getGradleHomeFromBrew() {
     try {
       try (DirectoryStream<Path> ds = Files.newDirectoryStream(BREW_GRADLE_LOCATION)) {
         Path bestPath = null;
@@ -258,8 +252,7 @@ public class GradleInstallationManager implements Disposable {
    * @param homePath expected path to gradle home
    * @return proper in terms of {@link #isGradleSdkHome(Project, File)} path or {@code null} if it is impossible to fix path
    */
-  @NlsSafe
-  public String suggestBetterGradleHomePath(@Nullable Project project, @NotNull String homePath) {
+  public @NlsSafe String suggestBetterGradleHomePath(@Nullable Project project, @NotNull String homePath) {
     Path path = Paths.get(homePath);
     if (path.startsWith(BREW_GRADLE_LOCATION)) {
       Path libexecPath = path.resolve(LIBEXEC);
@@ -276,8 +269,7 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return file handle for the gradle directory if it's possible to deduce from the system path; {@code null} otherwise
    */
-  @Nullable
-  public File getGradleHomeFromPath(@Nullable Project project) {
+  public @Nullable File getGradleHomeFromPath(@Nullable Project project) {
     Ref<File> ref = myCachedGradleHomeFromPath;
     if (ref != null) {
       return ref.get();
@@ -310,8 +302,7 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return file handle for the gradle directory deduced from the environment where the project is located
    */
-  @Nullable
-  public File getGradleHomeFromEnvProperty(@Nullable Project project) {
+  public @Nullable File getGradleHomeFromEnvProperty(@Nullable Project project) {
     String path = System.getenv(GRADLE_ENV_PROPERTY_NAME);
     if (path == null) {
       return null;
@@ -392,8 +383,7 @@ public class GradleInstallationManager implements Disposable {
     return findGradleJar(files) != null;
   }
 
-  @Nullable
-  private static File findGradleJar(File @Nullable ... files) {
+  private static @Nullable File findGradleJar(File @Nullable ... files) {
     if (files == null) {
       return null;
     }
@@ -420,8 +410,7 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  @Nullable
-  public List<File> getClassRoots(@Nullable Project project, @Nullable String rootProjectPath) {
+  public @Nullable List<File> getClassRoots(@Nullable Project project, @Nullable String rootProjectPath) {
     if (project == null) return null;
 
     if (rootProjectPath == null) {
@@ -438,8 +427,7 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  @Nullable
-  public static String getGradleVersion(@Nullable Path gradleHome) {
+  public static @Nullable String getGradleVersion(@Nullable Path gradleHome) {
     if (gradleHome == null) {
       return null;
     }
@@ -470,9 +458,8 @@ public class GradleInstallationManager implements Disposable {
   /**
    * @deprecated Use {@link GradleInstallationManager#getGradleVersion(Path)} instead.
    */
-  @Nullable
   @Deprecated
-  public static String getGradleVersion(@Nullable String gradleHome) {
+  public static @Nullable String getGradleVersion(@Nullable String gradleHome) {
     if (gradleHome == null) {
       return null;
     }
@@ -536,8 +523,7 @@ public class GradleInstallationManager implements Disposable {
     return name.startsWith("groovy-") && name.endsWith(".jar") && !name.contains("src") && !name.contains("doc");
   }
 
-  @Nullable
-  public static GradleVersion guessGradleVersion(@NotNull GradleProjectSettings settings) {
+  public static @Nullable GradleVersion guessGradleVersion(@NotNull GradleProjectSettings settings) {
     DistributionType distributionType = settings.getDistributionType();
     if (distributionType == null) return null;
     BuildLayoutParameters buildLayoutParameters;
@@ -557,8 +543,7 @@ public class GradleInstallationManager implements Disposable {
     return buildLayoutParameters.getGradleVersion();
   }
 
-  @Nullable
-  public static GradleVersion parseDistributionVersion(@NotNull String path) {
+  public static @Nullable GradleVersion parseDistributionVersion(@NotNull String path) {
     path = StringUtil.substringAfterLast(path, "/");
     if (path == null) return null;
 
@@ -571,8 +556,7 @@ public class GradleInstallationManager implements Disposable {
     return getGradleVersionSafe(path.substring(0, i));
   }
 
-  @Nullable
-  public static GradleVersion getGradleVersionSafe(@NotNull String gradleVersion) {
+  public static @Nullable GradleVersion getGradleVersionSafe(@NotNull String gradleVersion) {
     try {
       return GradleVersion.version(gradleVersion);
     }
@@ -583,8 +567,7 @@ public class GradleInstallationManager implements Disposable {
     }
   }
 
-  @Nullable
-  private static Project findProject(@NotNull GradleProjectSettings settings) {
+  private static @Nullable Project findProject(@NotNull GradleProjectSettings settings) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       GradleProjectSettings linkedProjectSettings =
         GradleSettings.getInstance(project).getLinkedProjectSettings(settings.getExternalProjectPath());

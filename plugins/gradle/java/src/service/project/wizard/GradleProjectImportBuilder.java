@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
@@ -69,9 +69,8 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
              new Throwable());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return GradleBundle.message("gradle.name");
   }
 
@@ -80,9 +79,8 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     return GradleIcons.Gradle;
   }
 
-  @Nullable
   @Override
-  protected Sdk resolveProjectJdk(@NotNull WizardContext context) {
+  protected @Nullable Sdk resolveProjectJdk(@NotNull WizardContext context) {
     JavaSdk javaSdkType = JavaSdk.getInstance();
     ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
 
@@ -133,11 +131,11 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
   }
 
   @Override
-  protected ExternalProjectRefreshCallback createFinalImportCallback(@NotNull final Project project,
+  protected ExternalProjectRefreshCallback createFinalImportCallback(final @NotNull Project project,
                                                                      @NotNull ExternalProjectSettings projectSettings) {
     return new ExternalProjectRefreshCallback() {
       @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
         if (externalProject == null) return;
         Runnable selectDataTask = () -> {
           ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
@@ -205,9 +203,8 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     }
   }
 
-  @NotNull
   @Override
-  protected File getExternalProjectConfigToUse(@NotNull File file) {
+  protected @NotNull File getExternalProjectConfigToUse(@NotNull File file) {
     return file.isDirectory() ? file : file.getParentFile();
   }
 
@@ -216,9 +213,8 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     return sdk == JavaSdk.getInstance();
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public @Nullable Project createProject(String name, String path) {
     return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,8 +28,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -122,9 +122,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     super(GradleConstants.SYSTEM_ID, GradleDefaultProjectSettings.createProjectSettings(""));
   }
 
-  @NotNull
   @Override
-  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, ConfigurationException {
     LOG.assertTrue(getName() != null);
     final String moduleFilePath = getModuleFilePath();
@@ -138,7 +137,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
-  public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+  public void setupRootModel(final @NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
     String contentEntryPath = getContentEntryPath();
     if (StringUtil.isEmpty(contentEntryPath)) {
       return;
@@ -328,8 +327,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return StdModuleTypes.JAVA;
   }
 
-  @NotNull
-  private VirtualFile setupGradleBuildFile(@NotNull VirtualFile modelContentRootDir)
+  private @NotNull VirtualFile setupGradleBuildFile(@NotNull VirtualFile modelContentRootDir)
     throws ConfigurationException {
     String scriptName;
     if (myUseKotlinDSL) {
@@ -369,13 +367,12 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return file;
   }
 
-  @NotNull
-  public static VirtualFile setupGradleSettingsFile(@NotNull Path rootProjectPath,
-                                                    @NotNull VirtualFile modelContentRootDir,
-                                                    String projectName,
-                                                    String moduleName,
-                                                    boolean renderNewFile,
-                                                    boolean useKotlinDSL) throws ConfigurationException {
+  public static @NotNull VirtualFile setupGradleSettingsFile(@NotNull Path rootProjectPath,
+                                                             @NotNull VirtualFile modelContentRootDir,
+                                                             String projectName,
+                                                             String moduleName,
+                                                             boolean renderNewFile,
+                                                             boolean useKotlinDSL) throws ConfigurationException {
     if (!renderNewFile) {
       Path settingsFile = rootProjectPath.resolve(GradleConstants.SETTINGS_FILE_NAME);
       Path kotlinKtsSettingsFile = rootProjectPath.resolve(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME);
@@ -554,9 +551,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     myJdk = null;
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     if (settingsStep instanceof ProjectSettingsStep projectSettingsStep) {
       if (myProjectId != null) {
         final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
@@ -578,8 +574,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     VfsUtil.saveText(file, content);
   }
 
-  @NotNull
-  private static String lineSeparator(@NotNull VirtualFile file) {
+  private static @NotNull String lineSeparator(@NotNull VirtualFile file) {
     String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
     if (lineSeparator == null) {
       lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
@@ -587,14 +582,12 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     return lineSeparator;
   }
 
-  @Nullable
-  public static BuildScriptDataBuilder getBuildScriptData(@Nullable Module module) {
+  public static @Nullable BuildScriptDataBuilder getBuildScriptData(@Nullable Module module) {
     return module == null ? null : module.getUserData(BUILD_SCRIPT_DATA);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public @Nullable Project createProject(String name, String path) {
     setCreatingNewProject(true);
     return super.createProject(name, path);
   }

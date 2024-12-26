@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.jetbrains.annotations.NotNull;
@@ -16,12 +16,9 @@ import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmo
  * @author Vladislav.Soroka
  */
 public class ClasspathEntryModelImpl implements ClasspathEntryModel, Serializable {
-  @NotNull
-  private final Set<File> classes;
-  @NotNull
-  private final Set<File> sources;
-  @NotNull
-  private final Set<File> javadoc;
+  private final @NotNull Set<File> classes;
+  private final @NotNull Set<File> sources;
+  private final @NotNull Set<File> javadoc;
 
   public ClasspathEntryModelImpl(@NotNull Collection<File> classes, @NotNull Collection<File> sources, @NotNull Collection<File> javadoc) {
     this.classes = new LinkedHashSet<>(classes);
@@ -29,21 +26,18 @@ public class ClasspathEntryModelImpl implements ClasspathEntryModel, Serializabl
     this.javadoc = new LinkedHashSet<>(javadoc);
   }
 
-  @NotNull
   @Override
-  public Set<String> getClasses() {
+  public @NotNull Set<String> getClasses() {
     return unmodifiablePathSet(classes);
   }
 
-  @NotNull
   @Override
-  public Set<String> getSources() {
+  public @NotNull Set<String> getSources() {
     return unmodifiablePathSet(sources);
   }
 
-  @NotNull
   @Override
-  public Set<String> getJavadoc() {
+  public @NotNull Set<String> getJavadoc() {
     return unmodifiablePathSet(javadoc);
   }
 

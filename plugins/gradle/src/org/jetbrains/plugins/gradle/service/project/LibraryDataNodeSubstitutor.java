@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -29,12 +29,12 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
  */
 @ApiStatus.Internal
 public class LibraryDataNodeSubstitutor {
-  private @NotNull final ProjectResolverContext resolverContext;
-  private @Nullable final File gradleUserHomeDir;
-  private @Nullable final File gradleHomeDir;
-  private @NotNull final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap;
-  private @NotNull final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap;
-  private @NotNull final ArtifactMappingService artifactsMap;
+  private final @NotNull ProjectResolverContext resolverContext;
+  private final @Nullable File gradleUserHomeDir;
+  private final @Nullable File gradleHomeDir;
+  private final @NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap;
+  private final @NotNull Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap;
+  private final @NotNull ArtifactMappingService artifactsMap;
 
   public LibraryDataNodeSubstitutor(@NotNull ProjectResolverContext context,
                                     @Nullable File gradleUserHomeDir,
@@ -210,8 +210,7 @@ public class LibraryDataNodeSubstitutor {
     return result;
   }
 
-  @NotNull
-  private Collection<ModuleLookupResult> lookupTargetModule(String path) {
+  private @NotNull Collection<ModuleLookupResult> lookupTargetModule(String path) {
     List<ModuleLookupResult> results = new ArrayList<>();
 
     GradleSourceSetData targetModule = Optional.of(resolverContext.getSettings())

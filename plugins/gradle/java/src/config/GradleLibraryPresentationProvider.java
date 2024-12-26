@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.roots.OrderRootType;
@@ -32,15 +32,13 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
     myLibraryManager = GradleInstallationManager.getInstance();
   }
 
-  @NotNull
   @Override
-  public Icon getIcon(GroovyLibraryProperties properties) {
+  public @NotNull Icon getIcon(GroovyLibraryProperties properties) {
     return GradleIcons.Gradle;
   }
 
-  @Nls
   @Override
-  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+  public @Nls String getLibraryVersion(final VirtualFile[] libraryFiles) {
     return getGradleVersion(libraryFiles);
   }
 
@@ -54,9 +52,8 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
     return myLibraryManager.isGradleSdk(libraryFiles);
   }
 
-  @NotNull
   @Override
-  public String getSDKVersion(String path) {
+  public @NotNull String getSDKVersion(String path) {
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
     assert file != null;
     VirtualFile lib = file.findChild("lib");
@@ -70,10 +67,8 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
     throw new AssertionError(path);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getLibraryCategoryName() {
+  public @Nls @NotNull String getLibraryCategoryName() {
     return GradleConstants.GRADLE_NAME; //NON-NLS GRADLE_NAME
   }
 
@@ -90,9 +85,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
     }
   }
 
-  @Nullable
-  @NlsSafe
-  private static String getGradleVersion(VirtualFile[] libraryFiles) {
+  private static @Nullable @NlsSafe String getGradleVersion(VirtualFile[] libraryFiles) {
     for (VirtualFile file : libraryFiles) {
       final String version = getGradleJarVersion(file);
       if (version != null) {
@@ -102,8 +95,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
     return null;
   }
 
-  @Nullable
-  private static String getGradleJarVersion(VirtualFile file) {
+  private static @Nullable String getGradleJarVersion(VirtualFile file) {
     final Matcher matcher = GradleInstallationManager.GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
     if (matcher.matches()) {
       return matcher.group(2);

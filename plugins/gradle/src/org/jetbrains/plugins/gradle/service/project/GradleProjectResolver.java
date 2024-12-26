@@ -41,7 +41,10 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildActionFailureException;
+import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -978,12 +981,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     GradleProjectResolverExtension chainWrapper = new AbstractProjectResolverExtension() {
-      @NotNull
       @Override
-      public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                          @NotNull Throwable error,
-                                                          @NotNull String projectPath,
-                                                          @Nullable String buildFilePath) {
+      public @NotNull ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                                   @NotNull Throwable error,
+                                                                   @NotNull String projectPath,
+                                                                   @Nullable String buildFilePath) {
         ExternalSystemException friendlyError = super.getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
         return new BaseProjectImportErrorHandler()
           .checkErrorsWithoutQuickFixes(buildEnvironment, error, projectPath, buildFilePath, friendlyError);

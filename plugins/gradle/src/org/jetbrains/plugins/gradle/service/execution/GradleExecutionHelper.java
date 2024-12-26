@@ -31,7 +31,10 @@ import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -458,12 +461,11 @@ public final class GradleExecutionHelper {
     return i <= 0 ? Couple.of(arg, "") : Couple.of(arg.substring(0, i), arg.substring(i));
   }
 
-  @Nullable
-  public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
-                                                     @NotNull ExternalSystemTaskId taskId,
-                                                     @NotNull ExternalSystemTaskNotificationListener listener,
-                                                     @Nullable CancellationToken cancellationToken,
-                                                     @Nullable GradleExecutionSettings settings) {
+  public static @Nullable BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
+                                                               @NotNull ExternalSystemTaskId taskId,
+                                                               @NotNull ExternalSystemTaskNotificationListener listener,
+                                                               @Nullable CancellationToken cancellationToken,
+                                                               @Nullable GradleExecutionSettings settings) {
     Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GetBuildEnvironment")
       .startSpan();

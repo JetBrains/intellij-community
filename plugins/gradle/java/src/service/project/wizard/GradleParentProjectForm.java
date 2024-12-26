@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.icons.AllIcons;
@@ -40,20 +40,16 @@ public class GradleParentProjectForm implements Disposable {
 
   private static final String EMPTY_PARENT = "<none>";
 
-  @Nullable
-  private final Project myProjectOrNull;
-  @Nullable
-  private ProjectData myParent;
-  @NotNull
-  private final Consumer<ProjectData> myConsumer;
+  private final @Nullable Project myProjectOrNull;
+  private @Nullable ProjectData myParent;
+  private final @NotNull Consumer<ProjectData> myConsumer;
 
   private final boolean myIsVisible;
 
   private JPanel myPanel;
   private JButton mySelectParent;
   private EditorTextField myParentPathField;
-  @NotNull
-  private final WizardContext myContext;
+  private final @NotNull WizardContext myContext;
 
   public GradleParentProjectForm(@NotNull WizardContext context, @Nullable Consumer<@Nullable ProjectData> consumer) {
     myProjectOrNull = context.getProject();
@@ -87,8 +83,7 @@ public class GradleParentProjectForm implements Disposable {
     return myPanel;
   }
 
-  @Nullable
-  public ProjectData getParentProject() {
+  public @Nullable ProjectData getParentProject() {
     return myParent;
   }
 
@@ -124,14 +119,12 @@ public class GradleParentProjectForm implements Disposable {
     return d.getResult();
   }
 
-  @NotNull
-  private Project getProject() {
+  private @NotNull Project getProject() {
     Project project = myProjectOrNull != null ? myProjectOrNull : ArrayUtil.getFirstElement(ProjectManager.getInstance().getOpenProjects());
     return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
   }
 
-  @Nullable
-  private ProjectData findPotentialParentProject(@Nullable Project project) {
+  private @Nullable ProjectData findPotentialParentProject(@Nullable Project project) {
     if (project == null) return null;
 
     String contextProjectFileDirectory = myContext.getProjectFileDirectory();

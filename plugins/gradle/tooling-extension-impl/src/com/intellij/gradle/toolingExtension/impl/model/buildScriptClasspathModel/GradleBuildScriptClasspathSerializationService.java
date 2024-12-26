@@ -7,8 +7,8 @@ import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
@@ -91,8 +91,7 @@ public final class GradleBuildScriptClasspathSerializationService implements Ser
     writer.stepOut();
   }
 
-  @Nullable
-  private static GradleBuildScriptClasspathModel read(final IonReader reader, final ReadContext context) {
+  private static @Nullable GradleBuildScriptClasspathModel read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 

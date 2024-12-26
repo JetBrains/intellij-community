@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.build;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,9 +22,8 @@ import java.util.jar.JarFile;
  * @author Vladislav.Soroka
  */
 public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
-  @NotNull
   @Override
-  public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
+  public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
     String artifactName = artifact.getName();
     if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING && (artifactName.endsWith(" (exploded)"))
         && artifact.getRootElement() instanceof JpsArtifactRootElement) {
@@ -38,8 +37,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static JpsGradleArtifactExtension getArtifactExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
+  private static @Nullable JpsGradleArtifactExtension getArtifactExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
     if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING) {
       return JpsGradleExtensionService.getArtifactExtension(artifact);
     }

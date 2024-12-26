@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -32,18 +32,16 @@ import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER + 1)
 public final class GradleSourceSetDataService extends AbstractModuleDataService<GradleSourceSetData> {
 
-  @NotNull
   @Override
-  public Key<GradleSourceSetData> getTargetDataKey() {
+  public @NotNull Key<GradleSourceSetData> getTargetDataKey() {
     return GradleSourceSetData.KEY;
   }
 
-  @NotNull
   @Override
-  public Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<GradleSourceSetData>> toImport,
-                                                          @NotNull final ProjectData projectData,
-                                                          @NotNull final Project project,
-                                                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  public @NotNull Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<GradleSourceSetData>> toImport,
+                                                                   final @NotNull ProjectData projectData,
+                                                                   final @NotNull Project project,
+                                                                   final @NotNull IdeModifiableModelsProvider modelsProvider) {
     return () -> {
       List<Module> orphanIdeModules = new SmartList<>();
 
@@ -87,9 +85,8 @@ public final class GradleSourceSetDataService extends AbstractModuleDataService<
     return super.createModule(sourceSetModuleNode, modelsProvider);
   }
 
-  @NotNull
-  private static String findDeduplicatedModuleName(@NotNull String moduleName,
-                                                   @NotNull IdeModifiableModelsProvider modelsProvider) {
+  private static @NotNull String findDeduplicatedModuleName(@NotNull String moduleName,
+                                                            @NotNull IdeModifiableModelsProvider modelsProvider) {
     Module ideModule = modelsProvider.findIdeModule(moduleName);
     if (ideModule == null) {
       return moduleName;

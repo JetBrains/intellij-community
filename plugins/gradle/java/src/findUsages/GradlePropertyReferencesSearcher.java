@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.findUsages;
 
 import com.intellij.lang.properties.psi.Property;
@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class GradlePropertyReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
-  private final static String[] GRADLE_PROPERTY_FILES = {"gradle.properties"};
-  private final static String GRADLE_DSL_EXTENSION = "gradle";
+  private static final String[] GRADLE_PROPERTY_FILES = {"gradle.properties"};
+  private static final String GRADLE_DSL_EXTENSION = "gradle";
 
   public GradlePropertyReferencesSearcher() {
     super(true);
@@ -87,8 +87,7 @@ public final class GradlePropertyReferencesSearcher extends QueryExecutorBase<Ps
   }
 
   private static class FileByExtensionSearchScope extends DelegatingGlobalSearchScope {
-    @NotNull
-    private final String extension;
+    private final @NotNull String extension;
 
     FileByExtensionSearchScope(GlobalSearchScope scope,
                                @NotNull String extension) {

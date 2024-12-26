@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -58,8 +58,7 @@ public final class GradleBuildParticipant implements Serializable {
     }
   }
 
-  @Nullable
-  public ModuleData findModuleDataByArtifacts(Collection<? extends File> artifacts) {
+  public @Nullable ModuleData findModuleDataByArtifacts(Collection<? extends File> artifacts) {
     ModuleData moduleData = null;
     for (File artifact : artifacts) {
       moduleData = moduleArtifactMap.get(artifact);
@@ -68,8 +67,7 @@ public final class GradleBuildParticipant implements Serializable {
     return moduleData;
   }
 
-  @Nullable
-  public ModuleData findModuleDataByName(String moduleName) {
+  public @Nullable ModuleData findModuleDataByName(String moduleName) {
     return moduleNameMap.get(moduleName);
   }
 }

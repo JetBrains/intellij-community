@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public final class GradleModuleBuildGlobalSearchScope extends DelegatingGlobalSearchScope {
-  @NotNull
-  private final String externalModulePath;
+  private final @NotNull String externalModulePath;
 
   public GradleModuleBuildGlobalSearchScope(@NotNull Project project,
                                             @NotNull GlobalSearchScope baseScope,
@@ -20,8 +19,7 @@ public final class GradleModuleBuildGlobalSearchScope extends DelegatingGlobalSe
     this.externalModulePath = externalModulePath;
   }
 
-  @NotNull
-  public String getExternalModulePath() {
+  public @NotNull String getExternalModulePath() {
     return externalModulePath;
   }
 }

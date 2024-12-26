@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
 import org.gradle.api.invocation.Gradle;
@@ -31,9 +31,8 @@ public final class DefaultModelBuilderContext implements ModelBuilderContext {
     return myMessageReporter;
   }
 
-  @NotNull
   @Override
-  public <T> T getData(@NotNull DataProvider<T> provider) {
+  public @NotNull <T> T getData(@NotNull DataProvider<T> provider) {
     Object data = myMap.get(provider);
     if (data == null) {
       synchronized (myMap) {

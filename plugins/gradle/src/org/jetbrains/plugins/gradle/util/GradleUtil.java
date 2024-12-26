@@ -82,8 +82,7 @@ public final class GradleUtil {
    * @return gradle wrapper settings should be used with gradle wrapper for the gradle project located at the given path
    * if any; {@code null} otherwise
    */
-  @Nullable
-  public static WrapperConfiguration getWrapperConfiguration(@Nullable Path gradleProjectPath) {
+  public static @Nullable WrapperConfiguration getWrapperConfiguration(@Nullable Path gradleProjectPath) {
     Path wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
     if (wrapperPropertiesFile == null) {
       return null;
@@ -94,9 +93,8 @@ public final class GradleUtil {
   /**
    * @deprecated Use {@link GradleUtil#getWrapperConfiguration(Path)} instead.
    */
-  @Nullable
   @Deprecated
-  public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
+  public static @Nullable WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
@@ -224,8 +222,7 @@ public final class GradleUtil {
    * @param rootProjectPath path to root project's directory which contains 'build.gradle'
    * @return path to the given sub-project's directory which contains 'build.gradle'
    */
-  @NotNull
-  public static String getConfigPath(@NotNull GradleProject subProject, @NotNull String rootProjectPath) {
+  public static @NotNull String getConfigPath(@NotNull GradleProject subProject, @NotNull String rootProjectPath) {
     try {
       GradleScript script = subProject.getBuildScript();
       if (script != null) {
@@ -262,8 +259,7 @@ public final class GradleUtil {
     return buffer.toString();
   }
 
-  @NotNull
-  public static String getLastUsedGradleHome() {
+  public static @NotNull String getLastUsedGradleHome() {
     return PropertiesComponent.getInstance().getValue(LAST_USED_GRADLE_HOME_KEY, "");
   }
 
@@ -274,9 +270,8 @@ public final class GradleUtil {
   /**
    * @deprecated Use {@link GradleUtil#findDefaultWrapperPropertiesFile(Path)} instead.
    */
-  @Nullable
   @Deprecated
-  public static Path findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
+  public static @Nullable Path findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
@@ -287,8 +282,7 @@ public final class GradleUtil {
     return findDefaultWrapperPropertiesFile(nioProjectPath);
   }
 
-  @Nullable
-  public static Path findDefaultWrapperPropertiesFile(@Nullable Path root) {
+  public static @Nullable Path findDefaultWrapperPropertiesFile(@Nullable Path root) {
     if (root == null) {
       return null;
     }
@@ -327,8 +321,7 @@ public final class GradleUtil {
     }
   }
 
-  @NotNull
-  public static String determineRootProject(@NotNull String subProjectPath) {
+  public static @NotNull String determineRootProject(@NotNull String subProjectPath) {
     final Path subProject = Paths.get(subProjectPath);
     Path candidate = subProject;
     try {
@@ -366,8 +359,7 @@ public final class GradleUtil {
    * Module 'module.test' -> ModuleData 'module' instead of GradleSourceSetData 'module.test'
    */
   @ApiStatus.Experimental
-  @Nullable
-  public static DataNode<ModuleData> findGradleModuleData(@NotNull Module module) {
+  public static @Nullable DataNode<ModuleData> findGradleModuleData(@NotNull Module module) {
     String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (projectPath == null) return null;
     Project project = module.getProject();
@@ -375,8 +367,7 @@ public final class GradleUtil {
   }
 
   @ApiStatus.Experimental
-  @Nullable
-  public static DataNode<ModuleData> findGradleModuleData(@NotNull Project project, @NotNull String projectPath) {
+  public static @Nullable DataNode<ModuleData> findGradleModuleData(@NotNull Project project, @NotNull String projectPath) {
     return ExternalSystemApiUtil.findModuleNode(project, GradleConstants.SYSTEM_ID, projectPath);
   }
 
@@ -426,8 +417,7 @@ public final class GradleUtil {
     return GradleVersionUtil.isGradleAtLeast(gradleVersion, "3.4");
   }
 
-  @Nullable
-  public static VirtualFile getGradleBuildScriptSource(@NotNull Module module) {
+  public static @Nullable VirtualFile getGradleBuildScriptSource(@NotNull Module module) {
     DataNode<? extends ModuleData> moduleData = findGradleModuleData(module);
     if (moduleData == null) return null;
     DataNode<GradleProjectBuildScriptData> dataNode = ExternalSystemApiUtil.find(moduleData, GradleProjectBuildScriptData.KEY);
