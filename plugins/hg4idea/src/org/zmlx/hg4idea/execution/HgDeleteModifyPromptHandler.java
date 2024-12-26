@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,9 +23,9 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
 
   @Override
-  public HgPromptChoice promptUser(@NotNull final String message,
+  public HgPromptChoice promptUser(final @NotNull String message,
                                    final HgPromptChoice @NotNull [] choices,
-                                   @NotNull final HgPromptChoice defaultChoice) {
+                                   final @NotNull HgPromptChoice defaultChoice) {
 
     Matcher localDelMatcher = LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN.matcher(message);
     Matcher localModifyMatcher = REMOTE_DELETE_LOCAL_MODIFIED_CONFLICT_MESSAGE_PATTERN.matcher(message);

@@ -385,9 +385,8 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
         return sb.charAt(index);
       }
 
-      @NotNull
       @Override
-      public CharSequence subSequence(int start, int end) {
+      public @NotNull CharSequence subSequence(int start, int end) {
         return sb.subSequence(start, end);
       }
 

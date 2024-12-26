@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -33,12 +33,9 @@ public class GitRebaseSpec {
   private static final Logger LOG = Logger.getInstance(GitRebaseSpec.class);
 
   private final @Nullable GitRebaseParams myParams;
-  @Unmodifiable
-  private final @NotNull Map<GitRepository, GitRebaseStatus> myStatuses;
-  @Unmodifiable
-  private final @NotNull Map<GitRepository, String> myInitialHeadPositions;
-  @Unmodifiable
-  private final @NotNull Map<GitRepository, String> myInitialBranchNames;
+  private final @Unmodifiable @NotNull Map<GitRepository, GitRebaseStatus> myStatuses;
+  private final @Unmodifiable @NotNull Map<GitRepository, String> myInitialHeadPositions;
+  private final @Unmodifiable @NotNull Map<GitRepository, String> myInitialBranchNames;
   private final @NotNull GitChangesSaver mySaver;
   private final boolean myShouldBeSaved;
 
@@ -87,8 +84,7 @@ public class GitRebaseSpec {
     return mySaver;
   }
 
-  @Unmodifiable
-  public @NotNull Collection<GitRepository> getAllRepositories() {
+  public @Unmodifiable @NotNull Collection<GitRepository> getAllRepositories() {
     return myStatuses.keySet();
   }
 
@@ -100,13 +96,11 @@ public class GitRebaseSpec {
     return myParams;
   }
 
-  @Unmodifiable
-  public @NotNull Map<GitRepository, GitRebaseStatus> getStatuses() {
+  public @Unmodifiable @NotNull Map<GitRepository, GitRebaseStatus> getStatuses() {
     return myStatuses;
   }
 
-  @Unmodifiable
-  public @NotNull Map<GitRepository,String> getHeadPositionsToRollback() {
+  public @Unmodifiable @NotNull Map<GitRepository,String> getHeadPositionsToRollback() {
     return ContainerUtil.filter(myInitialHeadPositions, repository -> myStatuses.get(repository).getType() == GitRebaseStatus.Type.SUCCESS);
   }
 
@@ -114,8 +108,7 @@ public class GitRebaseSpec {
    * Returns names of branches which were current at the moment of this GitRebaseSpec creation. <br/>
    * The map may contain null elements, if some repositories were in the detached HEAD state.
    */
-  @Unmodifiable
-  public @NotNull Map<GitRepository, String> getInitialBranchNames() {
+  public @Unmodifiable @NotNull Map<GitRepository, String> getInitialBranchNames() {
     return myInitialBranchNames;
   }
 
@@ -147,9 +140,8 @@ public class GitRebaseSpec {
                                     VcsBundle.message("stash.changes.message", GitBundle.message("rebase.operation.name")), saveMethod);
   }
 
-  @Unmodifiable
-  private static @NotNull Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<? extends GitRepository> repositories,
-                                                                              final @Nullable String branchToCheckout) {
+  private static @Unmodifiable @NotNull Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<? extends GitRepository> repositories,
+                                                                                            final @Nullable String branchToCheckout) {
     return ContainerUtil.map2Map(repositories, repository -> {
       String currentRevision = findCurrentRevision(repository, branchToCheckout);
       LOG.debug("Current revision in [" + repository.getRoot().getName() + "] is [" + currentRevision + "]");
@@ -176,8 +168,7 @@ public class GitRebaseSpec {
     return repository.getCurrentRevision();
   }
 
-  @Unmodifiable
-  private static @NotNull Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<? extends GitRepository> repositories) {
+  private static @Unmodifiable @NotNull Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<? extends GitRepository> repositories) {
     return ContainerUtil.map2Map(repositories, repository -> {
       String currentBranchName = repository.getCurrentBranchName();
       LOG.debug("Current branch in [" + repository.getRoot().getName() + "] is [" + currentBranchName + "]");

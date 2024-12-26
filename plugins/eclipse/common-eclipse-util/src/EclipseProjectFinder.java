@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.eclipse;
 
@@ -52,8 +38,7 @@ public class EclipseProjectFinder implements EclipseXml {
     }
   }
 
-  @Nullable
-  public static String findProjectName(String rootPath) {
+  public static @Nullable String findProjectName(String rootPath) {
     String name = null;
     final File file = new File(rootPath, DOT_PROJECT_EXT);
     if (file.isFile()) {
@@ -71,8 +56,7 @@ public class EclipseProjectFinder implements EclipseXml {
     return name;
   }
 
-  @Nullable
-  public static LinkedResource findLinkedResource(@NotNull String projectPath, @NotNull String relativePath) {
+  public static @Nullable LinkedResource findLinkedResource(@NotNull String projectPath, @NotNull String relativePath) {
     String independentPath = FileUtil.toSystemIndependentName(relativePath);
     @NotNull String resourceName = independentPath;
     final int idx = independentPath.indexOf('/');
@@ -113,14 +97,12 @@ public class EclipseProjectFinder implements EclipseXml {
     private String myURI;
     private String myLocation;
 
-    @NotNull
-    public String getVariableName() {
+    public @NotNull String getVariableName() {
       final int idx = myURI.indexOf('/');
       return idx > -1 ? myURI.substring(0, idx) : myURI;
     }
 
-    @Nullable
-    public String getRelativeToVariablePath() {
+    public @Nullable String getRelativeToVariablePath() {
       final int idx = myURI.indexOf('/');
       return idx > -1 && idx + 1 < myURI.length() ? myURI.substring(idx + 1) : null;
     }

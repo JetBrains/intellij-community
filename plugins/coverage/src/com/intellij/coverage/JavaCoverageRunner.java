@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
@@ -78,9 +78,8 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
       return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
     });
     builder.generateReport(new IDEACoverageData(projectData, sourceCodeProvider) {
-      @NotNull
       @Override
-      public Collection<ClassInfo> getClasses() {
+      public @NotNull Collection<ClassInfo> getClasses() {
         final Collection<ClassInfo> classes = super.getClasses();
         JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
         if (!suite.isTrackTestFolders() ||
@@ -109,8 +108,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     CoverageLogger.logHTMLReport(project, timeMs, generationTimeMs);
   }
 
-  @Nullable
-  public static String handleSpacesInAgentPath(@NotNull String agentPath) {
+  public static @Nullable String handleSpacesInAgentPath(@NotNull String agentPath) {
     return JavaExecutionUtil.handleSpacesInAgentPath(agentPath, "testAgent", JAVA_COVERAGE_AGENT_AGENT_PATH);
   }
 
@@ -118,8 +116,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(StandardCharsets.UTF_8), true);
   }
 
-  @NotNull
-  protected static File createTempFile() throws IOException {
+  protected static @NotNull File createTempFile() throws IOException {
     File tempFile = FileUtil.createTempFile("coverage", "args");
     if (tempFile.getAbsolutePath().contains(" ")) {
       String path = JavaExecutionUtil.handleSpacesInAgentPath(tempFile.getAbsolutePath(), "coverage", JAVA_COVERAGE_AGENT_AGENT_PATH);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.coverage.view.CoverageViewManager;
@@ -130,8 +130,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     return myActiveBundles.values().stream().findFirst().orElse(null);
   }
 
-  @Nullable
-  protected CoverageSuiteListener createCoverageViewListener() {
+  protected @Nullable CoverageSuiteListener createCoverageViewListener() {
     return new CoverageViewSuiteListener(myProject);
   }
 
@@ -349,12 +348,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void attachToProcess(@NotNull final ProcessHandler handler,
-                              @NotNull final RunConfigurationBase configuration,
+  public void attachToProcess(final @NotNull ProcessHandler handler,
+                              final @NotNull RunConfigurationBase configuration,
                               final RunnerSettings runnerSettings) {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
+      public void processTerminated(final @NotNull ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
         handler.removeProcessListener(this);
       }
@@ -392,7 +391,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void addSuiteListener(@NotNull final CoverageSuiteListener listener, @NotNull Disposable parentDisposable) {
+  public void addSuiteListener(final @NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.finder;
 
 import com.intellij.navigation.ChooseByNameContributor;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditorConfigGotoFileContributor implements ChooseByNameContributor {
-  private final static String[] EDITOR_CONFIG_NAMES = new String[] {Utils.EDITOR_CONFIG_FILE_NAME};
+  private static final String[] EDITOR_CONFIG_NAMES = new String[] {Utils.EDITOR_CONFIG_FILE_NAME};
 
   @Override
   public String @NotNull [] getNames(Project project, boolean includeNonProjectItems) {
@@ -64,8 +64,7 @@ public class EditorConfigGotoFileContributor implements ChooseByNameContributor 
     }
   }
 
-  @Nullable
-  private static EditorConfigPsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  private static @Nullable EditorConfigPsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);

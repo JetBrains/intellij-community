@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -37,7 +37,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
-  public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
+  public ProjectData loadCoverageData(final @NotNull File sessionDataFile, final @Nullable CoverageSuite coverageSuite) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
     if (sourceMapFile.exists()) {
@@ -80,7 +80,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean testTracking,
                                      final boolean branchCoverage,
                                      @Nullable String sourceMapPath,
-                                     @Nullable final Project project) {
+                                     final @Nullable Project project) {
     final String agentPath = getAgentPath();
     if (agentPath == null) return;
     final String[] excludeAnnotations = getExcludeAnnotations(project);
@@ -101,23 +101,21 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  @Nullable
-  private static String getAgentPath() {
+  private static @Nullable String getAgentPath() {
     final String userDefinedAgentPath = System.getProperty(COVERAGE_AGENT_PATH_PROPERTY);
     final String bundledAgentPath = PathUtil.getJarPathForClass(ProjectData.class);
     final String agentPath = userDefinedAgentPath != null ? userDefinedAgentPath : bundledAgentPath;
     return handleSpacesInAgentPath(agentPath);
   }
 
-  @Nullable
-  private static JavaTargetParameter createArgumentTargetParameter(String agentPath,
-                                                                   String sessionDataFilePath,
-                                                                   String @Nullable [] patterns,
-                                                                   String[] excludePatterns,
-                                                                   String[] excludeAnnotations,
-                                                                   boolean testTracking,
-                                                                   boolean branchCoverage,
-                                                                   String sourceMapPath) {
+  private static @Nullable JavaTargetParameter createArgumentTargetParameter(String agentPath,
+                                                                             String sessionDataFilePath,
+                                                                             String @Nullable [] patterns,
+                                                                             String[] excludePatterns,
+                                                                             String[] excludeAnnotations,
+                                                                             boolean testTracking,
+                                                                             boolean branchCoverage,
+                                                                             String sourceMapPath) {
     try {
       final File tempFile = createTempFile();
       tempFile.deleteOnExit();
@@ -251,20 +249,17 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
 
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return "IntelliJ IDEA";
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "idea";
   }
 
   @Override
-  @NotNull
-  public String getDataFileExtension() {
+  public @NotNull String getDataFileExtension() {
     return "ic";
   }
 

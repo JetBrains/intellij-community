@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -92,8 +92,7 @@ public class CoverageSuitesBundle {
     return false;
   }
 
-  @Nullable
-  public ProjectData getCoverageData() {
+  public @Nullable ProjectData getCoverageData() {
     ProjectData projectData = myData.get();
     if (projectData != null) return projectData;
 
@@ -132,17 +131,16 @@ public class CoverageSuitesBundle {
     return false;
   }
 
-  @NotNull
-  public CoverageEngine getCoverageEngine() {
+  public @NotNull CoverageEngine getCoverageEngine() {
     return myEngine;
   }
 
   @ApiStatus.Internal
   public LineMarkerRendererWithErrorStripe getLineMarkerRenderer(int lineNumber,
-                                                                 @Nullable final String className,
-                                                                 @NotNull final TreeMap<Integer, LineData> lines,
+                                                                 final @Nullable String className,
+                                                                 final @NotNull TreeMap<Integer, LineData> lines,
                                                                  final boolean coverageByTestApplicable,
-                                                                 @NotNull final CoverageSuitesBundle coverageSuite,
+                                                                 final @NotNull CoverageSuitesBundle coverageSuite,
                                                                  final Function<? super Integer, Integer> newToOldConverter,
                                                                  final Function<? super Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
     return myEngine.getLineMarkerRenderer(lineNumber, className, lines, coverageByTestApplicable, coverageSuite, newToOldConverter, oldToNewConverter, subCoverageActive);
@@ -188,8 +186,7 @@ public class CoverageSuitesBundle {
     myProcessedModules.add(module);
   }
 
-  @Nullable
-  public RunConfigurationBase getRunConfiguration() {
+  public @Nullable RunConfigurationBase getRunConfiguration() {
     for (CoverageSuite suite : mySuites) {
       if (suite instanceof BaseCoverageSuite) {
         final RunConfigurationBase configuration = ((BaseCoverageSuite)suite).getConfiguration();
@@ -238,8 +235,7 @@ public class CoverageSuitesBundle {
    * Merge include filters from different coverage report into one list.
    * @return merged list or <code>null</code> if some of the reports has empty include filters
    */
-  @Unmodifiable
-  private static @Nullable List<Pattern> mergeIncludeFilters(@NotNull List<ProjectData> dataList) {
+  private static @Unmodifiable @Nullable List<Pattern> mergeIncludeFilters(@NotNull List<ProjectData> dataList) {
     boolean hasEmptyFilters = false;
     Set<String> result = new HashSet<>();
     for (ProjectData data : dataList) {

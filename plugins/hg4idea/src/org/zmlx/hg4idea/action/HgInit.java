@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action;
 
 import com.intellij.ide.impl.TrustedProjects;
@@ -106,7 +106,7 @@ public class HgInit extends DumbAwareAction {
     }
   }
 
-  public static boolean createRepository(@NotNull Project project, @NotNull final VirtualFile selectedRoot) {
+  public static boolean createRepository(@NotNull Project project, final @NotNull VirtualFile selectedRoot) {
     HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
     if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
       VcsNotifier.getInstance(project)

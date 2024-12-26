@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -319,8 +319,7 @@ public class ProjectSettingsPanel {
         private PackageSetChooserCombo myScopeChooser;
 
         @Override
-        @Nullable
-        public Object getCellEditorValue() {
+        public @Nullable Object getCellEditorValue() {
           return myScopeChooser.getSelectedScope();
         }
 
@@ -353,7 +352,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private static abstract class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
+  private abstract static class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
     protected MyColumnInfo(final @NlsContexts.ColumnName String name) {
       super(name);
     }

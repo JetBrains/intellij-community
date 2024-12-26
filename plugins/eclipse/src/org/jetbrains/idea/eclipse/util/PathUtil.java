@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.util;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -6,8 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class PathUtil {
-  @NotNull
-  public static String normalize(@NotNull String path) {
+  public static @NotNull String normalize(@NotNull String path) {
     path = FileUtil.toSystemIndependentName(path);
     path = StringUtil.trimEnd(path, "/");
     while (path.contains("/./")) {
@@ -27,8 +26,7 @@ public final class PathUtil {
     return path;
   }
 
-  @NotNull
-  public static String getRelative(@NotNull String baseRoot, @NotNull String path) {
+  public static @NotNull String getRelative(@NotNull String baseRoot, @NotNull String path) {
     baseRoot = normalize(baseRoot);
     path = normalize(path);
 
@@ -72,8 +70,7 @@ public final class PathUtil {
     return index == -1 ? s.length() : index;
   }
 
-  @NotNull
-  private static String revertRelativePath(@NotNull String path) {
+  private static @NotNull String revertRelativePath(@NotNull String path) {
     if (path.equals(".")) {
       return path;
     }

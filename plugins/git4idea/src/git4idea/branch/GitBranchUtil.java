@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -195,9 +195,8 @@ public final class GitBranchUtil {
     }
   }
 
-  @Nls
-  private static String getDetachedStatePresentableText(@NotNull GitRepository repository,
-                                                        @NotNull Function<@NotNull @NlsSafe String,
+  private static @Nls String getDetachedStatePresentableText(@NotNull GitRepository repository,
+                                                             @NotNull Function<@NotNull @NlsSafe String,
                                                         @NotNull @NlsSafe String> branchNameTruncator) {
     GitReference currentReference = GitRefUtil.getCurrentReference(repository);
     if (currentReference instanceof GitTag) {

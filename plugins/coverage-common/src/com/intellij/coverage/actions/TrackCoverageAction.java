@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.coverage.*;
@@ -51,7 +52,7 @@ class TrackCoverageAction extends ToggleModelAction {
   }
 
   @Override
-  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+  public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
     myIsActive = state;
     if (state) {
       selectSubCoverageAsync();
@@ -105,8 +106,7 @@ class TrackCoverageAction extends ToggleModelAction {
     return suite != null && suite.isCoverageByTestApplicable();
   }
 
-  @Nullable
-  private CoverageSuitesBundle getCurrentCoverageSuite() {
+  private @Nullable CoverageSuitesBundle getCurrentCoverageSuite() {
     if (myModel == null) {
       return null;
     }

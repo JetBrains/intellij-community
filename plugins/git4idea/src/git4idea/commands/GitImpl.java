@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -139,8 +139,7 @@ public class GitImpl extends GitImplBase {
    * @return Unversioned not ignored files from the given scope.
    */
   @Override
-  @Unmodifiable
-  public @NotNull Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
+  public @Unmodifiable @NotNull Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                          @Nullable Collection<? extends VirtualFile> files) throws VcsException {
     return ContainerUtil.map2SetNotNull(
       untrackedFilePaths(project, root,

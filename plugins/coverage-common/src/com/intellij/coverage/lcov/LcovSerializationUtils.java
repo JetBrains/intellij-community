@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.lcov;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -8,7 +9,10 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +26,7 @@ public final class LcovSerializationUtils {
   private static final String LINE_HIT_PREFIX = "DA:";
   private static final String FUNCTION_PREFIX = "FN:";
   private static final String END_OF_RECORD = "end_of_record";
-  private final static Pattern FN_PATTERN = Pattern.compile("^FN:(\\d+),(.+)$");
+  private static final Pattern FN_PATTERN = Pattern.compile("^FN:(\\d+),(.+)$");
 
   public static @NotNull LcovCoverageReport readLCOV(@NotNull List<File> lcovFiles) throws IOException {
     LcovCoverageReport report = new LcovCoverageReport();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -33,15 +33,15 @@ import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSam
  * Read/write .eml
  */
 public final class IdeaSpecificSettings {
-  @NonNls public static final String RELATIVE_MODULE_SRC = "relative-module-src";
-  @NonNls public static final String RELATIVE_MODULE_CLS = "relative-module-cls";
-  @NonNls public static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
-  @NonNls public static final String PROJECT_RELATED = "project-related";
+  public static final @NonNls String RELATIVE_MODULE_SRC = "relative-module-src";
+  public static final @NonNls String RELATIVE_MODULE_CLS = "relative-module-cls";
+  public static final @NonNls String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
+  public static final @NonNls String PROJECT_RELATED = "project-related";
 
-  @NonNls public static final String SRCROOT_ATTR = "srcroot";
-  @NonNls public static final String SRCROOT_BIND_ATTR = "bind";
+  public static final @NonNls String SRCROOT_ATTR = "srcroot";
+  public static final @NonNls String SRCROOT_BIND_ATTR = "bind";
   private static final Logger LOG = Logger.getInstance(IdeaSpecificSettings.class);
-  @NonNls public static final String JAVADOCROOT_ATTR = "javadocroot_attr";
+  public static final @NonNls String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
 
 

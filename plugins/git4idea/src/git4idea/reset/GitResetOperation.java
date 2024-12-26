@@ -42,8 +42,7 @@ import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operat
 public class GitResetOperation {
 
   private final @NotNull Project myProject;
-  @Unmodifiable
-  private final @NotNull Map<GitRepository, @NotNull String> myCommits;
+  private final @Unmodifiable @NotNull Map<GitRepository, @NotNull String> myCommits;
   private final @NotNull GitResetMode myMode;
   private final @NotNull ProgressIndicator myIndicator;
   private final @NotNull Git myGit;

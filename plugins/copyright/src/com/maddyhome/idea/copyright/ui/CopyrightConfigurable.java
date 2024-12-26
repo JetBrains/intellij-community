@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.ui;
 
@@ -104,9 +90,8 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     return myCopyrightProfile.getName();
   }
 
-  @Nullable
   @Override
-  protected JComponent createTopRightComponent() {
+  protected @Nullable JComponent createTopRightComponent() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(BorderLayout.WEST, mySharedCheckbox);
     panel.add(BorderLayout.EAST, mySharedContextHelp);
@@ -134,8 +119,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return myCopyrightProfile.getName();
   }
 
@@ -168,8 +152,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     myModified = false;
   }
 
-  @NotNull
-  private static String validateRegexpAndGet(final String regexp, final @NlsContexts.DialogMessage String message) throws ConfigurationException {
+  private static @NotNull String validateRegexpAndGet(final String regexp, final @NlsContexts.DialogMessage String message) throws ConfigurationException {
     try {
       if (!StringUtil.isEmptyOrSpaces(regexp)) {
         Pattern.compile(regexp);

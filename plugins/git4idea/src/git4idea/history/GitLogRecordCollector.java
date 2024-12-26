@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -111,8 +111,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
   /*
    * This method calculates tree hashes for commits and their parents.
    */
-  @Unmodifiable
-  private static @NotNull <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
+  private static @Unmodifiable @NotNull <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
                                                                                @NotNull VirtualFile root,
                                                                                @NotNull Collection<? extends R> records)
     throws VcsException {

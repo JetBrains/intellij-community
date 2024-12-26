@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.openapi.Disposable;
@@ -102,8 +102,7 @@ final class CoverageDataAnnotationsManager implements Disposable {
     myRequests.put(editor, future);
   }
 
-  @NotNull
-  private CoverageEditorAnnotator getOrCreateAnnotator(Editor editor, PsiFile file, CoverageEngine engine) {
+  private @NotNull CoverageEditorAnnotator getOrCreateAnnotator(Editor editor, PsiFile file, CoverageEngine engine) {
     synchronized (myAnnotationsLock) {
       return myAnnotators.computeIfAbsent(editor, (x) -> engine.createSrcFileAnnotator(file, editor));
     }
@@ -135,8 +134,7 @@ final class CoverageDataAnnotationsManager implements Disposable {
    * Returns a Future that ensures that all requests in the coverage data annotations manager are completed.
    */
   @TestOnly
-  @NotNull
-  public Future<?> getAllRequestsCompletion() {
+  public @NotNull Future<?> getAllRequestsCompletion() {
     if (myUpdateRequest == null) return CompletableFuture.runAsync(() -> { }, myExecutor);
     return myUpdateRequest.thenRunAsync(() -> {}, myExecutor);
   }

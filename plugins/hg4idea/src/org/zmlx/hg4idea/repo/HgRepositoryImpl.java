@@ -41,13 +41,13 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
 
   private static final Logger LOG = Logger.getInstance(HgRepositoryImpl.class);
 
-  @NotNull private final HgVcs myVcs;
-  @NotNull private final HgRepositoryReader myReader;
-  @NotNull private final VirtualFile myHgDir;
-  @NotNull private volatile HgRepoInfo myInfo;
-  @NotNull private Set<String> myOpenedBranches = Collections.emptySet();
+  private final @NotNull HgVcs myVcs;
+  private final @NotNull HgRepositoryReader myReader;
+  private final @NotNull VirtualFile myHgDir;
+  private volatile @NotNull HgRepoInfo myInfo;
+  private @NotNull Set<String> myOpenedBranches = Collections.emptySet();
 
-  @NotNull private volatile HgConfig myConfig;
+  private volatile @NotNull HgConfig myConfig;
   private final HgLocalIgnoredHolder myLocalIgnoredHolder;
 
   private final CoroutineScope coroutineScope;
@@ -72,9 +72,8 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     update();
   }
 
-  @NotNull
-  public static HgRepository getInstance(@NotNull VirtualFile root, @NotNull Project project,
-                                         @NotNull Disposable parentDisposable) {
+  public static @NotNull HgRepository getInstance(@NotNull VirtualFile root, @NotNull Project project,
+                                                  @NotNull Disposable parentDisposable) {
     ProgressManager.checkCanceled();
     HgVcs vcs = HgVcs.getInstance(project);
     if (vcs == null) {
@@ -97,24 +96,21 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     myLocalIgnoredHolder.startRescan();
   }
 
-  @NotNull
   @Override
-  public VirtualFile getHgDir() {
+  public @NotNull VirtualFile getHgDir() {
     return myHgDir;
   }
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myInfo.getState();
   }
 
   /**
    * Return active bookmark name if exist or heavy branch name otherwise
    */
-  @Nullable
   @Override
-  public String getCurrentBranchName() {
+  public @Nullable String getCurrentBranchName() {
     String branchOrBookMarkName = getCurrentBookmark();
     if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {
       branchOrBookMarkName = getCurrentBranch();
@@ -122,69 +118,58 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     return branchOrBookMarkName;
   }
 
-  @NotNull
   @Override
-  public AbstractVcs getVcs() {
+  public @NotNull AbstractVcs getVcs() {
     return myVcs;
   }
 
   @Override
-  @NotNull
-  public String getCurrentBranch() {
+  public @NotNull String getCurrentBranch() {
     return myInfo.getCurrentBranch();
   }
 
   @Override
-  @Nullable
-  public String getCurrentRevision() {
+  public @Nullable String getCurrentRevision() {
     return myInfo.getCurrentRevision();
   }
 
   @Override
-  @Nullable
-  public String getTipRevision() {
+  public @Nullable String getTipRevision() {
     return myInfo.getTipRevision();
   }
 
   @Override
-  @NotNull
-  public Map<String, LinkedHashSet<Hash>> getBranches() {
+  public @NotNull Map<String, LinkedHashSet<Hash>> getBranches() {
     return myInfo.getBranches();
   }
 
   @Override
-  @NotNull
-  public Set<String> getOpenedBranches() {
+  public @NotNull Set<String> getOpenedBranches() {
     return myOpenedBranches;
   }
 
-  @NotNull
   @Override
-  public Collection<HgNameWithHashInfo> getBookmarks() {
+  public @NotNull Collection<HgNameWithHashInfo> getBookmarks() {
     return myInfo.getBookmarks();
   }
 
-  @Nullable
   @Override
-  public String getCurrentBookmark() {
+  public @Nullable String getCurrentBookmark() {
     return myInfo.getCurrentBookmark();
   }
 
-  @NotNull
   @Override
-  public Collection<HgNameWithHashInfo> getTags() {
+  public @NotNull Collection<HgNameWithHashInfo> getTags() {
     return myInfo.getTags();
   }
 
-  @NotNull
   @Override
-  public Collection<HgNameWithHashInfo> getLocalTags() {
+  public @NotNull Collection<HgNameWithHashInfo> getLocalTags() {
     return myInfo.getLocalTags();
   }
 
-  @NotNull
   @Override
-  public HgConfig getRepositoryConfig() {
+  public @NotNull HgConfig getRepositoryConfig() {
     return myConfig;
   }
 
@@ -194,26 +179,22 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
   }
 
   @Override
-  @NotNull
-  public Collection<HgNameWithHashInfo> getSubrepos() {
+  public @NotNull Collection<HgNameWithHashInfo> getSubrepos() {
     return myInfo.getSubrepos();
   }
 
-  @NotNull
   @Override
-  public List<HgNameWithHashInfo> getMQAppliedPatches() {
+  public @NotNull List<HgNameWithHashInfo> getMQAppliedPatches() {
     return myInfo.getMQApplied();
   }
 
-  @NotNull
   @Override
-  public List<String> getAllPatchNames() {
+  public @NotNull List<String> getAllPatchNames() {
     return myInfo.getMqPatchNames();
   }
 
-  @NotNull
   @Override
-  public List<String> getUnappliedPatchNames() {
+  public @NotNull List<String> getUnappliedPatchNames() {
     final List<String> appliedPatches = HgUtil.getNamesWithoutHashes(getMQAppliedPatches());
     return ContainerUtil.filter(getAllPatchNames(), s -> !appliedPatches.contains(s));
   }
@@ -240,15 +221,12 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     }
   }
 
-  @NonNls
-  @NotNull
   @Override
-  public String toLogString() {
+  public @NonNls @NotNull String toLogString() {
     return "HgRepository " + getRoot() + " : " + myInfo;
   }
 
-  @NotNull
-  private HgRepoInfo readRepoInfo() {
+  private @NotNull HgRepoInfo readRepoInfo() {
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readCurrentTipRevision(), myReader.readState(),
@@ -262,14 +240,13 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     myConfig = HgConfig.getInstance(getProject(), getRoot());
   }
 
-  @NotNull
   @Override
-  public HgLocalIgnoredHolder getIgnoredFilesHolder() {
+  public @NotNull HgLocalIgnoredHolder getIgnoredFilesHolder() {
     return myLocalIgnoredHolder;
   }
 
   private static class MyIgnoredHolderAsyncListener implements VcsIgnoredHolderUpdateListener {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     MyIgnoredHolderAsyncListener(@NotNull Project project) {
       myProject = project;

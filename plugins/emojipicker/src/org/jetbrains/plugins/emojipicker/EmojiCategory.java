@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public final class EmojiCategory implements Serializable {
-  @NonNls private final String myId;
+  private final @NonNls String myId;
   private final List<Emoji> myEmoji;
   private transient Icon myIcon;
 
@@ -18,8 +18,7 @@ public final class EmojiCategory implements Serializable {
     myEmoji = emojiList;
   }
 
-  @NonNls
-  public String getId() {
+  public @NonNls String getId() {
     return myId;
   }
 

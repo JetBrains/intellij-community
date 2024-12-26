@@ -116,8 +116,7 @@ public final class GitRefUtil {
     return result;
   }
 
-  @Nullable
-  public static GitReference getCurrentReference(GitRepository repository) {
+  public static @Nullable GitReference getCurrentReference(GitRepository repository) {
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch != null) {
       return currentBranch;
@@ -131,8 +130,7 @@ public final class GitRefUtil {
     return null;
   }
 
-  @Nullable
-  public static GitTag getCurrentTag(GitRepository repository) {
+  public static @Nullable GitTag getCurrentTag(GitRepository repository) {
     if (repository.getState() != Repository.State.DETACHED) return null;
 
     GitReference currentRef = getCurrentReference(repository);

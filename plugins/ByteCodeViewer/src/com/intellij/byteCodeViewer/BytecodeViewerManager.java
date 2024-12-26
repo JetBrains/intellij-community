@@ -115,8 +115,7 @@ public final class BytecodeViewerManager {
     return null;
   }
 
-  @Nullable
-  public static PsiClass getContainingClass(@NotNull PsiElement psiElement) {
+  public static @Nullable PsiClass getContainingClass(@NotNull PsiElement psiElement) {
     for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensionList()) {
       PsiClass aClass = searcher.findClass(psiElement);
       if (aClass != null) {

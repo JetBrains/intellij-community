@@ -65,8 +65,7 @@ public final class GitUpdateProcess {
   private final @NotNull Project myProject;
   private final @NotNull Git myGit;
 
-  @Unmodifiable
-  private final @NotNull List<GitRepository> myRepositories;
+  private final @Unmodifiable @NotNull List<GitRepository> myRepositories;
   private final @NotNull Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;

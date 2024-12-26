@@ -244,8 +244,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     return !command.isEmpty() && !command.startsWith("ssh ");
   }
 
-  @Nullable
-  private String readSshCommand() {
+  private @Nullable String readSshCommand() {
     String sshCommand = EnvironmentUtil.getValue(GitCommand.GIT_SSH_COMMAND_ENV);
     if (sshCommand != null) return sshCommand;
 

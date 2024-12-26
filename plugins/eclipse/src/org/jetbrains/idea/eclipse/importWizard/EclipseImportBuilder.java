@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -79,8 +79,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
   private Parameters parameters;
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return EclipseBundle.message("eclipse.name");
   }
 
@@ -90,8 +89,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
   }
 
   @Override
-  @Nullable
-  public String getRootDirectory() {
+  public @Nullable String getRootDirectory() {
     return getParameters().root;
   }
 
@@ -389,8 +387,8 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }
   }
 
-  private static void scheduleNaturesImporting(@NotNull final Project project,
-                                               @NotNull final Map<Module, Set<String>> module2NatureNames) {
+  private static void scheduleNaturesImporting(final @NotNull Project project,
+                                               final @NotNull Map<Module, Set<String>> module2NatureNames) {
     if (module2NatureNames.size() == 0) {
       return;
     }
@@ -452,8 +450,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }
   }
 
-  @NotNull
-  public Parameters getParameters() {
+  public @NotNull Parameters getParameters() {
     if (parameters == null) {
       parameters = new Parameters();
       parameters.existingModuleNames = new HashSet<>();
@@ -482,8 +479,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }
   }
 
-  @NotNull
-  public static Set<String> collectNatures(@NotNull String path) {
+  public static @NotNull Set<String> collectNatures(@NotNull String path) {
     Set<String> naturesNames = new HashSet<>();
     try {
       Element natures = JDOMUtil.load(new File(path, EclipseXml.DOT_PROJECT_EXT)).getChild("natures");

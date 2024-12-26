@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
@@ -11,15 +11,14 @@ import java.util.Collections;
 import java.util.List;
 
 public final class EditorConfigIntellijNameUtil {
-  public final static String IDE_PREFIX = "ij_";
-  final static String GENERIC_PROPERTY_PREFIX = "any_";
-  final static String GENERIC_OPTION_KEY_PREFIX = IDE_PREFIX + GENERIC_PROPERTY_PREFIX;
+  public static final String IDE_PREFIX = "ij_";
+  static final String GENERIC_PROPERTY_PREFIX = "any_";
+  static final String GENERIC_OPTION_KEY_PREFIX = IDE_PREFIX + GENERIC_PROPERTY_PREFIX;
 
   private EditorConfigIntellijNameUtil() {
   }
 
-  @NotNull
-  public static List<String> toEditorConfigNames(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String propertyName) {
+  public static @NotNull List<String> toEditorConfigNames(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String propertyName) {
     if (isIgnored(propertyName)) {
       return Collections.emptyList();
     }
@@ -34,18 +33,15 @@ public final class EditorConfigIntellijNameUtil {
     };
   }
 
-  @NotNull
-  public static String getLanguageProperty(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String propertyName) {
+  public static @NotNull String getLanguageProperty(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String propertyName) {
     return IDE_PREFIX + mapper.getLanguageDomainId() + "_" + propertyName;
   }
 
-  @NotNull
-  public static String toIntellijName(@NotNull String editorConfigName) {
+  public static @NotNull String toIntellijName(@NotNull String editorConfigName) {
     return StringUtil.trimStart(StringUtil.trimStart(editorConfigName, IDE_PREFIX), GENERIC_PROPERTY_PREFIX);
   }
 
-  @Nullable
-  public static String extractLanguageDomainId(@NotNull String propertyName) {
+  public static @Nullable String extractLanguageDomainId(@NotNull String propertyName) {
     if (propertyName.startsWith(IDE_PREFIX)) {
       String id = StringUtil.trimStart(propertyName, IDE_PREFIX);
       int separatorPos = id.indexOf("_");

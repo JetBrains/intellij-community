@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
@@ -21,8 +20,6 @@ import com.intellij.util.ui.EmptyIcon;
 import git4idea.*;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.branch.GitBrancher;
-import git4idea.branch.GitNewBranchDialog;
-import git4idea.branch.GitNewBranchOptions;
 import git4idea.config.GitSharedSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.remote.hosting.GitRemoteBranchesUtil;
@@ -36,12 +33,13 @@ import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.GitReference.BRANCH_NAME_HASHING_STRATEGY;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
-import static git4idea.ui.branch.GitBranchActionsUtilKt.*;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.GIT_SINGLE_REF_ACTION_GROUP;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.createOrCheckoutNewBranch;
 
 public final class GitBranchPopupActions {
 
@@ -277,7 +275,7 @@ public final class GitBranchPopupActions {
      * @deprecated use {@link GitBrancher}
      */
     @Deprecated(forRemoval = true)
-    public final static class CheckoutAction {
+    public static final class CheckoutAction {
       /**
        * @deprecated use {@link GitBrancher#checkout(String, boolean, List, Runnable))}
        */

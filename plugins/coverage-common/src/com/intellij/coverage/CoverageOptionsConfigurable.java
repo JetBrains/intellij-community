@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -31,15 +31,13 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "coverage";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return CoverageBundle.message("configurable.CoverageOptionsConfigurable.display.name");
   }
 
@@ -89,9 +87,8 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     return panel;
   }
 
-  @NotNull
   @Override
-  protected List<CoverageOptions> createConfigurables() {
+  protected @NotNull List<CoverageOptions> createConfigurables() {
     return CoverageOptions.EP_NAME.getExtensions(myProject);
   }
 

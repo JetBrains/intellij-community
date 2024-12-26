@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.coverage;
 
@@ -105,17 +105,16 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     return myKey;
   }
 
-  @Nullable
   @Override
-  public Integer getMaxWidth() {
+  public @Nullable Integer getMaxWidth() {
     return THICKNESS;
   }
 
   public static CoverageLineMarkerRenderer getRenderer(int lineNumber,
-                                                       @Nullable final String className,
-                                                       @NotNull final TreeMap<Integer, LineData> lines,
+                                                       final @Nullable String className,
+                                                       final @NotNull TreeMap<Integer, LineData> lines,
                                                        final boolean coverageByTestApplicable,
-                                                       @NotNull final CoverageSuitesBundle coverageSuite,
+                                                       final @NotNull CoverageSuitesBundle coverageSuite,
                                                        final Function<? super Integer, Integer> newToOldConverter,
                                                        final Function<? super Integer, Integer> oldToNewConverter,
                                                        boolean subCoverageActive) {
@@ -124,7 +123,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   }
 
   public static TextAttributesKey getAttributesKey(final int oldLine,
-                                                   @NotNull final TreeMap<Integer, LineData> lines) {
+                                                   final @NotNull TreeMap<Integer, LineData> lines) {
 
     return getAttributesKey(lines.get(oldLine));
   }
@@ -143,7 +142,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   }
 
   @Override
-  public boolean canDoAction(@NotNull final MouseEvent e) {
+  public boolean canDoAction(final @NotNull MouseEvent e) {
     Component component = e.getComponent();
     if (component instanceof EditorGutterComponentEx gutter) {
       return e.getX() > gutter.getLineMarkerAreaOffset() && e.getX() < gutter.getIconAreaOffset();
@@ -152,7 +151,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   }
 
   @Override
-  public void doAction(@NotNull final Editor editor, @NotNull final MouseEvent e) {
+  public void doAction(final @NotNull Editor editor, final @NotNull MouseEvent e) {
     e.consume();
     showHint(editor, myOldLine);
   }
@@ -203,8 +202,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     HintManagerImpl.getInstanceImpl().showGutterHint(hint, editor, lineInCurrent, THICKNESS, hideFlags, -1, false, hintInfo);
   }
 
-  @Nullable
-  public static String getReport(LineData lineData, int lineInCurrent, Editor editor, CoverageSuitesBundle bundle) {
+  public static @Nullable String getReport(LineData lineData, int lineInCurrent, Editor editor, CoverageSuitesBundle bundle) {
     final Document document = editor.getDocument();
     final Project project = editor.getProject();
     assert project != null;
@@ -260,8 +258,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     editor.getScrollingModel().runActionOnScrollingFinished(() -> showHint(editor, lineNumber));
   }
 
-  @Nullable
-  public LineData getLineData(int oldLine) {
+  public @Nullable LineData getLineData(int oldLine) {
     return myLines.get(oldLine);
   }
 
@@ -270,9 +267,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     return editor.getColorsScheme().getAttributes(myKey).getErrorStripeColor();
   }
 
-  @NotNull
   @Override
-  public Position getPosition() {
+  public @NotNull Position getPosition() {
     return Position.LEFT;
   }
 
@@ -334,7 +330,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final Integer nextOldLine = getLineEntry();
       if (nextOldLine != null) {
         moveToLine(nextOldLine.intValue(), myEditor);
@@ -346,8 +342,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     /**
      * @return next interesting old line
      */
-    @Nullable
-    private Integer getLineEntry() {
+    private @Nullable Integer getLineEntry() {
       List<Integer> oldLines = ContainerUtil.sorted(myLines.keySet());
       int size = oldLines.size();
       final LineData data = getLineData(myOldLine);
@@ -369,8 +364,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
       }
     }
 
-    @Nullable
-    protected String getNextChange() {
+    protected @Nullable String getNextChange() {
       Integer nextOldLine = getLineEntry();
       if (nextOldLine != null) {
         final LineData lineData = getLineData(nextOldLine);
@@ -387,7 +381,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getLineEntry() != null);
     }
 
@@ -421,17 +415,14 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
         @Override
         protected List<ColorAndFontPanelFactory> createPanelFactories() {
           final ColorAndFontPanelFactory panelFactory = new ColorAndFontPanelFactory() {
-            @NotNull
             @Override
-            public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+            public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
               final SimpleEditorPreview preview = new SimpleEditorPreview(options, colorsPage);
               return NewColorAndFontPanel.create(preview, colorsPage.getDisplayName(), options, null, colorsPage);
             }
 
-            @NlsContexts.ConfigurableName
-            @NotNull
             @Override
-            public String getPanelDisplayName() {
+            public @NlsContexts.ConfigurableName @NotNull String getPanelDisplayName() {
               return fullDisplayName;
             }
           };
@@ -462,9 +453,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     }
   }
 
-  @NotNull
   @Override
-  public String getAccessibleName() {
+  public @NotNull String getAccessibleName() {
     return CoverageBundle.message("marker.code.coverage");
   }
 }

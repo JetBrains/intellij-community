@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.commander;
 
@@ -68,10 +68,8 @@ public class CommanderPanel extends JPanel {
   protected final ListSpeedSearch myListSpeedSearch;
   private final IdeView myIdeView = new MyIdeView();
   private final MyDeleteElementProvider myDeleteElementProvider = new MyDeleteElementProvider();
-  @NonNls
-  private static final String ACTION_DRILL_DOWN = "DrillDown";
-  @NonNls
-  private static final String ACTION_GO_UP = "GoUp";
+  private static final @NonNls String ACTION_DRILL_DOWN = "DrillDown";
+  private static final @NonNls String ACTION_GO_UP = "GoUp";
   private ProjectAbstractTreeStructureBase myProjectTreeStructure;
   private boolean myActive = true;
   private final List<CommanderHistoryListener> myHistoryListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -455,7 +453,7 @@ public class CommanderPanel extends JPanel {
     }
 
     @Override
-    public boolean canDeleteElement(@NotNull final DataContext dataContext) {
+    public boolean canDeleteElement(final @NotNull DataContext dataContext) {
       PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null || elements.length == 0) return false;
       return DeleteHandler.shouldEnableDeleteAction(elements);

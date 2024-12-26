@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,12 +75,11 @@ public interface Git {
   Collection<FilePath> untrackedFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root,
                                                 @Nullable List<String> relativePaths) throws VcsException;
 
-  @NotNull
-  default GitCommandResult clone(@Nullable Project project,
-                                 @NotNull File parentDirectory,
-                                 @NotNull String url,
-                                 @NotNull String clonedDirectoryName,
-                                 GitLineHandlerListener @NotNull ... progressListeners) {
+  default @NotNull GitCommandResult clone(@Nullable Project project,
+                                          @NotNull File parentDirectory,
+                                          @NotNull String url,
+                                          @NotNull String clonedDirectoryName,
+                                          GitLineHandlerListener @NotNull ... progressListeners) {
     return clone(project, parentDirectory, url, clonedDirectoryName, null, progressListeners);
   }
 

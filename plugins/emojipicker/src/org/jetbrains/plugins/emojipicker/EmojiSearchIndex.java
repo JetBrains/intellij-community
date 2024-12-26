@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class EmojiSearchIndex implements Serializable {
-  @NonNls private final String myChars;
+  private final @NonNls String myChars;
   private final int[] myData;
   private final int myRootNodeOffset, myTotalEmojiIndices;
 
@@ -68,7 +68,7 @@ public final class EmojiSearchIndex implements Serializable {
 
 
   public static final class PrefixTree {
-    @NonNls private String myPrefix;
+    private @NonNls String myPrefix;
     private final List<PrefixTree> myChildren = new ArrayList<>();
     private final List<Integer> myValues = new ArrayList<>();
 

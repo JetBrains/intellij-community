@@ -103,8 +103,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
    * <p>Currently submodule-dependency is the only one which is taken into account.</p>
    * <p>If repositories are independent of each other, they are sorted {@link DvcsUtil#REPOSITORY_COMPARATOR by path}.</p>
    */
-  @Unmodifiable
-  public @NotNull List<GitRepository> sortByDependency(@NotNull @Unmodifiable Collection<? extends GitRepository> repositories) {
+  public @Unmodifiable @NotNull List<GitRepository> sortByDependency(@NotNull @Unmodifiable Collection<? extends GitRepository> repositories) {
     return ContainerUtil.sorted(repositories, DEPENDENCY_COMPARATOR);
   }
 }

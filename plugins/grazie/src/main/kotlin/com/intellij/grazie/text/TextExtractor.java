@@ -87,8 +87,7 @@ public abstract class TextExtractor {
    * @return text contents intersecting the given PSI element with the domains from the allowed set.
    * The extensions are queried for the given {@code psi} and its parents, the results are cached and reused.
    */
-  @Unmodifiable
-  public static @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  public static @Unmodifiable @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     TextRange psiRange = psi.getTextRange();
     PsiFile file = null;
     for (PsiElement each = psi; each != null; each = each.getParent()) {
@@ -210,8 +209,7 @@ public abstract class TextExtractor {
    * That's useful if you iterate over PSI elements and want to process each of their contents just once
    * (e.g. during highlighting).
    */
-  @Unmodifiable
-  public static @NotNull List<TextContent> findUniqueTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  public static @Unmodifiable @NotNull List<TextContent> findUniqueTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (psi.getFirstChild() != null) return Collections.emptyList();
 
     TextRange psiRange = psi.getTextRange();

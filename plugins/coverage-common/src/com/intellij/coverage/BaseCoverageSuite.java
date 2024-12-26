@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -125,9 +125,8 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     return myCoverageDataFileProvider;
   }
 
-  @NotNull
   @Override
-  public String getCoverageDataFileName() {
+  public @NotNull String getCoverageDataFileName() {
     return myCoverageDataFileProvider.getCoverageDataFilePath();
   }
 
@@ -152,8 +151,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     return myCoverageByTestEnabled;
   }
 
-  @Nullable
-  public RunConfigurationBase<?> getConfiguration() {
+  public @Nullable RunConfigurationBase<?> getConfiguration() {
     return myConfiguration;
   }
 
@@ -162,8 +160,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
   }
 
   @Override
-  @Nullable
-  public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
+  public @Nullable ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
     ProjectData data = getCoverageData();
     if (data == null) {
       data = loadProjectInfo();
@@ -190,8 +187,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     setCoverageData(loadProjectInfo());
   }
 
-  @Nullable
-  protected ProjectData loadProjectInfo() {
+  protected @Nullable ProjectData loadProjectInfo() {
     String sessionDataFileName = myCoverageDataFileProvider.getCoverageDataFilePath();
     if (sessionDataFileName == null) return null;
     File sessionDataFile = new File(sessionDataFileName);
@@ -296,8 +292,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     return text;
   }
 
-  @Nullable
-  static CoverageRunner readRunnerAttribute(@NotNull Element element) {
+  static @Nullable CoverageRunner readRunnerAttribute(@NotNull Element element) {
     final String runner = element.getAttributeValue(COVERAGE_RUNNER);
     return runner == null ? null : CoverageRunner.getInstanceById(runner);
   }

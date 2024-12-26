@@ -67,8 +67,7 @@ final class LineHistoryMapper {
     return myOldContent != null;
   }
 
-  @Nullable
-  public Int2IntMap getOldToNewLineMapping() {
+  public @Nullable Int2IntMap getOldToNewLineMapping() {
     if (myOldToNewLines == null) {
       myOldToNewLines = doGetLineMapping(true);
       if (myOldToNewLines == null) return null;
@@ -76,8 +75,7 @@ final class LineHistoryMapper {
     return myOldToNewLines.get();
   }
 
-  @Nullable
-  public Int2IntMap getNewToOldLineMapping() {
+  public @Nullable Int2IntMap getNewToOldLineMapping() {
     if (myNewToOldLines == null) {
       myNewToOldLines = doGetLineMapping(false);
       if (myNewToOldLines == null) return null;

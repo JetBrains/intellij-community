@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -17,8 +17,8 @@ public class HgBrancher {
     myProject = project;
   }
 
-  public void compare(@NotNull final String branchName, @NotNull final List<HgRepository> repositories,
-                      @NotNull final HgRepository selectedRepository) {
+  public void compare(final @NotNull String branchName, final @NotNull List<HgRepository> repositories,
+                      final @NotNull HgRepository selectedRepository) {
     new Task.Backgroundable(myProject, HgBundle.message("hg4idea.branch.comparing", branchName)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

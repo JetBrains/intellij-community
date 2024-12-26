@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider.annotate;
 
 import com.intellij.openapi.project.Project;
@@ -35,10 +35,10 @@ public class HgAnnotation extends FileAnnotation {
   private final HgLineAnnotationAspect userAnnotationAspect = new HgLineAnnotationAspect(FIELD.USER);
   private final HgLineAnnotationAspect revisionAnnotationAspect = new HgLineAnnotationAspect(FIELD.REVISION);
 
-  @NotNull private final Project myProject;
-  @NotNull private final List<? extends HgAnnotationLine> myLines;
-  @NotNull private final List<? extends HgFileRevision> myFileRevisions;
-  @NotNull private final HgFile myFile;
+  private final @NotNull Project myProject;
+  private final @NotNull List<? extends HgAnnotationLine> myLines;
+  private final @NotNull List<? extends HgFileRevision> myFileRevisions;
+  private final @NotNull HgFile myFile;
   private final VcsRevisionNumber myCurrentRevision;
 
   public HgAnnotation(@NotNull Project project, @NotNull HgFile hgFile, @NotNull List<? extends HgAnnotationLine> lines,
@@ -65,21 +65,17 @@ public class HgAnnotation extends FileAnnotation {
     };
   }
 
-  @Nullable
   @Override
-  public String getToolTip(int lineNumber) {
+  public @Nullable String getToolTip(int lineNumber) {
     return getToolTip(lineNumber, false);
   }
 
-  @Nullable
   @Override
-  public String getHtmlToolTip(int lineNumber) {
+  public @Nullable String getHtmlToolTip(int lineNumber) {
     return getToolTip(lineNumber, true);
   }
 
-  @Nls
-  @Nullable
-  private String getToolTip(int lineNumber, boolean asHtml) {
+  private @Nls @Nullable String getToolTip(int lineNumber, boolean asHtml) {
     if (myLines.size() <= lineNumber || lineNumber < 0) {
       return null;
     }
@@ -114,8 +110,7 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber getLineRevisionNumber(int lineNumber) {
+  public @Nullable VcsRevisionNumber getLineRevisionNumber(int lineNumber) {
     if (lineNumber >= myLines.size() || lineNumber < 0) {
       return null;
     }
@@ -124,8 +119,7 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public Date getLineDate(int lineNumber) {
+  public @Nullable Date getLineDate(int lineNumber) {
     //if (lineNumber >= myLines.size() || lineNumber < 0) {
     //  return null;
     //}
@@ -135,15 +129,13 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public List<VcsFileRevision> getRevisions() {
+  public @Nullable List<VcsFileRevision> getRevisions() {
     List<VcsFileRevision> result = new LinkedList<>();
     result.addAll(myFileRevisions);
     return result;
   }
 
-  @Nullable
-  private static String id(FIELD field) {
+  private static @Nullable String id(FIELD field) {
     return switch (field) {
       case USER -> LineAnnotationAspect.AUTHOR;
       case REVISION -> LineAnnotationAspect.REVISION;
@@ -196,9 +188,8 @@ public class HgAnnotation extends FileAnnotation {
     }
   }
 
-  @Nullable
   @Override
-  public VcsRevisionNumber getCurrentRevision() {
+  public @Nullable VcsRevisionNumber getCurrentRevision() {
     return myCurrentRevision;
   }
 

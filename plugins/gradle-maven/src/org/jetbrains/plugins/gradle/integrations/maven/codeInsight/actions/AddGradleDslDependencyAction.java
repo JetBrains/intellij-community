@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -33,9 +33,8 @@ public class AddGradleDslDependencyAction extends CodeInsightAction {
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new AddGradleDslDependencyActionHandler();
   }
 
@@ -47,8 +46,7 @@ public class AddGradleDslDependencyAction extends CodeInsightAction {
     return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName());
   }
 
-  @NotNull
-  private static Boolean packageSearchPluginEnabled() {
+  private static @NotNull Boolean packageSearchPluginEnabled() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     return ofNullable(getPlugin(getId("com.jetbrains.packagesearch.intellij-plugin"))).map(p -> p.isEnabled()).orElse(false);
   }

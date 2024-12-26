@@ -46,7 +46,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
   private volatile SearchIndex myEmojiSearchIndex;
 
-  @Nls private final String[] myEmojiNames;
+  private final @Nls String[] myEmojiNames;
   private volatile EmojiSkinTone mySkinTone;
   private volatile boolean dirty;
 
@@ -141,8 +141,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     return myCategories;
   }
 
-  @Nls
-  public String findNameForEmoji(Emoji emoji) {
+  public @Nls String findNameForEmoji(Emoji emoji) {
     return emoji == null ? null : myEmojiNames[emoji.getId()];
   }
 

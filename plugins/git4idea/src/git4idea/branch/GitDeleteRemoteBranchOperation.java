@@ -108,9 +108,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     throw new UnsupportedOperationException();
   }
 
-  @Unmodifiable
-  private static @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
-                                                                       @NotNull Collection<? extends GitRepository> repositories) {
+  private static @Unmodifiable @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
+                                                                                     @NotNull Collection<? extends GitRepository> repositories) {
     return new GitMultiRootBranchConfig(repositories).getCommonTrackingBranches(remoteBranch);
   }
 
