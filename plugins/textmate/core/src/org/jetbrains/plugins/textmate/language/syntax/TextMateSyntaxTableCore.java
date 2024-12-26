@@ -40,8 +40,7 @@ public class TextMateSyntaxTableCore {
    * @param plist Plist represented a syntax file (*.tmLanguage) of the target language.
    * @return language scope root name
    */
-  @Nullable
-  public CharSequence addSyntax(Plist plist, @NotNull TextMateInterner interner) {
+  public @Nullable CharSequence addSyntax(Plist plist, @NotNull TextMateInterner interner) {
     return loadRealNode(plist, null, interner).getScopeName();
   }
 
@@ -53,8 +52,7 @@ public class TextMateSyntaxTableCore {
    * If tables don't contain syntax rule for given scope,
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
-  @NotNull
-  public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
+  public @NotNull SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
       LOG.info("Can't find syntax node for scope: '{}'", scopeName);
@@ -73,10 +71,9 @@ public class TextMateSyntaxTableCore {
     return plist.contains(Constants.INCLUDE_KEY) ? loadProxyNode(plist, parentNode, interner) : loadRealNode(plist, parentNode, interner);
   }
 
-  @NotNull
-  private SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
-                                            @Nullable SyntaxNodeDescriptor parentNode,
-                                            @NotNull TextMateInterner interner) {
+  private @NotNull SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
+                                                     @Nullable SyntaxNodeDescriptor parentNode,
+                                                     @NotNull TextMateInterner interner) {
     PListValue scopeNameValue = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value);
     CharSequence scopeName = scopeNameValue != null ? interner.intern(scopeNameValue.getString()) : null;
     MutableSyntaxNodeDescriptor result = new SyntaxNodeDescriptorImpl(scopeName, parentNode);
@@ -115,11 +112,10 @@ public class TextMateSyntaxTableCore {
     return result;
   }
 
-  @Nullable
   @SuppressWarnings("SSBasedInspection")
-  private TextMateCapture @Nullable [] loadCaptures(@NotNull Plist captures,
-                                                    @NotNull SyntaxNodeDescriptor parentNode,
-                                                    @NotNull TextMateInterner interner) {
+  private @Nullable TextMateCapture @Nullable [] loadCaptures(@NotNull Plist captures,
+                                                              @NotNull SyntaxNodeDescriptor parentNode,
+                                                              @NotNull TextMateInterner interner) {
     Int2ObjectOpenHashMap<TextMateCapture> map = new Int2ObjectOpenHashMap<>();
     int maxGroupIndex = -1;
     for (Map.Entry<String, PListValue> capture : captures.entries()) {

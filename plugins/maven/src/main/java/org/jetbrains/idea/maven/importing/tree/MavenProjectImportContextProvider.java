@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.openapi.project.Project;
@@ -20,14 +20,10 @@ import static com.intellij.util.containers.ContainerUtil.concat;
 import static org.jetbrains.idea.maven.importing.MavenImportUtil.*;
 
 public class MavenProjectImportContextProvider {
-  @NotNull
-  protected final Project myProject;
-  @NotNull
-  protected final MavenProjectsTree myProjectsTree;
-  @NotNull
-  protected final MavenImportingSettings myImportingSettings;
-  @NotNull
-  protected final Map<MavenProject, String> myMavenProjectToModuleName;
+  protected final @NotNull Project myProject;
+  protected final @NotNull MavenProjectsTree myProjectsTree;
+  protected final @NotNull MavenImportingSettings myImportingSettings;
+  protected final @NotNull Map<MavenProject, String> myMavenProjectToModuleName;
 
   public MavenProjectImportContextProvider(@NotNull Project project,
                                            @NotNull MavenProjectsTree projectsTree,
@@ -77,13 +73,11 @@ public class MavenProjectImportContextProvider {
     return new ModuleImportDataContext(allModules, myMavenProjectToModuleName, moduleImportDataByMavenId, hasChanges);
   }
 
-  @Nullable
-  protected String getModuleName(MavenProject project) {
+  protected @Nullable String getModuleName(MavenProject project) {
     return myMavenProjectToModuleName.get(project);
   }
 
-  @NotNull
-  private MavenProjectImportContextProvider.ModuleImportDataDependencyContext getFlattenModuleDataDependencyContext(
+  private @NotNull MavenProjectImportContextProvider.ModuleImportDataDependencyContext getFlattenModuleDataDependencyContext(
     ModuleImportDataContext context) {
     List<MavenTreeModuleImportData> allModuleDataWithDependencies = new ArrayList<>();
     List<MavenTreeModuleImportData> changedModuleDataWithDependencies = new ArrayList<>();
@@ -104,8 +98,7 @@ public class MavenProjectImportContextProvider {
     return new ModuleImportDataDependencyContext(allModuleDataWithDependencies, changedModuleDataWithDependencies);
   }
 
-  @NotNull
-  protected static List<MavenTreeModuleImportData> splitToModules(MavenModuleImportDataWithDependencies dataWithDependencies) {
+  protected static @NotNull List<MavenTreeModuleImportData> splitToModules(MavenModuleImportDataWithDependencies dataWithDependencies) {
     SplittedMainAndTestModules mainAndTestModules = dataWithDependencies.getModuleImportData().getSplittedMainAndTestModules();
     MavenProject project = dataWithDependencies.getModuleImportData().getMavenProject();
     ModuleData moduleData = dataWithDependencies.getModuleImportData().getModuleData();
@@ -164,9 +157,9 @@ public class MavenProjectImportContextProvider {
   }
 
   private static class ModuleImportDataContext {
-    @NotNull final List<MavenProjectImportData> importData;
-    @NotNull final Map<MavenProject, String> moduleNameByProject;
-    @NotNull final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
+    final @NotNull List<MavenProjectImportData> importData;
+    final @NotNull Map<MavenProject, String> moduleNameByProject;
+    final @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
     final boolean hasChanges;
 
     private ModuleImportDataContext(@NotNull List<MavenProjectImportData> importData,
@@ -181,8 +174,8 @@ public class MavenProjectImportContextProvider {
   }
 
   private static class ModuleImportDataDependencyContext {
-    @NotNull final List<MavenTreeModuleImportData> allModuleDataWithDependencies;
-    @NotNull final List<MavenTreeModuleImportData> changedModuleDataWithDependencies;
+    final @NotNull List<MavenTreeModuleImportData> allModuleDataWithDependencies;
+    final @NotNull List<MavenTreeModuleImportData> changedModuleDataWithDependencies;
 
     private ModuleImportDataDependencyContext(@NotNull List<MavenTreeModuleImportData> allModuleDataWithDependencies,
                                               @NotNull List<MavenTreeModuleImportData> changedModuleDataWithDependencies) {

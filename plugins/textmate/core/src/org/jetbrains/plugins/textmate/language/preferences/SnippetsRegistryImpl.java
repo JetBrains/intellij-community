@@ -12,14 +12,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class SnippetsRegistryImpl implements SnippetsRegistry {
-  @NotNull private final Map<String, Collection<TextMateSnippet>> mySnippets = new ConcurrentHashMap<>();
+  private final @NotNull Map<String, Collection<TextMateSnippet>> mySnippets = new ConcurrentHashMap<>();
 
   public void register(@NotNull TextMateSnippet snippet) {
     mySnippets.computeIfAbsent(snippet.getKey(), (key) -> Collections.synchronizedList(new ArrayList<>())).add(snippet);
   }
 
-  @Override @NotNull
-  public Collection<TextMateSnippet> findSnippet(@NotNull String key, @Nullable TextMateScope scope) {
+  @Override
+  public @NotNull Collection<TextMateSnippet> findSnippet(@NotNull String key, @Nullable TextMateScope scope) {
     if (scope == null) {
       return Collections.emptyList();
     }
@@ -30,8 +30,8 @@ public final class SnippetsRegistryImpl implements SnippetsRegistry {
     return new TextMateScopeComparator<>(scope, TextMateSnippet::getScopeSelector).sortAndFilter(snippets);
   }
 
-  @Override @NotNull
-  public Collection<TextMateSnippet> getAvailableSnippets(@Nullable TextMateScope scopeSelector) {
+  @Override
+  public @NotNull Collection<TextMateSnippet> getAvailableSnippets(@Nullable TextMateScope scopeSelector) {
     if (scopeSelector == null) {
       return Collections.emptyList();
     }

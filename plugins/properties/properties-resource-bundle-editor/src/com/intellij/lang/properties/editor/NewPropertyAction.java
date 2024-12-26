@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.icons.AllIcons;
@@ -29,9 +29,9 @@ import java.util.Collections;
 * @author Dmitry Batkovich
 */
 class NewPropertyAction extends AnAction {
-  private final static Logger LOG = Logger.getInstance(NewPropertyAction.class);
+  private static final Logger LOG = Logger.getInstance(NewPropertyAction.class);
 
-  private final static String ADD_NEW_PROPERTY_AFTER_SELECTED_PROP = "add.property.after.selected";
+  private static final String ADD_NEW_PROPERTY_AFTER_SELECTED_PROP = "add.property.after.selected";
 
   private final boolean myEnabledForce;
 
@@ -46,7 +46,7 @@ class NewPropertyAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) {
       return;
@@ -179,8 +179,7 @@ class NewPropertyAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static String getSelectedPrefixText(@NotNull ResourceBundleEditor resourceBundleEditor) {
+  private static @Nullable String getSelectedPrefixText(@NotNull ResourceBundleEditor resourceBundleEditor) {
     Object item = resourceBundleEditor.getSelectedElementIfOnlyOne();
     if (item instanceof PropertiesPrefixGroup prefixGroup) {
       return prefixGroup.getPrefix() + prefixGroup.getSeparator();

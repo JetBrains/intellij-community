@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.collaboration.api.ServerPath;
@@ -30,14 +30,10 @@ public final class GithubServerPath implements ServerPath {
   private static final String ENTERPRISE_API_V3_SUFFIX = "/v3";
   private static final String GRAPHQL_SUFFIX = "/graphql";
 
-  @Attribute("useHttp")
-  @Nullable private final Boolean myUseHttp;
-  @Attribute("host")
-  @NotNull private final String myHost;
-  @Attribute("port")
-  @Nullable private final Integer myPort;
-  @Attribute("suffix")
-  @Nullable private final String mySuffix;
+  @Attribute("useHttp") private final @Nullable Boolean myUseHttp;
+  @Attribute("host") private final @NotNull String myHost;
+  @Attribute("port") private final @Nullable Integer myPort;
+  @Attribute("suffix") private final @Nullable String mySuffix;
 
   public GithubServerPath() {
     this(null, "", null, null);
@@ -57,32 +53,27 @@ public final class GithubServerPath implements ServerPath {
     mySuffix = suffix;
   }
 
-  @NotNull
-  public String getSchema() {
+  public @NotNull String getSchema() {
     return (myUseHttp == null || !myUseHttp) ? "https" : "http";
   }
 
-  @NotNull
-  public String getHost() {
+  public @NotNull String getHost() {
     return myHost;
   }
 
-  @Nullable
-  public Integer getPort() {
+  public @Nullable Integer getPort() {
     return myPort;
   }
 
-  @Nullable
-  public String getSuffix() {
+  public @Nullable String getSuffix() {
     return mySuffix;
   }
 
   // 1 - schema, 2 - host, 4 - port, 5 - path
-  private final static Pattern URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?",
+  private static final Pattern URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?",
                                                            Pattern.CASE_INSENSITIVE);
 
-  @NotNull
-  public static GithubServerPath from(@NotNull String uri) throws GithubParseException {
+  public static @NotNull GithubServerPath from(@NotNull String uri) throws GithubParseException {
     Matcher matcher = URL_REGEX.matcher(uri);
 
     if (!matcher.matches()) throw new GithubParseException("Not a valid URL");
@@ -110,21 +101,18 @@ public final class GithubServerPath implements ServerPath {
     return new GithubServerPath(httpSchema, host, port, path);
   }
 
-  @NotNull
-  public String toUrl() {
+  public @NotNull String toUrl() {
     return toUrl(true);
   }
 
-  @NotNull
-  public String toUrl(boolean showSchema) {
+  public @NotNull String toUrl(boolean showSchema) {
     StringBuilder builder = new StringBuilder();
     if (showSchema) builder.append(getSchemaUrlPart());
     builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
     return builder.toString();
   }
 
-  @NotNull
-  public String getApiHost() {
+  public @NotNull String getApiHost() {
     if (isGithubDotCom()) {
       return API_PREFIX + myHost;
     }
@@ -133,8 +121,7 @@ public final class GithubServerPath implements ServerPath {
     }
   }
 
-  @NotNull
-  public String toApiUrl() {
+  public @NotNull String toApiUrl() {
     StringBuilder builder = new StringBuilder(getSchemaUrlPart());
     if (isGithubDotCom()) {
       builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
@@ -146,8 +133,7 @@ public final class GithubServerPath implements ServerPath {
     return builder.toString();
   }
 
-  @NotNull
-  public String toGraphQLUrl() {
+  public @NotNull String toGraphQLUrl() {
     StringBuilder builder = new StringBuilder(getSchemaUrlPart());
     if (isGithubDotCom()) {
       builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(GRAPHQL_SUFFIX);
@@ -180,13 +166,11 @@ public final class GithubServerPath implements ServerPath {
     return schema + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
   }
 
-  @NotNull
-  private String getPortUrlPart() {
+  private @NotNull String getPortUrlPart() {
     return myPort != null ? (":" + myPort.toString()) : "";
   }
 
-  @NotNull
-  private String getSchemaUrlPart() {
+  private @NotNull String getSchemaUrlPart() {
     return getSchema() + URLUtil.SCHEME_SEPARATOR;
   }
 

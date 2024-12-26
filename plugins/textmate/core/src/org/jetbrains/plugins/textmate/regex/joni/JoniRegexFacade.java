@@ -17,8 +17,7 @@ import java.nio.charset.StandardCharsets;
 public final class JoniRegexFacade implements RegexFacade {
   private static final Logger LOGGER = LoggerFactory.getLogger(JoniRegexFacade.class);
 
-  @NotNull
-  private final Regex myRegex;
+  private final @NotNull Regex myRegex;
   private final boolean hasGMatch;
 
   private final ThreadLocal<LastMatch> matchResult = new ThreadLocal<>();

@@ -304,8 +304,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   @Override
-  @Nullable
-  public Module findModuleByName(String moduleName) {
+  public @Nullable Module findModuleByName(String moduleName) {
     return myModuleModel.findModuleByName(moduleName);
   }
 
@@ -447,7 +446,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
 
   @Override
-  public Library findLibrary(@NotNull final MavenArtifact artifact) {
+  public Library findLibrary(final @NotNull MavenArtifact artifact) {
     return getOrCreateLibrariesTable().get(artifact.getLibraryName());
   }
 

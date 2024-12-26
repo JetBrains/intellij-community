@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.text.VersionComparatorUtil;
@@ -51,8 +51,8 @@ import static org.jetbrains.idea.maven.server.Maven3ModelConverter.convertRemote
  * @author Vladislav.Soroka
  */
 public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
-  public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
-  private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
+  public static final boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
+  private static final String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
   protected final MavenServerSettings myServerSettings;
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
@@ -94,17 +94,14 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   protected abstract ArtifactRepository getLocalRepository();
 
   @Override
-  @Nullable
-  public MavenModel readModel(File file, MavenToken token) throws RemoteException {
+  public @Nullable MavenModel readModel(File file, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     return null;
   }
 
-  @NotNull
-  protected abstract List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException;
+  protected abstract @NotNull List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException;
 
-  @NotNull
-  protected List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) {
+  protected @NotNull List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) {
     PlexusContainer container = getContainer();
     List<ArtifactRepository> result = new ArrayList<>();
     for (MavenRemoteRepository each : repositories) {
@@ -119,8 +116,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     return result;
   }
 
-  @Nullable
-  public String getMavenVersion() {
+  public @Nullable String getMavenVersion() {
     return MAVEN_VERSION;
   }
 
@@ -153,8 +149,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     }
   }
 
-  @NotNull
-  private MavenSession createMavenSession(MavenExecutionRequest request, DefaultMaven maven) {
+  private @NotNull MavenSession createMavenSession(MavenExecutionRequest request, DefaultMaven maven) {
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);
     request.getProjectBuildingRequest().setRepositorySession(repositorySession);
     return new MavenSession(getContainer(), repositorySession, request, new DefaultMavenExecutionResult());
@@ -198,8 +193,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     }
   }
 
-  @NotNull
-  protected abstract PlexusContainer getContainer();
+  protected abstract @NotNull PlexusContainer getContainer();
 
   public MavenExecutionRequest createRequest(File file,
                                              List<String> activeProfiles,
@@ -261,12 +255,11 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     return new ArrayList<>();
   }
 
-  @Nullable
   @Override
-  public HashMap<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
-                                                              @NotNull String version,
-                                                              @NotNull ArrayList<MavenRemoteRepository> repositories,
-                                                              @Nullable String url, MavenToken token) throws RemoteException {
+  public @Nullable HashMap<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+                                                                            @NotNull String version,
+                                                                            @NotNull ArrayList<MavenRemoteRepository> repositories,
+                                                                            @Nullable String url, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       MavenExecutionRequest request = createRequest(null, null, null);
@@ -311,8 +304,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     }
   }
 
-  @NotNull
-  private static ArrayList<MavenArchetype> getArchetypes(ArchetypeCatalog archetypeCatalog) {
+  private static @NotNull ArrayList<MavenArchetype> getArchetypes(ArchetypeCatalog archetypeCatalog) {
     ArrayList<MavenArchetype> result = new ArrayList<>(archetypeCatalog.getArchetypes().size());
     for (Archetype each : archetypeCatalog.getArchetypes()) {
       result.add(Maven3ModelConverter.convertArchetype(each));

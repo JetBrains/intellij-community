@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,8 +24,7 @@ public final class MavenActionUtil {
     return CommonDataKeys.PROJECT.getData(context) != null;
   }
 
-  @Nullable
-  public static Project getProject(DataContext context) {
+  public static @Nullable Project getProject(DataContext context) {
     return CommonDataKeys.PROJECT.getData(context);
   }
 
@@ -37,8 +36,7 @@ public final class MavenActionUtil {
     return mavenProjectsManager.isMavenizedProject();
   }
 
-  @Nullable
-  public static MavenProject getMavenProject(DataContext context) {
+  public static @Nullable MavenProject getMavenProject(DataContext context) {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
     if (manager == null) return null;
@@ -58,8 +56,7 @@ public final class MavenActionUtil {
     return null;
   }
 
-  @Nullable
-  public static MavenProjectsManager getProjectsManager(DataContext context) {
+  public static @Nullable MavenProjectsManager getProjectsManager(DataContext context) {
     final Project project = getProject(context);
     if (project == null) return null;
     return MavenProjectsManager.getInstanceIfCreated(project);

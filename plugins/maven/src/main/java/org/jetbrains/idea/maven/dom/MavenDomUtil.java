@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.properties.IProperty;
@@ -123,8 +123,7 @@ public final class MavenDomUtil {
     return isMavenFile(element.getContainingFile());
   }
 
-  @Nullable
-  public static Module findContainingMavenizedModule(@NotNull PsiFile psiFile) {
+  public static @Nullable Module findContainingMavenizedModule(@NotNull PsiFile psiFile) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return null;
 
@@ -179,20 +178,17 @@ public final class MavenDomUtil {
     return clazz.isInstance(parentElement) ? (T)parentElement : null;
   }
 
-  @Nullable
-  public static VirtualFile getVirtualFile(@NotNull DomElement element) {
+  public static @Nullable VirtualFile getVirtualFile(@NotNull DomElement element) {
     PsiFile psiFile = DomUtil.getFile(element);
     return getVirtualFile(psiFile);
   }
 
-  @Nullable
-  public static VirtualFile getVirtualFile(@NotNull PsiElement element) {
+  public static @Nullable VirtualFile getVirtualFile(@NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     return getVirtualFile(psiFile);
   }
 
-  @Nullable
-  private static VirtualFile getVirtualFile(PsiFile psiFile) {
+  private static @Nullable VirtualFile getVirtualFile(PsiFile psiFile) {
     if (psiFile == null) return null;
     psiFile = psiFile.getOriginalFile();
     VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -202,8 +198,7 @@ public final class MavenDomUtil {
     return virtualFile;
   }
 
-  @Nullable
-  public static MavenProject findProject(@NotNull MavenDomProjectModel projectDom) {
+  public static @Nullable MavenProject findProject(@NotNull MavenDomProjectModel projectDom) {
     XmlElement element = projectDom.getXmlElement();
     if (element == null) return null;
 
@@ -213,56 +208,48 @@ public final class MavenDomUtil {
     return manager.findProject(file);
   }
 
-  @Nullable
-  public static MavenProject findContainingProject(@NotNull DomElement element) {
+  public static @Nullable MavenProject findContainingProject(@NotNull DomElement element) {
     PsiElement psi = element.getXmlElement();
     return psi == null ? null : findContainingProject(psi);
   }
 
-  @Nullable
-  public static MavenProject findContainingProject(@NotNull PsiElement element) {
+  public static @Nullable MavenProject findContainingProject(@NotNull PsiElement element) {
     VirtualFile file = getVirtualFile(element);
     if (file == null) return null;
     MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
     return manager.findContainingProject(file);
   }
 
-  @Nullable
-  public static MavenDomProjectModel getMavenDomProjectModel(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @Nullable MavenDomProjectModel getMavenDomProjectModel(@NotNull Project project, @NotNull VirtualFile file) {
     return getMavenDomModel(project, file, MavenDomProjectModel.class);
   }
 
-  @Nullable
-  public static MavenDomProfiles getMavenDomProfilesModel(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @Nullable MavenDomProfiles getMavenDomProfilesModel(@NotNull Project project, @NotNull VirtualFile file) {
     MavenDomProfilesModel model = getMavenDomModel(project, file, MavenDomProfilesModel.class);
     if (model != null) return model.getProfiles();
     return getMavenDomModel(project, file, MavenDomProfiles.class); // try old-style model
   }
 
-  @Nullable
-  public static <T extends MavenDomElement> T getMavenDomModel(@NotNull Project project,
-                                                               @NotNull VirtualFile file,
-                                                               @NotNull Class<T> clazz) {
+  public static @Nullable <T extends MavenDomElement> T getMavenDomModel(@NotNull Project project,
+                                                                         @NotNull VirtualFile file,
+                                                                         @NotNull Class<T> clazz) {
     if (!file.isValid()) return null;
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) return null;
     return getMavenDomModel(psiFile, clazz);
   }
 
-  @Nullable
-  public static <T extends MavenDomElement> T getMavenDomModel(@NotNull PsiFile file, @NotNull Class<T> clazz) {
+  public static @Nullable <T extends MavenDomElement> T getMavenDomModel(@NotNull PsiFile file, @NotNull Class<T> clazz) {
     DomFileElement<T> fileElement = getMavenDomFile(file, clazz);
     return fileElement == null ? null : fileElement.getRootElement();
   }
 
-  @Nullable
-  private static <T extends MavenDomElement> DomFileElement<T> getMavenDomFile(@NotNull PsiFile file, @NotNull Class<T> clazz) {
+  private static @Nullable <T extends MavenDomElement> DomFileElement<T> getMavenDomFile(@NotNull PsiFile file, @NotNull Class<T> clazz) {
     if (!(file instanceof XmlFile)) return null;
     return DomManager.getDomManager(file.getProject()).getFileElement((XmlFile)file, clazz);
   }
 
-  @Nullable
-  public static XmlTag findTag(@NotNull DomElement domElement, @NotNull String path) {
+  public static @Nullable XmlTag findTag(@NotNull DomElement domElement, @NotNull String path) {
     List<String> elements = StringUtil.split(path, ".");
     if (elements.isEmpty()) return null;
 
@@ -312,27 +299,23 @@ public final class MavenDomUtil {
     return children[index];
   }
 
-  @Nullable
-  public static PropertiesFile getPropertiesFile(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @Nullable PropertiesFile getPropertiesFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof PropertiesFile)) return null;
     return (PropertiesFile)psiFile;
   }
 
-  @Nullable
-  public static IProperty findProperty(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
+  public static @Nullable IProperty findProperty(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
     PropertiesFile propertiesFile = getPropertiesFile(project, file);
     return propertiesFile == null ? null : propertiesFile.findPropertyByKey(propName);
   }
 
-  @Nullable
-  public static PsiElement findPropertyValue(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
+  public static @Nullable PsiElement findPropertyValue(@NotNull Project project, @NotNull VirtualFile file, @NotNull String propName) {
     IProperty prop = findProperty(project, file, propName);
     return prop == null ? null : prop.getPsiElement().getFirstChild().getNextSibling().getNextSibling();
   }
 
-  @Nullable
-  private static Set<VirtualFile> getFilteredResourcesRoots(@NotNull MavenProject mavenProject) {
+  private static @Nullable Set<VirtualFile> getFilteredResourcesRoots(@NotNull MavenProject mavenProject) {
     Pair<Long, Set<VirtualFile>> cachedValue = mavenProject.getCachedValue(FILTERED_RESOURCES_ROOTS_KEY);
 
     if (cachedValue == null || cachedValue.first != VirtualFileManager.getInstance().getModificationCount()) {
@@ -389,8 +372,7 @@ public final class MavenDomUtil {
     return DomService.getInstance().getFileElements(MavenDomProjectModel.class, p, GlobalSearchScope.projectScope(p));
   }
 
-  @NotNull
-  public static MavenId describe(PsiFile psiFile) {
+  public static @NotNull MavenId describe(PsiFile psiFile) {
     MavenDomProjectModel model = getMavenDomModel(psiFile, MavenDomProjectModel.class);
 
     if (model == null) {
@@ -412,19 +394,17 @@ public final class MavenDomUtil {
     return new MavenId(groupId, artifactId, version);
   }
 
-  @NotNull
-  public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
-                                                       @Nullable Editor editor,
-                                                       @NotNull final MavenId id) {
+  public static @NotNull MavenDomDependency createDomDependency(MavenDomProjectModel model,
+                                                                @Nullable Editor editor,
+                                                                final @NotNull MavenId id) {
 
     return createDomDependency(model.getDependencies(), editor, id);
   }
 
 
-  @NotNull
-  public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
-                                                       @Nullable Editor editor,
-                                                       @NotNull final MavenCoordinate id) {
+  public static @NotNull MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
+                                                                @Nullable Editor editor,
+                                                                final @NotNull MavenCoordinate id) {
     MavenDomDependency dep = createDomDependency(dependencies, editor);
 
     dep.getGroupId().setStringValue(id.getGroupId());
@@ -434,13 +414,11 @@ public final class MavenDomUtil {
     return dep;
   }
 
-  @NotNull
-  public static MavenDomDependency createDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
+  public static @NotNull MavenDomDependency createDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
     return createDomDependency(model.getDependencies(), editor);
   }
 
-  @NotNull
-  public static MavenDomDependency createDomDependency(@NotNull MavenDomDependencies dependencies, @Nullable Editor editor) {
+  public static @NotNull MavenDomDependency createDomDependency(@NotNull MavenDomDependencies dependencies, @Nullable Editor editor) {
     int index = getCollectionIndex(dependencies, editor);
     if (index >= 0) {
       DomCollectionChildDescription childDescription = dependencies.getGenericInfo().getCollectionChildDescription("dependency");
@@ -455,7 +433,7 @@ public final class MavenDomUtil {
   }
 
 
-  public static int getCollectionIndex(@NotNull final MavenDomDependencies dependencies, @Nullable final Editor editor) {
+  public static int getCollectionIndex(final @NotNull MavenDomDependencies dependencies, final @Nullable Editor editor) {
     if (editor != null) {
       int offset = editor.getCaretModel().getOffset();
 
@@ -473,8 +451,7 @@ public final class MavenDomUtil {
     return -1;
   }
 
-  @NotNull
-  public static String getProjectName(MavenDomProjectModel model) {
+  public static @NotNull String getProjectName(MavenDomProjectModel model) {
     MavenProject mavenProject = findProject(model);
     if (mavenProject != null) {
       return mavenProject.getDisplayName();
@@ -490,8 +467,7 @@ public final class MavenDomUtil {
     }
   }
 
-  @Nullable
-  public static String getMavenVersion(@Nullable VirtualFile file, @NotNull Project project) {
+  public static @Nullable String getMavenVersion(@Nullable VirtualFile file, @NotNull Project project) {
     VirtualFile directory = file == null ? null : file.getParent();
     MavenDistribution distribution;
     if (directory == null) {

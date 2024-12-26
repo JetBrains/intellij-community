@@ -53,7 +53,7 @@ public class MavenServerCMDState extends CommandLineState {
     .Logger.getInstance(MavenServerCMDState.class);
   private static boolean setupThrowMainClass = false;
 
-  @NonNls private static final String MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS =
+  private static final @NonNls String MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS =
     "org.jetbrains.idea.maven.server.RemoteMavenServerThrowsExceptionForTests";
 
 
@@ -255,8 +255,7 @@ public class MavenServerCMDState extends CommandLineState {
     return MavenUtil.getPropertiesFromMavenOpts();
   }
 
-  @NotNull
-  protected String getWorkingDirectory() {
+  protected @NotNull String getWorkingDirectory() {
     return PathManager.getBinPath();
   }
 
@@ -282,16 +281,14 @@ public class MavenServerCMDState extends CommandLineState {
     }
   }
 
-  @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+  public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     ProcessHandler processHandler = startProcess();
     return new DefaultExecutionResult(processHandler);
   }
 
   @Override
-  @NotNull
-  protected ProcessHandler startProcess() throws ExecutionException {
+  protected @NotNull ProcessHandler startProcess() throws ExecutionException {
     SimpleJavaParameters params = createJavaParameters();
     GeneralCommandLine commandLine = params.toCommandLine();
     OSProcessHandler processHandler = new OSProcessHandler.Silent(commandLine);
@@ -311,8 +308,7 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
 
-  @Nullable
-  static String getMaxXmxStringValue(@Nullable String memoryValueA, @Nullable String memoryValueB) {
+  static @Nullable String getMaxXmxStringValue(@Nullable String memoryValueA, @Nullable String memoryValueB) {
     MemoryProperty propertyA = MemoryProperty.valueOf(memoryValueA);
     MemoryProperty propertyB = MemoryProperty.valueOf(memoryValueB);
     if (propertyA != null && propertyB != null) {
@@ -337,13 +333,11 @@ public class MavenServerCMDState extends CommandLineState {
       this.valueBytes = value * this.unit.ratio;
     }
 
-    @NotNull
-    public static MemoryProperty of(@NotNull MemoryPropertyType propertyType, long bytes) {
+    public static @NotNull MemoryProperty of(@NotNull MemoryPropertyType propertyType, long bytes) {
       return new MemoryProperty(propertyType.type, bytes, MemoryUnit.B.name());
     }
 
-    @Nullable
-    public static MemoryProperty valueOf(@Nullable String value) {
+    public static @Nullable MemoryProperty valueOf(@Nullable String value) {
       if (value == null) return null;
       Matcher matcher = MEMORY_PROPERTY_PATTERN.matcher(value);
       if (matcher.find()) {

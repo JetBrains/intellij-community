@@ -47,7 +47,7 @@ final class AddAntBuildFile extends AnAction {
     }
 
     int filesAdded = 0;
-    @Nls final StringBuilder errors = new StringBuilder();
+    final @Nls StringBuilder errors = new StringBuilder();
 
     for (VirtualFile file : files) {
       try {

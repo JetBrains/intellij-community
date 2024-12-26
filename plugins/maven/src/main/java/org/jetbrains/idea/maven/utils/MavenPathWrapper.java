@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,8 +14,7 @@ public class MavenPathWrapper {
     this.path = path;
   }
 
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     return path;
   }
 

@@ -42,8 +42,7 @@ public final class ContextComputationProcessor {
     myEvaluationHelper = new SubstitutedExpressionEvaluationHelper(project);
   }
 
-  @NotNull
-  public static List<Object> collectOperands(@NotNull String prefix, String suffix, Ref<? super Boolean> unparsable, PsiElement[] operands) {
+  public static @NotNull List<Object> collectOperands(@NotNull String prefix, String suffix, Ref<? super Boolean> unparsable, PsiElement[] operands) {
     ArrayList<Object> result = new ArrayList<>();
     ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
     addStringFragment(prefix, result);
@@ -113,8 +112,7 @@ public final class ContextComputationProcessor {
     }
   }
 
-  @NotNull
-  public static PsiElement getTopLevelInjectionTarget(@NotNull PsiElement host) {
+  public static @NotNull PsiElement getTopLevelInjectionTarget(@NotNull PsiElement host) {
     PsiElement target = host;
     PsiElement parent = target.getParent();
     for (; parent != null; target = parent, parent = target.getParent()) {

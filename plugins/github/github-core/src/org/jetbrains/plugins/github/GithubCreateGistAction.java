@@ -95,9 +95,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
     return ContainerUtil.filter(files, FILE_WITH_CONTENT).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  private static void createGistAction(@NotNull final Project project,
-                                       @Nullable final Editor editor,
-                                       @Nullable final VirtualFile file,
+  private static void createGistAction(final @NotNull Project project,
+                                       final @Nullable Editor editor,
+                                       final @Nullable VirtualFile file,
                                        final VirtualFile @Nullable [] files) {
     GithubSettings settings = GithubSettings.getInstance();
     // Ask for description and other params
@@ -155,15 +155,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
-  @Nullable
-  static String createGist(@NotNull Project project,
-                           @NotNull GithubApiRequestExecutor executor,
-                           @NotNull ProgressIndicator indicator,
-                           @NotNull GithubServerPath server,
-                           @NotNull List<? extends FileContent> contents,
-                           final boolean isSecret,
-                           @NotNull final String description,
-                           @Nullable String filename) {
+  static @Nullable String createGist(@NotNull Project project,
+                                     @NotNull GithubApiRequestExecutor executor,
+                                     @NotNull ProgressIndicator indicator,
+                                     @NotNull GithubServerPath server,
+                                     @NotNull List<? extends FileContent> contents,
+                                     final boolean isSecret,
+                                     final @NotNull String description,
+                                     @Nullable String filename) {
     if (contents.isEmpty()) {
       GithubNotifications.showWarning(project,
                                       GithubNotificationIdsHolder.GIST_CANNOT_CREATE,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -77,8 +77,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   @Override
-  @NotNull
-  public Collection<String> getVariants(@NotNull ConvertContext context) {
+  public @NotNull Collection<String> getVariants(@NotNull ConvertContext context) {
     DependencySearchService searchService = DependencySearchService.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
@@ -125,8 +124,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return false;
   }
 
-  @Nullable
-  protected VirtualFile getMavenProjectFile(ConvertContext context) {
+  protected @Nullable VirtualFile getMavenProjectFile(ConvertContext context) {
     PsiFile psiFile = context.getFile().getOriginalFile();
     return psiFile.getVirtualFile();
   }
@@ -162,14 +160,12 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   public static final class MyUpdateIndicesIntention implements IntentionAction {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
       return MavenDomBundle.message("fix.update.indices");
     }
 
@@ -192,8 +188,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private class ConverterStrategy {
-    @Nls
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    public @Nls String getErrorMessage(@Nullable String s, ConvertContext context) {
       return MavenDomBundle.message("artifact.0.not.found", MavenArtifactCoordinatesHelper.getId(context));
     }
 
@@ -218,8 +213,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return resolveInLocalRepository(id, projectsManager, psiManager);
     }
 
-    @Nullable
-    protected PsiFile resolveBySpecifiedPath() {
+    protected @Nullable PsiFile resolveBySpecifiedPath() {
       return null;
     }
 

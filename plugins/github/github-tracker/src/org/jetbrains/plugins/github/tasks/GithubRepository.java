@@ -43,9 +43,9 @@ import java.util.regex.Pattern;
 final class GithubRepository extends BaseRepository {
 
   private Pattern myPattern = Pattern.compile("($^)");
-  @NotNull private String myRepoAuthor = "";
-  @NotNull private String myRepoName = "";
-  @NotNull private String myUser = "";
+  private @NotNull String myRepoAuthor = "";
+  private @NotNull String myRepoName = "";
+  private @NotNull String myUser = "";
   private boolean myAssignedIssuesOnly = false;
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -64,9 +64,8 @@ final class GithubRepository extends BaseRepository {
     setUrl("https://" + GithubServerPath.DEFAULT_HOST);
   }
 
-  @NotNull
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @NotNull CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
       private final GithubApiRequestExecutor myExecutor = getExecutor();
       private final ProgressIndicator myIndicator = new EmptyProgressIndicator();
@@ -157,10 +156,9 @@ final class GithubRepository extends BaseRepository {
     return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueCommentWithHtml> comments) {
+  private @NotNull Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueCommentWithHtml> comments) {
     return new Task() {
-      @NotNull private final String myRepoName = getRepoName();
+      private final @NotNull String myRepoName = getRepoName();
       private final Comment @NotNull [] myComments =
         ContainerUtil.map2Array(comments, Comment.class, comment -> new GithubComment(comment.getCreatedAt(),
                                                                                       comment.getUser().getLogin(),
@@ -183,9 +181,8 @@ final class GithubRepository extends BaseRepository {
         return myRepoName + "-" + issue.getNumber();
       }
 
-      @NotNull
       @Override
-      public String getSummary() {
+      public @NotNull String getSummary() {
         return issue.getTitle();
       }
 
@@ -199,15 +196,13 @@ final class GithubRepository extends BaseRepository {
         return myComments;
       }
 
-      @NotNull
       @Override
-      public Icon getIcon() {
+      public @NotNull Icon getIcon() {
         return AllIcons.Vcs.Vendors.Github;
       }
 
-      @NotNull
       @Override
-      public TaskType getType() {
+      public @NotNull TaskType getType() {
         return TaskType.BUG;
       }
 
@@ -239,15 +234,13 @@ final class GithubRepository extends BaseRepository {
   }
 
   @Override
-  @Nullable
-  public String extractId(@NotNull String taskName) {
+  public @Nullable String extractId(@NotNull String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
     return matcher.find() ? matcher.group(1) : null;
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String id) throws Exception {
+  public @Nullable Task findTask(@NotNull String id) throws Exception {
     final int index = id.lastIndexOf("-");
     if (index < 0) {
       return null;
@@ -280,9 +273,8 @@ final class GithubRepository extends BaseRepository {
                      GithubApiRequests.Repos.Issues.updateState(server, repoAuthor, repoName, task.getNumber(), isOpen));
   }
 
-  @NotNull
   @Override
-  public BaseRepository clone() {
+  public @NotNull BaseRepository clone() {
     return new GithubRepository(this);
   }
 
@@ -329,26 +321,22 @@ final class GithubRepository extends BaseRepository {
   }
 
   @Override
-  @NotNull
-  protected CredentialAttributes getAttributes() {
+  protected @NotNull CredentialAttributes getAttributes() {
     String serviceName = CredentialAttributesKt.generateServiceName("Tasks", getRepositoryType().getName() + " " + getPresentableName());
     return new CredentialAttributes(serviceName, "GitHub OAuth token");
   }
 
-  @NotNull
-  private GithubApiRequestExecutor getExecutor() {
+  private @NotNull GithubApiRequestExecutor getExecutor() {
     return GithubApiRequestExecutor.Factory.getInstance().create(myUseProxy, getServer(), getPassword());
   }
 
-  @NotNull
-  private static ProgressIndicator getProgressIndicator() {
+  private static @NotNull ProgressIndicator getProgressIndicator() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) indicator = new EmptyProgressIndicator();
     return indicator;
   }
 
-  @NotNull
-  private GithubServerPath getServer() {
+  private @NotNull GithubServerPath getServer() {
     return GithubServerPath.from(getUrl());
   }
 

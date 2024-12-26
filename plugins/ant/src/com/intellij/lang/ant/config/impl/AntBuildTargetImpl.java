@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -84,20 +84,17 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public @NlsSafe String getName() {
+  public @Nullable @NlsSafe String getName() {
     return myName;
   }
 
   @Override
-  @Nullable
-  public @NlsSafe String getDisplayName() {
+  public @Nullable @NlsSafe String getDisplayName() {
     return myDisplayName;
   }
 
   @Override
-  @Nullable
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getNotEmptyDescription() {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getNotEmptyDescription() {
     return myDescription;
   }
 
@@ -117,8 +114,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public String getActionId() {
+  public @Nullable String getActionId() {
     final StringBuilder name = new StringBuilder();
     name.append(AntConfiguration.getActionIdPrefix(myModel.getBuildFile().getProject()));
 
@@ -131,8 +127,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     return name.toString();
   }
 
-  @Nullable
-  public static String parseBuildFileName(@Nullable Project project, @NotNull String actionId) {
+  public static @Nullable String parseBuildFileName(@Nullable Project project, @NotNull String actionId) {
     // expected format antIdPrefix{_modelName}_targetName
     String idPrefix = project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX;
     if (actionId.length() <= idPrefix.length() || !actionId.startsWith(idPrefix)) {
@@ -146,8 +141,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public BuildTask findTask(final String taskName) {
+  public @Nullable BuildTask findTask(final String taskName) {
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     final AntDomProject domProject = AntSupport.getAntDomProject(psiFile);
     if (domProject != null) {

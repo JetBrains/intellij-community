@@ -74,7 +74,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
       final Document document = PsiUtilEx.createDocument(s, project);
       document.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(@NotNull final DocumentEvent e) {
+        public void documentChanged(final @NotNull DocumentEvent e) {
           updateParamTree();
           updateInjectionPanelTree();
         }
@@ -121,7 +121,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
     });
     new AnAction(CommonBundle.message("action.text.toggle")) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myParamsTable);
@@ -148,8 +148,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
     myParamsTable.updateUI();
   }
 
-  @Nullable
-  private PsiType getClassType() {
+  private @Nullable PsiType getClassType() {
     final Document document = myClassField.getEditorTextField().getDocument();
     final PsiDocumentManager dm = PsiDocumentManager.getInstance(myProject);
     dm.commitDocument(document);
@@ -275,8 +274,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
     myAdvancedPanel = new AdvancedPanel(myProject, myOrigInjection);
   }
 
-  @Nullable
-  private Boolean isNodeSelected(final DefaultMutableTreeNode o) {
+  private @Nullable Boolean isNodeSelected(final DefaultMutableTreeNode o) {
     final Object userObject = o.getUserObject();
     if (userObject instanceof PsiMethod method) {
       return MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ? myData.get(method).isReturnFlag() : null;

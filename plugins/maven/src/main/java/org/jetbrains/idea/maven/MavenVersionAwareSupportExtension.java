@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -29,8 +29,7 @@ public interface MavenVersionAwareSupportExtension {
   @NotNull
   List<Path> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
 
-  @NotNull
-  default List<@NonNls String> getAdditionalVmParameters() {
+  default @NotNull List<@NonNls String> getAdditionalVmParameters() {
     return Collections.emptyList();
   }
 

@@ -14,8 +14,7 @@ public final class TextMateWeigh implements Comparable<TextMateWeigh> {
   }
 
   public final int weigh;
-  @NotNull
-  public final Priority priority;
+  public final @NotNull Priority priority;
 
   public TextMateWeigh(int weigh, @NotNull Priority priority) {
     this.weigh = weigh;

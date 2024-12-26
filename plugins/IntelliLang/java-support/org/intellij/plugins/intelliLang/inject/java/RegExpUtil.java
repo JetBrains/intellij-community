@@ -33,8 +33,7 @@ final class RegExpUtil {
   private RegExpUtil() {
   }
 
-  @Nullable
-  public static Set<String> getEnumValues(Project project, @NotNull String regExp) {
+  public static @Nullable Set<String> getEnumValues(Project project, @NotNull String regExp) {
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final PsiFile file = factory.createFileFromText("dummy.regexp", RegExpFileType.INSTANCE, regExp);
     final RegExpPattern pattern = (RegExpPattern)file.getFirstChild();

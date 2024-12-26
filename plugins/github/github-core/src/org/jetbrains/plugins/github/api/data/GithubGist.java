@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,13 +30,11 @@ public class GithubGist {
 
   private Date createdAt;
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return id;
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return StringUtil.notNullize(description);
   }
 
@@ -44,18 +42,15 @@ public class GithubGist {
     return isPublic;
   }
 
-  @NotNull
-  public String getHtmlUrl() {
+  public @NotNull String getHtmlUrl() {
     return htmlUrl;
   }
 
-  @NotNull
-  public List<GistFile> getFiles() {
+  public @NotNull List<GistFile> getFiles() {
     return new ArrayList<>(files.values());
   }
 
-  @Nullable
-  public GithubUser getUser() {
+  public @Nullable GithubUser getUser() {
     return owner;
   }
 
@@ -69,18 +64,15 @@ public class GithubGist {
     private String type;
     private String language;
 
-    @NotNull
-    public String getFilename() {
+    public @NotNull String getFilename() {
       return filename;
     }
 
-    @NotNull
-    public String getContent() {
+    public @NotNull String getContent() {
       return content;
     }
 
-    @NotNull
-    public String getRawUrl() {
+    public @NotNull String getRawUrl() {
       return raw_url;
     }
   }

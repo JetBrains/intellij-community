@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -9,7 +9,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch.Parameters;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PatternValuesIndex;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -47,8 +50,7 @@ public final class InjectionCache {
     }, false);
   }
 
-  @NotNull
-  private Set<String> collectMethodNamesWithLanguage(String annotationClassName) {
+  private @NotNull Set<String> collectMethodNamesWithLanguage(String annotationClassName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
 
     // todo use allScope once Kotlin support becomes fast enough (https://youtrack.jetbrains.com/issue/KT-13734)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.CommonBundle;
@@ -208,8 +208,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     });
   }
 
-  @NotNull
-  public List<MavenId> getResult() {
+  public @NotNull List<MavenId> getResult() {
     TreePath[] selectionPaths = myResultList.getSelectionPaths();
     if (selectionPaths == null) {
       return Collections.emptyList();

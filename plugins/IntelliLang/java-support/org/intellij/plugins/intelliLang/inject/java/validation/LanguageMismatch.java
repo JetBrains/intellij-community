@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiStringTemplateUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CollectionUtils;
@@ -55,8 +54,7 @@ public class LanguageMismatch extends LocalInspectionTool {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getLanguageAnnotationPair();
 

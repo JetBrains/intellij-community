@@ -3,11 +3,11 @@ package org.jetbrains.plugins.textmate.language.preferences;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final public class IndentationRules {
-  @Nullable private final String myIncreaseIndentPattern;
-  @Nullable private final String myDecreaseIndentPattern;
-  @Nullable private final String myIndentNextLinePattern;
-  @Nullable private final String myUnIndentedLinePattern;
+public final class IndentationRules {
+  private final @Nullable String myIncreaseIndentPattern;
+  private final @Nullable String myDecreaseIndentPattern;
+  private final @Nullable String myIndentNextLinePattern;
+  private final @Nullable String myUnIndentedLinePattern;
 
   public IndentationRules(@Nullable String increaseIndentPattern,
                           @Nullable String decreaseIndentPattern,
@@ -24,19 +24,16 @@ final public class IndentationRules {
   public @Nullable String getIndentNextLinePattern() { return myIndentNextLinePattern; }
   public @Nullable String getUnIndentedLinePattern() { return myUnIndentedLinePattern; }
 
-  @NotNull
-  public static IndentationRules empty() {
+  public static @NotNull IndentationRules empty() {
     return new IndentationRules(null, null, null, null);
   }
 
-  @NotNull
-  public Boolean isEmpty() {
+  public @NotNull Boolean isEmpty() {
     return myIncreaseIndentPattern == null && myDecreaseIndentPattern == null
       && myIndentNextLinePattern == null && myUnIndentedLinePattern == null;
   }
 
-  @NotNull
-  public IndentationRules updateWith(IndentationRules other) {
+  public @NotNull IndentationRules updateWith(IndentationRules other) {
     return new IndentationRules(
       other.myIncreaseIndentPattern != null ? other.myIncreaseIndentPattern : myIncreaseIndentPattern,
       other.myDecreaseIndentPattern != null ? other.myDecreaseIndentPattern : myDecreaseIndentPattern,

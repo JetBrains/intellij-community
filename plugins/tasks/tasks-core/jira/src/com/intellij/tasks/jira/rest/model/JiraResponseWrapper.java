@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.model;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -37,8 +37,7 @@ public abstract class JiraResponseWrapper {
   public static class Issues<T extends JiraIssue> extends JiraResponseWrapper {
     private List<T> issues = ContainerUtil.emptyList();
 
-    @NotNull
-    public List<T> getIssues() {
+    public @NotNull List<T> getIssues() {
       return issues;
     }
   }
@@ -46,8 +45,7 @@ public abstract class JiraResponseWrapper {
   public static class Comments extends JiraResponseWrapper {
     private List<JiraComment> comments = ContainerUtil.emptyList();
 
-    @NotNull
-    public List<JiraComment> getComments() {
+    public @NotNull List<JiraComment> getComments() {
       return comments;
     }
   }

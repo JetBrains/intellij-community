@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.model.*;
@@ -17,7 +17,6 @@ import org.apache.maven.model.profile.activation.OperatingSystemProfileActivator
 import org.apache.maven.model.profile.activation.ProfileActivator;
 import org.apache.maven.model.profile.activation.PropertyProfileActivator;
 import org.apache.maven.model.root.DefaultRootLocator;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -147,15 +146,13 @@ public final class Maven40ProfileUtil {
     return result;
   }
 
-  @NotNull
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
+  public static @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
     Model nativeModel = Maven40ModelConverter.toNativeModel(model);
     Model result = interpolateAndAlignModel(nativeModel, basedir, pomDir);
     return Maven40ModelConverter.convertModel(result);
   }
 
-  @NotNull
-  public static Model interpolateAndAlignModel(Model nativeModel, File basedir, File pomDir) {
+  public static @NotNull Model interpolateAndAlignModel(Model nativeModel, File basedir, File pomDir) {
     DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
     DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
     DefaultRootLocator rootLocator = new DefaultRootLocator();

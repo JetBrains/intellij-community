@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.project.Project;
@@ -15,35 +16,30 @@ import javax.swing.*;
  */
 public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Mantis";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Mantis;
   }
 
-  @NotNull
   @Override
-  public TaskRepository createRepository() {
+  public @NotNull TaskRepository createRepository() {
     return new MantisRepository(this);
   }
 
-  @NotNull
   @Override
-  public Class<MantisRepository> getRepositoryClass() {
+  public @NotNull Class<MantisRepository> getRepositoryClass() {
     return MantisRepository.class;
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(final MantisRepository repository,
-                                           final Project project,
-                                           final Consumer<? super MantisRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(final MantisRepository repository,
+                                                    final Project project,
+                                                    final Consumer<? super MantisRepository> changeListener) {
     return new MantisRepositoryEditor(project, repository, changeListener);
   }
 }

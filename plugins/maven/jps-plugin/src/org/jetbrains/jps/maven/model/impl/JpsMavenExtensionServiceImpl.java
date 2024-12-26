@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,15 +42,13 @@ public final class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService
     });
   }
 
-  @Nullable
   @Override
-  public JpsMavenModuleExtension getExtension(@NotNull JpsModule module) {
+  public @Nullable JpsMavenModuleExtension getExtension(@NotNull JpsModule module) {
     return module.getContainer().getChild(JpsMavenModuleExtensionImpl.ROLE);
   }
 
-  @NotNull
   @Override
-  public JpsMavenModuleExtension getOrCreateExtension(@NotNull JpsModule module) {
+  public @NotNull JpsMavenModuleExtension getOrCreateExtension(@NotNull JpsModule module) {
     JpsMavenModuleExtension extension = module.getContainer().getChild(JpsMavenModuleExtensionImpl.ROLE);
     if (extension == null) {
       extension = new JpsMavenModuleExtensionImpl();
@@ -93,8 +91,7 @@ public final class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService
     return getMavenProjectConfiguration(dataStorageRoot);
   }
 
-  @NotNull
-  public MavenProjectConfiguration getMavenProjectConfiguration(@NotNull File dataStorageRoot) {
+  public @NotNull MavenProjectConfiguration getMavenProjectConfiguration(@NotNull File dataStorageRoot) {
     final File configFile = new File(dataStorageRoot, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
     MavenProjectConfiguration config;
     synchronized (myLoadedConfigs) {

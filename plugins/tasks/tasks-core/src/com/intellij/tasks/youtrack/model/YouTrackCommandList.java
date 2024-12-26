@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +13,7 @@ public class YouTrackCommandList {
 
   private List<Suggestion> suggestions;
 
-  @NotNull
-  public List<Suggestion> getSuggestions() {
+  public @NotNull List<Suggestion> getSuggestions() {
     return suggestions;
   }
 
@@ -22,8 +21,7 @@ public class YouTrackCommandList {
   public static class Suggestion {
     private String option;
 
-    @NotNull
-    public String getOption() {
+    public @NotNull String getOption() {
       return option;
     }
   }

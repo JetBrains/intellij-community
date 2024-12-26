@@ -81,8 +81,7 @@ public class Maven40Invoker extends ResidentMavenInvoker {
     }
   }
 
-  @NotNull
-  public LookupContext invokeAndGetContext(InvokerRequest invokerRequest) {
+  public @NotNull LookupContext invokeAndGetContext(InvokerRequest invokerRequest) {
     invoke(invokerRequest);
     return myContext;
   }

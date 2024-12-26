@@ -91,15 +91,13 @@ public abstract class BaseRepository extends TaskRepository {
     PasswordSafe.getInstance().set(attributes, new Credentials(getUsername(), getPassword()));
   }
 
-  @NotNull
-  protected CredentialAttributes getAttributes() {
+  protected @NotNull CredentialAttributes getAttributes() {
     String serviceName = CredentialAttributesKt.generateServiceName("Tasks", getRepositoryType().getName() + " " + getUrl());
     return new CredentialAttributes(serviceName, getUsername());
   }
 
-  @NotNull
   @Override
-  public abstract BaseRepository clone();
+  public abstract @NotNull BaseRepository clone();
 
   @Override
   public boolean equals(Object o) {
@@ -146,9 +144,8 @@ public abstract class BaseRepository extends TaskRepository {
     myPreferredOpenTaskState = state;
   }
 
-  @Nullable
   @Override
-  public CustomTaskState getPreferredOpenTaskState() {
+  public @Nullable CustomTaskState getPreferredOpenTaskState() {
     return myPreferredOpenTaskState;
   }
 
@@ -157,15 +154,13 @@ public abstract class BaseRepository extends TaskRepository {
     myPreferredCloseTaskState = state;
   }
 
-  @Nullable
   @Override
-  public CustomTaskState getPreferredCloseTaskState() {
+  public @Nullable CustomTaskState getPreferredCloseTaskState() {
     return myPreferredCloseTaskState;
   }
 
   @Override
-  @Nullable
-  public String extractId(@NotNull String taskName) {
+  public @Nullable String extractId(@NotNull String taskName) {
     Matcher matcher = PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }
@@ -175,13 +170,11 @@ public abstract class BaseRepository extends TaskRepository {
     super.setUrl(addSchemeIfNoneSpecified(url));
   }
 
-  @NotNull
-  protected String getDefaultScheme() {
+  protected @NotNull String getDefaultScheme() {
     return "http";
   }
 
-  @Nullable
-  private String addSchemeIfNoneSpecified(@Nullable String url) {
+  private @Nullable String addSchemeIfNoneSpecified(@Nullable String url) {
     if (StringUtil.isNotEmpty(url)) {
       try {
         final String scheme = new URI(url).getScheme();

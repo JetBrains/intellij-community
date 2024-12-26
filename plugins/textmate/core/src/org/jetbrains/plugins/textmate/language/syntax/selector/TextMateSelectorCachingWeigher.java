@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public final class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
-  @NotNull private final TextMateSelectorWeigher myOriginalWeigher;
+  private final @NotNull TextMateSelectorWeigher myOriginalWeigher;
   private final Cache<@NotNull CacheKey, @NotNull TextMateWeigh> myCache;
 
   public TextMateSelectorCachingWeigher(@NotNull TextMateSelectorWeigher originalWeigher) {
@@ -24,7 +24,7 @@ public final class TextMateSelectorCachingWeigher implements TextMateSelectorWei
   }
 
   @Override
-  public TextMateWeigh weigh(@NotNull final CharSequence scopeSelector, final @NotNull TextMateScope scope) {
+  public TextMateWeigh weigh(final @NotNull CharSequence scopeSelector, final @NotNull TextMateScope scope) {
     return myCache.get(new CacheKey(scopeSelector, scope), this::weigh);
   }
 

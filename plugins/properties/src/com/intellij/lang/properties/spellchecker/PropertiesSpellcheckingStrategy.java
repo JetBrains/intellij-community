@@ -19,9 +19,8 @@ public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy imple
   private final Tokenizer<PropertyValueImpl> myPropertyValueTokenizer = TokenizerBase.create(PlainTextSplitter.getInstance());
   private final Tokenizer<PropertyKeyImpl> myPropertyTokenizer = TokenizerBase.create(PropertiesSplitter.getInstance());
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PropertyValueImpl) {
       return myPropertyValueTokenizer;
     }

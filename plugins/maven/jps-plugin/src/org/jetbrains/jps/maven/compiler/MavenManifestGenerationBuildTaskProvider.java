@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,10 +34,9 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskProvider {
-  @NotNull
   @Override
-  public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
-                                                            @NotNull ArtifactBuildPhase buildPhase) {
+  public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
+                                                                     @NotNull ArtifactBuildPhase buildPhase) {
     String artifactName = artifact.getName();
     if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING && (artifactName.endsWith(" exploded") || artifactName.endsWith("ejb-client"))
         && artifact.getRootElement() instanceof JpsArtifactRootElement) {
@@ -159,8 +158,7 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
       });
     }
 
-    @Nullable
-    private static String getModuleName(@NotNull String artifactName) {
+    private static @Nullable String getModuleName(@NotNull String artifactName) {
       return StringUtil.substringBefore(artifactName, ":");
     }
   }

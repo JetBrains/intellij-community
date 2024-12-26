@@ -52,8 +52,7 @@ public final class AnnotationUtilEx {
    * decides whether to prefer the element a reference expressions resolves to, or the element that is implied by the
    * usage context ("expected type").
    */
-  @Nullable
-  public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiElement element, LookupType type) {
+  public static @Nullable PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiElement element, LookupType type) {
     while (element != null) {
       if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLARATION_ONLY) {
         if (element instanceof PsiReferenceExpression) {
@@ -267,8 +266,7 @@ public final class AnnotationUtilEx {
    * find the attribute in the supplied list of annotations and calculating the constant value for the first attribute
    * it finds.
    */
-  @Nullable
-  public static String calcAnnotationValue(PsiAnnotation[] annotation, @NonNls String attr) {
+  public static @Nullable String calcAnnotationValue(PsiAnnotation[] annotation, @NonNls String attr) {
     for (PsiAnnotation psiAnnotation : annotation) {
       final String value = calcAnnotationValue(psiAnnotation, attr);
       if (value != null) return value;
@@ -276,8 +274,7 @@ public final class AnnotationUtilEx {
     return null;
   }
 
-  @Nullable
-  public static String calcAnnotationValue(@NotNull PsiAnnotation annotation, @NonNls String attr) {
+  public static @Nullable String calcAnnotationValue(@NotNull PsiAnnotation annotation, @NonNls String attr) {
     PsiElement value = annotation.findAttributeValue(attr);
     Object o = CONSTANT_EVALUATION_HELPER.computeConstantExpression(value);
     if (o instanceof String) {
@@ -291,7 +288,7 @@ public final class AnnotationUtilEx {
    *
    * @see AnnotationUtil#getSuperAnnotationOwners(PsiModifierListOwner)
    */
-  private static PsiAnnotation[] getAnnotations(@NotNull final PsiModifierListOwner listOwner, final boolean inHierarchy) {
+  private static PsiAnnotation[] getAnnotations(final @NotNull PsiModifierListOwner listOwner, final boolean inHierarchy) {
     final PsiModifierList modifierList = listOwner.getModifierList();
     if (!inHierarchy) {
       return modifierList == null ? PsiAnnotation.EMPTY_ARRAY : modifierList.getAnnotations();

@@ -34,9 +34,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -123,7 +121,7 @@ public class MavenUtil {
   public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
   @ApiStatus.Experimental
   public static final @NlsSafe String MAVEN_NAME = "Maven";
-  @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
+  public static final @NonNls String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
   public static final @NotNull ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
   public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;
   public static final String SETTINGS_XML = "settings.xml";
@@ -301,13 +299,11 @@ public class MavenUtil {
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, message, NotificationType.ERROR), project);
   }
 
-  @NotNull
-  public static Path getPluginSystemDir(@NotNull String folder) {
+  public static @NotNull Path getPluginSystemDir(@NotNull String folder) {
     return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
-  @NotNull
-  public static Path getBaseDir(@NotNull VirtualFile file) {
+  public static @NotNull Path getBaseDir(@NotNull VirtualFile file) {
     VirtualFile virtualBaseDir = getVFileBaseDir(file);
     return virtualBaseDir.toNioPath();
   }
@@ -316,8 +312,7 @@ public class MavenUtil {
     return ContainerUtil.groupBy(projects, p -> getBaseDir(tree.findRootProject(p).getDirectoryFile()).toString());
   }
 
-  @NotNull
-  public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
+  public static @NotNull VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
     VirtualFile baseDir = file.isDirectory() || file.getParent() == null ? file : file.getParent();
     VirtualFile dir = baseDir;
     do {
@@ -338,16 +333,14 @@ public class MavenUtil {
     return baseDir;
   }
 
-  @Nullable
-  public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
+  public static @Nullable VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
     if (pomFile == null) return null;
     VirtualFile parent = pomFile.getParent();
     if (parent == null || !parent.isValid()) return null;
     return parent.findChild(MavenConstants.PROFILES_XML);
   }
 
-  @Nullable
-  public static Path getProfilesXmlNioFile(VirtualFile pomFile) {
+  public static @Nullable Path getProfilesXmlNioFile(VirtualFile pomFile) {
     if (pomFile == null) return null;
     VirtualFile parent = pomFile.getParent();
     if (parent == null) return null;
@@ -386,8 +379,7 @@ public class MavenUtil {
     return (collection instanceof Set ? collection : new HashSet<>(collection));
   }
 
-  @NotNull
-  public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
+  public static @NotNull <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
     return ContainerUtil.map(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }
 
@@ -570,9 +562,8 @@ public class MavenUtil {
     if (errorEx[0] != null) throw errorEx[0];
   }
 
-  @NotNull
   // used in third-party plugins
-  public static MavenTaskHandler runInBackground(@NotNull Project project,
+  public static @NotNull MavenTaskHandler runInBackground(@NotNull Project project,
                                                  @NotNull @NlsContexts.Command String title,
                                                  boolean cancellable,
                                                  @NotNull MavenTask task) {
@@ -621,9 +612,8 @@ public class MavenUtil {
    * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
    * use {@link MavenUtil#getMavenHomePath(StaticResolvedMavenHomeType) getMavenHomePath(StaticResolvedMavenHomeType} instead
    */
-  @Nullable
   @Deprecated(forRemoval = true)
-  public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
+  public static @Nullable File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
       //noinspection HardCodedStringLiteral
       return getMavenHomePath(staticOrBundled(resolveMavenHomeType(overrideMavenHome))).toFile();
@@ -757,8 +747,7 @@ public class MavenUtil {
     params.getVMParametersList().add(targetedValue);
   }
 
-  @Nullable
-  private static Path fromMacSystemJavaTools(@Nullable EelApi eelApi) {
+  private static @Nullable Path fromMacSystemJavaTools(@Nullable EelApi eelApi) {
     final Path symlinkDir;
     if (eelApi == null) {
       symlinkDir = Path.of("/usr/share/maven");
@@ -816,8 +805,7 @@ public class MavenUtil {
     return null;
   }
 
-  @Nullable
-  private static Path fromBrew(EelApi eelApi) {
+  private static @Nullable Path fromBrew(EelApi eelApi) {
     final Path brewDir = eelApi.getMapper().toNioPath(getPath(eelApi.getFs(), "/usr/local/Cellar/maven"));
 
     List<Path> list = new ArrayList<>();
@@ -895,8 +883,7 @@ public class MavenUtil {
   }
 
 
-  @Nullable
-  public static String getMavenVersion(@Nullable Path mavenHome) {
+  public static @Nullable String getMavenVersion(@Nullable Path mavenHome) {
     if (mavenHome == null) return null;
     Path libDir = mavenHome.resolve("lib");
     if (!Files.isDirectory(libDir)) {
@@ -938,42 +925,35 @@ public class MavenUtil {
            : nullize(JarUtils.getJarAttribute(file, null, java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION));
   }
 
-  @Nullable
-  public static String getMavenVersion(String mavenHome) {
+  public static @Nullable String getMavenVersion(String mavenHome) {
     return getMavenVersion(Path.of(mavenHome));
   }
 
 
-  @Nullable
-  public static String getMavenVersion(StaticResolvedMavenHomeType mavenHomeType) {
+  public static @Nullable String getMavenVersion(StaticResolvedMavenHomeType mavenHomeType) {
     return getMavenVersion(getMavenHomePath(mavenHomeType));
   }
 
-  @Nullable
-  public static Path resolveGlobalSettingsFile(@NotNull StaticResolvedMavenHomeType mavenHomeType) {
+  public static @Nullable Path resolveGlobalSettingsFile(@NotNull StaticResolvedMavenHomeType mavenHomeType) {
     Path directory = getMavenHomePath(mavenHomeType);
     if (directory == null) return null;
     return directory.resolve(CONF_DIR).resolve(SETTINGS_XML);
   }
 
-  @NotNull
-  public static Path resolveGlobalSettingsFile(@NotNull Path mavenHome) {
+  public static @NotNull Path resolveGlobalSettingsFile(@NotNull Path mavenHome) {
     return mavenHome.resolve(CONF_DIR).resolve(SETTINGS_XML);
   }
 
-  @NotNull
   @Deprecated
-  public static File resolveUserSettingsFile(@Nullable String overriddenUserSettingsFile) {
+  public static @NotNull File resolveUserSettingsFile(@Nullable String overriddenUserSettingsFile) {
     return resolveUserSettingsPath(overriddenUserSettingsFile, null).toFile();
   }
 
-  @NotNull
-  public static Path resolveUserSettingsPath(@Nullable String overriddenUserSettingsFile, @Nullable Project project) {
+  public static @NotNull Path resolveUserSettingsPath(@Nullable String overriddenUserSettingsFile, @Nullable Project project) {
     return MavenEelUtil.resolveUserSettingsPathBlocking(overriddenUserSettingsFile, project);
   }
 
-  @NotNull
-  public static Path resolveM2Dir(@Nullable Project project) {
+  public static @NotNull Path resolveM2Dir(@Nullable Project project) {
     var eel = project != null ? getEelApiBlocking(project) : null;
     return MavenEelUtil.resolveM2Dir(eel);
   }
@@ -983,9 +963,8 @@ public class MavenUtil {
    * use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
    * or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,
+  public static @NotNull File resolveLocalRepository(@Nullable String overriddenLocalRepository,
                                             @Nullable String overriddenMavenHome,
                                             @Nullable String overriddenUserSettingsFile) {
     return resolveLocalRepository(null, overriddenLocalRepository, overriddenMavenHome, overriddenUserSettingsFile).toFile();
@@ -996,9 +975,8 @@ public class MavenUtil {
    * use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
    * or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public static Path resolveLocalRepository(@Nullable Project project,
+  public static @NotNull Path resolveLocalRepository(@Nullable Project project,
                                             @Nullable String overriddenLocalRepository,
                                             @Nullable String overriddenMavenHome,
                                             @Nullable String overriddenUserSettingsFile) {
@@ -1013,8 +991,7 @@ public class MavenUtil {
   /**
    * @param path any path pointing to an environment where the repository should be searched.
    */
-  @NotNull
-  public static Path resolveDefaultLocalRepository(@Nullable Path path) {
+  public static @NotNull Path resolveDefaultLocalRepository(@Nullable Path path) {
     String mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL);
 
     if (mavenRepoLocal != null) {
@@ -1039,19 +1016,17 @@ public class MavenUtil {
     }
   }
 
-  @NotNull
-  public static Path resolveLocalRepository(@Nullable Project project,
-                                            @Nullable String overriddenLocalRepository,
-                                            @NotNull StaticResolvedMavenHomeType mavenHomeType,
-                                            @Nullable String overriddenUserSettingsFile) {
+  public static @NotNull Path resolveLocalRepository(@Nullable Project project,
+                                                     @Nullable String overriddenLocalRepository,
+                                                     @NotNull StaticResolvedMavenHomeType mavenHomeType,
+                                                     @Nullable String overriddenUserSettingsFile) {
     return MavenEelUtil.resolveLocalRepositoryBlocking(project, overriddenLocalRepository, mavenHomeType, overriddenUserSettingsFile);
   }
 
-  @Nullable
-  public static Path getRepositoryFile(@NotNull Project project,
-                                       @NotNull MavenId id,
-                                       @NotNull String extension,
-                                       @Nullable String classifier) {
+  public static @Nullable Path getRepositoryFile(@NotNull Project project,
+                                                 @NotNull MavenId id,
+                                                 @NotNull String extension,
+                                                 @Nullable String classifier) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -1059,11 +1034,10 @@ public class MavenUtil {
     return makeLocalRepositoryFile(id, projectsManager.getRepositoryPath(), extension, classifier);
   }
 
-  @NotNull
-  public static Path makeLocalRepositoryFile(MavenId id,
-                                             Path localRepository,
-                                             @NotNull String extension,
-                                             @Nullable String classifier) {
+  public static @NotNull Path makeLocalRepositoryFile(MavenId id,
+                                                      Path localRepository,
+                                                      @NotNull String extension,
+                                                      @Nullable String classifier) {
     String relPath = id.getGroupId().replace(".", "/");
 
     relPath += "/" + id.getArtifactId();
@@ -1074,11 +1048,10 @@ public class MavenUtil {
     return localRepository.resolve(relPath);
   }
 
-  @Nullable
-  public static Path getArtifactPath(@NotNull Path localRepository,
-                                     @NotNull MavenId id,
-                                     @NotNull String extension,
-                                     @Nullable String classifier) {
+  public static @Nullable Path getArtifactPath(@NotNull Path localRepository,
+                                               @NotNull MavenId id,
+                                               @NotNull String extension,
+                                               @Nullable String classifier) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -1097,8 +1070,7 @@ public class MavenUtil {
     }
   }
 
-  @Nullable
-  public static Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
+  public static @Nullable Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -1114,8 +1086,7 @@ public class MavenUtil {
     return path;
   }
 
-  @Nullable
-  protected static Path doResolveLocalRepository(@Nullable Path userSettingsFile, @Nullable Path globalSettingsFile) {
+  protected static @Nullable Path doResolveLocalRepository(@Nullable Path userSettingsFile, @Nullable Path globalSettingsFile) {
     if (userSettingsFile != null) {
       final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
       if (!isEmpty(fromUserSettings)) {
@@ -1133,8 +1104,7 @@ public class MavenUtil {
     return null;
   }
 
-  @Nullable
-  public static String getRepositoryFromSettings(final Path file) {
+  public static @Nullable String getRepositoryFromSettings(final Path file) {
     try {
       Element repository = getRepositoryElement(file);
 
@@ -1213,8 +1183,7 @@ public class MavenUtil {
     return false;
   }
 
-  @Nullable
-  private static Element getRepositoryElement(Path file) throws JDOMException, IOException {
+  private static @Nullable Element getRepositoryElement(Path file) throws JDOMException, IOException {
     return getElementWithRegardToNamespace(getDomRootElement(file), "localRepository", settingsListNamespaces);
   }
 
@@ -1223,8 +1192,7 @@ public class MavenUtil {
     return JDOMUtil.load(reader);
   }
 
-  @Nullable
-  private static Element getElementWithRegardToNamespace(@NotNull Element parent, String childName, List<String> namespaces) {
+  private static @Nullable Element getElementWithRegardToNamespace(@NotNull Element parent, String childName, List<String> namespaces) {
     Element element = parent.getChild(childName);
     if (element != null) return element;
     for (String namespace : namespaces) {
@@ -1265,13 +1233,11 @@ public class MavenUtil {
    * @return A {@link VirtualFile} representing the SuperPOM located inside the jar if found, False otherwise.
    */
 
-  @Nullable
-  public static VirtualFile resolveSuperPomFile(@NotNull Path mavenHome, String superPomName) {
+  public static @Nullable VirtualFile resolveSuperPomFile(@NotNull Path mavenHome, String superPomName) {
     return doResolveSuperPomFile(mavenHome.resolve(LIB_DIR), superPomName);
   }
 
-  @Nullable
-  public static VirtualFile resolveSuperPomFile(@NotNull Project project, VirtualFile projectFile) {
+  public static @Nullable VirtualFile resolveSuperPomFile(@NotNull Project project, VirtualFile projectFile) {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(projectFile.getParent().getPath());
     String superPomName = resolveMavenSchema(projectFile);
     return resolveSuperPomFile(distribution.getMavenHome(), superPomName);
@@ -1281,8 +1247,7 @@ public class MavenUtil {
     return MavenConstants.SUPER_POM_4_0_XML; //todo
   }
 
-  @Nullable
-  private static VirtualFile doResolveSuperPomFile(@NotNull Path libDir, String superPomName) {
+  private static @Nullable VirtualFile doResolveSuperPomFile(@NotNull Path libDir, String superPomName) {
     List<Path> libraries;
 
     try (Stream<Path> pathStream = Files.list(libDir)) {
@@ -1492,29 +1457,25 @@ public class MavenUtil {
     return homeDirectory.getPath();
   }
 
-  @Nullable
-  public static String getModuleJreHome(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+  public static @Nullable String getModuleJreHome(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
     return getSdkPath(getModuleJdk(mavenProjectsManager, mavenProject));
   }
 
-  @Nullable
-  public static String getModuleJavaVersion(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+  public static @Nullable String getModuleJavaVersion(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
     Sdk sdk = getModuleJdk(mavenProjectsManager, mavenProject);
     if (sdk == null) return null;
 
     return sdk.getVersionString();
   }
 
-  @Nullable
-  public static Sdk getModuleJdk(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+  public static @Nullable Sdk getModuleJdk(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
     Module module = mavenProjectsManager.findModule(mavenProject);
     if (module == null) return null;
 
     return ModuleRootManager.getInstance(module).getSdk();
   }
 
-  @NotNull
-  public static <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
+  public static @NotNull <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
     V res = map.get(key);
     if (res == null) {
       //noinspection unchecked
@@ -1710,8 +1671,7 @@ public class MavenUtil {
   }
 
 
-  @Nullable
-  protected static Sdk getSdkByExactName(@NotNull String name) {
+  protected static @Nullable Sdk getSdkByExactName(@NotNull String name) {
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName().equals(name)) {
         if (projectJdk.getSdkType() instanceof JavaSdkType) {
@@ -1739,8 +1699,7 @@ public class MavenUtil {
     return Boolean.getBoolean("maven.unit.tests.remove");
   }
 
-  @NotNull
-  public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
+  public static @NotNull String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
     return plugin != null ? plugin.getVersion() : "";
   }
@@ -1749,8 +1708,7 @@ public class MavenUtil {
     return settings.getMavenHomeType() instanceof MavenWrapper;
   }
 
-  @Nullable
-  public static Sdk suggestProjectSdk(Path rootProjectPath) {
+  public static @Nullable Sdk suggestProjectSdk(Path rootProjectPath) {
     ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
     SdkType sdkType = ExternalSystemJdkUtil.getJavaSdkType();
     return projectJdkTable.getSdksOfType(sdkType).stream()
@@ -1771,8 +1729,7 @@ public class MavenUtil {
     return JdkUtil.checkForJdk(sdkRoot.toNioPath(), isWindowsProjectRoot);
   }
 
-  @NotNull
-  public static Set<MavenRemoteRepository> getRemoteResolvedRepositories(@NotNull Project project) {
+  public static @NotNull Set<MavenRemoteRepository> getRemoteResolvedRepositories(@NotNull Project project) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();

@@ -1,23 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api.data.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration", "MismatchedQueryAndUpdateOfCollection"})
 public class GithubGistRequest {
-  @NotNull private final String description;
-  @NotNull private final Map<String, GistFile> files;
+  private final @NotNull String description;
+  private final @NotNull Map<String, GistFile> files;
 
   @JsonProperty("public")
   private final boolean isPublic;
 
   public static class GistFile {
-    @NotNull private final String content;
+    private final @NotNull String content;
 
     public GistFile(@NotNull String content) {
       this.content = content;
@@ -35,21 +35,19 @@ public class GithubGistRequest {
   }
 
   public static class FileContent {
-    @NotNull private final String myFileName;
-    @NotNull private final String myContent;
+    private final @NotNull String myFileName;
+    private final @NotNull String myContent;
 
     public FileContent(@NotNull String fileName, @NotNull String content) {
       myFileName = fileName;
       myContent = content;
     }
 
-    @NotNull
-    public String getFileName() {
+    public @NotNull String getFileName() {
       return myFileName;
     }
 
-    @NotNull
-    public String getContent() {
+    public @NotNull String getContent() {
       return myContent;
     }
 

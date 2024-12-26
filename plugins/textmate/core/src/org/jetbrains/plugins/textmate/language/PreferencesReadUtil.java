@@ -3,7 +3,10 @@ package org.jetbrains.plugins.textmate.language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.language.preferences.*;
+import org.jetbrains.plugins.textmate.language.preferences.IndentationRules;
+import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
@@ -15,8 +18,7 @@ public final class PreferencesReadUtil {
    * @return pair <scopeName, settingsPlist> or null if rootPlist doesn't contain 'settings' child
    * or scopeName is null or empty
    */
-  @Nullable
-  public static Map.Entry<String, Plist> retrieveSettingsPlist(Plist rootPlist) {
+  public static @Nullable Map.Entry<String, Plist> retrieveSettingsPlist(Plist rootPlist) {
     String scopeName = null;
     Plist settingsValuePlist = null;
     final PListValue value = rootPlist.getPlistValue(Constants.SCOPE_KEY);
@@ -30,8 +32,7 @@ public final class PreferencesReadUtil {
     return settingsValuePlist != null ? Map.entry(scopeName, settingsValuePlist) : null;
   }
 
-  @Nullable
-  public static Set<TextMateBracePair> readPairs(@Nullable PListValue pairsValue) {
+  public static @Nullable Set<TextMateBracePair> readPairs(@Nullable PListValue pairsValue) {
     if (pairsValue == null) {
       return null;
     }
@@ -51,8 +52,7 @@ public final class PreferencesReadUtil {
     return result.isEmpty() ? Collections.emptySet() : result;
   }
 
-  @NotNull
-  public static <K, V> Map<K, V> compactMap(@NotNull Map<K, V> map) {
+  public static @NotNull <K, V> Map<K, V> compactMap(@NotNull Map<K, V> map) {
     if (map.isEmpty()) {
       return Collections.emptyMap();
     }
@@ -71,15 +71,13 @@ public final class PreferencesReadUtil {
   private PreferencesReadUtil() {
   }
 
-  @Nullable
-  private static String getPattern(@NotNull String name, @NotNull Plist from) {
+  private static @Nullable String getPattern(@NotNull String name, @NotNull Plist from) {
     final PListValue value = from.getPlistValue(name);
     if (value == null) return null;
     return value.getString();
   }
 
-  @NotNull
-  public static IndentationRules loadIndentationRules(@NotNull Plist plist) {
+  public static @NotNull IndentationRules loadIndentationRules(@NotNull Plist plist) {
     final PListValue rulesValue = plist.getPlistValue(Constants.INDENTATION_RULES);
     if (rulesValue == null) return IndentationRules.empty();
     final Plist rules = rulesValue.getPlist();
@@ -91,9 +89,8 @@ public final class PreferencesReadUtil {
     );
   }
 
-  @NotNull
-  public static TextMateCommentPrefixes readCommentPrefixes(@NotNull final ShellVariablesRegistry registry,
-                                                                      @NotNull final TextMateScope scope) {
+  public static @NotNull TextMateCommentPrefixes readCommentPrefixes(final @NotNull ShellVariablesRegistry registry,
+                                                                     final @NotNull TextMateScope scope) {
 
     String lineCommentPrefix = null;
     TextMateBlockCommentPair blockCommentPair = null;

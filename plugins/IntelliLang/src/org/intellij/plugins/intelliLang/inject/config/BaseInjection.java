@@ -54,7 +54,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public static final Key<BaseInjection> INJECTION_KEY = Key.create("INJECTION_KEY");
 
-  @NotNull private final @NlsSafe String mySupportId;
+  private final @NotNull @NlsSafe String mySupportId;
 
   private @Nls String myDisplayName = "";
 
@@ -62,12 +62,10 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   private String myPrefix = "";
   private String mySuffix = "";
 
-  @NonNls
-  private String myValuePattern = "";
+  private @NonNls String myValuePattern = "";
   private Pattern myCompiledValuePattern;
 
-  @NonNls
-  private String myIgnorePattern = "";
+  private @NonNls String myIgnorePattern = "";
   private Pattern myCompiledIgnorePattern;
 
   private boolean mySingleFile;
@@ -104,21 +102,17 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  @NotNull
-  public @NlsSafe String getSupportId() {
+  public @NotNull @NlsSafe String getSupportId() {
     return mySupportId;
   }
 
   @Override
-  @NotNull
-  public @NlsSafe String getInjectedLanguageId() {
+  public @NotNull @NlsSafe String getInjectedLanguageId() {
     return myInjectedLanguageId;
   }
 
-  @Nls
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return myDisplayName;
   }
 
@@ -131,8 +125,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  @NotNull
-  public String getPrefix() {
+  public @NotNull String getPrefix() {
     return myPrefix;
   }
 
@@ -141,8 +134,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  @NotNull
-  public String getSuffix() {
+  public @NotNull String getSuffix() {
     return mySuffix;
   }
 
@@ -195,8 +187,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @Override
-  @NotNull
-  public List<TextRange> getInjectedArea(final PsiElement element) {
+  public @NotNull List<TextRange> getInjectedArea(final PsiElement element) {
     final TextRange textRange = ElementManipulators.getValueTextRange(element);
     if (myCompiledValuePattern == null) {
       return Collections.singletonList(textRange);
@@ -384,8 +375,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   protected void writeExternalImpl(Element e) { }
 
-  @NotNull
-  public String getValuePattern() {
+  public @NotNull String getValuePattern() {
     return myValuePattern;
   }
 
@@ -406,8 +396,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
-  @NotNull
-  public String getIgnorePattern() {
+  public @NotNull String getIgnorePattern() {
     return myIgnorePattern;
   }
 
@@ -474,7 +463,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
-  public void setPlaceEnabled(@Nullable final String text, final boolean enabled) {
+  public void setPlaceEnabled(final @Nullable String text, final boolean enabled) {
     for (int i = 0; i < myPlaces.length; i++) {
       final InjectionPlace cur = myPlaces[i];
       if (text == null || Objects.equals(text, cur.getText())) {

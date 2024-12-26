@@ -8,8 +8,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.compiler.*;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
@@ -116,9 +116,8 @@ public final class FormsInstrumenter extends ModuleLevelBuilder {
     return ExitCode.OK;
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return Collections.emptyList();
   }
 
@@ -230,9 +229,8 @@ public final class FormsInstrumenter extends ModuleLevelBuilder {
     return instrumented;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return BUILDER_NAME;
   }
 
@@ -326,8 +324,7 @@ public final class FormsInstrumenter extends ModuleLevelBuilder {
     }
   }
 
-  @Nullable
-  private static String getJVMClassName(File outputRoot, String className) {
+  private static @Nullable String getJVMClassName(File outputRoot, String className) {
     while (true) {
       final File candidateClass = new File(outputRoot, className + ".class");
       if (candidateClass.exists()) {

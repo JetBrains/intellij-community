@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
@@ -28,7 +28,7 @@ import java.util.Set;
 @Service(Service.Level.PROJECT)
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
 public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState>, Disposable {
-  private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
+  private static final Logger LOG = Logger.getInstance(ResourceBundleManager.class);
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
@@ -36,7 +36,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     PsiManager manager = PsiManager.getInstance(project);
     manager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
-      public void childMoved(@NotNull final PsiTreeChangeEvent event) {
+      public void childMoved(final @NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
         if (!(child instanceof PsiFile)) {
           if (child instanceof PsiDirectory) {
@@ -96,8 +96,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
 
       }
 
-      @Nullable
-      private static String getUrl(PsiElement element) {
+      private static @Nullable String getUrl(PsiElement element) {
         return !(element instanceof PsiDirectory) ? null : ((PsiDirectory)element).getVirtualFile().getUrl();
       }
 
@@ -153,8 +152,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return project.getService(ResourceBundleManager.class);
   }
 
-  @Nullable
-  public String getFullName(final @NotNull PropertiesFile propertiesFile) {
+  public @Nullable String getFullName(final @NotNull PropertiesFile propertiesFile) {
     return ReadAction.compute(() -> {
       final PsiDirectory directory = propertiesFile.getParent();
       final String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
@@ -170,8 +168,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     });
   }
 
-  @NotNull
-  public String getBaseName(@NotNull final PsiFile file) {
+  public @NotNull String getBaseName(final @NotNull PsiFile file) {
     final VirtualFile vFile = file.getVirtualFile();
     final CustomResourceBundleState customResourceBundle = getCustomResourceBundleState(vFile);
     if (customResourceBundle != null) {
@@ -215,8 +212,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return propertiesFiles.get(0).getResourceBundle();
   }
 
-  @Nullable
-  public CustomResourceBundle getCustomResourceBundle(final @NotNull PropertiesFile file) {
+  public @Nullable CustomResourceBundle getCustomResourceBundle(final @NotNull PropertiesFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return null;
@@ -233,8 +229,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return myState.getDissociatedFiles().contains(url) || getCustomResourceBundleState(virtualFile) != null;
   }
 
-  @Nullable
-  private CustomResourceBundleState getCustomResourceBundleState(final @NotNull VirtualFile virtualFile) {
+  private @Nullable CustomResourceBundleState getCustomResourceBundleState(final @NotNull VirtualFile virtualFile) {
     if (myState.getCustomResourceBundles().isEmpty()) {
       return null;
     }
@@ -247,9 +242,8 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return null;
   }
 
-  @Nullable
   @Override
-  public ResourceBundleManagerState getState() {
+  public @Nullable ResourceBundleManagerState getState() {
     return myState.isEmpty() ? null : myState;
   }
 

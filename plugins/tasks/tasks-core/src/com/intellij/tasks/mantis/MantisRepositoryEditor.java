@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -94,15 +94,14 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     super.setAnchor(anchor);
     myProjectLabel.setAnchor(anchor);
     myFilterLabel.setAnchor(anchor);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     myProjectLabel = new JBLabel(TaskBundle.message("label.project"), SwingConstants.RIGHT);
     myProjectCombobox = new ComboBox<>(200);
     myProjectCombobox.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.login.first"), MantisProject::getName));
@@ -120,16 +119,14 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
       super(MantisRepositoryEditor.this.myProject, TaskBundle.message("progress.title.downloading.mantis.projects"), myProjectCombobox);
     }
 
-    @NotNull
     @Override
-    protected List<MantisProject> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+    protected @NotNull List<MantisProject> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       myRepository.refreshProjects();
       return myRepository.getProjects();
     }
 
-    @Nullable
     @Override
-    public MantisProject getSelectedItem() {
+    public @Nullable MantisProject getSelectedItem() {
       return myRepository.getCurrentProject();
     }
 

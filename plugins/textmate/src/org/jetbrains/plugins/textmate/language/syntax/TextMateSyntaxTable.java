@@ -15,8 +15,7 @@ public class TextMateSyntaxTable extends TextMateSyntaxTableCore {
    * @return language scope root name
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
+  public @Nullable CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
     return addSyntax(plist, new TextMateInterner() {
       @Override
       public @NotNull String intern(@NotNull String name) {

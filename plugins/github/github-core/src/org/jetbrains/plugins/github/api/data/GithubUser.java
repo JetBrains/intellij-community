@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
@@ -42,23 +42,19 @@ public class GithubUser {
   private String type;
   private Boolean siteAdmin;
 
-  @NotNull
-  public String getNodeId() {
+  public @NotNull String getNodeId() {
     return nodeId;
   }
 
-  @NotNull
-  public String getLogin() {
+  public @NotNull String getLogin() {
     return login;
   }
 
-  @NotNull
-  public String getHtmlUrl() {
+  public @NotNull String getHtmlUrl() {
     return htmlUrl;
   }
 
-  @Nullable
-  public String getAvatarUrl() {
+  public @Nullable String getAvatarUrl() {
     return avatarUrl;
   }
 

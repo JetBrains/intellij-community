@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,8 +30,7 @@ public class CustomResourceBundleState {
   public String myBaseName;
 
   @Transient
-  @NotNull
-  public String getBaseName() {
+  public @NotNull String getBaseName() {
     return myBaseName;
   }
 
@@ -41,13 +38,11 @@ public class CustomResourceBundleState {
     return myFileUrls;
   }
 
-  @Unmodifiable
-  public List<VirtualFile> getFiles(@NotNull final VirtualFileManager manager) {
+  public @Unmodifiable List<VirtualFile> getFiles(final @NotNull VirtualFileManager manager) {
     return ContainerUtil.mapNotNull(getFileUrls(), url -> manager.findFileByUrl(url));
   }
 
-  @Nullable
-  public CustomResourceBundleState removeNonExistentFiles(final VirtualFileManager virtualFileManager) {
+  public @Nullable CustomResourceBundleState removeNonExistentFiles(final VirtualFileManager virtualFileManager) {
     final List<String> existentFiles = ContainerUtil.filter(myFileUrls, url -> virtualFileManager.findFileByUrl(url) != null);
     if (existentFiles.isEmpty()) {
       return null;

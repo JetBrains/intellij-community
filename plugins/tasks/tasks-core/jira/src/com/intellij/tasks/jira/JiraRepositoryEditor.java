@@ -47,9 +47,8 @@ public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraReposit
     }
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     mySearchQueryField = new LanguageTextField(JqlLanguage.INSTANCE, myProject, myRepository.getSearchQuery());
     installListener(mySearchQueryField);
     mySearchLabel = new JBLabel(TaskBundle.message("label.search"), SwingConstants.RIGHT);
@@ -73,7 +72,7 @@ public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraReposit
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     super.setAnchor(anchor);
     mySearchLabel.setAnchor(anchor);
   }

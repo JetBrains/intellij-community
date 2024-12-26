@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,13 +25,11 @@ public class GithubRepoBasic {
   private String url;
   //urls
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return StringUtil.notNullize(description);
   }
 
@@ -43,34 +41,28 @@ public class GithubRepoBasic {
     return isFork;
   }
 
-  @NotNull
-  public String getUrl() {
+  public @NotNull String getUrl() {
     return url;
   }
 
-  @NotNull
-  public String getHtmlUrl() {
+  public @NotNull String getHtmlUrl() {
     return htmlUrl;
   }
 
-  @NotNull
-  public GithubUser getOwner() {
+  public @NotNull GithubUser getOwner() {
     return owner;
   }
 
 
-  @NotNull
-  public String getUserName() {
+  public @NotNull String getUserName() {
     return getOwner().getLogin();
   }
 
-  @NotNull
-  public String getFullName() {
+  public @NotNull String getFullName() {
     return getUserName() + "/" + getName();
   }
 
-  @NotNull
-  public GHRepositoryPath getFullPath() {
+  public @NotNull GHRepositoryPath getFullPath() {
     return new GHRepositoryPath(getUserName(), getName());
   }
 

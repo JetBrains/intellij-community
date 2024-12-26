@@ -408,8 +408,7 @@ public final class TerminalSettingsPanel {
     }
   }
 
-  @NotNull
-  private static Color findColorByKey(String... colorKeys) {
+  private static @NotNull Color findColorByKey(String... colorKeys) {
     Color c = null;
     for (String key : colorKeys) {
       c = UIManager.getColor(key);

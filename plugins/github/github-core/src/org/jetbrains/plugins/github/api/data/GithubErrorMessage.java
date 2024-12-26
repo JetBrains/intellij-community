@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,22 +10,19 @@ import java.util.List;
 
 @SuppressWarnings("UnusedDeclaration")
 public class GithubErrorMessage {
-  @Nullable private String message;
-  @Nullable private List<Error> errors;
+  private @Nullable String message;
+  private @Nullable List<Error> errors;
 
-  @Nullable
-  public String getMessage() {
+  public @Nullable String getMessage() {
     return message;
   }
 
-  @Nullable
-  public List<Error> getErrors() {
+  public @Nullable List<Error> getErrors() {
     if (errors == null) return Collections.emptyList();
     return errors;
   }
 
-  @NotNull
-  public String getPresentableError() {
+  public @NotNull String getPresentableError() {
     if (errors == null) {
       return message != null ? message : GithubBundle.message("unknown.loading.error");
     }
@@ -66,23 +63,19 @@ public class GithubErrorMessage {
     private String code;
     private String message;
 
-    @Nullable
-    public String getResource() {
+    public @Nullable String getResource() {
       return resource;
     }
 
-    @Nullable
-    public String getField() {
+    public @Nullable String getField() {
       return field;
     }
 
-    @Nullable
-    public String getCode() {
+    public @Nullable String getCode() {
       return code;
     }
 
-    @Nullable
-    public String getMessage() {
+    public @Nullable String getMessage() {
       return message;
     }
   }

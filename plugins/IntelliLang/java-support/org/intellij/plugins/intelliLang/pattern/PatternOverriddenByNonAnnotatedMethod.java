@@ -32,8 +32,7 @@ import java.util.Set;
 public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       final Pair<String, ? extends Set<String>> annotationName =
         Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getPatternAnnotationPair();

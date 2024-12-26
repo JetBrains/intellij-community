@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.concurrency.JobScheduler;
@@ -42,17 +43,16 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
+  public @NotNull List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
   @Override
   public boolean filterElements(@NotNull ChooseByNameViewModel base,
-                                @NotNull final String pattern,
+                                final @NotNull String pattern,
                                 final boolean everywhere,
-                                @NotNull final ProgressIndicator cancelled,
+                                final @NotNull ProgressIndicator cancelled,
                                 @NotNull Processor<Object> consumer) {
 
     GotoTaskAction.CREATE_NEW_TASK_ACTION.setTaskName(pattern);

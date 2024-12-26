@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -310,9 +310,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return "Maven";
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
     if (nameLocationSettings != null && myProjectId != null && myProjectId.getArtifactId() != null) {
       nameLocationSettings.setModuleName(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
@@ -323,9 +322,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return super.modifySettingsStep(settingsStep);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public @Nullable Project createProject(String name, String path) {
     setCreatingNewProject(true);
     return super.createProject(name, path);
   }

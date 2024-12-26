@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -54,8 +54,8 @@ public interface MavenLogEntryReader {
   }
 
   class MavenLogEntry {
-    @Nullable final LogMessageType myType;
-    @NotNull final String myLine;
+    final @Nullable LogMessageType myType;
+    final @NotNull String myLine;
 
     @TestOnly
     MavenLogEntry(@NotNull String line, LogMessageType type) {
@@ -69,26 +69,21 @@ public interface MavenLogEntryReader {
       myLine = clearLine(myType, line);
     }
 
-    @NotNull
-    private static String clearProgressCarriageReturns(@NotNull String line) {
+    private static @NotNull String clearProgressCarriageReturns(@NotNull String line) {
       int i = line.lastIndexOf("\r");
       if (i == -1) return line;
       return line.substring(i + 1);
     }
 
-    @NotNull
-    private static String clearLine(@Nullable LogMessageType type, @NotNull String line) {
+    private static @NotNull String clearLine(@Nullable LogMessageType type, @NotNull String line) {
       return type == null ? line : type.clearLine(line);
     }
 
-    @Nullable
-    public LogMessageType getType() {
+    public @Nullable LogMessageType getType() {
       return myType;
     }
 
-    @NotNull
-    @NlsSafe
-    public String getLine() {
+    public @NotNull @NlsSafe String getLine() {
       return myLine;
     }
 

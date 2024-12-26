@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
@@ -92,9 +92,8 @@ public final class Maven40EffectivePomDumper {
   }
 
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
-  @Nullable
-  public static String evaluateEffectivePom(Maven40ServerEmbedderImpl embedder,
-                                            @NotNull final File file,
+  public static @Nullable String evaluateEffectivePom(Maven40ServerEmbedderImpl embedder,
+                                            final @NotNull File file,
                                             @NotNull List<String> activeProfiles,
                                             @NotNull List<String> inactiveProfiles) {
     final StringWriter w = new StringWriter();

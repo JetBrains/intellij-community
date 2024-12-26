@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -160,10 +160,10 @@ public class GithubSyncForkAction extends DumbAwareAction {
   }
 
   private static class SyncForkTask extends Task.Backgroundable {
-    @NotNull private final Git myGit;
-    @NotNull private final GithubAccount myAccount;
-    @NotNull private final GitRepository myRepository;
-    @NotNull private final GHRepositoryPath myRepoPath;
+    private final @NotNull Git myGit;
+    private final @NotNull GithubAccount myAccount;
+    private final @NotNull GitRepository myRepository;
+    private final @NotNull GHRepositoryPath myRepoPath;
 
     SyncForkTask(@NotNull Project project,
                  @NotNull Git git,
@@ -207,8 +207,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       rebaseCurrentBranch(indicator, parentRemote, branchName);
     }
 
-    @Nullable
-    private GithubRepo validateRepoAndLoadParent(@NotNull GithubApiRequestExecutor executor, @NotNull ProgressIndicator indicator) {
+    private @Nullable GithubRepo validateRepoAndLoadParent(@NotNull GithubApiRequestExecutor executor, @NotNull ProgressIndicator indicator) {
       try {
         GithubRepoDetailed repositoryInfo =
           executor.execute(indicator,
@@ -241,8 +240,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       }
     }
 
-    @Nullable
-    private GitRemote configureParentRemote(@NotNull ProgressIndicator indicator, @NotNull GHRepositoryPath parentRepoPath) {
+    private @Nullable GitRemote configureParentRemote(@NotNull ProgressIndicator indicator, @NotNull GHRepositoryPath parentRepoPath) {
       LOG.info("Configuring upstream remote");
       indicator.setText(GithubBundle.message("rebase.process.configuring.upstream.remote"));
 
@@ -276,8 +274,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return upstreamRemote;
     }
 
-    @Nullable
-    private GitRemote findRemote(@NotNull GHRepositoryPath repoPath) {
+    private @Nullable GitRemote findRemote(@NotNull GHRepositoryPath repoPath) {
       return ContainerUtil.find(myRepository.getRemotes(), remote -> {
         String url = remote.getFirstUrl();
         if (url == null || !GitHostingUrlUtil.match(myAccount.getServer().toURI(), url)) return false;

@@ -131,8 +131,7 @@ public final class LocalShellIntegrationInjector {
       .build();
   }
 
-  @Nullable
-  private static String findRCFile(@NotNull String shellName) {
+  private static @Nullable String findRCFile(@NotNull String shellName) {
     String rcfile = switch (shellName) {
       case ShellNameUtil.BASH_NAME, ShellNameUtil.SH_NAME -> "shell-integrations/bash/bash-integration.bash";
       case ShellNameUtil.ZSH_NAME -> "shell-integrations/zsh/.zshenv";

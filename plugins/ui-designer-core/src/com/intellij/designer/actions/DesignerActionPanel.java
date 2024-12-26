@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.actions;
 
 import com.intellij.designer.DesignerBundle;
@@ -87,8 +87,7 @@ public class DesignerActionPanel implements DataProvider {
     return toolbar;
   }
 
-  @NotNull
-  private ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
+  private @NotNull ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
     final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> DesignerBundle.message("action.select.text"));
 
     AnAction selectParent = new AnAction(UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.text.select.parent"),

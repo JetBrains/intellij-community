@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.intellij.plugins.intelliLang;
 
@@ -29,7 +29,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
   private AdvancedSettingsPanel myPanel;
   private final Project myProject;
 
-  public AdvancedSettingsUI(@NotNull final Project project, Configuration configuration) {
+  public AdvancedSettingsUI(final @NotNull Project project, Configuration configuration) {
     myProject = project;
     myConfiguration = configuration.getAdvancedConfiguration();
   }
@@ -70,9 +70,8 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     return "reference.settings.injection.advanced";
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "IntelliLang.Advanced";
   }
 
@@ -188,8 +187,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       return false;
     }
 
-    @NotNull
-    private Configuration.InstrumentationType getInstrumentation() {
+    private @NotNull Configuration.InstrumentationType getInstrumentation() {
       if (myNoInstrumentation.isSelected()) return Configuration.InstrumentationType.NONE;
       if (myAssertInstrumentation.isSelected()) return Configuration.InstrumentationType.ASSERT;
       if (myExceptionInstrumentation.isSelected()) return Configuration.InstrumentationType.EXCEPTION;
@@ -209,8 +207,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       myConfiguration.setSourceModificationAllowed(mySourceModificationAllowedCheckBox.isSelected());
     }
 
-    @NotNull
-    private Configuration.DfaOption getDfaOption() {
+    private @NotNull Configuration.DfaOption getDfaOption() {
       if (myDfaOff.isSelected()) return Configuration.DfaOption.OFF;
       if (myAnalyzeReferences.isSelected()) return Configuration.DfaOption.RESOLVE;
       if (myLookForAssignments.isSelected()) return Configuration.DfaOption.ASSIGNMENTS;
@@ -232,7 +229,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       mySourceModificationAllowedCheckBox.setSelected(myConfiguration.isSourceModificationAllowed());
     }
 
-    private void setDfaOption(@NotNull final Configuration.DfaOption dfaOption) {
+    private void setDfaOption(final @NotNull Configuration.DfaOption dfaOption) {
       switch (dfaOption) {
         case OFF -> myDfaOff.setSelected(true);
         case RESOLVE -> myAnalyzeReferences.setSelected(true);

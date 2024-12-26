@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.tasks.impl.SimpleComment;
@@ -10,8 +10,8 @@ import org.jetbrains.plugins.github.i18n.GithubBundle;
 import java.util.Date;
 
 final class GithubComment extends SimpleComment {
-  @Nullable private final String myAvatarUrl;
-  @NotNull private final String myUserHtmlUrl;
+  private final @Nullable String myAvatarUrl;
+  private final @NotNull String myUserHtmlUrl;
 
   public GithubComment(@Nullable Date date,
                        @Nullable String author,

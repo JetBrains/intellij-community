@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -185,8 +185,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myUseHttpAuthenticationCheckBox.setEnabled(enabled);
   }
 
-  @Nullable
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     return null;
   }
 
@@ -299,7 +298,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     myAnchor = anchor;
     myUrlLabel.setAnchor(anchor);
     myUsernameLabel.setAnchor(anchor);

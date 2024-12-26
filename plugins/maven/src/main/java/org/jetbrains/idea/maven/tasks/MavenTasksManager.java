@@ -52,8 +52,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     AFTER_COMPILE("maven.tasks.goal.after.compile"),
     BEFORE_REBUILD("maven.tasks.goal.before.rebuild"),
     AFTER_REBUILD("maven.tasks.goal.after.rebuild");
-    @PropertyKey(resourceBundle = TasksBundle.BUNDLE)
-    public final String myMessageKey;
+    public final @PropertyKey(resourceBundle = TasksBundle.BUNDLE) String myMessageKey;
 
     Phase(@PropertyKey(resourceBundle = TasksBundle.BUNDLE) String messageKey) {
       myMessageKey = messageKey;

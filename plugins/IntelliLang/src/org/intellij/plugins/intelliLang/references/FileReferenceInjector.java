@@ -15,15 +15,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class FileReferenceInjector extends ReferenceInjector {
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "file-reference";
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return IntelliLangBundle.message("reference.injection.display.name.file.reference");
   }
 

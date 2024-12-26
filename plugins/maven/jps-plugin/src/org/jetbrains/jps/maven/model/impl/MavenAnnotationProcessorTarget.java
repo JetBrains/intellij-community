@@ -29,17 +29,15 @@ import java.util.stream.Collectors;
  */
 @ApiStatus.Internal
 public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
-  @NotNull
-  private final MavenAnnotationProcessorTargetType myTargetType;
+  private final @NotNull MavenAnnotationProcessorTargetType myTargetType;
 
   public MavenAnnotationProcessorTarget(@NotNull MavenAnnotationProcessorTargetType targetType, JpsModule module) {
     super(targetType, module);
     myTargetType = targetType;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myTargetType.getTypeId() + ":" + myModule.getName();
   }
 
@@ -70,18 +68,16 @@ public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<B
                    .collect(Collectors.toList());
   }
 
-  @NotNull
   @Override
-  public List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
-                                                          @NotNull ModuleExcludeIndex index,
-                                                          @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                          @NotNull BuildDataPaths dataPaths) {
+  public @NotNull List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                                   @NotNull ModuleExcludeIndex index,
+                                                                   @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                                   @NotNull BuildDataPaths dataPaths) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
+  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
     return Collections.emptyList();
   }
 }

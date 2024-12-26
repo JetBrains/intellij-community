@@ -14,8 +14,7 @@ public class PListValue {
     myType = type;
   }
 
-  @Nullable
-  public Object getValue() {
+  public @Nullable Object getValue() {
     return myValue;
   }
 
@@ -23,21 +22,18 @@ public class PListValue {
     return myType;
   }
 
-  @NotNull
-  public Plist getPlist() {
+  public @NotNull Plist getPlist() {
     return myType == PlistValueType.DICT
            ? (Plist)myValue
            : Plist.EMPTY_PLIST;
   }
 
   @SuppressWarnings("unchecked")
-  @NotNull
-  public List<PListValue> getArray() {
+  public @NotNull List<PListValue> getArray() {
     return myType == PlistValueType.ARRAY ? (List<PListValue>)myValue : Collections.emptyList();
   }
 
-  @NotNull
-  public List<String> getStringArray() {
+  public @NotNull List<String> getStringArray() {
     List<PListValue> array = getArray();
     List<String> result = new ArrayList<>(array.size());
     for (PListValue value : array) {
@@ -125,27 +121,23 @@ public class PListValue {
       super(null, type);
     }
 
-    @NotNull
     @Override
-    public Plist getPlist() {
+    public @NotNull Plist getPlist() {
       return Plist.EMPTY_PLIST;
     }
 
-    @NotNull
     @Override
-    public List<PListValue> getArray() {
-      return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public List<String> getStringArray() {
+    public @NotNull List<PListValue> getArray() {
       return Collections.emptyList();
     }
 
     @Override
-    @Nullable
-    public String getString() {
+    public @NotNull List<String> getStringArray() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public @Nullable String getString() {
       return null;
     }
   }

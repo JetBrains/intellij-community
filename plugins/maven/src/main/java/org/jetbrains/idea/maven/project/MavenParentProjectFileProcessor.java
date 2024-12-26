@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
@@ -23,10 +23,9 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     myProject = project;
   }
 
-  @Nullable
-  public RESULT_TYPE process(@NotNull MavenGeneralSettings generalSettings,
-                             @NotNull VirtualFile projectFile,
-                             @Nullable MavenParentDesc parentDesc) {
+  public @Nullable RESULT_TYPE process(@NotNull MavenGeneralSettings generalSettings,
+                                       @NotNull VirtualFile projectFile,
+                                       @Nullable MavenParentDesc parentDesc) {
     VirtualFile superPom = MavenUtil.getEffectiveSuperPomWithNoRespectToWrapper(myProject);
     if (superPom == null || projectFile.equals(superPom)) return null;
 
@@ -78,29 +77,23 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     return result;
   }
 
-  @Nullable
-  protected abstract VirtualFile findManagedFile(@NotNull MavenId id);
+  protected abstract @Nullable VirtualFile findManagedFile(@NotNull MavenId id);
 
-  @Nullable
-  protected RESULT_TYPE processManagedParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processManagedParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected RESULT_TYPE processRelativeParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processRelativeParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected RESULT_TYPE processRepositoryParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processRepositoryParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected RESULT_TYPE processSuperParent(VirtualFile parentFile) {
+  protected @Nullable RESULT_TYPE processSuperParent(VirtualFile parentFile) {
     return doProcessParent(parentFile);
   }
 
-  @Nullable
-  protected abstract RESULT_TYPE doProcessParent(VirtualFile parentFile);
+  protected abstract @Nullable RESULT_TYPE doProcessParent(VirtualFile parentFile);
 }

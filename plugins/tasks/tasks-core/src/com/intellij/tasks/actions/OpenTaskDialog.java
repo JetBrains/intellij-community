@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.actions;
 
@@ -32,7 +32,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class OpenTaskDialog extends DialogWrapper {
-  private final static Logger LOG = Logger.getInstance(OpenTaskDialog.class);
+  private static final Logger LOG = Logger.getInstance(OpenTaskDialog.class);
   private static final String UPDATE_STATE_ENABLED = "tasks.open.task.update.state.enabled";
 
   private JPanel myPanel;
@@ -47,7 +47,7 @@ public class OpenTaskDialog extends DialogWrapper {
   private final LocalTaskImpl myTask;
   private final List<TaskDialogPanel> myPanels;
 
-  public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
+  public OpenTaskDialog(final @NotNull Project project, final @NotNull Task task) {
     super(project, false);
     myProject = project;
     myTask = new LocalTaskImpl(task);
@@ -155,8 +155,7 @@ public class OpenTaskDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "SimpleOpenTaskDialog";
   }
 
@@ -177,9 +176,8 @@ public class OpenTaskDialog extends DialogWrapper {
     return null;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     String taskName = myNameField.getText().trim();
     if (taskName.isEmpty()) {
       return new ValidationInfo(TaskBundle.message("dialog.message.task.name.should.not.be.empty"), myNameField);
@@ -198,9 +196,8 @@ public class OpenTaskDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myTaskStateCombo = new TaskStateCombo() {
-      @Nullable
       @Override
-      protected CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {
+      protected @Nullable CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {
         return repository.getPreferredOpenTaskState();
       }
     };

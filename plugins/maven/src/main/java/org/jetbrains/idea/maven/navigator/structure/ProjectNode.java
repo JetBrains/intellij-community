@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -161,8 +161,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     return super.getPlainAttributes();
   }
 
-  @NlsContexts.DetailedDescription
-  private String makeDescription() {
+  private @NlsContexts.DetailedDescription String makeDescription() {
     StringBuilder desc = new StringBuilder();
 
     desc.append("<html>")
@@ -270,9 +269,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  protected String getMenuId() {
+  protected @Nullable @NonNls String getMenuId() {
     return "Maven.NavigatorProjectMenu";
   }
 }

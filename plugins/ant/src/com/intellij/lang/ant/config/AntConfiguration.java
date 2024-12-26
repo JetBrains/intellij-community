@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.ant.config;
 
@@ -16,7 +16,7 @@ import java.util.List;
 
 public abstract class AntConfiguration extends SimpleModificationTracker {
   private final Project myProject;
-  @NonNls public static final String ACTION_ID_PREFIX = "Ant_";
+  public static final @NonNls String ACTION_ID_PREFIX = "Ant_";
 
   protected AntConfiguration(@NotNull Project project) {
     myProject = project;
@@ -53,8 +53,7 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
 
   public abstract List<AntBuildFileBase> getBuildFileList();
 
-  @Nullable
-  public abstract AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException;
+  public abstract @Nullable AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException;
 
   public abstract void removeBuildFile(final AntBuildFile file);
 
@@ -66,13 +65,11 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
 
   public abstract void updateBuildFile(final AntBuildFile buildFile);
 
-  @Nullable
-  public abstract AntBuildModelBase getModelIfRegistered(@NotNull AntBuildFileBase buildFile);
+  public abstract @Nullable AntBuildModelBase getModelIfRegistered(@NotNull AntBuildFileBase buildFile);
 
   public abstract AntBuildModel getModel(@NotNull AntBuildFile buildFile);
 
-  @Nullable
-  public abstract AntBuildFile findBuildFileByActionId(final String id);
+  public abstract @Nullable AntBuildFile findBuildFileByActionId(final String id);
 
   public abstract boolean executeTargetBeforeCompile(CompileContext compileContext, DataContext dataContext);
 

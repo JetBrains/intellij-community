@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 
 public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
-  @NonNls public static final String TOOL_WINDOW_ID = "Terminal";
+  public static final @NonNls String TOOL_WINDOW_ID = "Terminal";
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {

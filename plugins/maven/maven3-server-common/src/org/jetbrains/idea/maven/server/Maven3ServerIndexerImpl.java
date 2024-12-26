@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.apache.commons.lang3.StringUtils;
@@ -65,8 +65,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
     }
   }
 
-  @NotNull
-  private IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException {
+  private @NotNull IndexingContext getIndex(MavenIndexId mavenIndexId) throws IOException {
     IndexingContext context = myIndexer.getIndexingContexts().get(mavenIndexId.indexId);
     if (context == null) {
       synchronized (myIndexer) {
@@ -167,8 +166,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
     }
   }
 
-  @NotNull
-  private WagonTransferListenerAdapter getWagonTransferListenerAdapter(MavenServerProgressIndicator indicator) {
+  private @NotNull WagonTransferListenerAdapter getWagonTransferListenerAdapter(MavenServerProgressIndicator indicator) {
     return new WagonTransferListenerAdapter(indicator) {
       @Override
       protected void downloadProgress(long downloaded, long total) {
@@ -315,8 +313,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
     }
   }
 
-  @NotNull
-  private static WildcardQuery getWildcardQuery(String pattern) {
+  private static @NotNull WildcardQuery getWildcardQuery(String pattern) {
     return new WildcardQuery(new Term(SEARCH_TERM_CLASS_NAMES, "*/" + pattern.replaceAll("\\.", "/")));
   }
 

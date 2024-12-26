@@ -17,9 +17,8 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   private static final SyntaxHighlighter PLAIN_SYNTAX_HIGHLIGHTER = new TextMateHighlighter(null);
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxHighlighterFactory.class);
 
-  @NotNull
   @Override
-  public SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+  public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
     if (virtualFile == null) {
       return PLAIN_SYNTAX_HIGHLIGHTER;
     }

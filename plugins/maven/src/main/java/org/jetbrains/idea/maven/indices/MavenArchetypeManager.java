@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -37,7 +37,7 @@ public class MavenArchetypeManager {
   private static final String ELEMENT_REPOSITORY = "repository";
   private static final String ELEMENT_DESCRIPTION = "description";
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public static MavenArchetypeManager getInstance(@NotNull Project project) {
     return project.getService(MavenArchetypeManager.class);
@@ -158,8 +158,7 @@ public class MavenArchetypeManager {
    *
    * @return null if archetype not resolved, else descriptor map.
    */
-  @Nullable
-  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+  public @Nullable Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version, @Nullable String url) {
     Map<String, String> map = executeWithMavenEmbedderWrapperNullable(
       wrapper -> wrapper.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, Collections.emptyList(), url)
@@ -178,8 +177,7 @@ public class MavenArchetypeManager {
     }
   }
 
-  @NotNull
-  private <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
+  private @NotNull <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenEmbeddersManager manager = projectsManager.getEmbeddersManager();
     String baseDir = "";
@@ -196,8 +194,7 @@ public class MavenArchetypeManager {
     }
   }
 
-  @Nullable
-  private <R> R executeWithMavenEmbedderWrapperNullable(Function<MavenEmbedderWrapper, R> function) {
+  private @Nullable <R> R executeWithMavenEmbedderWrapperNullable(Function<MavenEmbedderWrapper, R> function) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
     MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, "");
     try {
@@ -208,8 +205,7 @@ public class MavenArchetypeManager {
     }
   }
 
-  @NotNull
-  static List<MavenArchetype> loadUserArchetypes(@NotNull Path userArchetypesPath) {
+  static @NotNull List<MavenArchetype> loadUserArchetypes(@NotNull Path userArchetypesPath) {
     try {
       if (!Files.exists(userArchetypesPath)) {
         return Collections.emptyList();
@@ -261,8 +257,7 @@ public class MavenArchetypeManager {
     saveUserArchetypes(archetypes, userArchetypesPath);
   }
 
-  @NotNull
-  private static Path getUserArchetypesFile() {
+  private static @NotNull Path getUserArchetypesFile() {
     return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 

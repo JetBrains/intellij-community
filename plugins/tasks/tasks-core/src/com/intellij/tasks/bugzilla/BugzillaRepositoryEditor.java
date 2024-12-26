@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,9 +63,8 @@ public class BugzillaRepositoryEditor extends BaseRepositoryEditor<BugzillaRepos
     myTestButton.setEnabled(myRepository.isConfigured());
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     myProductLabel = new JBLabel(TaskBundle.message("bugzilla.label.product"), SwingConstants.RIGHT);
     myProductInput = TextFieldWithAutoCompletion.create(myProject, Collections.emptyList(), true,
                                                         myRepository.getProductName());

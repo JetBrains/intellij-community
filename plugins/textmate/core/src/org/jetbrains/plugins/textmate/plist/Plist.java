@@ -42,8 +42,7 @@ public final class Plist {
     }
   }
 
-  @Nullable
-  public PListValue getPlistValue(@NotNull String key) {
+  public @Nullable PListValue getPlistValue(@NotNull String key) {
     return getPlistValue(key, null);
   }
 

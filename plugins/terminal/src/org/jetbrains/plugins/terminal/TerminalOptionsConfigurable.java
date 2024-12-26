@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.ide.IdeBundle;
@@ -29,15 +29,13 @@ public final class TerminalOptionsConfigurable implements SearchableConfigurable
     myBlockTerminalOptions = BlockTerminalOptions.getInstance();
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "terminal";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name");
   }
 

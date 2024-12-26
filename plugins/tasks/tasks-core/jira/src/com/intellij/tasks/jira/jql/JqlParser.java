@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
 public final class JqlParser implements PsiParser {
   private static final Logger LOG = Logger.getInstance(JqlParser.class);
 
-  @NotNull
   @Override
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public @NotNull ASTNode parse(IElementType root, PsiBuilder builder) {
     //builder.setDebugMode(true);
     PsiBuilder.Marker rootMarker = builder.mark();
     // Parser should accept empty string

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -19,13 +18,12 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
   private final SyntaxNodeDescriptor myParentNode;
   private SyntaxNodeDescriptor myTargetNode;
 
-  SyntaxProxyDescriptor(@NotNull final SyntaxNodeDescriptor parentNode) {
+  SyntaxProxyDescriptor(final @NotNull SyntaxNodeDescriptor parentNode) {
     myParentNode = parentNode;
   }
 
-  @Nullable
   @Override
-  public CharSequence getStringAttribute(@NotNull Constants.StringKey key) {
+  public @Nullable CharSequence getStringAttribute(@NotNull Constants.StringKey key) {
     return getTargetNode().getStringAttribute(key);
   }
 
@@ -44,38 +42,32 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return getTargetNode().hasBackReference(key, group);
   }
 
-  @NotNull
   @Override
-  public List<SyntaxNodeDescriptor> getChildren() {
+  public @NotNull List<SyntaxNodeDescriptor> getChildren() {
     return getTargetNode().getChildren();
   }
 
-  @NotNull
   @Override
-  public List<InjectionNodeDescriptor> getInjections() {
+  public @NotNull List<InjectionNodeDescriptor> getInjections() {
     return getTargetNode().getInjections();
   }
 
-  @NotNull
   @Override
-  public SyntaxNodeDescriptor findInRepository(int ruleId) {
+  public @NotNull SyntaxNodeDescriptor findInRepository(int ruleId) {
     return getTargetNode().findInRepository(ruleId);
   }
 
-  @Nullable
   @Override
-  public CharSequence getScopeName() {
+  public @Nullable CharSequence getScopeName() {
     return getTargetNode().getScopeName();
   }
 
-  @NotNull
   @Override
-  public SyntaxNodeDescriptor getParentNode() {
+  public @NotNull SyntaxNodeDescriptor getParentNode() {
     return myParentNode;
   }
 
-  @NotNull
-  private SyntaxNodeDescriptor getTargetNode() {
+  private @NotNull SyntaxNodeDescriptor getTargetNode() {
     if (myTargetNode == null) {
       Set<SyntaxNodeDescriptor> visitedNodes = new HashSet<>();
       visitedNodes.add(this);

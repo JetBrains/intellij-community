@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
-  private final static Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
+  private static final Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
 
   private final ResourceBundle myResourceBundle;
 
@@ -50,16 +50,15 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     showToolbar();
   }
 
-  @NotNull
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     final DefaultActionGroup result = (DefaultActionGroup) super.createActionGroup();
     result.add(new ContextHelpAction(getHelpID()), Constraints.LAST);
     return result;
   }
 
   @Override
-  protected void addGroupByActions(@NotNull final DefaultActionGroup result) {
+  protected void addGroupByActions(final @NotNull DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(createSettingsActionGroup());
     result.add(new NewPropertyAction(true), Constraints.FIRST);
@@ -132,8 +131,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     });
   }
 
-  @Unmodifiable
-  private static @NotNull List<PsiElement> getPsiElements(JBIterable<Object> selection) {
+  private static @Unmodifiable @NotNull List<PsiElement> getPsiElements(JBIterable<Object> selection) {
     return selection
       .filterMap(StructureViewComponent::unwrapWrapper)
       .filter(ResourceBundleEditorViewElement.class)
@@ -228,7 +226,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
 
     @Override
-    public void deleteElement(@NotNull final DataContext dataContext) {
+    public void deleteElement(final @NotNull DataContext dataContext) {
       final List<PropertiesFile> bundlePropertiesFiles = myResourceBundle.getPropertiesFiles();
 
       final List<PsiElement> toDelete = new ArrayList<>();
@@ -251,14 +249,13 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
 
     @Override
-    public boolean canDeleteElement(@NotNull final DataContext dataContext) {
+    public boolean canDeleteElement(final @NotNull DataContext dataContext) {
       return true;
     }
   }
 
   @Override
-  @NonNls
-  public String getHelpID() {
+  public @NonNls String getHelpID() {
     return "editing.propertyFile.bundleEditor";
   }
 }

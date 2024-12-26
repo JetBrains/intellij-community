@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -24,8 +24,7 @@ public final class GithubUrlUtil {
    * <p>
    * git@github.com:user/repo.git -> user/repo
    */
-  @Nullable
-  public static GHRepositoryPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
+  public static @Nullable GHRepositoryPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
     remoteUrl = removeProtocolPrefix(removeEndingDotGit(remoteUrl));
     int index1 = remoteUrl.lastIndexOf('/');
     if (index1 == -1) {
@@ -62,8 +61,7 @@ public final class GithubUrlUtil {
    * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static String getHostFromUrl(@NotNull String url) {
+  public static @NotNull String getHostFromUrl(@NotNull String url) {
     String path = removeProtocolPrefix(url).replace(':', '/');
     int index = path.indexOf('/');
     if (index == -1) {
@@ -78,8 +76,7 @@ public final class GithubUrlUtil {
    * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
+  public static @Nullable String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
     GHRepositoryPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (repo == null) {
       return null;

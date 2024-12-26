@@ -33,7 +33,7 @@ import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
 
 @Service(Service.Level.PROJECT)
 public final class MavenDistributionsCache {
-  private final static ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
+  private static final ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
 
   private final ConcurrentMap<String, String> myWorkingDirToMultiModuleMap = CollectionFactory.createConcurrentWeakMap();
   private final ConcurrentMap<String, String> myVmSettingsMap = CollectionFactory.createConcurrentWeakMap();
@@ -86,8 +86,7 @@ public final class MavenDistributionsCache {
 
   }
 
-  @Nullable
-  private static MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
+  private static @Nullable MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
     Path file = Path.of(path);
     if (!isValidMavenHome(file)) return null;
     return new LocalMavenDistribution(file, label);
@@ -136,8 +135,7 @@ public final class MavenDistributionsCache {
     return distribution;
   }
 
-  @NotNull
-  public static LocalMavenDistribution resolveEmbeddedMavenHome() {
+  public static @NotNull LocalMavenDistribution resolveEmbeddedMavenHome() {
     PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
 
     if (PluginManagerCore.isRunningFromSources()) { // running from sources

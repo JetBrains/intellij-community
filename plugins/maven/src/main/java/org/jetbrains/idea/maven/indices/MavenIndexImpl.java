@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -433,8 +433,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     return getCurrentDataDir().resolve("context");
   }
 
-  @NotNull
-  private Path createNewDataDir() {
+  private @NotNull Path createNewDataDir() {
     return MavenIndices.createNewDir(myDir, DATA_DIR_PREFIX, 100);
   }
 
@@ -444,8 +443,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
    * @return list of artifact responses; indexed id is not null if artifact added; indexed id is null if retry is needed
    */
   @Override
-  @NotNull
-  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<? extends Path> artifactFiles) {
+  public @NotNull List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<? extends Path> artifactFiles) {
     var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file.toFile(), null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
@@ -626,8 +624,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     isBroken = true;
   }
 
-  @NotNull
-  private Collection<String> getGroupIdsRaw() throws IOException {
+  private @NotNull Collection<String> getGroupIdsRaw() throws IOException {
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
     myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
     return processor.getResults();

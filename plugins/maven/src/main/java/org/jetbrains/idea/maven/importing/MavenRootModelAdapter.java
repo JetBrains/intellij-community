@@ -86,8 +86,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   @Override
-  @Nullable
-  public Module findModuleByName(String moduleName) {
+  public @Nullable Module findModuleByName(String moduleName) {
     return myDelegate.findModuleByName(moduleName);
   }
 
@@ -153,8 +152,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     return ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID);
   }
 
-  @Nullable
-  public static OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
+  public static @Nullable OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
     String name = artifact.getLibraryName();
     for (OrderEntry each : ModuleRootManager.getInstance(m).getOrderEntries()) {
       if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
@@ -164,8 +162,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     return null;
   }
 
-  @Nullable
-  public static MavenArtifact findArtifact(@NotNull MavenProject project, @Nullable Library library) {
+  public static @Nullable MavenArtifact findArtifact(@NotNull MavenProject project, @Nullable Library library) {
     if (library == null) return null;
 
     String name = library.getName();

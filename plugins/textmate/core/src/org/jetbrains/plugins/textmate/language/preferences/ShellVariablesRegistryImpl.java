@@ -17,7 +17,7 @@ public final class ShellVariablesRegistryImpl implements ShellVariablesRegistry 
   private final Function<String, Collection<TextMateShellVariable>>
     ADD_VARIABLE_FACTORY = key -> Collections.synchronizedList(new CopyOnWriteArrayList<>());
 
-  @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new ConcurrentHashMap<>();
+  private final @NotNull Map<String, Collection<TextMateShellVariable>> myVariables = new ConcurrentHashMap<>();
 
   public void addVariable(@NotNull TextMateShellVariable variable) {
     if (!variable.name.isEmpty()) {
@@ -32,8 +32,8 @@ public final class ShellVariablesRegistryImpl implements ShellVariablesRegistry 
    * @return preferences from table for given scope sorted by descending weigh
    * of rule selector relative to scope selector.
    */
-  @Override @Nullable
-  public TextMateShellVariable getVariableValue(@NotNull String name, @Nullable TextMateScope scope) {
+  @Override
+  public @Nullable TextMateShellVariable getVariableValue(@NotNull String name, @Nullable TextMateScope scope) {
     if (scope == null) {
       return null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.config;
 
 import org.apache.commons.cli.Option;
@@ -13,8 +13,7 @@ import java.util.Objects;
 
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
 
-@Nullable
-public class MavenConfig {
+public @Nullable class MavenConfig {
   private final Map<String, Option> optionMap;
   private final String baseDir;
 

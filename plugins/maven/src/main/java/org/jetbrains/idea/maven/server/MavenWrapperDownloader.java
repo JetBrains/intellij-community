@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
@@ -79,8 +79,7 @@ public final class MavenWrapperDownloader {
     }
   }
 
-  @NotNull
-  private static Task.Backgroundable getTaskInfo() {
+  private static @NotNull Task.Backgroundable getTaskInfo() {
     return new Task.Backgroundable(null, SyncBundle.message("maven.sync.wrapper.downloading")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) { }

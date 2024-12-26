@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.intellij.plugins.intelliLang.inject.xml;
 
@@ -41,7 +41,7 @@ import java.util.Collections;
  */
 public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
 
-  @NonNls public static final String XML_SUPPORT_ID = "xml";
+  public static final @NonNls String XML_SUPPORT_ID = "xml";
 
   private static boolean isMine(final PsiLanguageInjectionHost host) {
     if (host instanceof XmlAttributeValue) {
@@ -59,8 +59,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return XML_SUPPORT_ID;
   }
 
@@ -74,9 +73,8 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return host instanceof XmlElement;
   }
 
-  @Nullable
   @Override
-  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
+  public @Nullable BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
     if (host instanceof XmlAttributeValue) return null;
     return InjectorUtils.findCommentInjection(host instanceof XmlText ? host.getParent() : host, getId(), commentRef);
   }
@@ -137,8 +135,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return true;
   }
 
-  @Nullable
-  private static BaseInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
+  private static @Nullable BaseInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
     final AbstractInjectionPanel panel;
     String helpId;
     if (xmlInjection instanceof XmlTagInjection) {
@@ -156,8 +153,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return showEditInjectionDialog(project, panel, null, helpId) ? xmlInjection.copy() : null;
   }
 
-  @Nullable
-  private static BaseInjection createFrom(final BaseInjection injection) {
+  private static @Nullable BaseInjection createFrom(final BaseInjection injection) {
     if (injection.getInjectionPlaces().length == 0 || injection.getInjectionPlaces().length > 1) return null;
 
     AbstractTagInjection result;
@@ -219,8 +215,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return result;
   }
 
-  @Nullable
-  private static String extractValue(PatternCondition<?> condition) {
+  private static @Nullable String extractValue(PatternCondition<?> condition) {
     if (!(condition instanceof PatternConditionPlus)) return null;
     final ElementPattern valuePattern = ((PatternConditionPlus<?, ?>)condition).getValuePattern();
     final ElementPatternCondition<?> rootCondition = valuePattern.getCondition();
@@ -328,14 +323,14 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       new AnAction(IntelliLangBundle.messagePointer("action.XmlLanguageInjectionSupport.Anonymous.xml.tag.injection"),
                    Presentation.NULL_STRING, PlatformIcons.XML_TAG_ICON) {
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
+        public void actionPerformed(final @NotNull AnActionEvent e) {
           final BaseInjection newInjection = showInjectionUI(project, new XmlTagInjection());
           if (newInjection != null) consumer.consume(newInjection);
         }
       },
       new AnAction(IntelliLangBundle.messagePointer("action.XmlLanguageInjectionSupport.Anonymous.xml.attribute.injection"), Presentation.NULL_STRING, PlatformIcons.ANNOTATION_TYPE_ICON) {
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
+        public void actionPerformed(final @NotNull AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new XmlAttributeInjection());
           if (injection != null) consumer.consume(injection);
         }
@@ -347,7 +342,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   public AnAction createEditAction(final Project project, final Factory<? extends BaseInjection> producer) {
     return new AnAction() {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         final BaseInjection originalInjection = producer.create();
         final BaseInjection injection = createFrom(originalInjection);
         if (injection != null) {

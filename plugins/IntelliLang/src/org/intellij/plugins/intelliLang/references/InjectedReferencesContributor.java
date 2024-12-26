@@ -49,7 +49,7 @@ public final class InjectedReferencesContributor extends PsiReferenceContributor
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(), new PsiReferenceProvider() {
       @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
         return getInjectionInfo(element).first;
       }
 

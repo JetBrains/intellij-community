@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -35,8 +35,7 @@ public final class MavenWorkspaceSettingsComponent implements PersistentStateCom
   }
 
   @Override
-  @NotNull
-  public MavenWorkspacePersistedSettings getState() {
+  public @NotNull MavenWorkspacePersistedSettings getState() {
     MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
     mySettings.explicitlyEnabledProfiles = StringUtil.nullize(StringUtil.join(profiles.getEnabledProfiles(), ","));
     mySettings.explicitlyDisabledProfiles = StringUtil.nullize(StringUtil.join(profiles.getDisabledProfiles(), ","));

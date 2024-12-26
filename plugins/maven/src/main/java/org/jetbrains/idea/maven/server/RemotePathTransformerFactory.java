@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,8 +60,7 @@ public interface RemotePathTransformerFactory {
     boolean canBeRemotePath(String s);
 
     @Contract("!null -> !null")
-    @Nullable
-    default String toRemotePathOrSelf(@Nullable String localPath) {
+    default @Nullable String toRemotePathOrSelf(@Nullable String localPath) {
       if (localPath == null) return null;
       String remotePath = toRemotePath(localPath);
       return remotePath != null ? remotePath : localPath;

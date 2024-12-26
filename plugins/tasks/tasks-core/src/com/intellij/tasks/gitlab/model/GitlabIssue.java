@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.gitlab.model;
 
 import com.google.gson.annotations.SerializedName;
@@ -36,13 +37,11 @@ public class GitlabIssue {
     return id;
   }
 
-  @NotNull
-  public @NlsSafe String getTitle() {
+  public @NotNull @NlsSafe String getTitle() {
     return title;
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return description;
   }
 
@@ -50,18 +49,15 @@ public class GitlabIssue {
     return projectId;
   }
 
-  @NotNull
-  public Date getUpdatedAt() {
+  public @NotNull Date getUpdatedAt() {
     return updatedAt;
   }
 
-  @NotNull
-  public Date getCreatedAt() {
+  public @NotNull Date getCreatedAt() {
     return createdAt;
   }
 
-  @NotNull
-  public String getState() {
+  public @NotNull String getState() {
     return state;
   }
 

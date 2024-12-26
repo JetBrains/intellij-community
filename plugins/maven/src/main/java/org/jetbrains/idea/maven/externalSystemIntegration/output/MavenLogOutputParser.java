@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.BuildEvent;
@@ -131,16 +131,14 @@ public class MavenLogOutputParser implements BuildOutputParser {
         reader.pushBack();
       }
 
-      @Nullable
       @Override
-      public MavenLogEntry readLine() {
+      public @Nullable MavenLogEntry readLine() {
         return nextLine(reader.readLine());
       }
     };
   }
 
-  @Nullable
-  private static MavenLogEntryReader.MavenLogEntry nextLine(String line) {
+  private static @Nullable MavenLogEntryReader.MavenLogEntry nextLine(String line) {
     if (line == null) {
       return null;
     }

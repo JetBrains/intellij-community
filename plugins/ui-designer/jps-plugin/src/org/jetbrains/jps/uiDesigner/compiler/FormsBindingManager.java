@@ -78,20 +78,17 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     }
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return BUILDER_NAME;
   }
 
-  @NotNull
-  private static File getMarkerFile(CompileContext context) {
+  private static @NotNull File getMarkerFile(CompileContext context) {
     return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "forms_rebuild_required");
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return Collections.singletonList(FORM_EXTENSION);
   }
 
@@ -230,8 +227,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     return false;
   }
 
-  @NotNull
-  private static Collection<File> findBoundSourceCandidates(CompileContext context, final ModuleBuildTarget target, File form) throws IOException, AlienFormFileException {
+  private static @NotNull Collection<File> findBoundSourceCandidates(CompileContext context, final ModuleBuildTarget target, File form) throws IOException, AlienFormFileException {
     final List<JavaSourceRootDescriptor> targetRoots = context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context);
     if (targetRoots.isEmpty()) {
       return Collections.emptyList();
@@ -254,8 +250,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     return candidates;
   }
 
-  @Nullable
-  private static File findSourceForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) {
+  private static @Nullable File findSourceForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) {
     if (boundClassName == null) {
       return null;
     }
@@ -273,8 +268,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     }
   }
 
-  @NotNull
-  private static Collection<File> findPossibleSourcesForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) {
+  private static @NotNull Collection<File> findPossibleSourcesForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) {
     if (boundClassName == null) {
       return Collections.emptyList();
     }
@@ -290,8 +284,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     return Arrays.asList(files);
   }
 
-  @NotNull
-  private static String suggestRelativePath(@NotNull JavaSourceRootDescriptor rd, @NotNull String className) {
+  private static @NotNull String suggestRelativePath(@NotNull JavaSourceRootDescriptor rd, @NotNull String className) {
     String clsName = className;
     String prefix = rd.getPackagePrefix();
     if (!StringUtil.isEmpty(prefix)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import org.slf4j.Logger;
@@ -6,7 +6,7 @@ import org.slf4j.Marker;
 
 public class Maven40Sl4jLoggerWrapper implements Logger {
   private final String myName;
-  private volatile static Maven40ServerConsoleLogger currentWrapper;
+  private static volatile Maven40ServerConsoleLogger currentWrapper;
 
   public Maven40Sl4jLoggerWrapper(String name) {
     myName = name;

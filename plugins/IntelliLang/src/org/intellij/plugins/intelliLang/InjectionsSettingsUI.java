@@ -54,8 +54,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -160,7 +160,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
                                           com.intellij.util.PlatformIcons.SELECT_ALL_ICON) {
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         performSelectedInjectionsEnabled(true);
       }
     });
@@ -169,7 +169,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
                                           com.intellij.util.PlatformIcons.UNSELECT_ALL_ICON) {
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         performSelectedInjectionsEnabled(false);
       }
     });
@@ -187,7 +187,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
@@ -205,7 +205,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         }
 
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
+        public void actionPerformed(final @NotNull AnActionEvent e) {
           final List<InjInfo> injections = getSelectedInjections();
           final CfgInfo cfg = getTargetCfgInfo(injections);
           if (cfg == null) return;
@@ -220,8 +220,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
           TableUtil.selectRows(myInjectionsTable, selectedRows);
         }
 
-        @Nullable
-        private CfgInfo getTargetCfgInfo(final List<InjInfo> injections) {
+        private @Nullable CfgInfo getTargetCfgInfo(final List<InjInfo> injections) {
           CfgInfo cfg = null;
           for (InjInfo info : injections) {
             if (info.bundled) {
@@ -247,7 +246,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
                                           AllIcons.Actions.Install) {
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         doImportAction(e.getDataContext());
         updateCountLabel();
       }
@@ -257,7 +256,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
                                           AllIcons.ToolbarDecorator.Export) {
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         List<BaseInjection> injections = getInjectionList(getSelectedInjections());
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
           .createSaveFileDialog(
@@ -317,8 +316,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }
   }
 
-  @Nullable
-  private AnAction getEditAction() {
+  private @Nullable AnAction getEditAction() {
     final InjInfo info = getSelectedInjection();
     final String supportId = info == null? null : info.injection.getSupportId();
     return supportId == null? null : myEditActions.get(supportId);
@@ -351,9 +349,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       return configurables.toArray(new Configurable[0]);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "IntelliLang.Configuration";
   }
 
@@ -439,8 +436,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     return toRemove;
   }
 
-  @Nullable
-  private InjInfo getSelectedInjection() {
+  private @Nullable InjInfo getSelectedInjection() {
     final int row = myInjectionsTable.getSelectedRow();
     return row < 0? null : myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row));
   }
@@ -454,8 +450,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IntelliLangBundle.message("configurable.InjectionsSettingsUI.display.name");
   }
 
@@ -861,8 +856,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }
   }
 
-  @Unmodifiable
-  private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {
+  private static @Unmodifiable List<InjInfo> getInjInfoList(final CfgInfo[] infos) {
     return ContainerUtil.concat(infos, cfgInfo -> cfgInfo.injectionInfos);
   }
 
@@ -880,7 +874,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     };
   }
 
-  private static abstract class MyAction extends DumbAwareAction {
+  private abstract static class MyAction extends DumbAwareAction {
     MyAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
              @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
              @Nullable Icon icon) {

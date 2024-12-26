@@ -8,7 +8,7 @@ public final class CaptureMatchData {
   public final int group;
   public final CharSequence selectorName;
 
-  CaptureMatchData(@NotNull final TextMateRange range, final int group, @NotNull final CharSequence selectorName) {
+  CaptureMatchData(final @NotNull TextMateRange range, final int group, final @NotNull CharSequence selectorName) {
     this.range = range;
     this.group = group;
     this.selectorName = selectorName;

@@ -22,34 +22,28 @@ public final class TextMateSnippet implements TextMateScopeSelectorOwner {
     mySettingsId = settingsId;
   }
 
-  @NotNull
-  public String getKey() {
+  public @NotNull String getKey() {
     return myKey;
   }
 
-  @NotNull
-  public String getContent() {
+  public @NotNull String getContent() {
     return myContent;
   }
 
-  @NotNull
   @Override
-  public CharSequence getScopeSelector() {
+  public @NotNull CharSequence getScopeSelector() {
     return myScope;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return myDescription;
   }
 
-  @NotNull
-  public String getSettingsId() {
+  public @NotNull String getSettingsId() {
     return mySettingsId;
   }
 }

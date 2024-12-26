@@ -19,23 +19,19 @@ public final class TextMateTextAttributes {
     fontStyle = style;
   }
 
-  @Nullable
-  public String getForeground() {
+  public @Nullable String getForeground() {
     return foreground;
   }
 
-  @Nullable
-  public String getBackground() {
+  public @Nullable String getBackground() {
     return background;
   }
 
-  @NotNull
-  public FontStyle getFontStyle() {
+  public @NotNull FontStyle getFontStyle() {
     return fontStyle;
   }
 
-  @Nullable
-  public static TextMateTextAttributes fromPlist(@NotNull Plist settingsPlist) {
+  public static @Nullable TextMateTextAttributes fromPlist(@NotNull Plist settingsPlist) {
     boolean empty = true;
     String foreground = null;
     String background = null;

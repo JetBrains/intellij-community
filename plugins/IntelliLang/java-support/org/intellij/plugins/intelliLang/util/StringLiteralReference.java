@@ -35,20 +35,17 @@ public abstract class StringLiteralReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myValue;
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return ElementManipulators.getValueTextRange(myValue);
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myValue.getText();
   }
 
@@ -67,8 +64,7 @@ public abstract class StringLiteralReference implements PsiReference {
     return resolve() == element;
   }
 
-  @Nullable
-  protected String getValue() {
+  protected @Nullable String getValue() {
     return (String)myValue.getValue();
   }
 

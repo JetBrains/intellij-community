@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
@@ -47,8 +46,7 @@ public interface MavenCompilerExtension {
                                          @NotNull MavenProject mavenProject,
                                          @NotNull MavenEmbedderWrapper embedder) { return false; }
 
-  @Nullable
-  default String getDefaultCompilerTargetLevel(@NotNull MavenProject mavenProject, @NotNull Module module) { return null; }
+  default @Nullable String getDefaultCompilerTargetLevel(@NotNull MavenProject mavenProject, @NotNull Module module) { return null; }
 
   default void configureOptions(CompilerOptions compilerOptions,
                                 Module module,

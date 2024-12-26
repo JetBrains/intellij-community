@@ -43,7 +43,7 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
       new PatternCondition<>(
         "isLanguageAnnotation") {
         @Override
-        public boolean accepts(@NotNull final String s, final ProcessingContext context) {
+        public boolean accepts(final @NotNull String s, final ProcessingContext context) {
           return Objects.equals(configuration.getAdvancedConfiguration().getLanguageAnnotationClass(), s);
         }
       }), "value"), new UastInjectionHostReferenceProvider() {
@@ -62,7 +62,7 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
     registrar.registerReferenceProvider(literalExpression().with(new PatternCondition<>("isStringLiteral") {
       @Override
-      public boolean accepts(@NotNull final PsiLiteralExpression expression, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiLiteralExpression expression, final ProcessingContext context) {
         return PsiUtilEx.isStringOrCharacterLiteral(expression);
       }
     }), new PsiReferenceProvider() {

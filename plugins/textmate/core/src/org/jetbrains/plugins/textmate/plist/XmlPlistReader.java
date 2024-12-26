@@ -51,8 +51,7 @@ public final class XmlPlistReader implements PlistReader {
     return value(dict, PlistValueType.DICT);
   }
 
-  @Nullable
-  private static PListValue readValue(@NotNull String key, @NotNull XmlElement valueElement) throws IOException {
+  private static @Nullable PListValue readValue(@NotNull String key, @NotNull XmlElement valueElement) throws IOException {
     String type = valueElement.name;
     if ("dict".equals(type)) {
       return readDict(valueElement);
@@ -76,8 +75,7 @@ public final class XmlPlistReader implements PlistReader {
     return value(result, PlistValueType.ARRAY);
   }
 
-  @Nullable
-  private static PListValue readBasicValue(@NotNull String type, @NotNull XmlElement valueElement) throws IOException {
+  private static @Nullable PListValue readBasicValue(@NotNull String type, @NotNull XmlElement valueElement) throws IOException {
     String content = valueElement.content;
 
     if ("string".equals(type) && content != null) {

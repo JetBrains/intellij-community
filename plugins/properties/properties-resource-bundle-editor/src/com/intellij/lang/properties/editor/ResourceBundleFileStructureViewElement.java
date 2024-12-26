@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -21,10 +21,8 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 
 public final class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
-  @NotNull
-  private final ResourceBundle myResourceBundle;
-  @NotNull
-  private final BooleanSupplier myGrouped;
+  private final @NotNull ResourceBundle myResourceBundle;
+  private final @NotNull BooleanSupplier myGrouped;
 
   private volatile boolean myShowOnlyIncomplete;
   private final Map<String, PropertyStructureViewElement> myElements = new LinkedHashMap<>();
@@ -133,8 +131,7 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {

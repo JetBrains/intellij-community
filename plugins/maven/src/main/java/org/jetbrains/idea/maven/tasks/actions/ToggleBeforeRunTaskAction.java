@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks.actions;
 
 import com.intellij.execution.RunManager;
@@ -60,7 +46,7 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   }
 
   @Override
-  public void setSelected(@NotNull final AnActionEvent e, boolean state) {
+  public void setSelected(final @NotNull AnActionEvent e, boolean state) {
     final DataContext context = e.getDataContext();
     final Pair<MavenProject, String> desc = getTaskDesc(context);
     if (desc != null) {
@@ -68,8 +54,7 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
     }
   }
 
-  @Nullable
-  protected static Pair<MavenProject, String> getTaskDesc(DataContext context) {
+  protected static @Nullable Pair<MavenProject, String> getTaskDesc(DataContext context) {
     List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
     if (goals == null || goals.size() != 1) return null;
 
@@ -80,8 +65,7 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
     return Pair.create(mavenProject, goals.get(0));
   }
 
-  @Nullable
-  private static RunManager getRunManager(DataContext context) {
+  private static @Nullable RunManager getRunManager(DataContext context) {
     final Project project = MavenActionUtil.getProject(context);
     if(project == null) return null;
     return RunManager.getInstance(project);

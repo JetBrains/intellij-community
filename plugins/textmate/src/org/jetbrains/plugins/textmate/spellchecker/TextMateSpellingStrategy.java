@@ -7,9 +7,8 @@ import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 public class TextMateSpellingStrategy extends SpellcheckingStrategy implements DumbAware {
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     return TEXT_TOKENIZER;
   }
 }

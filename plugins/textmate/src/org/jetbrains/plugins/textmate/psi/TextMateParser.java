@@ -7,9 +7,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 class TextMateParser implements PsiParser {
-  @NotNull
   @Override
-  public ASTNode parse(@NotNull IElementType root, PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, PsiBuilder builder) {
     PsiBuilder.Marker mark = builder.mark();
     while (!builder.eof()) {
       builder.advanceLexer();

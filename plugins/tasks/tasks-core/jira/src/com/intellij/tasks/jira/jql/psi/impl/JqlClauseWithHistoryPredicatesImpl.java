@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -15,45 +16,38 @@ public abstract class JqlClauseWithHistoryPredicatesImpl extends JqlTerminalClau
     super(node);
   }
 
-  @Nullable
   @Override
-  public JqlOperand getAfter() {
+  public @Nullable JqlOperand getAfter() {
     return findOperandOfPredicate(JqlHistoryPredicate.Type.AFTER);
   }
 
-  @Nullable
   @Override
-  public JqlOperand getBefore() {
+  public @Nullable JqlOperand getBefore() {
     return findOperandOfPredicate(JqlHistoryPredicate.Type.BEFORE);
   }
 
-  @Nullable
   @Override
-  public JqlOperand getOn() {
+  public @Nullable JqlOperand getOn() {
     return findOperandOfPredicate(JqlHistoryPredicate.Type.ON);
   }
 
-  @Nullable
   @Override
-  public JqlOperand getBy() {
+  public @Nullable JqlOperand getBy() {
     return findOperandOfPredicate(JqlHistoryPredicate.Type.BY);
   }
 
-  @Nullable
   @Override
-  public JqlOperand getDuring() {
+  public @Nullable JqlOperand getDuring() {
     return findOperandOfPredicate(JqlHistoryPredicate.Type.DURING);
   }
 
-  @Nullable
   @Override
-  public JqlOperand getFrom() {
+  public @Nullable JqlOperand getFrom() {
     return findOperandOfPredicate(JqlHistoryPredicate.Type.FROM);
   }
 
-  @Nullable
   @Override
-  public JqlOperand getTo() {
+  public @Nullable JqlOperand getTo() {
     return findOperandOfPredicate(JqlHistoryPredicate.Type.TO);
   }
 

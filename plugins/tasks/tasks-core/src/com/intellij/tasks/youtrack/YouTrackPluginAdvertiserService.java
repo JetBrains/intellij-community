@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -28,8 +28,7 @@ final class YouTrackPluginAdvertiserService {
 
   private boolean myNotificationWasShownPerAppSession = false;
 
-  @NotNull
-  public static YouTrackPluginAdvertiserService getInstance() {
+  public static @NotNull YouTrackPluginAdvertiserService getInstance() {
     return ApplicationManager.getApplication().getService(YouTrackPluginAdvertiserService.class);
   }
 
@@ -60,8 +59,7 @@ final class YouTrackPluginAdvertiserService {
     myNotificationWasShownPerAppSession = true;
   }
 
-  @Nullable
-  private static Project detectCurrentProject() {
+  private static @Nullable Project detectCurrentProject() {
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     return frame != null ? frame.getProject() : null;
   }

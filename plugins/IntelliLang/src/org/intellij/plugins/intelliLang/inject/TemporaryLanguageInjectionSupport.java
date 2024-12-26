@@ -8,9 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 final class TemporaryLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return TemporaryPlacesRegistry.SUPPORT_ID;
   }
 

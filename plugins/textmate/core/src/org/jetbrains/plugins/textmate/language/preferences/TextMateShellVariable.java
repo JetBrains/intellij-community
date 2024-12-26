@@ -14,9 +14,8 @@ public final class TextMateShellVariable implements TextMateScopeSelectorOwner {
     this.value = value;
   }
 
-  @NotNull
   @Override
-  public CharSequence getScopeSelector() {
+  public @NotNull CharSequence getScopeSelector() {
     return scopeName;
   }
 }

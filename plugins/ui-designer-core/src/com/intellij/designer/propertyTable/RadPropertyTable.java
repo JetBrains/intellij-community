@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -92,8 +92,7 @@ public class RadPropertyTable extends PropertyTable implements UiDataProvider, C
   }
 
   @Override
-  @NotNull
-  protected TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
+  protected @NotNull TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
     return SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
   }
 
@@ -146,8 +145,7 @@ public class RadPropertyTable extends PropertyTable implements UiDataProvider, C
     }
   }
 
-  @Nullable
-  private String getCurrentKey() {
+  private @Nullable String getCurrentKey() {
     PropertyTableTab tab = myPropertyTablePanel.getCurrentTab();
     return tab == null ? null : tab.getKey();
   }

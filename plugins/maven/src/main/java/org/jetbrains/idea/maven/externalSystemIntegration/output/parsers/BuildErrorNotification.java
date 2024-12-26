@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.FilePosition;
@@ -28,7 +28,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
   private static final Pattern LINE_ONLY = Pattern.compile("[^\\d]+?(\\d+)");
   private final String myLanguage;
   private final String myExtension;
-  private @BuildEventsNls.Title final String myMessageGroup;
+  private final @BuildEventsNls.Title String myMessageGroup;
 
   protected BuildErrorNotification(@NonNls String language, @NonNls String extension, @BuildEventsNls.Title String messageGroup) {
     myLanguage = language;
@@ -100,9 +100,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     return null;
   }
 
-  @NotNull
-  @NlsSafe
-  private static String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
+  private static @NotNull @NlsSafe String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
     message = message.trim();
     while (message.startsWith(":") || message.startsWith("]") || message.startsWith(")")) {
       message = message.substring(1);
@@ -112,8 +110,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     return message;
   }
 
-  @NotNull
-  private static FilePosition withLineAndColumn(File toTest, Matcher matcher) {
+  private static @NotNull FilePosition withLineAndColumn(File toTest, Matcher matcher) {
     if (matcher.groupCount() == 2) {
       return new FilePosition(toTest, atoi(matcher.group(1)) - 1, atoi(matcher.group(2)) - 1);
     }

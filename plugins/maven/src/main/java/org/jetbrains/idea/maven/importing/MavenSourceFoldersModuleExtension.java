@@ -85,9 +85,8 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     }
   }
 
-  @NotNull
   @Override
-  public ModuleExtension getModifiableModel(boolean writable) {
+  public @NotNull ModuleExtension getModifiableModel(boolean writable) {
     return new MavenSourceFoldersModuleExtension(myProject);
   }
 
@@ -173,8 +172,7 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     isJpsSourceFoldersChanged = true;
   }
 
-  @Nullable
-  private ContentEntry getContentRootFor(@NotNull Url url) {
+  private @Nullable ContentEntry getContentRootFor(@NotNull Url url) {
     for (ContentEntry e : myRootModel.getContentEntries()) {
       if (VfsUtilCore.isEqualOrAncestor(e.getUrl(), url.getUrl())) return e;
     }
@@ -214,7 +212,7 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
   }
 
   @Service(Service.Level.PROJECT)
-  final static class ProjectLevelDisposableService implements Disposable {
+  static final class ProjectLevelDisposableService implements Disposable {
     @Override
     public void dispose() {
     }

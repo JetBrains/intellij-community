@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntBundle;
@@ -80,8 +80,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     }};
   }
 
-  @Nullable
-  private static AntDomElement findElementById(AntDomElement from, final String id, final boolean skipCustomTags) {
+  private static @Nullable AntDomElement findElementById(AntDomElement from, final String id, final boolean skipCustomTags) {
     if (id.equals(from.getId().getRawText())) {
       return from;
     }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.redmine.model;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -46,13 +47,11 @@ public class RedmineProject {
     this.id = id;
   }
 
-  @NotNull
-  public @NlsSafe String getName() {
+  public @NotNull @NlsSafe String getName() {
     return name;
   }
 
-  @Nullable
-  public String getIdentifier() {
+  public @Nullable String getIdentifier() {
     return identifier;
   }
 
@@ -64,8 +63,7 @@ public class RedmineProject {
     this.identifier = identifier;
   }
 
-  @Nullable
-  public RedmineProject getParent() {
+  public @Nullable RedmineProject getParent() {
     return parent;
   }
 

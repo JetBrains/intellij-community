@@ -58,9 +58,8 @@ final class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository
     myRepoName.getDocument().addDocumentListener(buttonUpdater);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     myHostLabel = new JBLabel(GithubBundle.message("task.repo.host.field"), SwingConstants.RIGHT);
 
     JPanel myHostPanel = new JPanel(new BorderLayout(5, 0));
@@ -126,7 +125,7 @@ final class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     super.setAnchor(anchor);
     myHostLabel.setAnchor(anchor);
     myRepositoryLabel.setAnchor(anchor);
@@ -144,23 +143,19 @@ final class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository
     }
   }
 
-  @NotNull
-  private String getHost() {
+  private @NotNull String getHost() {
     return myURLText.getText().trim();
   }
 
-  @NotNull
-  private String getRepoAuthor() {
+  private @NotNull String getRepoAuthor() {
     return myRepoAuthor.getText().trim();
   }
 
-  @NotNull
-  private String getRepoName() {
+  private @NotNull String getRepoName() {
     return myRepoName.getText().trim();
   }
 
-  @NotNull
-  private String getToken() {
+  private @NotNull String getToken() {
     return myToken.getText().trim();
   }
 

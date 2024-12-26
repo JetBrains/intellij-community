@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.parsing;
 
 import com.intellij.lang.*;
@@ -49,14 +49,12 @@ public class PropertiesParser implements PsiParser {
 
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     doParse(root, builder);
     return builder.getTreeBuilt();
   }
 
-  @NotNull
-  public FlyweightCapableTreeStructure<LighterASTNode> parseLight(IElementType root, PsiBuilder builder) {
+  public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseLight(IElementType root, PsiBuilder builder) {
     doParse(root, builder);
     return builder.getLightTree();
   }

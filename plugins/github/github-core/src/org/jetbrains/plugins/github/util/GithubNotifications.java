@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.notification.NotificationAction;
@@ -143,8 +143,7 @@ public final class GithubNotifications {
       .ask(project);
   }
 
-  @NotNull
-  public static AnAction getConfigureAction(@NotNull Project project) {
+  public static @NotNull AnAction getConfigureAction(@NotNull Project project) {
     return NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.GithubNotifications.text.configure"),
                                            () -> ShowSettingsUtil.getInstance()
                                              .showSettingsDialog(project, GithubUtil.SERVICE_DISPLAY_NAME));

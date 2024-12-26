@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -71,14 +71,12 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     }
 
     @Override
-    @Nullable
-    public String getDefault(final AbstractPropertyContainer container) {
+    public @Nullable String getDefault(final AbstractPropertyContainer container) {
       return get(container);
     }
 
     @Override
-    @Nullable
-    public String get(@NotNull AbstractPropertyContainer container) {
+    public @Nullable String get(@NotNull AbstractPropertyContainer container) {
       if (!container.hasProperty(this)) {
         return null;
       }
@@ -94,13 +92,13 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   };
 
   private static final Logger LOG = Logger.getInstance(AntConfigurationImpl.class);
-  @NonNls private static final String BUILD_FILE = "buildFile";
-  @NonNls private static final String CONTEXT_MAPPING = "contextMapping";
-  @NonNls private static final String CONTEXT = "context";
-  @NonNls private static final String URL = "url";
-  @NonNls private static final String EXECUTE_ON_ELEMENT = "executeOn";
-  @NonNls private static final String EVENT_ELEMENT = "event";
-  @NonNls private static final String TARGET_ELEMENT = "target";
+  private static final @NonNls String BUILD_FILE = "buildFile";
+  private static final @NonNls String CONTEXT_MAPPING = "contextMapping";
+  private static final @NonNls String CONTEXT = "context";
+  private static final @NonNls String URL = "url";
+  private static final @NonNls String EXECUTE_ON_ELEMENT = "executeOn";
+  private static final @NonNls String EVENT_ELEMENT = "event";
+  private static final @NonNls String TARGET_ELEMENT = "target";
 
   private final PsiManager myPsiManager;
   private final List<AntBuildFileBase> myBuildFiles = new CopyOnWriteArrayList<>();
@@ -147,9 +145,8 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       private final ChangeApplier NO_OP = new ChangeApplier() {};
 
-      @Nullable
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toDelete = null;
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
@@ -258,7 +255,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     StartupManager.getInstance(getProject()).runAfterOpened(() -> {
       queueLater(new Task.Backgroundable(getProject(), AntBundle.message("progress.text.loading.ant.config"), false) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           Project project = getProject();
           if (project == null || project.isDisposed()) {
             myInitialized = true; // ensure all clients waiting on isInitialized() are released
@@ -415,21 +412,19 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     return myBuildFiles;
   }
 
-  @Nullable
   @Override
-  public AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
+  public @Nullable AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
     final Ref<AntBuildFile> result = Ref.create(null);
     final Ref<AntNoFileException> ex = Ref.create(null);
     final String title = AntBundle.message("dialog.title.register.ant.build.file", file.getPresentableUrl());
     ProgressManager.getInstance().run(new Task.Modal(getProject(), title, false) {
-      @NotNull
       @Override
-      public NotificationInfo getNotificationInfo() {
+      public @NotNull NotificationInfo getNotificationInfo() {
         return new NotificationInfo("Ant", AntBundle.message("system.notification.title.ant.task.finished"), "");
       }
 
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public void run(final @NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.pushState();
         try {
@@ -530,8 +525,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   @Override
-  @Nullable
-  public AntBuildTarget getTargetForEvent(final ExecutionEvent event) {
+  public @Nullable AntBuildTarget getTargetForEvent(final ExecutionEvent event) {
     final Pair<AntBuildFile, String> pair = myEventToTargetMap.get(event);
     if (pair == null) {
       return null;
@@ -589,8 +583,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   @Override
-  @Nullable
-  public AntBuildModelBase getModelIfRegistered(@NotNull AntBuildFileBase buildFile) {
+  public @Nullable AntBuildModelBase getModelIfRegistered(@NotNull AntBuildFileBase buildFile) {
     return myBuildFiles.contains(buildFile) ? getModel(buildFile) : null;
   }
 
@@ -643,8 +636,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   @Override
-  @Nullable
-  public AntBuildFile findBuildFileByActionId(final String id) {
+  public @Nullable AntBuildFile findBuildFileByActionId(final String id) {
     for (AntBuildFile buildFile : myBuildFiles) {
       AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
       if (id.equals(model.getDefaultTargetActionId())) {
@@ -858,8 +850,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   @Override
-  @Nullable
-  public XmlFile getContextFile(@Nullable final XmlFile file) {
+  public @Nullable XmlFile getContextFile(final @Nullable XmlFile file) {
     if (file == null) {
       return null;
     }
@@ -875,8 +866,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   @Override
-  @Nullable
-  public AntBuildFileBase getAntBuildFile(@NotNull PsiFile file) {
+  public @Nullable AntBuildFileBase getAntBuildFile(@NotNull PsiFile file) {
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
       for (AntBuildFileBase bFile : myBuildFiles) {
@@ -889,8 +879,7 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
   }
 
   @Override
-  @Nullable
-  public XmlFile getEffectiveContextFile(final XmlFile file) {
+  public @Nullable XmlFile getEffectiveContextFile(final XmlFile file) {
     return new Object() {
       @Nullable XmlFile findContext(final XmlFile file, Set<? super PsiElement> processed) {
         if (file != null) {

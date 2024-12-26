@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.customizeActions;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -34,7 +34,7 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -45,7 +45,7 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
     if (!resourceBundles.isEmpty()) {
       final String actionText = resourceBundles.size() == 1 
@@ -77,8 +77,7 @@ public class DissociateResourceBundleAction extends AnAction {
     }
   }
 
-  @NotNull
-  private static Collection<ResourceBundle> extractResourceBundles(final AnActionEvent event) {
+  private static @NotNull Collection<ResourceBundle> extractResourceBundles(final AnActionEvent event) {
     final Set<ResourceBundle> targetResourceBundles = new HashSet<>();
     final ResourceBundle[] chosenResourceBundles = event.getData(ResourceBundle.ARRAY_DATA_KEY);
     if (chosenResourceBundles != null) {

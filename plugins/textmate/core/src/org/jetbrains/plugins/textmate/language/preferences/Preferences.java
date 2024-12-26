@@ -7,13 +7,13 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeSelectorOwner;
 import java.util.Set;
 
 public final class Preferences implements TextMateScopeSelectorOwner {
-  @NotNull private final CharSequence myScopeRule;
-  @Nullable private final Set<TextMateBracePair> myHighlightingPairs;
-  @Nullable private final Set<TextMateAutoClosingPair> mySmartTypingPairs;
-  @Nullable private final Set<TextMateBracePair> mySurroundingPairs;
-  @Nullable private final String myAutoCloseBefore;
-  @NotNull private final IndentationRules myIndentationRules;
-  @Nullable private final Set<OnEnterRule> myOnEnterRules;
+  private final @NotNull CharSequence myScopeRule;
+  private final @Nullable Set<TextMateBracePair> myHighlightingPairs;
+  private final @Nullable Set<TextMateAutoClosingPair> mySmartTypingPairs;
+  private final @Nullable Set<TextMateBracePair> mySurroundingPairs;
+  private final @Nullable String myAutoCloseBefore;
+  private final @NotNull IndentationRules myIndentationRules;
+  private final @Nullable Set<OnEnterRule> myOnEnterRules;
 
   public Preferences(@NotNull CharSequence scopeRule,
                      @Nullable Set<TextMateBracePair> highlightingPairs,
@@ -31,35 +31,28 @@ public final class Preferences implements TextMateScopeSelectorOwner {
     myOnEnterRules = onEnterRules;
   }
 
-  @Nullable
-  public Set<TextMateBracePair> getHighlightingPairs() {
+  public @Nullable Set<TextMateBracePair> getHighlightingPairs() {
     return myHighlightingPairs;
   }
 
-  @Nullable
-  public Set<TextMateAutoClosingPair> getSmartTypingPairs() {
+  public @Nullable Set<TextMateAutoClosingPair> getSmartTypingPairs() {
     return mySmartTypingPairs;
   }
 
-  @Nullable
-  public Set<TextMateBracePair> getSurroundingPairs() {
+  public @Nullable Set<TextMateBracePair> getSurroundingPairs() {
     return mySurroundingPairs;
   }
 
-  @Nullable
-  public String getAutoCloseBefore() {
+  public @Nullable String getAutoCloseBefore() {
     return myAutoCloseBefore;
   }
 
-  @NotNull
   @Override
-  public CharSequence getScopeSelector() {
+  public @NotNull CharSequence getScopeSelector() {
     return myScopeRule;
   }
 
-  @NotNull
-  public IndentationRules getIndentationRules() { return myIndentationRules; }
+  public @NotNull IndentationRules getIndentationRules() { return myIndentationRules; }
 
-  @Nullable
-  public Set<OnEnterRule> getOnEnterRules() { return myOnEnterRules; }
+  public @Nullable Set<OnEnterRule> getOnEnterRules() { return myOnEnterRules; }
 }

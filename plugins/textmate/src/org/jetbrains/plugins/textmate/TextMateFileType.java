@@ -23,21 +23,18 @@ public final class TextMateFileType extends LanguageFileType implements FileType
     super(TextMateLanguage.LANGUAGE);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "textmate";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return TextMateBundle.message("filetype.textmate.description");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "";
   }
 

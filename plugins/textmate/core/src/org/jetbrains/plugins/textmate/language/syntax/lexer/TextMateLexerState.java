@@ -11,13 +11,13 @@ import java.util.Objects;
 
 public final class TextMateLexerState {
   private final int hashcode;
-  @NotNull public final SyntaxNodeDescriptor syntaxRule;
-  @NotNull public final MatchData matchData;
-  @NotNull public final TextMateWeigh.Priority priorityMatch;
+  public final @NotNull SyntaxNodeDescriptor syntaxRule;
+  public final @NotNull MatchData matchData;
+  public final @NotNull TextMateWeigh.Priority priorityMatch;
   // offset in line where state was emitted. used for local loop protection only
   public final int enterByteOffset;
   public final boolean matchedEOL;
-  @Nullable public final TextMateString string;
+  public final @Nullable TextMateString string;
 
   TextMateLexerState(@NotNull SyntaxNodeDescriptor syntaxRule,
                      @NotNull MatchData matchData,
@@ -37,9 +37,8 @@ public final class TextMateLexerState {
     return new TextMateLexerState(syntaxRule, MatchData.NOT_MATCHED, TextMateWeigh.Priority.NORMAL, 0,null);
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return "TextMateLexerState{" +
            "syntaxRule=" + syntaxRule +
            ", matchData=" + matchData +
@@ -62,8 +61,7 @@ public final class TextMateLexerState {
     return hashcode;
   }
 
-  @Nullable
-  private Object stringId() {
+  private @Nullable Object stringId() {
     return string != null ? string.id : null;
   }
 }

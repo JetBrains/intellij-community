@@ -42,9 +42,7 @@ public class PatternAnnotationNotApplicable extends AbstractAnnotationNotApplica
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "PatternNotApplicable";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unsorted;
 
 import com.intellij.codeInspection.*;
@@ -25,9 +25,8 @@ import java.util.*;
 public final class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
@@ -64,8 +63,8 @@ public final class AlphaUnsortedPropertiesFileInspection extends LocalInspection
     return propertiesFile;
   }
 
-  private static boolean isResourceBundleAlphaSortedExceptOneFile(@NotNull final ResourceBundle resourceBundle,
-                                                                  @NotNull final PropertiesFile exceptedFile) {
+  private static boolean isResourceBundleAlphaSortedExceptOneFile(final @NotNull ResourceBundle resourceBundle,
+                                                                  final @NotNull PropertiesFile exceptedFile) {
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       if (!(file instanceof PropertiesFileImpl)) {
         return true;
@@ -84,9 +83,8 @@ public final class AlphaUnsortedPropertiesFileInspection extends LocalInspection
       myOnlyCurrentFile = onlyCurrentFile;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PropertiesBundle.message("properties.sorter.quick.fix.family.name");
     }
 
@@ -150,8 +148,7 @@ public final class AlphaUnsortedPropertiesFileInspection extends LocalInspection
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "AlphaUnsortedPropertiesFile";
   }
 }

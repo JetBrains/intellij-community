@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.icons.AllIcons;
@@ -34,9 +34,8 @@ import static java.util.Optional.ofNullable;
 public class GenerateDependencyAction extends GenerateDomElementAction {
   public GenerateDependencyAction() {
     super(new MavenGenerateProvider<>(MavenDomBundle.message("generate.dependency.title"), MavenDomDependency.class) {
-      @Nullable
       @Override
-      protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
+      protected @Nullable MavenDomDependency doGenerate(final @NotNull MavenDomProjectModel mavenModel, final Editor editor) {
         Project project = mavenModel.getManager().getProject();
 
         final Map<DependencyConflictId, MavenDomDependency> managedDependencies =
@@ -62,11 +61,10 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
       .compute(() -> createDependency(mavenModel, editor, managedDependencies, ids));
   }
 
-  @Nullable
-  public static MavenDomDependency createDependency(@NotNull MavenDomProjectModel mavenModel,
-                                                     @NotNull Editor editor,
-                                                     @NotNull Map<DependencyConflictId, MavenDomDependency> managedDependencies,
-                                                     @NotNull List<? extends MavenCoordinate> ids) {
+  public static @Nullable MavenDomDependency createDependency(@NotNull MavenDomProjectModel mavenModel,
+                                                              @NotNull Editor editor,
+                                                              @NotNull Map<DependencyConflictId, MavenDomDependency> managedDependencies,
+                                                              @NotNull List<? extends MavenCoordinate> ids) {
     boolean isInsideManagedDependencies;
 
     MavenDomDependencyManagement dependencyManagement = mavenModel.getDependencyManagement();

@@ -40,8 +40,7 @@ public final class MavenSchemaProvider implements StandardResourceProvider {
     }
   }
 
-  @NotNull
-  public static VirtualFile getSchemaFile(@NotNull String url) {
+  public static @NotNull VirtualFile getSchemaFile(@NotNull String url) {
     String location = ((ExternalResourceManagerEx)ExternalResourceManager.getInstance()).getStdResource(url, null);
     assert location != null : "cannot find a standard resource for " + url;
 

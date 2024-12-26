@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -20,7 +20,7 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspectionTool {
-  private final static Logger LOG = Logger.getInstance(DataProviderReturnTypeInspection.class);
+  private static final Logger LOG = Logger.getInstance(DataProviderReturnTypeInspection.class);
 
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {

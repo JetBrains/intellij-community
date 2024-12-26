@@ -315,8 +315,7 @@ public final class GenericRepository extends BaseRepositoryImpl {
   /**
    * Returns all template variables including both predefined and defined by user
    */
-  @Unmodifiable
-  public List<TemplateVariable> getAllTemplateVariables() {
+  public @Unmodifiable List<TemplateVariable> getAllTemplateVariables() {
     return ContainerUtil.concat(myPredefinedTemplateVariables, getTemplateVariables());
   }
 

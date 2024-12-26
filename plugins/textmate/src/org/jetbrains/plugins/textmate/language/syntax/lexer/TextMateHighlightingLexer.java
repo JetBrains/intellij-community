@@ -55,9 +55,8 @@ public class TextMateHighlightingLexer extends LexerBase {
     return myRestartable ? 0 : 1;
   }
 
-  @Nullable
   @Override
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     return myTokenType;
   }
 
@@ -71,9 +70,8 @@ public class TextMateHighlightingLexer extends LexerBase {
     return myTokenEnd;
   }
 
-  @NotNull
   @Override
-  public CharSequence getBufferSequence() {
+  public @NotNull CharSequence getBufferSequence() {
     return myBuffer;
   }
 

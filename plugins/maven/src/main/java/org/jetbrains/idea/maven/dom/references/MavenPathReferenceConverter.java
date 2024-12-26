@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.Condition;
@@ -39,13 +39,13 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
 
   public static PsiReference[] createReferences(final DomElement genericDomValue,
                                                 PsiElement element,
-                                                @NotNull final Condition<PsiFileSystemItem> fileFilter) {
+                                                final @NotNull Condition<PsiFileSystemItem> fileFilter) {
     return createReferences(genericDomValue, element, fileFilter, false);
   }
 
   public static PsiReference[] createReferences(final DomElement genericDomValue,
                                                 PsiElement element,
-                                                @NotNull final Condition<PsiFileSystemItem> fileFilter, boolean isAbsolutePath) {
+                                                final @NotNull Condition<PsiFileSystemItem> fileFilter, boolean isAbsolutePath) {
     TextRange range = ElementManipulators.getValueTextRange(element);
     String text = range.substring(element.getText());
 

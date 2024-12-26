@@ -113,8 +113,7 @@ public final class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     }
   }
 
-  @NotNull
-  public String getLanguage() {
+  public @NotNull String getLanguage() {
     return (String)myLanguage.getSelectedItem();
   }
 

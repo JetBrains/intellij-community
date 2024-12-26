@@ -72,8 +72,7 @@ public class TextMateTextAttributesAdapter {
     return TextAttributesKey.createTextAttributesKey("TextMateCustomRule_" + TextMateTheme.INSTANCE.getName() + myScopeName, result);
   }
 
-  @Nullable
-  private static Color mixBackground(@Nullable Color color, @Nullable Color defaultBackground, double alpha) {
+  private static @Nullable Color mixBackground(@Nullable Color color, @Nullable Color defaultBackground, double alpha) {
     if (color == null || defaultBackground == null || alpha < 0) {
       return null;
     }

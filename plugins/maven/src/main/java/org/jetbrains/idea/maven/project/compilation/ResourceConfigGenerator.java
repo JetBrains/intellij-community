@@ -154,10 +154,9 @@ public class ResourceConfigGenerator {
     modelMap.put("build.plugin.maven-ear-plugin.skinnyWars", skinnyWars);
   }
 
-  @Nullable
-  private static String getResourcesPluginGoalOutputDirectory(@NotNull MavenProject mavenProject,
-                                                              @Nullable Element pluginConfiguration,
-                                                              @NotNull String goal) {
+  private static @Nullable String getResourcesPluginGoalOutputDirectory(@NotNull MavenProject mavenProject,
+                                                                        @Nullable Element pluginConfiguration,
+                                                                        @NotNull String goal) {
     final Element goalConfiguration = mavenProject.getPluginGoalConfiguration("org.apache.maven.plugins", "maven-resources-plugin", goal);
     String outputDirectory = MavenJDOMUtil.findChildValueByPath(goalConfiguration, "outputDirectory", null);
     if (outputDirectory == null) {

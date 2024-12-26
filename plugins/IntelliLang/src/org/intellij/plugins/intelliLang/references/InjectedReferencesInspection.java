@@ -14,9 +14,8 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public final class InjectedReferencesInspection extends LocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new InjectedReferencesVisitor(holder);
   }
 

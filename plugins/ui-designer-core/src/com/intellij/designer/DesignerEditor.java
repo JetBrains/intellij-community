@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -30,16 +30,14 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
 
   protected abstract Module findModule(Project project, VirtualFile file);
 
-  @NotNull
-  protected abstract DesignerEditorPanel createDesignerPanel(Project project, Module module, VirtualFile file);
+  protected abstract @NotNull DesignerEditorPanel createDesignerPanel(Project project, Module module, VirtualFile file);
 
   public final DesignerEditorPanel getDesignerPanel() {
     return myDesignerPanel;
   }
 
-  @NotNull
   @Override
-  public final JComponent getComponent() {
+  public final @NotNull JComponent getComponent() {
     return myDesignerPanel;
   }
 
@@ -48,9 +46,8 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
     return myDesignerPanel.getPreferredFocusedComponent();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return DesignerBundle.message("design");
   }
 
@@ -80,8 +77,7 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
   }
 
   @Override
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     return myDesignerPanel.createState();
   }
 

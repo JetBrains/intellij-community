@@ -57,8 +57,7 @@ public final class TextMateSelectorLexer {
     return result;
   }
 
-  @NotNull
-  private static StringBuilder addPendingToken(ArrayList<TextMateSelectorToken> result, StringBuilder currentSelector) {
+  private static @NotNull StringBuilder addPendingToken(ArrayList<TextMateSelectorToken> result, StringBuilder currentSelector) {
     if (!currentSelector.isEmpty()) {
       result.add(new SelectorToken(currentSelector.toString()));
       return new StringBuilder();

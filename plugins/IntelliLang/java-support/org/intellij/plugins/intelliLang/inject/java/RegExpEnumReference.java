@@ -55,14 +55,12 @@ final class RegExpEnumReference extends StringLiteralReference {
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final Set<String> values = getEnumValues();
     return values != null ? values.contains(getValue()) ? myValue : null : null;
   }
 
-  @Nullable
-  private Set<String> getEnumValues() {
+  private @Nullable Set<String> getEnumValues() {
     return RegExpUtil.getEnumValues(myValue.getProject(), myPattern);
   }
 }

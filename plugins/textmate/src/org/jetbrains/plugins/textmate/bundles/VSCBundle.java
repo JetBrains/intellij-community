@@ -38,9 +38,8 @@ public class VSCBundle extends Bundle {
     super(name, bundle, BundleType.VSCODE);
   }
 
-  @NotNull
   @Override
-  public Collection<File> getGrammarFiles() {
+  public @NotNull Collection<File> getGrammarFiles() {
     loadExtensions();
     //noinspection SSBasedInspection
     return grammarToExtensions.keySet().stream().map((path) -> new File(bundleFile, path)).collect(Collectors.toList());
@@ -148,9 +147,8 @@ public class VSCBundle extends Bundle {
     catch (Exception ignored) {}
   }
 
-  @NotNull
   @Override
-  public Collection<File> getPreferenceFiles() {
+  public @NotNull Collection<File> getPreferenceFiles() {
     loadExtensions();
     //noinspection SSBasedInspection
     return configToScopes.keySet().stream().map(config -> new File(bundleFile, config)).collect(Collectors.toList());
@@ -166,8 +164,7 @@ public class VSCBundle extends Bundle {
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  private static Plist loadLanguageConfig(File languageConfig) throws IOException {
+  private static @NotNull Plist loadLanguageConfig(File languageConfig) throws IOException {
     try {
       Object json = createJsonReader().readValue(new FileReader(languageConfig, StandardCharsets.UTF_8), Object.class);
       Plist settings = new Plist();

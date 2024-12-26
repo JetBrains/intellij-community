@@ -29,8 +29,7 @@ public final class TextMateLexer {
 
   private CharSequence myText = "";
 
-  @NotNull
-  private TextMateScope myCurrentScope = TextMateScope.EMPTY;
+  private @NotNull TextMateScope myCurrentScope = TextMateScope.EMPTY;
   private IntList myNestedScope = IntArrayList.of();
   private PersistentList<TextMateLexerState> myStates = ExtensionsKt.persistentListOf();
 

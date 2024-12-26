@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -51,10 +51,9 @@ public class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
     };
   }
 
-  @NotNull
-  private static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                  @NotNull @NonNls String refName,
-                                                  @NotNull @NonNls String criteria) {
+  private static @NotNull Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                                            @NotNull @NonNls String refName,
+                                                            @NotNull @NonNls String criteria) {
     return PredefinedConfigurationUtil.createConfiguration(
       name, refName, criteria, PropertiesBundle.message("properties.files.inspection.group.display.name"), PropertiesFileType.INSTANCE);
   }

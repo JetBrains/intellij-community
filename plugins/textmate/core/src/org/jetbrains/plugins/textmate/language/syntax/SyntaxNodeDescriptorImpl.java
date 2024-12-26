@@ -23,8 +23,7 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   private final SyntaxNodeDescriptor myParentNode;
 
-  @Nullable
-  private final CharSequence myScopeName;
+  private final @Nullable CharSequence myScopeName;
 
   SyntaxNodeDescriptorImpl(@Nullable CharSequence scopeName, @Nullable SyntaxNodeDescriptor parentNode) {
     myParentNode = parentNode;
@@ -36,9 +35,8 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     myStringAttributes.put(key, value);
   }
 
-  @Nullable
   @Override
-  public CharSequence getStringAttribute(@NotNull Constants.StringKey key) {
+  public @Nullable CharSequence getStringAttribute(@NotNull Constants.StringKey key) {
     return myStringAttributes.get(key);
   }
 
@@ -67,9 +65,8 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     myChildren.add(descriptor);
   }
 
-  @NotNull
   @Override
-  public List<SyntaxNodeDescriptor> getChildren() {
+  public @NotNull List<SyntaxNodeDescriptor> getChildren() {
     return myChildren;
   }
 
@@ -110,9 +107,8 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     return list;
   }
 
-  @NotNull
   @Override
-  public List<InjectionNodeDescriptor> getInjections() {
+  public @NotNull List<InjectionNodeDescriptor> getInjections() {
     return myInjections;
   }
 
@@ -121,9 +117,8 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     myInjections.add(injection);
   }
 
-  @NotNull
   @Override
-  public SyntaxNodeDescriptor findInRepository(int ruleId) {
+  public @NotNull SyntaxNodeDescriptor findInRepository(int ruleId) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = myRepository != null ? myRepository.get(ruleId) : null;
     if (syntaxNodeDescriptor == null && myParentNode != null) {
       return myParentNode.findInRepository(ruleId);
@@ -135,15 +130,13 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     return syntaxNodeDescriptor;
   }
 
-  @Nullable
   @Override
-  public CharSequence getScopeName() {
+  public @Nullable CharSequence getScopeName() {
     return myScopeName;
   }
 
-  @Nullable
   @Override
-  public SyntaxNodeDescriptor getParentNode() {
+  public @Nullable SyntaxNodeDescriptor getParentNode() {
     return myParentNode;
   }
 

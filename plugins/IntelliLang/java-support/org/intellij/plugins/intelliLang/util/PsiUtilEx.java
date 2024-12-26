@@ -35,8 +35,7 @@ public final class PsiUtilEx {
   private PsiUtilEx() {
   }
 
-  @Nullable
-  public static PsiParameter getParameterForArgument(PsiElement element) {
+  public static @Nullable PsiParameter getParameterForArgument(PsiElement element) {
     PsiElement p = element.getParent();
     if (!(p instanceof PsiExpressionList list)) return null;
     PsiElement parent = list.getParent();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.icons.AllIcons;
@@ -14,21 +14,18 @@ import javax.swing.*;
 import java.util.EnumSet;
 
 final class GithubRepositoryType extends BaseRepositoryType<GithubRepository> {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "GitHub";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Vcs.Vendors.Github;
   }
 
-  @NotNull
   @Override
-  public TaskRepository createRepository() {
+  public @NotNull TaskRepository createRepository() {
     return new GithubRepository(this);
   }
 
@@ -37,11 +34,10 @@ final class GithubRepositoryType extends BaseRepositoryType<GithubRepository> {
     return GithubRepository.class;
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(GithubRepository repository,
-                                           Project project,
-                                           Consumer<? super GithubRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(GithubRepository repository,
+                                                    Project project,
+                                                    Consumer<? super GithubRepository> changeListener) {
     return new GithubRepositoryEditor(project, repository, changeListener);
   }
 

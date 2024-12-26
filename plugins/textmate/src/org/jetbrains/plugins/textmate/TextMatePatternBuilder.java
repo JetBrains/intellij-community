@@ -11,15 +11,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.psi.TextMateFile;
 
 public class TextMatePatternBuilder implements IndexPatternBuilder {
-  @Nullable
   @Override
-  public Lexer getIndexingLexer(@NotNull PsiFile file) {
+  public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {
     return file instanceof TextMateFile ? new EmptyLexer() : null;
   }
 
-  @Nullable
   @Override
-  public TokenSet getCommentTokenSet(@NotNull PsiFile file) {
+  public @Nullable TokenSet getCommentTokenSet(@NotNull PsiFile file) {
     return null;
   }
 

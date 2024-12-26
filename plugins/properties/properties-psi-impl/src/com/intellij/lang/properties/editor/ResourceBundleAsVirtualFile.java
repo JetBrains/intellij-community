@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.presentation.Presentation;
@@ -28,26 +28,22 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
     myResourceBundle = resourceBundle;
   }
 
-  @NotNull
-  public ResourceBundle getResourceBundle() {
+  public @NotNull ResourceBundle getResourceBundle() {
     return myResourceBundle;
   }
 
   @Override
-  @NotNull
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return LocalFileSystem.getInstance();
   }
 
   @Override
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myResourceBundle.isValid() ? myResourceBundle.getBaseName() : "";
   }
 
@@ -107,15 +103,13 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
     return EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
@@ -135,8 +129,7 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 

@@ -162,30 +162,25 @@ public final class TextMateTheme {
   private static final @NotNull Set<CharSequence> RULES =
     ContainerUtil.union(DEFAULT_COLORS_PROVIDER.getAllDefaultKeys(), EXTENSIONS_MAPPING.keySet());
 
-  @NotNull
-  private final String myName;
+  private final @NotNull String myName;
 
   private TextMateTheme(@NotNull String name) {
     myName = name;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
-  public Color getDefaultBackground() {
+  public @NotNull Color getDefaultBackground() {
     return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
   }
 
-  @NotNull
-  public Set<CharSequence> getRules() {
+  public @NotNull Set<CharSequence> getRules() {
     return RULES;
   }
 
-  @NotNull
-  public TextAttributesKey getTextAttributesKey(CharSequence highlightingRule) {
+  public @NotNull TextAttributesKey getTextAttributesKey(CharSequence highlightingRule) {
     CharSequence keyName = EXTENSIONS_MAPPING.get(highlightingRule);
     TextAttributesKey extendedKey = keyName != null ? TextAttributesKey.find(keyName.toString()) : null;
     return extendedKey == null ? DEFAULT_COLORS_PROVIDER.getTextAttributesKey(highlightingRule) : extendedKey;

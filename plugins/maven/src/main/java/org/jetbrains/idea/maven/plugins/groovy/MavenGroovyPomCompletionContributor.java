@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -168,9 +168,8 @@ public final class MavenGroovyPomCompletionContributor extends CompletionContrib
     if (StringUtil.isEmptyOrSpaces(artifactId)) return;
     CompletionResultSet newResultSet = completionResultSet.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
       new LookupElementWeigher("mavenVersionWeigher") {
-        @Nullable
         @Override
-        public Comparable weigh(@NotNull LookupElement element) {
+        public @Nullable Comparable weigh(@NotNull LookupElement element) {
           return new NegatingComparable(new MavenVersionComparable(StringUtil.trimStart(element.getLookupString(), prefix)));
         }
       }));
@@ -225,7 +224,7 @@ public final class MavenGroovyPomCompletionContributor extends CompletionContrib
     private static final InsertHandler<LookupElement> INSTANCE = new MavenDependencyInsertHandler();
 
     @Override
-    public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
+    public void handleInsert(final @NotNull InsertionContext context, @NotNull LookupElement item) {
       String s = item.getLookupString();
       int idx = s.indexOf(':');
       String groupId = s.substring(0, idx);

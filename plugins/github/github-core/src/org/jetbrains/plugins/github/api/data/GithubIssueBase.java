@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -122,13 +122,11 @@ public abstract class GithubIssueBase {
   private String authorAssociation;
   private String body;
 
-  @NotNull
-  public String getCommentsUrl() {
+  public @NotNull String getCommentsUrl() {
     return commentsUrl;
   }
 
-  @NotNull
-  public String getHtmlUrl() {
+  public @NotNull String getHtmlUrl() {
     return htmlUrl;
   }
 
@@ -136,8 +134,7 @@ public abstract class GithubIssueBase {
     return number;
   }
 
-  @NotNull
-  public GithubIssueState getState() {
+  public @NotNull GithubIssueState getState() {
     return state;
   }
 
@@ -145,8 +142,7 @@ public abstract class GithubIssueBase {
     return title;
   }
 
-  @Nullable
-  public List<GithubIssueLabel> getLabels() {
+  public @Nullable List<GithubIssueLabel> getLabels() {
     return labels;
   }
 
@@ -154,33 +150,27 @@ public abstract class GithubIssueBase {
     return StringUtil.notNullize(body);
   }
 
-  @NotNull
-  public GithubUser getUser() {
+  public @NotNull GithubUser getUser() {
     return user;
   }
 
-  @Nullable
-  public GithubUser getAssignee() {
+  public @Nullable GithubUser getAssignee() {
     return assignee;
   }
 
-  @NotNull
-  public List<GithubUser> getAssignees() {
+  public @NotNull List<GithubUser> getAssignees() {
     return assignees;
   }
 
-  @Nullable
-  public Date getClosedAt() {
+  public @Nullable Date getClosedAt() {
     return closedAt;
   }
 
-  @NotNull
-  public Date getCreatedAt() {
+  public @NotNull Date getCreatedAt() {
     return createdAt;
   }
 
-  @NotNull
-  public Date getUpdatedAt() {
+  public @NotNull Date getUpdatedAt() {
     return updatedAt;
   }
 

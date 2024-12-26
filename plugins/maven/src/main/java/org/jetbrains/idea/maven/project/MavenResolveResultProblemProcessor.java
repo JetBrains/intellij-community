@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.issue.BuildIssue;
@@ -48,12 +48,9 @@ public final class MavenResolveResultProblemProcessor {
   }
 
   public static class MavenResolveProblemHolder {
-    @NotNull
-    public final Set<MavenProjectProblem> repositoryBlockedProblems;
-    @NotNull
-    public final Set<MavenProjectProblem> unresolvedArtifactProblems;
-    @NotNull
-    public final Set<MavenArtifact> unresolvedArtifacts;
+    public final @NotNull Set<MavenProjectProblem> repositoryBlockedProblems;
+    public final @NotNull Set<MavenProjectProblem> unresolvedArtifactProblems;
+    public final @NotNull Set<MavenArtifact> unresolvedArtifacts;
 
     public MavenResolveProblemHolder(@NotNull Set<MavenProjectProblem> repositoryBlockedProblems,
                                      @NotNull Set<MavenProjectProblem> unresolvedArtifactProblems,

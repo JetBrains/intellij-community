@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.util.containers.CollectionFactory;
@@ -43,8 +43,7 @@ public final class MavenWebArtifactConfiguration {
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;
 
-  @Nullable
-  public ResourceRootConfiguration getRootConfiguration(@NotNull File root) {
+  public @Nullable ResourceRootConfiguration getRootConfiguration(@NotNull File root) {
     if (myResourceRootsMap == null) {
       Map<File, ResourceRootConfiguration> map = FileCollectionFactory.createCanonicalFileMap();
       for (ResourceRootConfiguration resource : webResources) {

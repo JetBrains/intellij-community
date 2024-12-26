@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
@@ -24,10 +24,8 @@ import java.util.List;
  */
 public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider {
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<? extends GotoRelatedItem> getItems(@NotNull final DataContext context) {
+  public @NotNull @Unmodifiable List<? extends GotoRelatedItem> getItems(final @NotNull DataContext context) {
     final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof ResourceBundleEditor) {
       return Collections.emptyList();

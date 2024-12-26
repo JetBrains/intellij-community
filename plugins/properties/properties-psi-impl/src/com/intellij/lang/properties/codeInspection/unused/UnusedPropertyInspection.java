@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -45,11 +45,10 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
   public static final String SHORT_NAME = "UnusedProperty";
 
-  public @NotNull @RegExp String fileNameMask = ".*";
+  @RegExp public @NotNull String fileNameMask = ".*";
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -68,8 +67,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     });
   }
 
-  @Nullable
-  private static GlobalSearchScope getWidestUseScope(@Nullable String key, @NotNull Project project, @NotNull Module ownModule) {
+  private static @Nullable GlobalSearchScope getWidestUseScope(@Nullable String key, @NotNull Project project, @NotNull Module ownModule) {
     if (key == null) return null;
 
     Set<Module> modules = new LinkedHashSet<>();
@@ -87,11 +85,10 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     return GlobalSearchScope.union(modules.stream().map(Module::getModuleWithDependentsScope).toArray(GlobalSearchScope[]::new));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull final LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
     final PsiFile file = session.getFile();
     if (!fileNameMask.isEmpty()) {
       try {
@@ -151,8 +148,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
    * @param file the properties file that is supposed to contain the closure to extract properties that are being committed
    * @return a {@link Set} of properties that are being committed or null if no commit is in progress.
    */
-  @Nullable
-  private static Set<PsiElement> getBeingCommittedProperties(@NotNull PsiFile file) {
+  private static @Nullable Set<PsiElement> getBeingCommittedProperties(@NotNull PsiFile file) {
     final Map<Class<? extends PsiElement>, Set<PsiElement>> data = file.getUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED);
     if (data == null) return null;
 
@@ -208,8 +204,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     return ReferencesSearch.search(property, newScope, false).findFirst() != null;
   }
 
-  @NotNull
-  private static GlobalSearchScope createExceptPropertyFilesScope(@NotNull GlobalSearchScope origin) {
+  private static @NotNull GlobalSearchScope createExceptPropertyFilesScope(@NotNull GlobalSearchScope origin) {
     return new DelegatingGlobalSearchScope(origin) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {

@@ -19,7 +19,7 @@ public final class CaptureMatchEdge {
   public final Type type;
   public final CharSequence selectorName;
 
-  CaptureMatchEdge(final int offset, final int group, final Type type, @NotNull final CharSequence selectorName) {
+  CaptureMatchEdge(final int offset, final int group, final Type type, final @NotNull CharSequence selectorName) {
     this.offset = offset;
     this.group = group;
     this.type = type;

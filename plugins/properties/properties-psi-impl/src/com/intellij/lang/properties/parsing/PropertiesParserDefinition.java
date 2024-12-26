@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.parsing;
 
 import com.intellij.lang.*;
@@ -37,8 +37,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
   };
 
   @Override
-  @NotNull
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new PropertiesLexer();
   }
 
@@ -48,26 +47,22 @@ public class PropertiesParserDefinition implements ParserDefinition {
   }
 
   @Override
-  @NotNull
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return PropertiesTokenTypes.WHITESPACES;
   }
 
   @Override
-  @NotNull
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return PropertiesTokenTypes.COMMENTS;
   }
 
   @Override
-  @NotNull
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  @NotNull
-  public PsiParser createParser(final Project project) {
+  public @NotNull PsiParser createParser(final Project project) {
     return new PropertiesParser();
   }
 
@@ -85,8 +80,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == PropertiesElementTypes.PROPERTY) {
       return new PropertyImpl(node);

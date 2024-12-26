@@ -64,13 +64,12 @@ final class XmlLanguageInjector implements MultiHostInjector {
   }
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Arrays.asList(XmlTag.class, XmlAttributeValue.class);
   }
 
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
+  public void getLanguagesToInject(final @NotNull MultiHostRegistrar registrar, @NotNull PsiElement host) {
     final XmlElement xmlElement = (XmlElement) host;
     if (!isInIndex(xmlElement)) return;
     final TreeSet<TextRange> ranges = new TreeSet<>(InjectorUtils.RANGE_COMPARATOR);
@@ -248,8 +247,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
     return index;
   }
 
-  @Nullable
-  private static Pattern buildPattern(Collection<String> stringSet) {
+  private static @Nullable Pattern buildPattern(Collection<String> stringSet) {
     final StringBuilder sb = new StringBuilder();
     for (String s : stringSet) {
       if (!InjectorUtils.isRegexp(s)) continue;

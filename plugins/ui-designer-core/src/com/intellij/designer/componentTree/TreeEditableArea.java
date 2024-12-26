@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.componentTree;
 
 import com.intellij.designer.actions.DesignerActionPanel;
@@ -80,9 +80,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     }
   }
 
-  @NotNull
   @Override
-  public List<RadComponent> getSelection() {
+  public @NotNull List<RadComponent> getSelection() {
     return new ArrayList<>(getRawSelection());
   }
 
@@ -131,8 +130,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   public void scrollToSelection() {
   }
 
-  @Unmodifiable
-  private List<RadComponent> getRawSelection() {
+  private @Unmodifiable List<RadComponent> getRawSelection() {
     return TreeUtil.collectSelectedObjectsOfType(myTree, RadComponent.class);
   }
 
@@ -197,9 +195,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   public void setDescription(@Nullable String text) {
   }
 
-  @NotNull
   @Override
-  public JComponent getNativeComponent() {
+  public @NotNull JComponent getNativeComponent() {
     return myTree;
   }
 

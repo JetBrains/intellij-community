@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.process.LocalPtyOptions;
@@ -51,8 +51,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     myDefaultCharset = StandardCharsets.UTF_8;
   }
 
-  @NotNull
-  public static LocalTerminalDirectRunner createTerminalRunner(Project project) {
+  public static @NotNull LocalTerminalDirectRunner createTerminalRunner(Project project) {
     return new LocalTerminalDirectRunner(project);
   }
 

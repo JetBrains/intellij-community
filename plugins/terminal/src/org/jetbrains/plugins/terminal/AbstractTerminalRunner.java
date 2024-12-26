@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.Executor;
@@ -42,8 +42,7 @@ import static org.jetbrains.plugins.terminal.TerminalStartupKt.logCommonStartupI
 
 public abstract class AbstractTerminalRunner<T extends Process> {
   private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class);
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   private final JBTerminalSystemSettingsProvider mySettingsProvider;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
 
@@ -75,8 +74,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    * @deprecated use {@link #createTerminalWidget(Disposable, VirtualFile, boolean)} instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
+  public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
     return createTerminalWidget(parent, getParentDirectoryPath(currentWorkingDirectory), true);
   }
 
@@ -84,8 +82,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    * @deprecated use {@link AbstractTerminalRunner#createTerminalWidget(Disposable, String, boolean)} instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
+  protected @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                   @Nullable VirtualFile currentWorkingDirectory,
                                                   boolean deferSessionStartUntilUiShown) {
     return createTerminalWidget(parent, getParentDirectoryPath(currentWorkingDirectory), deferSessionStartUntilUiShown);
@@ -169,8 +166,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public abstract @NotNull TtyConnector createTtyConnector(@NotNull T process);
 
-  @NotNull
-  protected Project getProject() {
+  protected @NotNull Project getProject() {
     return myProject;
   }
 
@@ -190,8 +186,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return true;
   }
 
-  @Nullable
-  private static String getParentDirectoryPath(@Nullable VirtualFile file) {
+  private static @Nullable String getParentDirectoryPath(@Nullable VirtualFile file) {
     VirtualFile dir = file != null && !file.isDirectory() ? file.getParent() : file;
     return dir != null ? dir.getPath() : null;
   }

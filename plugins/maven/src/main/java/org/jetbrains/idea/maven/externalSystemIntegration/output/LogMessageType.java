@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -24,8 +24,7 @@ public enum LogMessageType {
     return line.substring(myPrefixLength);
   }
 
-  @Nullable
-  static LogMessageType determine(@NotNull String line) {
+  static @Nullable LogMessageType determine(@NotNull String line) {
     for (LogMessageType type : LogMessageType.values()) {
       if (line.startsWith(type.myPrefix)) {
         return type;

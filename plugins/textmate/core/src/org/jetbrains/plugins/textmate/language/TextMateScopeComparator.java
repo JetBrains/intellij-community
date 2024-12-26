@@ -17,11 +17,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class TextMateScopeComparator<T> implements Comparator<T> {
-  @NotNull
-  private static final TextMateSelectorWeigher myWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
+  private static final @NotNull TextMateSelectorWeigher myWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
-  @NotNull
-  private final TextMateScope myScope;
+  private final @NotNull TextMateScope myScope;
   private final @NotNull Function<? super T, ? extends CharSequence> myScopeSupplier;
 
   public TextMateScopeComparator(@NotNull TextMateScope scope, @NotNull Function<? super T, ? extends CharSequence> scopeSupplier) {
@@ -35,19 +33,16 @@ public final class TextMateScopeComparator<T> implements Comparator<T> {
       .compareTo(myWeigher.weigh(myScopeSupplier.apply(second), myScope));
   }
 
-  @NotNull
-  public List<T> sortAndFilter(@NotNull Collection<? extends T> objects) {
+  public @NotNull List<T> sortAndFilter(@NotNull Collection<? extends T> objects) {
     return sortAndFilter(objects.stream());
   }
 
-  @NotNull
-  public List<T> sortAndFilter(Stream<? extends T> stream) {
+  public @NotNull List<T> sortAndFilter(Stream<? extends T> stream) {
     return stream.filter(t -> myWeigher.weigh(myScopeSupplier.apply(t), myScope).weigh > 0)
       .sorted(Collections.reverseOrder(this)).collect(Collectors.toList());
   }
 
-  @Nullable
-  public T max(Collection<T> objects) {
+  public @Nullable T max(Collection<T> objects) {
     TextMateWeigh max = TextMateWeigh.ZERO;
     T result = null;
     for (T object : objects) {

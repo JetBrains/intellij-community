@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Ascii;
@@ -55,7 +55,7 @@ import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelper.class);
-  @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
+  private static final @NonNls String FEATURE_ID = "terminal.shell.command.handling";
   private static final int TYPING_THRESHOLD_MS = 200;
 
   private static Experiments ourExperiments;
@@ -187,8 +187,7 @@ public final class TerminalShellCommandHandlerHelper {
                                                Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION_DEFAULT);
   }
 
-  @NotNull
-  private PropertiesComponent getPropertiesComponent() {
+  private @NotNull PropertiesComponent getPropertiesComponent() {
     PropertiesComponent propertiesComponent = myPropertiesComponent;
     if (propertiesComponent == null) {
       propertiesComponent = ReadAction.compute(() -> PropertiesComponent.getInstance());
@@ -197,8 +196,7 @@ public final class TerminalShellCommandHandlerHelper {
     return propertiesComponent;
   }
 
-  @Nullable
-  private String getWorkingDirectory() {
+  private @Nullable String getWorkingDirectory() {
     String workingDirectory = myWorkingDirectory;
     if (workingDirectory == null) {
       workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget.asNewWidget()));
