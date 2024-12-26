@@ -541,6 +541,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return typeParameter;
   }
 
+  public GrLightMethodBuilder addTypeParameter(@NotNull PsiTypeParameter typeParameter) {
+    myTypeParameterList.addParameter(typeParameter);
+    return this;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
