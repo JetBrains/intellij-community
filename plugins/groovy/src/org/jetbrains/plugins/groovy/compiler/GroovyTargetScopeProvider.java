@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.BuildTargetScopeProvider;
@@ -29,11 +29,10 @@ import java.util.Collections;
 import java.util.List;
 
 public final class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
-  @NotNull
   @Override
-  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope,
-                                                         @NotNull Project project,
-                                                         boolean forceBuild) {
+  public @NotNull List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope,
+                                                                  @NotNull Project project,
+                                                                  boolean forceBuild) {
     Boolean checkResourcesRebuild = baseScope.getUserData(GroovyResourceChecker.CHECKING_RESOURCES_REBUILD);
     if (checkResourcesRebuild == null) return Collections.emptyList();
 
@@ -43,11 +42,10 @@ public final class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
       filter(Conditions.notNull()).toList();
   }
 
-  @Nullable
-  private static TargetTypeBuildScope createTargets(@NotNull Project project,
-                                                    boolean forceBuild,
-                                                    final JavaResourceRootType rootType,
-                                                    final CheckResourcesTarget.Type targetType) {
+  private static @Nullable TargetTypeBuildScope createTargets(@NotNull Project project,
+                                                              boolean forceBuild,
+                                                              final JavaResourceRootType rootType,
+                                                              final CheckResourcesTarget.Type targetType) {
     List<Module> withResources = getModulesWithGroovyResources(project, rootType);
     return withResources.isEmpty()
            ? null

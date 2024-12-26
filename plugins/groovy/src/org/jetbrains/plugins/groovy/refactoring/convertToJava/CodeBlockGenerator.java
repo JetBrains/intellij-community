@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -182,7 +182,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitConstructorInvocation(@NotNull final GrConstructorInvocation invocation) {
+  public void visitConstructorInvocation(final @NotNull GrConstructorInvocation invocation) {
     writeStatement(invocation, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -225,7 +225,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitReturnStatement(@NotNull final GrReturnStatement returnStatement) {
+  public void visitReturnStatement(final @NotNull GrReturnStatement returnStatement) {
     final GrExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null) {
       builder.append("return;\n");
@@ -241,7 +241,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitAssertStatement(@NotNull final GrAssertStatement assertStatement) {
+  public void visitAssertStatement(final @NotNull GrAssertStatement assertStatement) {
     final GrExpression assertion = assertStatement.getAssertion();
     final GrExpression message = assertStatement.getErrorMessage();
     if (assertion != null) {
@@ -291,7 +291,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitLabeledStatement(@NotNull final GrLabeledStatement labeledStatement) {
+  public void visitLabeledStatement(final @NotNull GrLabeledStatement labeledStatement) {
     writeStatement(labeledStatement, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -307,7 +307,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitExpression(@NotNull final GrExpression expression) {
+  public void visitExpression(final @NotNull GrExpression expression) {
     writeStatement(expression, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -358,7 +358,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitIfStatement(@NotNull final GrIfStatement ifStatement) {
+  public void visitIfStatement(final @NotNull GrIfStatement ifStatement) {
     writeStatement(ifStatement, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -460,7 +460,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitWhileStatement(@NotNull final GrWhileStatement whileStatement) {
+  public void visitWhileStatement(final @NotNull GrWhileStatement whileStatement) {
     writeStatement(whileStatement, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -480,7 +480,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitSwitchStatement(@NotNull final GrSwitchStatement switchStatement) {
+  public void visitSwitchStatement(final @NotNull GrSwitchStatement switchStatement) {
     writeStatement(switchStatement, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -536,7 +536,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitSynchronizedStatement(@NotNull final GrSynchronizedStatement statement) {
+  public void visitSynchronizedStatement(final @NotNull GrSynchronizedStatement statement) {
     writeStatement(statement, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -556,7 +556,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitVariableDeclaration(@NotNull final GrVariableDeclaration variableDeclaration) {
+  public void visitVariableDeclaration(final @NotNull GrVariableDeclaration variableDeclaration) {
     writeStatement(variableDeclaration, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {

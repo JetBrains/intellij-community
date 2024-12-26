@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -60,9 +60,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
-  @NotNull
   @Override
-  protected GrParameterTableModel createParametersInfoModel(@NotNull GrMethodDescriptor method) {
+  protected @NotNull GrParameterTableModel createParametersInfoModel(@NotNull GrMethodDescriptor method) {
     final PsiParameterList parameterList = method.getMethod().getParameterList();
     return new GrParameterTableModel(parameterList, myDefaultValueContext, this);
   }
@@ -113,8 +112,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
   }
 
-  @Nullable
-  private CanonicalTypes.Type getReturnType() {
+  private @Nullable CanonicalTypes.Type getReturnType() {
     PsiType returnType = null;
     try {
       if (myReturnTypeCodeFragment != null) {
@@ -133,9 +131,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     return factory.createTypeCodeFragment(myMethod.getReturnTypeText(), myMethod.getMethod(), true, JavaCodeFragmentFactory.ALLOW_VOID);
   }
 
-  @Nullable
   @Override
-  protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PsiMethod>> callback) {
+  protected @Nullable CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PsiMethod>> callback) {
     return null; //todo next iteration
   }
 
@@ -153,9 +150,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   }
 
 
-  @Nullable
   @Override
-  protected String validateAndCommitData() {
+  protected @Nullable String validateAndCommitData() {
     if (myReturnTypeCodeFragment != null && !checkType((PsiTypeCodeFragment)myReturnTypeCodeFragment, true)) {
       return GroovyRefactoringBundle.message("return.type.is.wrong");
     }

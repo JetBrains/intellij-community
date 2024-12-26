@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -77,8 +77,7 @@ public final class GroovyIntroduceParameterUtil {
     return searcher.getResult();
   }
 
-  @Nullable
-  public static PsiParameter getAnchorParameter(PsiParameterList parameterList, boolean isVarArgs) {
+  public static @Nullable PsiParameter getAnchorParameter(PsiParameterList parameterList, boolean isVarArgs) {
     final PsiParameter[] parameters = parameterList.getParameters();
     final int length = parameters.length;
     if (isVarArgs) {
@@ -327,8 +326,7 @@ public final class GroovyIntroduceParameterUtil {
     }
   }
 
-  @Nullable
-  public static GrExpression addClosureToCall(PsiElement initializer, GrArgumentList list) {
+  public static @Nullable GrExpression addClosureToCall(PsiElement initializer, GrArgumentList list) {
     if (!(initializer instanceof GrClosableBlock)) return null;
 
     final PsiElement parent = list.getParent();
@@ -346,8 +344,7 @@ public final class GroovyIntroduceParameterUtil {
     return (GrExpression)parent.addAfter(initializer, anchor);
   }
 
-  @Nullable
-  static GrVariable findVar(IntroduceParameterInfo info) {
+  static @Nullable GrVariable findVar(IntroduceParameterInfo info) {
     GrVariable variable = info.getVar();
     if (variable != null) return variable;
 
@@ -356,8 +353,7 @@ public final class GroovyIntroduceParameterUtil {
     return GrIntroduceHandlerBase.findVariable(statements[0]);
   }
 
-  @Nullable
-  static GrExpression findExpr(IntroduceParameterInfo info) {
+  static @Nullable GrExpression findExpr(IntroduceParameterInfo info) {
     final GrStatement[] statements = info.getStatements();
     if (statements.length != 1) return null;
     return GrIntroduceHandlerBase.findExpression(statements[0]);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -96,15 +96,13 @@ public class AddMethodFix extends GroovyFix {
   }
 
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return GroovyBundle.message("add.method", myMethodName, myClassName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("add.method.family");
   }
 

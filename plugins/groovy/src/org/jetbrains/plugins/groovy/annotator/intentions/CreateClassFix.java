@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
@@ -156,8 +156,7 @@ public abstract class CreateClassFix {
         });
       }
 
-      @Nullable
-      private static PsiElement resolveQualifier(@NotNull PsiElement qualifier) {
+      private static @Nullable PsiElement resolveQualifier(@NotNull PsiElement qualifier) {
         if (qualifier instanceof GrCodeReferenceElement) {
           return ((GrCodeReferenceElement)qualifier).resolve();
         }
@@ -177,8 +176,7 @@ public abstract class CreateClassFix {
         return null;
       }
 
-      @Nullable
-      private PsiClass createTemplate(JVMElementFactory factory, String name) {
+      private @Nullable PsiClass createTemplate(JVMElementFactory factory, String name) {
         return switch (getType()) {
           case ENUM -> factory.createEnum(name);
           case TRAIT -> {
@@ -216,8 +214,7 @@ public abstract class CreateClassFix {
         IntentionUtils.positionCursor(project, targetClass.getContainingFile(), targetClass);
       }
 
-      @NotNull
-      private String getPackage(@NotNull PsiClassOwner file) {
+      private @NotNull String getPackage(@NotNull PsiClassOwner file) {
         final PsiElement qualifier = myRefElement.getQualifier();
         if (qualifier instanceof GrReferenceElement) {
           final PsiElement resolved = ((GrReferenceElement<?>)qualifier).resolve();
@@ -242,7 +239,7 @@ public abstract class CreateClassFix {
     };
   }
 
-  private static void bindRef(@NotNull final PsiClass targetClass, @NotNull final GrReferenceElement ref) {
+  private static void bindRef(final @NotNull PsiClass targetClass, final @NotNull GrReferenceElement ref) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final PsiElement newRef = ref.bindToElement(targetClass);
       JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(newRef);

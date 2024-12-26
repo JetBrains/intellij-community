@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -55,8 +55,7 @@ public final class GrCreateSubclassAction extends CreateSubclassAction {
     }
   }
 
-  @Nullable
-  public static PsiClass createSubclassGroovy(final GrTypeDefinition psiClass, final PsiDirectory targetDirectory, final String className) {
+  public static @Nullable PsiClass createSubclassGroovy(final GrTypeDefinition psiClass, final PsiDirectory targetDirectory, final String className) {
     final Project project = psiClass.getProject();
     final Ref<GrTypeDefinition> targetClass = new Ref<>();
 

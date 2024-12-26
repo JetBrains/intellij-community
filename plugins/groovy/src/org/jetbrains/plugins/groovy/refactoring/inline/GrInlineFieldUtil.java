@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -23,8 +23,7 @@ public final class GrInlineFieldUtil {
   private GrInlineFieldUtil() {
   }
 
-  @Nullable
-  static InlineHandler.Settings inlineFieldSettings(final GrField field, Editor editor, boolean invokedOnReference) {
+  static @Nullable InlineHandler.Settings inlineFieldSettings(final GrField field, Editor editor, boolean invokedOnReference) {
     final Project project = field.getProject();
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
@@ -66,7 +66,7 @@ public final class ConvertMapToClassIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, final @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrListOrMap map = (GrListOrMap)element;
     final GrNamedArgument[] namedArguments = map.getNamedArguments();
     LOG.assertTrue(map.getInitializers().length == 0);
@@ -174,8 +174,7 @@ public final class ConvertMapToClassIntention extends Intention {
     return false;
   }
 
-  @Nullable
-  private static GrParameter getParameterByArgument(GrExpression arg) {
+  private static @Nullable GrParameter getParameterByArgument(GrExpression arg) {
     PsiElement parent = PsiUtil.skipParentheses(arg.getParent(), true);
     if (!(parent instanceof final GrArgumentList argList)) return null;
 
@@ -196,8 +195,7 @@ public final class ConvertMapToClassIntention extends Intention {
     return parameter instanceof GrParameter? ((GrParameter)parameter):null;
   }
 
-  @Nullable
-  public static GrParameter checkForMethodParameter(GrExpression map) {
+  public static @Nullable GrParameter checkForMethodParameter(GrExpression map) {
     final GrParameter parameter = getParameterByArgument(map);
     if (parameter == null) return null;
     final PsiElement parent = parameter.getParent().getParent();
@@ -237,9 +235,8 @@ public final class ConvertMapToClassIntention extends Intention {
     return GroovyPsiElementFactory.getInstance(project).createTypeDefinition(classText.toString());
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPredicate();
   }
 }

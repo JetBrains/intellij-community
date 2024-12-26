@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
@@ -20,33 +20,28 @@ public final class GreclipseIdeaCompiler implements BackendCompiler {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return GreclipseBuilder.ID;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return GreclipseBuilder.ID;
   }
 
-  @NotNull
   @Override
-  public Configurable createConfigurable() {
+  public @NotNull Configurable createConfigurable() {
     return new GreclipseConfigurable(GreclipseIdeaCompilerSettings.getSettings(myProject));
   }
 
-  @NotNull
   @Override
-  public Set<FileType> getCompilableFileTypes() {
+  public @NotNull Set<FileType> getCompilableFileTypes() {
     return Set.of(JavaFileType.INSTANCE, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
-  @NotNull
   @Override
-  public CompilerOptions getOptions() {
+  public @NotNull CompilerOptions getOptions() {
     return GreclipseIdeaCompilerSettings.getSettings(myProject);
   }
 }

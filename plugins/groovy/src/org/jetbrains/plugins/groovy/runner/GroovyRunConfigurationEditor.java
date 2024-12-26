@@ -104,8 +104,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myMainPanel;
   }
 

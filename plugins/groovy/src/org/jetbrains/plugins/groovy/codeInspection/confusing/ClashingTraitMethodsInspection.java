@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -16,22 +16,20 @@ import java.util.List;
 
 public final class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspectionBase {
 
-  @NotNull
   @Override
-  protected LocalQuickFix getFix(){
+  protected @NotNull LocalQuickFix getFix(){
     return new MyQuickFix();
   }
 
   private static class MyQuickFix implements LocalQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("declare.explicit.implementations.of.trait");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull final ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element.getParent();
       if (parent instanceof GrTypeDefinition aClass && aClass.getNameIdentifierGroovy() == element) {

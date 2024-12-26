@@ -40,9 +40,8 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     myFiles = files;
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -145,9 +144,8 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     return UniqueNameGenerator.generateUniqueName(prefix, "", ".java", fileNames);
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return GroovyRefactoringBundle.message("converting.files.to.java");
   }
 }

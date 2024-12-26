@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.ide.TitledHandler;
@@ -33,8 +33,7 @@ public final class PropertyRenameHandler implements RenameHandler, TitledHandler
     return false;
   }
 
-  @Nullable
-  private static PsiElement getElement(DataContext dataContext) {
+  private static @Nullable PsiElement getElement(DataContext dataContext) {
     return CommonDataKeys.PSI_ELEMENT.getData(dataContext);
   }
 

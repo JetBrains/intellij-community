@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions.generate.equals;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,15 +35,14 @@ public class GroovyGenerateEqualsHelper {
   private final GroovyPsiElementFactory myFactory;
   private String myParameterName;
 
-  @NonNls private static final String BASE_OBJECT_PARAMETER_NAME = "object";
-  @NonNls private static final String BASE_OBJECT_LOCAL_NAME = "that";
-  @NonNls private static final String RESULT_VARIABLE = "result";
-  @NonNls private static final String TEMP_VARIABLE = "temp";
+  private static final @NonNls String BASE_OBJECT_PARAMETER_NAME = "object";
+  private static final @NonNls String BASE_OBJECT_LOCAL_NAME = "that";
+  private static final @NonNls String RESULT_VARIABLE = "result";
+  private static final @NonNls String TEMP_VARIABLE = "temp";
 
   private String myClassInstanceName;
 
-  @NonNls
-  private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<>();
+  private static final @NonNls HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<>();
   private final boolean mySuperHasHashCode;
 //  private CodeStyleManager myCodeStyleManager;
 
@@ -137,14 +136,14 @@ public class GroovyGenerateEqualsHelper {
 
 
   private void addDoubleFieldComparison(final StringBuffer buffer, final PsiField field) {
-    @NonNls final String type = PsiTypes.doubleType().equals(field.getType()) ? "Double" : "Float";
+    final @NonNls String type = PsiTypes.doubleType().equals(field.getType()) ? "Double" : "Float";
     final Object[] parameters = new Object[]{type, myClassInstanceName, field.getName()};
     DOUBLE_FIELD_COMPARER_MF.format(parameters, buffer, null);
   }
 
-  @NonNls private static final MessageFormat ARRAY_COMPARER_MF = new MessageFormat("if (!java.util.Arrays.equals({1}, {0}.{1})) return false\n");
-  @NonNls private static final MessageFormat FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false\n");
-  @NonNls private static final MessageFormat DOUBLE_FIELD_COMPARER_MF = new MessageFormat("if ({0}.compare({1}.{2}, {2}) != 0) return false\n");
+  private static final @NonNls MessageFormat ARRAY_COMPARER_MF = new MessageFormat("if (!java.util.Arrays.equals({1}, {0}.{1})) return false\n");
+  private static final @NonNls MessageFormat FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false\n");
+  private static final @NonNls MessageFormat DOUBLE_FIELD_COMPARER_MF = new MessageFormat("if ({0}.compare({1}.{2}, {2}) != 0) return false\n");
 
   private void addArrayEquals(StringBuffer buffer, PsiField field) {
     final PsiType fieldType = field.getType();
@@ -370,9 +369,8 @@ public class GroovyGenerateEqualsHelper {
     buffer.append(") : 0L\n");
   }
 
-  @Nullable
   @SuppressWarnings("HardCodedStringLiteral")
-  private String addTempDeclaration(StringBuilder buffer) {
+  private @Nullable String addTempDeclaration(StringBuilder buffer) {
     for (PsiField hashCodeField : myHashCodeFields) {
       if (PsiTypes.doubleType().equals(hashCodeField.getType())) {
         final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
@@ -383,9 +381,8 @@ public class GroovyGenerateEqualsHelper {
     return null;
   }
 
-  @Nullable
   @SuppressWarnings("HardCodedStringLiteral")
-  private String addTempForOneField(PsiField field, StringBuilder buffer) {
+  private @Nullable String addTempForOneField(PsiField field, StringBuilder buffer) {
     if (PsiTypes.doubleType().equals(field.getType())) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
       JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
@@ -441,8 +438,7 @@ public class GroovyGenerateEqualsHelper {
     }
   }
 
-  @Nullable
-  static PsiMethod findMethod(PsiClass aClass, MethodSignature signature) {
+  static @Nullable PsiMethod findMethod(PsiClass aClass, MethodSignature signature) {
     return MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
   }
 

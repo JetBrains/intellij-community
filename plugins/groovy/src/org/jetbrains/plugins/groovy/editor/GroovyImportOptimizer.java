@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.lang.ImportOptimizer;
@@ -42,8 +42,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
   }
 
   @Override
-  @NotNull
-  public Runnable processFile(@NotNull PsiFile file) {
+  public @NotNull Runnable processFile(@NotNull PsiFile file) {
     return new MyProcessor((GroovyFile)file).compute();
   }
 
@@ -54,9 +53,8 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
       myFile = file;
     }
 
-    @NotNull
     @Override
-    public Runnable compute() {
+    public @NotNull Runnable compute() {
       final Set<String> simplyImportedClasses = new LinkedHashSet<>();
       final Set<String> staticallyImportedMembers = new LinkedHashSet<>();
       final Set<GrImportStatement> usedImports = new HashSet<>();

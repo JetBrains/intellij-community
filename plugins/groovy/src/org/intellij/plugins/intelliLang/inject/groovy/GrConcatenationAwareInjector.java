@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.Language;
@@ -42,7 +42,7 @@ import java.util.*;
 
 public final class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
+  public void getLanguagesToInject(final @NotNull MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
     if (operands.length == 0) return;
 
     final PsiFile file = operands[0].getContainingFile();
@@ -77,8 +77,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     }.processInjections();
   }
 
-  @NotNull
-  private static String getStringPresentation(@Nullable PsiElement operand) {
+  private static @NotNull String getStringPresentation(@Nullable PsiElement operand) {
     if (operand instanceof GrStringInjection) {
       return operand.getText();
     }

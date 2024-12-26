@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.openapi.application.WriteAction;
@@ -143,9 +129,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     revalidate();
   }
 
-  @Nullable
   @Override
-  protected PsiElement getNameIdentifier() {
+  protected @Nullable PsiElement getNameIdentifier() {
     return ((GrVariable)myElementToRename).getNameIdentifierGroovy();
   }
 
@@ -169,9 +154,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  @Nullable
   @Override
-  protected GrVariable createFieldToStartTemplateOn(boolean replaceAll, String @NotNull [] names) {
+  protected @Nullable GrVariable createFieldToStartTemplateOn(boolean replaceAll, String @NotNull [] names) {
 
     final Settings settings = getInitialSettingsForInplace(myContext, myReplaceChoice, names);
     if (settings == null) return null;
@@ -193,10 +177,9 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     return pointer != null ? pointer.getElement() : null;
   }
 
-  @Nullable
-  protected abstract Settings getInitialSettingsForInplace(@NotNull GrIntroduceContext context,
-                                                           @NotNull OccurrencesChooser.ReplaceChoice choice,
-                                                           String[] names);
+  protected abstract @Nullable Settings getInitialSettingsForInplace(@NotNull GrIntroduceContext context,
+                                                                     @NotNull OccurrencesChooser.ReplaceChoice choice,
+                                                                     String[] names);
 
   @Override
   public boolean isReplaceAllOccurrences() {
@@ -212,15 +195,13 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     super.restoreState(psiField);
   }
 
-  @Nullable
-  protected PsiType getSelectedType() {
+  protected @Nullable PsiType getSelectedType() {
     return myTypePointer != null ? myTypePointer.getType() : null;
   }
 
   private class IntroduceContextAdapter implements GrIntroduceContext {
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -229,21 +210,18 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       return myEditor;
     }
 
-    @Nullable
     @Override
-    public GrExpression getExpression() {
+    public @Nullable GrExpression getExpression() {
       return (GrExpression)getExpr();
     }
 
-    @Nullable
     @Override
-    public GrVariable getVar() {
+    public @Nullable GrVariable getVar() {
       return getLocalVariable();
     }
 
-    @Nullable
     @Override
-    public StringPartInfo getStringPart() {
+    public @Nullable StringPartInfo getStringPart() {
       return null;
     }
 
@@ -257,9 +235,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       return myScope;
     }
 
-    @NotNull
     @Override
-    public PsiElement getPlace() {
+    public @NotNull PsiElement getPlace() {
       GrExpression expression = getExpression();
       return expression != null ? expression : getLocalVariable();
     }

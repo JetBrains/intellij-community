@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -212,9 +212,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       myWrapper = new GrExpressionWrapper(myClosure);
     }
 
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -223,9 +222,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myMethod;
     }
 
-    @NotNull
     @Override
-    public PsiMethod getMethodToSearchFor() {
+    public @NotNull PsiMethod getMethodToSearchFor() {
       return (PsiMethod)myHelper.getToSearchFor();
     }
 
@@ -234,9 +232,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myWrapper;
     }
 
-    @NotNull
     @Override
-    public String getParameterName() {
+    public @NotNull String getParameterName() {
       return myHelper.getName();
     }
 
@@ -255,16 +252,14 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return false; //todo
     }
 
-    @NotNull
     @Override
-    public PsiType getForcedType() {
+    public @NotNull PsiType getForcedType() {
       PsiType type = myHelper.getSelectedType();
       return type != null ? type : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
     }
 
-    @NotNull
     @Override
-    public IntList getParameterListToRemove() {
+    public @NotNull IntList getParameterListToRemove() {
       return myHelper.parametersToRemove();
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.editor;
 
@@ -13,7 +13,7 @@ public final class HandlerUtils {
   private HandlerUtils() {
   }
 
-  public static boolean isReadOnly(@NotNull final Editor editor) {
+  public static boolean isReadOnly(final @NotNull Editor editor) {
     if (editor.isViewer()) {
       return true;
     }
@@ -32,7 +32,7 @@ public final class HandlerUtils {
     return true;
   }
 
-  public static PsiFile getPsiFile(@NotNull final Editor editor, final Project project) {
+  public static PsiFile getPsiFile(final @NotNull Editor editor, final Project project) {
     return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
   }
 }

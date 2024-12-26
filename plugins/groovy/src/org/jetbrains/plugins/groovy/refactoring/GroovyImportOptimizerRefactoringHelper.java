@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,7 +49,7 @@ public final class GroovyImportOptimizerRefactoringHelper implements Refactoring
   }
 
   @Override
-  public void performOperation(@NotNull final Project project, final Set<GroovyFile> files) {
+  public void performOperation(final @NotNull Project project, final Set<GroovyFile> files) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<>();
     final Runnable findUnusedImports = () -> {

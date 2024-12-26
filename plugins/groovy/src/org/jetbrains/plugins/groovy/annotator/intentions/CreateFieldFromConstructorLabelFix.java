@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -65,8 +65,7 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, classKind + " " + className, "", parent.getText());
   }
 
-  @Nullable
-  private String getFieldName() {
+  private @Nullable String getFieldName() {
     GrNamedArgument namedArgument = myNamedArgumentPointer.getElement();
     if (namedArgument == null) return null;
     final GrArgumentLabel label = namedArgument.getLabel();
@@ -88,15 +87,13 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
     }
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return GroovyBundle.message("create.field.from.usage", getFieldName());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("intention.family.name.create.field");
   }
 

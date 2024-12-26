@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,11 +63,11 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
 
   private static final Logger LOG =
     Logger.getInstance(ConvertParameterToMapEntryIntention.class);
-  @NlsSafe private static final String MAP_TYPE_TEXT = "Map";
-  @NlsSafe private static final String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
+  private static final @NlsSafe String MAP_TYPE_TEXT = "Map";
+  private static final @NlsSafe String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
   @Override
-  protected void processIntention(@NotNull final PsiElement element, @NotNull final Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(final @NotNull PsiElement element, final @NotNull Project project, Editor editor) throws IncorrectOperationException {
     // Method or closure to be refactored
     final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(element, GrParameterListOwner.class);
     final Collection<PsiElement> occurrences = new ArrayList<>();
@@ -160,7 +160,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
                                          final GrParameterListOwner owner,
                                          final Collection<PsiElement> occurrences,
                                          final boolean createNewFirstParam,
-                                         @Nullable final String mapParamName,
+                                         final @Nullable String mapParamName,
                                          final boolean specifyMapType) {
     final GrParameter param = getAppropriateParameter(element);
     assert param != null;
@@ -301,8 +301,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
   }
 
 
-  @Nullable
-  private static GrParameter getAppropriateParameter(final PsiElement element) {
+  private static @Nullable GrParameter getAppropriateParameter(final PsiElement element) {
     if (element instanceof GrParameter) {
       return (GrParameter)element;
     }
@@ -315,8 +314,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
     return null;
   }
 
-  @Nullable
-  private static GrSignature generateSignature(GrParameterListOwner owner, GrReferenceExpression refExpr) {
+  private static @Nullable GrSignature generateSignature(GrParameterListOwner owner, GrReferenceExpression refExpr) {
     if (owner instanceof PsiMethod) {
       final GroovyResolveResult resolveResult = refExpr.advancedResolve();
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -360,8 +358,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
     return type.isConvertibleFrom(createTypeByFQClassName(JAVA_UTIL_LINKED_HASH_MAP, owner));
   }
 
-  @NotNull
-  private static GrParameter getFirstParameter(final GrParameterListOwner owner) {
+  private static @NotNull GrParameter getFirstParameter(final GrParameterListOwner owner) {
     final GrParameter[] params = owner.getParameters();
     LOG.assertTrue(params.length > 0);
     return params[0];
@@ -371,8 +368,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
     IS_NOT_MAP, MUST_BE_MAP, ERROR
   }
 
-  @Nullable
-  private static GrNamedElement getReferencedElement(final GrParameterListOwner owner) {
+  private static @Nullable GrNamedElement getReferencedElement(final GrParameterListOwner owner) {
     if (owner instanceof GrMethodImpl) return ((GrMethodImpl)owner);
     if (owner instanceof GrClosableBlock) {
       final PsiElement parent = owner.getParent();
@@ -416,7 +412,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
       true
     ) {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public void run(final @NotNull ProgressIndicator indicator) {
         final Collection<PsiReference> references = Collections.synchronizedSet(new HashSet<>());
         final Processor<PsiReference> consumer = psiReference -> {
           references.add(psiReference);
@@ -460,14 +456,13 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPsiElementPredicate();
   }
 
   private static class MyPsiElementPredicate implements PsiElementPredicate {
     @Override
-    public boolean satisfiedBy(@NotNull final PsiElement element) {
+    public boolean satisfiedBy(final @NotNull PsiElement element) {
       GrParameter parameter = null;
       if (element instanceof GrParameter) {
         parameter = (GrParameter)element;

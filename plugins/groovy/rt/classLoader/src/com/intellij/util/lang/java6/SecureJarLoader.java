@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.java6;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -17,7 +17,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 final class SecureJarLoader extends JarLoader {
-  private @Nullable ProtectionDomain myProtectionDomain;
+  @Nullable private ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
   SecureJarLoader(@NotNull URL url, @NotNull String filePath, @NotNull ClassPath configuration) throws IOException {

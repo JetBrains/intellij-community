@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.modcommand.ActionContext;
@@ -70,9 +70,8 @@ public final class ConvertSimpleGetterToPropertyIntention extends GrPsiUpdateInt
     JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

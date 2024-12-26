@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.openapi.options.ConfigurableUi;
@@ -25,9 +26,8 @@ class GroovySteppingConfigurableUi implements ConfigurableUi<GroovyDebuggerSetti
     settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS = ignoreGroovyMethods.isSelected();
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return rootPanel;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -48,9 +48,8 @@ public final class GroovyParameterInfoHandler implements ParameterInfoHandlerWit
 
   private static final Set<Class<?>> ourStopSearch = Collections.singleton(GrMethod.class);
 
-  @NotNull
   @Override
-  public Set<? extends Class<?>> getArgListStopSearchClasses() {
+  public @NotNull Set<? extends Class<?>> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 
@@ -71,8 +70,7 @@ public final class GroovyParameterInfoHandler implements ParameterInfoHandlerWit
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  @Nullable
-  private static GroovyPsiElement findAnchorElement(int offset, PsiFile file) {
+  private static @Nullable GroovyPsiElement findAnchorElement(int offset, PsiFile file) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
@@ -97,9 +95,8 @@ public final class GroovyParameterInfoHandler implements ParameterInfoHandlerWit
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  @NotNull
   @RequiresBackgroundThread
-  private static List<Object> collectParameterInfo(@NotNull GroovyPsiElement place) {
+  private static @NotNull List<Object> collectParameterInfo(@NotNull GroovyPsiElement place) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
 
     final List<Object> elementToShow = new ArrayList<>();
@@ -138,7 +135,7 @@ public final class GroovyParameterInfoHandler implements ParameterInfoHandlerWit
     }
   }
 
-  private static boolean tryAddSignatureVariant(@NotNull final List<Object> elementToShow, @Nullable PsiType type) {
+  private static boolean tryAddSignatureVariant(final @NotNull List<Object> elementToShow, @Nullable PsiType type) {
     if (type instanceof GrClosureType closureType) {
       elementToShow.addAll(closureType.getSignatures());
       return true;
@@ -439,29 +436,25 @@ public final class GroovyParameterInfoHandler implements ParameterInfoHandlerWit
     return GroovyPsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParameterDelimiterType() {
+  public @NotNull IElementType getActualParameterDelimiterType() {
     return GroovyTokenTypes.mCOMMA;
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParametersRBraceType() {
+  public @NotNull IElementType getActualParametersRBraceType() {
     return GroovyTokenTypes.mRPAREN;
   }
 
   private static final Set<Class<?>> ALLOWED_PARAM_CLASSES = Collections.singleton(GroovyPsiElement.class);
 
-  @NotNull
   @Override
-  public Set<Class<?>> getArgumentListAllowedParentClasses() {
+  public @NotNull Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_PARAM_CLASSES;
   }
 
-  @NotNull
   @Override
-  public Class<GroovyPsiElement> getArgumentListClass() {
+  public @NotNull Class<GroovyPsiElement> getArgumentListClass() {
     return GroovyPsiElement.class;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dependencies;
 
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -17,10 +17,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 final class GrDependencyVisitorFactory extends DependencyVisitorFactory {
-  @NotNull
   @Override
-  public PsiElementVisitor getVisitor(@NotNull DependenciesBuilder.DependencyProcessor processor,
-                                      @NotNull DependencyVisitorFactory.VisitorOptions options) {
+  public @NotNull PsiElementVisitor getVisitor(@NotNull DependenciesBuilder.DependencyProcessor processor,
+                                               @NotNull DependencyVisitorFactory.VisitorOptions options) {
     GroovyElementVisitor visitor = new MyVisitor(processor, options);
     return new PsiElementVisitor() {
       @Override

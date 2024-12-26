@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.openapi.module.Module;
@@ -14,9 +14,8 @@ import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.hasNeeded
 
 public final class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
 
-  @Nullable
   @Override
-  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
+  public @Nullable GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     final GroovyConsoleStateService projectConsole = GroovyConsoleStateService.getInstance(project);
 
     final Module module = projectConsole.getSelectedModule(file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
 import com.intellij.modcommand.ActionContext;
@@ -36,12 +36,11 @@ import java.util.Set;
  */
 public final class EachToForIntention extends GrPsiUpdateIntention {
 
-  @NonNls public static final String OUTER = "Outer";
-  @NonNls public static final String HINT = "Replace with for-in";
+  public static final @NonNls String OUTER = "Outer";
+  public static final @NonNls String HINT = "Replace with for-in";
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new EachToForPredicate();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -92,15 +92,13 @@ public class AddClassToExtendsFix extends GroovyFix {
     }
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return GroovyBundle.message("implement.class", myInterfaceName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("add.class.to.extends.family.name");
   }
 }

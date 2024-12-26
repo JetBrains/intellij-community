@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,7 +7,10 @@ import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -388,8 +391,7 @@ public final class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     return "'".equals(GrStringUtil.getStartQuote(element.getText()));
   }
 
-  @Nullable
-  private static PsiElement inferStringPair(PsiFile file, int caretOffset) {
+  private static @Nullable PsiElement inferStringPair(PsiFile file, int caretOffset) {
     PsiElement stringElement = file.findElementAt(caretOffset - 1);
     if (stringElement == null) return null;
     ASTNode node = stringElement.getNode();

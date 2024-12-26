@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.ChildAttributes;
@@ -74,8 +74,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
    * @param child       child node
    * @return indent
    */
-  @NotNull
-  public Indent getChildIndent(@NotNull final GroovyBlock parentBlock, @NotNull final ASTNode child) {
+  public @NotNull Indent getChildIndent(final @NotNull GroovyBlock parentBlock, final @NotNull ASTNode child) {
     myChildType = child.getElementType();
     if (parentBlock instanceof ClosureBodyBlock) {
       if (myChildType == GroovyEmptyStubElementTypes.PARAMETER_LIST) {
@@ -531,13 +530,11 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
   }
 
-  @NotNull
-  public static Indent getIndentInBlock(int braceStyle) {
+  public static @NotNull Indent getIndentInBlock(int braceStyle) {
       return braceStyle == NEXT_LINE_SHIFTED ? getNoneIndent() : getNormalIndent();
   }
 
-  @NotNull
-  public static Indent getBlockIndent(int braceStyle) {
+  public static @NotNull Indent getBlockIndent(int braceStyle) {
     return braceStyle == NEXT_LINE_SHIFTED || braceStyle == NEXT_LINE_SHIFTED2 ? getNormalIndent() : getNoneIndent();
   }
 

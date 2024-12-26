@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.springloaded;
 
 import com.intellij.debugger.NoDataException;
@@ -49,9 +49,8 @@ public class SpringLoadedPositionManager implements PositionManager {
     throw NoDataException.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) throws NoDataException {
+  public @NotNull List<ReferenceType> getAllClasses(final @NotNull SourcePosition classPosition) throws NoDataException {
 
     String className = ReadAction.compute(() -> findEnclosingName(classPosition));
     if (className == null) throw NoDataException.INSTANCE;
@@ -74,14 +73,12 @@ public class SpringLoadedPositionManager implements PositionManager {
     return new ArrayList<>(res);
   }
 
-  @NotNull
   @Override
-  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     throw NoDataException.INSTANCE;
   }
 
-  @Nullable
-  private static String findEnclosingName(final SourcePosition position) {
+  private static @Nullable String findEnclosingName(final SourcePosition position) {
     PsiElement element = findElementAt(position);
     while (true) {
       element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
@@ -100,8 +97,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     return null;
   }
 
-  @Nullable
-  private static String getClassNameForJvm(final PsiClass aClass) {
+  private static @Nullable String getClassNameForJvm(final PsiClass aClass) {
     final PsiClass psiClass = aClass.getContainingClass();
     if (psiClass != null) {
       return getClassNameForJvm(psiClass) + "$" + aClass.getName();
@@ -110,8 +106,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     return aClass.getQualifiedName();
   }
 
-  @Nullable
-  private static String getOuterClassName(final SourcePosition position) {
+  private static @Nullable String getOuterClassName(final SourcePosition position) {
 
     return ReadAction.compute(()->{
       PsiElement element = findElementAt(position);
@@ -125,8 +120,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     });
   }
 
-  @Nullable
-  private static PsiElement findElementAt(SourcePosition position) {
+  private static @Nullable PsiElement findElementAt(SourcePosition position) {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFileBase) && !(file instanceof PsiJavaFile)) return null;
     return file.findElementAt(position.getOffset());

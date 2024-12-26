@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -33,8 +33,7 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("add.dynamic.method.0", mySignature);
   }
 
@@ -65,8 +64,7 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("add.dynamic.element");
   }
 

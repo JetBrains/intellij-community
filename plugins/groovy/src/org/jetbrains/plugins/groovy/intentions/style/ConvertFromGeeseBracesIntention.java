@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.modcommand.ActionContext;
@@ -76,8 +62,7 @@ public final class ConvertFromGeeseBracesIntention extends GrPsiUpdateIntention 
     }
   };
 
-  @Nullable
-  private static PsiElement getPrev(PsiElement element) {
+  private static @Nullable PsiElement getPrev(PsiElement element) {
     PsiElement prev = PsiUtil.getPreviousNonWhitespaceToken(element);
     if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mNLS) {
       prev = PsiUtil.getPreviousNonWhitespaceToken(prev);
@@ -85,8 +70,7 @@ public final class ConvertFromGeeseBracesIntention extends GrPsiUpdateIntention 
     return prev;
   }
 
-  @Nullable
-  private static PsiElement getNext(PsiElement element) {
+  private static @Nullable PsiElement getNext(PsiElement element) {
     PsiElement next = GeeseUtil.getNextNonWhitespaceToken(element);
     if (next != null && next.getNode().getElementType() == GroovyTokenTypes.mNLS) next = GeeseUtil.getNextNonWhitespaceToken(next);
     return next;
@@ -132,9 +116,8 @@ public final class ConvertFromGeeseBracesIntention extends GrPsiUpdateIntention 
   }
 
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return MY_PREDICATE;
   }
 }

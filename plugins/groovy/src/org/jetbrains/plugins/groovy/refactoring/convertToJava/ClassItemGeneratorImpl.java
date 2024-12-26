@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.google.common.collect.ImmutableSortedSet;
@@ -443,7 +443,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     return false;
   }
 
-  private static boolean containsMethodsOf(@NotNull GrTypeDefinition aClass, @NotNull final String fqn) {
+  private static boolean containsMethodsOf(@NotNull GrTypeDefinition aClass, final @NotNull String fqn) {
     PsiClass classToSearch = JavaPsiFacade.getInstance(aClass.getProject()).findClass(fqn, aClass.getResolveScope());
     if (classToSearch == null) return true;
 

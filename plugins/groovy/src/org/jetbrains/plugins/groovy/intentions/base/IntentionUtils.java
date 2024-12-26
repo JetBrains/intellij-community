@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -40,7 +40,7 @@ public final class IntentionUtils {
                                              PsiClass owner,
                                              TypeConstraint[] constraints,
                                              boolean isConstructor,
-                                             @NotNull final PsiElement context) {
+                                             final @NotNull PsiElement context) {
     ParameterNameExpression[] nameExpressions = new ParameterNameExpression[paramTypesExpressions.length];
     for (int i = 0; i < nameExpressions.length; i++) {
       nameExpressions[i] = StringParameterNameExpression.Companion.getEMPTY();
@@ -62,7 +62,7 @@ public final class IntentionUtils {
                                              ChooseTypeExpression returnTypeExpression,
                                              boolean isConstructor,
                                              boolean isScrollToTemplate,
-                                             @Nullable final PsiElement context) {
+                                             final @Nullable PsiElement context) {
 
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();

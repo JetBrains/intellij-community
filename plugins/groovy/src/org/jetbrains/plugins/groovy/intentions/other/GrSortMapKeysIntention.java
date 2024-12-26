@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.other;
 
 import com.intellij.modcommand.ActionContext;
@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -37,8 +37,7 @@ public final class GrSortMapKeysIntention extends GrPsiUpdateIntention {
     }
   }
 
-  @NotNull
-  private static GrListOrMap constructNewMap(GrNamedArgument @NotNull [] args, Project project) {
+  private static @NotNull GrListOrMap constructNewMap(GrNamedArgument @NotNull [] args, Project project) {
     StringBuilder builder = new StringBuilder();
 
     builder.append("[");
@@ -61,9 +60,8 @@ public final class GrSortMapKeysIntention extends GrPsiUpdateIntention {
     return (GrListOrMap)GroovyPsiElementFactory.getInstance(project).createExpressionFromText(builder);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -35,9 +35,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
     return GroovyBundle.message("introduce.constant.title");
   }
 
-  @NotNull
   @Override
-  protected String getHelpID() {
+  protected @NotNull String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
   }
 
@@ -73,14 +72,12 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
     }
   }
 
-  @Nullable
-  public static PsiClass findContainingClass(GrIntroduceContext context) {
+  public static @Nullable PsiClass findContainingClass(GrIntroduceContext context) {
     return (PsiClass)context.getScope();
   }
 
-  @NotNull
   @Override
-  protected GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(@NotNull GrIntroduceContext context) {
+  protected @NotNull GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(@NotNull GrIntroduceContext context) {
     return new GrIntroduceConstantDialog(context, findContainingClass(context));
   }
 
@@ -100,9 +97,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
     return new GrInplaceConstantIntroducer(contextRef.get(), choice);
   }
 
-  @NotNull
   @Override
-  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
+  protected @NotNull Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
     HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = new LinkedHashMap<>();
 
     GrVariable localVar = resolveLocalVar(context);

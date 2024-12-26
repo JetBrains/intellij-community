@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
@@ -40,8 +40,7 @@ public abstract class CreateClassActionBase extends Intention {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     String referenceName = myRefElement.getReferenceName();
     return switch (getType()) {
       case TRAIT -> GroovyBundle.message("create.trait", referenceName);
@@ -79,8 +78,7 @@ public abstract class CreateClassActionBase extends Intention {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("create.class.family.name");
   }
 
@@ -99,13 +97,12 @@ public abstract class CreateClassActionBase extends Intention {
     return myType;
   }
 
-  @Nullable
-  public static GrTypeDefinition createClassByType(@NotNull final PsiDirectory directory,
-                                                   @NotNull final String name,
-                                                   @NotNull final PsiManager manager,
-                                                   @Nullable final PsiElement contextElement,
-                                                   @NotNull final String templateName,
-                                                   boolean allowReformatting) {
+  public static @Nullable GrTypeDefinition createClassByType(final @NotNull PsiDirectory directory,
+                                                             final @NotNull String name,
+                                                             final @NotNull PsiManager manager,
+                                                             final @Nullable PsiElement contextElement,
+                                                             final @NotNull String templateName,
+                                                             boolean allowReformatting) {
     return WriteAction.compute(() -> {
       try {
         GrTypeDefinition targetClass = null;
@@ -142,12 +139,11 @@ public abstract class CreateClassActionBase extends Intention {
     });
   }
 
-  @Nullable
-  protected PsiDirectory getTargetDirectory(@NotNull Project project,
-                                            @NotNull String qualifier,
-                                            @NotNull String name,
-                                            @Nullable Module module,
-                                            @DialogTitle @NotNull String title) {
+  protected @Nullable PsiDirectory getTargetDirectory(@NotNull Project project,
+                                                      @NotNull String qualifier,
+                                                      @NotNull String name,
+                                                      @Nullable Module module,
+                                                      @DialogTitle @NotNull String title) {
     CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifier, getType(), false, module) {
       @Override
       protected boolean reportBaseInSourceSelectionInTest() {
@@ -160,9 +156,8 @@ public abstract class CreateClassActionBase extends Intention {
     return dialog.getTargetDirectory();
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
