@@ -153,6 +153,9 @@
 
     <applicationActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
 
+    <applicationService serviceInterface="com.intellij.ide.projectView.impl.AbstractUrl$AbstractUrlLoader"
+                        serviceImplementation="com.intellij.ide.projectView.impl.AbstractUrlLoaderImpl"/>
+
     <registryKey key="ide.project.view.new.file.popup" defaultValue="false"
                  description="Switches submenu in File - New to popup step" />
   </extensions>

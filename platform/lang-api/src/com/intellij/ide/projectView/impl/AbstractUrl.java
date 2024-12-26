@@ -2,6 +2,7 @@
 
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
@@ -80,6 +81,12 @@ public abstract class AbstractUrl {
 
   @ApiStatus.Internal
   public static List<AbstractUrl> getAbstractUrlProviders() {
+    ApplicationManager.getApplication().getService(AbstractUrlLoader.class).loadUrls();
     return ourAbstractUrlProviders;
+  }
+
+  @ApiStatus.Internal
+  interface AbstractUrlLoader {
+    void loadUrls();
   }
 }
