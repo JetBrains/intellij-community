@@ -126,9 +126,7 @@ public class ReflectionAccessMethodBuilder {
 
       String name = parameter.getName();
 
-      PsiType accessedType = erasedType != null
-                             ? PsiReflectionAccessUtil.nearestAccessibleType(erasedType)
-                             : PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
+      PsiType accessedType = PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
       myParameters.add(new ParameterInfo(accessedType.getCanonicalText(), name, jvmType));
     }
 
