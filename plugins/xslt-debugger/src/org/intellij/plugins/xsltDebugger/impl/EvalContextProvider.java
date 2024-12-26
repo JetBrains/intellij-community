@@ -38,14 +38,12 @@ public class EvalContextProvider extends ContextProvider {
   }
 
   @Override
-  @NotNull
-  public ContextType getContextType() {
+  public @NotNull ContextType getContextType() {
     return XsltContextProvider.TYPE;
   }
 
   @Override
-  @Nullable
-  public XmlElement getContextElement() {
+  public @Nullable XmlElement getContextElement() {
     return null;
   }
 
@@ -55,8 +53,7 @@ public class EvalContextProvider extends ContextProvider {
   }
 
   @Override
-  @Nullable
-  public NamespaceContext getNamespaceContext() {
+  public @Nullable NamespaceContext getNamespaceContext() {
     return null;
   }
 
@@ -76,14 +73,12 @@ public class EvalContextProvider extends ContextProvider {
   }
 
   @Override
-  @Nullable
-  public Set<QName> getAttributes(boolean forValidation) {
+  public @Nullable Set<QName> getAttributes(boolean forValidation) {
     return null; // TODO
   }
 
   @Override
-  @Nullable
-  public Set<QName> getElements(boolean forValidation) {
+  public @Nullable Set<QName> getElements(boolean forValidation) {
     return null; // TODO
   }
 }

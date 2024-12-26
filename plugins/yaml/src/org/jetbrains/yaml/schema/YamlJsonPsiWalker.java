@@ -366,16 +366,14 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       return preferInline ? generator.createEmptyArray() : generator.createEmptySequence();
     }
 
-    @Nullable
-    private static PsiElement skipWsBackward(@Nullable PsiElement item) {
+    private static @Nullable PsiElement skipWsBackward(@Nullable PsiElement item) {
       while (item instanceof PsiWhiteSpace || item instanceof PsiComment) {
         item = PsiTreeUtil.prevLeaf(item);
       }
       return item;
     }
 
-    @Nullable
-    private static PsiElement skipWsForward(@Nullable PsiElement item) {
+    private static @Nullable PsiElement skipWsForward(@Nullable PsiElement item) {
       while (item instanceof PsiWhiteSpace || item instanceof PsiComment) {
         item = PsiTreeUtil.nextLeaf(item);
       }
@@ -544,9 +542,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       return sibling;
     }
 
-    @NotNull
     @Override
-    public PsiElement addProperty(@NotNull PsiElement contextForInsertion, @NotNull PsiElement newProperty) {
+    public @NotNull PsiElement addProperty(@NotNull PsiElement contextForInsertion, @NotNull PsiElement newProperty) {
       // Sometimes, post-write-action formatting can break the YAML structure if the area was not indented properly initially.
       // This is why we pre-format it to avoid problems.
       preFormatAround(contextForInsertion);

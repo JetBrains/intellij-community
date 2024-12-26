@@ -20,8 +20,7 @@ public abstract class YAMLMappingImpl extends YAMLCompoundValueImpl implements Y
   }
 
   @Override
-  @Unmodifiable
-  public @NotNull Collection<YAMLKeyValue> getKeyValues() {
+  public @Unmodifiable @NotNull Collection<YAMLKeyValue> getKeyValues() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, YAMLKeyValue.class);
   }
 

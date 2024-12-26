@@ -40,8 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class GeneratedStructureModel extends DefaultTreeModel {
-  @NonNls
-  private static final String PENDING = "...";
+  private static final @NonNls String PENDING = "...";
 
   private static WeakReference<Interner<String>> ourSharedInterner;
 
@@ -201,8 +200,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     return event;
   }
 
-  @Nullable
-  private OutputEventQueue.NodeEvent.QName intern(OutputEventQueue.NodeEvent.QName name) {
+  private @Nullable OutputEventQueue.NodeEvent.QName intern(OutputEventQueue.NodeEvent.QName name) {
     if (name == null) return null;
     name.myPrefix = intern(name.myPrefix);
     name.myLocalName = intern(name.myLocalName);
@@ -210,8 +208,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     return name;
   }
 
-  @Nullable
-  private String intern(String s) {
+  private @Nullable String intern(String s) {
     if (s != null) {
       if (s.length() == 0) return s.intern();
       return myInterner.intern(s);
