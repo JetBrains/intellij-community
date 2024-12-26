@@ -135,7 +135,6 @@ internal class OutputStreamAdapterImpl(
   private val sendChannel: EelSendChannel<ErrorString>,
   private val blockingContext: CoroutineContext,
 ) : OutputStream() {
-  private val emptyBuffer = ByteBuffer.allocate(0)
   private val oneByte = ByteBuffer.allocate(1)
   override fun write(b: Int) {
     oneByte.clear().put(b.toByte()).flip()
@@ -146,9 +145,7 @@ internal class OutputStreamAdapterImpl(
     write(ByteBuffer.wrap(b, off, len))
   }
 
-  override fun flush() {
-    write(emptyBuffer)
-  }
+  override fun flush() = Unit
 
   @Throws(IOException::class)
   private fun write(buffer: ByteBuffer) {
