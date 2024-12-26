@@ -1,15 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
-import com.intellij.ide.tags.TagManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.ui.ColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
@@ -17,7 +12,6 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageNodePresentation;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -113,12 +107,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   // >= 0 if found, < 0 if not found
   private static int getNodeIndex(@NotNull Node newNode, @NotNull List<? extends Node> children) {
     return Collections.binarySearch(children, newNode, COMPARATOR);
-  }
-
-  // always >= 0
-  private static int getNodeInsertionIndex(@NotNull Node node, @NotNull List<? extends Node> children) {
-    int i = getNodeIndex(node, children);
-    return i >= 0 ? i : -i - 1;
   }
 
   void addTargetsNode(@NotNull Node node, @NotNull DefaultTreeModel treeModel) {
@@ -401,17 +389,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     if (group == null || !group.isValid()) {
       return;
     }
-    PsiElement element = group instanceof DataProvider
-                         ? CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group)
-                         : null;
     FileStatus fileStatus = group.getFileStatus();
     Color foregroundColor = fileStatus != null ? fileStatus.getColor() : null;
-    var tagIconAndText = TagManager.getTagIconAndText(element);
-    Icon icon = IconUtil.rowIcon(tagIconAndText.icon(), group.getIcon());
+    Icon icon = group.getIcon();
     List<TextChunk> chunks = new ArrayList<>();
-    for (ColoredText.Fragment fragment : tagIconAndText.coloredText().fragments()) {
-      chunks.add(new TextChunk(fragment.fragmentAttributes().toTextAttributes(), fragment.fragmentText()));
-    }
     TextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
     attributes.setForegroundColor(foregroundColor);
     chunks.add(new TextChunk(attributes, group.getPresentableGroupText()));

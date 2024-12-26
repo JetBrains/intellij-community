@@ -437,28 +437,6 @@ com.intellij.ide.bookmark.BookmarksManager
 - a:isManualOrder():Z
 - a:isSortByType():Z
 *f:com.intellij.ide.projectView.NodeSortSettings$Companion
-*a:com.intellij.ide.tags.TagManager
-- <init>():V
-- s:getElementTags(com.intellij.psi.PsiElement):java.util.Collection
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.tags.TagManager
-- s:getTagIconAndText(com.intellij.psi.PsiElement):com.intellij.ide.tags.TagManager$TagIconAndText
-- a:getTags(com.intellij.psi.PsiElement):java.util.Collection
-- s:isEnabled():Z
-*f:com.intellij.ide.tags.TagManager$Tag
-- f:color:java.awt.Color
-- f:icon:javax.swing.Icon
-- f:text:java.lang.String
-- <init>(java.lang.String,java.awt.Color,javax.swing.Icon):V
-- equals(java.lang.Object):Z
-- hashCode():I
-*f:com.intellij.ide.tags.TagManager$TagIconAndText
-- java.lang.Record
-- sf:EMPTY:com.intellij.ide.tags.TagManager$TagIconAndText
-- <init>(javax.swing.Icon,com.intellij.ui.ColoredText):V
-- coloredText():com.intellij.ui.ColoredText
-- f:equals(java.lang.Object):Z
-- f:hashCode():I
-- icon():javax.swing.Icon
 *:com.intellij.ide.util.projectWizard.ModuleNameGenerator
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getUi(java.lang.String,java.util.function.Consumer):javax.swing.JComponent

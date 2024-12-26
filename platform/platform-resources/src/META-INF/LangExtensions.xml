@@ -1329,8 +1329,6 @@
     <fileDocumentSynchronizationVetoer implementation="com.intellij.codeInsight.lookup.impl.LookupDocumentSavingVetoer"/>
     <toolsProvider implementation="com.intellij.tools.LocalToolsProvider"/>
 
-    <projectService serviceInterface="com.intellij.ide.tags.TagManager" serviceImplementation="com.intellij.ide.tags.TagManagerImpl"/>
-
     <applicationService serviceInterface="com.intellij.codeInsight.FileModificationService"
                         serviceImplementation="com.intellij.codeInsight.CodeInsightUtilBase"/>
     <applicationService serviceInterface="com.intellij.ide.util.treeView.TreeAnchorizer"

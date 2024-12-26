@@ -9832,7 +9832,6 @@ a:com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 - f:getHighlightedText():com.intellij.openapi.roots.ui.util.CompositeAppearance
 - ps:getInvalidPrefixAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - ps:getPackageNameAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- getTagIconAndTextCached():com.intellij.ide.tags.TagManager$TagIconAndText
 - ps:getUsageCountPrefixAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - pf:installIcon(com.intellij.psi.PsiElement,Z):V
 - pf:installIcon(javax.swing.Icon,Z):V

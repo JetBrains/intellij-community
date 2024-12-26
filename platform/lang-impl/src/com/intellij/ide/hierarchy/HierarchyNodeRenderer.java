@@ -3,7 +3,6 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.tags.TagManager;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -34,10 +33,8 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
                                     int row, boolean hasFocus) {
     Object userObject = TreeUtil.getUserObject(value);
     if (userObject instanceof HierarchyNodeDescriptor descriptor) {
-      var tagIconAndText = descriptor.getTagIconAndTextCached();
       descriptor.getHighlightedText().customize(this);
-      setIcon(IconUtil.rowIcon(tagIconAndText.icon(), fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus)));
-      append(tagIconAndText.coloredText());
+      setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
     }
     else {
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
