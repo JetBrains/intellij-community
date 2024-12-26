@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import org.junitpioneer.jupiter.params.IntRangeSource
+import org.opentest4j.AssertionFailedError
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -211,33 +212,51 @@ class EelChannelToolsTest {
     val pipe = EelPipe()
     val input = pipe.source.consumeAsInputStream()
     Assertions.assertEquals(0, input.available(), "empty stream must have 0 available")
-    val sender = launch {
-      // TODO:Doc first fail, send not
-      repeat(2) {
-        when (pipe.sink.send(allocate(bytesCount))) {
-          is EelResult.Error -> if (it == 0) fail("Sending to opened channel shouldn't be an error")
-          is EelResult.Ok -> if (it == 1) fail("Sending to closed channel must be an error")
-        }
-      }
+
+    // 8192
+    launch {
+      pipe.sink.send(allocate(bytesCount)).getOrThrow()
     }
-    awaitForCondition("Wrong number of bytes available") {
-      input.available() == bytesCount
+    // 8192 * 2
+    launch {
+      pipe.sink.send(allocate(bytesCount)).getOrThrow()
     }
+    awaitForCondition {
+      Assertions.assertEquals(bytesCount * 2, input.available(), "Wrong number of bytes available")
+    }
+    // 8192
+    pipe.source.receive(allocate(bytesCount)).getOrThrow()
+    // 8193
     launch {
       pipe.sink.send(allocate(1)).getOrThrow()
     }
-    awaitForCondition("Wrong number of bytes available") {
-      input.available() == bytesCount + 1
+    awaitForCondition {
+      Assertions.assertEquals(bytesCount + 1, input.available(), "Wrong number of bytes available")
+    }
+    // 1
+    pipe.source.receive(allocate(bytesCount)).getOrThrow()
+    awaitForCondition {
+      Assertions.assertEquals(1, input.available(), "After receiving there must be 0 bytes")
     }
 
-
+    //0
     pipe.source.receive(allocate(bytesCount)).getOrThrow()
-    Assertions.assertEquals(1, input.available(), "After receiving there must be 0 bytes")
-    pipe.source.receive(allocate(bytesCount)).getOrThrow()
-    Assertions.assertEquals(0, input.available(), "After receiving there must be 0 bytes")
+    awaitForCondition {
+      Assertions.assertEquals(0, input.available(), "After receiving there must be 0 bytes")
+    }
+    launch {
+      when (pipe.sink.send(allocate(bytesCount))) {
+        is EelResult.Error -> Unit
+        is EelResult.Ok -> fail("Writing to the closed channel must fail")
+      }
+    }
+    awaitForCondition {
+      Assertions.assertEquals(bytesCount, input.available(), "Wrong number of bytes available")
+    }
     pipe.closePipe()
-    sender.join()
-    Assertions.assertEquals(0, input.available(), "Closed channel available must be 0 bytes")
+    awaitForCondition {
+      Assertions.assertEquals(0, input.available(), "Closed channel available must be 0 bytes")
+    }
   }
 
   @CartesianTest
@@ -430,12 +449,14 @@ private class ByteArrayInputStreamLimited(data: ByteArray, private val blockSize
   }
 }
 
-private suspend fun awaitForCondition(errorMessage: String, condition: suspend () -> Boolean) {
+private suspend fun awaitForCondition(code: suspend () -> Unit) {
   repeat(10) {
-    if (condition()) {
-      return
+    try {
+      code()
     }
-    delay(100)
+    catch (_: AssertionFailedError) {
+      delay(100)
+    }
   }
-  assertTrue(condition(), errorMessage)
+  code()
 }

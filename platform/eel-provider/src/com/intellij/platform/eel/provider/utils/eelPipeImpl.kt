@@ -12,9 +12,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicInteger
 
 
 internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveChannel<ErrorString> {
@@ -24,24 +23,21 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
   }
 
   private val channel = Channel<ByteBuffer>()
-  private val bytesInQueueMutex = Mutex(locked = false)
 
   /**
    * Number of bytes currently waiting to be received by [source].
    * This can be used as a hint for [java.io.InputStream.available]
    */
-  @Volatile
-  var bytesInQueue: Int = 0
-    private set
+  private val _bytesInQueue = AtomicInteger(0)
+  internal val bytesInQueue: Int get() = _bytesInQueue.get()
 
   override val sink: EelSendChannel<ErrorString> = this
   override val source: EelReceiveChannel<ErrorString> = this
 
   override suspend fun send(src: ByteBuffer): EelResult<Unit, ErrorString> {
+    val remaining = src.remaining()
     try {
-      bytesInQueueMutex.withLock {
-        bytesInQueue += src.remaining()
-      }
+      _bytesInQueue.addAndGet(remaining)
       channel.send(src)
       return OK_UNIT
     }
@@ -52,6 +48,9 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
     catch (e: PipeBrokenException) {
       closePipe()
       return e.asErrorResult()
+    }
+    finally {
+      _bytesInQueue.addAndGet(-remaining)
     }
   }
 
@@ -67,7 +66,6 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       closePipe()
       return e.asErrorResult()
     }
-    val bytesToWrite = src.remaining()
     // Choose the best approach:
     if (src.remaining() <= dst.remaining()) {
       // Bulk put the whole buffer
@@ -79,14 +77,11 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       dst.put(src.limit(src.position() + dst.remaining()))
       src.limit(l)
     }
-    bytesInQueueMutex.withLock {
-      bytesInQueue -= bytesToWrite - src.remaining()
-    }
     return OK_NOT_EOF
   }
 
   override suspend fun close() {
-    if (bytesInQueueMutex.withLock { bytesInQueue } != 0) {
+    if (_bytesInQueue.get() > 0) {
       // We still have some data to be delivered. Let's wait sometime to give change to read it
       delay(200)
     }
@@ -95,12 +90,11 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
 
 
   override fun closePipe(error: Throwable?) {
-    if (bytesInQueue > 0) {
+    if (_bytesInQueue.get() > 0) {
       // We still have some data to be delivered. Let's wait sometime to give change to read it
       Thread.sleep(200)
     }
     channel.close(error?.let { PipeBrokenException(it) })
-    bytesInQueue = 0
     channel.cancel() //If there is a coroutine near `send`, it must get an error
   }
 }
