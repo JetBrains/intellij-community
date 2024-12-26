@@ -228,7 +228,7 @@ open class JDIEval(
 
             if (internalMethods.isNotEmpty()) {
                 return internalMethods.singleOrNull()
-                    ?: throwBrokenCodeException(IllegalArgumentException("Several internal methods found for $methodDesc"))
+                    ?: throwBrokenCodeException(Eval4JIllegalArgumentException("Several internal methods found for $methodDesc"))
             }
         }
 
@@ -515,9 +515,9 @@ private fun <T> JdiOperationResult<T>.ifFail(lazyMessage: () -> String): T {
         is JdiOperationResult.OK -> this.value
         is JdiOperationResult.Fail -> {
             if (cause is IllegalArgumentException) {
-                throwBrokenCodeException(IllegalArgumentException(lazyMessage(), this.cause))
+                throwBrokenCodeException(Eval4JIllegalArgumentException(lazyMessage(), this.cause))
             } else {
-                throwBrokenCodeException(IllegalStateException(lazyMessage(), this.cause))
+                throwBrokenCodeException(Eval4JIllegalStateException(lazyMessage(), this.cause))
             }
         }
     }

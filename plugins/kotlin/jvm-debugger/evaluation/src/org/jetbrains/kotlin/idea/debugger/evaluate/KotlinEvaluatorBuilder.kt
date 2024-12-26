@@ -163,6 +163,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 val cause = e.cause
                 val errorType = when {
                     e is ControlFlowException || e is IndexNotReadyException -> StatisticsEvaluationResult.UNRELATED_EXCEPTION
+                    e is LinkageError || e is Eval4JIllegalArgumentException || e is Eval4JIllegalStateException ->
+                        StatisticsEvaluationResult.MISCOMPILED
                     e is Eval4JInterpretingException ->
                         if (!hasCast && e.cause is ClassCastException) StatisticsEvaluationResult.MISCOMPILED
                         else StatisticsEvaluationResult.USER_EXCEPTION
