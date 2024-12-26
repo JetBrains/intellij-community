@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.execution.ui
@@ -436,7 +436,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     }
 
     getToolWindowManager().getToolWindow(id)?.apply {
-      stripeTitle = executor.actionName
+      stripeTitle = executor.toolWindowTitle
       setIcon(executor.toolWindowIcon)
       toolWindowIdToBaseIcon[id] = executor.toolWindowIcon
     }

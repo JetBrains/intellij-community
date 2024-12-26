@@ -252,6 +252,7 @@ a:com.intellij.execution.Executor
 - getStartActionText(java.lang.String):java.lang.String
 - a:getToolWindowIcon():javax.swing.Icon
 - a:getToolWindowId():java.lang.String
+- getToolWindowTitle():java.lang.String
 - isApplicable(com.intellij.openapi.project.Project):Z
 - s:shortenNameIfNeeded(java.lang.String):java.lang.String
 a:com.intellij.execution.ExecutorRegistry
