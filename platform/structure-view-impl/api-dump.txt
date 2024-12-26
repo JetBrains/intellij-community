@@ -58,7 +58,7 @@ f:com.intellij.ide.structureView.logical.ConvertElementsProvider$Companion
 - f:convert(java.lang.Object):kotlin.sequences.Sequence
 com.intellij.ide.structureView.logical.ExternalElementsProvider
 - com.intellij.ide.structureView.logical.ContainerElementsProvider
-c:com.intellij.ide.structureView.logical.LogicalStructureDataKeys
+f:com.intellij.ide.structureView.logical.LogicalStructureDataKeys
 - sf:STRUCTURE_TREE_ELEMENT:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
 com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider

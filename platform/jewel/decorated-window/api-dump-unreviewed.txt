@@ -6,7 +6,7 @@ com.jetbrains.DesktopActions$Handler
 - mail(java.net.URI):V
 - open(java.io.File):V
 - print(java.io.File):V
-c:com.jetbrains.JBR
+f:com.jetbrains.JBR
 - s:getApiVersion():java.lang.String
 - s:getDesktopActions():com.jetbrains.DesktopActions
 - s:getRoundedCornersManager():com.jetbrains.RoundedCornersManager
