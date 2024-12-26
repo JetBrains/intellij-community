@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.*;
@@ -61,9 +61,7 @@ final class SerializableCtorInspection extends DevKitUastInspectionBase {
     return ContainerUtil.exists(aClass.getFields(), field -> name.equals(field.getName()));
   }
 
-  @NotNull
-  @Unmodifiable
-  private static List<UMethod> getConstructors(@NotNull UClass aClass) {
+  private static @NotNull @Unmodifiable List<UMethod> getConstructors(@NotNull UClass aClass) {
     return ContainerUtil.filter(aClass.getMethods(), method -> method.isConstructor());
   }
 

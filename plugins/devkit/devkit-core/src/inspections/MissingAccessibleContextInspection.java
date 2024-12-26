@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -162,8 +162,7 @@ final class MissingAccessibleContextInspection extends DevKitUastInspectionBase 
       return leafs;
     }
 
-    @NotNull
-    private static Queue<UExpression> findDirectExpressions(@NotNull UExpression body, @NotNull UElement context) {
+    private static @NotNull Queue<UExpression> findDirectExpressions(@NotNull UExpression body, @NotNull UElement context) {
       Queue<UExpression> direct = new ArrayDeque<>();
       if (body instanceof UBlockExpression) {
         body.accept(new AbstractUastVisitor() {
@@ -195,8 +194,7 @@ final class MissingAccessibleContextInspection extends DevKitUastInspectionBase 
       return false;
     }
 
-    @Nullable
-    private static PsiClass findReturnedClass(UExpression result) {
+    private static @Nullable PsiClass findReturnedClass(UExpression result) {
       PsiClass panelClass = null;
       if (result instanceof UObjectLiteralExpression) {
         panelClass = ((UObjectLiteralExpression)result).getDeclaration().getJavaPsi();

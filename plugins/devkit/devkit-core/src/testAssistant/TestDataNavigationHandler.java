@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -30,13 +30,11 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     navigate(new RelativePoint(e), fileNames, elt.getProject());
   }
 
-  @NotNull
-  static List<TestDataFile> getFileNames(PsiMethod method) {
+  static @NotNull List<TestDataFile> getFileNames(PsiMethod method) {
     return getFileNames(method, true);
   }
 
-  @NotNull
-  static List<TestDataFile> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
+  static @NotNull List<TestDataFile> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
     List<TestDataFile> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
     if (testDataPath != null) {
@@ -69,8 +67,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     showNavigationPopup(project, testDataFiles, point);
   }
 
-  @NotNull
-  public static List<String> fastGetTestDataPathsByRelativePath(@NotNull String testDataFileRelativePath, PsiMethod method) {
+  public static @NotNull List<String> fastGetTestDataPathsByRelativePath(@NotNull String testDataFileRelativePath, PsiMethod method) {
     return getFileNames(method, false).stream()
       .map(TestDataFile::getPath)
       .filter(path -> path.endsWith(testDataFileRelativePath.startsWith("/") ? testDataFileRelativePath : "/" + testDataFileRelativePath))

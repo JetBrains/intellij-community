@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.openapi.project.Project;
@@ -47,14 +47,12 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
    *
    * @see #getAttribute(Extension, String)
    */
-  @Nullable
-  protected GenericAttributeValue<String> getNameElement(Extension extension) {
+  protected @Nullable GenericAttributeValue<String> getNameElement(Extension extension) {
     return extension.getId();
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final String resolveId = getResolveValue();
     if (StringUtil.isEmptyOrSpaces(resolveId)) return null;
 
@@ -72,8 +70,7 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
     return getValue();
   }
 
-  @Nullable
-  protected static GenericAttributeValue<?> getAttribute(Extension extension, String attributeName) {
+  protected static @Nullable GenericAttributeValue<?> getAttribute(Extension extension, String attributeName) {
     final DomAttributeChildDescription attributeDescription = extension.getGenericInfo().getAttributeChildDescription(attributeName);
     if (attributeDescription == null) {
       return null;
@@ -82,8 +79,7 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
     return attributeDescription.getDomAttributeValue(extension);
   }
 
-  @Nullable
-  protected static String getAttributeValue(Extension extension, String attributeName) {
+  protected static @Nullable String getAttributeValue(Extension extension, String attributeName) {
     final GenericAttributeValue attribute = getAttribute(extension, attributeName);
     return attribute == null ? null : attribute.getStringValue();
   }

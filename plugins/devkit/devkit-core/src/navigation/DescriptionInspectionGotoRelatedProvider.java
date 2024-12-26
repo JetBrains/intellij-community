@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -35,11 +35,10 @@ import java.util.Set;
 
 final class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider {
 
-  @NonNls private static final String INSPECTION_CLASS_NAME_SUFFIX = "Inspection";
+  private static final @NonNls String INSPECTION_CLASS_NAME_SUFFIX = "Inspection";
 
-  @NotNull
   @Override
-  public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
+  public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     PsiFile descriptionFile = context.getData(CommonDataKeys.PSI_FILE);
     if (descriptionFile == null || descriptionFile.getFileType() != HtmlFileType.INSTANCE) {
       return Collections.emptyList();

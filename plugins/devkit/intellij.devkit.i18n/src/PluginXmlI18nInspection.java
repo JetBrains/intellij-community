@@ -241,9 +241,8 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     builder.createPopup().showCenteredInCurrentWindow(project);
   }
 
-  @NotNull
-  private static String getBundleQName(@NotNull Project project,
-                                       PropertiesFile propertiesFile) {
+  private static @NotNull String getBundleQName(@NotNull Project project,
+                                                PropertiesFile propertiesFile) {
     String baseName = propertiesFile.getResourceBundle().getBaseName();
     VirtualFile virtualFile = propertiesFile.getVirtualFile();
     VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virtualFile);
@@ -296,10 +295,8 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       return IntentionPreviewInfo.EMPTY;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "key");
     }
 
@@ -351,10 +348,8 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       this.prefix = prefix;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", attributeName);
     }
 
@@ -460,10 +455,8 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       myIsAction = isAction;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return DevKitI18nBundle.message("inspections.plugin.xml.i18n.name");
     }
 
@@ -607,10 +600,8 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
   private static class SeparatorKeyI18nQuickFix implements LocalQuickFix, BatchQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return DevKitI18nBundle.message("inspections.plugin.xml.i18n.key");
     }
 

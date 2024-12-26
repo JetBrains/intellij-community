@@ -57,8 +57,7 @@ final class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
     return null;
   }
 
-  @NotNull
-  private static SearchScope getAllPluginDescriptorFilesSearchScope(PsiElement element) {
+  private static @NotNull SearchScope getAllPluginDescriptorFilesSearchScope(PsiElement element) {
     Project project = element.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Collection<VirtualFile> pluginXmlFiles =

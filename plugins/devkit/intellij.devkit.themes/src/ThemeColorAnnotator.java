@@ -101,9 +101,8 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       return JBUIScale.scaleIcon(EmptyIcon.create(ICON_SIZE));
     }
 
-    @NotNull
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myIcon;
     }
 
@@ -112,15 +111,13 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       return canChooseColor();
     }
 
-    @Nullable
     @Override
-    public String getTooltipText() {
+    public @Nullable String getTooltipText() {
       return canChooseColor() ? DevKitThemesBundle.message("theme.choose.color.tooltip") : null;
     }
 
-    @Nullable
     @Override
-    public AnAction getClickAction() {
+    public @Nullable AnAction getClickAction() {
       if (!canChooseColor()) return null;
 
       return new AnAction(DevKitThemesBundle.messagePointer("action.Anonymous.text.choose.color")) {
@@ -164,8 +161,7 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       return isColorCode(myColorText);
     }
 
-    @Nullable
-    private Color getColor(@NotNull String colorText) {
+    private @Nullable Color getColor(@NotNull String colorText) {
       if (!isColorCode(colorText)) {
         return findNamedColor(colorText);
       }
@@ -173,8 +169,7 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       return parseColor(colorText);
     }
 
-    @Nullable
-    private static Color parseColor(@NotNull String colorHex) {
+    private static @Nullable Color parseColor(@NotNull String colorHex) {
       boolean isRgba = isRgbaColorHex(colorHex);
       if (!isRgba && !isRgbColorHex(colorHex)) return null;
 
@@ -193,8 +188,7 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       }
     }
 
-    @Nullable
-    private Color findNamedColor(String colorText) {
+    private @Nullable Color findNamedColor(String colorText) {
       final PsiFile file = myLiteral.getContainingFile();
       if (!(file instanceof JsonFile)) return null;
       final List<JsonProperty> colors = ThemeJsonUtil.getNamedColors((JsonFile)file);

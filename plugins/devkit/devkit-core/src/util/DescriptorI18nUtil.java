@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -24,8 +24,7 @@ import java.util.List;
 
 public final class DescriptorI18nUtil {
 
-  @NonNls
-  public static final String CORE_ACTIONS_BUNDLE = "messages.ActionsBundle";
+  public static final @NonNls String CORE_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
   public static @Nullable PropertiesFile findBundlePropertiesFile(@Nullable DomElement domElement) {
     XmlElement bundleXmlElement = null;

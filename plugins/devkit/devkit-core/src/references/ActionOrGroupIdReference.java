@@ -39,9 +39,8 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     myId = id;
   }
 
-  @NotNull
   @Override
-  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+  public @NotNull ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     Project project = getElement().getProject();
 
     final GlobalSearchScope scope = ProjectScope.getContentScope(project);

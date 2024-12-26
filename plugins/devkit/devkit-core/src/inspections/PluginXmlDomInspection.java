@@ -66,8 +66,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static final int MINIMAL_DESCRIPTION_LENGTH = 40;
 
-  @NonNls
-  public static final String DEPENDENCIES_DOC_URL =
+  public static final @NonNls String DEPENDENCIES_DOC_URL =
     "https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html?from=DevkitPluginXmlInspection";
 
   private static class Holder {
@@ -79,8 +78,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   public boolean myIgnoreUnstableApiDeclaredInThisProject = false;
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "PluginXmlValidity";
   }
 
@@ -1226,17 +1224,13 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       myCorrectValue = correctValue;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return DevKitBundle.message("inspections.plugin.xml.change.until.build.name", myCorrectValue);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.plugin.xml.change.until.build.family.name");
     }
 
@@ -1251,15 +1245,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static final class AddMissingMainTag implements LocalQuickFix {
 
-    @IntentionFamilyName
-    @NotNull
-    private final String myFamilyName;
+    private final @IntentionFamilyName @NotNull String myFamilyName;
 
-    @NotNull
-    private final String myTagName;
+    private final @NotNull String myTagName;
 
-    @Nullable
-    private final String myTagValue;
+    private final @Nullable String myTagValue;
 
     private AddMissingMainTag(@IntentionFamilyName @NotNull String familyName,
                               @NotNull GenericDomValue<String> domValue,
@@ -1269,10 +1259,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       myTagValue = tagValue;
     }
 
-    @IntentionFamilyName
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @IntentionFamilyName @NotNull String getFamilyName() {
       return myFamilyName;
     }
 

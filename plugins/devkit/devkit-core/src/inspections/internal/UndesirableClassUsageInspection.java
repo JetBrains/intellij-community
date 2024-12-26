@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -31,8 +31,7 @@ import java.util.Objects;
 @ApiStatus.Internal
 public final class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
-  @NonNls
-  private static final Map<String, String> CLASSES = Map.of(
+  private static final @NonNls Map<String, String> CLASSES = Map.of(
     JList.class.getName(), JBList.class.getName(),
     JTable.class.getName(), JBTable.class.getName(),
     JTree.class.getName(), Tree.class.getName(),

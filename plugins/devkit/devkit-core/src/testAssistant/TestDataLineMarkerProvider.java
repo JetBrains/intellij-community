@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -101,8 +101,7 @@ final class TestDataLineMarkerProvider extends LineMarkerProviderDescriptor {
     return new RunLineMarkerContributor.Info(new GotoTestDataAction(testDataBasePath, psiClass.getProject(), AllIcons.Nodes.Folder));
   }
 
-  @Nullable
-  public static String getTestDataBasePath(@Nullable PsiClass psiClass) {
+  public static @Nullable String getTestDataBasePath(@Nullable PsiClass psiClass) {
     if (psiClass == null) return null;
 
     return CachedValuesManager.getCachedValue(psiClass, () -> {
@@ -135,8 +134,7 @@ final class TestDataLineMarkerProvider extends LineMarkerProviderDescriptor {
     });
   }
 
-  @Nullable
-  public static String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
+  public static @Nullable String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
     Set<String> annotationNames = Collections.singleton(annotationFqName);
     boolean nestedClass = owner instanceof PsiClass && ((PsiClass)owner).getContainingClass() != null;
     PsiAnnotation element = nestedClass

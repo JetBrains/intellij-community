@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -135,9 +135,8 @@ public final class PluginDescriptorChooser {
     return extensions;
   }
 
-  @Unmodifiable
-  private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
-                                                                  @Unmodifiable List<? extends DomFileElement<IdeaPlugin>> elements) {
+  private static @Unmodifiable List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
+                                                                                @Unmodifiable List<? extends DomFileElement<IdeaPlugin>> elements) {
     ModuleGrouper grouper = ModuleGrouper.instanceFor(currentModule.getProject());
     final List<String> groupPath = grouper.getGroupPath(currentModule);
 

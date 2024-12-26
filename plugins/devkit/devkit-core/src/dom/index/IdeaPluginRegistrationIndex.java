@@ -72,9 +72,8 @@ public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String
     }
   };
 
-  @NotNull
   @Override
-  public ID<String, List<RegistrationEntry>> getName() {
+  public @NotNull ID<String, List<RegistrationEntry>> getName() {
     return NAME;
   }
 
@@ -83,15 +82,13 @@ public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String
     return new RegistrationIndexer(plugin).indexFile();
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<List<RegistrationEntry>> getValueExternalizer() {
+  public @NotNull DataExternalizer<List<RegistrationEntry>> getValueExternalizer() {
     return myValueExternalizer;
   }
 

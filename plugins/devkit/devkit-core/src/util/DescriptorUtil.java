@@ -91,13 +91,11 @@ public final class DescriptorUtil {
     return getIdeaPluginFileElement((XmlFile)file) != null;
   }
 
-  @Nullable
-  public static DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
+  public static @Nullable DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
     return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
   }
 
-  @Nullable
-  public static IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
+  public static @Nullable IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
     final DomFileElement<IdeaPlugin> plugin = getIdeaPluginFileElement(file);
     return plugin != null ? plugin.getRootElement() : null;
   }
@@ -115,9 +113,7 @@ public final class DescriptorUtil {
     return DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, domElementClass) != null;
   }
 
-  @NotNull
-  @Unmodifiable
-  public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
+  public static @NotNull @Unmodifiable Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);

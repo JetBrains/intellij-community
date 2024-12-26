@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -41,8 +41,7 @@ final class RegistrationCheckerUtil {
   /**
    * @return the classes that the given {@code psiClass} is registered as, e.g., PsiClass representing AnAction, ProjectComponent, etc.
    */
-  @Nullable
-  static Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
+  static @Nullable Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
@@ -74,14 +73,12 @@ final class RegistrationCheckerUtil {
     return null;
   }
 
-  @Nullable
-  private static Set<PsiClass> checkIdeaProject(Project project, RegistrationTypeFinder finder) {
+  private static @Nullable Set<PsiClass> checkIdeaProject(Project project, RegistrationTypeFinder finder) {
     finder.processScope(GlobalSearchScopesCore.projectProductionScope(project));
     return finder.getTypes();
   }
 
-  @Nullable
-  private static Set<PsiClass> checkModule(Module module, RegistrationTypeFinder finder) {
+  private static @Nullable Set<PsiClass> checkModule(Module module, RegistrationTypeFinder finder) {
     final DomFileElement<IdeaPlugin> pluginXml = getPluginXmlFile(module);
     if (pluginXml == null) {
       return null;
@@ -133,8 +130,7 @@ final class RegistrationCheckerUtil {
     return finder.getTypes();
   }
 
-  @Nullable
-  private static DomFileElement<IdeaPlugin> getPluginXmlFile(Module module) {
+  private static @Nullable DomFileElement<IdeaPlugin> getPluginXmlFile(Module module) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml == null) {
       return null;

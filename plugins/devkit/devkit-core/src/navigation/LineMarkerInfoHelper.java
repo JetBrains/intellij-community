@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
-import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.util.ActionCandidate;
 import org.jetbrains.idea.devkit.util.ComponentCandidate;
 import org.jetbrains.idea.devkit.util.ListenerCandidate;
@@ -114,9 +114,8 @@ final class LineMarkerInfoHelper {
             return getDomElementName((T)domElement, namer);
           }
 
-          @Nls
           @Override
-          public @Nullable String getCustomContainerName() {
+          public @Nls @Nullable String getCustomContainerName() {
             PsiElement psiElement = getElement();
             if (psiElement == null) return null;
             return UniqueVFilePathBuilder.getInstance()
@@ -132,25 +131,21 @@ final class LineMarkerInfoHelper {
         return getDomElementName((T)domElement, namer);
       })
       .setTargetRenderer(() -> new PsiTargetPresentationRenderer<>() {
-        @Nls
-        @NotNull
         @Override
-        public String getElementText(@NotNull PsiElement element) {
+        public @Nls @NotNull String getElementText(@NotNull PsiElement element) {
           DomElement domElement = DomUtil.getDomElement(element);
           //noinspection unchecked
           return getDomElementName((T)domElement, namer);
         }
 
-        @Nls
         @Override
-        public String getContainerText(@NotNull PsiElement element) {
+        public @Nls String getContainerText(@NotNull PsiElement element) {
           return UniqueVFilePathBuilder.getInstance()
             .getUniqueVirtualFilePath(element.getProject(), element.getContainingFile().getVirtualFile());
         }
 
-        @Nullable
         @Override
-        protected Icon getIcon(@NotNull PsiElement element) {
+        protected @Nullable Icon getIcon(@NotNull PsiElement element) {
           DomElement domElement = DomUtil.getDomElement(element);
           assert domElement != null;
           return ObjectUtils.chooseNotNull(domElement.getPresentation().getIcon(), element.getIcon(0));
@@ -160,8 +155,7 @@ final class LineMarkerInfoHelper {
       .createLineMarkerInfo(element);
   }
 
-  @NlsSafe
-  private static <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
+  private static @NlsSafe <T extends DomElement> String getDomElementName(T domElement, NullableFunction<T, @NlsSafe String> namer) {
     return StringUtil.defaultIfEmpty(namer.fun(domElement), "?");
   }
 }

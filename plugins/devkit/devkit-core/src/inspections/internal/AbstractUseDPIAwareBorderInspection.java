@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -47,7 +47,7 @@ abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionB
   protected abstract @NotNull LocalQuickFix createConvertToDpiAwareMethodCall();
 
   @Override
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
@@ -144,8 +144,7 @@ abstract class AbstractUseDPIAwareBorderInspection extends DevKitUastInspectionB
     return true;
   }
 
-  @Nullable
-  private static Integer evaluateIntegerValue(@NotNull UExpression expression) {
+  private static @Nullable Integer evaluateIntegerValue(@NotNull UExpression expression) {
     Object evaluatedExpression = expression.evaluate();
     if (evaluatedExpression instanceof Integer value) {
       return value;

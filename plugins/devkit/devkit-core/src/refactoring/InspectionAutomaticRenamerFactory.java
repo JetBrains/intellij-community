@@ -52,9 +52,8 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
            !isGetShortNameMethodOverridden(inspectionClass);
   }
 
-  @Nls
   @Override
-  public String getOptionName() {
+  public @Nls String getOptionName() {
     return DevKitBundle.message("inspection.renamer.option.name");
   }
 
@@ -68,9 +67,8 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     PropertiesComponent.getInstance().setValue(PROPERTY_RENAME_DESCRIPTION_AND_SHORT_NAME, enabled);
   }
 
-  @NotNull
   @Override
-  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
+  public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new InspectionAutomaticRenamer((PsiClass)element, newName);
   }
 
@@ -144,15 +142,13 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     }
 
 
-    @Nls
     @Override
-    public String getDialogTitle() {
+    public @Nls String getDialogTitle() {
       return DevKitBundle.message("inspection.renamer.dialog.title");
     }
 
-    @Nls
     @Override
-    public String getDialogDescription() {
+    public @Nls String getDialogDescription() {
       return DevKitBundle.message("inspection.renamer.dialog.description");
     }
 
@@ -217,13 +213,11 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     /**
      * @return inspection description file name without extension.
      */
-    @NotNull
-    private static String getDescriptionFileName(String inspectionClassName) {
+    private static @NotNull String getDescriptionFileName(String inspectionClassName) {
       return StringUtil.trimEnd(inspectionClassName, INSPECTION_CLASS_SUFFIX);
     }
 
-    @Nullable
-    private static XmlAttribute getInspectionShortNameAttribute(DescriptionTypeResolver resolver) {
+    private static @Nullable XmlAttribute getInspectionShortNameAttribute(DescriptionTypeResolver resolver) {
       return resolver.getUserData(DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_XML_ATTRIBUTE);
     }
   }

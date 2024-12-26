@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -128,19 +128,15 @@ abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase implemen
       PsiReplacementUtil.replaceExpression(binaryExpression, expString, commentTracker);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myNegated ?
              DevKitBundle.message("inspections.use.equals.fix.replace.equality.with.not.equals.name", myCurrentOperator) :
              DevKitBundle.message("inspections.use.equals.fix.replace.equality.with.equals.name", myCurrentOperator);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.use.equals.fix.replace.equality.with.equals.family.name");
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -22,9 +22,8 @@ abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlugin> {
     return ideaPlugin != null ? ideaPlugin.getPluginId() : null;
   }
 
-  @Nullable
   @Override
-  public LookupElement createLookupElement(IdeaPlugin plugin) {
+  public @Nullable LookupElement createLookupElement(IdeaPlugin plugin) {
     final String pluginId = plugin.getPluginId();
     if (pluginId == null) return null;
 
@@ -35,7 +34,7 @@ abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlugin> {
   }
 
   @Override
-  public String getErrorMessage(@Nullable final String s, final @NotNull ConvertContext context) {
+  public String getErrorMessage(final @Nullable String s, final @NotNull ConvertContext context) {
     return new HtmlBuilder()
       .append(DevKitBundle.message("error.cannot.resolve.plugin", s))
       .nbsp()

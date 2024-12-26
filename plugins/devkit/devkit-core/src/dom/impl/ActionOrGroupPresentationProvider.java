@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.icons.AllIcons;
@@ -26,16 +26,14 @@ import javax.swing.*;
 public class ActionOrGroupPresentationProvider extends PresentationProvider<ActionOrGroup> {
 
   @Override
-  @Nullable
-  public Icon getIcon(@Nullable ActionOrGroup actionOrGroup) {
+  public @Nullable Icon getIcon(@Nullable ActionOrGroup actionOrGroup) {
     return getIconForActionOrGroup(actionOrGroup);
   }
 
   public static class ForReference extends PresentationProvider<Reference> {
 
-    @Nullable
     @Override
-    public Icon getIcon(Reference reference) {
+    public @Nullable Icon getIcon(Reference reference) {
       //noinspection deprecation
       if (DomUtil.hasXml(reference.getId())) {
         //noinspection deprecation
@@ -48,15 +46,13 @@ public class ActionOrGroupPresentationProvider extends PresentationProvider<Acti
 
   public static class ForAddToGroup extends PresentationProvider<AddToGroup> {
 
-    @Nullable
     @Override
-    public Icon getIcon(AddToGroup addToGroup) {
+    public @Nullable Icon getIcon(AddToGroup addToGroup) {
       return getIconForActionOrGroup(addToGroup.getGroupId().getValue());
     }
   }
 
-  @Nullable
-  private static Icon getIconForActionOrGroup(@Nullable ActionOrGroup actionOrGroup) {
+  private static @Nullable Icon getIconForActionOrGroup(@Nullable ActionOrGroup actionOrGroup) {
     if (actionOrGroup == null || !DomUtil.hasXml(actionOrGroup.getIcon())) {
       return actionOrGroup instanceof Group ? AllIcons.Actions.GroupByPackage : null;
     }
@@ -84,8 +80,7 @@ public class ActionOrGroupPresentationProvider extends PresentationProvider<Acti
     return null;
   }
 
-  @Nullable
-  private static Icon getIconFromReference(@NotNull PsiReference reference) {
+  private static @Nullable Icon getIconFromReference(@NotNull PsiReference reference) {
     PsiElement resolved = reference.resolve();
     if (!(resolved instanceof PsiField)) {
       return null;

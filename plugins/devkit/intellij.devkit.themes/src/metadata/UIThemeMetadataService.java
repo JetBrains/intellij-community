@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.metadata;
 
 import com.intellij.ide.ui.UIThemeMetadata;
@@ -57,8 +57,7 @@ public final class UIThemeMetadataService {
     return true;
   }
 
-  @Nullable
-  public Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findByKey(String key) {
+  public @Nullable Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findByKey(String key) {
     var baseKey = key;
     baseKey = StringUtil.trimEnd(baseKey, ".compact");
     baseKey = StringUtil.trimEnd(baseKey, ".os.mac");

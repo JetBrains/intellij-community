@@ -15,9 +15,8 @@ public class StubTreeStructure extends SimpleTreeStructure {
     myRoot = root;
   }
 
-  @NotNull
   @Override
-  public StubTreeNode getRootElement() {
+  public @NotNull StubTreeNode getRootElement() {
     return myRoot;
   }
 }

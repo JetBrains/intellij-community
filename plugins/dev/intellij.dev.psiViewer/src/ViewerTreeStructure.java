@@ -39,9 +39,8 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return myRootPsiElement;
   }
 
-  @NotNull
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRootElement;
   }
 
@@ -130,8 +129,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor<?> createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor<?> createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new NodeDescriptor<>(myProject, null) {
         @Override
@@ -156,10 +154,8 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   }
 
   static class Inject {
-    @NotNull
-    private final PsiElement myParent;
-    @NotNull
-    private final PsiElement myPsi;
+    private final @NotNull PsiElement myParent;
+    private final @NotNull PsiElement myPsi;
 
     Inject(@NotNull PsiElement parent, @NotNull PsiElement psi) {
       myParent = parent;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -39,9 +39,8 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGroup> {
 
-  @NotNull
   @Override
-  public Collection<? extends ActionOrGroup> getVariants(@NotNull ConvertContext context) {
+  public @NotNull Collection<? extends ActionOrGroup> getVariants(@NotNull ConvertContext context) {
     return getVariants(context.getProject(), context.getModule());
   }
 
@@ -62,17 +61,15 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return variants;
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement(@Nullable ActionOrGroup resolvedValue) {
+  public @Nullable PsiElement getPsiElement(@Nullable ActionOrGroup resolvedValue) {
     if (resolvedValue == null) return null;
     DomTarget target = DomTarget.getTarget(resolvedValue);
     return target == null ? super.getPsiElement(resolvedValue) : PomService.convertToPsi(target);
   }
 
-  @Nullable
   @Override
-  public ActionOrGroup fromString(@Nullable @NonNls final String value, @NotNull ConvertContext context) {
+  public @Nullable ActionOrGroup fromString(final @Nullable @NonNls String value, @NotNull ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(value)) return null;
 
     final Project project = context.getProject();
@@ -89,9 +86,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return result.get();
   }
 
-  @Nullable
   @Override
-  public String toString(@Nullable ActionOrGroup actionGroup, @NotNull ConvertContext context) {
+  public @Nullable String toString(@Nullable ActionOrGroup actionGroup, @NotNull ConvertContext context) {
     return actionGroup == null ? null : getName(actionGroup);
   }
 
@@ -100,9 +96,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return DevKitBundle.message("plugin.xml.convert.action.or.group.cannot.resolve", getResultTypes(), s);
   }
 
-  @Nullable
   @Override
-  public LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
+  public @Nullable LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
     PsiElement psiElement = getPsiElement(actionOrGroup);
     String name = StringUtil.notNullize(getName(actionOrGroup), DevKitBundle.message("plugin.xml.convert.action.or.group.invalid.name"));
     LookupElementBuilder builder = psiElement == null ? LookupElementBuilder.create(name) :
@@ -116,8 +111,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return true;
   }
 
-  @Nls
-  protected String getResultTypes() {
+  protected @Nls String getResultTypes() {
     return DevKitBundle.message("plugin.xml.convert.action.or.group.type.action.or.group");
   }
 
@@ -161,8 +155,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     });
   }
 
-  @Nullable
-  private static String getName(@NotNull ActionOrGroup actionOrGroup) {
+  private static @Nullable String getName(@NotNull ActionOrGroup actionOrGroup) {
     return actionOrGroup.getId().getStringValue();
   }
 
@@ -198,10 +191,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
       }
     }
 
-    @Nullable
-    private static String getLocalizedText(ActionOrGroup actionOrGroup,
-                                           ActionOrGroup.TextType text,
-                                           NullableLazyValue<PropertiesFile> propertiesFile) {
+    private static @Nullable String getLocalizedText(ActionOrGroup actionOrGroup,
+                                                     ActionOrGroup.TextType text,
+                                                     NullableLazyValue<PropertiesFile> propertiesFile) {
       final String plain = text.getDomValue(actionOrGroup).getStringValue();
       if (StringUtil.isNotEmpty(plain)) return plain;
 

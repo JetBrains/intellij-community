@@ -6,7 +6,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -43,7 +42,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private Sdk myIdeaJdk;
 
   private boolean myModified;
-  @NonNls private static final String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
+  private static final @NonNls String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
 
   private final SdkModel mySdkModel;
   private final SdkModificator mySdkModificator;
@@ -76,7 +75,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       }
 
       @Override
-      public void sdkHomeSelected(@NotNull final Sdk sdk, @NotNull final String newSdkHome) {
+      public void sdkHomeSelected(final @NotNull Sdk sdk, final @NotNull String newSdkHome) {
         if (sdk.getSdkType() instanceof IdeaJdk) {
           internalJdkUpdate(sdk);
         }

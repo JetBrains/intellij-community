@@ -45,16 +45,11 @@ import static com.intellij.dev.psiViewer.PsiViewerDialog.initTree;
 
 public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
-  @NotNull
-  private final JComponent myComponent;
-  @NotNull
-  private final Tree myBlockTree;
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final PsiTreeUpdater myUpdater;
-  @Nullable
-  private volatile HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
+  private final @NotNull JComponent myComponent;
+  private final @NotNull Tree myBlockTree;
+  private final @NotNull Project myProject;
+  private final @NotNull PsiTreeUpdater myUpdater;
+  private volatile @Nullable HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
   private AsyncTreeModel myTreeModel;
   private Disposable myTreeModelDisposable = Disposer.newDisposable();
 
@@ -82,9 +77,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
@@ -153,8 +147,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
 
-  @Nullable
-  private BlockTreeNode findBlockNode(PsiElement element) {
+  private @Nullable BlockTreeNode findBlockNode(PsiElement element) {
     HashMap<PsiElement, BlockTreeNode> psiToBlockMap = myPsiToBlockMap;
 
     BlockTreeNode result = psiToBlockMap == null ? null : psiToBlockMap.get(element);
@@ -166,8 +159,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
 
-  @NotNull
-  private TreeVisitor createVisitor(@NotNull BlockTreeNode currentBlockNode) {
+  private @NotNull TreeVisitor createVisitor(@NotNull BlockTreeNode currentBlockNode) {
     Function<Object, BlockTreeNode> converter = el -> el instanceof DefaultMutableTreeNode ?
                                                       (BlockTreeNode)((DefaultMutableTreeNode)el).getUserObject() :
                                                       null;
@@ -204,8 +196,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
   public class BlockTreeSelectionListener implements TreeSelectionListener {
-    @NotNull
-    private final PsiElement myRootElement;
+    private final @NotNull PsiElement myRootElement;
 
     public BlockTreeSelectionListener(@NotNull PsiElement rootElement) {
       myRootElement = rootElement;
@@ -247,8 +238,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
-  @Nullable
-  private BlockTreeNode findBlockNode(TextRange range) {
+  private @Nullable BlockTreeNode findBlockNode(TextRange range) {
     if (myTreeModel == null || !myComponent.isVisible()) {
       return null;
     }
@@ -273,8 +263,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
-  @Nullable
-  private static Block buildBlocks(@NotNull PsiElement rootElement) {
+  private static @Nullable Block buildBlocks(@NotNull PsiElement rootElement) {
     FormattingModelBuilder formattingModelBuilder = LanguageFormatting.INSTANCE.forContext(rootElement);
     CodeStyleSettings settings = CodeStyle.getSettings(rootElement.getContainingFile());
     if (formattingModelBuilder != null) {
@@ -318,8 +307,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     myPsiToBlockMap = psiToBlockMap;
   }
 
-  @Nullable
-  private DefaultMutableTreeNode getRoot() {
+  private @Nullable DefaultMutableTreeNode getRoot() {
     return (DefaultMutableTreeNode)myBlockTree.getModel().getRoot();
   }
 }

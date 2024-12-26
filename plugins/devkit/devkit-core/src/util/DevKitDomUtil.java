@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.util.ObjectUtils;
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class DevKitDomUtil {
 
-  @Nullable
-  public static GenericAttributeValue<?> getAttribute(DomElement domElement, @NonNls String attributeName) {
+  public static @Nullable GenericAttributeValue<?> getAttribute(DomElement domElement, @NonNls String attributeName) {
     final DomAttributeChildDescription<?> attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
     if (attributeDescription == null) {
       return null;
@@ -23,8 +22,7 @@ public final class DevKitDomUtil {
     return attributeDescription.getDomAttributeValue(domElement);
   }
 
-  @Nullable
-  public static GenericDomValue<?> getTag(DomElement domElement, @NonNls String tagName) {
+  public static @Nullable GenericDomValue<?> getTag(DomElement domElement, @NonNls String tagName) {
     final DomFixedChildDescription fixedChildDescription = domElement.getGenericInfo().getFixedChildDescription(tagName);
     if (fixedChildDescription == null) {
       return null;

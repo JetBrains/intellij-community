@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
@@ -157,13 +157,11 @@ public final class ShowSerializedXmlAction extends DumbAwareAction {
   private static class SampleObjectGenerator {
     private int myNum;
 
-    @Nullable
-    public Object createValue(Type type, final FList<Type> types) throws Exception {
+    public @Nullable Object createValue(Type type, final FList<Type> types) throws Exception {
       return createValue(type, types, Collections.emptyList());
     }
 
-    @Nullable
-    public Object createValue(Type type, final FList<Type> types, List<Type> elementTypes) throws Exception {
+    public @Nullable Object createValue(Type type, final FList<Type> types, List<Type> elementTypes) throws Exception {
       if (types.contains(type)) return null;
       FList<Type> processedTypes = types.prepend(type);
       final Class<?> valueClass = type instanceof Class ? (Class<Object>)type : (Class<Object>)((ParameterizedType)type).getRawType();
@@ -204,8 +202,7 @@ public final class ShowSerializedXmlAction extends DumbAwareAction {
       }
     }
 
-    @NotNull
-    public Object createObject(@NotNull Class<?> aClass, FList<Type> processedTypes) throws Exception {
+    public @NotNull Object createObject(@NotNull Class<?> aClass, FList<Type> processedTypes) throws Exception {
       Object o = ReflectionUtil.newInstance(aClass);
       for (MutableAccessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
         AbstractCollection abstractCollection = accessor.getAnnotation(AbstractCollection.class);
@@ -241,8 +238,7 @@ public final class ShowSerializedXmlAction extends DumbAwareAction {
       return map;
     }
 
-    @Nullable
-    private Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
+    private @Nullable Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
       Collection<Object> o;
       if (List.class.isAssignableFrom(aClass)) {
         o = new ArrayList<>();

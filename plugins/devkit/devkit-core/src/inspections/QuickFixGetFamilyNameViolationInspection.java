@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -24,7 +24,7 @@ final class QuickFixGetFamilyNameViolationInspection extends DevKitUastInspectio
 
   private static final boolean SKIP_CHILDREN = true;
 
-  private final static Set<String> BASE_CONTEXT_AWARE_CLASSES = Set.of(PsiElement.class.getName(),
+  private static final Set<String> BASE_CONTEXT_AWARE_CLASSES = Set.of(PsiElement.class.getName(),
                                                                        Navigatable.class.getName(),
                                                                        AreaInstance.class.getName(),
                                                                        VirtualFile.class.getName());

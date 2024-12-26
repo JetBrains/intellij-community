@@ -56,7 +56,7 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
    */
   private final DataExternalizer<IntList> myValueExternalizer = new DataExternalizer<>() {
     @Override
-    public void save(@NotNull final DataOutput out, final IntList values) throws IOException {
+    public void save(final @NotNull DataOutput out, final IntList values) throws IOException {
       final int size = values.size();
       if (size == 1) {
         DataInputOutputUtil.writeINT(out, -values.getInt(0));
@@ -70,7 +70,7 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
     }
 
     @Override
-    public IntList read(@NotNull final DataInput in) throws IOException {
+    public IntList read(final @NotNull DataInput in) throws IOException {
       int count = DataInputOutputUtil.readINT(in);
       if (count < 0) {
         return new IntArrayList(new int[]{-count});
@@ -85,9 +85,8 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
     }
   };
 
-  @NotNull
   @Override
-  public DataExternalizer<IntList> getValueExternalizer() {
+  public @NotNull DataExternalizer<IntList> getValueExternalizer() {
     return myValueExternalizer;
   }
 
@@ -112,15 +111,13 @@ public final class ExtensionPointClassIndex extends PluginXmlIndexBase<String, I
     return true;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public ID<String, IntList> getName() {
+  public @NotNull ID<String, IntList> getName() {
     return NAME;
   }
 

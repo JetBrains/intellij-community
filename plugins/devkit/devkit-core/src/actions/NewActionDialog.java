@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.icons.AllIcons;
@@ -189,14 +189,12 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   }
 
   @Override
-  @NotNull
-  public String getActionId() {
+  public @NotNull String getActionId() {
     return myActionIdEdit.getText();
   }
 
   @Override
-  @NotNull
-  public String getActionText() {
+  public @NotNull String getActionText() {
     @NlsSafe String text = myActionNameEdit.getText();
     return text;
   }
@@ -208,22 +206,19 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   }
 
   @Override
-  @Nullable
-  public String getSelectedGroupId() {
+  public @Nullable String getSelectedGroupId() {
     ActionGroup group = myGroupList.getSelectedValue();
     return group == null ? null : ActionManager.getInstance().getId(group);
   }
 
   @Override
-  @Nullable
-  public String getSelectedActionId() {
+  public @Nullable String getSelectedActionId() {
     AnAction action = myActionList.getSelectedValue();
     return action == null ? null : ActionManager.getInstance().getId(action);
   }
 
   @Override
-  @NonNls
-  public String getSelectedAnchor() {
+  public @NonNls String getSelectedAnchor() {
     ButtonModel selection = myAnchorButtonGroup.getSelection();
     if (selection == myAnchorFirstRadio.getModel()) return "first";
     if (selection == myAnchorLastRadio.getModel()) return "last";
@@ -284,8 +279,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
            (!myActionClassNameEdit.isEditable() || PsiNameHelper.getInstance(myProject).isQualifiedName(myActionClassNameEdit.getText()));
   }
 
-  @Nullable
-  private @NlsSafe String checkCanCreateActionClass() {
+  private @Nullable @NlsSafe String checkCanCreateActionClass() {
     if (myDirectory != null) {
       try {
         DevkitActionsUtil.checkCanCreateClass(myDirectory, myActionClassNameEdit.getText());
@@ -297,9 +291,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     return null;
   }
 
-  @NotNull
   @Override
-  protected List<ValidationInfo> doValidateAll() {
+  protected @NotNull List<ValidationInfo> doValidateAll() {
     boolean actionIdValid = isActionIdValid();
     boolean actionNameValid = isActionNameValid();
     boolean actionClassNameValid = isActionClassNameValid();

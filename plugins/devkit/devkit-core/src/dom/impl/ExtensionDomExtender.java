@@ -41,7 +41,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   private static final ActionOrGroupResolveConverter ACTION_CONVERTER = new ActionOrGroupResolveConverter.OnlyActions();
 
   @Override
-  public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
+  public void registerExtensions(final @NotNull Extension extension, final @NotNull DomExtensionsRegistrar registrar) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
 
@@ -143,8 +143,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     });
   }
 
-  @Nullable
-  static With findWithElement(List<? extends With> withElements, PsiField field) {
+  static @Nullable With findWithElement(List<? extends With> withElements, PsiField field) {
     for (With with : withElements) {
       PsiField withPsiField = DomUtil.hasXml(with.getTag()) ? with.getTag().getValue() : with.getAttribute().getValue();
       if (field.getManager().areElementsEquivalent(field, withPsiField)) {
@@ -256,8 +255,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  @Nullable
-  private static PsiType getElementType(final PsiType psiType) {
+  private static @Nullable PsiType getElementType(final PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
       return ((PsiArrayType)psiType).getComponentType();
     }
@@ -365,8 +363,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  @NotNull
-  private static ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
+  private static @NotNull ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
     return new PsiEnumConstantResolvingConverter(fieldPsiClass.getQualifiedName());
   }
 
@@ -394,25 +391,21 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, myEnumFqn);
     }
 
-    @NotNull
     @Override
-    @Unmodifiable
-    public Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
+    public @NotNull @Unmodifiable Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
       PsiClass enumClass = getEnumClass(context);
       if (enumClass == null) return Collections.emptyList();
 
       return ContainerUtil.findAll(enumClass.getFields(), PsiEnumConstant.class);
     }
 
-    @Nullable
     @Override
-    public LookupElement createLookupElement(PsiEnumConstant constant) {
+    public @Nullable LookupElement createLookupElement(PsiEnumConstant constant) {
       return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
     }
 
-    @Nullable
     @Override
-    public PsiEnumConstant fromString(@Nullable String s, @NotNull ConvertContext context) {
+    public @Nullable PsiEnumConstant fromString(@Nullable String s, @NotNull ConvertContext context) {
       if (s == null) return null;
 
       PsiClass enumClass = getEnumClass(context);
@@ -422,14 +415,12 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
     }
 
-    @Nullable
     @Override
-    public String toString(@Nullable PsiEnumConstant constant, @NotNull ConvertContext context) {
+    public @Nullable String toString(@Nullable PsiEnumConstant constant, @NotNull ConvertContext context) {
       return constant == null ? null : toXmlName(constant);
     }
 
-    @Nullable
-    private PsiClass getEnumClass(ConvertContext context) {
+    private @Nullable PsiClass getEnumClass(ConvertContext context) {
       return DomJavaUtil.findClass(myEnumFqn, context.getInvocationElement());
     }
 

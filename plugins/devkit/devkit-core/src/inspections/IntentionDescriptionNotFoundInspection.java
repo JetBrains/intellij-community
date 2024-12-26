@@ -11,14 +11,12 @@ final class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundIn
   }
 
   @Override
-  @NotNull
-  protected String getHasNotDescriptionError(@NotNull DescriptionTypeResolver descriptionTypeResolver) {
+  protected @NotNull String getHasNotDescriptionError(@NotNull DescriptionTypeResolver descriptionTypeResolver) {
     return DevKitBundle.message("inspections.intention.description.not.found");
   }
 
   @Override
-  @NotNull
-  protected String getHasNotBeforeAfterError() {
+  protected @NotNull String getHasNotBeforeAfterError() {
     return DevKitBundle.message("inspections.intention.description.no.before.after.template");
   }
 }

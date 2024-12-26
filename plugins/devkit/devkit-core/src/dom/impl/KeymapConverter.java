@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,29 +23,25 @@ import java.util.List;
 
 public class KeymapConverter extends ResolvingConverter<XmlFile> {
 
-  @Nullable
   @Override
-  public XmlFile fromString(@Nullable String s, @NotNull ConvertContext context) {
+  public @Nullable XmlFile fromString(@Nullable String s, @NotNull ConvertContext context) {
     if (StringUtil.isEmpty(s)) return null;
 
     return ContainerUtil.find(getKeymapFiles(context), file -> s.equals(getKeymapName(file)));
   }
 
-  @Nullable
   @Override
-  public String toString(@Nullable XmlFile file, @NotNull ConvertContext context) {
+  public @Nullable String toString(@Nullable XmlFile file, @NotNull ConvertContext context) {
     return file != null ? getKeymapName(file) : null;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends XmlFile> getVariants(@NotNull ConvertContext context) {
+  public @NotNull Collection<? extends XmlFile> getVariants(@NotNull ConvertContext context) {
     return getKeymapFiles(context);
   }
 
-  @Nullable
   @Override
-  public LookupElement createLookupElement(XmlFile file) {
+  public @Nullable LookupElement createLookupElement(XmlFile file) {
     return LookupElementBuilder.create(file, getKeymapName(file));
   }
 
@@ -58,9 +54,7 @@ public class KeymapConverter extends ResolvingConverter<XmlFile> {
     return FileUtilRt.getNameWithoutExtension(file.getName());
   }
 
-  @NotNull
-  @Unmodifiable
-  private static List<XmlFile> getKeymapFiles(ConvertContext context) {
+  private static @NotNull @Unmodifiable List<XmlFile> getKeymapFiles(ConvertContext context) {
     final PsiPackage keymapsPackage = JavaPsiFacade.getInstance(context.getProject()).findPackage("keymaps");
     if (keymapsPackage == null) {
       return Collections.emptyList();

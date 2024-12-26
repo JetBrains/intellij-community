@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -40,21 +40,18 @@ public interface IdeaVersion extends DomElement {
 
   class BuildNumberConverter extends Converter<BuildNumber> {
 
-    @Nullable
     @Override
-    public BuildNumber fromString(@Nullable String s, @NotNull ConvertContext context) {
+    public @Nullable BuildNumber fromString(@Nullable String s, @NotNull ConvertContext context) {
       return s == null ? null : BuildNumber.fromStringOrNull(s);
     }
 
-    @Nullable
     @Override
-    public String toString(@Nullable BuildNumber number, @NotNull ConvertContext context) {
+    public @Nullable String toString(@Nullable BuildNumber number, @NotNull ConvertContext context) {
       return number == null ? null : number.asString();
     }
 
-    @Nullable
     @Override
-    public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
+    public @Nullable String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
       return DevKitBundle.message("inspections.plugin.xml.invalid.build.number", s);
     }
   }

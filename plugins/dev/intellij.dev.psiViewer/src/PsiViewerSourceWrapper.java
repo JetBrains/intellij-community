@@ -39,8 +39,7 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
     return myFileType != null ? DevPsiViewerBundle.message("label.file", myFileType.getName()) : myExtension.getName();
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myFileType != null ? myFileType.getIcon() : myExtension.getIcon();
   }
 
@@ -50,14 +49,11 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
   }
 
 
-  @NotNull
-  @Unmodifiable
-  static List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
+  static @NotNull @Unmodifiable List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
     return ContainerUtil.map(PsiViewerExtension.EP_NAME.getExtensionList(), el -> new PsiViewerSourceWrapper(el));
   }
 
-  @NotNull
-  static List<PsiViewerSourceWrapper> getFileTypeBasedWrappers() {
+  static @NotNull List<PsiViewerSourceWrapper> getFileTypeBasedWrappers() {
     Set<FileType> allFileTypes = new HashSet<>();
     List<PsiViewerSourceWrapper> sourceWrappers = new ArrayList<>();
     Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());

@@ -41,8 +41,7 @@ import java.util.List;
  */
 public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
-  @NonNls
-  private static final String TEMPLATE_NAME = "InspectionDescription.html";
+  private static final @NonNls String TEMPLATE_NAME = "InspectionDescription.html";
 
   private final String myFilename;
   private final Module myModule;
@@ -55,14 +54,12 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return DevKitBundle.message("create.description.file", getNewFileName());
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return DevKitBundle.message("create.description.file.family.name");
   }
 

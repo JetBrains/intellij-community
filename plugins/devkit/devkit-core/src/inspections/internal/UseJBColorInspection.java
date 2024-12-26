@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -38,8 +38,7 @@ final class UseJBColorInspection extends DevKitUastInspectionBase implements Cle
     new Class[]{UCallExpression.class, UQualifiedReferenceExpression.class, USimpleNameReferenceExpression.class};
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
 
       @Override
@@ -141,8 +140,7 @@ final class UseJBColorInspection extends DevKitUastInspectionBase implements Cle
       }
     }
 
-    @Nullable
-    private static UReferenceExpression getReferenceExpression(PsiElement element) {
+    private static @Nullable UReferenceExpression getReferenceExpression(PsiElement element) {
       UReferenceExpression expression = UastContextKt.toUElement(element, UQualifiedReferenceExpression.class);
       if (expression == null) {
         expression = UastContextKt.toUElement(element, USimpleNameReferenceExpression.class);
@@ -150,8 +148,7 @@ final class UseJBColorInspection extends DevKitUastInspectionBase implements Cle
       return expression;
     }
 
-    @NotNull
-    private static @NonNls String buildColorConstantName(@NotNull PsiElement expression) {
+    private static @NotNull @NonNls String buildColorConstantName(@NotNull PsiElement expression) {
       @NonNls String text = expression.getText();
       if (text.contains(".")) {
         text = text.substring(text.lastIndexOf('.'));

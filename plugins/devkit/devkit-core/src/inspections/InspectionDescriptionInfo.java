@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -95,8 +95,7 @@ public final class InspectionDescriptionInfo {
     return new InspectionDescriptionInfo(filename, getShortNameMethod, descriptionFile, shortNameInXml, shortNameXmlAttribute);
   }
 
-  @Nullable
-  private static Extension findExtension(PsiClass psiClass) {
+  private static @Nullable Extension findExtension(PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
       Extension extension = module == null ? null : doFindExtension(module, psiClass);
@@ -106,8 +105,7 @@ public final class InspectionDescriptionInfo {
     });
   }
 
-  @Nullable
-  private static Extension doFindExtension(Module module, PsiClass psiClass) {
+  private static @Nullable Extension doFindExtension(Module module, PsiClass psiClass) {
     // Try search in narrow scopes first
     Project project = module.getProject();
     Set<DomFileElement<IdeaPlugin>> processedFileElements = new HashSet<>();
@@ -137,8 +135,7 @@ public final class InspectionDescriptionInfo {
     return null;
   }
 
-  @Nullable
-  private static PsiFile resolveInspectionDescriptionFile(Module module, @Nullable String filename) {
+  private static @Nullable PsiFile resolveInspectionDescriptionFile(Module module, @Nullable String filename) {
     if (filename == null) return null;
 
     String nameWithSuffix = filename + ".html";
@@ -172,8 +169,7 @@ public final class InspectionDescriptionInfo {
     return myShortNameXmlAttribute;
   }
 
-  @Nullable
-  private static String getReturnedLiteral(PsiMethod method, PsiClass cls) {
+  private static @Nullable String getReturnedLiteral(PsiMethod method, PsiClass cls) {
     final UExpression expression = PsiUtil.getReturnedExpression(method);
     if (expression == null) return null;
 

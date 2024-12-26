@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.IdeaPluginOsRequirement;
@@ -33,16 +33,13 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
   private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> plugin.hasRealPluginId();
 
   @Override
-  @NotNull
-  @Unmodifiable
-  public Collection<? extends IdeaPlugin> getVariants(final @NotNull ConvertContext context) {
+  public @NotNull @Unmodifiable Collection<? extends IdeaPlugin> getVariants(final @NotNull ConvertContext context) {
     Collection<IdeaPlugin> plugins = getAllPluginsWithoutSelf(context);
     return ContainerUtil.filter(plugins, NON_CORE_PLUGINS);
   }
 
-  @NotNull
   @Override
-  public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
+  public @NotNull Set<String> getAdditionalVariants(final @NotNull ConvertContext context) {
     Set<String> result = new HashSet<>();
     for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
       for (PluginModule module : ideaPlugin.getModules()) {
@@ -60,12 +57,11 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
   }
 
   @Override
-  public IdeaPlugin fromString(@Nullable @NonNls final String s, final @NotNull ConvertContext context) {
+  public IdeaPlugin fromString(final @Nullable @NonNls String s, final @NotNull ConvertContext context) {
     return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
   }
 
-  @Unmodifiable
-  private static Collection<IdeaPlugin> getAllPluginsWithoutSelf(final ConvertContext context) {
+  private static @Unmodifiable Collection<IdeaPlugin> getAllPluginsWithoutSelf(final ConvertContext context) {
     final IdeaPlugin self = context.getInvocationElement().getParentOfType(IdeaPlugin.class, true);
     if (self == null) return Collections.emptyList();
 

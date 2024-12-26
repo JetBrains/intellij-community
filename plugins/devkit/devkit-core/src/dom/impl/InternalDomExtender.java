@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,14 +27,14 @@ public class InternalDomExtender {
       .setConverter(BooleanValueConverter.getInstance(false));
   }
 
-  final static class ForAction extends DomExtender<Action> {
+  static final class ForAction extends DomExtender<Action> {
     @Override
     public void registerExtensions(@NotNull Action action, @NotNull DomExtensionsRegistrar registrar) {
       addInternalAttribute(registrar, Action.class);
     }
   }
 
-  final static class ForGroup extends DomExtender<Group> {
+  static final class ForGroup extends DomExtender<Group> {
     @Override
     public void registerExtensions(@NotNull Group group, @NotNull DomExtensionsRegistrar registrar) {
       addInternalAttribute(registrar, Group.class);

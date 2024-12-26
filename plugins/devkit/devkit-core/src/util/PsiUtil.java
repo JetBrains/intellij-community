@@ -61,8 +61,7 @@ public final class PsiUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
+  public static @Nullable PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
     if (cls == null) return null;
     for (PsiMethod method : cls.findMethodsByName(name, false)) {
       if (method.getParameterList().isEmpty()) {
@@ -72,8 +71,7 @@ public final class PsiUtil {
     return findNearestMethod(name, cls.getSuperClass());
   }
 
-  @Nullable
-  public static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
+  public static @Nullable PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
     for (PsiMember member : members) {
       if (member == null) continue;
 
@@ -83,10 +81,9 @@ public final class PsiUtil {
     return null;
   }
 
-  @Nullable
-  public static String getAnnotationStringAttribute(final PsiAnnotation annotation,
-                                                    final String name,
-                                                    String defaultValueIfEmpty) {
+  public static @Nullable String getAnnotationStringAttribute(final PsiAnnotation annotation,
+                                                              final String name,
+                                                              String defaultValueIfEmpty) {
     final String value = AnnotationUtil.getDeclaredStringAttributeValue(annotation, name);
     return StringUtil.defaultIfEmpty(value, defaultValueIfEmpty);
   }
@@ -115,8 +112,7 @@ public final class PsiUtil {
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, value);
   }
 
-  @Nullable
-  public static UExpression getReturnedExpression(PsiMethod method) {
+  public static @Nullable UExpression getReturnedExpression(PsiMethod method) {
     UMethod uMethod = UastContextKt.toUElement(method, UMethod.class);
     if (uMethod == null) return null;
 
@@ -149,11 +145,11 @@ public final class PsiUtil {
   }
 
   @RequiresReadLock
-  public static boolean isPluginProject(@NotNull final Project project) {
+  public static boolean isPluginProject(final @NotNull Project project) {
     return JavaLibraryUtil.hasLibraryClass(project, IDE_PROJECT_MARKER_CLASS);
   }
 
-  public static boolean isPluginModule(@NotNull final Module module) {
+  public static boolean isPluginModule(final @NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       boolean foundMarkerClass = JavaPsiFacade.getInstance(module.getProject())
                                    .findClass(IDE_PROJECT_MARKER_CLASS,

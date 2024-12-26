@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -75,8 +75,7 @@ final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     return containingClass != null && JB_COLOR_FQN.equals(containingClass.getQualifiedName());
   }
 
-  @Nullable
-  private static String getKey(@NotNull UCallExpression expression) {
+  private static @Nullable String getKey(@NotNull UCallExpression expression) {
     List<UExpression> arguments = expression.getValueArguments();
     if (arguments.isEmpty()) return null;
     UExpression firstArgument = arguments.get(0);
@@ -95,10 +94,8 @@ final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     ProblemHolderUtilKt.registerUProblem(holder, expression,
                                          DevKitThemesBundle.message("inspections.unregistered.named.color", key), new LocalQuickFix() {
 
-        @Nls(capitalization = Nls.Capitalization.Sentence)
-        @NotNull
         @Override
-        public String getFamilyName() {
+        public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
           return DevKitThemesBundle.message("inspections.unregistered.named.color.fix.navigate.theme.metadata.file");
         }
 
