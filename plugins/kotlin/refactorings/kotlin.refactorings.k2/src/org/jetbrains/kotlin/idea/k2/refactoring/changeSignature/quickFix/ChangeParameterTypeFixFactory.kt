@@ -55,14 +55,12 @@ object ChangeParameterTypeFixFactory {
         val psiParent = psi.parent ?: return emptyList()
         // Support of overloaded operators and anonymous objects infix calls
         val (argumentKey, callElement) = if (psiParent is KtOperationExpression) {
-            val argumentKey = psi as? KtExpression
-            val callElement = psiParent
-            Pair(argumentKey, callElement)
+            Pair(psi, psiParent)
         } else {
             val valueArgument = getValueArgument(psi) ?: return emptyList()
             val valueArgumentExpression = valueArgument.getArgumentExpression() ?: return emptyList()
             val argumentKey = if (valueArgumentExpression is KtParenthesizedExpression) {
-                psi as? KtExpression
+                psi
             } else {
                 valueArgumentExpression
             }
