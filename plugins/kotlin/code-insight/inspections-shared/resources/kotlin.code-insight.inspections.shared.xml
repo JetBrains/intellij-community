@@ -201,6 +201,16 @@
             key="redundant.constructor.keyword" bundle="messages.KotlinBundle"/>
 
     <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinBigDecimalEqualsInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.numeric.issues"
+            enabledByDefault="false"
+            cleanupTool="true"
+            level="WARNING"
+            language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+            key="big.decimal.equals" bundle="messages.KotlinBundle"/>
+
+    <localInspection
             implementationClass="org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInJavaInspection"
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"

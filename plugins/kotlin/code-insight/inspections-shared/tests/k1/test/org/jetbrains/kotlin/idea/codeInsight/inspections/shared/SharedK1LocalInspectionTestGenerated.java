@@ -75,6 +75,60 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/bigDecimalEquals")
+    public static class BigDecimalEquals extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("nullableLeftWithCall.kt")
+        public void testNullableLeftWithCall() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/nullableLeftWithCall.kt");
+        }
+
+        @TestMetadata("nullableLeftWithOperator.kt")
+        public void testNullableLeftWithOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/nullableLeftWithOperator.kt");
+        }
+
+        @TestMetadata("nullableRightWithCall.kt")
+        public void testNullableRightWithCall() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/nullableRightWithCall.kt");
+        }
+
+        @TestMetadata("nullableRightWithOperator.kt")
+        public void testNullableRightWithOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/nullableRightWithOperator.kt");
+        }
+
+        @TestMetadata("nullablesWithCall.kt")
+        public void testNullablesWithCall() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/nullablesWithCall.kt");
+        }
+
+        @TestMetadata("nullablesWithOperator.kt")
+        public void testNullablesWithOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/nullablesWithOperator.kt");
+        }
+
+        @TestMetadata("simpleWithCall.kt")
+        public void testSimpleWithCall() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/simpleWithCall.kt");
+        }
+
+        @TestMetadata("simpleWithOperator.kt")
+        public void testSimpleWithOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/bigDecimalEquals/simpleWithOperator.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/complexRedundantLet")
     public static class ComplexRedundantLet extends AbstractSharedK1LocalInspectionTest {
         @java.lang.Override

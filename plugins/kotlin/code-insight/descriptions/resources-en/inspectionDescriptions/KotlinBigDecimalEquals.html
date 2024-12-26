@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports <code>==</code> or <code>equals()</code> calls that compare two <code>java.math.BigDecimal</code> numbers.
+This is normally a mistake, as two <code>java.math.BigDecimal</code> numbers are only equal if
+they are equal in both value and scale.
+<p><b>Example:</b></p>
+<pre><code>
+  // condition is false
+  val condition = BigDecimal("2.0") ==
+      BigDecimal("2.00")
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  // condition is true
+  val condition = BigDecimal("2.0").compareTo(
+      BigDecimal("2.00")) == 0
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>
