@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
 import com.intellij.openapi.application.ReadAction;
@@ -110,8 +110,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
       o -> Objects.requireNonNull(o.getScriptClass()));
   }
 
-  @NotNull
-  public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
+  public @NotNull List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
     TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
     if (names != null) {
       String topLevelName = toTopLevelName(name);

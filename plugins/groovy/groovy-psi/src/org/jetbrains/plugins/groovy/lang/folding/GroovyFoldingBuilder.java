@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.folding;
 
@@ -262,14 +262,12 @@ public final class GroovyFoldingBuilder extends CustomFoldingBuilder implements 
     return text.contains("\n") || text.contains("\r");
   }
 
-  @Nullable
   @Override
-  protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
+  protected @Nullable String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return null;
   }
 
-  @NotNull
-  private static String multiLineStringLiteralPlaceholder(@NotNull ASTNode node) {
+  private static @NotNull String multiLineStringLiteralPlaceholder(@NotNull ASTNode node) {
     final String start_quote = GrStringUtil.getStartQuote(node.getText());
     final String end_quote = GrStringUtil.getEndQuote(node.getText());
     return start_quote + "..." + end_quote;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -61,8 +61,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
   }
 
   @Override
-  @Nullable
-  public PsiElement getKeyword() {
+  public @Nullable PsiElement getKeyword() {
     PsiElement firstChild = getFirstChild();
     if (firstChild != null && firstChild.getNode().getElementType() == getKeywordType()) {
       return firstChild;
@@ -130,12 +129,10 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
     return super.add(element);
   }
 
-  @Nullable
-  protected abstract IElementType getKeywordType();
+  protected abstract @Nullable IElementType getKeywordType();
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getReferenceElementsGroovy());
   }
 }

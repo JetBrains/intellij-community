@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -25,41 +25,35 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
     super(node);
   }
 
-  @Nullable
   @Override
-  public GroovyCallReference getReference() {
+  public @Nullable GroovyCallReference getReference() {
     return hasOperatorReference(this) && !isFake(this) ? myReference : null;
   }
 
   @Override
-  @Nullable
-  public PsiType getRightType() {
+  public @Nullable PsiType getRightType() {
     final GrExpression rightOperand = getRightOperand();
     return rightOperand == null ? null : rightOperand.getType();
   }
 
-  @Nullable
   @Override
-  public PsiType getLeftType() {
+  public @Nullable PsiType getLeftType() {
     return getLeftOperand().getType();
   }
 
   @Override
-  @NotNull
-  public GrExpression getLeftOperand() {
+  public @NotNull GrExpression getLeftOperand() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
   @Override
-  @Nullable
-  public GrExpression getRightOperand() {
+  public @Nullable GrExpression getRightOperand() {
     final PsiElement last = getLastChild();
     return last instanceof GrExpression ? (GrExpression)last : null;
   }
 
   @Override
-  @NotNull
-  public PsiElement getOperationToken() {
+  public @NotNull PsiElement getOperationToken() {
     return findNotNullChildByType(BINARY_OPERATORS);
   }
 

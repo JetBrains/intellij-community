@@ -53,21 +53,18 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
     return "Parameter list";
   }
 
-  @Nullable
   @Override
-  public PsiElement getLParen() {
+  public @Nullable PsiElement getLParen() {
     return findChildByType(T_LPAREN);
   }
 
-  @Nullable
   @Override
-  public PsiElement getRParen() {
+  public @Nullable PsiElement getRParen() {
     return findLastChildByType(T_RPAREN);
   }
 
-  @NotNull
   @Override
-  public TextRange getParametersRange() {
+  public @NotNull TextRange getParametersRange() {
     TextRange range = getTextRange();
     PsiElement lParen = getLParen();
     PsiElement rParen = getRParen();
@@ -165,9 +162,8 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
     return result;
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getParameters());
   }
 }

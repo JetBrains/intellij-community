@@ -146,9 +146,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public PsiElement getModifier(@GrModifierConstant @NotNull @NonNls String name) {
+  public @Nullable PsiElement getModifier(@GrModifierConstant @NotNull @NonNls String name) {
     return findChildByType(NAME_TO_MODIFIER_ELEMENT_TYPE.get(name));
   }
 
@@ -245,8 +244,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     return getTextLength() == 0 || getModifiers().length == 0 && getRawAnnotations().length == 0;
   }
 
-  @Nullable
-  private PsiElement findAnchor(String name) {
+  private @Nullable PsiElement findAnchor(String name) {
     final int myPriority = PRIORITY.getInt(name);
     PsiElement anchor = null;
 
@@ -281,8 +279,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
   }
 
   @Override
-  @Nullable
-  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @Nullable PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     for (GrAnnotation annotation : getAnnotations()) {
       if (annotation.hasQualifiedName(qualifiedName)) {
         return annotation;
@@ -292,8 +289,7 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
   }
 
   @Override
-  @NotNull
-  public GrAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull GrAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
     GrAnnotation annotation;
@@ -320,9 +316,8 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
     return annotation;
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getModifiers());
   }
 }

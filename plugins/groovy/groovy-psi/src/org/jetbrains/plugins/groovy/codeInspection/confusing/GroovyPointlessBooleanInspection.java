@@ -43,9 +43,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public final class GroovyPointlessBooleanInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PointlessBooleanExpressionVisitor();
   }
 
@@ -54,8 +53,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
     return GroovyBundle.message("pointless.boolean.problem.descriptor");
   }
 
-  @Nullable
-  private static String calculateSimplifiedBinaryExpression(GrBinaryExpression expression) {
+  private static @Nullable String calculateSimplifiedBinaryExpression(GrBinaryExpression expression) {
     final IElementType sign = expression.getOperationTokenType();
     final GrExpression lhs = expression.getLeftOperand();
 
@@ -137,8 +135,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
-  @NonNls
-  private static String calculateSimplifiedPrefixExpression(GrUnaryExpression expression) {
+  private static @NonNls String calculateSimplifiedPrefixExpression(GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (isUnaryNot(operand)) {
       return booleanLiteral(((GrUnaryExpression)operand).getOperand());
@@ -148,8 +145,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static String negateBooleanLiteral(GrExpression operand) {
+  private static @NotNull String negateBooleanLiteral(GrExpression operand) {
     if (isTrue(operand)) {
       return "false";
     }
@@ -161,8 +157,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static String booleanLiteral(GrExpression operand) {
+  private static @NotNull String booleanLiteral(GrExpression operand) {
     if (isTrue(operand)) {
       return "true";
     }
@@ -182,8 +177,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
   private static class BooleanLiteralComparisonFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("pointless.boolean.quickfix");
     }
 
@@ -306,7 +300,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
     if (!(expression instanceof GrLiteral)) {
       return false;
     }
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "true".equals(text);
   }
 
@@ -317,7 +311,7 @@ public final class GroovyPointlessBooleanInspection extends BaseInspection {
     if (!(expression instanceof GrLiteral)) {
       return false;
     }
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "false".equals(text);
   }
 }

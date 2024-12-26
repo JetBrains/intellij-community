@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiElement;
@@ -46,7 +46,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   }
 
   @Override
-  public TypeDfaState fun(@NotNull final TypeDfaState state, @NotNull final Instruction instruction) {
+  public TypeDfaState fun(final @NotNull TypeDfaState state, final @NotNull Instruction instruction) {
     TypeDfaState newState;
     if (instruction.num() == 0) {
       newState = handleStartInstruction();
@@ -91,7 +91,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     return true;
   }
 
-  private TypeDfaState handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
+  private TypeDfaState handleMixin(final @NotNull TypeDfaState state, final @NotNull MixinTypeInstruction instruction) {
     final int descriptor = instruction.getVariableDescriptor();
     if (descriptor == 0) return state;
 
@@ -197,8 +197,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     return TypeInferenceHelper.doInference(unwrappedVariables, computation);
   }
 
-  @NotNull
-  private Map<VariableDescriptor, DFAType> getCurrentVariableTypes(@NotNull TypeDfaState state) {
+  private @NotNull Map<VariableDescriptor, DFAType> getCurrentVariableTypes(@NotNull TypeDfaState state) {
     Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
     for (var entry : state.getRawVarTypes().int2ObjectEntrySet()) {
       if (!state.isProhibited(entry.getIntKey())) {

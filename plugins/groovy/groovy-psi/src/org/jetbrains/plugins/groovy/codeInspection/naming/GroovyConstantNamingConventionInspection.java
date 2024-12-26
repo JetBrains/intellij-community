@@ -40,8 +40,7 @@ public final class GroovyConstantNamingConventionInspection extends ConventionIn
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... args) {
+  public @NotNull String buildErrorString(Object... args) {
     final String className = (String) args[0];
     if (className.length() < getMinLength()) {
       return GroovyBundle.message("inspection.message.constant.name.ref.too.short");
@@ -66,9 +65,8 @@ public final class GroovyConstantNamingConventionInspection extends ConventionIn
     return DEFAULT_MAX_LENGTH;
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 

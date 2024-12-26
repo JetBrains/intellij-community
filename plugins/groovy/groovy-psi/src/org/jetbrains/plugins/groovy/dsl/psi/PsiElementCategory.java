@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.dsl.psi;
 
@@ -33,23 +19,20 @@ import java.util.Collections;
 
 public final class PsiElementCategory implements PsiEnhancerCategory {
 
-  @Nullable
-  public static PsiElement bind(PsiElement element) {
+  public static @Nullable PsiElement bind(PsiElement element) {
     PsiElement elem = element instanceof GrMethodCall ? ((GrMethodCall)element).getInvokedExpression() : element;
     final PsiReference ref = elem.getReference();
     return ref == null ? null : ref.resolve();
   }
 
-  @Nullable
-  public static PsiElement getQualifier(PsiElement elem){
+  public static @Nullable PsiElement getQualifier(PsiElement elem){
     if (elem instanceof GrReferenceExpression) {
       return ((GrReferenceExpression)elem).getQualifierExpression();
     }
     return null;
   }
 
-  @NotNull
-  public static Collection<? extends PsiElement> asList(@Nullable PsiElement elem) {
+  public static @NotNull Collection<? extends PsiElement> asList(@Nullable PsiElement elem) {
     if (elem == null) return new ArrayList<>();
     if (elem instanceof GrListOrMap) {
       return Arrays.asList(((GrListOrMap)elem).getInitializers());

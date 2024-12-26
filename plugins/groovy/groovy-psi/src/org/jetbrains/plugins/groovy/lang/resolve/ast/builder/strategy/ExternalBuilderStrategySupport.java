@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
 import com.intellij.psi.*;
@@ -44,10 +44,9 @@ public final class ExternalBuilderStrategySupport extends BuilderAnnotationContr
     context.addMethod(createBuildMethod(annotation, createType(constructedClass)));
   }
 
-  @Nullable
-  public static LightMethodBuilder createFieldSetter(@NotNull TransformationContext context,
-                                                     @NotNull PsiMethod setter,
-                                                     @NotNull PsiAnnotation annotation) {
+  public static @Nullable LightMethodBuilder createFieldSetter(@NotNull TransformationContext context,
+                                                               @NotNull PsiMethod setter,
+                                                               @NotNull PsiAnnotation annotation) {
     PsiClass builderClass = context.getCodeClass();
     final String name = PropertyUtilBase.getPropertyNameBySetter(setter);
     final PsiType type = PropertyUtilBase.getPropertyType(setter);

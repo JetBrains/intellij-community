@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
@@ -61,7 +61,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(@NotNull final ProgressIndicator progress) {
+  public void doCollectInformation(final @NotNull ProgressIndicator progress) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     VirtualFile virtualFile = myFile.getViewProvider().getVirtualFile();
     if (!fileIndex.isInContent(virtualFile)) {
@@ -230,9 +230,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  @NotNull
-  private static List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
-                                                                 @NotNull Set<? extends GrImportStatement> unusedImports) {
+  private static @NotNull List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
+                                                                          @NotNull Set<? extends GrImportStatement> unusedImports) {
     List<HighlightInfo> infos = new ArrayList<>(unusedDeclarations);
     for (GrImportStatement unusedImport : unusedImports) {
       IntentionAction action = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false);

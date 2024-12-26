@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -40,14 +40,11 @@ public final class GppClosureParameterTypeProvider extends AbstractClosureParame
     return null;
   }
 
-  @Nullable
-  public static Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrNamedArgument namedArgument) {
+  public static @Nullable Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrNamedArgument namedArgument) {
     return ContainerUtil.getFirstItem(getOverriddenMethodVariants(namedArgument), null);
   }
 
-  @NotNull
-  @Unmodifiable
-  public static List<Pair<PsiMethod, PsiSubstitutor>> getOverriddenMethodVariants(GrNamedArgument namedArgument) {
+  public static @NotNull @Unmodifiable List<Pair<PsiMethod, PsiSubstitutor>> getOverriddenMethodVariants(GrNamedArgument namedArgument) {
 
     final GrArgumentLabel label = namedArgument.getLabel();
     if (label == null) {
@@ -76,8 +73,7 @@ public final class GppClosureParameterTypeProvider extends AbstractClosureParame
     return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, psiParameter -> pair.second.substitute(psiParameter.getType()));
   }
 
-  @NotNull
-  public static List<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplementInInheritor(PsiClassType classType, boolean toImplement) {
+  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplementInInheritor(PsiClassType classType, boolean toImplement) {
     final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null) {

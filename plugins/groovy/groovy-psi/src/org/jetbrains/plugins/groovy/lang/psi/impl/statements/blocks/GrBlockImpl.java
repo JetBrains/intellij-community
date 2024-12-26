@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
@@ -97,8 +97,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return getGroovyControlFlow().getFlow();
   }
 
-  @NotNull
-  public GroovyControlFlow getGroovyControlFlow() {
+  public @NotNull GroovyControlFlow getGroovyControlFlow() {
     PsiUtilCore.ensureValid(this);
     CachedValue<GroovyControlFlow> controlFlow = ConcurrencyUtil.computeIfAbsent(this, CONTROL_FLOW, ()->
     CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
@@ -144,8 +143,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   }
 
   @Override
-  @NotNull
-  public GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
+  public @NotNull GrStatement addStatementBefore(@NotNull GrStatement element, @Nullable GrStatement anchor) throws IncorrectOperationException {
     if (anchor == null && getRBrace() == null) {
       throw new IncorrectOperationException();
     }
@@ -182,8 +180,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
   }
 
   @Override
-  @Nullable
-  public PsiElement getRBrace() {
+  public @Nullable PsiElement getRBrace() {
     return findPsiChildByType(GroovyTokenTypes.mRCURLY);
   }
 

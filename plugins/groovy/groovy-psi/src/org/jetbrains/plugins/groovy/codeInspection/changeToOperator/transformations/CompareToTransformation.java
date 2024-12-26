@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
@@ -31,8 +31,7 @@ class CompareToTransformation extends BinaryTransformation {
     replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), changeToOperator, rhsParenthesized.getText()));
   }
 
-  @Nullable
-  private static IElementType shouldChangeToOperator(@NotNull GrMethodCall call, Options options) {
+  private static @Nullable IElementType shouldChangeToOperator(@NotNull GrMethodCall call, Options options) {
     PsiElement parent = call.getParent();
     if (isComparison(parent) && isZero(((GrBinaryExpression)parent).getRightOperand())) {
       IElementType token = ((GrBinaryExpression)parent).getOperationTokenType();

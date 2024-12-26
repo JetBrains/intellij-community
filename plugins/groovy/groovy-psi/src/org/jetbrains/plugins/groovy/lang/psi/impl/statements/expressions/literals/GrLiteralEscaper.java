@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.openapi.util.TextRange;
@@ -36,7 +36,7 @@ public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralContainer> {
   }
 
   @Override
-  public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
+  public int getOffsetInHost(int offsetInDecoded, final @NotNull TextRange rangeInsideHost) {
     int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
     if (result == -1) return -1;
     return Math.min(result, rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();

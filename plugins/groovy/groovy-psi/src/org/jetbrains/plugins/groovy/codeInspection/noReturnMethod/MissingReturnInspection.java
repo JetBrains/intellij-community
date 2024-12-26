@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -59,8 +59,7 @@ public final class MissingReturnInspection extends GroovyLocalInspectionTool {
     }
   }
 
-  @Nullable
-  public static PsiType getExpectedClosureReturnType(GrClosableBlock closure) {
+  public static @Nullable PsiType getExpectedClosureReturnType(GrClosableBlock closure) {
     List<PsiType> expectedReturnTypes = new ArrayList<>();
 
     PsiElement parent = closure.getParent();
@@ -133,7 +132,7 @@ public final class MissingReturnInspection extends GroovyLocalInspectionTool {
     }
   }
 
-  public static boolean methodMissesSomeReturns(@NotNull GrControlFlowOwner block, @NotNull final ReturnStatus returnStatus) {
+  public static boolean methodMissesSomeReturns(@NotNull GrControlFlowOwner block, final @NotNull ReturnStatus returnStatus) {
     if (returnStatus == ReturnStatus.shouldNotReturnValue) {
       return false;
     }
@@ -188,9 +187,7 @@ public final class MissingReturnInspection extends GroovyLocalInspectionTool {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "GroovyMissingReturnStatement";
   }
 }

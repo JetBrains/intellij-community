@@ -37,9 +37,8 @@ public final class GroovyEmptyStatementBodyInspection extends BaseInspection {
     }
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

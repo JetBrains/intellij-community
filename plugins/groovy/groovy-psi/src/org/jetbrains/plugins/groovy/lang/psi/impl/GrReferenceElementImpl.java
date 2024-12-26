@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -40,9 +40,8 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return null;
   }
 
-  @Nullable
   @Override
-  public String getQualifiedReferenceName() {
+  public @Nullable String getQualifiedReferenceName() {
     String qualifiedReferenceName = myQualifiedReferenceName;
     if (Strings.areSameInstance(qualifiedReferenceName, DUMMY_FQN)) {
       qualifiedReferenceName = PsiImplUtilKt.getQualifiedReferenceName(this);
@@ -51,15 +50,13 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return qualifiedReferenceName;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final PsiElement refNameElement = getReferenceNameElement();
     if (refNameElement != null) {
       final int offsetInParent = refNameElement.getStartOffsetInParent();
@@ -140,8 +137,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return qualifiedRef;
   }
 
-  @NotNull
-  protected abstract GrReferenceElement<Q> createQualifiedRef(@NotNull String qName);
+  protected abstract @NotNull GrReferenceElement<Q> createQualifiedRef(@NotNull String qName);
 
   protected boolean bindsCorrectly(PsiElement element) {
     return isReferenceTo(element);
@@ -165,8 +161,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   }
 
   @Override
-  @Nullable
-  public GrTypeArgumentList getTypeArgumentList() {
+  public @Nullable GrTypeArgumentList getTypeArgumentList() {
     return findChildByType(GroovyElementTypes.TYPE_ARGUMENTS);
   }
 

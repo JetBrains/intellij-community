@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,8 +28,7 @@ import java.util.List;
 
 public final class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
 
-  @NotNull
-  private static List<PsiModifierListOwner> getAnnotatedMemberCandidates(final PsiClass clazz, final GlobalSearchScope scope) {
+  private static @NotNull List<PsiModifierListOwner> getAnnotatedMemberCandidates(final PsiClass clazz, final GlobalSearchScope scope) {
     final String name = ReadAction.compute(() -> clazz.getName());
     if (name == null) return Collections.emptyList();
     final Collection<PsiElement> members = ReadAction
@@ -54,7 +53,7 @@ public final class AnnotatedMembersSearcher implements QueryExecutor<PsiModifier
   }
 
   @Override
-  public boolean execute(@NotNull final AnnotatedElementsSearch.Parameters p, @NotNull final Processor<? super PsiModifierListOwner> consumer) {
+  public boolean execute(final @NotNull AnnotatedElementsSearch.Parameters p, final @NotNull Processor<? super PsiModifierListOwner> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 

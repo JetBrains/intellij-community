@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -18,8 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.references.GrConstructorInvocationReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrConstructorInvocationReference;
 
 public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstructorInvocation {
 
@@ -39,9 +39,8 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return "Constructor invocation";
   }
 
-  @NotNull
   @Override
-  public GroovyConstructorReference getConstructorReference() {
+  public @NotNull GroovyConstructorReference getConstructorReference() {
     return myConstructorReference;
   }
 
@@ -55,8 +54,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return getKeywordType() == GroovyTokenTypes.kTHIS;
   }
 
-  @Nullable
-  private IElementType getKeywordType() {
+  private @Nullable IElementType getKeywordType() {
     GrReferenceExpression keyword = getInvokedExpression();
     PsiElement refElement = keyword.getReferenceNameElement();
     if (refElement == null) return null;
@@ -65,8 +63,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   @Override
-  @NotNull
-  public GrReferenceExpression getInvokedExpression() {
+  public @NotNull GrReferenceExpression getInvokedExpression() {
     return findNotNullChildByClass(GrReferenceExpression.class);
   }
 
@@ -84,8 +81,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   @Override
-  @Nullable
-  public PsiClass getDelegatedClass() {
+  public @Nullable PsiClass getDelegatedClass() {
     PsiClass typeDefinition = PsiUtil.getContextClass(this);
     if (typeDefinition != null) {
       return isThisCall() ? typeDefinition : typeDefinition.getSuperClass();
@@ -98,9 +94,8 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return multiResolve(true);
   }
 
-  @NotNull
   @Override
-  public GrArgumentList getArgumentList() {
+  public @NotNull GrArgumentList getArgumentList() {
     return findNotNullChildByClass(GrArgumentList.class);
   }
 }

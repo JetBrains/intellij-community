@@ -41,14 +41,12 @@ public final class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection
   private final ReplaceWithPropertyAccessFix fix = new ReplaceWithPropertyAccessFix();
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.call.to.ref.can.be.keyed.access");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -60,8 +58,7 @@ public final class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection
   private static class ReplaceWithPropertyAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("intention.family.name.replace.with.keyed.access");
     }
 

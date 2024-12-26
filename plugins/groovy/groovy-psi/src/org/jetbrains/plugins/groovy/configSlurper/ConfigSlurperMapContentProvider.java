@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.configSlurper;
 
 import com.intellij.openapi.util.Pair;
@@ -20,9 +20,8 @@ import java.util.*;
 
 public final class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
-  @Nullable
-  private static Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> getInfo(@NotNull GrExpression qualifier,
-                                                                                     @Nullable PsiElement resolve) {
+  private static @Nullable Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> getInfo(@NotNull GrExpression qualifier,
+                                                                                               @Nullable PsiElement resolve) {
     if (!InheritanceUtil.isInheritor(qualifier.getType(), GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT)) {
       return null;
     }
@@ -78,7 +77,7 @@ public final class ConfigSlurperMapContentProvider extends GroovyMapContentProvi
   }
 
   @Override
-  public PsiType getValueType(@NotNull GrExpression qualifier, @Nullable PsiElement resolve, @NotNull final String key) {
+  public PsiType getValueType(@NotNull GrExpression qualifier, @Nullable PsiElement resolve, final @NotNull String key) {
     Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> info = getInfo(qualifier, resolve);
     if (info == null) return null;
 

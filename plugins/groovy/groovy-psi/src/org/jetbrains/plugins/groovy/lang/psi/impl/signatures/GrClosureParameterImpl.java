@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.psi.PsiElement;
@@ -34,9 +34,8 @@ class GrClosureParameterImpl implements GrClosureParameter {
     myContext = context;
   }
 
-  @Nullable
   @Override
-  public PsiType getType() {
+  public @Nullable PsiType getType() {
     PsiType correctType = PsiClassImplUtil.correctType(myParameter.getType(), myContext.getResolveScope());
     PsiType type = mySubstitutor.substitute(correctType);
     return myEraseType ? TypeConversionUtil.erasure(type, mySubstitutor) : type;
@@ -47,9 +46,8 @@ class GrClosureParameterImpl implements GrClosureParameter {
     return myParameter instanceof GrParameter && ((GrParameter)myParameter).isOptional();
   }
 
-  @Nullable
   @Override
-  public GrExpression getDefaultInitializer() {
+  public @Nullable GrExpression getDefaultInitializer() {
     return myParameter instanceof GrParameter ? ((GrParameter)myParameter).getInitializerGroovy() : null;
   }
 
@@ -58,9 +56,8 @@ class GrClosureParameterImpl implements GrClosureParameter {
     return myContext.isValid() && myParameter.isValid();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myParameter.getName();
   }
 }

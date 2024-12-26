@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,9 +30,8 @@ public class GrClassReferenceTypePointer extends TypePointerBase<GrClassReferenc
     myReferenceText = reference.getText();
   }
 
-  @Nullable
   @Override
-  protected GrClassReferenceType calcType() {
+  protected @Nullable GrClassReferenceType calcType() {
     final GrCodeReferenceElement reference = mySmartPsiElementPointer.getElement();
     if (reference != null) {
       return new GrClassReferenceType(reference);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
@@ -31,15 +31,13 @@ public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamed
   }
 
   @Override
-  @Nullable
-  public GrArgumentLabel getLabel() {
+  public @Nullable GrArgumentLabel getLabel() {
     return findChildByType(GroovyElementTypes.ARGUMENT_LABEL);
   }
 
 
   @Override
-  @Nullable
-  public GrExpression getExpression() {
+  public @Nullable GrExpression getExpression() {
     return findExpressionChild(this);
   }
 
@@ -49,9 +47,8 @@ public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamed
     return label == null ? null : label.getName();
   }
 
-  @Nullable
   @Override
-  public PsiElement getColon() {
+  public @Nullable PsiElement getColon() {
     return findChildByType(GroovyTokenTypes.mCOLON);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -61,7 +61,7 @@ public final class GrAliasedImportedElementSearcher extends QueryExecutorBase<Ps
     }
 
     @Override
-    public boolean processTextOccurrence(@NotNull final PsiElement element, int offsetInElement, @NotNull Processor<? super PsiReference> consumer) {
+    public boolean processTextOccurrence(final @NotNull PsiElement element, int offsetInElement, @NotNull Processor<? super PsiReference> consumer) {
       String alias = getAlias(element);
       if (alias == null) return true;
 
@@ -84,8 +84,7 @@ public final class GrAliasedImportedElementSearcher extends QueryExecutorBase<Ps
       return PsiSearchHelper.getInstance(element.getProject()).processRequests(collector, consumer);
     }
 
-    @Nullable
-    private static String getAlias(final PsiElement element) {
+    private static @Nullable String getAlias(final PsiElement element) {
       if (!(element.getParent() instanceof GrImportStatement importStatement)) return null;
       if (!importStatement.isAliasedImport()) return null;
       return importStatement.getImportedName();

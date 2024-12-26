@@ -54,9 +54,8 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getInitializers());
   }
 }

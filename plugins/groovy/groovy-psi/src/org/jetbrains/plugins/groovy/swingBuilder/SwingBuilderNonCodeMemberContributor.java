@@ -29,7 +29,7 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
 
   private static final Key<MultiMap<String, PsiMethod>> KEY = Key.create("SwingBuilderNonCodeMemberContributor.KEY");
 
-  @NonNls private static final Object METHOD_KIND = "SwingBuilder_builder_method";
+  private static final @NonNls Object METHOD_KIND = "SwingBuilder_builder_method";
 
   private static final class MyBuilder {
     private final PsiManager myManager;
@@ -58,9 +58,8 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
         setOriginInfo("SwingBuilder method");
       }
 
-      @NotNull
       @Override
-      public PsiElement getNavigationElement() {
+      public @NotNull PsiElement getNavigationElement() {
         PsiElement res = super.getNavigationElement();
         if (res != this || myNavigationClass == null) return res;
 
@@ -78,8 +77,7 @@ public final class SwingBuilderNonCodeMemberContributor extends NonCodeMembersCo
       }
     }
 
-    @NotNull
-    private PsiType type(@NotNull String typeName) {
+    private @NotNull PsiType type(@NotNull String typeName) {
       PsiType res = myTypeMap.get(typeName);
       if (res == null) {
         res = myFactory.createTypeByFQClassName(typeName, myResolveScope);

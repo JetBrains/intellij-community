@@ -40,8 +40,7 @@ public final class GroovyStaticMethodNamingConventionInspection extends Conventi
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... args) {
+  public @NotNull String buildErrorString(Object... args) {
     final String className = (String) args[0];
     if (className.length() < getMinLength()) {
       return GroovyBundle.message("inspection.message.static.method.name.ref.too.short");
@@ -66,9 +65,8 @@ public final class GroovyStaticMethodNamingConventionInspection extends Conventi
     return DEFAULT_MAX_LENGTH;
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 

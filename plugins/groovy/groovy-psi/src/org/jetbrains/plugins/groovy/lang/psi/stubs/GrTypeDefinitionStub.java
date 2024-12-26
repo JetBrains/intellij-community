@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.impl.PsiImplUtil;
@@ -33,12 +33,12 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
   private volatile SoftReference<GrCodeReferenceElement> myStubBaseReference;
 
   public GrTypeDefinitionStub(StubElement parent,
-                                  final String name,
-                                  @Nullable final String baseClassName,
-                                  @NotNull IStubElementType elementType,
-                                  final String qualifiedName,
-                                  String[] annotations,
-                                  byte flags) {
+                              final String name,
+                              final @Nullable String baseClassName,
+                              @NotNull IStubElementType elementType,
+                              final String qualifiedName,
+                              String[] annotations,
+                              byte flags) {
     super(parent, elementType);
     myAnnotations = annotations;
     myName = StringRef.fromString(name);
@@ -47,13 +47,11 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     myFlags = flags;
   }
 
-  @Nullable
-  public String getBaseClassName() {
+  public @Nullable String getBaseClassName() {
     return myBaseClassName;
   }
 
-  @Nullable
-  public GrCodeReferenceElement getBaseClassReference() {
+  public @Nullable GrCodeReferenceElement getBaseClassReference() {
     String baseClassName = getBaseClassName();
     if (baseClassName == null) return null;
 

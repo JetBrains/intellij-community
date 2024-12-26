@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -32,13 +32,11 @@ public final class CollectClassMembersUtil {
 
   private CollectClassMembersUtil() {}
 
-  @NotNull
-  public static Map<String, List<CandidateInfo>> getAllMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
+  public static @NotNull Map<String, List<CandidateInfo>> getAllMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return getCachedMembers(aClass, includeSynthetic).methods;
   }
 
-  @NotNull
-  private static ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
+  private static @NotNull ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
     CachedValueBase<ClassMembers> cached = (CachedValueBase<ClassMembers>)aClass.getUserData(getMemberCacheKey(includeSynthetic));
     if (cached != null) {
       CachedValueBase.Data<ClassMembers> data = cached.getUpToDateOrNull();
@@ -70,23 +68,19 @@ public final class CollectClassMembersUtil {
     return true;
   }
 
-  @NotNull
-  public static Map<String, CandidateInfo> getAllInnerClasses(@NotNull final PsiClass aClass, boolean includeSynthetic) {
+  public static @NotNull Map<String, CandidateInfo> getAllInnerClasses(final @NotNull PsiClass aClass, boolean includeSynthetic) {
     return getCachedMembers(aClass, includeSynthetic).innerClasses;
   }
 
-  @NotNull
-  public static Map<String, CandidateInfo> getAllFields(@NotNull final PsiClass aClass, boolean includeSynthetic) {
+  public static @NotNull Map<String, CandidateInfo> getAllFields(final @NotNull PsiClass aClass, boolean includeSynthetic) {
     return getCachedMembers(aClass, includeSynthetic).fields;
   }
 
-  @NotNull
-  public static Map<String, CandidateInfo> getAllFields(@NotNull final PsiClass aClass) {
+  public static @NotNull Map<String, CandidateInfo> getAllFields(final @NotNull PsiClass aClass) {
     return getAllFields(aClass, true);
   }
 
-  @NotNull
-  private static ClassMembers buildCache(@NotNull PsiClass aClass, boolean includeSynthetic) {
+  private static @NotNull ClassMembers buildCache(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return CachedValuesManager.getCachedValue(aClass, getMemberCacheKey(includeSynthetic), () -> {
       ClassMembers result = new ClassMembers();
       processClass(aClass, result.fields, result.methods, result.innerClasses, new HashSet<>(), PsiSubstitutor.EMPTY, includeSynthetic);
@@ -94,8 +88,7 @@ public final class CollectClassMembersUtil {
     });
   }
 
-  @NotNull
-  private static Key<CachedValue<ClassMembers>> getMemberCacheKey(boolean includeSynthetic) {
+  private static @NotNull Key<CachedValue<ClassMembers>> getMemberCacheKey(boolean includeSynthetic) {
     return includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
   }
 

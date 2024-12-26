@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -133,12 +133,11 @@ public final class ConstructorAnnotationsProcessor implements AstTransformationS
   }
 
 
-  @NotNull
-  private static GrLightMethodBuilder generateFieldConstructor(@NotNull TransformationContext context,
-                                                               @Nullable PsiAnnotation tupleConstructor,
-                                                               boolean immutable,
-                                                               boolean canonical,
-                                                               @NotNull String originInfo) {
+  private static @NotNull GrLightMethodBuilder generateFieldConstructor(@NotNull TransformationContext context,
+                                                                        @Nullable PsiAnnotation tupleConstructor,
+                                                                        boolean immutable,
+                                                                        boolean canonical,
+                                                                        @NotNull String originInfo) {
     final GrTypeDefinition typeDefinition = context.getCodeClass();
     final GrLightMethodBuilder fieldsConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
     fieldsConstructor.setConstructor(true);
@@ -205,7 +204,7 @@ public final class ConstructorAnnotationsProcessor implements AstTransformationS
     constructor.addParameter(justTypeParameter);
   }
 
-  static public class EnclosingClassParameter extends GrLightParameter {
+  public static class EnclosingClassParameter extends GrLightParameter {
     public EnclosingClassParameter(@NlsSafe @NotNull String name,
                                    @Nullable PsiType type,
                                    @NotNull PsiElement scope) {

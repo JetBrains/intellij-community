@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.psi.PsiClass;
@@ -21,8 +21,7 @@ import java.util.Collections;
 
 public final class GrSuperReferenceResolver {
 
-  @Nullable("null if ref is not 'super' reference")
-  public static Collection<GroovyResolveResult> resolveSuperExpression(@NotNull GrReferenceExpression ref) {
+  public static @Nullable("null if ref is not 'super' reference") Collection<GroovyResolveResult> resolveSuperExpression(@NotNull GrReferenceExpression ref) {
     GrExpression qualifier = ref.getQualifier();
 
     if (qualifier == null) {
@@ -51,8 +50,7 @@ public final class GrSuperReferenceResolver {
     return null;
   }
 
-  @NotNull
-  private static Collection<GroovyResolveResult> getSuperClass(@NotNull PsiClass aClass) {
+  private static @NotNull Collection<GroovyResolveResult> getSuperClass(@NotNull PsiClass aClass) {
     PsiClass superClass = aClass.getSuperClass();
     if (superClass != null) {
       PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);

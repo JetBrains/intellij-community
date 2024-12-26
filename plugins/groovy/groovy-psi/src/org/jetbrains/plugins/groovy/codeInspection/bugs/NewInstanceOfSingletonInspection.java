@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -25,9 +25,8 @@ import static org.jetbrains.plugins.groovy.transformations.singleton.ImplKt.getP
 
 public final class NewInstanceOfSingletonInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitNewExpression(@NotNull GrNewExpression newExpression) {
@@ -54,9 +53,8 @@ public final class NewInstanceOfSingletonInspection extends BaseInspection {
 
   private static class ReplaceWithInstanceAccessFix extends PsiUpdateModCommandQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("replace.new.expression.with.instance.access");
     }
 

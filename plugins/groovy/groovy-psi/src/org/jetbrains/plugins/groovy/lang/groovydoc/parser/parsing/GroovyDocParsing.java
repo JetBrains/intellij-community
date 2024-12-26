@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing;
 
@@ -17,20 +17,13 @@ public class GroovyDocParsing {
     ERROR, METHOD, FIELD
   }
 
-  @NonNls
-  private static final String SEE_TAG = "@see";
-  @NonNls
-  private static final String LINK_TAG = "@link";
-  @NonNls
-  private static final String LINKPLAIN_TAG = "@linkplain";
-  @NonNls
-  private static final String THROWS_TAG = "@throws";
-  @NonNls
-  private static final String EXCEPTION_TAG = "@exception";
-  @NonNls
-  private static final String PARAM_TAG = "@param";
-  @NonNls
-  private static final String VALUE_TAG = "@value";
+  private static final @NonNls String SEE_TAG = "@see";
+  private static final @NonNls String LINK_TAG = "@link";
+  private static final @NonNls String LINKPLAIN_TAG = "@linkplain";
+  private static final @NonNls String THROWS_TAG = "@throws";
+  private static final @NonNls String EXCEPTION_TAG = "@exception";
+  private static final @NonNls String PARAM_TAG = "@param";
+  private static final @NonNls String VALUE_TAG = "@value";
 
   private static final TokenSet REFERENCE_BEGIN = TokenSet.create(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN,
                                                                   GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN);

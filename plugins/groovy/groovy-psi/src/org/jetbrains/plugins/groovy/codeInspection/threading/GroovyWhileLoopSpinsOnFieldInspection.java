@@ -43,8 +43,7 @@ public final class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection 
   public boolean ignoreNonEmtpyLoops = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.ref.loop.spins.on.field");
   }
 
@@ -54,9 +53,8 @@ public final class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection 
       checkbox("ignoreNonEmtpyLoops", GroovyBundle.message("checkbox.only.warn.if.loop.empty")));
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new WhileLoopSpinsOnFieldVisitor();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.lexer.FlexLexer;
@@ -14,7 +14,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.STRING_LITER
 public abstract class GroovyLexerBase implements FlexLexer {
 
   // see groovy.g: allowRegexpLiteral()
-  private final static TokenSet DIVISION_IS_EXPECTED_AFTER = TokenSet.orSet(KEYWORDS, STRING_LITERALS, TokenSet.create(
+  private static final TokenSet DIVISION_IS_EXPECTED_AFTER = TokenSet.orSet(KEYWORDS, STRING_LITERALS, TokenSet.create(
     mINC, mDEC,
     mRPAREN, mRBRACK, mRCURLY,
     mGSTRING_END, mREGEX_END, mDOLLAR_SLASH_REGEX_END,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -270,13 +270,12 @@ public final class GrStringUtil {
     }
   }
 
-  @NotNull
-  public static StringBuilder escapeStringCharacters(int length,
-                                                     @NotNull CharSequence str,
-                                                     @Nullable String additionalChars,
-                                                     boolean escapeLineFeeds,
-                                                     boolean escapeBackSlash,
-                                                     @NotNull @NonNls StringBuilder buffer) {
+  public static @NotNull StringBuilder escapeStringCharacters(int length,
+                                                              @NotNull CharSequence str,
+                                                              @Nullable String additionalChars,
+                                                              boolean escapeLineFeeds,
+                                                              boolean escapeBackSlash,
+                                                              @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
@@ -579,9 +578,8 @@ public final class GrStringUtil {
     return "";
   }
 
-  @Nullable
   @Contract("null -> null")
-  public static TextRange getStringContentRange(@Nullable PsiElement element) {
+  public static @Nullable TextRange getStringContentRange(@Nullable PsiElement element) {
     if (element == null) return null;
     IElementType elementType = element.getNode().getElementType();
     if (!GroovyTokenSets.STRING_LITERALS.contains(elementType)) return null;

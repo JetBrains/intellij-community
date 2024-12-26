@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.*;
@@ -33,18 +19,17 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
     super(aClass);
   }
 
-  public GroovyElementPattern(@NotNull final InitialPatternCondition<T> condition) {
+  public GroovyElementPattern(final @NotNull InitialPatternCondition<T> condition) {
     super(condition);
   }
 
-  @NotNull
   @Override
-  public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
+  public @NotNull Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
 
     return with(new PatternCondition<>("methodCallParameter") {
       @Override
-      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof GrArgumentList psiExpressionList) {
           if (!(literal instanceof GrExpression)) return false;
@@ -82,8 +67,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
     });
   }
 
-  @NotNull
-  public Self regExpOperatorArgument() {
+  public @NotNull Self regExpOperatorArgument() {
     return with(new PatternCondition<>("regExpOperatorArg") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
@@ -106,7 +90,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
       super(aClass);
     }
 
-    public Capture(@NotNull final InitialPatternCondition<T> condition) {
+    public Capture(final @NotNull InitialPatternCondition<T> condition) {
       super(condition);
     }
   }

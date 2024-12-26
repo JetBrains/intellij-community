@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.StubBase;
@@ -24,13 +24,11 @@ public class GrVariableDeclarationStub extends StubBase<GrVariableDeclaration> {
     myTypeString = typeString;
   }
 
-  @Nullable
-  public String getTypeString() {
+  public @Nullable String getTypeString() {
     return myTypeString;
   }
 
-  @Nullable
-  public GrTypeElement getTypeElement() {
+  public @Nullable GrTypeElement getTypeElement() {
     String typeString = getTypeString();
     if (typeString == null) return null;
 
