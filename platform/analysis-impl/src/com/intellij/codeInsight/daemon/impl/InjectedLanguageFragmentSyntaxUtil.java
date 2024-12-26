@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class InjectedLanguageFragmentSyntaxUtil {
+final class InjectedLanguageFragmentSyntaxUtil {
   @Contract(pure = true)
   static List<HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
                                                            @NotNull TextRange hostRange,

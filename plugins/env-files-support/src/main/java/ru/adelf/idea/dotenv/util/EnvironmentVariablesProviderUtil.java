@@ -4,7 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider;
 
-public class EnvironmentVariablesProviderUtil {
+public final class EnvironmentVariablesProviderUtil {
     private static final ExtensionPointName<EnvironmentVariablesProvider> providersEP
             = new ExtensionPointName<>("ru.adelf.idea.dotenv.environmentVariablesProvider");
 

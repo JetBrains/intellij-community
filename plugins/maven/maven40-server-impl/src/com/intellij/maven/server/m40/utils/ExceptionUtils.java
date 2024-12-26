@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.*;
 
-public class ExceptionUtils {
+public final class ExceptionUtils {
   static final String WRAPPED_MARKER = " [wrapped] ";
 
   protected static String[] CAUSE_METHOD_NAMES = {

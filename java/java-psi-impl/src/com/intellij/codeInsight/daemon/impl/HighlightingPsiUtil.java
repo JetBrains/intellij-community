@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import org.jetbrains.annotations.NotNull;
 
-public class HighlightingPsiUtil {
+public final class HighlightingPsiUtil {
   public static boolean hasReferenceInside(@NotNull PsiElement psiElement) {
     boolean[] result = new boolean[1];
     psiElement.accept(new PsiRecursiveElementWalkingVisitor(){

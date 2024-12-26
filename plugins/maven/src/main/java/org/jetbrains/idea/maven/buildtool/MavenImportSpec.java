@@ -5,6 +5,6 @@ package org.jetbrains.idea.maven.buildtool;
  * @deprecated use MavenSyncSpec
  */
 @Deprecated(forRemoval = true)
-public class MavenImportSpec {
+public final class MavenImportSpec {
   public static final MavenImportSpec IMPLICIT_IMPORT = new MavenImportSpec();
 }

@@ -10,7 +10,7 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class DotEnvFactory {
+public final class DotEnvFactory {
     public static PsiElement createFromText(@NotNull Project project, @NotNull IElementType type, @NotNull String text) {
         final Ref<PsiElement> ret = new Ref<>();
         PsiFile dummyFile = createDummyFile(project, text);

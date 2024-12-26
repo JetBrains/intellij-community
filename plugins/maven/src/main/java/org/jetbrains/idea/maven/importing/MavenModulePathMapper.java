@@ -13,7 +13,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 
-public class MavenModulePathMapper {
+public final class MavenModulePathMapper {
   public static void resolveModulePaths(Collection<MavenProject> projects,
                                         Map<MavenProject, Module> mavenProjectToModule,
                                         Map<MavenProject, String> mavenProjectToModuleName,

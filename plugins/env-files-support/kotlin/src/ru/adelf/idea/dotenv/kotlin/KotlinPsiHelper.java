@@ -13,7 +13,7 @@ import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import java.util.Arrays;
 import java.util.List;
 
-class KotlinPsiHelper {
+final class KotlinPsiHelper {
     /**
      * Checks that this element environment string
      *

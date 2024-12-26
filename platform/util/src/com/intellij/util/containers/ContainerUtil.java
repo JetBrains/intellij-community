@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("UnstableApiUsage")
 public final class ContainerUtil {
   @ApiStatus.Internal
-  public static class Options {
+  public static final class Options {
     @ApiStatus.Internal
     public static boolean RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE;
   }

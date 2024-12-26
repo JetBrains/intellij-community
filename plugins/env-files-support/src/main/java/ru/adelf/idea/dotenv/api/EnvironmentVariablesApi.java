@@ -17,7 +17,7 @@ import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.*;
 
-public class EnvironmentVariablesApi {
+public final class EnvironmentVariablesApi {
 
     public static @NotNull Map<String, String> getAllKeyValues(Project project) {
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();

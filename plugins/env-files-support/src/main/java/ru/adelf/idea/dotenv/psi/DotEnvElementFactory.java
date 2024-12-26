@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFileFactory;
 import ru.adelf.idea.dotenv.DotEnvFileType;
 
-class DotEnvElementFactory {
+final class DotEnvElementFactory {
     static DotEnvProperty createProperty(Project project, String name) {
         final DotEnvFile file = createFile(project, name);
         return (DotEnvProperty) file.getFirstChild();

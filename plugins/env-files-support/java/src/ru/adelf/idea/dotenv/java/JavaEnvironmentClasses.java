@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaEnvironmentClasses {
+public final class JavaEnvironmentClasses {
     public static boolean isDirectMethodCall(String methodName) {
         return methodName.equals("getenv") || methodName.equals("getEnv");
     }

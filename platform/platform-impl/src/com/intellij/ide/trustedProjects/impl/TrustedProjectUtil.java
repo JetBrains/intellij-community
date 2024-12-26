@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrustedProjectUtil {
+public final class TrustedProjectUtil {
   public static @NotNull List<Integer> findAllIndexesOfSymbol(@NotNull CharSequence charSequence, char character) {
     List<Integer> result = new ArrayList<>();
     int firstIndex = 0;

@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class EnvironmentVariablesUtil {
+public final class EnvironmentVariablesUtil {
     public static @NotNull EnvironmentKeyValue getKeyValueFromString(@NotNull String s) {
         int pos = s.indexOf("=");
 
