@@ -228,6 +228,10 @@ public class OutputChecker {
       String junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), File.pathSeparator);
       result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
 
+      VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
+      assertNotNull(homeDirectory);
+      result = replacePath(result, homeDirectory.getPath(), JDK_HOME_STR);
+
       if (!StringUtil.isEmpty(CANONICAL_HOST_NAME)) {
         result = StringUtil.replace(result, CANONICAL_HOST_NAME, "!HOST_NAME!", true);
       }
@@ -235,10 +239,6 @@ public class OutputChecker {
         result = StringUtil.replace(result, HOST_NAME, "!HOST_NAME!", true);
       }
       result = result.replace("127.0.0.1", "!HOST_NAME!");
-
-      VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
-      assertNotNull(homeDirectory);
-      result = replacePath(result, homeDirectory.getPath(), JDK_HOME_STR);
 
       File productionFile = new File(PathUtil.getJarPathForClass(OutputChecker.class));
       if (productionFile.isDirectory()) {
