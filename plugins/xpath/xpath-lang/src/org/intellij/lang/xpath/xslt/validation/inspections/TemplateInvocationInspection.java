@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -27,20 +27,17 @@ import java.util.Map;
 public class TemplateInvocationInspection extends XsltInspection {
 
   @Override
-  @NotNull
-    public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
     }
 
   @Override
-    @NotNull
-    public String getShortName() {
+  public @NotNull String getShortName() {
         return "XsltTemplateInvocation";
     }
 
     @Override
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {

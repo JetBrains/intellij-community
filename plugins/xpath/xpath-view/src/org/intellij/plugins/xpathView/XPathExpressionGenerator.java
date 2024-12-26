@@ -51,8 +51,7 @@ public final class XPathExpressionGenerator {
     return visitor.getPath();
   }
 
-  @Nullable
-  public static PsiElement transformToValidShowPathNode(PsiElement contextNode) {
+  public static @Nullable PsiElement transformToValidShowPathNode(PsiElement contextNode) {
     PsiElement element = contextNode;
     while (element != null) {
       if (MyPsiUtil.isNameElement(element)) {
@@ -185,8 +184,7 @@ public final class XPathExpressionGenerator {
       return makeUnique(buffer.toString(), tag);
     }
 
-    @Nullable
-    public String getPath(XmlTag tag) {
+    public @Nullable String getPath(XmlTag tag) {
       if (tag == context) {
         return ".";
       }

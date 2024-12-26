@@ -34,14 +34,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class InlineXslAttribute implements IntentionAction {
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.inline.xsl.attribute");
     }
 
@@ -141,8 +139,7 @@ public class InlineXslAttribute implements IntentionAction {
         }
     }
 
-    @Nullable
-    private static XmlTag findParent(XmlTag tag) {
+    private static @Nullable XmlTag findParent(XmlTag tag) {
         XmlTag p = tag.getParentTag();
         if (p == null) {
             return null;

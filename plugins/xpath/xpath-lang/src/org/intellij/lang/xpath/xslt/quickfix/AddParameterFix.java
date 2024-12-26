@@ -36,8 +36,7 @@ public class AddParameterFix extends AddParamBase {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.add.parameter.to.template", myName, myTemplate.getName());
     }
 
@@ -52,8 +51,7 @@ public class AddParameterFix extends AddParamBase {
     }
 
     @Override
-    @Nullable
-    protected XmlTag findTemplateTag() {
+    protected @Nullable XmlTag findTemplateTag() {
         return PsiTreeUtil.getParentOfType(myTemplate.getNavigationElement(), XmlTag.class, false);
     }
 

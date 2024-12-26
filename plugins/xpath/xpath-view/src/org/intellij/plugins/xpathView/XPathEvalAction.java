@@ -46,7 +46,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
-import icons.XpathIcons;
 import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
@@ -285,7 +284,7 @@ public class XPathEvalAction extends XPathAction {
         });
     }
 
-    public static void showUsageView(@NotNull final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
+    public static void showUsageView(final @NotNull Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
         final UsageViewPresentation presentation = new UsageViewPresentation();
         presentation.setTargetsNodeText(XPathBundle.message("list.item.xpath.expression"));
         presentation.setCodeUsages(false);
@@ -332,8 +331,7 @@ public class XPathEvalAction extends XPathAction {
      * @return The expression or {@code null} if the user hits the cancel button
      * @param project The project to take the history from
      */
-    @Nullable
-    private static EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
+    private static @Nullable EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
         final XPathProjectComponent pc = XPathProjectComponent.getInstance(project);
         LOG.assertTrue(pc != null);
 
@@ -364,7 +362,7 @@ public class XPathEvalAction extends XPathAction {
      *
      * @param editor The editor object to apply the highlighting to
      */
-    private static void highlightResult(XmlElement contextNode, @NotNull final Editor editor, final List<?> list) {
+    private static void highlightResult(XmlElement contextNode, final @NotNull Editor editor, final List<?> list) {
 
         final Config cfg = XPathAppComponent.getInstance().getConfig();
         int lowestOffset = Integer.MAX_VALUE;
@@ -445,7 +443,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
         @Override
-        public void generate(@NotNull final Processor<? super Usage> processor) {
+        public void generate(final @NotNull Processor<? super Usage> processor) {
             Runnable runnable = () -> {
                 final List<?> list;
                 if (myResult.isEmpty()) {

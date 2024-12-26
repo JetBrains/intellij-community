@@ -34,8 +34,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
         this.myName = name;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
         return myName != null ? myName : "";
     }
 
@@ -48,8 +47,7 @@ public final class Variable implements Cloneable, Copyable<Variable> {
         }
     }
 
-    @NotNull
-    public String getExpression() {
+    public @NotNull String getExpression() {
         return myExpression != null ? myExpression : "";
     }
 

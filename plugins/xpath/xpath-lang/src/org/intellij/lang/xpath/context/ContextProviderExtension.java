@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.context;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,11 +12,9 @@ public abstract class ContextProviderExtension {
 
     protected abstract boolean accepts(XPathFile file);
 
-    @NotNull
-    protected abstract ContextProvider getContextProvider(XPathFile file);
+    protected abstract @NotNull ContextProvider getContextProvider(XPathFile file);
 
-    @Nullable
-    public static ContextProvider getInstance(XPathFile file) {
+    public static @Nullable ContextProvider getInstance(XPathFile file) {
       for (ContextProviderExtension extension : EXTENSION_POINT_NAME.getExtensionList()) {
             if (extension.accepts(file)) {
                 return extension.getContextProvider(file);

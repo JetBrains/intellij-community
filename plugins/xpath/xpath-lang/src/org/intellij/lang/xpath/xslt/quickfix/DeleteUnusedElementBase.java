@@ -34,14 +34,12 @@ public abstract class DeleteUnusedElementBase<T extends XsltVariable> extends Lo
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.delete.unused.element");
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.delete.unused", getType(), myName);
     }
 

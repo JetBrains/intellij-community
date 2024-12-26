@@ -287,8 +287,7 @@ public final class XsltSupport {
     return "import".equals(tag.getLocalName()) && isXsltCoreTag(tag) && tag.getAttribute("href", null) != null;
   }
 
-  @Nullable
-  public static PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
+  public static @Nullable PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
     final XmlAttributeValue valueElement = attribute.getValueElement();
     if (valueElement != null) {
       final PsiElement firstChild = valueElement.getFirstChild();

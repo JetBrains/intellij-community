@@ -77,8 +77,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        @NotNull
-        public String getPresentableGroupText() {
+        public @NotNull String getPresentableGroupText() {
             final StringBuilder sb = new StringBuilder();
 
             final XPathExpression expr = myTemplate.getMatchExpression();
@@ -138,9 +137,8 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
     private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
-        @Nullable
         @Override
-        protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+        protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
             if (usage instanceof UsageInfo2UsageAdapter u) {
               final UsageInfo usageInfo = u.getUsageInfo();
                 if (usageInfo instanceof MoveRenameUsageInfo info) {
@@ -157,8 +155,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return null;
         }
 
-        @Nullable
-        private static UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
+        private static @Nullable UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
             if (referencedElement instanceof XsltParameter parameter) {
               final PsiElement element = u.getElement();
                 if (element == null) return null;

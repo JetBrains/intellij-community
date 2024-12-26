@@ -45,8 +45,7 @@ public class CreateVariableFix extends AbstractFix {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.create.variable", myReference.getReferencedName());
     }
 
@@ -56,7 +55,7 @@ public class CreateVariableFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
 
         XmlTag tag = PsiTreeUtil.getContextOfType(myReference, XmlTag.class, true);
@@ -89,8 +88,7 @@ public class CreateVariableFix extends AbstractFix {
         return XsltCodeInsightUtil.findVariableInsertionPoint(currentUsageTag, getUsageBlock(), myReference.getReferencedName());
     }
 
-    @Nullable
-    public PsiElement getUsageBlock() {
+    public @Nullable PsiElement getUsageBlock() {
         return XsltCodeInsightUtil.getUsageBlock(myReference);
     }
 

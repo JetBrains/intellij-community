@@ -40,8 +40,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> extends XsltRefactoringActionBase {
-    @NlsContexts.Command
-    protected abstract String getCommandName();
+    protected abstract @NlsContexts.Command String getCommandName();
 
     protected abstract Settings getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions);
 

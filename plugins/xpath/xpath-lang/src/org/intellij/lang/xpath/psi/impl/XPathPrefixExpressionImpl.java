@@ -32,23 +32,20 @@ public class XPathPrefixExpressionImpl extends XPathElementImpl implements XPath
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
       // +/-: isn't this always a number?
         final XPathExpression expression = getExpression();
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
     @Override
-    @Nullable
-    public XPathExpression getExpression() {
+    public @Nullable XPathExpression getExpression() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
-  @NotNull
   @Override
-  public XPathElementType getOperator() {
+  public @NotNull XPathElementType getOperator() {
     final ASTNode node = getNode().findChildByType(XPathTokenTypes.ADD_OPS);
     final XPathElementType elementType = (XPathElementType)(node != null ? node.getElementType() : null);
     assert elementType != null : unexpectedPsiAssertion();

@@ -35,8 +35,7 @@ import java.text.MessageFormat;
 import java.util.Set;
 
 public class CheckNodeTest extends XPathInspection {
-    @NonNls
-    private static final String SHORT_NAME = "CheckNodeTest";
+    private static final @NonNls String SHORT_NAME = "CheckNodeTest";
 
     @Override
     protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
@@ -44,9 +43,7 @@ public class CheckNodeTest extends XPathInspection {
     }
 
   @Override
-    @NotNull
-    @NonNls
-    public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
         return SHORT_NAME;
     }
 
@@ -60,7 +57,7 @@ public class CheckNodeTest extends XPathInspection {
       return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
 
-    final static class MyVisitor extends Visitor {
+    static final class MyVisitor extends Visitor {
         MyVisitor(InspectionManager manager, boolean isOnTheFly) {
             super(manager, isOnTheFly);
         }

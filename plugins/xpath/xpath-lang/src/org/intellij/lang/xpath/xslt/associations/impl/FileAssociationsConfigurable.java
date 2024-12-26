@@ -114,8 +114,7 @@ public final class FileAssociationsConfigurable implements SearchableConfigurabl
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

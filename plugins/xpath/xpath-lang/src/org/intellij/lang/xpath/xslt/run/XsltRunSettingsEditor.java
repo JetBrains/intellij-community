@@ -74,8 +74,8 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   implements CheckableRunConfigurationEditor<XsltRunConfiguration> {
@@ -461,8 +461,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myJDK.setEnabled(getSelectedIndex(myJdkOptions) == XsltRunConfiguration.JdkChoice.JDK.ordinal());
     }
 
-    @Nullable
-    private Module getModule() {
+    private @Nullable Module getModule() {
       final Object selectedItem = myModule.getSelectedItem();
       return selectedItem instanceof Module ? (Module)selectedItem : null;
     }
@@ -626,8 +625,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     myEditor = new Editor(myProject);
     return myEditor.getComponent();
   }

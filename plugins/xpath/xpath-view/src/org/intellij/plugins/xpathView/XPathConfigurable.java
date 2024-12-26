@@ -32,14 +32,12 @@ public class XPathConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  @Nullable
-    public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
         return "xpath.settings";
     }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 

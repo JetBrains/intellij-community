@@ -106,9 +106,8 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
   }
 
   @Override
-  @NotNull
-  @SuppressWarnings({"EmptyMethod" })
-  public final ASTNode getNode() {
+  @SuppressWarnings({"EmptyMethod"})
+  public final @NotNull ASTNode getNode() {
     return super.getNode();
   }
 

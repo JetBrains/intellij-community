@@ -47,8 +47,7 @@ public class AddWithParamFix extends AbstractFix {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.add.argument.for.x", myName);
     }
 
@@ -73,7 +72,7 @@ public class AddWithParamFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(final @NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
         SmartPsiElementPointer<XmlTag> result = WriteAction.compute(() -> {
             final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);
 

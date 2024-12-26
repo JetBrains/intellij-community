@@ -124,8 +124,7 @@ public class XPathLanguageInjector implements MultiHostInjector {
     }
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(XmlAttributeValue.class);
   }
 

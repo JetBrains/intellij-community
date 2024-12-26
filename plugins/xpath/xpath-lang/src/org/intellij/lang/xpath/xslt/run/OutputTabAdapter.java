@@ -93,8 +93,7 @@ class OutputTabAdapter extends ProcessAdapter {
         });
     }
 
-    @Nullable
-    private InputStream connect(int port) throws IOException {
+    private @Nullable InputStream connect(int port) throws IOException {
         final long s = System.currentTimeMillis();
         final InetSocketAddress endpoint = new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
 

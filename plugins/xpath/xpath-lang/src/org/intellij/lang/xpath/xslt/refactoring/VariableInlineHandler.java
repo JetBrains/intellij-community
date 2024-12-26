@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -88,7 +88,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
     }
   }
 
-  public static void invoke(@NotNull final XPathVariable variable, Editor editor) {
+  public static void invoke(final @NotNull XPathVariable variable, Editor editor) {
 
     final String type = LanguageFindUsages.getType(variable);
     final Project project = variable.getProject();
@@ -193,8 +193,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
     });
   }
 
-  @Nullable
-  private static Color getScrollmarkColor(TextAttributes textAttributes) {
+  private static @Nullable Color getScrollmarkColor(TextAttributes textAttributes) {
     if (textAttributes.getErrorStripeColor() != null) {
       return textAttributes.getErrorStripeColor();
     } else if (textAttributes.getBackgroundColor() != null) {

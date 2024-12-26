@@ -40,14 +40,12 @@ import java.util.List;
 
 public class ReplaceWithXslAttribute implements IntentionAction {
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.replace.with.xsl.attribute");
     }
 

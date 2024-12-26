@@ -64,21 +64,18 @@ public abstract class AbstractFix implements IntentionAction {
 
   protected abstract boolean requiresEditor();
 
-  @Nullable
-  public LocalQuickFix createQuickFix(boolean isOnTheFly) {
+  public @Nullable LocalQuickFix createQuickFix(boolean isOnTheFly) {
     final boolean requiresEditor = requiresEditor();
     if (requiresEditor && !isOnTheFly) return null;
 
     return new LocalQuickFix() {
       @Override
-      @NotNull
-      public String getName() {
+      public @NotNull String getName() {
         return AbstractFix.this.getText();
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return AbstractFix.this.getFamilyName();
       }
 

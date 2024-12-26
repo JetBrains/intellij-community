@@ -25,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
-import icons.XpathIcons;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -74,42 +73,36 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
   }
 
   @Override
-  @NotNull
-  public String getFunctionName() {
+  public @NotNull String getFunctionName() {
     final ASTNode node = getNameNode();
     final String name = node != null ? node.getText() : null;
     assert name != null : unexpectedPsiAssertion();
     return name;
   }
 
-  @Nullable
-  protected ASTNode getNameNode() {
+  protected @Nullable ASTNode getNameNode() {
     return getNode().findChildByType(XPathTokenTypes.FUNCTION_NAME);
   }
 
-  @Nullable
-  protected ASTNode getPrefixNode() {
+  protected @Nullable ASTNode getPrefixNode() {
     return getNode().findChildByType(XPathTokenTypes.EXT_PREFIX);
   }
 
   @Override
-  @NotNull
-  public PrefixedName getQName() {
+  public @NotNull PrefixedName getQName() {
     final ASTNode node = getNameNode();
     assert node != null : unexpectedPsiAssertion();
     return new PrefixedNameImpl(getPrefixNode(), node);
   }
 
   @Override
-  @Nullable
-  public XPathFunction resolve() {
+  public @Nullable XPathFunction resolve() {
     final Reference reference = getReference();
     return reference != null ? reference.resolve() : null;
   }
 
   @Override
-  @Nullable
-  public Reference getReference() {
+  public @Nullable Reference getReference() {
     final ASTNode nameNode = getNameNode();
     if (nameNode != null) {
       return new Reference(nameNode);
@@ -126,8 +119,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
   }
 
   @Override
-  @NotNull
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     final XPathFunction f = resolve();
     if (f == null) return XPathType.UNKNOWN;
     final Function function = f.getDeclaration();
@@ -142,8 +134,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     }
 
     @Override
-    @Nullable
-    public XPathFunction resolve() {
+    public @Nullable XPathFunction resolve() {
       if (myFunction != null && myFunction.first.equals(getQName().toString())) {
         return myFunction.second;
       } else {
@@ -207,14 +198,12 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
       }
 
       @Override
-      @Nullable
-      public Icon getIcon(boolean open) {
+      public @Nullable Icon getIcon(boolean open) {
         return getIcon(0);
       }
 
       @Override
-      @Nullable
-      public @NlsSafe String getPresentableText() {
+      public @Nullable @NlsSafe String getPresentableText() {
         return myFunctionDecl != null ? myFunctionDecl.buildSignature() +
                 ": " + myFunctionDecl.getReturnType().getName() : null;
       }

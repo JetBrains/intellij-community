@@ -84,8 +84,7 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
     }
 
     @Override
-    @NotNull
-    protected String getPrivateDimensionServiceKey() {
+    protected @NotNull String getPrivateDimensionServiceKey() {
         return "XPathView.InputDialog.DIMENSION_SERVICE_KEY";
     }
 }

@@ -34,8 +34,7 @@ import java.util.regex.Pattern;
 public final class InspectionUtil {
     static final Pattern SUPPRESSION_PATTERN = Pattern.compile("[ \t]*(?:noinspection|suppress)[ \t]+(\\w+(,[ \t]*\\w+)*)[ \t]*");
 
-    @NonNls
-    private static final String ALL_ID = "ALL";
+    private static final @NonNls String ALL_ID = "ALL";
 
     private InspectionUtil() {
     }

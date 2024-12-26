@@ -150,8 +150,7 @@ public class XPathCompletionContributor extends CompletionContributor {
       PrioritizedLookupElement.withPriority(e, e instanceof VariableLookup ? 2 : 1)));
   }
 
-  @NotNull
-  private static String findPrefixStatic(CompletionParameters parameters) {
+  private static @NotNull String findPrefixStatic(CompletionParameters parameters) {
     String prefix = CompletionUtil.findReferencePrefix(parameters);
     if (prefix == null) {
       prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);

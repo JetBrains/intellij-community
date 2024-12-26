@@ -70,7 +70,7 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     @Override
-    public void generate(@NotNull final Processor<? super Usage> processor) {
+    public void generate(final @NotNull Processor<? super Usage> processor) {
         Runnable runnable = () -> {
             myIndicator.setIndeterminate(true);
             //noinspection DialogTitleCapitalization

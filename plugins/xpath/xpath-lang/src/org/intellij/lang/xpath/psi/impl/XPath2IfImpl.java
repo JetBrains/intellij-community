@@ -29,8 +29,7 @@ public class XPath2IfImpl extends XPath2ElementImpl implements XPath2If {
   }
 
   @Override
-  @NotNull
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     final XPathExpression then = getThenBranch();
     final XPathExpression value = then != null ? then : getElseBranch();
     return value != null ? value.getType() : XPathType.UNKNOWN;

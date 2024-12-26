@@ -39,9 +39,8 @@ abstract class AbstractLookup extends LookupElement {
         return myName;
     }
 
-    @NotNull
     @Override
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
         return myPresentation;
     }
 

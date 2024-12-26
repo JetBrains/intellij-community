@@ -28,8 +28,7 @@ public class XPathAxisSpecifierImpl extends XPathElementImpl implements XPathAxi
     }
 
     @Override
-    @NotNull
-    public Axis getAxis() {
+    public @NotNull Axis getAxis() {
         final ASTNode[] nodes = getNode().getChildren(XPathTokenTypes.AXIS);
         if (nodes.length > 0) {
           return Axis.fromName(nodes[0].getText());

@@ -50,8 +50,7 @@ class ToggleAssociationAction extends ToggleAction {
       return ActionUpdateThread.BGT;
     }
 
-    @NlsSafe
-    private static String getPath(PsiFile assoc, PsiFile psiFile) {
+    private static @NlsSafe String getPath(PsiFile assoc, PsiFile psiFile) {
         final VirtualFile virtualFile = assoc.getVirtualFile();
         assert virtualFile != null;
 

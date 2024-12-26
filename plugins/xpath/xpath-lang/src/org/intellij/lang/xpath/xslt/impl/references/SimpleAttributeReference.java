@@ -36,22 +36,19 @@ abstract class SimpleAttributeReference implements PsiReference {
     }
 
     @Override
-    @NotNull
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
         return getTextRange().substring(myAttribute.getValue());
     }
 
     @Override
-    @NotNull
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
         final XmlAttributeValue value = myAttribute.getValueElement();
         assert value != null;
         return value;
     }
 
     @Override
-    @NotNull
-    public TextRange getRangeInElement() {
+    public @NotNull TextRange getRangeInElement() {
         return getTextRange().shiftRight(1);
     }
 
@@ -82,15 +79,12 @@ abstract class SimpleAttributeReference implements PsiReference {
     }
 
     @Override
-    @Nullable
-    public final PsiElement resolve() {
+    public final @Nullable PsiElement resolve() {
         return ResolveCache.getInstance(myAttribute.getProject()).resolveWithCaching(this,
                                                                                      (ResolveCache.Resolver)(psiReference, b) -> resolveImpl(), false, false);
     }
 
-    @Nullable
-    protected abstract PsiElement resolveImpl();
+    protected abstract @Nullable PsiElement resolveImpl();
 
-    @NotNull
-    protected abstract TextRange getTextRange();
+    protected abstract @NotNull TextRange getTextRange();
 }

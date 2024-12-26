@@ -32,14 +32,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConvertIfToChooseIntention implements IntentionAction {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.convert.if.to.choose");
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 

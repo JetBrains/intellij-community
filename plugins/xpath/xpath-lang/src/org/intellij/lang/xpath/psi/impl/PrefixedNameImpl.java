@@ -39,8 +39,7 @@ public class PrefixedNameImpl implements PrefixedName {
     }
 
     @Override
-    @NotNull
-    public String getLocalName() {
+    public @NotNull String getLocalName() {
         return localNode.getText();
     }
 

@@ -51,8 +51,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.xml.namespace.QName;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
 
@@ -161,8 +161,7 @@ public class EditContextDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return getClass().getName() + ".DIMENSION_SERVICE_KEY";
   }
 
@@ -436,14 +435,12 @@ public class EditContextDialog extends DialogWrapper {
 
   private class MyNamespaceContext implements NamespaceContext {
     @Override
-    @Nullable
-    public String getNamespaceURI(String prefix, XmlElement context) {
+    public @Nullable String getNamespaceURI(String prefix, XmlElement context) {
       return Namespace.makeMap(myNamespaceTableModel.getNamespaces()).get(prefix);
     }
 
     @Override
-    @Nullable
-    public String getPrefixForURI(String uri, XmlElement context) {
+    public @Nullable String getPrefixForURI(String uri, XmlElement context) {
       final BidirectionalMap<String, String> bidiMap = new BidirectionalMap<>();
       bidiMap.putAll(Namespace.makeMap(myNamespaceTableModel.getNamespaces()));
       final List<String> list = bidiMap.getKeysByValue(uri);
@@ -451,14 +448,12 @@ public class EditContextDialog extends DialogWrapper {
     }
 
     @Override
-    @NotNull
-    public Collection<String> getKnownPrefixes(XmlElement context) {
+    public @NotNull Collection<String> getKnownPrefixes(XmlElement context) {
       return Namespace.makeMap(myNamespaceTableModel.getNamespaces()).keySet();
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve(String prefix, XmlElement context) {
+    public @Nullable PsiElement resolve(String prefix, XmlElement context) {
       return null;
     }
 
@@ -493,38 +488,32 @@ public class EditContextDialog extends DialogWrapper {
     }
 
     @Override
-    @NotNull
-    public ContextType getContextType() {
+    public @NotNull ContextType getContextType() {
       return myContextProvider.getContextType();
     }
 
     @Override
-    @Nullable
-    public XmlElement getContextElement() {
+    public @Nullable XmlElement getContextElement() {
       return myContextProvider.getContextElement();
     }
 
     @Override
-    @Nullable
-    public NamespaceContext getNamespaceContext() {
+    public @Nullable NamespaceContext getNamespaceContext() {
       return myNamespaceContext;
     }
 
     @Override
-    @Nullable
-    public VariableContext getVariableContext() {
+    public @Nullable VariableContext getVariableContext() {
       return myVariableContext;
     }
 
     @Override
-    @Nullable
-    public Set<QName> getAttributes(boolean forValidation) {
+    public @Nullable Set<QName> getAttributes(boolean forValidation) {
       return myContextProvider.getAttributes(forValidation);
     }
 
     @Override
-    @Nullable
-    public Set<QName> getElements(boolean forValidation) {
+    public @Nullable Set<QName> getElements(boolean forValidation) {
       return myContextProvider.getElements(forValidation);
     }
   }

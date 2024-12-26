@@ -43,8 +43,7 @@ public abstract class XsltRunnerExtension {
 
     protected abstract boolean supports(XsltRunConfiguration config, boolean debugger);
 
-    @NotNull
-    public static List<XsltRunnerExtension> getExtensions(XsltRunConfiguration config, boolean debugger) {
+    public static @NotNull List<XsltRunnerExtension> getExtensions(XsltRunConfiguration config, boolean debugger) {
       final List<XsltRunnerExtension> extensions = EXTENSION_POINT_NAME.getExtensionList();
         final ArrayList<XsltRunnerExtension> list = new ArrayList<>(extensions.size());
         for (XsltRunnerExtension extension : extensions) {

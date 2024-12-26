@@ -252,8 +252,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
     }
 
     @Override
-    @Nullable
-    public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
+    public @Nullable String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (!editor.getSelectionModel().hasSelection()) {
             return XPathBundle.message("notification.content.please.select.code.that.should.be.extracted");
         }
