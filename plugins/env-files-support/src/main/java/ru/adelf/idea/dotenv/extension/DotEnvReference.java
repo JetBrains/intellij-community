@@ -24,9 +24,8 @@ public class DotEnvReference extends PsiReferenceBase<PsiElement> implements Psi
         this.key = key;
     }
 
-    @NotNull
     @Override
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
+    public @NotNull ResolveResult[] multiResolve(boolean incompleteCode) {
         final PsiElement[] elements = EnvironmentVariablesApi.getKeyDeclarations(myElement.getProject(), key);
 
         return Arrays.stream(elements)
@@ -35,16 +34,14 @@ public class DotEnvReference extends PsiReferenceBase<PsiElement> implements Psi
                 .toArray(ResolveResult[]::new);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
         ResolveResult[] resolveResults = multiResolve(false);
         return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public @NotNull Object[] getVariants() {
         Project project = myElement.getProject();
         final PsiElement[] elements = EnvironmentVariablesApi.getKeyDeclarations(project, key);
 

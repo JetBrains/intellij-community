@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.browse;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -21,7 +21,7 @@ public class DirectoryEntry extends BaseNodeDescription implements Comparable<Di
     comparing(DirectoryEntry::getNodeKind).thenComparing(entry -> entry.getUrl().toDecodedString(), String.CASE_INSENSITIVE_ORDER);
 
   private final String myName;
-  @NotNull private final CommitInfo myCommitInfo;
+  private final @NotNull CommitInfo myCommitInfo;
   private final String myPath;
   private final Url myUrl;
   private final Url myRepositoryRoot;

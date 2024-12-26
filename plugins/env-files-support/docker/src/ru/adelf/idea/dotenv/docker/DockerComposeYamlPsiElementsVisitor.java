@@ -54,8 +54,7 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
      * FOO: [foobar]
      */
 
-    @NotNull
-    private Collection<YAMLSequenceItem> getSequenceItems(@NotNull YAMLKeyValue yamlKeyValue) {
+    private @NotNull Collection<YAMLSequenceItem> getSequenceItems(@NotNull YAMLKeyValue yamlKeyValue) {
         PsiElement yamlSequence = yamlKeyValue.getLastChild();
 
         if (yamlSequence instanceof YAMLSequence) {
@@ -70,8 +69,7 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
      * FOO:
      * bar: true
      */
-    @NotNull
-    private Collection<YAMLKeyValue> getMappingItems(@NotNull YAMLKeyValue yamlKeyValue) {
+    private @NotNull Collection<YAMLKeyValue> getMappingItems(@NotNull YAMLKeyValue yamlKeyValue) {
         PsiElement yamlMapping = yamlKeyValue.getLastChild();
 
         if (yamlMapping instanceof YAMLMapping) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -91,7 +91,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   @Override
-  public void run(@NotNull final ProgressIndicator indicator) {
+  public void run(final @NotNull ProgressIndicator indicator) {
     myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
 
@@ -124,8 +124,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
   }
 
-  @NotNull
-  private static VcsException createException(boolean isWarning, @Nls @Nullable String @NotNull ... messages) {
+  private static @NotNull VcsException createException(boolean isWarning, @Nls @Nullable String @NotNull ... messages) {
     Collection<String> notEmptyMessages = ContainerUtil.mapNotNull(messages, message -> StringUtil.nullize(message, true));
 
     return new VcsException(notEmptyMessages).setIsWarning(isWarning);
@@ -271,8 +270,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     });
   }
 
-  @NotNull
-  private Collection<FilePath> gatherChangedPaths() {
+  private @NotNull Collection<FilePath> gatherChangedPaths() {
     final Collection<FilePath> result = new ArrayList<>();
 
     UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(),
@@ -295,7 +293,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     showAlienCommit(dirtyScope);
   }
 
-  private void showAlienCommit(@NotNull final AlienDirtyScope dirtyScope) {
+  private void showAlienCommit(final @NotNull AlienDirtyScope dirtyScope) {
     new Task.Backgroundable(myVcs.getProject(),
                             message("action.Subversion.integrate.changes.collecting.changes.to.commit.task.title")) {
 
@@ -339,27 +337,23 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private static class FakeGate implements ChangeListManagerGate {
-    @NotNull
     @Override
-    public List<LocalChangeList> getListsCopy() {
+    public @NotNull List<LocalChangeList> getListsCopy() {
       throw new UnsupportedOperationException();
     }
 
-    @Nullable
     @Override
-    public LocalChangeList findChangeList(String name) {
+    public @Nullable LocalChangeList findChangeList(String name) {
       throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public LocalChangeList addChangeList(@NotNull String name, String comment) {
+    public @NotNull LocalChangeList addChangeList(@NotNull String name, String comment) {
       throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public LocalChangeList findOrCreateList(@NotNull String name, String comment) {
+    public @NotNull LocalChangeList findOrCreateList(@NotNull String name, String comment) {
       throw new UnsupportedOperationException();
     }
 
@@ -383,9 +377,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       throw new UnsupportedOperationException();
     }
 
-    @Nullable
     @Override
-    public FileStatus getStatus(@NotNull FilePath filePath) {
+    public @Nullable FileStatus getStatus(@NotNull FilePath filePath) {
       throw new UnsupportedOperationException();
     }
 

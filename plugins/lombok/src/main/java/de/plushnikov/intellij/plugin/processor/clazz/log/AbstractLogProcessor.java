@@ -30,8 +30,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     NULL,
     UNKNOWN;
 
-    @NotNull
-    static LoggerInitializerParameter find(@NotNull String parameter) {
+    static @NotNull LoggerInitializerParameter find(@NotNull String parameter) {
       return switch (parameter) {
         case "TYPE" -> TYPE;
         case "NAME" -> NAME;
@@ -51,8 +50,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return Collections.singleton(getLoggerName(psiClass));
   }
 
-  @NotNull
-  public static String getLoggerName(@NotNull PsiClass psiClass) {
+  public static @NotNull String getLoggerName(@NotNull PsiClass psiClass) {
     return ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.LOG_FIELDNAME, psiClass);
   }
 
@@ -63,20 +61,17 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   /**
    * Nullable because it can be called before validation.
    */
-  @Nullable
-  public abstract String getLoggerType(@NotNull PsiClass psiClass);
+  public abstract @Nullable String getLoggerType(@NotNull PsiClass psiClass);
 
   /**
    * Call only after validation.
    */
-  @NotNull
-  abstract String getLoggerInitializer(@NotNull PsiClass psiClass);
+  abstract @NotNull String getLoggerInitializer(@NotNull PsiClass psiClass);
 
   /**
    * Call only after validation.
    */
-  @NotNull
-  abstract List<LoggerInitializerParameter> getLoggerInitializerParameters(@NotNull PsiClass psiClass, boolean topicPresent);
+  abstract @NotNull List<LoggerInitializerParameter> getLoggerInitializerParameters(@NotNull PsiClass psiClass, boolean topicPresent);
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
@@ -130,8 +125,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return loggerField;
   }
 
-  @NotNull
-  private String createLoggerInitializeParameters(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  private @NotNull String createLoggerInitializeParameters(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final StringBuilder parametersBuilder = new StringBuilder();
     final String topic = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "topic", "");
     final boolean topicPresent = !StringUtil.isEmptyOrSpaces(topic);

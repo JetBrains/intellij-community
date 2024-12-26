@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.wrapper.*;
@@ -30,21 +30,18 @@ public class StreamChainImpl implements StreamChain {
     myContext = context;
   }
 
-  @NotNull
   @Override
-  public QualifierExpression getQualifierExpression() {
+  public @NotNull QualifierExpression getQualifierExpression() {
     return myQualifierExpression;
   }
 
-  @NotNull
   @Override
-  public List<IntermediateStreamCall> getIntermediateCalls() {
+  public @NotNull List<IntermediateStreamCall> getIntermediateCalls() {
     return Collections.unmodifiableList(myIntermediateCalls);
   }
 
-  @NotNull
   @Override
-  public StreamCall getCall(int index) {
+  public @NotNull StreamCall getCall(int index) {
     if (0 <= index && index < length()) {
       return doGetCall(index);
     }
@@ -52,9 +49,8 @@ public class StreamChainImpl implements StreamChain {
     throw new IndexOutOfBoundsException("Call index out of bound: " + index);
   }
 
-  @NotNull
   @Override
-  public TerminatorStreamCall getTerminationCall() {
+  public @NotNull TerminatorStreamCall getTerminationCall() {
     return myTerminator;
   }
 
@@ -93,9 +89,8 @@ public class StreamChainImpl implements StreamChain {
     return 1 + myIntermediateCalls.size();
   }
 
-  @NotNull
   @Override
-  public PsiElement getContext() {
+  public @NotNull PsiElement getContext() {
     return myContext;
   }
 
@@ -107,8 +102,7 @@ public class StreamChainImpl implements StreamChain {
     return myTerminator;
   }
 
-  @NotNull
-  private static String args2Text(@NotNull List<CallArgument> args) {
+  private static @NotNull String args2Text(@NotNull List<CallArgument> args) {
     return StreamEx.of(args).map(CallArgument::getText).joining(", ", "(", ")");
   }
 }

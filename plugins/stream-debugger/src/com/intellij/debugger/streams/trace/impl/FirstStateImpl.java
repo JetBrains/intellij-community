@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.NextAwareState;
@@ -25,15 +25,13 @@ public class FirstStateImpl extends StateBase implements NextAwareState {
     myToNext = toNextMapping;
   }
 
-  @NotNull
   @Override
-  public StreamCall getNextCall() {
+  public @NotNull StreamCall getNextCall() {
     return myNextCall;
   }
 
-  @NotNull
   @Override
-  public List<TraceElement> getNextValues(@NotNull TraceElement value) {
+  public @NotNull List<TraceElement> getNextValues(@NotNull TraceElement value) {
     return myToNext.getOrDefault(value, Collections.emptyList());
   }
 }

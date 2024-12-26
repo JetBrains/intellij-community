@@ -13,9 +13,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesProvider {
-    @NotNull
     @Override
-    public FileAcceptResult acceptFile(VirtualFile file) {
+    public @NotNull FileAcceptResult acceptFile(VirtualFile file) {
         if (file.getName().equals("docker-compose.yml") || file.getName().equals("docker-compose.yaml")) {
             return file.getFileType().equals(YAMLFileType.YML) ? FileAcceptResult.ACCEPTED : FileAcceptResult.NOT_ACCEPTED;
         }
@@ -23,9 +22,8 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
         return FileAcceptResult.NOT_ACCEPTED;
     }
 
-    @NotNull
     @Override
-    public Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
+    public @NotNull Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
         if (psiFile instanceof YAMLFile) {
             DockerComposeYamlPsiElementsVisitor visitor = new DockerComposeYamlPsiElementsVisitor();
             psiFile.acceptChildren(visitor);

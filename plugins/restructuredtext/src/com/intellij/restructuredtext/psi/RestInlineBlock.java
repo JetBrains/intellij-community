@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * User : catherine
  */
 public class RestInlineBlock extends RestElement {
-  public RestInlineBlock(@NotNull final ASTNode node) {
+  public RestInlineBlock(final @NotNull ASTNode node) {
     super(node);
   }
 

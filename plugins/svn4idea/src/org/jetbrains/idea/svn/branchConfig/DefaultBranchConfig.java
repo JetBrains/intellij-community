@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,8 +31,7 @@ public final class DefaultBranchConfig {
   public static final @NlsSafe String BRANCHES_NAME = "branches";
   public static final @NlsSafe String TAGS_NAME = "tags";
 
-  @Nullable
-  public static SvnBranchConfigurationNew detect(@NotNull Project project, @NotNull VirtualFile root) {
+  public static @Nullable SvnBranchConfigurationNew detect(@NotNull Project project, @NotNull VirtualFile root) {
     SvnBranchConfigurationNew result = null;
     SvnVcs vcs = SvnVcs.getInstance(project);
     Url rootUrl = SvnUtil.getUrl(vcs, VfsUtilCore.virtualToIoFile(root));
@@ -52,8 +51,7 @@ public final class DefaultBranchConfig {
     return result;
   }
 
-  @NotNull
-  private static SvnBranchConfigurationNew detect(@NotNull SvnVcs vcs, @NotNull Url url) throws VcsException {
+  private static @NotNull SvnBranchConfigurationNew detect(@NotNull SvnVcs vcs, @NotNull Url url) throws VcsException {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
     result.setTrunk(url);
 
@@ -67,8 +65,7 @@ public final class DefaultBranchConfig {
     return result;
   }
 
-  @Nullable
-  private static Url getBranchLocationsParent(@NotNull Url url) throws SvnBindException {
+  private static @Nullable Url getBranchLocationsParent(@NotNull Url url) throws SvnBindException {
     while (!hasEmptyName(url) && !hasDefaultName(url)) {
       url = removePathTail(url);
     }
@@ -85,8 +82,7 @@ public final class DefaultBranchConfig {
     return name.equalsIgnoreCase(TRUNK_NAME) || name.equalsIgnoreCase(BRANCHES_NAME) || name.equalsIgnoreCase(TAGS_NAME);
   }
 
-  @NotNull
-  private static DirectoryEntryConsumer createHandler(@NotNull final SvnBranchConfigurationNew result, @NotNull final Url rootPath) {
+  private static @NotNull DirectoryEntryConsumer createHandler(final @NotNull SvnBranchConfigurationNew result, final @NotNull Url rootPath) {
     return entry -> {
       if (entry.isDirectory()) {
         Url childUrl = append(rootPath, entry.getName());

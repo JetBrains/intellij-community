@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 class PythonEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
-    final private Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
+    private final Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
 
     @Override
     public void visitElement(PsiElement element) {

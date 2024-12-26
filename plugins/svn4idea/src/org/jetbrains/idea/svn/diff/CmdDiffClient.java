@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,9 +39,8 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
   private static final Logger LOG = Logger.getInstance(CmdDiffClient.class);
 
-  @NotNull
   @Override
-  public List<Change> compare(@NotNull Target target1, @NotNull Target target2) throws VcsException {
+  public @NotNull List<Change> compare(@NotNull Target target1, @NotNull Target target2) throws VcsException {
     assertUrl(target1);
     if (target2.isFile()) {
       // Such combination (file and url) with "--summarize" option is supported only in svn 1.8.
@@ -84,8 +83,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     }
   }
 
-  @NotNull
-  private List<Change> parseOutput(@NotNull Target target1, @NotNull Target target2, @NotNull CommandExecutor executor)
+  private @NotNull List<Change> parseOutput(@NotNull Target target1, @NotNull Target target2, @NotNull CommandExecutor executor)
     throws SvnBindException {
     try {
       DiffInfo diffInfo = CommandUtil.parse(executor.getOutput(), DiffInfo.class);
@@ -104,11 +102,10 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     }
   }
 
-  @NotNull
-  private ContentRevision createRevision(@NotNull FilePath path,
-                                         @NotNull FilePath localPath,
-                                         @NotNull Revision revision,
-                                         @NotNull FileStatus status) {
+  private @NotNull ContentRevision createRevision(@NotNull FilePath path,
+                                                  @NotNull FilePath localPath,
+                                                  @NotNull Revision revision,
+                                                  @NotNull FileStatus status) {
     ContentRevision result;
 
     if (path.isNonLocal()) {
@@ -130,8 +127,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
            : VcsUtil.getFilePathOnNonLocal(SvnUtil.toDecodedString(target), isDirectory);
   }
 
-  @NotNull
-  private Change createChange(@NotNull Target target1, @NotNull Target target2, @NotNull DiffPath diffPath) throws SvnBindException {
+  private @NotNull Change createChange(@NotNull Target target1, @NotNull Target target2, @NotNull DiffPath diffPath) throws SvnBindException {
     // TODO: 1) Unify logic of creating Change instance with SvnChangeProviderContext
     // TODO: 2) If some directory is switched, files inside it are returned as modified in "svn diff --summarize", even if they are equal
     // TODO: to branch files by content - possibly add separate processing of all switched files
@@ -162,10 +158,9 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     return createChange(status, beforeRevision, afterRevision);
   }
 
-  @NotNull
-  private static Change createChange(@NotNull final FileStatus status,
-                                     @Nullable final ContentRevision beforeRevision,
-                                     @Nullable final ContentRevision afterRevision) {
+  private static @NotNull Change createChange(final @NotNull FileStatus status,
+                                              final @Nullable ContentRevision beforeRevision,
+                                              final @Nullable ContentRevision afterRevision) {
     // isRenamed() and isMoved() are always false here not to have text like "moved from ..." in changes window - by default different
     // paths in before and after revisions are treated as move, but this is not the case for "Compare with Branch"
     return new Change(beforeRevision, afterRevision, status) {
@@ -181,8 +176,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     };
   }
 
-  @Nullable
-  private static StatusType getStatus(@NotNull String code) {
+  private static @Nullable StatusType getStatus(@NotNull String code) {
     StatusType result = StatusType.forStatusOperation(code);
 
     if (result == null) {

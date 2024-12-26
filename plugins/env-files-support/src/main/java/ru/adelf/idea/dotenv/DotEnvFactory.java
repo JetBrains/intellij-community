@@ -32,8 +32,7 @@ public class DotEnvFactory {
         return ret.get();
     }
 
-    @NotNull
-    private static PsiFile createDummyFile(Project project, String fileText) {
+    private static @NotNull PsiFile createDummyFile(Project project, String fileText) {
         return PsiFileFactory.getInstance(project).createFileFromText("DUMMY__.env", DotEnvFileType.INSTANCE, fileText, System.currentTimeMillis(), false);
     }
 }

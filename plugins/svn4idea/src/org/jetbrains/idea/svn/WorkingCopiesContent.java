@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class WorkingCopiesContent implements ChangesViewContentProvider {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public WorkingCopiesContent(@NotNull Project project) {
     myProject = project;
@@ -41,22 +41,21 @@ public final class WorkingCopiesContent implements ChangesViewContentProvider {
     }
   }
 
-  final static class VisibilityPredicate implements Predicate<Project> {
+  static final class VisibilityPredicate implements Predicate<Project> {
     @Override
     public boolean test(@NotNull Project project) {
       return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
     }
   }
 
-  final static class DisplayNameSupplier implements Supplier<String> {
+  static final class DisplayNameSupplier implements Supplier<String> {
     @Override
     public String get() {
       return SvnBundle.message("toolwindow.working.copies.info.title");
     }
   }
 
-  @NotNull
-  public static String getTabName() {
+  public static @NotNull String getTabName() {
     return SvnBundle.message("dialog.show.svn.map.title");
   }
 }

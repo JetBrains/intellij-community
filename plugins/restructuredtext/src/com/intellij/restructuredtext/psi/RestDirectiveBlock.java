@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * User : catherine
  */
 public class RestDirectiveBlock extends RestElement {
-  public RestDirectiveBlock(@NotNull final ASTNode node) {
+  public RestDirectiveBlock(final @NotNull ASTNode node) {
     super(node);
   }
 
@@ -18,8 +18,7 @@ public class RestDirectiveBlock extends RestElement {
     return "RestDirective:" + getNode().getElementType().toString();
   }
 
-  @NotNull
-  public String getDirectiveName() {
+  public @NotNull String getDirectiveName() {
     PsiElement child = this.getFirstChild();
     if (child != null)
       return child.getText();

@@ -36,8 +36,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     myState = new State();
   }
 
-  @NotNull
-  public static CompletionMLRankingSettings getInstance() {
+  public static @NotNull CompletionMLRankingSettings getInstance() {
     return ApplicationManager.getApplication().getService(CompletionMLRankingSettings.class);
   }
 

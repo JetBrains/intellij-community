@@ -2,9 +2,9 @@
 
 package com.jetbrains.performancePlugin.utils;
 
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
@@ -29,12 +29,11 @@ public class SafeSpanStack implements Disposable {
                      : upperContext;
   }
 
-  @Nullable
-  synchronized public Span getCurrentSpan() {
+  public synchronized @Nullable Span getCurrentSpan() {
     return myStack.peek();
   }
 
-  synchronized public void startSpan(@NotNull String activityName) {
+  public synchronized void startSpan(@NotNull String activityName) {
     //noinspection DataFlowIssue
     myStack.push(myTracer
                    .spanBuilder(activityName)
@@ -43,7 +42,7 @@ public class SafeSpanStack implements Disposable {
                    .startSpan());
   }
 
-  synchronized public void endSpan(@NonNls @Nullable String errDescriptionOrNull) {
+  public synchronized void endSpan(@NonNls @Nullable String errDescriptionOrNull) {
     if (myStack.isEmpty()) {
       LOG.warn("Lost span start!");
     }
@@ -57,7 +56,7 @@ public class SafeSpanStack implements Disposable {
   }
 
   @Override
-  synchronized public void dispose() {
+  public synchronized void dispose() {
     while (!myStack.isEmpty()) {
       endSpan("External span termination!");
     }

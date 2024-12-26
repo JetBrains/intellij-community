@@ -11,8 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class EnvironmentVariablesUtil {
-    @NotNull
-    public static EnvironmentKeyValue getKeyValueFromString(@NotNull String s) {
+    public static @NotNull EnvironmentKeyValue getKeyValueFromString(@NotNull String s) {
         int pos = s.indexOf("=");
 
         if(pos == -1) {
@@ -22,8 +21,7 @@ public class EnvironmentVariablesUtil {
         }
     }
 
-    @NotNull
-    public static String getKeyFromString(@NotNull String s) {
+    public static @NotNull String getKeyFromString(@NotNull String s) {
         int pos = s.indexOf("=");
 
         if(pos == -1) {
@@ -33,13 +31,11 @@ public class EnvironmentVariablesUtil {
         }
     }
 
-    @NotNull
-    public static Set<PsiElement> getElementsByKey(String key, Collection<KeyValuePsiElement> items) {
+    public static @NotNull Set<PsiElement> getElementsByKey(String key, Collection<KeyValuePsiElement> items) {
         return items.stream().filter(item -> item.getKey().equals(key)).map(KeyValuePsiElement::getElement).collect(Collectors.toSet());
     }
 
-    @NotNull
-    public static Set<PsiElement> getUsagesElementsByKey(String key, Collection<KeyUsagePsiElement> items) {
+    public static @NotNull Set<PsiElement> getUsagesElementsByKey(String key, Collection<KeyUsagePsiElement> items) {
         return items.stream().filter(item -> item.getKey().equals(key)).map(KeyUsagePsiElement::getElement).collect(Collectors.toSet());
     }
 }

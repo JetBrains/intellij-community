@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -19,12 +19,10 @@ public abstract class MarkdownStubElementType<S extends MarkdownStubElement<?>, 
     return "markdown: " + super.toString();
   }
 
-  @NotNull
-  public abstract PsiElement createElement(@NotNull final ASTNode node);
+  public abstract @NotNull PsiElement createElement(final @NotNull ASTNode node);
 
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     return "markdown." + super.toString();
   }
 }

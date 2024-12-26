@@ -17,9 +17,8 @@ public class PhpEnvironmentVariablesUsagesProvider implements EnvironmentVariabl
         return file.getFileType().equals(PhpFileType.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if(psiFile instanceof PhpFile) {
             PhpEnvironmentCallsVisitor visitor = new PhpEnvironmentCallsVisitor();
             psiFile.acceptChildren(visitor);

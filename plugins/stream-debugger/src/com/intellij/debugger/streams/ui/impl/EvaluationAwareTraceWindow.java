@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.CommonBundle;
@@ -95,9 +95,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "#com.intellij.debugger.streams.ui.EvaluationAwareTraceWindow";
   }
 
@@ -171,14 +170,12 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return new Action[]{new MyToggleViewAction()};
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myCenterPane;
   }
 
-  @NotNull
-  private List<TraceControllerImpl> createControllers(@NotNull ResolvedTracingResult resolvedResult) {
+  private @NotNull List<TraceControllerImpl> createControllers(@NotNull ResolvedTracingResult resolvedResult) {
     List<TraceControllerImpl> controllers = new ArrayList<>();
     final ResolvedStreamChain chain = resolvedResult.getResolvedChain();
 
@@ -221,9 +218,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     PropertiesComponent.getInstance().setValue(IS_FLAT_MODE_PROPERTY, MyMode.FLAT.equals(mode));
   }
 
-  @NotNull
-  @Nls
-  private static String getButtonText(@NotNull MyMode currentState) {
+  private static @NotNull @Nls String getButtonText(@NotNull MyMode currentState) {
     return MyMode.SPLIT.equals(currentState)
            ? StreamDebuggerBundle.message("stream.debugger.dialog.flat.mode.button")
            : StreamDebuggerBundle.message("stream.debugger.dialog.split.mode.button");
@@ -245,8 +240,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       updateWindowMode(myCenterPane, myMode);
     }
 
-    @NotNull
-    private static MyMode toggleMode(@NotNull MyMode mode) {
+    private static @NotNull MyMode toggleMode(@NotNull MyMode mode) {
       return MyMode.FLAT.equals(mode) ? MyMode.SPLIT : MyMode.FLAT;
     }
   }

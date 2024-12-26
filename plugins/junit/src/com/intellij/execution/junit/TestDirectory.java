@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -37,9 +37,8 @@ class TestDirectory extends TestPackage {
     super(configuration, environment);
   }
 
-  @Nullable
   @Override
-  public SourceScope getSourceScope() {
+  public @Nullable SourceScope getSourceScope() {
     final String dirName = getConfiguration().getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     final Project project = getConfiguration().getProject();
@@ -179,9 +178,8 @@ class TestDirectory extends TestPackage {
     }
   }
 
-  @NotNull
   @Override
-  protected PsiPackage getPackage() throws CantRunException {
+  protected @NotNull PsiPackage getPackage() throws CantRunException {
     final PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
     PsiPackage aPackage = ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
     if (aPackage == null) throw CantRunException.packageNotFound(directory.getName());

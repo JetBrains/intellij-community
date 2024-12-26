@@ -38,9 +38,8 @@ public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider imple
         });
     }
 
-    @Nullable
     @Override
-    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
         if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
@@ -55,8 +54,7 @@ public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider imple
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getContents());
     }
 
-    @Nullable
-    private StringLiteralExpression getStringLiteral(@NotNull PsiElement psiElement) {
+    private @Nullable StringLiteralExpression getStringLiteral(@NotNull PsiElement psiElement) {
         PsiElement parent = psiElement.getParent();
 
         if (!(parent instanceof StringLiteralExpression)) {
@@ -70,9 +68,8 @@ public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider imple
         return (StringLiteralExpression) parent;
     }
 
-    @Nullable
     @Override
-    public String getActionText(@NotNull DataContext dataContext) {
+    public @Nullable String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

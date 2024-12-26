@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.script.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -46,9 +46,8 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
         model = KotlinScriptDefinitionsModel.Companion.createModel(getAllDefinitions(project), settings);
     }
 
-    @Nullable
     @Override
-    public JComponent createComponent() {
+    public @Nullable JComponent createComponent() {
         panelScriptDefinitionsChooser.setLayout(new VerticalLayout(0));
 
         panelScriptDefinitionsChooser.add(new TitledSeparator(KotlinBundle.message("kotlin.script.definitions.title")));
@@ -139,8 +138,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
     }
 
     @Override
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
         return ID;
     }
 }

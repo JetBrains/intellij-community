@@ -24,16 +24,14 @@ public class ShKeywordCompletionContributor extends CompletionContributor implem
         "path exists", "directory exists", "file readable", "file writable", "file executable", "file equals", "file newer", "file older"));
   }
 
-  @NotNull
-  private static PsiElementPattern.Capture<PsiElement> keywordElementPattern() {
+  private static @NotNull PsiElementPattern.Capture<PsiElement> keywordElementPattern() {
     return psiElement().andNot(psiElement().andOr(insideForClause(), insideIfDeclaration(), insideWhileDeclaration(),
         insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration(),
         insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion(),
         insideCommandSubstitution(), insideSubshellCommand(), insideRawString(), insideString(), insideComment()));
   }
 
-  @NotNull
-  private static PsiElementPattern.Capture<PsiElement> elifElementPattern() {
+  private static @NotNull PsiElementPattern.Capture<PsiElement> elifElementPattern() {
     return insideThenOrElse().andNot(psiElement().andOr(insideRawString(), insideString(), insideComment()));
   }
 }

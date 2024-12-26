@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.resolve.impl;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
@@ -22,15 +22,13 @@ public class ResolvedStreamChainImpl implements ResolvedStreamChain {
     myIntermediateCalls = List.copyOf(intermediates);
   }
 
-  @NotNull
   @Override
-  public ResolvedStreamCall.Terminator getTerminator() {
+  public @NotNull ResolvedStreamCall.Terminator getTerminator() {
     return myTerminator;
   }
 
-  @NotNull
   @Override
-  public List<ResolvedStreamCall.Intermediate> getIntermediateCalls() {
+  public @NotNull List<ResolvedStreamCall.Intermediate> getIntermediateCalls() {
     return myIntermediateCalls;
   }
 

@@ -87,7 +87,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
     return true;
   }
 
-  private static boolean validNonStatic(@NotNull PsiField psiField, @NotNull final ProblemSink builder) {
+  private static boolean validNonStatic(@NotNull PsiField psiField, final @NotNull ProblemSink builder) {
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
       builder.addWarningMessage("inspection.message.not.generating.wither")
         .withLocalQuickFixes(()->PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.STATIC, false, false));
@@ -108,7 +108,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
     return true;
   }
 
-  private boolean validIsWitherUnique(@NotNull PsiField psiField, @NotNull final ProblemSink builder) {
+  private boolean validIsWitherUnique(@NotNull PsiField psiField, final @NotNull ProblemSink builder) {
     final PsiClass fieldContainingClass = psiField.getContainingClass();
     if (fieldContainingClass != null) {
       final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(fieldContainingClass));
@@ -182,8 +182,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  @Nullable
-  public PsiMethod createWitherMethod(@NotNull PsiField psiField, @NotNull String methodModifier, @NotNull AccessorsInfo accessorsInfo) {
+  public @Nullable PsiMethod createWitherMethod(@NotNull PsiField psiField, @NotNull String methodModifier, @NotNull AccessorsInfo accessorsInfo) {
     LombokLightMethodBuilder methodBuilder = null;
     final PsiClass psiFieldContainingClass = psiField.getContainingClass();
     if (psiFieldContainingClass != null) {

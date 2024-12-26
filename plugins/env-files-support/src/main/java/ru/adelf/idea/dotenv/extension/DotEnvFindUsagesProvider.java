@@ -10,9 +10,8 @@ import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 
 public class DotEnvFindUsagesProvider implements FindUsagesProvider {
-    @Nullable
     @Override
-    public WordsScanner getWordsScanner() {
+    public @Nullable WordsScanner getWordsScanner() {
         throw new UnsupportedOperationException("Not yet implemented");
         /*
          TODO commented out because `DefaultWordsScanner` requires intellij.platform.indexing.impl dependency
@@ -29,15 +28,13 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
         return psiElement instanceof PsiNamedElement;
     }
 
-    @Nullable
     @Override
-    public String getHelpId(@NotNull PsiElement psiElement) {
+    public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
         return null;
     }
 
-    @NotNull
     @Override
-    public String getType(@NotNull PsiElement element) {
+    public @NotNull String getType(@NotNull PsiElement element) {
         if (element instanceof DotEnvProperty) {
             return DotEnvBundle.message("environment.variable");
         } else {
@@ -45,9 +42,8 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
         }
     }
 
-    @NotNull
     @Override
-    public String getDescriptiveName(@NotNull PsiElement element) {
+    public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
         if (element instanceof DotEnvProperty property) {
             return property.getKeyText();
         } else {
@@ -55,9 +51,8 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
         }
     }
 
-    @NotNull
     @Override
-    public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+    public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
         if (element instanceof DotEnvProperty property) {
             return property.getKeyText() + ":" + property.getValueText();
         } else {

@@ -26,15 +26,13 @@ public final class SynchronizedProcessor extends AbstractProcessor {
     super(PsiElement.class, LombokClassNames.SYNCHRONIZED);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     final ProblemValidationSink problemBuilder = new ProblemValidationSink();
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);
@@ -62,7 +60,7 @@ public final class SynchronizedProcessor extends AbstractProcessor {
 
   private static void validateReferencedField(@NotNull ProblemSink problemNewBuilder, @NotNull PsiAnnotation psiAnnotation,
                                               @NotNull PsiMethod psiMethod, @NotNull PsiClass containingClass) {
-    @NlsSafe final String lockFieldName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value", "");
+    final @NlsSafe String lockFieldName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value", "");
     if (StringUtil.isNotEmpty(lockFieldName)) {
       final boolean isStatic = psiMethod.hasModifierProperty(PsiModifier.STATIC);
 

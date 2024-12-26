@@ -17,14 +17,12 @@ import org.jetbrains.annotations.Nullable;
 public class RestFillParagraphHandler extends ParagraphFillHandler {
 
   @Override
-  @NotNull
-  protected String getPrefix(@NotNull final PsiElement element) {
+  protected @NotNull String getPrefix(final @NotNull PsiElement element) {
     return element instanceof PsiComment? ".. " : "";
   }
 
-  @NotNull
   @Override
-  protected String getPostfix(@NotNull PsiElement element) {
+  protected @NotNull String getPostfix(@NotNull PsiElement element) {
     return element.getNode().getElementType() == RestTokenTypes.COMMENT ? "\n" : "";
   }
 
@@ -39,7 +37,7 @@ public class RestFillParagraphHandler extends ParagraphFillHandler {
   }
 
   @Override
-  protected boolean atWhitespaceToken(@Nullable final PsiElement element) {
+  protected boolean atWhitespaceToken(final @Nullable PsiElement element) {
     return element instanceof PsiWhiteSpace ||
            element != null && element.getNode().getElementType() == RestTokenTypes.WHITESPACE;
   }

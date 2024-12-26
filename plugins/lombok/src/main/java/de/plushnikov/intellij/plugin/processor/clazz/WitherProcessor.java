@@ -58,8 +58,7 @@ public final class WitherProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  @NotNull
-  private static Collection<? extends PsiVariable> getPossibleWithElements(@NotNull PsiClass psiClass) {
+  private static @NotNull Collection<? extends PsiVariable> getPossibleWithElements(@NotNull PsiClass psiClass) {
     if (psiClass.isRecord()) {
       return List.of(psiClass.getRecordComponents());
     }
@@ -102,10 +101,9 @@ public final class WitherProcessor extends AbstractClassProcessor {
     }
   }
 
-  @NotNull
-  private static Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass,
-                                                          @NotNull String methodModifier,
-                                                          @NotNull AccessorsInfo accessors) {
+  private static @NotNull Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass,
+                                                                   @NotNull String methodModifier,
+                                                                   @NotNull AccessorsInfo accessors) {
     Collection<PsiMethod> result = new ArrayList<>();
 
     final Collection<PsiField> witherFields = getWitherFields(psiClass);
@@ -120,8 +118,7 @@ public final class WitherProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  @NotNull
-  private static Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
+  private static @NotNull Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> witherFields = new ArrayList<>();
 
     for (PsiField psiField : psiClass.getFields()) {

@@ -17,9 +17,8 @@ public class GoEnvironmentVariablesUsagesProvider implements EnvironmentVariable
         return file.getFileType().equals(GoFileType.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if(psiFile instanceof GoFile) {
             GoEnvironmentCallsVisitor visitor = new GoEnvironmentCallsVisitor();
             psiFile.acceptChildren(visitor);

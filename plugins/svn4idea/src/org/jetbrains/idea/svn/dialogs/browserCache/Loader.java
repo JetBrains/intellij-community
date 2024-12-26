@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -11,7 +11,7 @@ import java.util.List;
 
 public abstract class Loader {
 
-  @NotNull protected final SvnRepositoryCache myCache;
+  protected final @NotNull SvnRepositoryCache myCache;
 
   protected Loader(@NotNull SvnRepositoryCache cache) {
     myCache = cache;
@@ -19,8 +19,7 @@ public abstract class Loader {
 
   public abstract void load(@NotNull RepositoryTreeNode node, @NotNull Expander afterRefreshExpander);
 
-  @NotNull
-  protected abstract NodeLoadState getNodeLoadState();
+  protected abstract @NotNull NodeLoadState getNodeLoadState();
 
   protected void refreshNodeError(@NotNull RepositoryTreeNode node, @NotNull VcsException error) {
     RepositoryTreeNode existingNode = findExistingNode(node);
@@ -40,8 +39,7 @@ public abstract class Loader {
     }
   }
 
-  @Nullable
-  private static RepositoryTreeNode findExistingNode(@NotNull RepositoryTreeNode node) {
+  private static @Nullable RepositoryTreeNode findExistingNode(@NotNull RepositoryTreeNode node) {
     RepositoryTreeNode result = null;
 
     if (!node.isDisposed()) {

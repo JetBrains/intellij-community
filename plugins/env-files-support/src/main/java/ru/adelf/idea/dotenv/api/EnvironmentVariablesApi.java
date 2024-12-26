@@ -19,8 +19,7 @@ import java.util.*;
 
 public class EnvironmentVariablesApi {
 
-    @NotNull
-    public static Map<String, String> getAllKeyValues(Project project) {
+    public static @NotNull Map<String, String> getAllKeyValues(Project project) {
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
         Map<String, String> keyValues = new HashMap<>();
         Map<String, String> secondaryKeyValues = new HashMap<>();
@@ -76,8 +75,7 @@ public class EnvironmentVariablesApi {
      * @param key     environment variable key
      * @return All key declarations, in .env files, Dockerfile, docker-compose.yml, etc
      */
-    @NotNull
-    public static PsiElement[] getKeyDeclarations(Project project, String key) {
+    public static @NotNull PsiElement[] getKeyDeclarations(Project project, String key) {
         List<PsiElement> targets = new ArrayList<>();
         List<PsiElement> secondaryTargets = new ArrayList<>();
 
@@ -107,8 +105,7 @@ public class EnvironmentVariablesApi {
      * @param key     environment variable key
      * @return All key usages, like getenv('KEY')
      */
-    @NotNull
-    public static PsiElement[] getKeyUsages(Project project, String key) {
+    public static @NotNull PsiElement[] getKeyUsages(Project project, String key) {
         List<PsiElement> targets = new ArrayList<>();
 
         PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);

@@ -72,8 +72,7 @@ public class JavaFxApplicationIcons {
     return result;
   }
 
-  @Nullable
-  private static String getRelativeIcon(String relativeToPath, String icon) {
+  private static @Nullable String getRelativeIcon(String relativeToPath, String icon) {
     if (!StringUtil.isEmpty(icon) && !StringUtil.isEmpty(relativeToPath)) {
       return FileUtil.getRelativePath(relativeToPath, icon, '/');
     }

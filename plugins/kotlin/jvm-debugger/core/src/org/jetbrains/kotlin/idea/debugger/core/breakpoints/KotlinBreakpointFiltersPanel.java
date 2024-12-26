@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
@@ -114,9 +114,8 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
         DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
         return myConditionsPanel;
     }
 
@@ -331,8 +330,7 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
         myClassFiltersField.getTextField().setToolTipText(tipText);
     }
 
-    @NlsSafe
-    private static StringBuilder concatWithEx(StringBuilder builder, List<String> s, String glue, int N, String nthGlue) {
+    private static @NlsSafe StringBuilder concatWithEx(StringBuilder builder, List<String> s, String glue, int N, String nthGlue) {
         int i = 1;
         for (Iterator<String> iterator = s.iterator(); iterator.hasNext(); i++) {
             String str = iterator.next();

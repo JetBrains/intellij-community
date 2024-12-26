@@ -6,7 +6,6 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +33,7 @@ public final class AllArgsConstructorProcessor extends AbstractConstructorClassP
     return result;
   }
 
-  @NotNull
-  public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
     final Collection<PsiField> allNotInitializedNotStaticFields = getAllNotInitializedAndNotStaticFields(psiClass);
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, false, allNotInitializedNotStaticFields);
   }
@@ -50,14 +48,12 @@ public final class AllArgsConstructorProcessor extends AbstractConstructorClassP
     }
   }
 
-  @NotNull
-  private Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName) {
+  private @NotNull Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName) {
     final Collection<PsiField> allNotInitializedNotStaticFields = getAllFields(psiClass);
     return createAllArgsConstructor(psiClass, methodVisibility, psiAnnotation, staticName, allNotInitializedNotStaticFields, false);
   }
 
-  @NotNull
-  public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields, boolean skipConstructorIfAnyConstructorExists) {
+  public @NotNull Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields, boolean skipConstructorIfAnyConstructorExists) {
     return createConstructorMethod(psiClass, methodModifier, psiAnnotation, false, allNotInitializedNotStaticFields, staticName, skipConstructorIfAnyConstructorExists);
   }
 

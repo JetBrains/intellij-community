@@ -106,9 +106,8 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @Contract("_,_,_,null -> !null")
-  @Nullable
-  public static PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier,
-                                             @Nullable String nameHint) {
+  public static @Nullable PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier,
+                                                       @Nullable String nameHint) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
     final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SETTER);
@@ -161,12 +160,11 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     return methodBuilder;
   }
 
-  @NotNull
-  private static String createCodeBlockText(@NotNull PsiField psiField,
-                                            @NotNull PsiClass psiClass,
-                                            PsiType returnType,
-                                            boolean isStatic,
-                                            PsiParameter methodParameter) {
+  private static @NotNull String createCodeBlockText(@NotNull PsiField psiField,
+                                                     @NotNull PsiClass psiClass,
+                                                     PsiType returnType,
+                                                     boolean isStatic,
+                                                     PsiParameter methodParameter) {
     final String blockText;
     final String thisOrClass = isStatic ? psiClass.getName() : "this";
     blockText = String.format("%s.%s = %s; ", thisOrClass, psiField.getName(), methodParameter.getName());

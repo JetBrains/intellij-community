@@ -13,9 +13,8 @@ public class IJPerfFile extends PsiFileBase {
     super(viewProvider, IJPerfLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return IJPerfFileType.INSTANCE;
   }
 

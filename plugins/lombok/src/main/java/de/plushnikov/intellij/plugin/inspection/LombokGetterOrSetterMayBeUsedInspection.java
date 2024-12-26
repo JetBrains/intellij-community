@@ -28,9 +28,8 @@ import java.util.List;
 
 public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJavaInspectionBase {
 
-  @NotNull
   @Override
-  protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected @NotNull PsiElementVisitor createVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new LombokGetterOrSetterMayBeUsedVisitor(holder, null);
   }
 
@@ -130,17 +129,13 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       myText = text;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return getFixName(myText);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return getFixFamilyName();
     }
 
@@ -254,28 +249,21 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
     }
   }
 
-  @NotNull
-  protected abstract String getTagName();
+  protected abstract @NotNull String getTagName();
 
-  @NotNull
-  protected abstract String getJavaDocMethodMarkup();
+  protected abstract @NotNull String getJavaDocMethodMarkup();
 
-  @NotNull
-  protected abstract @NonNls String getAnnotationName();
+  protected abstract @NotNull @NonNls String getAnnotationName();
 
-  @NotNull
-  protected abstract @Nls String getFieldErrorMessage(String fieldName);
+  protected abstract @NotNull @Nls String getFieldErrorMessage(String fieldName);
 
-  @NotNull
-  protected abstract @Nls String getClassErrorMessage(String className);
+  protected abstract @NotNull @Nls String getClassErrorMessage(String className);
 
   protected abstract boolean processMethod(@NotNull PsiMethod method,
                                            @NotNull List<Pair<PsiField, PsiMethod>> instanceCandidates,
                                            @NotNull List<Pair<PsiField, PsiMethod>> staticCandidates);
 
-  @NotNull
-  protected abstract @Nls String getFixName(String text);
+  protected abstract @NotNull @Nls String getFixName(String text);
 
-  @NotNull
-  protected abstract @Nls String getFixFamilyName();
+  protected abstract @NotNull @Nls String getFixFamilyName();
 }

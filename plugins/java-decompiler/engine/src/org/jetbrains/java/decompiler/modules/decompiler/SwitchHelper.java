@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -141,9 +141,8 @@ public final class SwitchHelper {
     }
   }
 
-  @NotNull
-  private static Map<Exprent, Exprent> evaluateCaseLabelsToFieldsMapping(@NotNull List<List<Exprent>> caseValues,
-                                                                         @NotNull ArrayExprent array) {
+  private static @NotNull Map<Exprent, Exprent> evaluateCaseLabelsToFieldsMapping(@NotNull List<List<Exprent>> caseValues,
+                                                                                  @NotNull ArrayExprent array) {
     Map<Exprent, Exprent> mapping = new HashMap<>(caseValues.size());
     if (array.getArray().type == Exprent.EXPRENT_FIELD) { // Javac compiler
       FieldExprent arrayField = (FieldExprent)array.getArray();
@@ -186,9 +185,8 @@ public final class SwitchHelper {
     return mapping;
   }
 
-  @Nullable
-  private static List<List<@Nullable Exprent>> findRealCaseValues(@NotNull List<List<Exprent>> caseValues,
-                                                                  @NotNull Map<Exprent, Exprent> mapping) {
+  private static @Nullable List<List<@Nullable Exprent>> findRealCaseValues(@NotNull List<List<Exprent>> caseValues,
+                                                                            @NotNull Map<Exprent, Exprent> mapping) {
     List<List<@Nullable Exprent>> result = new ArrayList<>(caseValues.size());
     for (List<Exprent> caseValue : caseValues) {
       List<@Nullable Exprent> values = new ArrayList<>(caseValue.size());
@@ -371,8 +369,7 @@ public final class SwitchHelper {
   private abstract static class StringSwitchRecognizer implements SwitchRecognizer {
 
     @Override
-    @Nullable
-    public abstract SwitchOnStringCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
+    public abstract @Nullable SwitchOnStringCandidate recognize(@NotNull SwitchStatement statement, @NotNull InvocationExprent switchSelector);
 
     @NotNull
     Set<Object> findRealCaseValuesHashCodes(@NotNull SwitchStatement switchStatement) {
@@ -430,9 +427,8 @@ public final class SwitchHelper {
        * @return recognized a switch candidate
        * see Lower.visitStringSwitch(JCTree.JCSwitch) in javac
        */
-      @Nullable
       @Override
-      public SwitchOnStringCandidate recognize(@NotNull SwitchStatement firstSwitch,
+      public @Nullable SwitchOnStringCandidate recognize(@NotNull SwitchStatement firstSwitch,
                                                @NotNull InvocationExprent switchSelector) {
         if (switchSelector.getInstance() == null || switchSelector.getInstance().type != Exprent.EXPRENT_VAR) return null;
         if (!switchSelector.isInstanceCall(ClassNameConstants.JAVA_LANG_STRING, "hashCode", 0)) return null;
@@ -500,9 +496,8 @@ public final class SwitchHelper {
     }
 
     private static class EcjStringRecognizer extends StringSwitchRecognizer {
-      @Nullable
       @Override
-      public SwitchOnStringCandidate recognize(@NotNull SwitchStatement switchStatement, @NotNull InvocationExprent switchSelector) {
+      public @Nullable SwitchOnStringCandidate recognize(@NotNull SwitchStatement switchStatement, @NotNull InvocationExprent switchSelector) {
         if (!switchSelector.isInstanceCall(ClassNameConstants.JAVA_LANG_STRING, "hashCode", 0)) return null;
         Set<Object> realCaseValueHashCodes = findRealCaseValuesHashCodes(switchStatement);
         Exprent switchSelectorQualifier = switchSelector.getInstance();
@@ -561,11 +556,10 @@ public final class SwitchHelper {
   }
 
   private abstract static class SwitchOnStringCandidate implements SwitchOnCandidate {
-    @Nullable
-    private static AssignmentExprent addTempVarAssignment(@NotNull Exprent exprent,
-                                                          @NotNull VarExprent varExprent,
-                                                          @NotNull Statement statement,
-                                                          @NotNull List<TempVarAssignmentItem> tempVarAssignments) {
+    private static @Nullable AssignmentExprent addTempVarAssignment(@NotNull Exprent exprent,
+                                                                    @NotNull VarExprent varExprent,
+                                                                    @NotNull Statement statement,
+                                                                    @NotNull List<TempVarAssignmentItem> tempVarAssignments) {
       if (exprent.type != Exprent.EXPRENT_ASSIGNMENT) return null;
       AssignmentExprent assignment = (AssignmentExprent)exprent;
       if (!varExprent.isDefinition() && varExprent.equals(assignment.getLeft())) {
@@ -576,16 +570,16 @@ public final class SwitchHelper {
     }
 
     private static class JavacSwitchCandidate extends SwitchOnStringCandidate {
-      @NotNull private final SwitchStatement firstSwitch;
-      @NotNull private final SwitchStatement secondSwitch;
-      @NotNull private final VarExprent firstSwitchSelector;
-      @NotNull private final Exprent secondSwitchSelector;
-      @NotNull private final VarExprent tmpVarInFirstSwitch;
-      @NotNull private final Map<Integer, @NotNull String> mappedCaseLabelValues;
-      @NotNull private final List<Exprent> firstSwitchExprents;
-      @NotNull private final Statement firstStatementInSecondSwitch;
-      @NotNull private final NewSelector newSelector;
-      @NotNull private final List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
+      private final @NotNull SwitchStatement firstSwitch;
+      private final @NotNull SwitchStatement secondSwitch;
+      private final @NotNull VarExprent firstSwitchSelector;
+      private final @NotNull Exprent secondSwitchSelector;
+      private final @NotNull VarExprent tmpVarInFirstSwitch;
+      private final @NotNull Map<Integer, @NotNull String> mappedCaseLabelValues;
+      private final @NotNull List<Exprent> firstSwitchExprents;
+      private final @NotNull Statement firstStatementInSecondSwitch;
+      private final @NotNull NewSelector newSelector;
+      private final @NotNull List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
 
       JavacSwitchCandidate(@NotNull SwitchStatement firstSwitch,
                            @NotNull VarExprent firstSwitchSelector,
@@ -652,8 +646,7 @@ public final class SwitchHelper {
         return Set.of(firstSwitch, secondSwitch);
       }
 
-      @NotNull
-      private NewSelector getSelector(@NotNull List<TempVarAssignmentItem> tempVarAssignments, List<Exprent> firstSwitchExprents) {
+      private @NotNull NewSelector getSelector(@NotNull List<TempVarAssignmentItem> tempVarAssignments, List<Exprent> firstSwitchExprents) {
         int lastExprentIndex = firstSwitchExprents.size();
         if (lastExprentIndex > 0) {
           AssignmentExprent assignment = addTempVarAssignment(firstSwitchExprents.get(lastExprentIndex - 1), tmpVarInFirstSwitch,
@@ -684,11 +677,11 @@ public final class SwitchHelper {
     }
 
     private static class EcjSwitchCandidate extends SwitchOnStringCandidate {
-      @NotNull private final SwitchStatement switchStatement;
-      @NotNull private final Exprent switchSelector;
-      @NotNull private final Map<Integer, @NotNull IfStatement> mappedIfStatements;
-      @NotNull private final Map<Integer, @NotNull String> mappedCaseLabelValues;
-      @NotNull private final List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
+      private final @NotNull SwitchStatement switchStatement;
+      private final @NotNull Exprent switchSelector;
+      private final @NotNull Map<Integer, @NotNull IfStatement> mappedIfStatements;
+      private final @NotNull Map<Integer, @NotNull String> mappedCaseLabelValues;
+      private final @NotNull List<TempVarAssignmentItem> tempVarAssignments = new ArrayList<>();
 
       private EcjSwitchCandidate(@NotNull SwitchStatement switchStatement,
                                  @NotNull Exprent switchSelector,

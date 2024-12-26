@@ -76,9 +76,8 @@ public class FinishScriptDialog extends DialogWrapper {
     return dialogActions.toArray(new Action[0]);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myMainPanel;
   }
 }

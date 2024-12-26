@@ -34,15 +34,15 @@ import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 import static com.intellij.sh.ShBundle.message;
 
 public final class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
-  @NonNls private static final String TAG_PREFIX = "INDEPENDENT_";
-  @NonNls private static final String SCRIPT_TEXT_TAG = "SCRIPT_TEXT";
-  @NonNls private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
-  @NonNls private static final String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
-  @NonNls private static final String SCRIPT_WORKING_DIRECTORY_TAG = "SCRIPT_WORKING_DIRECTORY";
-  @NonNls private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
-  @NonNls private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
-  @NonNls private static final String EXECUTE_IN_TERMINAL_TAG = "EXECUTE_IN_TERMINAL";
-  @NonNls private static final String EXECUTE_SCRIPT_FILE_TAG = "EXECUTE_SCRIPT_FILE";
+  private static final @NonNls String TAG_PREFIX = "INDEPENDENT_";
+  private static final @NonNls String SCRIPT_TEXT_TAG = "SCRIPT_TEXT";
+  private static final @NonNls String SCRIPT_PATH_TAG = "SCRIPT_PATH";
+  private static final @NonNls String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
+  private static final @NonNls String SCRIPT_WORKING_DIRECTORY_TAG = "SCRIPT_WORKING_DIRECTORY";
+  private static final @NonNls String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
+  private static final @NonNls String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
+  private static final @NonNls String EXECUTE_IN_TERMINAL_TAG = "EXECUTE_IN_TERMINAL";
+  private static final @NonNls String EXECUTE_SCRIPT_FILE_TAG = "EXECUTE_SCRIPT_FILE";
 
   private String myScriptText = "";
   private String myScriptPath = "";
@@ -58,9 +58,8 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
     super(project, factory, name);
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new ShRunConfigurationEditor(getProject());
   }
 
@@ -119,9 +118,8 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
     myEnvData = EnvironmentVariablesData.readExternal(element);
   }
 
-  @Nullable
   @Override
-  public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
+  public @Nullable RefactoringElementListener getRefactoringElementListener(PsiElement element) {
     if (StringUtil.isEmpty(myScriptPath) || !(element instanceof ShFile) || !myScriptPath.equals(getPathByElement(element))) return null;
 
     return new RefactoringElementAdapter() {
@@ -139,8 +137,7 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
     };
   }
 
-  @Nullable
-  private static String getPathByElement(@NotNull PsiElement element) {
+  private static @Nullable String getPathByElement(@NotNull PsiElement element) {
     VirtualFile vfile = PsiUtilCore.getVirtualFile(element);
     if (vfile == null) return null;
     return vfile.getPath();
@@ -158,8 +155,7 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
            : toSystemDependentName(readStringTagValue(element, pathTag));
   }
 
-  @NotNull
-  private static String readStringTagValue(@NotNull Element element, @NotNull String tagName) {
+  private static @NotNull String readStringTagValue(@NotNull Element element, @NotNull String tagName) {
     return notNullize(JDOMExternalizerUtil.readField(element, tagName), "");
   }
 

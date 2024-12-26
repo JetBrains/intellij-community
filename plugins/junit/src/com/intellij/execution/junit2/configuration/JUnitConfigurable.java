@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -295,7 +295,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   @Override
-  public void applyEditorTo(@NotNull final JUnitConfiguration configuration) {
+  public void applyEditorTo(final @NotNull JUnitConfiguration configuration) {
     configuration.setRepeatMode((String)myRepeatCb.getSelectedItem());
     try {
       configuration.setRepeatCount(Integer.parseInt(myRepeatCountField.getText()));
@@ -336,7 +336,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   @Override
-  public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {
+  public void resetEditorFrom(final @NotNull JUnitConfiguration configuration) {
     final int count = configuration.getRepeatCount();
     myRepeatCountField.setText(String.valueOf(count));
     myRepeatCountField.setEnabled(count > 1);
@@ -403,8 +403,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem(), myRepeatCb.getSelectedItem()));
   }
 
-  @NotNull
-  public static String updateForkMethod(Integer selectedType, String forkMethod, Object repeat) {
+  public static @NotNull String updateForkMethod(Integer selectedType, String forkMethod, Object repeat) {
     if (forkMethod == null) {
       forkMethod = JUnitConfiguration.FORK_NONE;
     }
@@ -501,8 +500,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myShortenClasspathModeCombo = new LabeledComponent<>();
   }
 
-  @NotNull
-  public static JavaCodeFragment.VisibilityChecker createClassVisibilityChecker(TestClassBrowser classBrowser) {
+  public static @NotNull JavaCodeFragment.VisibilityChecker createClassVisibilityChecker(TestClassBrowser classBrowser) {
     return new JavaCodeFragment.VisibilityChecker() {
       @Override
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
@@ -574,8 +572,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 

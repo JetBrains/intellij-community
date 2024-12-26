@@ -61,9 +61,8 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
         configuration.setShortenCommandLine(shortenClasspathModeCombo.getComponent().getSelectedItem());
     }
 
-    @NotNull
     @Override
-    protected JComponent createEditor() {
+    protected @NotNull JComponent createEditor() {
         return mainPanel;
     }
 

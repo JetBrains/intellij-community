@@ -28,9 +28,8 @@ public class KotlinDelegatedPropertyRendererConfigurableUi implements Configurab
         settings.setDebugDisableCoroutineAgent(!disableCoroutineAgent.isSelected());
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
         return myPanel;
     }
 }

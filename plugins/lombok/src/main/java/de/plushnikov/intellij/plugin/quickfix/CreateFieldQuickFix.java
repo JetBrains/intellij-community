@@ -33,8 +33,7 @@ public class CreateFieldQuickFix extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return LombokBundle.message("intention.name.create.new.field.s", myName);
   }
 

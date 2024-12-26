@@ -264,8 +264,7 @@ public final class ShShfmtFormatterUtil {
     return null;
   }
 
-  @NotNull
-  private static String getShfmtDistributionLink() {
+  private static @NotNull String getShfmtDistributionLink() {
     StringBuilder baseUrl = new StringBuilder("https://github.com/mvdan/sh/releases/download/")
         .append(SHFMT_VERSION)
         .append('/')

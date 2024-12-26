@@ -33,7 +33,7 @@ final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, @Nullable Caret c, DataContext dataContext) {
+  public void doExecute(final @NotNull Editor editor, @Nullable Caret c, DataContext dataContext) {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     SelectionModel selectionModel = editor.getSelectionModel();
     boolean hasSelection = caret.hasSelection();
@@ -62,8 +62,7 @@ final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
     }
   }
 
-  @NotNull
-  static RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
+  static @NotNull RegistryValue getMaxInplaceRenameSegmentsRegistryValue() {
     return Registry.get("inplace.rename.segments.limit");
   }
 

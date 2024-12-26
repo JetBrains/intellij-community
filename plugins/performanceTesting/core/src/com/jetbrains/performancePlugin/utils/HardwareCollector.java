@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class HardwareCollector implements TroubleInfoCollector {
-  private final static Logger logger = Logger.getInstance(HardwareCollector.class);
+  private static final Logger logger = Logger.getInstance(HardwareCollector.class);
 
   private final List<String> info = new ArrayList<>();
 

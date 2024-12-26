@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
-  private final static Logger LOG = Logger.getInstance(SvnUpdateRootOptionsPanel.class);
+  private static final Logger LOG = Logger.getInstance(SvnUpdateRootOptionsPanel.class);
   private TextFieldWithBrowseButton myURLText;
   private JCheckBox myRevisionBox;
   private TextFieldWithBrowseButton myRevisionText;
@@ -40,7 +40,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private JLabel myBranchLabel;
   private JLabel myUrlLabel;
   private JLabel myCopyType;
-  @Nullable private Url mySourceUrl;
+  private @Nullable Url mySourceUrl;
 
   public SvnUpdateRootOptionsPanel(FilePath root, final SvnVcs vcs, Collection<FilePath> roots) {
     myRoot = root;
@@ -163,15 +163,13 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     return myPanel;
   }
 
-  @Nullable
-  private Url getBranchForUrl(@Nullable Url url) {
+  private @Nullable Url getBranchForUrl(@Nullable Url url) {
     final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
 
     return rootInfo != null && url != null ? SvnUtil.getBranchForUrl(myVcs, rootInfo.getVirtualFile(), url) : null;
   }
 
-  @Nullable
-  private SvnBranchConfigurationNew getBranchConfiguration() {
+  private @Nullable SvnBranchConfigurationNew getBranchConfiguration() {
     final RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot);
 
     return rootInfo != null ? SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootInfo.getVirtualFile()) : null;

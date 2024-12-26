@@ -32,9 +32,8 @@ class DotEnvSyntaxHighlighter extends SyntaxHighlighterBase {
     private static final TextAttributesKey[] COMMENT_KEYS = new TextAttributesKey[]{COMMENT};
     private static final TextAttributesKey[] EMPTY_KEYS = TextAttributesKey.EMPTY_ARRAY;
 
-    @NotNull
     @Override
-    public Lexer getHighlightingLexer() {
+    public @NotNull Lexer getHighlightingLexer() {
         return new DotEnvLexerAdapter();
     }
 

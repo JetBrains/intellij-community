@@ -19,14 +19,14 @@ import static com.intellij.sh.ShTypes.SHEBANG;
 
 public class ShShebangCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String SHEBANG_PREFIX = "#!";
-  @NonNls private static final List<String> ACCEPTABLE_SHELLS = Arrays.asList("/usr/bin/env bash",
+  private static final @NonNls List<String> ACCEPTABLE_SHELLS = Arrays.asList("/usr/bin/env bash",
                                                                               "/usr/bin/env sh",
                                                                               "/usr/bin/env zsh",
                                                                               "/usr/bin/env csh",
                                                                               "/usr/bin/env ksh",
                                                                               "/usr/bin/env tcsh");
 
-  @NonNls private static final CompletionProvider<CompletionParameters> SHEBANG_COMPLETION_PROVIDER = new CompletionProvider<>() {
+  private static final @NonNls CompletionProvider<CompletionParameters> SHEBANG_COMPLETION_PROVIDER = new CompletionProvider<>() {
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,

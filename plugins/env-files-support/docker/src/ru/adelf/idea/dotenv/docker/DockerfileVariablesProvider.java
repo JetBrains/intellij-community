@@ -13,15 +13,13 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class DockerfileVariablesProvider implements EnvironmentVariablesProvider {
-    @NotNull
     @Override
-    public FileAcceptResult acceptFile(VirtualFile file) {
+    public @NotNull FileAcceptResult acceptFile(VirtualFile file) {
         return file.getFileType().equals(DockerFileType.DOCKER_FILE_TYPE) ? FileAcceptResult.ACCEPTED : FileAcceptResult.NOT_ACCEPTED;
     }
 
-    @NotNull
     @Override
-    public Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
+    public @NotNull Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
         if(psiFile instanceof DockerPsiFile) {
             DockerfilePsiElementsVisitor visitor = new DockerfilePsiElementsVisitor();
             psiFile.acceptChildren(visitor);

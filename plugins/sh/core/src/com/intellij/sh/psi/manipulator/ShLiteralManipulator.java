@@ -10,9 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShLiteralManipulator extends AbstractElementManipulator<ShLiteral> {
-  @Nullable
   @Override
-  public ShLiteral handleContentChange(@NotNull ShLiteral element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
+  public @Nullable ShLiteral handleContentChange(@NotNull ShLiteral element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     ASTNode oldNode = element.getNode();
     ShLiteral newElement = ShElementGenerator.createLiteral(element.getProject(), newContent);
     oldNode.getTreeParent().replaceChild(oldNode, newElement.getNode());

@@ -44,8 +44,7 @@ public final class LombokAnnotationProcessor {
    * @return the list of augmented PsiMethods or empty list
    * @see <a href="https://projectlombok.org/features/experimental/onX">Lombok onX</a>
    */
-  @NotNull
-  public static List<PsiMethod> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public static @NotNull List<PsiMethod> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     if (nameHint != null && !config.containsKey(nameHint)) {
       return Collections.emptyList();
     }

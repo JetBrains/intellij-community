@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea;
 
 import com.intellij.DynamicBundle;
@@ -14,8 +14,8 @@ public final class KotlinIdeaBundle {
     private KotlinIdeaBundle() {
     }
 
-    public static @Nls
-    @NotNull String message(
+    @Nls
+    public static @NotNull String message(
             @PropertyKey(resourceBundle = BUNDLE_FQN) @NotNull String key,
             @Nullable Object @NotNull ... params
     ) {

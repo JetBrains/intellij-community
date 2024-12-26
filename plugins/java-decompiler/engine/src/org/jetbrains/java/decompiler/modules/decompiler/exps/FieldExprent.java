@@ -30,8 +30,7 @@ public class FieldExprent extends Exprent {
   private final boolean isStatic;
   private Exprent instance;
   private final FieldDescriptor descriptor;
-  @Nullable
-  private VarType inferredType;
+  private @Nullable VarType inferredType;
   public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
     this(cn.elementName, cn.className, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
   }
@@ -47,9 +46,8 @@ public class FieldExprent extends Exprent {
     addBytecodeOffsets(bytecodeOffsets);
   }
 
-  @NotNull
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     VarType variableType = inferredType;
     if (variableType == null) {
       VarType varType = descriptor.type;

@@ -47,8 +47,9 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import static com.intellij.openapi.util.text.StringUtil.join;
+
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
@@ -170,8 +171,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   @Override
-  @Nullable
-  public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
+  public @Nullable VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     final VcsAppendableHistoryPartnerAdapter adapter = new VcsAppendableHistoryPartnerAdapter();
     reportAppendableHistory(filePath, adapter);
     adapter.check();
@@ -190,7 +190,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner,
-                                      @Nullable final Revision from, @Nullable final Revision to, final int limit,
+                                      final @Nullable Revision from, final @Nullable Revision to, final int limit,
                                       Revision peg, final boolean forceBackwards) throws VcsException {
     FilePath committedPath = path;
     Change change = ChangeListManager.getInstance(myVcs.getProject()).getChange(path);
@@ -244,7 +244,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     logLoader.check();
   }
 
-  private static abstract class LogLoader {
+  private abstract static class LogLoader {
     protected final boolean myShowMergeSources;
     protected Url myUrl;
     protected boolean mySupport15;
@@ -596,14 +596,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   private static final class RevisionMergeSourceInfo {
 
-    @NotNull private final VcsFileRevision revision;
+    private final @NotNull VcsFileRevision revision;
 
     private RevisionMergeSourceInfo(@NotNull VcsFileRevision revision) {
       this.revision = revision;
     }
 
-    @NotNull
-    public SvnFileRevision getRevision() {
+    public @NotNull SvnFileRevision getRevision() {
       return (SvnFileRevision)revision;
     }
 
@@ -685,8 +684,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       return false;
     }
 
-    @Nullable
-    private static SvnFileRevision getSelectedRevision(final MouseEvent e) {
+    private static @Nullable SvnFileRevision getSelectedRevision(final MouseEvent e) {
       JTable table = (JTable)e.getSource();
       int row = table.rowAtPoint(e.getPoint());
       int column = table.columnAtPoint(e.getPoint());

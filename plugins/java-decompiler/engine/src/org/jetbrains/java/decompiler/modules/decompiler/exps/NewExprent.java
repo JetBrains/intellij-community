@@ -35,8 +35,7 @@ public class NewExprent extends Exprent {
   private boolean methodReference = false;
   private boolean enumConst;
   private List<VarType> genericArgs = new ArrayList<>();
-  @Nullable
-  private VarType inferredType;
+  private @Nullable VarType inferredType;
   public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
   }
@@ -70,9 +69,8 @@ public class NewExprent extends Exprent {
     return lstDims;
   }
 
-  @NotNull
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     if (inferredType != null) {
       return inferredType;
     }

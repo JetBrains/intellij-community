@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public final class ProjectIndexingComponent implements DumbService.DumbModeListener {
   public static final String PROFILE_INDEXING_COMPONENT = "performancePlugin.isProfileIndexing";
   public static final String PROFILE_WITH_ASYNC = "performancePlugin.isProfileIndexingWithAsync";
-  @NotNull private final Project project;
+  private final @NotNull Project project;
   private static final int TIMEOUT = 500;
   private final Alarm alarm;
 

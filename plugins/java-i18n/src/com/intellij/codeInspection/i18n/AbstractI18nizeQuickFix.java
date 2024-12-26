@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -74,11 +74,11 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
   }
 
   @Override
-  public final void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public final void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     doFix(descriptor, project);
   }
 
-  abstract protected void doReplacement(@NotNull PsiFile psiFile,
+  protected abstract void doReplacement(@NotNull PsiFile psiFile,
                                         Editor editor,
                                         T literalExpression,
                                         String i18nizedText) throws IncorrectOperationException;
@@ -113,8 +113,7 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
     generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
-  @NotNull
-  protected I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
+  protected @NotNull I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
     return new I18nizeQuickFixDialog.DialogCustomization(null, true, false, null, getSuggestedName(value, myInfo));
   }
 

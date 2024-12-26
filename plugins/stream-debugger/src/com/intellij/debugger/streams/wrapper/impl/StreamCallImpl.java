@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.wrapper.CallArgument;
@@ -29,9 +29,8 @@ public abstract class StreamCallImpl implements StreamCall {
     myTextRange = range;
   }
 
-  @NotNull
   @Override
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myTextRange;
   }
 
@@ -40,15 +39,13 @@ public abstract class StreamCallImpl implements StreamCall {
     return myName;
   }
 
-  @NotNull
   @Override
-  public List<CallArgument> getArguments() {
+  public @NotNull List<CallArgument> getArguments() {
     return myArgs;
   }
 
-  @NotNull
   @Override
-  public StreamCallType getType() {
+  public @NotNull StreamCallType getType() {
     return myType;
   }
 }

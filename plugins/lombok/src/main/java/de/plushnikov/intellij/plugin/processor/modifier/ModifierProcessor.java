@@ -29,5 +29,5 @@ public interface ModifierProcessor {
    * @param modifierList Modifier List that will have mosifiers augmented
    * @param modifiers    Set of modifiers that is currently present for the list
    */
-  void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers);
+  void transformModifiers(@NotNull PsiModifierList modifierList, final @NotNull Set<String> modifiers);
 }

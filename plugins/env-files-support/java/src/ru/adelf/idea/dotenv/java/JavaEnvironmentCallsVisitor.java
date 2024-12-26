@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 class JavaEnvironmentCallsVisitor extends JavaRecursiveElementWalkingVisitor {
-    final private Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
+    private final Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {

@@ -12,9 +12,8 @@ import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 public class DockerfileKeyGotoHandler implements GotoDeclarationHandler {
 
-    @Nullable
     @Override
-    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
         if (psiElement == null || psiElement.getParent() == null) {
             return PsiElement.EMPTY_ARRAY;
         }
@@ -32,9 +31,8 @@ public class DockerfileKeyGotoHandler implements GotoDeclarationHandler {
         return EnvironmentVariablesApi.getKeyUsages(psiElement.getProject(), EnvironmentVariablesUtil.getKeyFromString((((DockerFileEnvRegularDeclaration) psiElement).getDeclaredName().getText())));
     }
 
-    @Nullable
     @Override
-    public String getActionText(@NotNull DataContext dataContext) {
+    public @Nullable String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

@@ -13,15 +13,15 @@ import org.jetbrains.annotations.Nullable;
  * User : catherine
  */
 public abstract class RestInspectionVisitor extends RestElementVisitor {
-  @Nullable private final ProblemsHolder myHolder;
+  private final @Nullable ProblemsHolder myHolder;
 
-  public RestInspectionVisitor(@Nullable final ProblemsHolder holder) {
+  public RestInspectionVisitor(final @Nullable ProblemsHolder holder) {
     myHolder = holder;
   }
 
-  protected final void registerProblem(@Nullable final PsiElement element,
-                                       @NotNull final @InspectionMessage String message,
-                                       @NotNull final LocalQuickFix quickFix) {
+  protected final void registerProblem(final @Nullable PsiElement element,
+                                       final @NotNull @InspectionMessage String message,
+                                       final @NotNull LocalQuickFix quickFix) {
     if (element == null || element.getTextLength() == 0) {
       return;
     }

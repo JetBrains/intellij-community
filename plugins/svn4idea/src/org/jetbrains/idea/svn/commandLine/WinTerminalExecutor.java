@@ -28,16 +28,15 @@ public class WinTerminalExecutor extends TerminalExecutor {
     }
   }
 
-  @Nullable private File myRedirectFile;
-  @Nullable private FileInputStream myRedirectStream;
+  private @Nullable File myRedirectFile;
+  private @Nullable FileInputStream myRedirectStream;
 
   public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
     super(exePath, command);
   }
 
-  @NotNull
   @Override
-  protected SvnProcessHandler createProcessHandler() {
+  protected @NotNull SvnProcessHandler createProcessHandler() {
     return new WinTerminalProcessHandler(myProcess, myCommandLine, needsUtf8Output(), needsBinaryOutput());
   }
 
@@ -79,9 +78,8 @@ public class WinTerminalExecutor extends TerminalExecutor {
     deleteTempFile(myRedirectFile);
   }
 
-  @NotNull
   @Override
-  protected Process createProcess() throws ExecutionException {
+  protected @NotNull Process createProcess() throws ExecutionException {
     checkRedirectFile();
 
     List<String> parameters = escapeArguments(buildParameters());
@@ -118,14 +116,12 @@ public class WinTerminalExecutor extends TerminalExecutor {
   /**
    * TODO: Identify pty4j quoting requirements for Windows and implement accordingly
    */
-  @NotNull
   @Override
-  protected List<String> escapeArguments(@NotNull List<String> arguments) {
+  protected @NotNull List<String> escapeArguments(@NotNull List<String> arguments) {
     return ContainerUtil.map(arguments, argument -> needQuote(argument) && !isQuoted(argument) ? quote(argument) : argument);
   }
 
-  @NotNull
-  private static String quote(@NotNull String argument) {
+  private static @NotNull String quote(@NotNull String argument) {
     return StringUtil.wrapWithDoubleQuote(argument);
   }
 

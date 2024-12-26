@@ -46,21 +46,19 @@ public class AccessorsInfo {
     this.prefixes = null == prefixes ? ArrayUtil.EMPTY_STRING_ARRAY : prefixes;
   }
 
-  @NotNull
-  public static AccessorsInfo build(boolean fluentValue,
-                                    boolean chainValue,
-                                    boolean makeFinal,
-                                    boolean doNotUseIsPrefix,
-                                    CapitalizationStrategy capitalizationStrategy,
-                                    String... prefixes) {
+  public static @NotNull AccessorsInfo build(boolean fluentValue,
+                                             boolean chainValue,
+                                             boolean makeFinal,
+                                             boolean doNotUseIsPrefix,
+                                             CapitalizationStrategy capitalizationStrategy,
+                                             String... prefixes) {
     return new AccessorsInfo(fluentValue, chainValue, makeFinal, doNotUseIsPrefix, capitalizationStrategy, prefixes);
   }
 
-  @NotNull
-  private static AccessorsInfo buildAccessorsInfo(@Nullable PsiClass psiClass, @Nullable Boolean chainDeclaredValue,
-                                                  @Nullable Boolean fluentDeclaredValue,
-                                                  @Nullable Boolean makeFinalDeclaredValue,
-                                                  @NotNull Collection<String> prefixDeclared) {
+  private static @NotNull AccessorsInfo buildAccessorsInfo(@Nullable PsiClass psiClass, @Nullable Boolean chainDeclaredValue,
+                                                           @Nullable Boolean fluentDeclaredValue,
+                                                           @Nullable Boolean makeFinalDeclaredValue,
+                                                           @NotNull Collection<String> prefixDeclared) {
     final boolean isFluent;
     final boolean isChained;
     final boolean makeFinal;
@@ -158,8 +156,7 @@ public class AccessorsInfo {
                               values.prefixes);
   }
 
-  @NotNull
-  public static AccessorsInfo buildFor(@NotNull PsiField psiField) {
+  public static @NotNull AccessorsInfo buildFor(@NotNull PsiField psiField) {
     final AccessorsValues fieldAccessorsValues = getAccessorsValues(psiField);
     final AccessorsValues classAccessorsValues = getAccessorsValues(psiField.getContainingClass());
     final AccessorsValues combinedAccessorValues = fieldAccessorsValues.combine(classAccessorsValues);
@@ -168,14 +165,12 @@ public class AccessorsInfo {
     return buildFrom(containingClass, combinedAccessorValues);
   }
 
-  @NotNull
-  public static AccessorsInfo buildFor(@NotNull PsiClass psiClass) {
+  public static @NotNull AccessorsInfo buildFor(@NotNull PsiClass psiClass) {
     AccessorsValues resultAccessorsValues = getAccessorsValues(psiClass);
     return buildFrom(psiClass, resultAccessorsValues);
   }
 
-  @NotNull
-  private static AccessorsValues getAccessorsValues(@NotNull PsiField psiField) {
+  private static @NotNull AccessorsValues getAccessorsValues(@NotNull PsiField psiField) {
     AccessorsValues accessorsValues = new AccessorsValues();
     final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.ACCESSORS);
     if (null != accessorsFieldAnnotation) {
@@ -184,8 +179,7 @@ public class AccessorsInfo {
     return accessorsValues;
   }
 
-  @NotNull
-  public static AccessorsValues getAccessorsValues(@Nullable PsiClass psiClass) {
+  public static @NotNull AccessorsValues getAccessorsValues(@Nullable PsiClass psiClass) {
     AccessorsValues resultAccessorsValues = new AccessorsValues();
 
     PsiClass containingClass = psiClass;
@@ -200,8 +194,7 @@ public class AccessorsInfo {
     return resultAccessorsValues;
   }
 
-  @NotNull
-  public static AccessorsInfo buildFor(@NotNull PsiField psiField, AccessorsValues classAccessorsValues) {
+  public static @NotNull AccessorsInfo buildFor(@NotNull PsiField psiField, AccessorsValues classAccessorsValues) {
     final AccessorsValues fieldAccessorsValues = getAccessorsValues(psiField);
     final AccessorsValues combinedAccessorValues = fieldAccessorsValues.combine(classAccessorsValues);
 

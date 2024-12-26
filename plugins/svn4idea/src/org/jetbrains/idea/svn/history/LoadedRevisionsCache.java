@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.Disposable;
@@ -72,8 +72,7 @@ public final class LoadedRevisionsCache implements Disposable {
     myMap.clear();
   }
 
-  @NotNull
-  private static List<List<CommittedChangeList>> split(final List<CommittedChangeList> list, final int size) {
+  private static @NotNull List<List<CommittedChangeList>> split(final List<CommittedChangeList> list, final int size) {
     final int listSize = list.size();
     if (listSize < size) {
       return Collections.singletonList(list);
@@ -91,8 +90,7 @@ public final class LoadedRevisionsCache implements Disposable {
     return result;
   }
 
-  @Nullable
-  public Bunch put(final List<CommittedChangeList> data, final boolean consistentWithPrevious, final Bunch bindTo) {
+  public @Nullable Bunch put(final List<CommittedChangeList> data, final boolean consistentWithPrevious, final Bunch bindTo) {
     if (data.isEmpty()) {
       return null;
     }
@@ -127,8 +125,7 @@ public final class LoadedRevisionsCache implements Disposable {
     return bindToBunch;
   }
 
-  @Nullable
-  public Iterator<ChangesBunch> iterator(final String location) {
+  public @Nullable Iterator<ChangesBunch> iterator(final String location) {
     final Bunch bunch = myMap.get(location);
     if (bunch == null) {
       return null;

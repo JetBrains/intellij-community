@@ -16,15 +16,13 @@ public class DotEnvSettingsConfigurable implements Configurable {
     private JCheckBox storeValuesCheckbox;
     private JCheckBox hideValuesCheckbox;
 
-    @Nls
     @Override
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
         return "DotEnv";
     }
 
-    @Nullable
     @Override
-    public JComponent createComponent() {
+    public @Nullable JComponent createComponent() {
         DotEnvSettings settings = getSettings();
         Border standardBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
 

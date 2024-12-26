@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.lib.InterpreterFactory;
@@ -28,9 +28,8 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     myInterpreterFactory = interpreterFactory;
   }
 
-  @NotNull
   @Override
-  public TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference resultArray) {
+  public @NotNull TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference resultArray) {
     final ArrayReference info = (ArrayReference)resultArray.getValue(0);
     final ArrayReference result = (ArrayReference)resultArray.getValue(1);
     final Value streamResult = result.getValue(0);
@@ -40,8 +39,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     return new TracingResultImpl(chain, TraceElementImpl.ofResultValue(streamResult), trace, isException(result));
   }
 
-  @NotNull
-  private List<TraceInfo> getTrace(@NotNull StreamChain chain, @NotNull ArrayReference info) {
+  private @NotNull List<TraceInfo> getTrace(@NotNull StreamChain chain, @NotNull ArrayReference info) {
     final int callCount = chain.length();
     final List<TraceInfo> result = new ArrayList<>(callCount);
 

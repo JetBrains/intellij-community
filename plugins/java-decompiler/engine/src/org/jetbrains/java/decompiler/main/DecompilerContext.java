@@ -25,20 +25,13 @@ public class DecompilerContext {
   public static final String IN_CLASS_TYPE_PARAMS = "IN_CLASS_TYPE_PARAMS";
   public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
 
-  @NotNull
-  private final Map<String, Object> properties;
-  @NotNull
-  private final IFernflowerLogger logger;
-  @NotNull
-  private final StructContext structContext;
-  @NotNull
-  private final ClassesProcessor classProcessor;
-  @Nullable
-  private final PoolInterceptor poolInterceptor;
-  @NotNull
-  private final CancellationManager cancellationManager;
-  @NotNull
-  private final IVariableNamingFactory renamerFactory;
+  private final @NotNull Map<String, Object> properties;
+  private final @NotNull IFernflowerLogger logger;
+  private final @NotNull StructContext structContext;
+  private final @NotNull ClassesProcessor classProcessor;
+  private final @Nullable PoolInterceptor poolInterceptor;
+  private final @NotNull CancellationManager cancellationManager;
+  private final @NotNull IVariableNamingFactory renamerFactory;
   private ImportCollector importCollector;
   private VarProcessor varProcessor;
   private CounterContainer counterContainer;

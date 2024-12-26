@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.structureView;
 
 import com.intellij.ide.structureView.*;
@@ -15,13 +16,11 @@ import static org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.PRESEN
 import static org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.TRANSPARENT_CONTAINERS;
 
 public final class MarkdownStructureViewFactory implements PsiStructureViewFactory {
-  @Nullable
   @Override
-  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(final @NotNull PsiFile psiFile) {
     return new TreeBasedStructureViewBuilder() {
-      @NotNull
       @Override
-      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+      public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
         return new MarkdownStructureViewModel(psiFile, editor);
       }
 
@@ -37,9 +36,8 @@ public final class MarkdownStructureViewFactory implements PsiStructureViewFacto
       super(psiFile, editor, new MarkdownStructureElement(psiFile));
     }
 
-    @Nullable
     @Override
-    protected Object findAcceptableElement(PsiElement element) {
+    protected @Nullable Object findAcceptableElement(PsiElement element) {
       // walk up the psi-tree until we find an element from the structure view
       while (element != null && !(element instanceof PsiFile) && !PRESENTABLE_TYPES.contains(PsiUtilCore.getElementType(element))) {
         IElementType parentType = PsiUtilCore.getElementType(element.getParent());

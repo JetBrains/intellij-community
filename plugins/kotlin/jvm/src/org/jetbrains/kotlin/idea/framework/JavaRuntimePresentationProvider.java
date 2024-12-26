@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.framework;
 
@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinIcons;
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility;
-import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
+import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription;
 
 import javax.swing.*;
 import java.util.List;
@@ -24,15 +24,13 @@ public class JavaRuntimePresentationProvider extends LibraryPresentationProvider
         super(JavaRuntimeLibraryDescription.Companion.getKOTLIN_JAVA_RUNTIME_KIND());
     }
 
-    @Nullable
     @Override
-    public Icon getIcon(@Nullable LibraryVersionProperties properties) {
+    public @Nullable Icon getIcon(@Nullable LibraryVersionProperties properties) {
         return KotlinIcons.SMALL_LOGO;
     }
 
-    @Nullable
     @Override
-    public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
+    public @Nullable LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
         IdeKotlinVersion version = KotlinJvmStdlibDetectorFacility.INSTANCE.getStdlibVersion(classesRoots);
         return version == null ? null : new LibraryVersionProperties(version.getArtifactVersion());
     }

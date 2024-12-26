@@ -62,9 +62,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     return ShShellcheckInspection.SHORT_NAME;
   }
 
-  @Nullable
   @Override
-  public CollectedInfo collectInformation(@NotNull PsiFile file) {
+  public @Nullable CollectedInfo collectInformation(@NotNull PsiFile file) {
     if (!(file instanceof ShFile)) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
@@ -74,9 +73,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
                              getShellcheckExecutionParams(file));
   }
 
-  @Nullable
   @Override
-  public ShellcheckResponse doAnnotate(@NotNull CollectedInfo fileInfo) {
+  public @Nullable ShellcheckResponse doAnnotate(@NotNull CollectedInfo fileInfo) {
     // Temporary solution to avoid execution under read action in dumb mode. Should be removed after IDEA-229905 will be fixed
     Application application = ApplicationManager.getApplication();
     if (application != null && application.isReadAccessAllowed() && !application.isUnitTestMode()) return null;
@@ -159,8 +157,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     }
   }
 
-  @NotNull
-  private static HighlightSeverity severity(@Nullable String level) {
+  private static @NotNull HighlightSeverity severity(@Nullable String level) {
     if ("error".equals(level)) {
       return HighlightSeverity.ERROR;
     }
@@ -170,8 +167,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     return HighlightSeverity.WEAK_WARNING;
   }
 
-  @NotNull
-  private static List<@NlsSafe String> getShellcheckExecutionParams(@NotNull PsiFile file) {
+  private static @NotNull List<@NlsSafe String> getShellcheckExecutionParams(@NotNull PsiFile file) {
     String interpreter = getInterpreter(file);
     List<String> params = new SmartList<>();
     ShShellcheckInspection inspection = ShShellcheckInspection.findShShellcheckInspection(file);
@@ -193,18 +189,15 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static String format(@NotNull String originalMessage) {
+  private static @NotNull String format(@NotNull String originalMessage) {
     return originalMessage.endsWith(".") ? originalMessage.substring(0, originalMessage.length() - 1) : originalMessage;
   }
 
-  @NotNull
-  private static String quote(@NotNull String originalMessage) {
+  private static @NotNull String quote(@NotNull String originalMessage) {
     return "'" + StringUtil.first(originalMessage, 60, true) + "'";
   }
 
-  @NotNull
-  private static String getInterpreter(@NotNull PsiFile file) {
+  private static @NotNull String getInterpreter(@NotNull PsiFile file) {
     if (!(file instanceof ShFile)) return DEFAULT_SHELL;
     return ShShebangParserUtil.getInterpreter((ShFile)file, KNOWN_SHELLS, DEFAULT_SHELL);
   }

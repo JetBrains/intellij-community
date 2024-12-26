@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.stepping;
 
@@ -32,9 +32,8 @@ public class KotlinSteppingConfigurableUi implements ConfigurableUi<KotlinDebugg
         settings.setAlwaysDoSmartStepInto(alwaysDoSmartStepInto.isSelected());
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
         return myPanel;
     }
 }

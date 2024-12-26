@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.TraceElement;
@@ -14,17 +14,15 @@ import java.util.stream.Collectors;
  * @author Vitaliy.Bibaev
  */
 public class EmptyResolver implements ValuesOrderResolver {
-  @NotNull
   @Override
-  public Result resolve(@NotNull TraceInfo info) {
+  public @NotNull Result resolve(@NotNull TraceInfo info) {
     final Map<Integer, TraceElement> orderBefore = info.getValuesOrderBefore();
     final Map<Integer, TraceElement> orderAfter = info.getValuesOrderAfter();
 
     return Result.of(toEmptyMap(orderBefore), toEmptyMap(orderAfter));
   }
 
-  @NotNull
-  private static Map<TraceElement, List<TraceElement>> toEmptyMap(@NotNull Map<Integer, TraceElement> order) {
+  private static @NotNull Map<TraceElement, List<TraceElement>> toEmptyMap(@NotNull Map<Integer, TraceElement> order) {
     return order.keySet().stream().collect(Collectors.toMap(order::get, x -> Collections.emptyList()));
   }
 }

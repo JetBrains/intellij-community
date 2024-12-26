@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
@@ -55,8 +55,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return myRepositoryTree;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myVCS.getProject();
   }
 
@@ -106,7 +105,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     myRepositoryTree.setSelectionRow(0);
   }
 
-  public void expandNode(@NotNull final TreeNode treeNode) {
+  public void expandNode(final @NotNull TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     if ((pathToNode != null) && (pathToNode.length > 0)) {
@@ -115,7 +114,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     }
   }
 
-  public Collection<TreeNode> getExpandedSubTree(@NotNull final TreeNode treeNode) {
+  public Collection<TreeNode> getExpandedSubTree(final @NotNull TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     final Enumeration<TreePath> expanded = myRepositoryTree.getExpandedDescendants(new TreePath(pathToNode));
@@ -130,7 +129,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return result;
   }
 
-  public boolean isExpanded(@NotNull final TreeNode treeNode) {
+  public boolean isExpanded(final @NotNull TreeNode treeNode) {
     final TreeNode[] pathToNode = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(treeNode);
 
     return (pathToNode != null) && (pathToNode.length > 0) && myRepositoryTree.isExpanded(new TreePath(pathToNode));
@@ -144,8 +143,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     ((RepositoryTreeModel)myRepositoryTree.getModel()).removeRoot(url);
   }
 
-  @Nullable
-  public DirectoryEntry getSelectedEntry() {
+  public @Nullable DirectoryEntry getSelectedEntry() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
@@ -157,14 +155,12 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return null;
   }
 
-  @Nullable
-  public String getSelectedURL() {
+  public @Nullable String getSelectedURL() {
     Url selectedUrl = getSelectedSVNURL();
     return selectedUrl == null ? null : selectedUrl.toString();
   }
 
-  @Nullable
-  public Url getSelectedSVNURL() {
+  public @Nullable Url getSelectedSVNURL() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
@@ -210,8 +206,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     EditSourceOnDoubleClickHandler.install(myRepositoryTree);
   }
 
-  @Nullable
-  public RepositoryTreeNode getSelectedNode() {
+  public @Nullable RepositoryTreeNode getSelectedNode() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection != null && selection.getLastPathComponent() instanceof RepositoryTreeNode) {
       return (RepositoryTreeNode)selection.getLastPathComponent();
@@ -219,13 +214,12 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     return null;
   }
 
-  public void setSelectedNode(@NotNull final TreeNode node) {
+  public void setSelectedNode(final @NotNull TreeNode node) {
     final TreeNode[] pathNodes = ((RepositoryTreeModel)myRepositoryTree.getModel()).getPathToRoot(node);
     myRepositoryTree.setSelectionPath(new TreePath(pathNodes));
   }
 
-  @Nullable
-  public VirtualFile getSelectedVcsFile() {
+  public @Nullable VirtualFile getSelectedVcsFile() {
     final RepositoryTreeNode node = getSelectedNode();
     if (node == null) return null;
 
@@ -278,8 +272,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
     ((RepositoryTreeModel)myRepositoryTree.getModel()).setDefaultExpanderFactory(expanderFactory);
   }
 
-  @NotNull
-  public StatusText getStatusText() {
+  public @NotNull StatusText getStatusText() {
     return myRepositoryTree.getEmptyText();
   }
 }

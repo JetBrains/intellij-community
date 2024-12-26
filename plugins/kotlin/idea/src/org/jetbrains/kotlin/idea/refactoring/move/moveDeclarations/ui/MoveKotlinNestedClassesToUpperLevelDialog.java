@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui;
 
@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
-    @NonNls private static final String RECENTS_KEY = MoveKotlinNestedClassesToUpperLevelDialog.class.getName() + ".RECENTS_KEY";
+    private static final @NonNls String RECENTS_KEY = MoveKotlinNestedClassesToUpperLevelDialog.class.getName() + ".RECENTS_KEY";
 
     private final Project project;
     private final KtClassOrObject innerClass;
@@ -105,8 +105,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
         return classNameField.getText().trim();
     }
 
-    @Nullable
-    public String getParameterName() {
+    public @Nullable String getParameterName() {
         return parameterField != null ? parameterField.getEnteredName() : null;
     }
 
@@ -114,13 +113,11 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
         return innerClass instanceof KtClass && MoveUtilKt.traverseOuterInstanceReferences(innerClass, true);
     }
 
-    @Nullable
-    private FqName getTargetPackageFqName() {
+    private @Nullable FqName getTargetPackageFqName() {
         return MoveUtilKt.getTargetPackageFqName(targetContainer);
     }
 
-    @NotNull
-    private KotlinType getOuterInstanceType() {
+    private @NotNull KotlinType getOuterInstanceType() {
         return ((ClassDescriptor) innerClassDescriptor.getContainingDeclaration()).getDefaultType();
     }
 
@@ -235,9 +232,8 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
                   isOpenInEditor);
         }
 
-        @Nullable
         @Override
-        protected VirtualFile chooseSourceRoot(
+        protected @Nullable VirtualFile chooseSourceRoot(
                 @NotNull PackageWrapper newPackage,
                 @NotNull List<? extends VirtualFile> contentSourceRoots,
                 @Nullable PsiDirectory initialDir

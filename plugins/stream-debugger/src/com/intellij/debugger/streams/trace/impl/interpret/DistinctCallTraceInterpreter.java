@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter;
@@ -26,9 +26,8 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     DIRECT, REVERSE
   }
 
-  @NotNull
   @Override
-  public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
+  public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference) {
       final Value peekTrace = ((ArrayReference)value).getValue(0);
       final Value trace = ((ArrayReference)value).getValue(1);
@@ -44,10 +43,9 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     throw new UnexpectedValueException("distinct trace must be an array value");
   }
 
-  @NotNull
-  private static Map<TraceElement, List<TraceElement>> resolve(@NotNull Value value,
-                                                               @NotNull TraceInfo order,
-                                                               @NotNull Direction direction) {
+  private static @NotNull Map<TraceElement, List<TraceElement>> resolve(@NotNull Value value,
+                                                                        @NotNull TraceInfo order,
+                                                                        @NotNull Direction direction) {
     if (value instanceof ArrayReference convertedMap) {
       final Value keys = convertedMap.getValue(0);
       final Value values = convertedMap.getValue(1);
@@ -63,10 +61,9 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     throw new UnexpectedValueException("value must be an array reference");
   }
 
-  @NotNull
-  private static Map<TraceElement, List<TraceElement>> resolveDirectTrace(@NotNull ArrayReference keys,
-                                                                          @NotNull ArrayReference values,
-                                                                          @NotNull TraceInfo order) {
+  private static @NotNull Map<TraceElement, List<TraceElement>> resolveDirectTrace(@NotNull ArrayReference keys,
+                                                                                   @NotNull ArrayReference values,
+                                                                                   @NotNull TraceInfo order) {
     final int size = keys.length();
     if (size != values.length()) {
       throw new UnexpectedArrayLengthException("length of keys array should be same with values array");
@@ -85,10 +82,9 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     return result;
   }
 
-  @NotNull
-  private static Map<TraceElement, List<TraceElement>> resolveReverseTrace(@NotNull ArrayReference keys,
-                                                                           @NotNull ArrayReference values,
-                                                                           @NotNull TraceInfo order) {
+  private static @NotNull Map<TraceElement, List<TraceElement>> resolveReverseTrace(@NotNull ArrayReference keys,
+                                                                                    @NotNull ArrayReference values,
+                                                                                    @NotNull TraceInfo order) {
     final int size = keys.length();
     if (size != values.length()) {
       throw new UnexpectedArrayLengthException("length of keys array should be same with values array");
@@ -121,15 +117,13 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
       myReverseTrace = reverseTrace;
     }
 
-    @Nullable
     @Override
-    public Map<TraceElement, List<TraceElement>> getDirectTrace() {
+    public @Nullable Map<TraceElement, List<TraceElement>> getDirectTrace() {
       return Collections.unmodifiableMap(myDirectTrace);
     }
 
-    @Nullable
     @Override
-    public Map<TraceElement, List<TraceElement>> getReverseTrace() {
+    public @Nullable Map<TraceElement, List<TraceElement>> getReverseTrace() {
       return Collections.unmodifiableMap(myReverseTrace);
     }
   }

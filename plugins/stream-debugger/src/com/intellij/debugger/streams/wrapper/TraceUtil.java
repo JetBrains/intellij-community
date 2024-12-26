@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.wrapper;
 
 import com.intellij.debugger.streams.trace.TraceElement;
@@ -24,8 +24,7 @@ public final class TraceUtil {
     return values.stream().sorted(Comparator.comparing(TraceElement::getTime)).collect(Collectors.toList());
   }
 
-  @Nullable
-  public static Object extractKey(@NotNull TraceElement element) {
+  public static @Nullable Object extractKey(@NotNull TraceElement element) {
     final Value value = element.getValue();
     if (!(value instanceof PrimitiveValue)) return value;
     if (value instanceof IntegerValue) return ((IntegerValue)value).value();
@@ -39,17 +38,13 @@ public final class TraceUtil {
     throw new RuntimeException("unknown primitive value: " + value.type().name());
   }
 
-  @NotNull
-  @NlsSafe
-  public static String formatWithArguments(@NotNull MethodCall call) {
+  public static @NotNull @NlsSafe String formatWithArguments(@NotNull MethodCall call) {
     return call.getName() + StreamEx.of(call.getArguments())
       .map(x -> StringUtil.shortenTextWithEllipsis(x.getText().replaceAll("\\s", ""), 30, 5, THREE_DOTS))
       .joining(", ", "(", ")");
   }
 
-  @NotNull
-  @NlsSafe
-  public static String formatQualifierExpression(@NotNull String expression, int maxLength) {
+  public static @NotNull @NlsSafe String formatQualifierExpression(@NotNull String expression, int maxLength) {
     expression = expression.replaceAll("\\s", "").replaceAll(",", ", ");
     if (expression.length() < maxLength) return expression;
     if (expression.isEmpty()) return "qualifier";

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.lib.ResolverFactory;
@@ -38,9 +38,8 @@ public class TracingResultImpl implements TracingResult {
     myIsResultException = isResultException;
   }
 
-  @NotNull
   @Override
-  public TraceElement getResult() {
+  public @NotNull TraceElement getResult() {
     return myStreamResult;
   }
 
@@ -49,15 +48,13 @@ public class TracingResultImpl implements TracingResult {
     return myIsResultException;
   }
 
-  @NotNull
   @Override
-  public List<TraceInfo> getTrace() {
+  public @NotNull List<TraceInfo> getTrace() {
     return myTrace;
   }
 
-  @NotNull
   @Override
-  public ResolvedTracingResult resolve(@NotNull ResolverFactory resolverFactory) {
+  public @NotNull ResolvedTracingResult resolve(@NotNull ResolverFactory resolverFactory) {
     assert myTrace.size() == mySourceChain.length();
 
     List<ValuesOrderResolver.Result> resolvedTraces =
@@ -115,21 +112,19 @@ public class TracingResultImpl implements TracingResult {
 
   private class MyResolvedResult implements ResolvedTracingResult {
 
-    @NotNull private final ResolvedStreamChain myChain;
+    private final @NotNull ResolvedStreamChain myChain;
 
     MyResolvedResult(@NotNull ResolvedStreamChain resolvedStreamChain) {
       myChain = resolvedStreamChain;
     }
 
-    @NotNull
     @Override
-    public ResolvedStreamChain getResolvedChain() {
+    public @NotNull ResolvedStreamChain getResolvedChain() {
       return myChain;
     }
 
-    @NotNull
     @Override
-    public StreamChain getSourceChain() {
+    public @NotNull StreamChain getSourceChain() {
       return mySourceChain;
     }
 
@@ -138,9 +133,8 @@ public class TracingResultImpl implements TracingResult {
       return myIsResultException;
     }
 
-    @NotNull
     @Override
-    public TraceElement getResult() {
+    public @NotNull TraceElement getResult() {
       return myStreamResult;
     }
   }

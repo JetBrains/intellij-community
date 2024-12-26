@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.ui;
 
@@ -14,9 +14,8 @@ import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.IntroduceTypeAliasDescriptor;
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.IntroduceTypeAliasImplKt;
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.KotlinIntroduceTypeAliasHandler;
@@ -76,8 +75,7 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
         return !getApplicableVisibilities().isEmpty();
     }
 
-    @NotNull
-    private List<KtModifierKeywordToken> getApplicableVisibilities() {
+    private @NotNull List<KtModifierKeywordToken> getApplicableVisibilities() {
         return IntroduceTypeAliasImplKt.getApplicableVisibilities(originalDescriptor.getOriginalData());
     }
 
@@ -85,8 +83,7 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
         return KtPsiUtilKt.quoteIfNeeded(aliasNameField.getEnteredName());
     }
 
-    @Nullable
-    private KtModifierKeywordToken getVisibility() {
+    private @Nullable KtModifierKeywordToken getVisibility() {
         if (!isVisibilitySectionAvailable()) return null;
         return (KtModifierKeywordToken) visibilityBox.getSelectedItem();
     }
@@ -213,14 +210,12 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
         return contentPane;
     }
 
-    @NotNull
     @Override
-    protected JComponent createContentPane() {
+    protected @NotNull JComponent createContentPane() {
         return contentPane;
     }
 
-    @NotNull
-    private IntroduceTypeAliasDescriptor createDescriptor() {
+    private @NotNull IntroduceTypeAliasDescriptor createDescriptor() {
         return originalDescriptor.copy(
                 originalDescriptor.getOriginalData(),
                 getAliasName(),

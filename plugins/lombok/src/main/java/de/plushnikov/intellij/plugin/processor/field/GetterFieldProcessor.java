@@ -105,12 +105,11 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  @Nullable
   @Contract("_,_,_,null -> !null")
-  public static PsiMethod createGetterMethod(@NotNull PsiField psiField,
-                                             @NotNull PsiClass psiClass,
-                                             @NotNull String methodModifier,
-                                             @Nullable String nameHint) {
+  public static @Nullable PsiMethod createGetterMethod(@NotNull PsiField psiField,
+                                                       @NotNull PsiClass psiClass,
+                                                       @NotNull String methodModifier,
+                                                       @Nullable String nameHint) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     final String methodName = LombokUtils.getGetterName(psiField, accessorsInfo);
     if (nameHint != null && !nameHint.equals(methodName)) return null;

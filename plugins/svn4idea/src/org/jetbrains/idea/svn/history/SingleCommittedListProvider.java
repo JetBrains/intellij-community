@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,10 +29,10 @@ public class SingleCommittedListProvider {
 
   private static final Logger LOG = Logger.getInstance(SingleCommittedListProvider.class);
 
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile file;
-  @NotNull private final VcsRevisionNumber number;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile file;
+  private final @NotNull VcsRevisionNumber number;
   private SvnChangeList[] changeList;
   private Revision revisionBefore;
   private Url repositoryUrl;
@@ -127,8 +127,7 @@ public class SingleCommittedListProvider {
     return path == null ? filePath : path;
   }
 
-  @NotNull
-  private SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
+  private @NotNull SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
     return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl);
   }
 

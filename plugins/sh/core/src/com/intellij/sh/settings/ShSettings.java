@@ -17,8 +17,7 @@ public final class ShSettings {
   private static final String SHFMT_PATH = "SHFMT.PATH";
   private static final String SHFMT_SKIPPED_VERSION = "SHFMT.SKIPPED.VERSION";
 
-  @NotNull
-  public static String getShellcheckPath() {
+  public static @NotNull String getShellcheckPath() {
     return PropertiesComponent.getInstance().getValue(SHELLCHECK_PATH, "");
   }
 
@@ -26,8 +25,7 @@ public final class ShSettings {
     if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance().setValue(SHELLCHECK_PATH, path);
   }
 
-  @NotNull
-  public static String getShfmtPath() {
+  public static @NotNull String getShfmtPath() {
     return PropertiesComponent.getInstance().getValue(SHFMT_PATH, "");
   }
 
@@ -35,8 +33,7 @@ public final class ShSettings {
     if (StringUtil.isNotEmpty(path)) PropertiesComponent.getInstance().setValue(SHFMT_PATH, path);
   }
 
-  @NotNull
-  public static String getSkippedShellcheckVersion() {
+  public static @NotNull String getSkippedShellcheckVersion() {
     return PropertiesComponent.getInstance().getValue(SHELLCHECK_SKIPPED_VERSION, "");
   }
 
@@ -44,8 +41,7 @@ public final class ShSettings {
     if (StringUtil.isNotEmpty(version)) PropertiesComponent.getInstance().setValue(SHELLCHECK_SKIPPED_VERSION, version);
   }
 
-  @NotNull
-  public static String getSkippedShfmtVersion() {
+  public static @NotNull String getSkippedShfmtVersion() {
     return PropertiesComponent.getInstance().getValue(SHFMT_SKIPPED_VERSION, "");
   }
 

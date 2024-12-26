@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.TraceElement;
@@ -17,9 +17,8 @@ public class NoneMatchTraceInterpreter extends MatchInterpreterBase {
     return traceAfterFilter.isEmpty();
   }
 
-  @NotNull
   @Override
-  protected Action getAction(boolean result) {
+  protected @NotNull Action getAction(boolean result) {
     if (result) {
       return Action.CONNECT_DIFFERENCE;
     }

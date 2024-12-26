@@ -42,7 +42,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
   }
 
   @Override
-  public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+  public void transformModifiers(@NotNull PsiModifierList modifierList, final @NotNull Set<String> modifiers) {
     if (modifiers.contains(PsiModifier.STATIC) || UtilityClassModifierProcessor.isModifierListSupported(modifierList)) {
       return; // skip static fields
     }
@@ -52,7 +52,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
       return; // Should not get here, but safer to check
     }
 
-    @Nullable final PsiAnnotation fieldDefaultsAnnotation = PsiAnnotationSearchUtil.findAnnotation(searchableClass,
+    final @Nullable PsiAnnotation fieldDefaultsAnnotation = PsiAnnotationSearchUtil.findAnnotation(searchableClass,
                                                                                                    LombokClassNames.FIELD_DEFAULTS);
     final boolean isConfigDefaultFinal = isConfigDefaultFinal(searchableClass);
     final boolean isConfigDefaultPrivate = isConfigDefaultPrivate(searchableClass);

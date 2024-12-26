@@ -47,8 +47,7 @@ public abstract class Exprent implements IMatchable {
 
   public final int type;
   public final int id;
-  @Nullable
-  public BitSet bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
+  public @Nullable BitSet bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
 
   public Exprent(int type) {
     this.type = type;
@@ -59,8 +58,7 @@ public abstract class Exprent implements IMatchable {
     return 0; // the highest precedence
   }
 
-  @NotNull
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     return VarType.VARTYPE_VOID;
   }
 

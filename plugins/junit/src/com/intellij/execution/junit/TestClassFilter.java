@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -72,19 +72,16 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return false;
   }
 
-  @NotNull
-  public TestClassFilter intersectionWith(final GlobalSearchScope scope) {
+  public @NotNull TestClassFilter intersectionWith(final GlobalSearchScope scope) {
     return new TestClassFilter(myBase, myScope.intersectWith(scope));
   }
 
-  @NotNull
-  public static TestClassFilter create(final SourceScope sourceScope, final Module module) throws JUnitUtil.NoJUnitException {
+  public static @NotNull TestClassFilter create(final SourceScope sourceScope, final Module module) throws JUnitUtil.NoJUnitException {
     final PsiClass testCase = getTestCase(sourceScope, module);
     return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope());
   }
 
-  @NotNull
-  private static PsiClass getTestCase(final SourceScope sourceScope, final Module module) throws JUnitUtil.NoJUnitException {
+  private static @NotNull PsiClass getTestCase(final SourceScope sourceScope, final Module module) throws JUnitUtil.NoJUnitException {
     if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
     return ReadAction.compute(() -> module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module));
   }
@@ -136,6 +133,5 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
 
   @Override
   public GlobalSearchScope getScope() { return myScope; }
-  @Nullable
-  public PsiClass getBase() { return myBase; }
+  public @Nullable PsiClass getBase() { return myBase; }
 }

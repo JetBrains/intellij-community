@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -154,17 +154,15 @@ public final class TraceStreamAction extends AnAction {
       this.provider = chain.provider;
     }
 
-    @NotNull
     @Override
-    public Stream<TextRange> rangeStream() {
+    public @NotNull Stream<TextRange> rangeStream() {
       return Stream.of(
         new TextRange(chain.getQualifierExpression().getTextRange().getStartOffset(),
                       chain.getTerminationCall().getTextRange().getEndOffset()));
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return chain.getCompactText();
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter;
@@ -24,9 +24,8 @@ import java.util.PrimitiveIterator;
 public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
   private final SimplePeekCallTraceInterpreter myPeekResolver = new SimplePeekCallTraceInterpreter();
 
-  @NotNull
   @Override
-  public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
+  public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (!(value instanceof ArrayReference array)) {
       throw new UnexpectedValueTypeException("Array reference expected. But " + value.type().name() + " received");
     }

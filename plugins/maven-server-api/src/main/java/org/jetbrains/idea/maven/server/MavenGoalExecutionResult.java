@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +14,9 @@ import java.util.List;
 
 public class MavenGoalExecutionResult implements Serializable {
   public final boolean success;
-  @NotNull public final File file;
-  @NotNull public final Folders folders;
-  @NotNull public final Collection<MavenProjectProblem> problems;
+  public final @NotNull File file;
+  public final @NotNull Folders folders;
+  public final @NotNull Collection<MavenProjectProblem> problems;
 
   public MavenGoalExecutionResult(boolean success, @NotNull File file, @NotNull Folders folders, @NotNull Collection<MavenProjectProblem> problems) {
     this.success = success;

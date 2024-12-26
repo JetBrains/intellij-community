@@ -19,9 +19,8 @@ public class KotlinEnvironmentVariablesUsagesProvider implements EnvironmentVari
         return file.getFileType().equals(KotlinFileType.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if (psiFile instanceof KtFile) {
             Set<KeyUsagePsiElement> result = new HashSet<>();
 

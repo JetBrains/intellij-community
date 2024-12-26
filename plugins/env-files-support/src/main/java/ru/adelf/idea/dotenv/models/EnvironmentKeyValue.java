@@ -15,13 +15,11 @@ public class EnvironmentKeyValue {
         this.value = value;
     }
 
-    @NotNull
-    public String getKey() {
+    public @NotNull String getKey() {
         return key;
     }
 
-    @NotNull
-    public String getValue() {
+    public @NotNull String getValue() {
         return value;
     }
 }

@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Objects;
 
 class RubyEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
-    final private Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
+    private final Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
 
     @Override
     public void visitElement(PsiElement element) {

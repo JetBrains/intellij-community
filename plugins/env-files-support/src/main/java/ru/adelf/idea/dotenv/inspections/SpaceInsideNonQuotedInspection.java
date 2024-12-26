@@ -21,9 +21,8 @@ import java.util.stream.Stream;
 public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
         return DotEnvBundle.message("inspection.name.space.inside.non.quoted.value");
     }
 
@@ -43,8 +42,7 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvValue.class).forEach(dotEnvValue -> {
@@ -63,9 +61,8 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
 
     private static class AddQuotesQuickFix implements LocalQuickFix {
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return DotEnvBundle.message("intention.name.add.quotes");
         }
 
@@ -104,8 +101,7 @@ public class SpaceInsideNonQuotedInspection extends LocalInspectionTool {
         }
 
         @Override
-        @NotNull
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
             return getName();
         }
     }

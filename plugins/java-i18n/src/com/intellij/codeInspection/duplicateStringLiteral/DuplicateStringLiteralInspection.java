@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -55,11 +55,10 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
 
   @SuppressWarnings("WeakerAccess") public int MIN_STRING_LENGTH = 5;
   @SuppressWarnings("WeakerAccess") public boolean IGNORE_PROPERTY_KEYS;
-  @NonNls private static final String BR = "<br>";
+  private static final @NonNls String BR = "<br>";
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
@@ -74,13 +73,11 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "DuplicateStringLiteralInspection";
   }
 
-  @NotNull
-  private static List<PsiLiteralExpression> findDuplicateLiterals(@NotNull StringLiteralSearchQuery query, @NotNull Project project) {
+  private static @NotNull List<PsiLiteralExpression> findDuplicateLiterals(@NotNull StringLiteralSearchQuery query, @NotNull Project project) {
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     final List<String> words = ContainerUtil.filter(StringUtil.getWordsInStringLongestFirst(query.stringToFind), s -> s.length() >= query.minStringLength);
     if (words.isEmpty()) return Collections.emptyList();
@@ -114,8 +111,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     return foundExpressions;
   }
 
-  @NotNull
-  private static List<PsiLiteralExpression> findDuplicateLiteralsInFile(@NotNull String stringToFind, boolean ignorePropertyKeys, @NotNull PsiFile file) {
+  private static @NotNull List<PsiLiteralExpression> findDuplicateLiteralsInFile(@NotNull String stringToFind, boolean ignorePropertyKeys, @NotNull PsiFile file) {
     ProgressManager.checkCanceled();
     CharSequence text = file.getViewProvider().getContents();
     StringSearcher searcher = new StringSearcher(stringToFind, true, true);
@@ -132,7 +128,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     return foundExpr;
   }
 
-  private void checkStringLiteralExpression(@NotNull final PsiLiteralExpression originalExpression,
+  private void checkStringLiteralExpression(final @NotNull PsiLiteralExpression originalExpression,
                                             @NotNull ProblemsHolder holder,
                                             final boolean isOnTheFly) {
     PsiExpression[] foundExpr = getDuplicateLiterals(holder.getProject(), originalExpression, isOnTheFly);
@@ -222,8 +218,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     }
   }
 
-  @Nullable
-  private static PsiReferenceExpression createReferenceTo(@NotNull PsiField constant) throws IncorrectOperationException {
+  private static @Nullable PsiReferenceExpression createReferenceTo(@NotNull PsiField constant) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(constant.getProject()).getElementFactory();
     PsiReferenceExpression reference = (PsiReferenceExpression)factory.createExpressionFromText("XXX." + constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
@@ -294,8 +289,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaI18nBundle.message("inspection.duplicates.replace.family.quickfix");
     }
   }
@@ -338,16 +332,13 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
       }, JavaI18nBundle.message("introduce.constant.across.the.project"));
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return getFamilyName();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaI18nBundle.message("inspection.duplicates.navigate.to.occurrences");
     }
 

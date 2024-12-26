@@ -47,8 +47,7 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
   }
 
   @Override
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -58,9 +57,8 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
     myStopped = true;
   }
 
-  @Nullable
   @Override
-  protected PlaybackCommand createCommand(@NotNull String _command, int line, @NotNull File scriptDir) {
+  protected @Nullable PlaybackCommand createCommand(@NotNull String _command, int line, @NotNull File scriptDir) {
     String command = _command.replaceAll("[\r\n]+$", "");
     String[] cmdline = command.split("\\s+");
     PlaybackCommand playbackCommand = null;

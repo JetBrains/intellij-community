@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -26,9 +26,8 @@ import javax.swing.*;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProvider {
-  @NotNull
   @Override
-  public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
+  public @NotNull ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
     if (change1 instanceof ConflictedSvnChange conflict1 && change2 instanceof ConflictedSvnChange conflict2) {
 
       if (!conflict1.isTreeConflict() && !conflict2.isTreeConflict()) return ThreeState.UNSURE;
@@ -46,37 +45,33 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
     return change instanceof ConflictedSvnChange && ((ConflictedSvnChange)change).getConflictState().isTree();
   }
 
-  @NotNull
   @Override
-  public DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
-                             @NotNull UserDataHolder context,
-                             @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+  public @NotNull DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
+                                      @NotNull UserDataHolder context,
+                                      @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     return new SvnTreeConflictDiffRequest(((ConflictedSvnChange)presentable.getChange()));
   }
 
   public static class SvnTreeConflictDiffRequest extends DiffRequest {
-    @NotNull private final ConflictedSvnChange myChange;
+    private final @NotNull ConflictedSvnChange myChange;
 
     public SvnTreeConflictDiffRequest(@NotNull ConflictedSvnChange change) {
       myChange = change;
     }
 
-    @NotNull
-    public ConflictedSvnChange getChange() {
+    public @NotNull ConflictedSvnChange getChange() {
       return myChange;
     }
 
-    @Nullable
     @Override
-    public String getTitle() {
+    public @Nullable String getTitle() {
       return ChangeDiffRequestProducer.getRequestTitle(myChange);
     }
   }
 
   public static class SvnTreeConflictDiffTool implements FrameDiffTool {
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return message("svn.tree.conflict.viewer");
     }
 
@@ -85,20 +80,19 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
       return request instanceof SvnTreeConflictDiffRequest;
     }
 
-    @NotNull
     @Override
-    public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    public @NotNull DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
       return new SvnTreeConflictDiffViewer(context, (SvnTreeConflictDiffRequest)request);
     }
   }
 
   private static class SvnTreeConflictDiffViewer implements FrameDiffTool.DiffViewer {
-    @NotNull private final DiffContext myContext;
-    @NotNull private final SvnTreeConflictDiffRequest myRequest;
-    @NotNull private final Wrapper myPanel = new Wrapper();
+    private final @NotNull DiffContext myContext;
+    private final @NotNull SvnTreeConflictDiffRequest myRequest;
+    private final @NotNull Wrapper myPanel = new Wrapper();
 
-    @NotNull private final BackgroundTaskQueue myQueue;
-    @NotNull private final TreeConflictRefreshablePanel myDelegate;
+    private final @NotNull BackgroundTaskQueue myQueue;
+    private final @NotNull TreeConflictRefreshablePanel myDelegate;
 
     SvnTreeConflictDiffViewer(@NotNull DiffContext context, @NotNull SvnTreeConflictDiffRequest request) {
       myContext = context;
@@ -113,21 +107,18 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
       myPanel.setContent(myDelegate.getPanel());
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return myPanel;
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myPanel;
     }
 
-    @NotNull
     @Override
-    public FrameDiffTool.ToolbarComponents init() {
+    public @NotNull FrameDiffTool.ToolbarComponents init() {
       return new FrameDiffTool.ToolbarComponents();
     }
 

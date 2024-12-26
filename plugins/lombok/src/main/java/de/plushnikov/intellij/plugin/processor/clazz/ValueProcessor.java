@@ -135,9 +135,8 @@ public final class ValueProcessor extends AbstractClassProcessor {
     }
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
     addClassAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);
     addFieldsAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);

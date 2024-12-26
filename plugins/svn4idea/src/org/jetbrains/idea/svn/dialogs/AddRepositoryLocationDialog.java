@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -27,8 +27,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class AddRepositoryLocationDialog extends DialogWrapper {
-  @Unmodifiable
-  @NotNull private final List<String> myPreviousLocations;
+  private final @Unmodifiable @NotNull List<String> myPreviousLocations;
   private JComboBox<String> myCombo;
   private Url mySelected;
   private JTextField myComboField;
@@ -72,9 +71,8 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     return wrapper;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     try {
       mySelected = createUrl(myComboField.getText().trim(), false);
       return null;
@@ -89,8 +87,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
-  @Nullable
-  public Url getSelected() {
+  public @Nullable Url getSelected() {
     return mySelected;
   }
 

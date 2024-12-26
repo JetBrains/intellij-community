@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.psi.impl;
 
 import com.intellij.debugger.streams.psi.ChainDetector;
@@ -42,10 +42,8 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     return false;
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<StreamChain> build(@NotNull PsiElement startElement) {
+  public @NotNull @Unmodifiable List<StreamChain> build(@NotNull PsiElement startElement) {
     final MyChainCollectorVisitor visitor = new MyChainCollectorVisitor();
 
     PsiElement current = getLatestElementInCurrentScope(PsiUtil.ignoreWhiteSpaces(startElement));
@@ -58,8 +56,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     return buildChains(chains, startElement);
   }
 
-  @Nullable
-  private static PsiElement toUpperLevel(@NotNull PsiElement element) {
+  private static @Nullable PsiElement toUpperLevel(@NotNull PsiElement element) {
     element = element.getParent();
     while (element != null && !(element instanceof PsiLambdaExpression) && !(element instanceof PsiAnonymousClass)) {
       element = element.getParent();
@@ -68,9 +65,8 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     return getLatestElementInCurrentScope(element);
   }
 
-  @Nullable
   @Contract("null -> null")
-  private static PsiElement getLatestElementInCurrentScope(@Nullable PsiElement element) {
+  private static @Nullable PsiElement getLatestElementInCurrentScope(@Nullable PsiElement element) {
     PsiElement current = element;
     while (current != null) {
       final PsiElement parent = current.getParent();
@@ -85,9 +81,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     return current;
   }
 
-  @NotNull
-  @Unmodifiable
-  private List<StreamChain> buildChains(@NotNull List<List<PsiMethodCallExpression>> chains, @NotNull PsiElement context) {
+  private @NotNull @Unmodifiable List<StreamChain> buildChains(@NotNull List<List<PsiMethodCallExpression>> chains, @NotNull PsiElement context) {
     return ContainerUtil.map(chains, x -> myChainTransformer.transform(x, context));
   }
 

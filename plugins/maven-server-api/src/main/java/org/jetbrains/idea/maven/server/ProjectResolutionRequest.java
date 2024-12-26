@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -33,23 +33,19 @@ public class ProjectResolutionRequest implements Serializable {
     this.userProperties = userProperties;
   }
 
-  @NotNull
-  public PomHashMap getPomHashMap() {
+  public @NotNull PomHashMap getPomHashMap() {
     return pomHashMap;
   }
 
-  @NotNull
-  public List<String> getActiveProfiles() {
+  public @NotNull List<String> getActiveProfiles() {
     return activeProfiles;
   }
 
-  @NotNull
-  public List<String> getInactiveProfiles() {
+  public @NotNull List<String> getInactiveProfiles() {
     return inactiveProfiles;
   }
 
-  @Nullable
-  public MavenWorkspaceMap getWorkspaceMap() {
+  public @Nullable MavenWorkspaceMap getWorkspaceMap() {
     return workspaceMap;
   }
 

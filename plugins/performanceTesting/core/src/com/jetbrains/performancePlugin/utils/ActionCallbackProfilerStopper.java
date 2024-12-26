@@ -28,8 +28,7 @@ public final class ActionCallbackProfilerStopper extends ActionCallback {
     Notifications.Bus.notify(errorNotification);
   }
 
-  @NlsSafe
-  private String errorText() {
+  private @NlsSafe String errorText() {
     return Strings.notNullize(getError());
   }
 }

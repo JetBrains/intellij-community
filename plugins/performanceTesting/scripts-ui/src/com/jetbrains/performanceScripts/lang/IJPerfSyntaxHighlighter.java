@@ -31,9 +31,8 @@ public class IJPerfSyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey FILE_PATH =
     createTextAttributesKey("PERF_PLUGIN_FILE_PATH", DefaultLanguageHighlighterColors.IDENTIFIER);
 
-  @NotNull
   @Override
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return new IJPerfLexerAdapter();
   }
 

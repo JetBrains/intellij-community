@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter;
@@ -21,9 +21,8 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
-  @NotNull
   @Override
-  public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
+  public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference trace) {
       final Value before = trace.getValue(0);
       final Value after = trace.getValue(1);
@@ -37,8 +36,7 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
     throw new UnexpectedValueException("peek operation trace is wrong format");
   }
 
-  @NotNull
-  private static Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference mapArray) {
+  private static @NotNull Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference mapArray) {
     final Value keys = mapArray.getValue(0);
     final Value values = mapArray.getValue(1);
     if (keys instanceof ArrayReference && values instanceof ArrayReference) {
@@ -48,8 +46,7 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
     throw new UnexpectedValueException("keys and values must be stored in arrays in peek resolver");
   }
 
-  @NotNull
-  private static Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference keysArray, @NotNull ArrayReference valuesArray) {
+  private static @NotNull Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference keysArray, @NotNull ArrayReference valuesArray) {
     final LinkedHashMap<Integer, TraceElement> result = new LinkedHashMap<>();
     final List<Value> keyMirrors = keysArray.getValues();
     final List<Value> valueMirrors = valuesArray.getValues();
@@ -65,8 +62,7 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
     throw new UnexpectedValueException("keys and values arrays should be with the same sizes");
   }
 
-  @NotNull
-  private static TraceElement resolveTraceElement(@NotNull Value key, @Nullable Value value) {
+  private static @NotNull TraceElement resolveTraceElement(@NotNull Value key, @Nullable Value value) {
     if (key instanceof IntegerValue) {
       return new TraceElementImpl(((IntegerValue)key).value(), value);
     }

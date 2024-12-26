@@ -38,7 +38,7 @@ import static com.intellij.sh.statistics.ShCounterUsagesCollector.DOCUMENTATION_
 
 final class ShDocumentationProvider implements DocumentationProvider {
   private static final int TIMEOUT_IN_MILLISECONDS = 3 * 1000;
-  private final static Logger LOG = Logger.getInstance(ShDocumentationProvider.class);
+  private static final Logger LOG = Logger.getInstance(ShDocumentationProvider.class);
 
   private static final NullableLazyValue<String> MAN_EXECUTABLE = atomicLazyNullable(() -> {
     String path = EnvironmentUtil.getValue("PATH");
@@ -66,10 +66,9 @@ final class ShDocumentationProvider implements DocumentationProvider {
         && (o.getParent().getParent() instanceof ShGenericCommandDirective);
   }
 
-  @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement,
-                                                  int targetOffset) {
+  public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement,
+                                                            int targetOffset) {
     ASTNode node = contextElement == null ? null : contextElement.getNode();
     if (node == null || (TreeUtil.isWhitespaceOrComment(node) || node.getElementType() == ShTypes.LINEFEED)) {
       PsiElement at = targetOffset > 0 ? file.findElementAt(targetOffset - 1) : null;
@@ -102,8 +101,7 @@ final class ShDocumentationProvider implements DocumentationProvider {
     });
   }
 
-  @Nullable
-  private static String wrapIntoHtml(@Nullable String s) {
+  private static @Nullable String wrapIntoHtml(@Nullable String s) {
     if (s == null) return null;
 
     @NonNls StringBuilder sb = new StringBuilder("<html><body><pre>");

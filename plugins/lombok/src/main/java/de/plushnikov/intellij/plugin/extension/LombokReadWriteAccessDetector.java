@@ -7,9 +7,8 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 
 public final class LombokReadWriteAccessDetector extends JavaReadWriteAccessDetector {
-  @NotNull
   @Override
-  public Access getExpressionAccess(@NotNull final PsiElement expression) {
+  public @NotNull Access getExpressionAccess(final @NotNull PsiElement expression) {
     if (expression instanceof PsiReferenceExpression psiRefExpression) {
       final PsiElement actualReferee = psiRefExpression.resolve();
       if (actualReferee instanceof LombokLightMethodBuilder lombokMethodBuilder) {

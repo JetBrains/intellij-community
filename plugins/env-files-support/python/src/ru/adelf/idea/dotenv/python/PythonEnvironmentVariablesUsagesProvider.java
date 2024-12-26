@@ -17,9 +17,8 @@ public class PythonEnvironmentVariablesUsagesProvider implements EnvironmentVari
         return file.getFileType().equals(PythonFileType.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if(psiFile instanceof PyFile) {
             PythonEnvironmentCallsVisitor visitor = new PythonEnvironmentCallsVisitor();
             psiFile.acceptChildren(visitor);

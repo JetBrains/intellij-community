@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.maven.model;
 
@@ -71,8 +71,7 @@ public final class MavenPlugin implements Serializable {
     return myExtensions;
   }
 
-  @Nullable
-  public Element getConfigurationElement() {
+  public @Nullable Element getConfigurationElement() {
     return myConfiguration;
   }
 
@@ -84,8 +83,7 @@ public final class MavenPlugin implements Serializable {
     return myDependencies;
   }
 
-  @Nullable
-  public Element getGoalConfiguration(@NotNull String goal) {
+  public @Nullable Element getGoalConfiguration(@NotNull String goal) {
     for (MavenPlugin.Execution each : getExecutions()) {
       if (each.getGoals().contains(goal)) {
         return each.getConfigurationElement();
@@ -218,8 +216,7 @@ public final class MavenPlugin implements Serializable {
       return myGoals;
     }
 
-    @Nullable
-    public Element getConfigurationElement() {
+    public @Nullable Element getConfigurationElement() {
       return myConfiguration;
     }
 

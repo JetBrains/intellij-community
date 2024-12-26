@@ -37,9 +37,8 @@ public class JavaEnvCompletionContributor extends BaseEnvCompletionProvider impl
         });
     }
 
-    @Nullable
     @Override
-    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
         if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
@@ -59,8 +58,7 @@ public class JavaEnvCompletionContributor extends BaseEnvCompletionProvider impl
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), (String) value);
     }
 
-    @Nullable
-    private PsiLiteralExpression getStringLiteral(@NotNull PsiElement psiElement) {
+    private @Nullable PsiLiteralExpression getStringLiteral(@NotNull PsiElement psiElement) {
         PsiElement parent = psiElement.getParent();
 
         if (!(parent instanceof PsiLiteralExpression)) {
@@ -74,9 +72,8 @@ public class JavaEnvCompletionContributor extends BaseEnvCompletionProvider impl
         return (PsiLiteralExpression) parent;
     }
 
-    @Nullable
     @Override
-    public String getActionText(@NotNull DataContext dataContext) {
+    public @Nullable String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

@@ -20,9 +20,8 @@ import java.util.Locale;
 public class LowercaseKeyInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
         return DotEnvBundle.message("inspection.name.key.uses.lowercase.chars");
     }
 
@@ -35,8 +34,7 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKey.class).forEach(dotEnvKey -> {
@@ -53,9 +51,8 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
 
     private static class ForceUppercaseQuickFix implements LocalQuickFix {
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return DotEnvBundle.message("intention.name.change.to.uppercase");
         }
 
@@ -74,8 +71,7 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
         }
 
         @Override
-        @NotNull
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
             return getName();
         }
     }

@@ -18,9 +18,8 @@ import ru.adelf.idea.dotenv.psi.impl.DotEnvKeyImpl;
 public class IncorrectDelimiterInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
         return DotEnvBundle.message("inspection.name.incorrect.delimiter");
     }
 
@@ -29,9 +28,8 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
         return true;
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public @Nullable ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -39,8 +37,7 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKeyImpl.class).forEach(key -> {
@@ -55,9 +52,8 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
 
     private static class ReplaceDelimiterQuickFix implements LocalQuickFix {
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return DotEnvBundle.message("intention.name.replace.delimiter");
         }
 
@@ -76,8 +72,7 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
         }
 
         @Override
-        @NotNull
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
             return getName();
         }
     }

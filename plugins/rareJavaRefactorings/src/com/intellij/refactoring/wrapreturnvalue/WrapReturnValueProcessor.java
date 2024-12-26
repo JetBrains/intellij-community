@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -47,15 +47,14 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
   private final MoveDestination myMoveDestination;
   private final PsiMethod myMethod;
-  @NotNull
-  private final String myClassName;
+  private final @NotNull String myClassName;
   private final String myPackageName;
   private final boolean myCreateInnerClass;
   private final PsiField myDelegateField;
   private final String myQualifiedName;
   private final boolean myUseExistingClass;
   private final List<PsiTypeParameter> myTypeParameters;
-  @NonNls private final String myUnwrapMethodName;
+  private final @NonNls String myUnwrapMethodName;
 
   public WrapReturnValueProcessor(@NotNull String className,
                                   String packageName,
@@ -88,8 +87,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
   }
 
-  @NonNls
-  private String calculateUnwrapMethodName() {
+  private @NonNls String calculateUnwrapMethodName() {
     final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, GlobalSearchScope.allScope(myProject));
     if (existingClass != null) {
       if (TypeConversionUtil.isPrimitiveWrapper(myQualifiedName)) {
@@ -105,9 +103,8 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     return "";
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
     return new WrapReturnValueUsageViewDescriptor(myMethod, usageInfos);
   }
 
@@ -174,7 +171,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, GlobalSearchScope.allScope(myProject));
     if (myUseExistingClass) {
@@ -330,8 +327,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     final PsiClass containingClass = myMethod.getContainingClass();
     return JavaRareRefactoringsBundle.message("wrapped.return.command.name", myClassName, StringUtil.getQualifiedName(containingClass.getName(), myMethod.getName()));
   }

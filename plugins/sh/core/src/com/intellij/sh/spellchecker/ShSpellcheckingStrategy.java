@@ -16,9 +16,8 @@ import static com.intellij.sh.lexer.ShTokenTypes.COMMENT;
 public class ShSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
   private static final TokenSet TOKENS_WITH_TEXT = TokenSet.create(STRING_CONTENT, RAW_STRING, HEREDOC_CONTENT, COMMENT);
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
     if (node != null && TOKENS_WITH_TEXT.contains(node.getElementType())) return TEXT_TOKENIZER;
     if (element instanceof PsiNameIdentifierOwner) return ShIdentifierOwnerTokenizer.INSTANCE;

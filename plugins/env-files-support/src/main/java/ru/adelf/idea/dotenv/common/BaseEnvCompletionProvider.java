@@ -11,7 +11,7 @@ import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 
 import java.util.Map;
 
-abstract public class BaseEnvCompletionProvider extends CompletionContributor implements GotoDeclarationHandler {
+public abstract class BaseEnvCompletionProvider extends CompletionContributor implements GotoDeclarationHandler {
 
     protected void fillCompletionResultSet(@NotNull CompletionResultSet completionResultSet, @NotNull Project project) {
         for (Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(project).entrySet()) {

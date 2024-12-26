@@ -95,22 +95,19 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     return 0;
   }
 
-  @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ShLanguage.INSTANCE, null, null);
     return HighlighterFactory.createHighlighter(highlighter, scheme);
   }
 
-  @NotNull
   @Override
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return ShFileType.INSTANCE;
   }
 
-  @Nullable
   @Override
-  protected String getPreviewText() {
+  protected @Nullable String getPreviewText() {
     return GENERAL_CODE_SAMPLE;
   }
 
@@ -150,9 +147,8 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
         || isFieldModified(myShfmtPathSelector, ShSettings.getShfmtPath());
   }
 
-  @Nullable
   @Override
-  public JComponent getPanel() {
+  public @Nullable JComponent getPanel() {
     return myPanel;
   }
 
@@ -187,7 +183,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     return !browseButton.getText().equals(value);
   }
 
-  @NonNls private static final String GENERAL_CODE_SAMPLE = """
+  private static final @NonNls String GENERAL_CODE_SAMPLE = """
     #!/usr/bin/env sh
 
     function foo() {

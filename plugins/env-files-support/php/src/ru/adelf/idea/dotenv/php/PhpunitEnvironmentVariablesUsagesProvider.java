@@ -21,9 +21,8 @@ public class PhpunitEnvironmentVariablesUsagesProvider implements EnvironmentVar
         return file.getFileType().equals(XmlFileType.INSTANCE) && file.getName().equals("phpunit.xml");
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if (!(psiFile instanceof XmlFile)) return Collections.emptyList();
 
         if (!(psiFile.getFirstChild() instanceof XmlDocument)) return Collections.emptyList();

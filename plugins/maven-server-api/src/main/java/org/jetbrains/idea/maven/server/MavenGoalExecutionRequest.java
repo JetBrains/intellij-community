@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,10 +12,10 @@ import java.util.Objects;
 import java.util.Properties;
 
 public final class MavenGoalExecutionRequest implements Serializable {
-  @NotNull private final File file;
-  @NotNull private final MavenExplicitProfiles profiles;
+  private final @NotNull File file;
+  private final @NotNull MavenExplicitProfiles profiles;
   private final List<String> selectedProjects;
-  @NotNull private final Properties userProperties;
+  private final @NotNull Properties userProperties;
 
   public MavenGoalExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles)  {
     this(file, profiles, Collections.emptyList(), new Properties());

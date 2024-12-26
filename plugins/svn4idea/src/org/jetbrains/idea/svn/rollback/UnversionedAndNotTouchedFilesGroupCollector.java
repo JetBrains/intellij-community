@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Couple;
@@ -32,11 +32,11 @@ public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelist
     toFromTo(file);
   }
 
-  public void markRename(@NotNull final File beforeFile, @NotNull final File afterFile) {
+  public void markRename(final @NotNull File beforeFile, final @NotNull File afterFile) {
     myToBeDeleted.add(Couple.of(beforeFile, afterFile));
   }
 
-  public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {
+  public ThroughRenameInfo findToFile(final @NotNull FilePath file, final @Nullable File firstTo) {
     final String path = FilePathsHelper.convertPath(file);
     if (myAlsoReverted.contains(path)) return null;
     final NavigableMap<String, File> head = myRenames.headMap(path, true);

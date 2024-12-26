@@ -1,9 +1,9 @@
 package ru.adelf.idea.dotenv.api;
 
 public class FileAcceptResult {
-    public final static FileAcceptResult ACCEPTED = new FileAcceptResult(true, true);
-    public final static FileAcceptResult NOT_ACCEPTED = new FileAcceptResult(false, true);
-    public final static FileAcceptResult ACCEPTED_SECONDARY = new FileAcceptResult(true, false);
+    public static final FileAcceptResult ACCEPTED = new FileAcceptResult(true, true);
+    public static final FileAcceptResult NOT_ACCEPTED = new FileAcceptResult(false, true);
+    public static final FileAcceptResult ACCEPTED_SECONDARY = new FileAcceptResult(true, false);
 
     private final boolean accepted;
     private final boolean primary;

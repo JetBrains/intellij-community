@@ -17,15 +17,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShRenameAllOccurrencesIntention extends BaseIntentionAction implements ShortcutProvider, HighPriorityAction {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ShBundle.message("sh.rename.all.occurrences");
   }
 
@@ -47,9 +45,8 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
     }
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
+  public @Nullable ShortcutSet getShortcut() {
     return CommonShortcuts.getRename();
   }
 }

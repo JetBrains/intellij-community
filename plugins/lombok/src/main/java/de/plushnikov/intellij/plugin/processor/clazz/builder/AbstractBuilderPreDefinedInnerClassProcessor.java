@@ -23,9 +23,8 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     super(supportedClass, supportedAnnotationClass);
   }
 
-  @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     final Optional<PsiClass> parentClass = getSupportedParentClass(psiClass);
     final Optional<PsiAnnotation> builderAnnotation = parentClass.map(this::getSupportedAnnotation);
     if (builderAnnotation.isPresent()) {
@@ -73,9 +72,8 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
   protected abstract Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass);
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     //do nothing
     return Collections.emptySet();
   }

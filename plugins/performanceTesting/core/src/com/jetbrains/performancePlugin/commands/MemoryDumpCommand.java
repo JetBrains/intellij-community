@@ -44,8 +44,7 @@ public final class MemoryDumpCommand extends AbstractCommand {
     }
   }
 
-  @NotNull
-  public static String getMemoryDumpPath() {
+  public static @NotNull String getMemoryDumpPath() {
     String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path", PathManager.getLogPath());
     String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     return memoryDumpPath + File.separator + (Timer.instance.getActivityName() + '-' + currentTime + ".hprof");

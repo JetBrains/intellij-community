@@ -49,21 +49,18 @@ public abstract class AbstractProcessor implements Processor {
     return supportedAnnotationClasses;
   }
 
-  @NotNull
   @Override
-  public final Class<? extends PsiElement> getSupportedClass() {
+  public final @NotNull Class<? extends PsiElement> getSupportedClass() {
     return supportedClass;
   }
 
-  @NotNull
-  public abstract Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
+  public abstract @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
 
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
     return true;
   }
 
-  @Unmodifiable
-  protected @NotNull <T extends PsiModifierListOwner> Collection<T> filterToleratedElements(@NotNull @Unmodifiable Collection<? extends T> definedMethods) {
+  protected @Unmodifiable @NotNull <T extends PsiModifierListOwner> Collection<T> filterToleratedElements(@NotNull @Unmodifiable Collection<? extends T> definedMethods) {
     return ContainerUtil.filter(definedMethods, definedMethod -> !PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, LombokClassNames.TOLERATE));
   }
 

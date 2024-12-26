@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -19,8 +19,7 @@ public final class JUnitRunDashboardCustomizer extends RunDashboardCustomizer {
   }
 
   @Override
-  @Nullable
-  public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
+  public @Nullable PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
     RunConfiguration runConfiguration = node.getConfigurationSettings().getConfiguration();
     if (!(runConfiguration instanceof JUnitConfiguration jUnitConfiguration)) return null;
 

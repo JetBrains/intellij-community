@@ -18,13 +18,11 @@ public class ShLazyDoBlockImpl extends ShLazyParseablePsiElement {
     super(node.getElementType(), node.getText());
   }
 
-  @NotNull
-  public PsiElement getDo() {
+  public @NotNull PsiElement getDo() {
     return findNotNullChildByType(DO);
   }
 
-  @Nullable
-  public PsiElement getDone() {
+  public @Nullable PsiElement getDone() {
     return findChildByElementType(DONE);
   }
 }

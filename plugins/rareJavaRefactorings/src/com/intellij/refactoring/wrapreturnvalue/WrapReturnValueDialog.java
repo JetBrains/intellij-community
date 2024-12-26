@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.TreeClassChooser;
@@ -122,18 +122,15 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
   }
 
-  @NotNull
-  private String getInnerClassName() {
+  private @NotNull String getInnerClassName() {
     return myInnerClassNameTextField.getText().trim();
   }
 
-  @NotNull
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     return packageTextField.getText().trim();
   }
 
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return classNameField.getText().trim();
   }
 
@@ -143,7 +140,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         validateButtons();
       }
     };

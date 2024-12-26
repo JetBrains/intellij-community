@@ -23,15 +23,13 @@ public final class JacksonizedProcessor extends AbstractProcessor {
     super(PsiElement.class, LombokClassNames.JACKSONIZED);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     final ProblemValidationSink validationSink = new ProblemValidationSink();
 
     final PsiModifierListOwner psiModifierListOwner;

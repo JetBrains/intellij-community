@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShStringUtil;
 import com.intellij.terminal.TerminalExecutionConsole;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
@@ -74,19 +73,16 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return new DefaultExecutionResult(console, processHandler);
   }
 
-  @NotNull
-  private static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
+  private static @NotNull ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableProcessHandler(commandLine) {
-      @NotNull
       @Override
-      protected BaseOutputReader.Options readerOptions() {
+      protected @NotNull BaseOutputReader.Options readerOptions() {
         return BaseOutputReader.Options.forTerminalPtyProcess();
       }
     };
   }
 
-  @NotNull
-  private GeneralCommandLine createCommandLineForScript() {
+  private @NotNull GeneralCommandLine createCommandLineForScript() {
     PtyCommandLine commandLine = new PtyCommandLine();
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
@@ -98,8 +94,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return commandLine;
   }
 
-  @NotNull
-  private GeneralCommandLine createCommandLineForFile() throws ExecutionException {
+  private @NotNull GeneralCommandLine createCommandLineForFile() throws ExecutionException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myRunConfiguration.getScriptPath());
     if (virtualFile == null || virtualFile.getParent() == null) {
       throw new ExecutionException(ShBundle.message("error.message.cannot.determine.shell.script.parent.directory"));
@@ -142,8 +137,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return isRunBeforeConfig;
   }
 
-  @NotNull
-  private String buildCommand() {
+  private @NotNull String buildCommand() {
     if (myRunConfiguration.isExecuteScriptFile()) {
       final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
                                                                                             myRunConfiguration.getScriptPath());

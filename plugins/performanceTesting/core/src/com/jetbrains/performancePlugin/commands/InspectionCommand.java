@@ -37,9 +37,8 @@ public class InspectionCommand extends AbstractCommand {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     String extension = extractCommandArgument(PREFIX);
 
@@ -69,8 +68,7 @@ public class InspectionCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  @Nullable
-  public static AnalysisScope getAnalysisScope(String extension, @NotNull Project project) {
+  public static @Nullable AnalysisScope getAnalysisScope(String extension, @NotNull Project project) {
     AnalysisScope scope;
     if (extension.isEmpty()) {
       scope = new AnalysisScope(project);
@@ -85,8 +83,7 @@ public class InspectionCommand extends AbstractCommand {
     return scope;
   }
 
-  @NotNull
-  private static Collection<VirtualFile> getFiles(@NotNull final String extension, @NotNull Project project) {
+  private static @NotNull Collection<VirtualFile> getFiles(final @NotNull String extension, @NotNull Project project) {
     final Collection<VirtualFile> files = new HashSet<>(100);
     FileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     index.iterateContent(fileOrDir -> {

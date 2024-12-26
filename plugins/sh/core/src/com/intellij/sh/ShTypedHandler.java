@@ -10,9 +10,8 @@ import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
 
 final class ShTypedHandler extends TypedHandlerDelegate {
-  @NotNull
   @Override
-  public Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!(file instanceof ShFile)) return Result.CONTINUE;
     int currentLine = editor.getCaretModel().getPrimaryCaret().getLogicalPosition().line;
     if ((currentLine == 0 && charTyped == '!') || charTyped == '/') {

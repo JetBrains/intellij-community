@@ -13,7 +13,7 @@ public final class CommandsRunner {
 
   private CompletableFuture<?> actionCallback;
 
-  synchronized static CommandsRunner getInstance() {
+  static synchronized CommandsRunner getInstance() {
     if (myCommandsRunner == null) {
       myCommandsRunner = new CommandsRunner();
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -30,12 +16,12 @@ import java.util.*;
 
 public class ChangesChecker {
 
-  @NotNull private final SuperfluousRemover myForAdds;
-  @NotNull private final SuperfluousRemover myForDeletes;
+  private final @NotNull SuperfluousRemover myForAdds;
+  private final @NotNull SuperfluousRemover myForDeletes;
   private final List<File> myForEdits;
 
   private final SvnChangeProvider myChangeProvider;
-  @NotNull private final UnversionedAndNotTouchedFilesGroupCollector myCollector;
+  private final @NotNull UnversionedAndNotTouchedFilesGroupCollector myCollector;
 
   private final List<SvnBindException> myExceptions;
 
@@ -94,13 +80,11 @@ public class ChangesChecker {
     }
   }
 
-  @NotNull
-  public Collection<File> getForAdds() {
+  public @NotNull Collection<File> getForAdds() {
     return myForAdds.getParentPaths();
   }
 
-  @NotNull
-  public Collection<File> getForDeletes() {
+  public @NotNull Collection<File> getForDeletes() {
     return myForDeletes.getParentPaths();
   }
 
@@ -108,8 +92,7 @@ public class ChangesChecker {
     return myExceptions;
   }
 
-  @NotNull
-  public List<File> getForEdits() {
+  public @NotNull List<File> getForEdits() {
     return myForEdits;
   }
 }

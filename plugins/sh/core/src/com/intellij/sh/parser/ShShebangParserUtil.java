@@ -19,14 +19,13 @@ import java.util.List;
 import java.util.Locale;
 
 public final class ShShebangParserUtil {
-  @NonNls private static final List<String> KNOWN_EXTENSIONS = Arrays.asList("exe", "bat", "cmd");
+  private static final @NonNls List<String> KNOWN_EXTENSIONS = Arrays.asList("exe", "bat", "cmd");
   private static final String PREFIX = "#!";
 
   private ShShebangParserUtil() {
   }
 
-  @Nullable
-  public static String getShebangExecutable(@NotNull ShFile file) {
+  public static @Nullable String getShebangExecutable(@NotNull ShFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.exists()) {
       ASTNode shebang = file.getNode().findChildByType(ShTypes.SHEBANG);
@@ -38,18 +37,16 @@ public final class ShShebangParserUtil {
     return null;
   }
 
-  @NotNull
-  public static @NlsSafe String getInterpreter(@NotNull ShFile file,
-                                               @NotNull List<@NlsSafe String> knownShells,
-                                               @NlsSafe @NotNull String defaultShell) {
+  public static @NotNull @NlsSafe String getInterpreter(@NotNull ShFile file,
+                                                        @NotNull List<@NlsSafe String> knownShells,
+                                                        @NlsSafe @NotNull String defaultShell) {
     String shebang = ApplicationManager.getApplication().isDispatchThread() ? file.findShebang()
                                                                             : ReadAction.compute(() -> file.findShebang());
     String detectedInterpreter = shebang != null ? detectInterpreter(shebang) : null;
     return detectedInterpreter != null && knownShells.contains(detectedInterpreter) ? detectedInterpreter : defaultShell;
   }
 
-  @Nullable
-  public static String detectInterpreter(@Nullable String shebang) {
+  public static @Nullable String detectInterpreter(@Nullable String shebang) {
     if (shebang == null || !shebang.startsWith(PREFIX)) return null;
 
     String interpreterPath = getInterpreterPath(shebang.substring(PREFIX.length()).trim());
@@ -58,8 +55,7 @@ public final class ShShebangParserUtil {
     return trimKnownExt(PathUtil.getFileName(lowerCasePath));
   }
 
-  @NotNull
-  private static String getInterpreterPath(@NotNull String shebang) {
+  private static @NotNull String getInterpreterPath(@NotNull String shebang) {
     int index = shebang.indexOf(" ");
     @NonNls String possiblePath = index < 0 ? shebang : shebang.substring(0, index);
     if (!possiblePath.equals("/usr/bin/env")) return possiblePath;
@@ -69,8 +65,7 @@ public final class ShShebangParserUtil {
     return index < 0 ? interpreterPath : interpreterPath.substring(0, index);
   }
 
-  @NotNull
-  private static String trimKnownExt(@NotNull String name) {
+  private static @NotNull String trimKnownExt(@NotNull String name) {
     String ext = PathUtil.getFileExtension(name);
     return ext != null && KNOWN_EXTENSIONS.contains(ext) ? name.substring(0, name.length() - ext.length() - 1) : name;
   }

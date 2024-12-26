@@ -20,9 +20,8 @@ public final class LombokElementFinder extends PsiElementFinder {
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public @Nullable PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     if (!LombokLibraryUtil.hasLombokLibrary(myProject) &&
         !DumbIncompleteModeUtil.isIncompleteMode(myProject)) {
       return null;

@@ -42,9 +42,8 @@ public class KotlinPasteFromJavaDialog extends DialogWrapper {
         return panel;
     }
 
-    @NotNull
     @Override
-    protected Action @NotNull [] createActions() {
+    protected @NotNull Action @NotNull [] createActions() {
         setOKButtonText(CommonBundle.getYesButtonText());
         setCancelButtonText(CommonBundle.getNoButtonText());
         return new Action[] {getOKAction(), getCancelAction()};

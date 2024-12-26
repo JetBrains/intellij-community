@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.resolve.impl;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
@@ -24,21 +24,18 @@ public class ResolvedTerminatorCallImpl implements ResolvedStreamCall.Terminator
     myStateAfter = stateAfter;
   }
 
-  @NotNull
   @Override
-  public TerminatorStreamCall getCall() {
+  public @NotNull TerminatorStreamCall getCall() {
     return myCall;
   }
 
-  @Nullable
   @Override
-  public PrevAwareState getStateAfter() {
+  public @Nullable PrevAwareState getStateAfter() {
     return myStateAfter;
   }
 
-  @NotNull
   @Override
-  public NextAwareState getStateBefore() {
+  public @NotNull NextAwareState getStateBefore() {
     return myStateBefore;
   }
 }

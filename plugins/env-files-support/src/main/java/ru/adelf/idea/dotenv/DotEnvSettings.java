@@ -15,9 +15,8 @@ public class DotEnvSettings implements PersistentStateComponent<DotEnvSettings> 
 
     public boolean hideValuesInTheFile = false;
 
-    @Nullable
     @Override
-    public DotEnvSettings getState() {
+    public @Nullable DotEnvSettings getState() {
         return this;
     }
 

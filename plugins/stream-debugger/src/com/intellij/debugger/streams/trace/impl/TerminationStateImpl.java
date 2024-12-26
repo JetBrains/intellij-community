@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.PrevAwareState;
@@ -29,21 +29,18 @@ public class TerminationStateImpl extends StateBase implements PrevAwareState {
     myToPrev = toPrevMapping;
   }
 
-  @NotNull
   @Override
-  public List<Value> getRawValues() {
+  public @NotNull List<Value> getRawValues() {
     return Collections.singletonList(myResult.getValue());
   }
 
-  @NotNull
   @Override
-  public StreamCall getPrevCall() {
+  public @NotNull StreamCall getPrevCall() {
     return myPrevCall;
   }
 
-  @NotNull
   @Override
-  public List<TraceElement> getPrevValues(@NotNull TraceElement value) {
+  public @NotNull List<TraceElement> getPrevValues(@NotNull TraceElement value) {
     return myToPrev.getOrDefault(value, Collections.emptyList());
   }
 }

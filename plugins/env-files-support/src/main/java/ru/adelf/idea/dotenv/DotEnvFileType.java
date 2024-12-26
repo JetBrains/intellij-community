@@ -14,27 +14,23 @@ public class DotEnvFileType extends LanguageFileType {
         super(DotEnvLanguage.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
         return ".env file";
     }
 
-    @NotNull
     @Override
-    public String getDescription() {
+    public @NotNull String getDescription() {
         return DotEnvBundle.message("label.env.file");
     }
 
-    @NotNull
     @Override
-    public String getDefaultExtension() {
+    public @NotNull String getDefaultExtension() {
         return "env";
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
         return AllIcons.FileTypes.Text;
     }
 }

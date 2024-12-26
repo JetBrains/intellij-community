@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,9 +32,8 @@ import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.*;
 
 public class ShareProjectAction extends BasicAction {
 
-  @NotNull
   @Override
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return message("share.directory.action");
   }
 
@@ -130,13 +129,12 @@ public class ShareProjectAction extends BasicAction {
     return false;
   }
 
-  @NotNull
-  private static Target createFolderStructure(@NotNull SvnVcs vcs,
-                                              @NotNull VirtualFile file,
-                                              @NotNull ShareDialog.ShareTarget shareTarget,
-                                              boolean createStandardStructure,
-                                              @NotNull Url parentUrl,
-                                              @NotNull String commitText) throws VcsException {
+  private static @NotNull Target createFolderStructure(@NotNull SvnVcs vcs,
+                                                       @NotNull VirtualFile file,
+                                                       @NotNull ShareDialog.ShareTarget shareTarget,
+                                                       boolean createStandardStructure,
+                                                       @NotNull Url parentUrl,
+                                                       @NotNull String commitText) throws VcsException {
     return switch (shareTarget) {
       case useSelected -> Target.on(parentUrl, Revision.HEAD);
       case useProjectName -> createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
@@ -158,11 +156,10 @@ public class ShareProjectAction extends BasicAction {
       () -> SvnUtil.remoteFolderIsEmpty(vcs, folderUrl), message("progress.title.check.remote.folder.contents"), false, vcs.getProject());
   }
 
-  @NotNull
-  private static Target createRemoteFolder(@NotNull SvnVcs vcs,
-                                           @NotNull Url parent,
-                                           @NotNull String folderName,
-                                           @NotNull String commitText) throws VcsException {
+  private static @NotNull Target createRemoteFolder(@NotNull SvnVcs vcs,
+                                                    @NotNull Url parent,
+                                                    @NotNull String folderName,
+                                                    @NotNull String commitText) throws VcsException {
     Url url = append(parent, folderName);
     String message =
       message("share.directory.commit.message", folderName, ApplicationNamesInfo.getInstance().getFullProductName(), commitText);

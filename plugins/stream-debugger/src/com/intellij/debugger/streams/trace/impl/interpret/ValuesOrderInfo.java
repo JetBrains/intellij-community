@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.TraceElement;
@@ -25,33 +25,28 @@ public class ValuesOrderInfo implements TraceInfo {
     myValuesOrderAfter = after;
   }
 
-  @NotNull
   @Override
-  public StreamCall getCall() {
+  public @NotNull StreamCall getCall() {
     return myStreamCall;
   }
 
-  @NotNull
   @Override
-  public Map<Integer, TraceElement> getValuesOrderBefore() {
+  public @NotNull Map<Integer, TraceElement> getValuesOrderBefore() {
     return myValuesOrderBefore;
   }
 
-  @NotNull
   @Override
-  public Map<Integer, TraceElement> getValuesOrderAfter() {
+  public @NotNull Map<Integer, TraceElement> getValuesOrderAfter() {
     return myValuesOrderAfter;
   }
 
-  @Nullable
   @Override
-  public Map<TraceElement, List<TraceElement>> getDirectTrace() {
+  public @Nullable Map<TraceElement, List<TraceElement>> getDirectTrace() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Map<TraceElement, List<TraceElement>> getReverseTrace() {
+  public @Nullable Map<TraceElement, List<TraceElement>> getReverseTrace() {
     return null;
   }
 

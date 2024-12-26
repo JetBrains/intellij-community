@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -43,9 +43,8 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
     myPlugins.sort(Comparator.comparing(p -> p.name()));
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new AddGradleDslPluginActionHandler(myPlugins);
   }
 

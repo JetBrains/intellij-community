@@ -17,15 +17,13 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
 
     public static final ID<String, String> KEY = ID.create("ru.adelf.idea.php.dotenv.keyValues");
 
-    @NotNull
     @Override
-    public ID<String, String> getName() {
+    public @NotNull ID<String, String> getName() {
         return KEY;
     }
 
-    @NotNull
     @Override
-    public DataIndexer<String, String, FileContent> getIndexer() {
+    public @NotNull DataIndexer<String, String, FileContent> getIndexer() {
         return fileContent -> {
             final Map<String, String> map = new HashMap<>();
 
@@ -45,21 +43,18 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
         };
     }
 
-    @NotNull
     @Override
-    public KeyDescriptor<String> getKeyDescriptor() {
+    public @NotNull KeyDescriptor<String> getKeyDescriptor() {
         return EnumeratorStringDescriptor.INSTANCE;
     }
 
-    @NotNull
     @Override
-    public DataExternalizer<String> getValueExternalizer() {
+    public @NotNull DataExternalizer<String> getValueExternalizer() {
         return EnumeratorStringDescriptor.INSTANCE;
     }
 
-    @NotNull
     @Override
-    public FileBasedIndex.InputFilter getInputFilter() {
+    public @NotNull FileBasedIndex.InputFilter getInputFilter() {
         return file -> {
             for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.getEnvVariablesProviders()) {
                 if (provider.acceptFile(file).isAccepted()) return true;

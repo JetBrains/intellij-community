@@ -39,8 +39,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static com.intellij.openapi.ui.playback.commands.ActionCommand.getInputEvent;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector.wrapDataContextWithActionStartData;
+import static com.intellij.openapi.ui.playback.commands.ActionCommand.getInputEvent;
 import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
 /**
@@ -144,8 +144,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  @NotNull
-  private static Ref<String> computeTabId(String tab) {
+  private static @NotNull Ref<String> computeTabId(String tab) {
     Ref<String> tabId = new Ref<>();
     switch (tab) {
       case "text" -> tabId.set(TextSearchContributor.class.getSimpleName());

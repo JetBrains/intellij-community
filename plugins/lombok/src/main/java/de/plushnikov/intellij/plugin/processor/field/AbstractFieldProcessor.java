@@ -41,9 +41,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
-  @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = new ArrayList<>();
     Collection<PsiField> fields = psiClass.isRecord() ? RecordAugmentProvider.getFieldAugments(psiClass)
                                                       : PsiClassUtil.collectClassFieldsIntern(psiClass);
@@ -78,9 +77,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
                                               @NotNull List<? super PsiElement> target,
                                               @Nullable String nameHint);
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
@@ -91,9 +89,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
 
     PsiField psiField = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class);

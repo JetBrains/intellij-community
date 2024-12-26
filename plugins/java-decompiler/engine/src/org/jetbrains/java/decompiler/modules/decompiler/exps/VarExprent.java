@@ -49,8 +49,7 @@ public class VarExprent extends Exprent {
   private boolean classDef = false;
   private boolean stack = false;
   private LocalVariable lvtEntry = null;
-  @Nullable
-  private VarType inferredType = null;
+  private @Nullable VarType inferredType = null;
   private boolean insideLVT = false;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
@@ -65,9 +64,8 @@ public class VarExprent extends Exprent {
     this.addBytecodeOffsets(bytecode);
   }
 
-  @NotNull
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     return getVarType();
   }
 
@@ -141,8 +139,7 @@ public class VarExprent extends Exprent {
     return bytecode == null ? -1 : bytecode.length();
   }
 
-  @NotNull
-  public static String getName(VarVersion versionPair) {
+  public static @NotNull String getName(VarVersion versionPair) {
     return "var" + versionPair.var + (versionPair.version == 0 ? "" : "_" + versionPair.version);
   }
 
@@ -242,8 +239,7 @@ public class VarExprent extends Exprent {
     this.insideLVT = insideLVT;
   }
 
-  @NotNull
-  public VarType getVarType() {
+  public @NotNull VarType getVarType() {
     if (inferredType != null) {
       return inferredType;
     }

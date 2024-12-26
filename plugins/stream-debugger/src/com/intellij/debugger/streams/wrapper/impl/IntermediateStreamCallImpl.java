@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
@@ -28,15 +28,13 @@ public class IntermediateStreamCallImpl extends StreamCallImpl implements Interm
     myTypeAfter = typeAfter;
   }
 
-  @NotNull
   @Override
-  public GenericType getTypeBefore() {
+  public @NotNull GenericType getTypeBefore() {
     return myTypeBefore;
   }
 
-  @NotNull
   @Override
-  public GenericType getTypeAfter() {
+  public @NotNull GenericType getTypeAfter() {
     return myTypeAfter;
   }
 }

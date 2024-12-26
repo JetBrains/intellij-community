@@ -17,9 +17,8 @@ public class RubyEnvironmentVariablesUsagesProvider implements EnvironmentVariab
         return file.getFileType().equals(RubyFileType.RUBY);
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if(psiFile instanceof RFile) {
             RubyEnvironmentCallsVisitor visitor = new RubyEnvironmentCallsVisitor();
             psiFile.acceptChildren(visitor);

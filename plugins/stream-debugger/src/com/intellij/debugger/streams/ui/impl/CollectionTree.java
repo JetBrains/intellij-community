@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -38,8 +38,8 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ui.tree.TreeUtil.collectSelectedPaths;
@@ -142,9 +142,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     return true;
   }
 
-  @Nullable
   @Override
-  public Color getFileColorForPath(@NotNull TreePath path) {
+  public @Nullable Color getFileColorForPath(@NotNull TreePath path) {
     if (isPathHighlighted(path)) {
       final Color background = UIUtil.getTreeSelectionBackground(true);
       return COLORS_CACHE.computeIfAbsent(background.getRGB(), rgb -> new JBColor(
@@ -162,8 +161,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     myIgnoreInternalSelectionEvents = false;
   }
 
-  @Nullable
-  public Rectangle getRectByValue(@NotNull TraceElement element) {
+  public @Nullable Rectangle getRectByValue(@NotNull TraceElement element) {
     final TreePath path = myValue2Path.get(element);
     return path == null ? null : getPathBounds(path);
   }
@@ -255,8 +253,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     }
   }
 
-  @NotNull
-  private Rectangle optimizeRowsCountInVisibleRect(int @NotNull [] rows) {
+  private @NotNull Rectangle optimizeRowsCountInVisibleRect(int @NotNull [] rows) {
     // a simple scan-line algorithm to find an optimal subset of visible rows (maximum)
     final Rectangle visibleRect = getVisibleRect();
     final int height = visibleRect.height;
@@ -347,7 +344,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     }
   }
 
-  private final static class MyNodeManager extends NodeManagerImpl {
+  private static final class MyNodeManager extends NodeManagerImpl {
     MyNodeManager(Project project) {
       super(project, null);
     }
@@ -368,8 +365,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     }
   }
 
-  @NotNull
-  private TreePath getTopPath(@NotNull TreePath path) {
+  private @NotNull TreePath getTopPath(@NotNull TreePath path) {
     TreePath current = path;
     while (current != null && !myPath2Value.containsKey(current)) {
       current = current.getParentPath();

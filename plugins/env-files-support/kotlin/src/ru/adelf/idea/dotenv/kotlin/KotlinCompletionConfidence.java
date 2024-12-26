@@ -8,9 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry;
 
 public class KotlinCompletionConfidence extends CompletionConfidence {
-    @NotNull
     @Override
-    public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
         PsiElement literal = contextElement.getContext();
         if (!(literal instanceof KtLiteralStringTemplateEntry)) {
             return ThreeState.UNSURE;

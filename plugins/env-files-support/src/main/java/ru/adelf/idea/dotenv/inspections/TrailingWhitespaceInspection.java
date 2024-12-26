@@ -22,9 +22,8 @@ import ru.adelf.idea.dotenv.psi.impl.DotEnvValueImpl;
 public class TrailingWhitespaceInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
         return DotEnvBundle.message("inspection.name.value.has.trailing.whitespace");
     }
 
@@ -37,8 +36,7 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvValue.class).forEach(dotEnvValue -> {
@@ -65,9 +63,8 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
 
     private static class RemoveTrailingWhitespaceQuickFix implements LocalQuickFix {
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return DotEnvBundle.message("intention.name.remove.trailing.whitespace");
         }
 
@@ -91,8 +88,7 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
         }
 
         @Override
-        @NotNull
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
             return getName();
         }
     }

@@ -29,7 +29,7 @@ public class ValueModifierProcessor implements ModifierProcessor {
   }
 
   @Override
-  public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+  public void transformModifiers(@NotNull PsiModifierList modifierList, final @NotNull Set<String> modifiers) {
     if (modifiers.contains(PsiModifier.STATIC) && modifierList.getParent() instanceof PsiField) {
       return; // skip static fields
     }

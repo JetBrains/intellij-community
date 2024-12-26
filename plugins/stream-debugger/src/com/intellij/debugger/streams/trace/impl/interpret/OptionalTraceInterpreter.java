@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter;
@@ -23,9 +23,8 @@ import java.util.Map;
 public class OptionalTraceInterpreter implements CallTraceInterpreter {
   private final CallTraceInterpreter myPeekResolver = new SimplePeekCallTraceInterpreter();
 
-  @NotNull
   @Override
-  public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
+  public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference) {
       final Value peeksResult = ((ArrayReference)value).getValue(0);
       final TraceInfo peekInfo = myPeekResolver.resolve(call, peeksResult);
@@ -44,8 +43,7 @@ public class OptionalTraceInterpreter implements CallTraceInterpreter {
     throw new UnexpectedValueException("trace termination with optional result must be an array value");
   }
 
-  @Nullable
-  private static Value getOptionalValue(@NotNull Value optionalTrace) {
+  private static @Nullable Value getOptionalValue(@NotNull Value optionalTrace) {
     if (!(optionalTrace instanceof ArrayReference trace)) {
       throw new UnexpectedValueTypeException("optional trace must be an array value");
     }

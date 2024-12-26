@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.IntermediateState;
@@ -17,9 +17,8 @@ abstract class StateBase implements IntermediateState {
     myElements = List.copyOf(elements);
   }
 
-  @NotNull
   @Override
-  public List<TraceElement> getTrace() {
+  public @NotNull List<TraceElement> getTrace() {
     return myElements;
   }
 }

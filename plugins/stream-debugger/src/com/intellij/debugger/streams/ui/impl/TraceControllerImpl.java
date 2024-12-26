@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.streams.trace.IntermediateState;
@@ -60,40 +60,33 @@ public class TraceControllerImpl implements TraceController, Disposable {
     myNextListener = listener;
   }
 
-  @NotNull
   @Override
-  @Unmodifiable
-  public List<Value> getValues() {
+  public @NotNull @Unmodifiable List<Value> getValues() {
     return myState.getRawValues();
   }
 
   @Override
-  @NotNull
-  public List<TraceElement> getTrace() {
+  public @NotNull List<TraceElement> getTrace() {
     return myState.getTrace();
   }
 
-  @Nullable
   @Override
-  public StreamCall getNextCall() {
+  public @Nullable StreamCall getNextCall() {
     return myToNext == null ? null : myToNext.getNextCall();
   }
 
-  @Nullable
   @Override
-  public StreamCall getPrevCall() {
+  public @Nullable StreamCall getPrevCall() {
     return myToPrev == null ? null : myToPrev.getPrevCall();
   }
 
-  @NotNull
   @Override
-  public List<TraceElement> getNextValues(@NotNull TraceElement element) {
+  public @NotNull List<TraceElement> getNextValues(@NotNull TraceElement element) {
     return myToNext == null ? Collections.emptyList() : myToNext.getNextValues(element);
   }
 
-  @NotNull
   @Override
-  public List<TraceElement> getPrevValues(@NotNull TraceElement element) {
+  public @NotNull List<TraceElement> getPrevValues(@NotNull TraceElement element) {
     return myToPrev == null ? Collections.emptyList() : myToPrev.getPrevValues(element);
   }
 

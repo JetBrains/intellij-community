@@ -234,12 +234,11 @@ public final class DelegateHandler {
     return !acceptMethod;
   }
 
-  @NotNull
-  private static <T extends PsiModifierListOwner & PsiNamedElement> PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass,
-                                                                                                     @NotNull T psiElement,
-                                                                                                     @NotNull PsiAnnotation psiAnnotation,
-                                                                                                     @NotNull PsiMethod psiMethod,
-                                                                                                     @NotNull PsiSubstitutor psiSubstitutor) {
+  private static @NotNull <T extends PsiModifierListOwner & PsiNamedElement> PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass,
+                                                                                                              @NotNull T psiElement,
+                                                                                                              @NotNull PsiAnnotation psiAnnotation,
+                                                                                                              @NotNull PsiMethod psiMethod,
+                                                                                                              @NotNull PsiSubstitutor psiSubstitutor) {
     final PsiType returnType = psiSubstitutor.substitute(psiMethod.getReturnType());
 
     final LombokLightMethodBuilder methodBuilder = new LombokDelegateMethod(psiMethod)
@@ -279,11 +278,10 @@ public final class DelegateHandler {
     return methodBuilder;
   }
 
-  @NotNull
-  private static <T extends PsiModifierListOwner & PsiNamedElement> String createCodeBlockText(@NotNull T psiElement,
-                                                                                               @NotNull PsiMethod psiMethod,
-                                                                                               @NotNull PsiType returnType,
-                                                                                               PsiParameter @NotNull [] psiParameters) {
+  private static @NotNull <T extends PsiModifierListOwner & PsiNamedElement> String createCodeBlockText(@NotNull T psiElement,
+                                                                                                        @NotNull PsiMethod psiMethod,
+                                                                                                        @NotNull PsiType returnType,
+                                                                                                        PsiParameter @NotNull [] psiParameters) {
     final String paramString = Arrays.stream(psiParameters).map(PsiParameter::getName).collect(Collectors.joining(","));
     final boolean isMethodCall = psiElement instanceof PsiMethod;
     return String.format("%sthis.%s%s.%s(%s);",

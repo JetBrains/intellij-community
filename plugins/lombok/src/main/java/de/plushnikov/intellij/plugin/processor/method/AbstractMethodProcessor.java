@@ -38,9 +38,8 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
-  @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = new ArrayList<>();
     for (PsiMethod psiMethod : PsiClassUtil.collectClassMethodsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotationByShortNameOnly(psiMethod, getSupportedAnnotationClasses());
@@ -66,9 +65,8 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     List<PsiAnnotation> result = new ArrayList<>();
     for (PsiMethod psiMethod : PsiClassUtil.collectClassMethodsIntern(psiClass)) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClasses());
@@ -79,9 +77,8 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
     return result;
   }
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);

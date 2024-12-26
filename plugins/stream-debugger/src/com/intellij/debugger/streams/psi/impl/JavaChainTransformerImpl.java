@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.psi.impl;
 
 import com.intellij.debugger.streams.psi.ChainTransformer;
@@ -24,10 +24,9 @@ import java.util.stream.Collectors;
  * @author Vitaliy.Bibaev
  */
 public class JavaChainTransformerImpl implements ChainTransformer.Java {
-  @NotNull
   @Override
-  public StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions,
-                               @NotNull PsiElement context) {
+  public @NotNull StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions,
+                                        @NotNull PsiElement context) {
     final PsiMethodCallExpression firstCall = streamExpressions.get(0);
 
     final PsiExpression qualifierExpression = firstCall.getMethodExpression().getQualifierExpression();
@@ -49,17 +48,15 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     return new StreamChainImpl(qualifier, intermediateCalls, terminationCall, context);
   }
 
-  @NotNull
-  private static GenericType getGenericTypeOfThis(PsiExpression expression) {
+  private static @NotNull GenericType getGenericTypeOfThis(PsiExpression expression) {
     final PsiClass klass = PsiUtil.getContainingClass(expression);
 
     return klass == null ? JavaTypes.INSTANCE.getANY()
                          : JavaTypes.INSTANCE.fromPsiClass(klass);
   }
 
-  @NotNull
-  private static List<IntermediateStreamCall> createIntermediateCalls(@NotNull GenericType producerAfterType,
-                                                                      @NotNull List<PsiMethodCallExpression> expressions) {
+  private static @NotNull List<IntermediateStreamCall> createIntermediateCalls(@NotNull GenericType producerAfterType,
+                                                                               @NotNull List<PsiMethodCallExpression> expressions) {
     final List<IntermediateStreamCall> result = new ArrayList<>();
 
     GenericType typeBefore = producerAfterType;
@@ -74,16 +71,14 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     return result;
   }
 
-  @NotNull
-  private static TerminatorStreamCall createTerminationCall(@NotNull GenericType typeBefore, @NotNull PsiMethodCallExpression expression) {
+  private static @NotNull TerminatorStreamCall createTerminationCall(@NotNull GenericType typeBefore, @NotNull PsiMethodCallExpression expression) {
     final String name = resolveMethodName(expression);
     final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
     return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange());
   }
 
-  @NotNull
-  private static List<CallArgument> resolveArguments(@NotNull PsiMethodCallExpression methodCall) {
+  private static @NotNull List<CallArgument> resolveArguments(@NotNull PsiMethodCallExpression methodCall) {
     final PsiExpressionList list = methodCall.getArgumentList();
     return StreamEx.of(list.getExpressions())
       .zipWith(StreamEx.of(list.getExpressionTypes()),
@@ -92,27 +87,23 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  private static String resolveMethodName(@NotNull PsiMethodCallExpression methodCall) {
+  private static @NotNull String resolveMethodName(@NotNull PsiMethodCallExpression methodCall) {
     final String name = methodCall.getMethodExpression().getReferenceName();
     Objects.requireNonNull(name, "Method reference must be not null" + methodCall.getText());
     return name;
   }
 
-  @NotNull
-  private static PsiType extractType(@NotNull PsiMethodCallExpression expression) {
+  private static @NotNull PsiType extractType(@NotNull PsiMethodCallExpression expression) {
     final PsiType returnType = expression.getType();
     Objects.requireNonNull(returnType, "Method return type must be not null" + expression.getText());
     return returnType;
   }
 
-  @NotNull
-  private static GenericType resolveType(@NotNull PsiMethodCallExpression call) {
+  private static @NotNull GenericType resolveType(@NotNull PsiMethodCallExpression call) {
     return JavaTypes.INSTANCE.fromStreamPsiType(extractType(call));
   }
 
-  @NotNull
-  private static GenericType resolveTerminationCallType(@NotNull PsiMethodCallExpression call) {
+  private static @NotNull GenericType resolveTerminationCallType(@NotNull PsiMethodCallExpression call) {
     return JavaTypes.INSTANCE.fromPsiType(extractType(call));
   }
 }

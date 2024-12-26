@@ -15,9 +15,8 @@ import ru.adelf.idea.dotenv.psi.DotEnvKey;
 public class LeadingCharacterInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
         return DotEnvBundle.message("inspection.name.invalid.leading.character");
     }
     
@@ -30,8 +29,7 @@ public class LeadingCharacterInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private static ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKey.class).forEach(dotEnvKey -> {

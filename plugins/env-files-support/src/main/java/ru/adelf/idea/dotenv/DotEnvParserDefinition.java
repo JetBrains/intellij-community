@@ -1,46 +1,47 @@
 package ru.adelf.idea.dotenv;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.grammars.DotEnvLexerAdapter;
 import ru.adelf.idea.dotenv.parser.DotEnvParser;
-import ru.adelf.idea.dotenv.psi.*;
-import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.psi.DotEnvFile;
+import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 
 public class DotEnvParserDefinition implements ParserDefinition {
     private static final TokenSet WHITE_SPACES = TokenSet.WHITE_SPACE;
     private static final IFileElementType FILE = new IFileElementType(DotEnvLanguage.INSTANCE);
 
-    @NotNull
     @Override
-    public Lexer createLexer(Project project) {
+    public @NotNull Lexer createLexer(Project project) {
         return new DotEnvLexerAdapter();
     }
 
     @Override
-    @NotNull
-    public TokenSet getWhitespaceTokens() {
+    public @NotNull TokenSet getWhitespaceTokens() {
         return WHITE_SPACES;
     }
 
     @Override
-    @NotNull
-    public TokenSet getCommentTokens() {
+    public @NotNull TokenSet getCommentTokens() {
         return TokenSet.create(DotEnvTypes.COMMENT);
     }
 
     @Override
-    @NotNull
-    public TokenSet getStringLiteralElements() {
+    public @NotNull TokenSet getStringLiteralElements() {
         return TokenSet.EMPTY;
     }
 
     @Override
-    @NotNull
-    public PsiParser createParser(final Project project) {
+    public @NotNull PsiParser createParser(final Project project) {
         return new DotEnvParser();
     }
 
@@ -60,8 +61,7 @@ public class DotEnvParserDefinition implements ParserDefinition {
     }
 
     @Override
-    @NotNull
-    public PsiElement createElement(ASTNode node) {
+    public @NotNull PsiElement createElement(ASTNode node) {
         return DotEnvTypes.Factory.createElement(node);
     }
 }

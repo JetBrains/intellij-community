@@ -13,16 +13,14 @@ import java.util.Set;
 
 public final class PsiAnnotationSearchUtil {
 
-  @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
+  public static @Nullable PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
     if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiModifierListOwner)) {
       return DumbIncompleteModeUtil.findAnnotationInDumbOrIncompleteMode(psiModifierListOwner, annotationFQN);
     }
     return psiModifierListOwner.getAnnotation(annotationFQN);
   }
 
-  @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationFQNs) {
+  public static @Nullable PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationFQNs) {
     boolean isDumbMode = DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiModifierListOwner);
     for (String annotationFQN : annotationFQNs) {
       PsiAnnotation annotation;
@@ -58,8 +56,7 @@ public final class PsiAnnotationSearchUtil {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
   }
 
-  @NotNull
-  public static String getShortNameOf(@NotNull PsiAnnotation psiAnnotation) {
+  public static @NotNull String getShortNameOf(@NotNull PsiAnnotation psiAnnotation) {
     PsiJavaCodeReferenceElement referenceElement = psiAnnotation.getNameReferenceElement();
     return StringUtil.notNullize(null == referenceElement ? null : referenceElement.getReferenceName());
   }
@@ -75,9 +72,8 @@ public final class PsiAnnotationSearchUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiAnnotation findAnnotationByShortNameOnly(@NotNull PsiModifierListOwner psiModifierListOwner,
-                                                            String @NotNull ... annotationFQNs) {
+  public static @Nullable PsiAnnotation findAnnotationByShortNameOnly(@NotNull PsiModifierListOwner psiModifierListOwner,
+                                                                      String @NotNull ... annotationFQNs) {
     if (annotationFQNs.length > 0) {
       Collection<String> possibleShortNames = ContainerUtil.map(annotationFQNs, StringUtil::getShortName);
 

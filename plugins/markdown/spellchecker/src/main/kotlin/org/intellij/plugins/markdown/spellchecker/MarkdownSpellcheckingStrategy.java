@@ -17,9 +17,8 @@ final class MarkdownSpellcheckingStrategy extends SpellcheckingStrategy implemen
                                                                         MarkdownElementTypes.CODE_SPAN,
                                                                         MarkdownElementTypes.LINK_DESTINATION);
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
     if (node == null || node.getElementType() != MarkdownTokenTypes.TEXT) {
       return SpellcheckingStrategy.EMPTY_TOKENIZER;

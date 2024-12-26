@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib;
 
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
@@ -16,8 +16,7 @@ import java.util.List;
 public interface LibrarySupportProvider {
   ExtensionPointName<LibrarySupportProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.debugger.streams.librarySupport");
 
-  @NotNull
-  static List<LibrarySupportProvider> getList() {
+  static @NotNull List<LibrarySupportProvider> getList() {
     return EP_NAME.getExtensionList();
   }
 

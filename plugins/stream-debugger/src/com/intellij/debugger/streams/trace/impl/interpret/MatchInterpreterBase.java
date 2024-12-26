@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter;
@@ -25,9 +25,8 @@ import java.util.stream.Stream;
 public abstract class MatchInterpreterBase implements CallTraceInterpreter {
   private final CallTraceInterpreter myPeekResolver = new SimplePeekCallTraceInterpreter();
 
-  @NotNull
   @Override
-  public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
+  public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference array) {
       if (array.length() != 2) {
         throw new UnexpectedArrayLengthException("trace array for *match call should contain two items. Actual = " + array.length());
@@ -58,25 +57,21 @@ public abstract class MatchInterpreterBase implements CallTraceInterpreter {
   protected abstract boolean getResult(@NotNull Collection<TraceElement> traceBeforeFilter,
                                        @NotNull Collection<TraceElement> traceAfterFilter);
 
-  @NotNull
-  protected abstract Action getAction(boolean result);
+  protected abstract @NotNull Action getAction(boolean result);
 
   protected enum Action {
     CONNECT_FILTERED, CONNECT_DIFFERENCE
   }
 
-  @NotNull
-  private static Map<Integer, TraceElement> onlyFiltered(@NotNull Collection<TraceElement> afterFilter) {
+  private static @NotNull Map<Integer, TraceElement> onlyFiltered(@NotNull Collection<TraceElement> afterFilter) {
     return makeIndexByTime(afterFilter.stream());
   }
 
-  @NotNull
-  private static Map<Integer, TraceElement> difference(@NotNull Collection<TraceElement> before, @NotNull Set<Integer> timesAfter) {
+  private static @NotNull Map<Integer, TraceElement> difference(@NotNull Collection<TraceElement> before, @NotNull Set<Integer> timesAfter) {
     return makeIndexByTime(before.stream().filter(x -> !timesAfter.contains(x.getTime())));
   }
 
-  @NotNull
-  private static Map<Integer, TraceElement> makeIndexByTime(@NotNull Stream<TraceElement> elementStream) {
+  private static @NotNull Map<Integer, TraceElement> makeIndexByTime(@NotNull Stream<TraceElement> elementStream) {
     return elementStream.collect(Collectors.toMap(TraceElement::getTime, Function.identity()));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -70,11 +70,11 @@ public class CopiesPanel extends SimpleToolWindowPanel {
 
   private static final @NonNls String HELP_ID = "reference.vcs.svn.working.copies.information";
 
-  final static @NonNls String CHANGE_FORMAT = "CHANGE_FORMAT";
-  final static @NonNls String CLEANUP = "CLEANUP";
-  final static @NonNls String FIX_DEPTH = "FIX_DEPTH";
-  final static @NonNls String CONFIGURE_BRANCHES = "CONFIGURE_BRANCHES";
-  final static @NonNls String MERGE_FROM = "MERGE_FROM";
+  static final @NonNls String CHANGE_FORMAT = "CHANGE_FORMAT";
+  static final @NonNls String CLEANUP = "CLEANUP";
+  static final @NonNls String FIX_DEPTH = "FIX_DEPTH";
+  static final @NonNls String CONFIGURE_BRANCHES = "CONFIGURE_BRANCHES";
+  static final @NonNls String MERGE_FROM = "MERGE_FROM";
 
   public CopiesPanel(@NotNull Project project) {
     super(false, true);
@@ -105,8 +105,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     getVcs().invokeRefreshSvnRoots();
   }
 
-  @NotNull
-  private SvnVcs getVcs() {
+  private @NotNull SvnVcs getVcs() {
     return SvnVcs.getInstance(myProject);
   }
 
@@ -146,7 +145,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     showErrorNotification(hasErrors);
   }
 
-  private void updateList(@NotNull final List<WCInfo> infoList, @NotNull final List<WorkingCopyFormat> supportedFormats) {
+  private void updateList(final @NotNull List<WCInfo> infoList, final @NotNull List<WorkingCopyFormat> supportedFormats) {
     myPanel.removeAll();
 
     for (final WCInfo wcInfo : infoList) {
@@ -174,8 +173,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     myPanel.repaint();
   }
 
-  @NotNull
-  private List<WorkingCopyFormat> getSupportedFormats() {
+  private @NotNull List<WorkingCopyFormat> getSupportedFormats() {
     List<WorkingCopyFormat> result = new ArrayList<>();
     ClientFactory factory = getVcs().getFactory();
 
@@ -272,14 +270,13 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     new CleanupWorker(getVcs(), singletonList(root)).execute();
   }
 
-  @NotNull
-  private static Url getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
-                                                      @NotNull Url url,
-                                                      @NotNull Url otherBranchUrl) throws SvnBindException {
+  private static @NotNull Url getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
+                                                               @NotNull Url url,
+                                                               @NotNull Url otherBranchUrl) throws SvnBindException {
     return otherBranchUrl.appendPath(notNullize(configuration.getRelativeUrl(url)), false);
   }
 
-  private void changeFormat(@NotNull final WCInfo wcInfo, @NotNull final Collection<WorkingCopyFormat> supportedFormats) {
+  private void changeFormat(final @NotNull WCInfo wcInfo, final @NotNull Collection<WorkingCopyFormat> supportedFormats) {
     ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, !wcInfo.isIsWcRoot());
 
     dialog.setSupported(supportedFormats);
@@ -319,7 +316,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
   }
 
   private static final class ErrorsFoundNotification extends Notification {
-    private ErrorsFoundNotification(@NotNull final Project project) {
+    private ErrorsFoundNotification(final @NotNull Project project) {
       super(NOTIFICATION_GROUP.getDisplayId(), "", message("subversion.roots.detection.errors.found.description"), NotificationType.ERROR);
 
       addAction(

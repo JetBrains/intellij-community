@@ -399,8 +399,7 @@ public class ClassWriter {
     }
   }
 
-  @NotNull
-  private static AnnotationContainer collectAllAnnotations(@Nullable StructMember mt) {
+  private static @NotNull AnnotationContainer collectAllAnnotations(@Nullable StructMember mt) {
     AnnotationContainer result = new AnnotationContainer(new HashSet<>(), new HashSet<>());
     if (mt == null) {
       return result;
@@ -1088,8 +1087,7 @@ public class ClassWriter {
 
   record RecordConstructorContext(boolean hideConstructor, boolean compact) { }
 
-  @NotNull
-  private static List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
+  private static @NotNull List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
     List<AnnotationExprent> result = new ArrayList<>();
     if (mt == null || type == null) return result;
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {

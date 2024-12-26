@@ -145,8 +145,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
     }
   }
 
-  @Nullable
-  protected PsiMethod findPublicNonStaticMethod(@NotNull PsiClass psiClass, @NotNull String methodName, @NotNull PsiType returnType, PsiType... params) {
+  protected @Nullable PsiMethod findPublicNonStaticMethod(@NotNull PsiClass psiClass, @NotNull String methodName, @NotNull PsiType returnType, PsiType... params) {
     final PsiMethod[] toStringMethods = psiClass.findMethodsByName(methodName, false);
     for (PsiMethod method : toStringMethods) {
       if (method.hasModifierProperty(PsiModifier.PUBLIC) &&

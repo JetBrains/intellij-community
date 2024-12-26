@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -24,16 +24,14 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
     return true;
   }
 
-  @NotNull
   @Override
-  protected BaseDataReader createErrorDataReader() {
+  protected @NotNull BaseDataReader createErrorDataReader() {
     return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, BaseOutputReader.Options.BLOCKING,
                                   "error stream of " + myPresentableName);
   }
 
-  @NotNull
   @Override
-  protected BaseOutputReader.Options readerOptions() {
+  protected @NotNull BaseOutputReader.Options readerOptions() {
     // Currently, when blocking policy is used, reading stops when nothing was actually read (stream ended).
     // This is an issue for reading output in Windows as redirection to file is used. And so file is actually
     // empty when first read attempt is performed (thus no output is read at all).
@@ -41,9 +39,8 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
     return BaseOutputReader.Options.NON_BLOCKING;
   }
 
-  @NotNull
   @Override
-  protected String filterCombinedText(@NotNull String currentLine) {
+  protected @NotNull String filterCombinedText(@NotNull String currentLine) {
     // for windows platform output is assumed in format suitable for terminal emulator
     // for instance, same text could be returned twice with '\r' symbol in between (so in emulator output we'll still see correct
     // text without duplication)
@@ -51,9 +48,8 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
     return removeAllBeforeCaretReturn(currentLine);
   }
 
-  @NotNull
   @Override
-  protected String filterText(@NotNull String text) {
+  protected @NotNull String filterText(@NotNull String text) {
     // filter terminal escape codes - they are presented in the output for windows platform
     text = text.replaceAll(CSI_ESCAPE_CODE, "").replaceAll(NON_CSI_ESCAPE_CODE, "");
     // trim leading '\r' symbols - as they break xml parsing logic
@@ -62,14 +58,12 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
     return text;
   }
 
-  @NotNull
   @Override
-  protected Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
+  protected @NotNull Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
     return outputType;
   }
 
-  @NotNull
-  private static String removeAllBeforeCaretReturn(@NotNull String line) {
+  private static @NotNull String removeAllBeforeCaretReturn(@NotNull String line) {
     int caretReturn = line.lastIndexOf("\r");
 
     while (caretReturn >= 0) {

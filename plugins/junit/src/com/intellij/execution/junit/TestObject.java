@@ -218,8 +218,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                      getConfiguration().getConfigurationModule().getModule());
   }
 
-  @Nullable
-  public SourceScope getSourceScope() {
+  public @Nullable SourceScope getSourceScope() {
     return SourceScope.modules(getConfiguration().getModules());
   }
 
@@ -277,8 +276,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
    * When 2 modules have e.g. the same package, one depends on another, and tests have to run in single module only,
    * by configuration settings or to avoid repetition in fork by module mode, additional filters per output directories are required.
    */
-  @Unmodifiable
-  protected static List<String> composeDirectoryFilter(@NotNull Module module) {
+  protected static @Unmodifiable List<String> composeDirectoryFilter(@NotNull Module module) {
     return ContainerUtil.map(OrderEnumerator.orderEntries(module)
                                .withoutSdk()
                                .withoutLibraries()
@@ -530,9 +528,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return JUnitStarter.JUNIT5_PARAMETER.equals(getRunner());
   }
 
-  @NotNull
   @Override
-  protected String getForkMode() {
+  protected @NotNull String getForkMode() {
     return getConfiguration().getForkMode();
   }
 
@@ -661,14 +658,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  @NotNull
-  protected String getFrameworkName() {
+  protected @NotNull String getFrameworkName() {
     return JUNIT_TEST_FRAMEWORK_NAME;
   }
 
   @Override
-  @NotNull
-  protected String getFrameworkId() {
+  protected @NotNull String getFrameworkId() {
     return "junit";
   }
 
@@ -678,8 +673,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  @NotNull
-  public JUnitConfiguration getConfiguration() {
+  public @NotNull JUnitConfiguration getConfiguration() {
     return myConfiguration;
   }
 
@@ -699,8 +693,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private String myRunner;
   private static final Object LOCK = ObjectUtils.sentinel("JUnitRunner");
 
-  @NotNull
-  protected String getRunner() {
+  protected @NotNull String getRunner() {
     synchronized (LOCK) {
       if (myRunner == null) {
         myRunner = ProgressManager.getInstance()
@@ -712,8 +705,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  @NotNull
-  private String getRunnerInner() {
+  private @NotNull String getRunnerInner() {
     Project project = myConfiguration.getProject();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
     final GlobalSearchScope globalSearchScope = getScopeForJUnit(myConfiguration);

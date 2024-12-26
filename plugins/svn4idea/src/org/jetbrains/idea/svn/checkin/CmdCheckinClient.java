@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -80,8 +80,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return revision;
   }
 
-  @NotNull
-  private List<File> filterCommittables(@NotNull List<File> committables) throws SvnBindException {
+  private @NotNull List<File> filterCommittables(@NotNull List<File> committables) throws SvnBindException {
     final Set<String> childrenOfSomebody = new HashSet<>();
     new AbstractFilterChildren<File>() {
       @Override
@@ -136,7 +135,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     private static final String PATH = "\\s*(.*?)\\s*";
     private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + OPTIONAL_FILE_TYPE + PATH);
 
-    @Nullable private final CommitEventHandler myHandler;
+    private final @Nullable CommitEventHandler myHandler;
     private SvnBindException myException;
     private long myCommittedRevision = INVALID_REVISION_NUMBER;
     private File myBase;
@@ -240,8 +239,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
       }
     }
 
-    @NotNull
-    private File toFile(@NotNull String path) {
+    private @NotNull File toFile(@NotNull String path) {
       return SvnUtil.resolvePath(myBase, path);
     }
   }

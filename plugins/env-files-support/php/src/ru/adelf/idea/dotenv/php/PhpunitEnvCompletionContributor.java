@@ -46,9 +46,8 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
         });
     }
 
-    @Nullable
     @Override
-    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
         if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
@@ -63,8 +62,7 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getValue());
     }
 
-    @Nullable
-    private XmlAttributeValue getXmlAttributeValue(@NotNull PsiElement psiElement) {
+    private @Nullable XmlAttributeValue getXmlAttributeValue(@NotNull PsiElement psiElement) {
         PsiElement attributeValue = psiElement.getParent();
 
         if (!(attributeValue instanceof XmlAttributeValue)) return null;
@@ -86,9 +84,8 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
         return (XmlAttributeValue) attributeValue;
     }
 
-    @Nullable
     @Override
-    public String getActionText(@NotNull DataContext dataContext) {
+    public @Nullable String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

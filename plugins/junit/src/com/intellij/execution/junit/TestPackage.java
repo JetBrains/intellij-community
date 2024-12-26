@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -62,9 +62,8 @@ public class TestPackage extends TestObject {
     super(configuration, environment);
   }
 
-  @Nullable
   @Override
-  public SourceScope getSourceScope() {
+  public @Nullable SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getScope().getSourceScope(getConfiguration());
   }
@@ -138,8 +137,7 @@ public class TestPackage extends TestObject {
     return module;
   }
 
-  @Nullable
-  private TestClassFilter computeFilter(JUnitConfiguration.Data data) throws CantRunException {
+  private @Nullable TestClassFilter computeFilter(JUnitConfiguration.Data data) throws CantRunException {
     try {
       return DumbService.getInstance(getConfiguration().getProject()).computeWithAlternativeResolveEnabled(() -> {
         try {
@@ -187,8 +185,7 @@ public class TestPackage extends TestObject {
     return false;
   }
 
-  @NotNull
-  protected @NlsSafe String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+  protected @NotNull @NlsSafe String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
     return data.getPackageName();
   }
 
@@ -250,8 +247,7 @@ public class TestPackage extends TestObject {
     return ReadAction.compute(() -> PackageScope.packageScope(getPackage(), true));
   }
 
-  @NotNull
-  protected PsiPackage getPackage() throws CantRunException {
+  protected @NotNull PsiPackage getPackage() throws CantRunException {
     final String packageName = getConfiguration().getPersistentData().getPackageName();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
     if (aPackage == null) throw CantRunException.packageNotFound(packageName);

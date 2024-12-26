@@ -38,18 +38,16 @@ public class DotEnvCommenter implements Commenter, SelfManagingCommenter<Comment
         return null;
     }
 
-    @Nullable
     @Override
-    public CommenterDataHolder createLineCommentingState(int startLine, int endLine, @NotNull Document document, @NotNull PsiFile file) {
+    public @Nullable CommenterDataHolder createLineCommentingState(int startLine, int endLine, @NotNull Document document, @NotNull PsiFile file) {
         return null;
     }
 
-    @Nullable
     @Override
-    public CommenterDataHolder createBlockCommentingState(int selectionStart,
-                                                          int selectionEnd,
-                                                          @NotNull Document document,
-                                                          @NotNull PsiFile file) {
+    public @Nullable CommenterDataHolder createBlockCommentingState(int selectionStart,
+                                                                    int selectionEnd,
+                                                                    @NotNull Document document,
+                                                                    @NotNull PsiFile file) {
         return null;
     }
 
@@ -68,30 +66,26 @@ public class DotEnvCommenter implements Commenter, SelfManagingCommenter<Comment
         return CharArrayUtil.regionMatches(document.getCharsSequence(), offset, HASH_COMMENT_PREFIX);
     }
 
-    @Nullable
     @Override
-    public String getCommentPrefix(int line, @NotNull Document document, @NotNull CommenterDataHolder data) {
+    public @Nullable String getCommentPrefix(int line, @NotNull Document document, @NotNull CommenterDataHolder data) {
         return HASH_COMMENT_PREFIX;
     }
 
-    @Nullable
     @Override
-    public TextRange getBlockCommentRange(int selectionStart,
-                                          int selectionEnd,
-                                          @NotNull Document document,
-                                          @NotNull CommenterDataHolder data) {
+    public @Nullable TextRange getBlockCommentRange(int selectionStart,
+                                                    int selectionEnd,
+                                                    @NotNull Document document,
+                                                    @NotNull CommenterDataHolder data) {
         throw new UnsupportedOperationException();
     }
 
-    @Nullable
     @Override
-    public String getBlockCommentPrefix(int selectionStart, @NotNull Document document, @NotNull CommenterDataHolder data) {
+    public @Nullable String getBlockCommentPrefix(int selectionStart, @NotNull Document document, @NotNull CommenterDataHolder data) {
         return getBlockCommentPrefix();
     }
 
-    @Nullable
     @Override
-    public String getBlockCommentSuffix(int selectionEnd, @NotNull Document document, @NotNull CommenterDataHolder data) {
+    public @Nullable String getBlockCommentSuffix(int selectionEnd, @NotNull Document document, @NotNull CommenterDataHolder data) {
         return getBlockCommentSuffix();
     }
 
@@ -100,9 +94,8 @@ public class DotEnvCommenter implements Commenter, SelfManagingCommenter<Comment
         throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public TextRange insertBlockComment(int startOffset, int endOffset, Document document, CommenterDataHolder data) {
+    public @NotNull TextRange insertBlockComment(int startOffset, int endOffset, Document document, CommenterDataHolder data) {
         throw new UnsupportedOperationException();
     }
 }

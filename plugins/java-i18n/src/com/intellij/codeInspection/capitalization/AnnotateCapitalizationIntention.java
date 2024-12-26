@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,21 +37,18 @@ public final class AnnotateCapitalizationIntention implements IntentionAction {
     return true;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return getFamilyName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaI18nBundle.message("intention.family.annotate.capitalization.type");
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner modifierListOwner = getElement(editor, file);
     if (modifierListOwner == null) throw new IncorrectOperationException();
 
@@ -78,8 +75,7 @@ public final class AnnotateCapitalizationIntention implements IntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PsiModifierListOwner getElement(Editor editor, PsiFile file) {
+  private static @Nullable PsiModifierListOwner getElement(Editor editor, PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
     if (parameter == null) return null;
