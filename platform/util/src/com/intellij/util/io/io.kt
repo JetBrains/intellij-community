@@ -75,11 +75,13 @@ suspend fun InputStream.copyToAsync(
   outputStream: OutputStream,
   bufferSize: Int = DEFAULT_BUFFER_SIZE,
   limit: Long = Long.MAX_VALUE,
+  progressNotifier: (suspend (Long) -> Unit)? = null,
 ) {
   computeDetached(context = CoroutineName("copyToAsync: $this => $outputStream")) {
     val buffer = ByteArray(bufferSize)
     var totalRead = 0L
     while (totalRead < limit) {
+      progressNotifier?.invoke(totalRead)
       yield()
       val read =
         try {

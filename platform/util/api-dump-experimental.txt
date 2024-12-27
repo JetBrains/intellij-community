@@ -58,8 +58,8 @@ f:com.intellij.util.TimeoutUtil
 - <init>(java.lang.Throwable,java.lang.Class):V
 - getClassToBlame():java.lang.Class
 f:com.intellij.util.io.IoKt
-- *sf:copyToAsync(java.io.InputStream,java.io.OutputStream,I,J,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:copyToAsync$default(java.io.InputStream,java.io.OutputStream,I,J,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- *sf:copyToAsync(java.io.InputStream,java.io.OutputStream,I,J,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:copyToAsync$default(java.io.InputStream,java.io.OutputStream,I,J,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *:com.intellij.util.io.KeyValueStore
 - com.intellij.openapi.Forceable
 - java.io.Closeable
