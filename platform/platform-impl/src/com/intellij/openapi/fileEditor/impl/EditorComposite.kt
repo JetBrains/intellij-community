@@ -379,6 +379,7 @@ open class EditorComposite internal constructor(
         }
       }
     }
+    component.validate()
 
     fileEditorWithProviderToSelect?.fileEditor?.selectNotify()
 
