@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
@@ -151,8 +150,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull RootType rootType) {
-    String path = ScratchFileService.getInstance().getRootPath(rootType);
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    return ScratchFileService.getInstance().getVirtualFile(rootType);
   }
 
   private static @Nullable AbstractTreeNode<?> createRootTypeNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {

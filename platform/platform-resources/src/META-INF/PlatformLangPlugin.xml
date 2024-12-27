@@ -67,6 +67,8 @@
 
   <xi:include href="/META-INF/IJent.xml"/>
 
+  <xi:include href="intellij.platform.bookmarks.xml"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>

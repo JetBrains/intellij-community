@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.actions.ArtifactAwareProjectSettingsService;
-import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -102,11 +101,11 @@ public final class IdeaProjectSettingsService extends ProjectSettingsService imp
   }
 
   @Override
-  public boolean processModulesMoved(final Module[] modules, final @Nullable ModuleGroup targetGroup) {
+  public boolean processModulesMoved(final Module[] modules, final @Nullable String targetGroupName) {
     final ModuleStructureConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getModulesConfig();
     if (rootConfigurable.updateProjectTree(modules)) { //inside project root editor
-      if (targetGroup != null) {
-        rootConfigurable.selectNodeInTree(targetGroup.toString());
+      if (targetGroupName != null) {
+        rootConfigurable.selectNodeInTree(targetGroupName);
       }
       else {
         rootConfigurable.selectNodeInTree(modules[0].getName());

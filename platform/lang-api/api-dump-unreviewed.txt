@@ -2619,6 +2619,13 @@ com.intellij.ide.bookmark.BookmarksManager
 com.intellij.ide.bookmark.FileBookmark
 - com.intellij.ide.bookmark.Bookmark
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
+f:com.intellij.ide.bookmark.FileBookmarksListener
+- com.intellij.ide.bookmark.BookmarksListener
+- <init>(java.util.function.Consumer):V
+- bookmarkAdded(com.intellij.ide.bookmark.BookmarkGroup,com.intellij.ide.bookmark.Bookmark):V
+- bookmarkChanged(com.intellij.ide.bookmark.BookmarkGroup,com.intellij.ide.bookmark.Bookmark):V
+- bookmarkRemoved(com.intellij.ide.bookmark.BookmarkGroup,com.intellij.ide.bookmark.Bookmark):V
+- bookmarkTypeChanged(com.intellij.ide.bookmark.Bookmark):V
 com.intellij.ide.bookmark.LineBookmark
 - com.intellij.ide.bookmark.FileBookmark
 - a:getLine():I
@@ -2729,6 +2736,7 @@ Fa:com.intellij.ide.projectView.impl.AbstractUrl
 - createUrl(java.lang.String,java.lang.String,java.lang.String):com.intellij.ide.projectView.impl.AbstractUrl
 - a:createUrlByElement(java.lang.Object):com.intellij.ide.projectView.impl.AbstractUrl
 - equals(java.lang.Object):Z
+- getType():java.lang.String
 - getURL():java.lang.String
 - hashCode():I
 - write(org.jdom.Element):V
@@ -4490,6 +4498,32 @@ com.intellij.openapi.roots.ui.OrderRootTypeUIFactory
 - a:createPathEditor(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.projectRoots.ui.SdkPathEditor
 - a:getIcon():javax.swing.Icon
 - a:getNodeText():java.lang.String
+a:com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- s:forLibraryType(com.intellij.openapi.roots.libraries.LibraryKind):com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider
+- a:getAdditionalSettingsConfigurable(com.intellij.openapi.project.Project):com.intellij.openapi.options.Configurable
+- s:getAdditionalSettingsConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.roots.libraries.LibraryKind):com.intellij.openapi.options.Configurable
+- a:getLibraryKind():com.intellij.openapi.roots.libraries.LibraryKind
+c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+- <init>():V
+- canOpenContentEntriesSettings():Z
+- canOpenLibraryOrSdkSettings(com.intellij.openapi.roots.OrderEntry):Z
+- canOpenModuleDependenciesSettings():Z
+- canOpenModuleLibrarySettings():Z
+- canOpenModuleSettings():Z
+- chooseAndSetSdk():com.intellij.openapi.projectRoots.Sdk
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+- openContentEntriesSettings(com.intellij.openapi.module.Module):V
+- openGlobalLibraries():V
+- openLibrary(com.intellij.openapi.roots.libraries.Library):V
+- openLibraryOrSdkSettings(com.intellij.openapi.roots.OrderEntry):V
+- openModuleDependenciesSettings(com.intellij.openapi.module.Module,com.intellij.openapi.roots.OrderEntry):V
+- openModuleLibrarySettings(com.intellij.openapi.module.Module):V
+- openModuleSettings(com.intellij.openapi.module.Module):V
+- openProjectSettings():V
+- processModulesMoved(com.intellij.openapi.module.Module[],java.lang.String):Z
+- showModuleConfigurationDialog(java.lang.String,java.lang.String):V
 c:com.intellij.openapi.roots.ui.configuration.libraryEditor.DocumentationOrderRootTypeUIFactory
 - com.intellij.openapi.roots.ui.OrderRootTypeUIFactory
 - <init>():V

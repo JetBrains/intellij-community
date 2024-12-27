@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 
 @ApiStatus.Internal
 public final class ModuleUrl extends AbstractUrl {
-  private static final @NonNls String ELEMENT_TYPE = "module";
+  private static final @NonNls String ELEMENT_TYPE = TYPE_MODULE;
 
   public ModuleUrl(String url, String moduleName) {
     super(url, moduleName, ELEMENT_TYPE);

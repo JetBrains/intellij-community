@@ -17,6 +17,19 @@ import java.util.List;
 
 @ApiStatus.NonExtendable
 public abstract class AbstractUrl {
+  @ApiStatus.Internal
+  public static final @NonNls String TYPE_DIRECTORY = "directory";
+  @ApiStatus.Internal
+  public static final @NonNls String TYPE_LIBRARY_MODULE_GROUP = "libraryModuleGroup";
+  @ApiStatus.Internal
+  public static final @NonNls String TYPE_MODULE_GROUP = "module_group";
+  @ApiStatus.Internal
+  public static final @NonNls String TYPE_MODULE = "module";
+  @ApiStatus.Internal
+  public static final @NonNls String TYPE_NAMED_LIBRARY = "namedLibrary";
+  @ApiStatus.Internal
+  public static final @NonNls String TYPE_PSI_FILE = "psiFile";
+
   protected final @NotNull String url;
   protected final String moduleName;
   private final String myType;
@@ -30,6 +43,10 @@ public abstract class AbstractUrl {
 
   public @NotNull String getURL() {
     return url;
+  }
+
+  public @NotNull String getType() {
+    return myType;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

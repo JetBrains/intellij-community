@@ -98,6 +98,9 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.ide.remote",
   "intellij.platform.ide.ui.inspector",
   "intellij.platform.threadDumpParser",
+
+  "intellij.platform.ide.favoritesTreeView",
+  "intellij.platform.bookmarks",
 )
 
 @Suppress("RemoveRedundantQualifierName")

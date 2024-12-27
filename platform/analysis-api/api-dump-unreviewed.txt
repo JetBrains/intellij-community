@@ -2239,6 +2239,7 @@ a:com.intellij.ide.scratch.ScratchFileService
 - a:getRootPath(com.intellij.ide.scratch.RootType):java.lang.String
 - a:getRootType(com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.scratch.RootType
 - a:getScratchesMapping():com.intellij.lang.PerFileMappings
+- getVirtualFile(com.intellij.ide.scratch.RootType):com.intellij.openapi.vfs.VirtualFile
 - s:isWorkspaceModelIntegrationEnabled():Z
 e:com.intellij.ide.scratch.ScratchFileService$Option
 - java.lang.Enum

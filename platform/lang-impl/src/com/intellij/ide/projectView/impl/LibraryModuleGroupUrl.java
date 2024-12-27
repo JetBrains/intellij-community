@@ -12,8 +12,7 @@ import org.jetbrains.annotations.NonNls;
 
 @ApiStatus.Internal
 public final class LibraryModuleGroupUrl extends AbstractUrl {
-
-  private static final @NonNls String ELEMENT_TYPE = "libraryModuleGroup";
+  private static final @NonNls String ELEMENT_TYPE = TYPE_LIBRARY_MODULE_GROUP;
 
   public LibraryModuleGroupUrl(String moduleName) {
     super(null, moduleName, ELEMENT_TYPE);
