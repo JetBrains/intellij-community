@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.xml.structureView.impl" exported="" />

@@ -15,10 +15,9 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.sh.lexer.ShTokenTypes.*;
 
-public class ShFindUsagesProvider implements FindUsagesProvider {
-
+final class ShFindUsagesProvider implements FindUsagesProvider {
   @Override
-  public @Nullable WordsScanner getWordsScanner() {
+  public @NotNull WordsScanner getWordsScanner() {
     return new DefaultWordsScanner(new ShLexer(), TokenSet.create(WORD), commentTokens, literals);
   }
 

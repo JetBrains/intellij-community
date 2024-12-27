@@ -6,7 +6,7 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer;
 import org.jetbrains.annotations.NotNull;
 
-public final class PropertiesTodoIndexer extends LexerBasedTodoIndexer {
+public class PropertiesTodoIndexer extends LexerBasedTodoIndexer {
   @Override
   public @NotNull Lexer createLexer(@NotNull OccurrenceConsumer consumer) {
     return PropertiesIdIndexer.createIndexingLexer(consumer);

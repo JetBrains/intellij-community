@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
 
 /**
@@ -16,7 +15,7 @@ import org.jetbrains.yaml.psi.*;
  */
 public class YAMLFindUsagesProvider implements FindUsagesProvider {
   @Override
-  public @Nullable WordsScanner getWordsScanner() {
+  public @NotNull WordsScanner getWordsScanner() {
     return new YAMLWordsScanner();
   }
 
@@ -26,7 +25,7 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
+  public @NotNull String getHelpId(@NotNull PsiElement psiElement) {
     return HelpID.FIND_OTHER_USAGES;
   }
 

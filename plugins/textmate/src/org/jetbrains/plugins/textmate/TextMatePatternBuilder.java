@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.psi.TextMateFile;
 
-public class TextMatePatternBuilder implements IndexPatternBuilder {
+public final class TextMatePatternBuilder implements IndexPatternBuilder {
   @Override
   public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {
     return file instanceof TextMateFile ? new EmptyLexer() : null;

@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.restructuredtext.lexer.RestFlexLexer;
 import org.jetbrains.annotations.NotNull;
 
-public class RestTodoIndexer extends LexerBasedTodoIndexer {
+final class RestTodoIndexer extends LexerBasedTodoIndexer {
   @Override
   public @NotNull Lexer createLexer(@NotNull OccurrenceConsumer consumer) {
     return new BaseFilterLexer(new RestFlexLexer(), consumer) {

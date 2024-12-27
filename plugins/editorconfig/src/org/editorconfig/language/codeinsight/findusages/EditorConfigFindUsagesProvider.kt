@@ -12,7 +12,7 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDes
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
 
-class EditorConfigFindUsagesProvider : FindUsagesProvider {
+private class EditorConfigFindUsagesProvider : FindUsagesProvider {
   override fun getWordsScanner(): WordsScanner = EditorConfigWordScanner()
   override fun canFindUsagesFor(psiElement: PsiElement) = psiElement is EditorConfigDescribableElement
   override fun getHelpId(psiElement: PsiElement): String = HelpID.FIND_OTHER_USAGES
