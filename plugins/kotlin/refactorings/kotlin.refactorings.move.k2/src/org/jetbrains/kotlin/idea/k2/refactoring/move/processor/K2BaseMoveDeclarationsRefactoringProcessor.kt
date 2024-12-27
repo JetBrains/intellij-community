@@ -144,13 +144,14 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
                 operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
                     preprocessUsages(moveDescriptor.project, moveDescriptor.source, usages.toList())
 
-                    val elementsToMove = moveDescriptor.source.elements.withContext()
-                    val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
-
-                    elementsToMove.forEach { elementToMove ->
-                        if (elementToMove !is KtNamedDeclaration) return@forEach
+                    val declarationsToMove = moveDescriptor.source.elements
+                    declarationsToMove.forEach { elementToMove ->
                         preprocessDeclaration(moveDescriptor, elementToMove)
+                        operationDescriptor.preDeclarationMoved(elementToMove)
                     }
+
+                    val elementsToMove = declarationsToMove.withContext()
+                    val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
                     val oldToNewMap = moveDescriptor.target.addElementsToTarget(elementsToMove, operationDescriptor.dirStructureMatchesPkg)
                     moveDescriptor.source.elements.forEach(::deleteMovedElement)
                     // Delete files if they are effectively empty after moving declarations out of them
@@ -160,6 +161,12 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
                     retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
                     oldToNewMap.forEach { original, new ->
                         postprocessDeclaration(moveDescriptor.target, original, new)
+
+                        val originalDeclaration = original as? KtNamedDeclaration
+                        val newDeclaration = new as? KtNamedDeclaration
+                        if (originalDeclaration != null && newDeclaration != null) {
+                            operationDescriptor.postDeclarationMoved(original, new)
+                        }
                     }
                     oldToNewMap.values
                 }
@@ -171,6 +178,7 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
                 EditorHelper.openFilesInEditor(movedElements.toTypedArray())
             }
         }
+
     }
 
     override fun performPsiSpoilingRefactoring() {

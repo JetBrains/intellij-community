@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor
 
 import com.intellij.ide.util.DirectoryUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
@@ -166,7 +168,7 @@ sealed interface K2MoveTargetDescriptor {
 
         private fun KtClassOrObject.addElementToClassBody(element: PsiElement): PsiElement {
             val body = getOrCreateBody()
-            val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
+            val anchor = (body.rBrace ?: body.lastChild!!).prevSibling
             return if (anchor?.nextSibling is PsiErrorElement) {
                 body.addBefore(element, anchor)
             } else {

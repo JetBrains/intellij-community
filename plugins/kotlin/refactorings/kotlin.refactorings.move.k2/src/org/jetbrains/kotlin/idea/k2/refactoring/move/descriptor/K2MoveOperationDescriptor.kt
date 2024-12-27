@@ -67,7 +67,9 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments: Boolean,
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
-        moveCallBack: MoveCallback? = null
+        moveCallBack: MoveCallback? = null,
+        internal val preDeclarationMoved: (KtNamedDeclaration) -> Unit,
+        internal val postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit
     )  : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
         project,
         moveDescriptors,
@@ -87,7 +89,9 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments: Boolean,
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
-        moveCallBack: MoveCallback? = null
+        moveCallBack: MoveCallback? = null,
+        preDeclarationMoved: (KtNamedDeclaration) -> Unit = { },
+        postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit = { _, _ -> },
     ) : DeclarationsMoveDescriptor(
         project,
         moveDescriptors,
@@ -95,7 +99,9 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments,
         searchReferences,
         dirStructureMatchesPkg,
-        moveCallBack
+        moveCallBack,
+        preDeclarationMoved,
+        postDeclarationMoved
     ) {
         override fun refactoringProcessor(): BaseRefactoringProcessor {
             return K2MoveDeclarationsRefactoringProcessor(this)
@@ -111,7 +117,9 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         dirStructureMatchesPkg: Boolean,
         val newClassName: String? = null,
         val outerInstanceParameterName: String? = null,
-        moveCallBack: MoveCallback? = null
+        moveCallBack: MoveCallback? = null,
+        preDeclarationMoved: (KtNamedDeclaration) -> Unit = { },
+        postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit = { _, _ -> },
     ) : DeclarationsMoveDescriptor(
         project,
         moveDescriptors,
@@ -119,7 +127,9 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments,
         searchReferences,
         dirStructureMatchesPkg,
-        moveCallBack
+        moveCallBack,
+        preDeclarationMoved,
+        postDeclarationMoved
     ) {
         override fun refactoringProcessor(): BaseRefactoringProcessor {
             return K2MoveNestedDeclarationsRefactoringProcessor(this)
