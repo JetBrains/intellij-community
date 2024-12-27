@@ -147,7 +147,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        pass
 
                    my_t = T
-                   class C3(Generic[my_t]):
+                   class C3(Generic[<error descr="Parameters to 'Generic[...]' must all be type variables">my_t</error>]):
                        pass
 
                    class D1:
@@ -182,7 +182,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        pass
 
                    T1 = T
-                   class D(Generic[T1, <error descr="Parameters to 'Generic[...]' must all be unique">T</error>]):
+                   class D(Generic[<error descr="Parameters to 'Generic[...]' must all be type variables">T1</error>, T]):
                        pass""");
   }
 
@@ -219,15 +219,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
                    B = Generic
                    D = T
-                   class A<error descr="Some type variables (S) are not listed in 'Generic[T]'">(B[D], Iterable[S])</error>:
+                   class A<error descr="Some type variables (S) are not listed in 'Generic[T]'">(B[<error descr="Parameters to 'Generic[...]' must all be type variables">D</error>], Iterable[S])</error>:
                        pass
 
                    class E(Generic[T], Iterable[T]):
                        pass
 
-                   class F(B[D], Iterable[<warning descr="Invalid type argument">D</warning>]):
+                   class F(B[<error descr="Parameters to 'Generic[...]' must all be type variables">D</error>]):
                        pass
-                      \s
+                   
                    class G(Iterable[T]):
                        pass""");
   }

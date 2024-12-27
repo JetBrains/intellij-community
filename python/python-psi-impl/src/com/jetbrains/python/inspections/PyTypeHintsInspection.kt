@@ -823,7 +823,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       qNames.forEach {
         when (it) {
-          genericQName -> checkGenericTypeParameters(node)
+          genericQName -> checkTypingGenericParameters(node)
           literalQName, literalExtQName -> checkLiteralParameter(index)
           annotatedQName, annotatedExtQName -> checkAnnotatedParameter(index)
           typeAliasQName, typeAliasExtQName -> reportParameterizedTypeAlias(index)
@@ -915,72 +915,58 @@ class PyTypeHintsInspection : PyInspection() {
       checkGenericTypeParameterization(node, genericDefinitionType, typeArgumentTypes)
     }
 
-    private fun checkGenericTypeParameters(node: PySubscriptionExpression) {
+    private fun checkTypingGenericParameters(node: PySubscriptionExpression) {
       val indexExpression = node.indexExpression ?: return
-      val parameters = (indexExpression as? PyTupleExpression)?.elements ?: arrayOf(indexExpression)
-      val genericParameters = mutableSetOf<PsiElement>()
+      val typeExpressions = (indexExpression as? PyTupleExpression)?.elements ?: arrayOf(indexExpression)
+      val typeParams = mutableSetOf<PyTypeParameterType>()
+      val typeParamDeclarations = mutableSetOf<PyQualifiedNameOwner>()
       var lastIsDefault = false
       var lastIsTypeVarTuple = false
-      val processedGenerics = mutableSetOf<PyQualifiedNameOwner>()
 
-      parameters.forEach {
-        if (it !is PyReferenceExpression && it !is PyStarExpression && it !is PySubscriptionExpression) {
-          registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
+      for (typeExpr in typeExpressions) {
+        if (typeExpr !is PyReferenceExpression && typeExpr !is PyStarExpression && typeExpr !is PySubscriptionExpression) {
+          registerProblem(typeExpr, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
+                          ProblemHighlightType.GENERIC_ERROR)
+          continue
+        }
+        val typeParameterType = Ref.deref(PyTypingTypeProvider.getType(typeExpr, myTypeEvalContext))
+        if (typeParameterType !is PyTypeParameterType) {
+          registerProblem(typeExpr, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
+                          ProblemHighlightType.GENERIC_ERROR)
+          continue
+        }
+        if (!typeParams.add(typeParameterType)) {
+          registerProblem(typeExpr, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.unique"),
                           ProblemHighlightType.GENERIC_ERROR)
         }
-        else {
-          val expression = if (it is PyStarExpression) it.expression else it
 
-          if (expression != null) {
-            val type = myTypeEvalContext.getType(expression)
+        val defaultType = typeParameterType.defaultType
+        if (defaultType != null) {
+          lastIsDefault = true
+          if (lastIsTypeVarTuple && typeParameterType is PyTypeVarType) {
+            registerProblem(typeExpr,
+                            PyPsiBundle.message("INSP.type.hints.default.type.var.cannot.follow.type.var.tuple"),
+                            ProblemHighlightType.GENERIC_ERROR)
+          }
+          val genericTypesInDefaultExpr = PyTypeChecker.collectGenerics(Ref.deref(defaultType), myTypeEvalContext)
+          val defaultOutOfScope = genericTypesInDefaultExpr.allTypeParameters
+            .firstOrNull { typeVar -> typeVar.declarationElement != null && typeVar.declarationElement !in typeParamDeclarations }
 
-            if (type != null) {
-              if (type is PyTypeVarType || isParamSpecOrConcatenate(it, myTypeEvalContext) || type is PyTypeVarTupleType) {
-                if (it is PyReferenceExpression && !genericParameters.addAll(multiFollowAssignmentsChain(it))) {
-                  registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.unique"),
-                                  ProblemHighlightType.GENERIC_ERROR)
-                }
-              }
-              else {
-                registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
-                                ProblemHighlightType.GENERIC_ERROR)
-                return@forEach
-              }
-
-              val typeParameterType = Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext))
-
-              if (typeParameterType is PyTypeParameterType) {
-                val typeVarDeclaration = typeParameterType.declarationElement
-                val defaultType = typeParameterType.defaultType
-                if (defaultType != null) {
-                  lastIsDefault = true
-                  if (lastIsTypeVarTuple && typeParameterType is PyTypeVarType) {
-                    registerProblem(it,
-                                    PyPsiBundle.message("INSP.type.hints.default.type.var.cannot.follow.type.var.tuple"),
-                                    ProblemHighlightType.GENERIC_ERROR)
-                  }
-                  val genericTypesInDefaultExpr = PyTypeChecker.collectGenerics(Ref.deref(defaultType), myTypeEvalContext)
-                  val defaultOutOfScope = genericTypesInDefaultExpr.allTypeParameters
-                    .firstOrNull { typeVar -> typeVar.declarationElement != null && typeVar.declarationElement !in processedGenerics }
-
-                  if (defaultOutOfScope != null) {
-                    registerProblem(it,
-                                    PyPsiBundle.message("INSP.type.hints.default.type.refers.to.type.var.out.of.scope"))
-                  }
-                }
-                else if (lastIsDefault) {
-                  registerProblem(it,
-                                  PyPsiBundle.message("INSP.type.hints.non.default.type.vars.cannot.follow.defaults"),
-                                  ProblemHighlightType.GENERIC_ERROR)
-                }
-                if (typeVarDeclaration != null) {
-                  processedGenerics.add(typeVarDeclaration)
-                }
-              }
-              lastIsTypeVarTuple = typeParameterType is PyTypeVarTupleType
-            }
+          if (defaultOutOfScope != null) {
+            registerProblem(typeExpr,
+                            PyPsiBundle.message("INSP.type.hints.default.type.refers.to.type.var.out.of.scope", defaultOutOfScope.name))
           }
         }
+        else if (lastIsDefault) {
+          registerProblem(typeExpr,
+                          PyPsiBundle.message("INSP.type.hints.non.default.type.vars.cannot.follow.defaults"),
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+        val typeParamDeclaration = typeParameterType.declarationElement
+        if (typeParamDeclaration != null) {
+          typeParamDeclarations.add(typeParamDeclaration)
+        }
+        lastIsTypeVarTuple = typeParameterType is PyTypeVarTupleType
       }
     }
 
