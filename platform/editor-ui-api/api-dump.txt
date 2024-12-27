@@ -1547,6 +1547,9 @@ e:com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - s:valueOf(java.lang.String):com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - s:values():com.intellij.openapi.editor.CaretVisualAttributes$Weight[]
 f:com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+- sf:AI_INLAY_BUTTON_DEFAULT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:AI_INLAY_BUTTON_FOCUSED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:AI_INLAY_BUTTON_HOVERED:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:BLOCK_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:BRACES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:BRACKETS:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -1569,6 +1572,10 @@ f:com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 - sf:GLOBAL_VARIABLE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:HIGHLIGHTED_REFERENCE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:IDENTIFIER:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_DEFAULT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_FOCUSED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_HINT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_HOVERED:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:INLAY_DEFAULT:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:INLAY_TEXT_WITHOUT_BACKGROUND:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:INLINE_PARAMETER_HINT:com.intellij.openapi.editor.colors.TextAttributesKey

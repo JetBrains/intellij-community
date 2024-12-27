@@ -579,6 +579,47 @@
           <option name="BACKGROUND" value="ededed"/>
         </value>
       </option>
+      <option name="INLAY_BUTTON_DEFAULT">
+        <value>
+          <option name="FOREGROUND" value="494b57"/>
+          <option name="EFFECT_COLOR" value="000000"/>
+        </value>
+      </option>
+      <option name="INLAY_BUTTON_FOCUSED">
+        <value>
+          <option name="FOREGROUND" value="494b57"/>
+          <option name="EFFECT_COLOR" value="000000"/>
+        </value>
+      </option>
+      <option name="INLAY_BUTTON_HOVERED">
+        <value>
+          <option name="FOREGROUND" value="494b57"/>
+          <option name="EFFECT_COLOR" value="3574f0"/>
+        </value>
+      </option>
+      <option name="AI_INLAY_BUTTON_DEFAULT">
+        <value>
+          <option name="FOREGROUND" value="494b57"/>
+          <option name="EFFECT_COLOR" value="834df0"/>
+        </value>
+      </option>
+      <option name="AI_INLAY_BUTTON_FOCUSED">
+        <value>
+          <option name="FOREGROUND" value="494b57"/>
+          <option name="EFFECT_COLOR" value="a177f4"/>
+        </value>
+      </option>
+      <option name="AI_INLAY_BUTTON_HOVERED">
+        <value>
+          <option name="FOREGROUND" value="494b57"/>
+          <option name="EFFECT_COLOR" value="a177f4"/>
+        </value>
+      </option>
+      <option name="INLAY_BUTTON_HINT">
+        <value>
+          <option name="FOREGROUND" value="818594"/>
+        </value>
+      </option>
       <option name="INLAY_TEXT_WITHOUT_BACKGROUND">
         <value>
           <option name="FOREGROUND" value="7a7a7a"/>
@@ -2423,6 +2464,47 @@
         <value>
           <option name="FOREGROUND" value="787878"/>
           <option name="BACKGROUND" value="3b3b3b"/>
+        </value>
+      </option>
+      <option name="INLAY_BUTTON_DEFAULT">
+        <value>
+          <option name="FOREGROUND" value="9da0a8"/>
+          <option name="EFFECT_COLOR" value="ffffff"/>
+        </value>
+      </option>
+      <option name="INLAY_BUTTON_FOCUSED">
+        <value>
+          <option name="FOREGROUND" value="9da0a8"/>
+          <option name="EFFECT_COLOR" value="ffffff"/>
+        </value>
+      </option>
+      <option name="INLAY_BUTTON_HOVERED">
+        <value>
+          <option name="FOREGROUND" value="9da0a8"/>
+          <option name="EFFECT_COLOR" value="3574f0"/>
+        </value>
+      </option>
+      <option name="AI_INLAY_BUTTON_DEFAULT">
+        <value>
+          <option name="FOREGROUND" value="9da0a8"/>
+          <option name="EFFECT_COLOR" value="955ae0"/>
+        </value>
+      </option>
+      <option name="AI_INLAY_BUTTON_FOCUSED">
+        <value>
+          <option name="FOREGROUND" value="9da0a8"/>
+          <option name="EFFECT_COLOR" value="8150be"/>
+        </value>
+      </option>
+      <option name="AI_INLAY_BUTTON_HOVERED">
+        <value>
+          <option name="FOREGROUND" value="9da0a8"/>
+          <option name="EFFECT_COLOR" value="8150be"/>
+        </value>
+      </option>
+      <option name="INLAY_BUTTON_HINT">
+        <value>
+          <option name="FOREGROUND" value="818594"/>
         </value>
       </option>
       <option name="INLAY_TEXT_WITHOUT_BACKGROUND">

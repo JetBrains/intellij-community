@@ -66,6 +66,13 @@ public final class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey INLINE_PARAMETER_HINT_HIGHLIGHTED = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_HIGHLIGHTED");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_CURRENT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_CURRENT");
   public static final TextAttributesKey INLAY_DEFAULT = TextAttributesKey.createTextAttributesKey("INLAY_DEFAULT");
+  public static final TextAttributesKey INLAY_BUTTON_DEFAULT = TextAttributesKey.createTextAttributesKey("INLAY_BUTTON_DEFAULT");
+  public static final TextAttributesKey INLAY_BUTTON_FOCUSED = TextAttributesKey.createTextAttributesKey("INLAY_BUTTON_FOCUSED");
+  public static final TextAttributesKey INLAY_BUTTON_HOVERED = TextAttributesKey.createTextAttributesKey("INLAY_BUTTON_HOVERED");
+  public static final TextAttributesKey AI_INLAY_BUTTON_DEFAULT = TextAttributesKey.createTextAttributesKey("AI_INLAY_BUTTON_DEFAULT");
+  public static final TextAttributesKey AI_INLAY_BUTTON_FOCUSED = TextAttributesKey.createTextAttributesKey("AI_INLAY_BUTTON_FOCUSED");
+  public static final TextAttributesKey AI_INLAY_BUTTON_HOVERED = TextAttributesKey.createTextAttributesKey("AI_INLAY_BUTTON_HOVERED");
+  public static final TextAttributesKey INLAY_BUTTON_HINT = TextAttributesKey.createTextAttributesKey("INLAY_BUTTON_HINT");
   public static final TextAttributesKey INLAY_TEXT_WITHOUT_BACKGROUND = TextAttributesKey.createTextAttributesKey("INLAY_TEXT_WITHOUT_BACKGROUND");
   public static final ColorKey INLINE_REFACTORING_SETTINGS_DEFAULT = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_DEFAULT");
   public static final ColorKey INLINE_REFACTORING_SETTINGS_FOCUSED = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_FOCUSED");
