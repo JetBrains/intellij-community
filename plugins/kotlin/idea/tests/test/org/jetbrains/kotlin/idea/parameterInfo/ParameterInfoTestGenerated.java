@@ -121,6 +121,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/Conflicting.kt");
         }
 
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ConstDefaultParameter.kt");
+        }
+
         @TestMetadata("DataClassComponentFunction.kt")
         public void testDataClassComponentFunction() throws Exception {
             runTest("testData/parameterInfo/functionCall/DataClassComponentFunction.kt");

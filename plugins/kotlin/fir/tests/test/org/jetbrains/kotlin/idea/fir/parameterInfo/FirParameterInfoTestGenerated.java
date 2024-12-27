@@ -140,6 +140,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../../idea/tests/testData/parameterInfo/functionCall/Conflicting.kt");
         }
 
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/ConstDefaultParameter.kt");
+        }
+
         @TestMetadata("DataClassComponentFunction.kt")
         public void testDataClassComponentFunction() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/DataClassComponentFunction.kt");

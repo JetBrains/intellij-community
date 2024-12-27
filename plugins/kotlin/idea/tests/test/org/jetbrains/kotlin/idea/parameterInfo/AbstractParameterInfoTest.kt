@@ -7,10 +7,12 @@ import com.intellij.codeInsight.hint.ShowParameterInfoHandler
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.parameterInfo.ParameterInfoHandler
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
@@ -23,7 +25,6 @@ import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
 
@@ -72,14 +73,17 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
         val file = myFixture.file
 
-        withCustomCompilerOptions(file.text, project, myFixture.module) {
+        val originalFileText = file.text
+        lateinit var lastChildElementType: IElementType
+        withCustomCompilerOptions(originalFileText, project, myFixture.module) {
             val lastChild = file.allChildren.filter { it !is PsiWhiteSpace }.last()
+            lastChildElementType = lastChild.node.elementType
             val expectedResultText = run {
-                val lines = when (lastChild.node.elementType) {
+                val lines = when (lastChildElementType) {
                     KtTokens.BLOCK_COMMENT -> lastChild.text.substring(2, lastChild.text.length - 2).trim()
                     JavaTokenType.C_STYLE_COMMENT -> lastChild.text.substring(2, lastChild.text.length - 2).trim()
                     KtTokens.EOL_COMMENT -> lastChild.text.substring(2).trim()
-                    else -> error("Unexpected last file child ${lastChild.node.elementType}")
+                    else -> error("Unexpected last file child $lastChildElementType")
                 }.lines()
                 lines.mapNotNull { line ->
                     when {
@@ -115,7 +119,7 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
                 parameterOwner = handler.findElementForParameterInfo(mockCreateParameterInfoContext) as PsiElement
             }
 
-            val textToType = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// TYPE:")
+            val textToType = InTextDirectivesUtils.findStringWithPrefixes(originalFileText, "// TYPE:")
             if (textToType != null) {
                 myFixture.type(textToType)
                 PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -137,7 +141,32 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
                 handler.updateUI(it, parameterInfoUIContext)
             }
 
-            Assert.assertEquals(expectedResultText, parameterInfoUIContext.resultText)
+
+            val actual = parameterInfoUIContext.resultText
+            if (actual != expectedResultText) {
+                val originalTextWithoutTextDirectives = when (lastChildElementType) {
+                    KtTokens.BLOCK_COMMENT -> originalFileText.substringBeforeLast("/*").trimEnd()
+                    JavaTokenType.C_STYLE_COMMENT, KtTokens.EOL_COMMENT -> originalFileText.substringBeforeLast("//")
+                    else -> error("Unexpected last file child $lastChildElementType")
+                }
+                val actualText = when (lastChildElementType) {
+                    KtTokens.BLOCK_COMMENT -> """
+                        |$originalTextWithoutTextDirectives
+                        |/*
+                        |$actual
+                        |*/
+                    """.trimMargin()
+                    JavaTokenType.C_STYLE_COMMENT -> "$originalTextWithoutTextDirectives // $actual"
+                    KtTokens.EOL_COMMENT -> "$originalTextWithoutTextDirectives // $actual"
+                    else -> error("Unexpected last file child $lastChildElementType")
+                }
+                throw FileComparisonFailedError(
+                    message = "Actual text differs from file content",
+                    expected = originalFileText,
+                    actual = actualText,
+                    expectedFilePath = mainFile.canonicalPath
+                )
+            }
         }
     }
 
