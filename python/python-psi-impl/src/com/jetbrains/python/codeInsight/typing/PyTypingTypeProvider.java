@@ -934,6 +934,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (paramSpecType != null) {
         return Ref.create(anchorTypeParameter(typeHint, paramSpecType, context));
       }
+      final PyType callableParameterListType = getCallableParameterListType(resolved, context);
+      if (callableParameterListType != null) {
+        return Ref.create(callableParameterListType);
+      }
       final PyType stringBasedType = getStringLiteralType(resolved, context);
       if (stringBasedType != null) {
         return Ref.create(stringBasedType);
@@ -965,6 +969,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         context.getTypeAliasStack().remove(alias);
       }
     }
+  }
+
+  private static @Nullable PyType getCallableParameterListType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyListLiteralExpression listLiteral) {
+      List<PyType> argumentTypes = ContainerUtil.map(listLiteral.getElements(), defExpr -> Ref.deref(getType(defExpr, context)));
+      return new PyCallableParameterListTypeImpl(ContainerUtil.map(argumentTypes, PyCallableParameterImpl::nonPsi));
+    }
+    return null;
   }
 
   private static @Nullable Ref<PyType> getNarrowedType(@NotNull PsiElement resolved, @NotNull Context context) {
@@ -1430,30 +1442,20 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           if (elements.length == 2) {
             final PyExpression parametersExpr = elements[0];
             final PyExpression returnTypeExpr = elements[1];
-            if (parametersExpr instanceof PyListLiteralExpression listExpr) {
-              final List<PyCallableParameter> parameters = new ArrayList<>();
-              for (PyExpression argExpr : listExpr.getElements()) {
-                parameters.add(PyCallableParameterImpl.nonPsi(Ref.deref(getType(argExpr, context))));
-              }
-              final PyType returnType = Ref.deref(getType(returnTypeExpr, context));
-              return new PyCallableTypeImpl(parameters, returnType);
+            PyType returnType = Ref.deref(getType(returnTypeExpr, context));
+            if (returnType instanceof PyVariadicType) {
+              returnType = null;
             }
             if (isEllipsis(parametersExpr)) {
-              return new PyCallableTypeImpl(null, Ref.deref(getType(returnTypeExpr, context)));
+              return new PyCallableTypeImpl(null, returnType);
             }
-            if (parametersExpr instanceof PyReferenceExpression) {
-              if (Ref.deref(getType(parametersExpr, context.myContext)) instanceof PyParamSpecType paramSpec) {
-                final var parameter = PyCallableParameterImpl.nonPsi(parametersExpr.getName(), paramSpec);
-                return new PyCallableTypeImpl(Collections.singletonList(parameter), Ref.deref(getType(returnTypeExpr, context)));
-              }
+            PyType parametersType = Ref.deref(getType(parametersExpr, context));
+            if (parametersType instanceof PyCallableParameterListType paramList) {
+              return new PyCallableTypeImpl(paramList.getParameters(), returnType);
             }
-            if (parametersExpr instanceof PySubscriptionExpression && isConcatenate(parametersExpr, context.myContext)) {
-              final var concatenateParameters = getConcatenateParametersTypes((PySubscriptionExpression)parametersExpr, context.myContext);
-              if (concatenateParameters != null) {
-                final var concatenate = new PyConcatenateType(concatenateParameters.first, concatenateParameters.second);
-                final var parameter = PyCallableParameterImpl.nonPsi(parametersExpr.getName(), concatenate);
-                return new PyCallableTypeImpl(Collections.singletonList(parameter), Ref.deref(getType(returnTypeExpr, context)));
-              }
+            if (parametersType instanceof PyParamSpecType || parametersType instanceof PyConcatenateType) {
+              PyCallableParameter paramSpecParam = PyCallableParameterImpl.nonPsi(parametersType);
+              return new PyCallableTypeImpl(Collections.singletonList(paramSpecParam), returnType);
             }
           }
         }
@@ -1595,8 +1597,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
               .withDeclarationElement(declarationElement);
           }
           case ParamSpec -> {
+            Ref<PyType> defaultExprType = defaultExpression != null ? getType(defaultExpression, context) : null;
             Ref<PyCallableParameterVariadicType> defaultType =
-              defaultExpression != null ? Ref.create(createParamSpecDefaultTypeFromExpression(defaultExpression, context)) : null;
+              Ref.deref(defaultExprType) instanceof PyCallableParameterVariadicType variadicType ? Ref.create(variadicType) : null;
             yield new PyParamSpecType(name)
               .withScopeOwner(scopeOwner)
               .withDefaultType(defaultType)
@@ -1775,26 +1778,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                                                                                    @NotNull Context context) {
     PyExpression defaultExpression = callExpression.getKeywordArgument("default");
     if (defaultExpression != null) {
-      return Ref.create(createParamSpecDefaultTypeFromExpression(defaultExpression, context));
-    }
-    return null;
-  }
-
-  private static @Nullable PyCallableParameterVariadicType createParamSpecDefaultTypeFromExpression(@NotNull PyExpression expression,
-                                                                                                    @NotNull Context context) {
-    if (expression instanceof PyListLiteralExpression listLiteralExpression) {
-      PyExpression[] defaultExpressions = listLiteralExpression.getElements();
-      List<PyType> defaultArgumentTypes = StreamEx.of(defaultExpressions)
-        .nonNull()
-        .map(defExpr -> Ref.deref(getType(defExpr, context)))
-        .toList();
-
-      return new PyCallableParameterListTypeImpl(ContainerUtil.map(defaultArgumentTypes, PyCallableParameterImpl::nonPsi));
-    }
-    if (expression instanceof PyReferenceExpression || expression instanceof PyStringLiteralExpression) {
-      PyType referenceType = Ref.deref(getType(expression, context));
-      if (referenceType instanceof PyParamSpecType paramSpecType) {
-        return paramSpecType;
+      PyType defaultType = Ref.deref(getType(defaultExpression, context));
+      if (defaultType instanceof PyCallableParameterVariadicType variadicType) {
+        return Ref.create(variadicType);
       }
     }
     return null;
@@ -1824,16 +1810,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     final PyExpression indexExpr = expression.getIndexExpression();
     if (indexExpr instanceof PyTupleExpression tupleExpr) {
       for (PyExpression expr : tupleExpr.getElements()) {
-        if (expr instanceof PyListLiteralExpression listLiteralExpression) { // ParamSpec explicit parameterization
-          types.add(createParamSpecDefaultTypeFromExpression(listLiteralExpression, context));
-        }
-        else {
-          types.add(Ref.deref(getType(expr, context)));
-        }
+        types.add(Ref.deref(getType(expr, context)));
       }
-    }
-    else if (indexExpr instanceof PyListLiteralExpression listLiteralExpression) {
-      types.add(createParamSpecDefaultTypeFromExpression(listLiteralExpression, context));
     }
     else if (indexExpr != null) {
       types.add(Ref.deref(getType(indexExpr, context)));

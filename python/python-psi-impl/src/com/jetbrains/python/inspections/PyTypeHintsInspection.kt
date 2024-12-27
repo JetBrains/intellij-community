@@ -886,6 +886,7 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkGenericTypeArguments(node: PySubscriptionExpression) {
       val indexExpression = node.indexExpression ?: return
       val pyClass = node.operand.reference?.resolve() as? PyClass ?: return // Should be explicitly resolved to class, not type alias
+      if (pyClass.qualifiedName == PyNames.TUPLE) return
       val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(pyClass, myTypeEvalContext) ?: return
 
       val parameters = (indexExpression as? PyTupleExpression)?.elements ?: arrayOf(indexExpression)
@@ -897,13 +898,14 @@ class PyTypeHintsInspection : PyInspection() {
           is PySubscriptionExpression,
           is PyBinaryExpression,
           is PyStarExpression,
-          is PyStringLiteralExpression -> {
+          is PyStringLiteralExpression,
+          is PyListLiteralExpression,
+          is PyNoneLiteralExpression,
+            -> {
             val typeRef = PyTypingTypeProvider.getType(it, myTypeEvalContext)
             if (typeRef == null) registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
-            typeArgumentTypes.add(Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext)))
+            typeArgumentTypes.add(Ref.deref(typeRef))
           }
-          is PyListLiteralExpression -> typeArgumentTypes.add(createCallableParameterListTypeFromListLiteral(it))
-          is PyNoneLiteralExpression -> typeArgumentTypes.add(Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext)))
           else -> {
             registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
             typeArgumentTypes.add(null)
@@ -980,18 +982,6 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
       }
-    }
-
-    private fun createCallableParameterListTypeFromListLiteral(listLiteral: PyListLiteralExpression): PyCallableParameterListType {
-      val argumentTypes = listLiteral.elements.filterNotNull().map { element ->
-        val typeRef = PyTypingTypeProvider.getType(element, myTypeEvalContext)
-        if (typeRef == null) {
-          registerProblem(element,  PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
-          null
-        }
-        else Ref.deref(typeRef)
-      }
-      return PyCallableParameterListTypeImpl(argumentTypes.map(PyCallableParameterImpl::nonPsi))
     }
 
     private fun checkCallableParameters(index: PyExpression) {
@@ -1123,17 +1113,13 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkGenericTypeParameterization(node: PySubscriptionExpression,
                                                  collectionType: PyCollectionType,
                                                  typeArguments: List<PyType?>) {
-      if (collectionType.pyClass.qualifiedName == PyNames.TUPLE) return
-
       if (typeArguments.isNotEmpty()) {
         val typeParameters = collectionType.elementTypes
         val mapping = PyTypeParameterMapping.mapByShape(typeParameters,
                                                         typeArguments,
                                                         PyTypeParameterMapping.Option.USE_DEFAULTS)
         if (mapping == null) {
-          val typeParameterListRepresentation = typeParameters
-            .map { it.name }
-            .joinToString(prefix = "[", postfix = "]")
+          val typeParameterListRepresentation = typeParameters.joinToString(prefix = "[", postfix = "]") { it.name!! }
 
           registerProblem(node.indexExpression,
                           PyPsiBundle.message("INSP.type.hints.type.arguments.do.not.match.type.parameters",
