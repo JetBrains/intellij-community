@@ -19,7 +19,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -163,7 +162,7 @@ final class FileAssociationsManagerImpl extends FileAssociationsManager implemen
           final VirtualFilePointer p = container.findByUrl(assoc.getVirtualFile().getUrl());
           if (p != null) {
             container.remove(p);
-            if (container.size() == 0) {
+            if (container.isEmpty()) {
               myAssociations.remove(pointer);
             }
             touch();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +55,7 @@ public final class EnvironmentRestorer {
 
     for (Pair<String, String> pair : reserved) {
       String originalName = pair.first.substring(RESERVED_ORIGINAL_VARIABLE_PREFIX.length());
-      if (originalName.length() == 0) {
+      if (originalName.isEmpty()) {
         Logger.getInstance(EnvironmentRestorer.class).warn(
           "the name of the reserved environment variable consists only of the prefix \"" +
           RESERVED_ORIGINAL_VARIABLE_PREFIX + "\". name=" + pair.first + " value=" + pair.second);

@@ -149,9 +149,9 @@ public class CheckNodeTest extends XPathInspection {
               }
             } else if (allowDefaultNamespace) {
               final String namespaceURI = namespaceContext.getDefaultNamespace(context);
-              b = b && (element.getNamespaceURI().equals(namespaceURI) || (element.getNamespaceURI().length() == 0 && namespaceURI == null));
+              b = b && (element.getNamespaceURI().equals(namespaceURI) || (element.getNamespaceURI().isEmpty() && namespaceURI == null));
             } else {
-              b = b && element.getNamespaceURI().length() == 0;
+              b = b && element.getNamespaceURI().isEmpty();
             }
           return b;
         }

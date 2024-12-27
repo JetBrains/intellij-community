@@ -60,7 +60,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
         text.append(UIUtil.getHtmlBody(new Html(problem).setKeepFont(true))).append(UIUtil.BORDER_LINE);
       }
     }
-    if (text.length() > 0) { //otherwise do not change anything
+    if (!text.isEmpty()) { //otherwise do not change anything
       return XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text.toString(), UIUtil.BORDER_LINE));
     }
     return super.dressDescription(editor, tooltipText, true);

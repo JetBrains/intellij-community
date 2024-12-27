@@ -901,7 +901,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
                                                                                    @Nullable List<PsiVariable> nonFinalVariables) {
         if (nonFinalVariables != null && !nonFinalVariables.isEmpty()) return null;
         List<PsiStatement> statements = Arrays.asList(terminalBlock.getStatements());
-        if (statements.size() < 1) return null;
+        if (statements.isEmpty()) return null;
         PsiVariable targetBuilder = extractStringBuilder(statements.get(0));
         if(!(targetBuilder instanceof PsiLocalVariable)) return null;
         List<PsiExpression> joinParts = extractJoinParts(statements);
@@ -1285,7 +1285,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           delimiterJoinParts.add(joinPart);
           sb.append(constantExpression);
         }
-        String separator = sb.length() == 0 ? null : sb.toString();
+        String separator = sb.isEmpty() ? null : sb.toString();
         if (firstNonConstant != -1) {
           List<PsiExpression> mainJoinParts = joinParts.subList(firstNonConstant, joinParts.size());
           return new JoinData(separator, mainJoinParts, delimiterJoinParts);
@@ -1307,7 +1307,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           sb.append(constantExpression);
           delimiterJoinParts.add(joinPart);
         }
-        String separator = sb.length() == 0 ? null : sb.toString();
+        String separator = sb.isEmpty() ? null : sb.toString();
         if (firstNonConstant != -1) {
           List<PsiExpression> mainJoinParts = joinParts.subList(0, firstNonConstant + 1);
           return new JoinData(separator, mainJoinParts, delimiterJoinParts);

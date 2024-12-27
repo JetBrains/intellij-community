@@ -227,7 +227,7 @@ public final class PatchReader {
             iterator.previous();
             break;
           }
-          if (sb.length() > 0) {
+          if (!sb.isEmpty()) {
             sb.append("\n");
           }
           sb.append(StringUtil.unescapeStringCharacters(line.substring(UnifiedDiffWriter.ADD_INFO_LINE_START.length())));
@@ -463,12 +463,12 @@ public final class PatchReader {
       int afterLineIndex = 0;
       PatchLine lastBeforePatchLine = null;
       PatchLine lastAfterPatchLine = null;
-      if (beforeLines.size() == 0) {
+      if (beforeLines.isEmpty()) {
         for (String line : afterLines) {
           hunk.addLine(parsePatchLine(line, 2));
         }
       }
-      else if (afterLines.size() == 0) {
+      else if (afterLines.isEmpty()) {
         for (String line : beforeLines) {
           hunk.addLine(parsePatchLine(line, 2));
         }
@@ -551,7 +551,7 @@ public final class PatchReader {
       if (pos >= 0) {
         @NlsSafe String versionId = fileName.substring(pos).trim();
         fileName = fileName.substring(0, pos);
-        if (versionId.length() > 0 && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
+        if (!versionId.isEmpty() && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
           if (before) {
             patch.setBeforeVersionId(versionId);
           }

@@ -152,7 +152,7 @@ public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseIns
       }
 
       List<PsiThrowStatement> all = getThrowStatements(lambdaSupplier);
-      if (all.size() == 0) {
+      if (all.isEmpty()) {
         return;
       }
       PsiIdentifier[] identifiers = PsiTreeUtil.getChildrenOfType(expression.getMethodExpression(), PsiIdentifier.class);

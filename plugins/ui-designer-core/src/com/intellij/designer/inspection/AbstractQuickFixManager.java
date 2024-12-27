@@ -327,7 +327,7 @@ public abstract class AbstractQuickFixManager {
 
       String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-      if (acceleratorsText.length() > 0) {
+      if (!acceleratorsText.isEmpty()) {
         setToolTipText(DesignerBundle.message("tooltip.press.accelerator", acceleratorsText));
       }
 

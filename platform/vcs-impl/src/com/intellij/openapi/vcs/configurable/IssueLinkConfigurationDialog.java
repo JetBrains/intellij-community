@@ -47,7 +47,7 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
   private void updateFeedback() {
     myErrorLabel.setText(" ");
     try {
-      if (myIssueIDTextField.getText().length() > 0) {
+      if (!myIssueIDTextField.getText().isEmpty()) {
         ArrayList<IssueNavigationConfiguration.LinkMatch> matches = new ArrayList<>();
         IssueNavigationConfiguration.findIssueLinkMatches(myExampleIssueIDTextField.getText(), getLink(), matches);
         IssueNavigationConfiguration.LinkMatch firstMatch = ContainerUtil.getFirstItem(matches);

@@ -268,7 +268,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     final PsiElement[] children = directory.getChildren();
     final String relativePath = VfsUtilCore.getRelativePath(directory.getVirtualFile(), rootDirectory.getVirtualFile(), '/');
 
-    final TargetDirectoryWrapper newTargetDirectory = relativePath.length() == 0
+    final TargetDirectoryWrapper newTargetDirectory = relativePath.isEmpty()
                                                       ? targetDirectory
                                                       : targetDirectory.findOrCreateChild(relativePath);
     nestedDirsToMove.put(directory, newTargetDirectory);

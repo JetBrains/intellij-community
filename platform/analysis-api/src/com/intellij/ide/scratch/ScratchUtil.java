@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.openapi.project.Project;
@@ -41,7 +41,7 @@ public final class ScratchUtil {
     StringBuilder sb = new StringBuilder();
     for (VirtualFile o = file; !rootFile.equals(o); o = o.getParent()) {
       String part = StringUtil.notNullize(rootType.substituteName(project, o), o.getName());
-      if (sb.length() == 0 && part.indexOf('/') > -1) {
+      if (sb.isEmpty() && part.indexOf('/') > -1) {
         // db console root type adds folder here, trim it
         part = part.substring(part.lastIndexOf('/') + 1);
       }

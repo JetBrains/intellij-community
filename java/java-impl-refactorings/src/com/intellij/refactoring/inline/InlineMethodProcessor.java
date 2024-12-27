@@ -579,7 +579,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         System.arraycopy(instanceCreationArguments, 0, exprs, 0, parameters.length - 1);
         StringBuilder varargs = new StringBuilder();
         for (int i = parameters.length - 1; i < instanceCreationArguments.length; i++) {
-          if (varargs.length() > 0) varargs.append(", ");
+          if (!varargs.isEmpty()) varargs.append(", ");
           varargs.append(instanceCreationArguments[i].getText());
         }
 

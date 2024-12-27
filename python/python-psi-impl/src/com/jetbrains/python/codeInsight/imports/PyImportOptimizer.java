@@ -354,7 +354,7 @@ public final class PyImportOptimizer implements ImportOptimizer {
       final StringBuilder content = new StringBuilder();
 
       for (List<PyImportStatementBase> imports : myGroups.values()) {
-        if (content.length() > 0 && !imports.isEmpty()) {
+        if (!content.isEmpty() && !imports.isEmpty()) {
           // one extra blank line between import groups according to PEP 8
           content.append("\n");
         }

@@ -84,13 +84,13 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
     final StringBuilder committedRevisions = new StringBuilder();
     for (CommitInfo result : results) {
       if (result != CommitInfo.EMPTY && result.getRevisionNumber() > 0) {
-        if (committedRevisions.length() > 0) {
+        if (!committedRevisions.isEmpty()) {
           committedRevisions.append(", ");
         }
         committedRevisions.append(result.getRevisionNumber());
       }
     }
-    if (committedRevisions.length() > 0) {
+    if (!committedRevisions.isEmpty()) {
       feedback.add(SvnVcs.VCS_DISPLAY_NAME + ": " + SvnBundle.message("status.text.committed.revision", committedRevisions));
     }
   }

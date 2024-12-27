@@ -317,7 +317,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
             return false;
           }
         }
-        return inputString.trim().length() > 0;
+        return !inputString.trim().isEmpty();
       }
 
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -125,7 +125,7 @@ final class FileTree {
     }
     // We have remove also all removed (empty) directories
     if (dirsToBeRemoved != null) {
-      LOG.assertTrue(dirsToBeRemoved.size() > 0);
+      LOG.assertTrue(!dirsToBeRemoved.isEmpty());
       for (VirtualFile dirToBeRemoved : dirsToBeRemoved) {
         removeDir(dirToBeRemoved);
       }
@@ -144,7 +144,7 @@ final class FileTree {
     if (children == null) {
       throw new IllegalArgumentException("directory has no children list: " + psiDirectory);
     }
-    if (children.size() > 0) {
+    if (!children.isEmpty()) {
       throw new IllegalArgumentException("directory isn't empty: " + psiDirectory);
     }
     //
@@ -168,7 +168,7 @@ final class FileTree {
                                                        List<VirtualFile> dirsToBeRemoved,
                                                        @NotNull VirtualFile _directory) {
     if (children.remove(psiDirectory)) {
-      if (children.size() == 0) {
+      if (children.isEmpty()) {
         if (dirsToBeRemoved == null) {
           dirsToBeRemoved = new ArrayList<>(2);
         }

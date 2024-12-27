@@ -42,7 +42,7 @@ public abstract class PyAbstractPackageCache {
                     @Override
                     public PackageInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                             throws JsonParseException {
-                      if (json.isJsonObject() && json.getAsJsonObject().size() == 0) {
+                      if (json.isJsonObject() && json.getAsJsonObject().isEmpty()) {
                         return PackageInfo.EMPTY;
                       }
                       return defaultGson.fromJson(json, typeOfT);

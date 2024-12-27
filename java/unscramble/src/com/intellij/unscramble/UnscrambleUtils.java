@@ -111,7 +111,7 @@ public final class UnscrambleUtils {
     int linesCount = 0;
     for (String line : text.split("\n")) {
       line = line.trim();
-      if (line.length() == 0) continue;
+      if (line.isEmpty()) continue;
       line = StringUtil.trimEnd(line, "\r");
       if (STACKTRACE_LINE.matcher(line).matches()) {
         linesCount++;

@@ -210,20 +210,20 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
         JavaRefactoringBundle.message("introduce.parameter.object.error.inner.class.already.exist", innerClassName));
     } else if (!useExistingClass()) {
       final String className = getClassName();
-      if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
+      if (className.isEmpty() || !nameHelper.isIdentifier(className)) {
         throw new ConfigurationException(
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.parameter.class.name", className));
       }
       final String packageName = getPackageName();
 
-      if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
+      if (packageName.isEmpty() || !nameHelper.isQualifiedName(packageName)) {
         throw new ConfigurationException(
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.parameter.class.package.name", packageName));
       }
     }
     else {
       final String className = getExistingClassName();
-      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
+      if (className.isEmpty() || !nameHelper.isQualifiedName(className)) {
         throw new ConfigurationException(
           JavaRefactoringBundle.message("introduce.parameter.object.error.invalid.qualified.parameter.class.name", className));
       }

@@ -53,7 +53,7 @@ public class TransferableFileEditorStateSupport {
     mySettings = settings;
     myHolders = holders;
     myEditors = ContainerUtil.map(ContainerUtil.filter(holders, IS_SUPPORTED), holder -> holder.getEditor());
-    mySupported = myEditors.size() > 0;
+    mySupported = !myEditors.isEmpty();
 
     new MySynchronizer().install(disposable);
   }

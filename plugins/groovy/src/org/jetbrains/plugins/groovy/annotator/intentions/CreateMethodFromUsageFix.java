@@ -48,7 +48,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     final List<PsiClass> classes = getTargetClasses();
-    if (classes.size() == 0) {
+    if (classes.isEmpty()) {
       return IntentionPreviewInfo.EMPTY;
     }
     Data data = generateMethod(classes.get(0), true);

@@ -236,7 +236,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
           buffer.append(c);
         }
       }
-      if (buffer.length() > 0) {
+      if (!buffer.isEmpty()) {
         document.insertString(rBracesInsertOffset + 1, buffer);
       }
     }

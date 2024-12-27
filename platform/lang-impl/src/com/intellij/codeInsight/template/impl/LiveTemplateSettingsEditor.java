@@ -303,7 +303,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
         if (type instanceof EverywhereContextType) {
           ownName = CodeInsightBundle.message("dialog.edit.template.context.other");
         }
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
         }
         if (!oldPrefix.equals(prefix)) {
@@ -316,7 +316,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       String contexts = CodeInsightBundle.message("dialog.edit.template.applicable.in.contexts", sb.toString());
       change.setText(CodeInsightBundle.message("link.change.context"));
 
-      final boolean noContexts = sb.length() == 0;
+      final boolean noContexts = sb.isEmpty();
       if (noContexts) {
         contexts = CodeInsightBundle.message("dialog.edit.template.no.applicable.contexts");
         ctxLabel.setIcon(AllIcons.General.BalloonWarning);

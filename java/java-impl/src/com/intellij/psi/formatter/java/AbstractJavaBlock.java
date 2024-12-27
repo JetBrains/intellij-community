@@ -874,7 +874,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       // hence, no alignment should be applied to them in order to avoid subsequent blocks aligned with the same alignment to
       // be located at the left editor edge as well.
       CharSequence prevChars;
-      if (previous != null && previous.getElementType() == TokenType.WHITE_SPACE && (prevChars = previous.getChars()).length() > 0
+      if (previous != null && previous.getElementType() == TokenType.WHITE_SPACE && !(prevChars = previous.getChars()).isEmpty()
           && prevChars.charAt(prevChars.length() - 1) == '\n') {
         return false;
       }

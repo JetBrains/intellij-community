@@ -397,7 +397,7 @@ public class GradleInstallationManager implements Disposable {
       for (File file : files) {
         filesInfo.append(file.getAbsolutePath()).append(';');
       }
-      if (filesInfo.length() > 0) {
+      if (!filesInfo.isEmpty()) {
         filesInfo.setLength(filesInfo.length() - 1);
       }
       GradleLog.LOG.info(String.format(

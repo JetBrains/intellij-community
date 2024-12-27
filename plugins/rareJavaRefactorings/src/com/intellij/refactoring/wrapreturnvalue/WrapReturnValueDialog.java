@@ -102,7 +102,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
       }
     } else if (useExistingClassButton.isSelected()) {
       final String className = existingClassField.getText().trim();
-      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
+      if (className.isEmpty() || !nameHelper.isQualifiedName(className)) {
         throw new ConfigurationException(JavaRareRefactoringsBundle.message("dialog.message.invalid.qualified.wrapper.class.name", className));
       }
       final Object item = myFieldsCombo.getSelectedItem();
@@ -111,12 +111,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
       }
     } else {
       final String className = getClassName();
-      if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
+      if (className.isEmpty() || !nameHelper.isIdentifier(className)) {
         throw new ConfigurationException(JavaRareRefactoringsBundle.message("dialog.message.invalid.wrapper.class.name", className));
       }
       final String packageName = getPackageName();
 
-      if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
+      if (packageName.isEmpty() || !nameHelper.isQualifiedName(packageName)) {
         throw new ConfigurationException(JavaRareRefactoringsBundle.message("dialog.message.invalid.wrapper.class.package.name", packageName));
       }
     }

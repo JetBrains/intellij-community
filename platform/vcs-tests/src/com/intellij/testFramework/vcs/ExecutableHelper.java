@@ -37,7 +37,7 @@ public final class ExecutableHelper {
     if (fileExec != null) {
       return fileExec.getAbsolutePath();
     }
-    throw new IllegalStateException(programName + " executable not found. " + (envs.size() > 0 ?
+    throw new IllegalStateException(programName + " executable not found. " + (!envs.isEmpty() ?
                                                                                "Please define a valid environment variable " +
                                                                                envs.iterator().next() +
                                                                                " pointing to the " +

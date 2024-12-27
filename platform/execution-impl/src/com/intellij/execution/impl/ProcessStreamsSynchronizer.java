@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -77,7 +77,7 @@ public class ProcessStreamsSynchronizer {
         myLastFlushedChunkBaseOutputType = baseOutputType;
         myLastFlushedChunkCreatedNanoTime = nowNano;
         flushRunnable.run();
-        if (newlineAdded && myPendingChunks.size() > 0
+        if (newlineAdded && !myPendingChunks.isEmpty()
             && myPendingChunks.get(0).getNanoTimePassedSinceLastFlushedChunk(nowNano) >= AWAIT_SAME_STREAM_TEXT_NANO) {
           processPendingChunks(nowNano);
         }

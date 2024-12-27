@@ -57,7 +57,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
         if (index == 0) {
           append(value, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-        else if (value.length() == 0) {
+        else if (value.isEmpty()) {
           append(VcsBundle.message("committed.changes.filter.none"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {

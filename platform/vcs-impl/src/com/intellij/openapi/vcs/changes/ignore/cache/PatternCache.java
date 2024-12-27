@@ -204,7 +204,7 @@ public class PatternCache implements Disposable {
           star = false;
         }
         else if (star) {
-          char prev = sb.length() > 0 ? sb.charAt(sb.length() - 1) : '\0';
+          char prev = !sb.isEmpty() ? sb.charAt(sb.length() - 1) : '\0';
           if (prev == '\0' || prev == '^' || prev == '/') {
             doubleStar = true;
           }

@@ -18,7 +18,7 @@ public interface BundleNameEvaluator {
       if (packageQualifiedName == null) return null;
 
       StringBuilder qName = new StringBuilder(packageQualifiedName);
-      if (qName.length() > 0) qName.append(".");
+      if (!qName.isEmpty()) qName.append(".");
       qName.append(ResourceBundleManager.getInstance(psiFile.getProject()).getBaseName(psiFile));
       return qName.toString();
     }

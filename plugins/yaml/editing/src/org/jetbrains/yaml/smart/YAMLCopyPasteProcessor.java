@@ -475,7 +475,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     String dotPrefix = text.substring(0, leadingDotsNumber);
     text = text.substring(leadingDotsNumber);
     List<String> sequence = new ArrayList<>(StringUtil.split(text, "."));
-    if (!dotPrefix.isEmpty() && sequence.size() > 0) {
+    if (!dotPrefix.isEmpty() && !sequence.isEmpty()) {
       sequence.set(0, dotPrefix + sequence.get(0));
     }
     return sequence;

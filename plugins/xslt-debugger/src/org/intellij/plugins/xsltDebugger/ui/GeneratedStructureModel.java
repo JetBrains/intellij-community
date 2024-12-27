@@ -100,7 +100,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     if (!myFilterWhitespace) {
       return super.isLeaf(node);
     }
-    return super.isLeaf(node) || getFilteredChildren((DefaultMutableTreeNode)node, true).size() == 0;
+    return super.isLeaf(node) || getFilteredChildren((DefaultMutableTreeNode)node, true).isEmpty();
   }
 
   private static List getFilteredChildren(DefaultMutableTreeNode node, boolean checkOnly) {
@@ -116,7 +116,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
       if (child instanceof StructureNode) {
         final OutputEventQueue.NodeEvent event = (OutputEventQueue.NodeEvent)child.getUserObject();
         if (event != null && event.getType() == OutputEventQueue.CHARACTERS) {
-          if (event.getValue().trim().length() == 0) {
+          if (event.getValue().trim().isEmpty()) {
             child = child.getNextSibling();
             continue;
           }
@@ -132,7 +132,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   }
 
   private void updateImpl(List<OutputEventQueue.NodeEvent> nodeEvents) {
-    if (nodeEvents.size() > 0) {
+    if (!nodeEvents.isEmpty()) {
       for (DefaultMutableTreeNode node : myLastNodes) {
         if (node instanceof StructureNode) {
           ((StructureNode)node).refresh();
@@ -210,7 +210,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
 
   private @Nullable String intern(String s) {
     if (s != null) {
-      if (s.length() == 0) return s.intern();
+      if (s.isEmpty()) return s.intern();
       return myInterner.intern(s);
     } else {
       return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -54,7 +54,7 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
       for (FilePath file : files) {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
-      if (allExceptions.size() > 0) {
+      if (!allExceptions.isEmpty()) {
         AbstractVcsHelper.getInstance(project).showErrors(allExceptions, VcsBundle.message("changes.tab.title.vcs.errors"));
       }
     };

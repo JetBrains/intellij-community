@@ -120,7 +120,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
         }
         String path = getDefaultBaseDir(myWizardContext, namePathComponent);
         final String moduleName = getModuleName();
-        if (path.length() > 0 && !Comparing.strEqual(moduleName, namePathComponent.getNameValue())) {
+        if (!path.isEmpty() && !Comparing.strEqual(moduleName, namePathComponent.getNameValue())) {
           path += "/" + moduleName;
         }
         if (!myContentRootChangedByUser) {

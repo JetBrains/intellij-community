@@ -140,7 +140,7 @@ public class FileTypeUtil implements Disposable {
         line = StringUtil.trimEnd(line, close);
         preview.append(leader).append(pre);
         int len = 0;
-        if (pre.length() > 0 && !line.isEmpty()) {
+        if (!pre.isEmpty() && !line.isEmpty()) {
           preview.append(' ');
           len++;
         }
@@ -184,8 +184,8 @@ public class FileTypeUtil implements Disposable {
       }
     }
 
-    return preview.length() > 0 ? preview.substring(0, preview.length() - 1) 
-                                : preview.toString();
+    return !preview.isEmpty() ? preview.substring(0, preview.length() - 1)
+                              : preview.toString();
   }
 
   public static boolean isSupportedFile(@NotNull VirtualFile file) {

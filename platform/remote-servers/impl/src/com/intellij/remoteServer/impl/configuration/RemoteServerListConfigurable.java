@@ -77,7 +77,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     final String typeNames = StringUtil.join(getDisplayedServerTypes(),
                                              ServerType::getPresentableName, ", ");
 
-    if (typeNames.length() > 0) {
+    if (!typeNames.isEmpty()) {
       return CloudBundle.message("clouds.configure.empty.selection.string", typeNames);
     }
     return null;

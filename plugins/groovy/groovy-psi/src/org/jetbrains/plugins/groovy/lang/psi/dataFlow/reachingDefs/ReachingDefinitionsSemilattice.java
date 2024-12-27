@@ -12,7 +12,7 @@ public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap
 
   @Override
   public @NotNull DefinitionMap join(@NotNull List<? extends DefinitionMap> ins) {
-    if (ins.size() == 0) {
+    if (ins.isEmpty()) {
       return NEUTRAL;
     }
     DefinitionMap result = ins.get(0);

@@ -380,7 +380,7 @@ class ContractInferenceInterpreter {
         List<PreContract> conditionResults = visitExpression(states, findExpressionChild(myTree, statement));
 
         List<LighterASTNode> thenElse = getStatements(statement, myTree);
-        if (thenElse.size() > 0) {
+        if (!thenElse.isEmpty()) {
           result.addAll(visitStatements(antecedentsReturning(conditionResults, returnTrue()), singletonList(thenElse.get(0))));
         }
 

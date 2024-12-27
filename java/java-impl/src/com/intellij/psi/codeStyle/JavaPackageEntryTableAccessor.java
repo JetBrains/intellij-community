@@ -26,7 +26,7 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     PackageEntryTable entryTable = new PackageEntryTable();
     for (String strValue : strList) {
       String parseStr = strValue.trim();
-      if (parseStr.length() > 0 && parseStr.charAt(0) == BLANK_LINE_CHAR) {
+      if (!parseStr.isEmpty() && parseStr.charAt(0) == BLANK_LINE_CHAR) {
         for (int i = 0; i < parseStr.length(); i ++) {
           if (parseStr.charAt(i) == BLANK_LINE_CHAR) {
             entryTable.addEntry(PackageEntry.BLANK_LINE_ENTRY);

@@ -228,7 +228,7 @@ public final class SvnUtil {
       }
       @Nls StringBuilder sb = new StringBuilder(SvnBundle.message("message.text.files.lock.failed", failedFiles.length == 1 ? 0 : 1));
       for (VcsException vcsException : exceptions) {
-        if (sb.length() > 0) sb.append('\n');
+        if (!sb.isEmpty()) sb.append('\n');
         sb.append(vcsException.getMessage());
       }
       throw new VcsException(sb.toString());

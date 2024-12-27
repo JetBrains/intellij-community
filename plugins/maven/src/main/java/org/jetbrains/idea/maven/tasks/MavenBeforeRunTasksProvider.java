@@ -109,7 +109,7 @@ public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<Mav
       // just created empty task.
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       List<MavenProject> rootProjects = projectsManager.getRootProjects();
-      if (rootProjects.size() > 0) {
+      if (!rootProjects.isEmpty()) {
         dialog.setSelectedMavenProject(rootProjects.get(0));
       }
       else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.navigation;
 
 import com.intellij.ide.actions.QualifiedNameProvider;
@@ -52,7 +52,7 @@ public final class JsonQualifiedNameProvider implements QualifiedNameProvider {
       parentProperty = PsiTreeUtil.getParentOfType(parentProperty, JsonProperty.class, JsonArray.class);
     }
 
-    if (builder.length() == 0) return null;
+    if (builder.isEmpty()) return null;
 
     // if the first operation is array indexing, we insert the 'root' element $
     if (builder.charAt(0) == '[') {

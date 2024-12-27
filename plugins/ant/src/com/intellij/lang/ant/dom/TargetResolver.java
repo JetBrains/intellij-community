@@ -94,7 +94,7 @@ public class TargetResolver extends PropertyProviderFinder {
 
   @Override
   protected void targetDefined(AntDomTarget target, String targetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
-    if (myContextTarget != null && myDeclaredTargetRefs.size() > 0 && target.equals(myContextTarget)) {
+    if (myContextTarget != null && !myDeclaredTargetRefs.isEmpty() && target.equals(myContextTarget)) {
       for (Iterator<String> it = myDeclaredTargetRefs.iterator(); it.hasNext();) {
         final String declaredRef = it.next();
         final Pair<AntDomTarget, String> result = dependenciesMap.get(declaredRef);
@@ -110,7 +110,7 @@ public class TargetResolver extends PropertyProviderFinder {
   @Override
   protected void stageCompleted(Stage completedStage, Stage startingStage) {
     if (completedStage == Stage.RESOLVE_MAP_BUILDING_STAGE) {
-      if (myDeclaredTargetRefs.size() > 0) {
+      if (!myDeclaredTargetRefs.isEmpty()) {
         for (Iterator<String> it = myDeclaredTargetRefs.iterator(); it.hasNext();) {
           final String declaredRef = it.next();
           final AntDomTarget result = getTargetByName(declaredRef);

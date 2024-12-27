@@ -82,7 +82,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     @Nls StringBuilder sb = new StringBuilder();
     if (!StringUtil.isEmpty(dataInfo)) sb.append(dataInfo);
     if (!StringUtil.isEmpty(message)) {
-      if (sb.length() > 0) sb.append(UIUtil.BR).append(UIUtil.BR);
+      if (!sb.isEmpty()) sb.append(UIUtil.BR).append(UIUtil.BR);
       sb.append(message);
     }
     return nullize(sb.toString());

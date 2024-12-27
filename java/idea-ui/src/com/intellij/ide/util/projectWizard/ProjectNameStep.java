@@ -97,13 +97,13 @@ public final class ProjectNameStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     String name = myNamePathComponent.getNameValue();
-    if (name.length() == 0) {
+    if (name.isEmpty()) {
       ApplicationNamesInfo info = ApplicationNamesInfo.getInstance();
       throw new ConfigurationException(JavaUiBundle.message("prompt.new.project.file.name", info.getFullProductName(), myWizardContext.getPresentationName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
-    if (projectFileDirectory.length() == 0) {
+    if (projectFileDirectory.isEmpty()) {
       throw new ConfigurationException(JavaUiBundle.message("prompt.enter.project.file.location", myWizardContext.getPresentationName()));
     }
 

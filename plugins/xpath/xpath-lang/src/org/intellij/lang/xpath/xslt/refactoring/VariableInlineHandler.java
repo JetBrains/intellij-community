@@ -104,7 +104,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
 
     final Collection<PsiReference> references =
       ReferencesSearch.search(variable, new LocalSearchScope(tag.getParentTag()), false).findAll();
-    if (references.size() == 0) {
+    if (references.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           XPathBundle.message("dialog.message.never.used", StringUtil.capitalize(type),variable.getName()),
                                           XPathBundle.message("dialog.title.xslt.inline"), null);

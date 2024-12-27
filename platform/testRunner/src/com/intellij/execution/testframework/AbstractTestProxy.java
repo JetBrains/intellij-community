@@ -113,7 +113,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   @Override
   public int getExceptionMark() {
-    if (myExceptionMark == 0 && getChildren().size() > 0) {
+    if (myExceptionMark == 0 && !getChildren().isEmpty()) {
       return getChildren().get(0).getExceptionMark();
     }
     return myExceptionMark;

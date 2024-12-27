@@ -69,7 +69,7 @@ public class AnnotationTooltipBuilder {
   }
 
   private void appendNewline() {
-    if (sb.length() != 0) append("\n");
+    if (!sb.isEmpty()) append("\n");
   }
 
   @Override

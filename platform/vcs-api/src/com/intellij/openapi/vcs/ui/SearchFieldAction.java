@@ -64,7 +64,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
     myComponent.setLayout(layout);
-    if (text.length() > 0) {
+    if (!text.isEmpty()) {
       final JLabel label = new JLabel(text);
       //label.setFont(label.getFont().deriveFont(Font.ITALIC));
       label.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : NamedColorUtil.getInactiveTextColor());

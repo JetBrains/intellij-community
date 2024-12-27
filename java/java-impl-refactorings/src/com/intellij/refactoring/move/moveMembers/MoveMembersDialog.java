@@ -226,7 +226,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     String message = validateInputData();
 
     if (message != null) {
-      if (message.length() != 0) {
+      if (!message.isEmpty()) {
         CommonRefactoringUtil.showErrorMessage(
           MoveMembersImpl.getRefactoringName(),
           message,

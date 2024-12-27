@@ -40,14 +40,14 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   }
 
   public void backspace() {
-    if (myString.length() > 0) {
+    if (!myString.isEmpty()) {
       updatePattern(myString.substring(0, myString.length() - 1));
     }
   }
 
   public boolean shouldBeShowing(String string) {
     return string == null ||
-           myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
+           myString.isEmpty() || (myMatcher != null && myMatcher.matches(string));
   }
 
   public void processKeyEvent(KeyEvent e) {
@@ -109,7 +109,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   }
 
   public boolean isHoldingFilter() {
-    return myEnabled && myString.length() > 0;
+    return myEnabled && !myString.isEmpty();
   }
 
   public void setEnabled(boolean enabled) {

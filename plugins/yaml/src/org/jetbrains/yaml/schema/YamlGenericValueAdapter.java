@@ -108,7 +108,7 @@ public final class YamlGenericValueAdapter implements JsonValueAdapter {
 
   // http://yaml.org/spec/1.2/spec.html#id2803828
   private static boolean isInteger(@NotNull String s) {
-    if (s.length() == 0) return false;
+    if (s.isEmpty()) return false;
     if ("0".equals(s) || "-0".equals(s) || "+0".equals(s)) return true;
     if (hasTag(s, "int")) return true;
     if (matchesInt(s)) return true;

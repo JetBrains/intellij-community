@@ -44,7 +44,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content = new PyPluginCommonOptionsPanel();
     final List<Module> validModules = data.getValidModules();
     validModules.sort(new ModulesAlphaComparator());
-    Module selection = validModules.size() > 0 ? validModules.get(0) : null;
+    Module selection = !validModules.isEmpty() ? validModules.get(0) : null;
     content.moduleComboBox.setModules(validModules);
     content.moduleComboBox.setSelectedModule(selection);
 

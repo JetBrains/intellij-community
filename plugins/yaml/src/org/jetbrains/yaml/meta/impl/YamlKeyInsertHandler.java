@@ -117,7 +117,7 @@ public abstract class YamlKeyInsertHandler implements InsertHandler<LookupElemen
       totalPadding.append(StringUtil.repeat(" ", ITEM_MARK.length()));
     }
 
-    if (toBeInserted.length() != 0) {
+    if (!toBeInserted.isEmpty()) {
       final Editor editor = context.getEditor();
 
       final int currentOffset = editor.getCaretModel().getOffset();

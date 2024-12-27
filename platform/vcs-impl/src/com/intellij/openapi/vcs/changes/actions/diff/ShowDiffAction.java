@@ -48,7 +48,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   public static boolean canShowDiff(@Nullable Project project, @Nullable List<? extends Change> changes) {
-    if (changes == null || changes.size() == 0) return false;
+    if (changes == null || changes.isEmpty()) return false;
     for (Change change : changes) {
       if (ChangeDiffRequestProducer.canCreate(project, change)) return true;
     }

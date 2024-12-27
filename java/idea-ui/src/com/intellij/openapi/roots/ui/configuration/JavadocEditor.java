@@ -115,7 +115,7 @@ public class JavadocEditor extends ModuleElementsEditor {
         @Override
         public void run(AnActionButton button) {
           final List<Object[]> removedItems = TableUtil.removeSelectedItems(myTable);
-          if (removedItems.size() > 0) {
+          if (!removedItems.isEmpty()) {
             saveData();
           }
         }

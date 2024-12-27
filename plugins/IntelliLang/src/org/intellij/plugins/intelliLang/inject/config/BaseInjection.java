@@ -381,7 +381,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public void setValuePattern(@RegExp @Nullable String pattern) {
     try {
-      if (pattern != null && pattern.length() > 0) {
+      if (pattern != null && !pattern.isEmpty()) {
         myValuePattern = pattern;
         myCompiledValuePattern = Pattern.compile(pattern, Pattern.DOTALL);
       }
@@ -402,7 +402,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public void setIgnorePattern(@RegExp @Nullable String pattern) {
     try {
-      if (pattern != null && pattern.length() > 0) {
+      if (pattern != null && !pattern.isEmpty()) {
         myIgnorePattern = pattern;
         myCompiledIgnorePattern = Pattern.compile(pattern, Pattern.DOTALL);
       }

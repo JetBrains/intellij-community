@@ -40,7 +40,7 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
         super.getTableCellRendererComponent(jtable, "", flag, flag1, i, j);
 
         Expression expression = (Expression)obj;
-        if (expression != null && expression.getExpression().length() != 0) {
+        if (expression != null && !expression.getExpression().isEmpty()) {
             final Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getFile());
             return new MyEditorTextField(document, project, expression.getFileType());
         } else {

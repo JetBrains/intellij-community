@@ -34,7 +34,7 @@ public class XmlTagInjection extends AbstractTagInjection {
 
   public @NlsSafe String getGeneratedName() {
     final String name = getTagName();
-    return name.length() > 0 ? name : "*";
+    return !name.isEmpty() ? name : "*";
   }
 
   @Override

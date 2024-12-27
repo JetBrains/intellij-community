@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -1315,7 +1315,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       }
       buffer.append(ch);
     }
-    if (buffer.length() == 0 && selectionIndent <= 0 || startLineNum >= endLineNum) {
+    if (buffer.isEmpty() && selectionIndent <= 0 || startLineNum >= endLineNum) {
       return;
     }
     String stringToInsert = buffer.toString();

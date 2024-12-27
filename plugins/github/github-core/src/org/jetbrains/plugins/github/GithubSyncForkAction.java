@@ -110,7 +110,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     GithubAccount githubAccount;
     List<GithubAccount> accounts = ContainerUtil.filter(accountManager.getAccountsState().getValue(),
                                                         account -> serverPath.equals(account.getServer()));
-    if (accounts.size() == 0) {
+    if (accounts.isEmpty()) {
       githubAccount = GHCompatibilityUtil.requestNewAccountForServer(serverPath, project);
     }
     else if (accounts.size() == 1) {

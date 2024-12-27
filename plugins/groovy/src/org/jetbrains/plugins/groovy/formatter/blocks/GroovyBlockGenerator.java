@@ -835,7 +835,7 @@ public class GroovyBlockGenerator {
                                            boolean topLevel,
                                            List<ASTNode> children,
                                            Wrap wrap) {
-    LOG.assertTrue(children.size() > 0);
+    LOG.assertTrue(!children.isEmpty());
     ASTNode fst = children.get(0);
     if (NESTED.contains(fst.getElementType())) {
       addNestedChildren(fst.getPsi(), list, aligner, false, wrap);

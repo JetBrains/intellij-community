@@ -180,7 +180,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     if (file instanceof PsiJavaFile) {
       String packageName = ((PsiJavaFile)file).getPackageName();
-      if (packageName.length() > 0) {
+      if (!packageName.isEmpty()) {
         buffer.append(packageName);
         newLine(buffer);
       }
@@ -649,7 +649,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         createTypeParamsListComment(builder, commenter, typeParameterList);
       }
     }
-    return builder.length() > 0 ? builder.toString() : null;
+    return !builder.isEmpty() ? builder.toString() : null;
   }
 
   public static void generateParametersTakingDocFromSuperMethods(StringBuilder builder,

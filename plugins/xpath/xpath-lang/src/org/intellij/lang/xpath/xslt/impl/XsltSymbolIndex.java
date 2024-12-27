@@ -165,7 +165,7 @@ public final class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltS
 
     @Override
     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
-      if (key.equals("name") && (nsURI == null || nsURI.length() == 0) && value != null) {
+      if (key.equals("name") && (nsURI == null || nsURI.isEmpty()) && value != null) {
         if (myMap.put(value, myKind) != null) {
           myMap.put(value, Kind.ANYTHING);
         }

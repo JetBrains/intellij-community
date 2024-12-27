@@ -317,7 +317,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     if (myCreateInnerClassRb.isSelected()) {
       buffer.append(visibilityString);
-      if (buffer.length() > 0) {
+      if (!buffer.isEmpty()) {
         buffer.append(" ");
       }
       if (isMakeStatic()) {

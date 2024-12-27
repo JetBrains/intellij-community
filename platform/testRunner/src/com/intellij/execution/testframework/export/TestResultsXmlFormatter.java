@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -236,7 +236,7 @@ public final class TestResultsXmlFormatter {
       public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
         ProgressManager.checkCanceled();
         if (contentType != lastType.get()) {
-          if (buffer.length() > 0) {
+          if (!buffer.isEmpty()) {
             try {
               writeOutput(lastType.get(), buffer);
             }
@@ -297,7 +297,7 @@ public final class TestResultsXmlFormatter {
     if (!error.isNull()) {
       throw error.get();
     }
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       writeOutput(lastType.get(), buffer);
     }
   }

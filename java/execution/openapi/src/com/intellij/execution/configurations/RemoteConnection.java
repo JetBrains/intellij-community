@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -119,11 +119,11 @@ public class RemoteConnection {
     if (shmem) {
       if (serverMode) {
         result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=n,address=" +
-                 ((address.length() > 0) ? address : "...") + ",suspend=y" + ONTHROW + ONUNCAUGHT;
+                 ((!address.isEmpty()) ? address : "...") + ",suspend=y" + ONTHROW + ONUNCAUGHT;
       }
       else {
         result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=y,suspend=n,address=" +
-                 ((address.length() > 0) ? address : "...");
+                 ((!address.isEmpty()) ? address : "...");
       }
     }
     else { // socket transport

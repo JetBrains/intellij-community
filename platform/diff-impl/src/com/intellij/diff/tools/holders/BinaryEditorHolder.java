@@ -88,7 +88,7 @@ public final class BinaryEditorHolder extends EditorHolder {
         VirtualFile file = ((FileContent)content).getFile();
 
         List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(project, file);
-        if (providers.size() == 0) {
+        if (providers.isEmpty()) {
           JComponent component = FileTypeRegistry.getInstance().isFileOfType(file, UnknownFileType.INSTANCE)
                                  ? UnknownFileTypeDiffRequest.createComponent(file.getName(), context)
                                  : DiffUtil.createMessagePanel(DiffBundle.message("error.cant.show.file"));

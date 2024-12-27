@@ -100,7 +100,7 @@ final class RunAnythingCalcThread implements Computable<RunAnythingSearchListMod
 
   private @NotNull List<RunAnythingItem> buildAllGroups(@NotNull RunAnythingSearchListModel model) {
     List<RunAnythingItem> items = new ArrayList<>();
-    if (myPattern.trim().length() == 0) {
+    if (myPattern.trim().isEmpty()) {
       RunAnythingGroup recentGroup =
         model.getGroups().stream().filter(group -> group instanceof RunAnythingRecentGroup).findFirst().orElse(null);
       assert recentGroup != null;

@@ -184,7 +184,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
       jdkMap.put(selectedValue, getInternalJdkItem());
     }
     else if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
-      assert selectedValue.length() > 0;
+      assert !selectedValue.isEmpty();
       jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, "", false)); //NON-NLS
     }
 

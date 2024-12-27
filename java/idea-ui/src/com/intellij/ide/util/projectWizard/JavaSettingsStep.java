@@ -78,7 +78,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
         if (contentEntryPath != null) {
           final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
           PropertiesComponent.getInstance().setValue(MODULE_SOURCE_ROOT_KEY, dirName);
-          String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
+          String text = !dirName.isEmpty() ? contentEntryPath + "/" + dirName : contentEntryPath;
           ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
         }
       }

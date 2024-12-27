@@ -163,7 +163,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
           context.error("Gradle resolve failed for: " + settings.getExternalProjectPath() + ":" + errorMessage + ":" + errorDetails,
                         getLine());
           synchronized (projectsWithResolveErrors) {
-            if (projectsWithResolveErrors.length() != 0) {
+            if (!projectsWithResolveErrors.isEmpty()) {
               projectsWithResolveErrors.append(", ");
             }
             projectsWithResolveErrors.append(String.format("'%s'", new File(settings.getExternalProjectPath()).getName()));

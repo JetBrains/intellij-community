@@ -535,7 +535,7 @@ public abstract class UIPropertyBinding {
         public void actionPerformed(ActionEvent e) {
           List<T> items = factory.create();
           getList().requestFocusInWindow();
-          if (items == null || items.size() == 0) {
+          if (items == null || items.isEmpty()) {
             return;
           }
           for (final T item : items) {

@@ -70,7 +70,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
             super.visitAntDomElement(element);
           }
         });
-        return variants.size() > 0 ? ArrayUtil.toObjectArray(variants) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+        return !variants.isEmpty() ? ArrayUtil.toObjectArray(variants) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
       @Override

@@ -151,8 +151,8 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
         updateClassFilterEditor(true);
 
         changed = properties.setINSTANCE_FILTERS_ENABLED(
-                myInstanceFiltersField.getText().length() > 0 && myInstanceFiltersCheckBox.isSelected()) || changed;
-        changed = properties.setCLASS_FILTERS_ENABLED(myClassFiltersField.getText().length() > 0 && myClassFiltersCheckBox.isSelected()) ||
+                !myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
+        changed = properties.setCLASS_FILTERS_ENABLED(!myClassFiltersField.getText().isEmpty() && myClassFiltersCheckBox.isSelected()) ||
                   changed;
         changed = properties.setClassFilters(myClassFilters) || changed;
         changed = properties.setClassExclusionFilters(myClassExclusionFilters) || changed;
@@ -224,7 +224,7 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
             reloadInstanceFilters();
             updateInstanceFilterEditor(false);
             String toolTipText = super.getToolTipText(event);
-            return getToolTipText().length() == 0 ? null : toolTipText;
+            return getToolTipText().isEmpty() ? null : toolTipText;
         }
 
         @Override

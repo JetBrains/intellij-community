@@ -294,7 +294,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
           JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
           if (subtype != null) filteredVariants.add(subtype);
         }
-        if (filteredVariants.size() == 0) {
+        if (filteredVariants.isEmpty()) {
           myIsValidByExclusion = false;
           return selfType;
         }

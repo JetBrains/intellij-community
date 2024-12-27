@@ -256,7 +256,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void abortOnLocalChanges() throws VcsException {
-    if (getLocalChanges().size() != 0) {
+    if (!getLocalChanges().isEmpty()) {
       throw new VcsException(HgBundle.message("hg4idea.update.error.localchanges", repoRoot.getPath()));
     }
   }

@@ -57,7 +57,7 @@ public final class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C 
 
   public @NlsContexts.Tooltip String getElementTooltip(T element) {
     final Set<? extends T> dependencies = getDependenciesOf(element);
-    if(dependencies == null || dependencies.size() == 0) return null;
+    if(dependencies == null || dependencies.isEmpty()) return null;
 
     String strings = dependencies.stream().map(NavigationItem::getName).collect(NlsMessages.joiningAnd());
     return RefactoringBundle.message("used.by.0", strings);

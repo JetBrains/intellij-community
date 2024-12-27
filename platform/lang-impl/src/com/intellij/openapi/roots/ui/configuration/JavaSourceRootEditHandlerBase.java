@@ -45,7 +45,7 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     if (!packagePrefix.isEmpty()) {
       buffer.append(" (").append(packagePrefix).append(")");
     }
-    return buffer.length() > 0 ? buffer.toString() : null;
+    return !buffer.isEmpty() ? buffer.toString() : null;
   }
 
   @Override

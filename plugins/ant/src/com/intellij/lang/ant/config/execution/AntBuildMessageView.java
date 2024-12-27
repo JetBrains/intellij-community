@@ -895,11 +895,11 @@ public final class AntBuildMessageView extends JPanel
       sb.append(seconds / 3600).append("h ");
       seconds %= 3600;
     }
-    if (seconds >= 60 || sb.length() > 0) {
+    if (seconds >= 60 || !sb.isEmpty()) {
       sb.append(seconds / 60).append("m ");
       seconds %= 60;
     }
-    if (seconds > 0 || sb.length() > 0) {
+    if (seconds > 0 || !sb.isEmpty()) {
       sb.append(seconds).append("s");
     }
     return sb.toString();

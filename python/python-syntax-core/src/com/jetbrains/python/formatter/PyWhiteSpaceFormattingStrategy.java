@@ -30,7 +30,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
                                                   int endOffset,
                                                   CodeStyleSettings codeStyleSettings) {
     CharSequence whiteSpace =  super.adjustWhiteSpaceIfNecessary(whiteSpaceText, startElement, startOffset, endOffset, codeStyleSettings);
-    if (whiteSpace.length() > 0 && whiteSpace.charAt(0) == '\n' && !Strings.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
+    if (!whiteSpace.isEmpty() && whiteSpace.charAt(0) == '\n' && !Strings.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
         needInsertBackslash(startElement.getContainingFile(), startOffset, false)) {
       return addBackslashPrefix(whiteSpace, codeStyleSettings);
     }
@@ -64,8 +64,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     // the general idea is that '\' symbol before line feed should be preserved
     Int2IntMap initialBackSlashes = countBackSlashes(text, startOffset, endOffset);
     if (initialBackSlashes.isEmpty()) {
-      if (nodeAfter != null && whiteSpaceText.length() > 0 && whiteSpaceText.charAt(0) == '\n' &&
-        needInsertBackslash(nodeAfter, false)) {
+      if (nodeAfter != null && !whiteSpaceText.isEmpty() && whiteSpaceText.charAt(0) == '\n' &&
+          needInsertBackslash(nodeAfter, false)) {
         return addBackslashPrefix(whiteSpaceText, codeStyleSettings);
       }
       return whiteSpaceText;

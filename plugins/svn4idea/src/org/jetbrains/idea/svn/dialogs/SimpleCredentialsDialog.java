@@ -154,7 +154,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
 
   @Override
   public boolean isOKActionEnabled() {
-    return myUserNameText != null && myUserNameText.getText().trim().length() > 0
+    return myUserNameText != null && !myUserNameText.getText().trim().isEmpty()
            && myPasswordText != null && myPasswordText.getPassword() != null;
   }
 

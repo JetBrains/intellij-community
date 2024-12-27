@@ -62,7 +62,7 @@ public abstract class MarkdownCompositePsiElementBase extends ASTWrapperPsiEleme
         if (!isValid()) {
           return null;
         }
-        if (getCompositeChildren().size() == 0) {
+        if (getCompositeChildren().isEmpty()) {
           return shrinkTextTo(PRESENTABLE_TEXT_LENGTH);
         }
         else {

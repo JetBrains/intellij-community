@@ -60,7 +60,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     }
     else {
       final List<Module> validModules = data.getValidModules();
-      Module selection = validModules.size() > 0 ? validModules.get(0) : null;
+      Module selection = !validModules.isEmpty() ? validModules.get(0) : null;
       content.moduleCombo.setModules(validModules);
       content.moduleCombo.setSelectedModule(selection);
       content.moduleCombo.addActionListener(new ActionListener() {

@@ -145,7 +145,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   private @Nullable String getConfiguredOutputPath() {
     String outputPath = FileUtil.toSystemIndependentName(myOutputDirectoryField.getText().trim());
-    if (outputPath.length() == 0) {
+    if (outputPath.isEmpty()) {
       outputPath = null;
     }
     return outputPath;
@@ -472,7 +472,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       final String name = ((ArchivePackagingElement)root).getArchiveFileName();
       final String fileName = FileUtilRt.getNameWithoutExtension(name);
       final String extension = FileUtilRt.getExtension(name);
-      if (fileName.equals(oldFileName) && extension.length() > 0) {
+      if (fileName.equals(oldFileName) && !extension.isEmpty()) {
         myLayoutTreeComponent.editLayout(
           () -> ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension));
         myLayoutTreeComponent.updateRootNode();

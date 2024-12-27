@@ -166,7 +166,7 @@ public final class GrLightModifierList extends LightElement implements GrModifie
       }
     }
 
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.delete(buffer.length() - 1, buffer.length());
     }
     return buffer.toString();

@@ -141,7 +141,7 @@ public final class FinishMarker {
     List<PsiExpression> nonTerminalReturns = StreamEx.<PsiReturnStatement>of(returns).without(terminalReturn)
       .map(PsiReturnStatement::getReturnValue)
       .map(PsiUtil::skipParenthesizedExprDown).toList();
-    if (nonTerminalReturns.size() == 0) {
+    if (nonTerminalReturns.isEmpty()) {
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
     }
     Set<Object> nonTerminalReturnValues = StreamEx.of(nonTerminalReturns)

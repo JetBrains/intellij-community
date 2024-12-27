@@ -304,7 +304,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         if (accessor_code != null) ret.poke(accessor_code, RatedResolveResult.RATE_NORMAL);
         PyTargetExpression site = property.getDefinitionSite();
         if (site != null) ret.poke(site, RatedResolveResult.RATE_LOW);
-        if (ret.size() > 0) {
+        if (!ret.isEmpty()) {
           resultRef = Ref.create(ret);
         }
         else {

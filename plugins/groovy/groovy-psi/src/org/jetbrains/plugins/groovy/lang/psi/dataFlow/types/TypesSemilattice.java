@@ -26,7 +26,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 
   @Override
   public @NotNull TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
-    if (ins.size() == 0) {
+    if (ins.isEmpty()) {
       return TypeDfaState.EMPTY_STATE;
     }
     if (ins.size() == 1) {

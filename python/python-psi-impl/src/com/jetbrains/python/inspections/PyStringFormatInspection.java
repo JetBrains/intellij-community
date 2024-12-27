@@ -353,7 +353,7 @@ public final class PyStringFormatInspection extends PyInspection {
         myUsedMappingKeys.clear();
 
         // if use mapping keys
-        final boolean mapping = chunks.size() > 0 && chunks.get(0).getMappingKey() != null;
+        final boolean mapping = !chunks.isEmpty() && chunks.get(0).getMappingKey() != null;
         for (int i = 0; i < chunks.size(); ++i) {
           PercentSubstitutionChunk chunk = as(chunks.get(i), PercentSubstitutionChunk.class);
           if (chunk != null) {
@@ -405,7 +405,7 @@ public final class PyStringFormatInspection extends PyInspection {
       private void inspectWidth(final @NotNull PyStringLiteralExpression formatExpression, String width) {
         if ("*".equals(width)) {
           ++myExpectedArguments;
-          if (myUsedMappingKeys.size() > 0) {
+          if (!myUsedMappingKeys.isEmpty()) {
             registerProblem(formatExpression, PyPsiBundle.message("INSP.str.format.can.not.use.star.in.formats.when.using.mapping"));
           }
         }
@@ -425,7 +425,7 @@ public final class PyStringFormatInspection extends PyInspection {
         else {
           final PyClassType type = as(myTypeEvalContext.getType(rightExpression), PyClassType.class);
           if (type != null) {
-            if (myUsedMappingKeys.size() > 0 && !PyABCUtil.isSubclass(type.getPyClass(), PyNames.MAPPING, myTypeEvalContext)) {
+            if (!myUsedMappingKeys.isEmpty() && !PyABCUtil.isSubclass(type.getPyClass(), PyNames.MAPPING, myTypeEvalContext)) {
               registerProblem(rightExpression, PyPsiBundle.message("INSP.format.requires.mapping"));
               return;
             }

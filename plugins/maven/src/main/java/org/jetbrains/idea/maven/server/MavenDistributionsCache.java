@@ -63,7 +63,7 @@ public final class MavenDistributionsCache {
     if (type instanceof MavenWrapper) {
       var baseDir = myProject.getBasePath();
       var projects = projectsManager.getProjects();
-      if (projects.size() > 0) {
+      if (!projects.isEmpty()) {
         baseDir = projects.get(0).getDirectory();
       }
       if (baseDir != null) {

@@ -145,6 +145,6 @@ public class DisabledAutodetectionByTypeElement {
         break;
       }
     }
-    return myModuleElements.size() > 0;
+    return !myModuleElements.isEmpty();
   }
 }

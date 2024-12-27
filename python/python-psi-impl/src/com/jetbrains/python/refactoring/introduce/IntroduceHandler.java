@@ -88,7 +88,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
   protected static void ensureName(IntroduceOperation operation) {
     if (operation.getName() == null) {
       final Collection<String> suggestedNames = operation.getSuggestedNames();
-      if (suggestedNames.size() > 0) {
+      if (!suggestedNames.isEmpty()) {
         operation.setName(suggestedNames.iterator().next());
       }
       else {
@@ -464,7 +464,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
       operation.setOccurrences(getOccurrences(element, initializer));
       operation.setSuggestedNames(getSuggestedNames(initializer));
     }
-    if (operation.getOccurrences().size() == 0) {
+    if (operation.getOccurrences().isEmpty()) {
       operation.setReplaceAll(false);
     }
 

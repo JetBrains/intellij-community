@@ -77,7 +77,7 @@ public final class UpdateOutputLineConverter {
       final long revision = matchAndGetRevision(pattern, line);
       if (revision != -1) {
         // checkout output does not have special line like "Updating '.'" on start - so stack could be empty and we should use myBase
-        File currentRoot = myRootsUnderProcessing.size() > 0 ? myRootsUnderProcessing.pop() : myBase;
+        File currentRoot = !myRootsUnderProcessing.isEmpty() ? myRootsUnderProcessing.pop() : myBase;
         return createEvent(currentRoot, revision, EventAction.UPDATE_COMPLETED, null);
       }
     }

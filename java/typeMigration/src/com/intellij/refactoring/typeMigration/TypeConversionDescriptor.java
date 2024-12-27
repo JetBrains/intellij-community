@@ -110,11 +110,11 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
       buf.append(myReplaceByString);
     }
     if (myStringToReplace != null) {
-      if (buf.length() > 0) buf.append(" ");
+      if (!buf.isEmpty()) buf.append(" ");
       buf.append(myStringToReplace);
     }
     if (myExpression != null) {
-      if (buf.length() > 0) buf.append(" ");
+      if (!buf.isEmpty()) buf.append(" ");
       buf.append(myExpression.getText());
     }
     return buf.toString();

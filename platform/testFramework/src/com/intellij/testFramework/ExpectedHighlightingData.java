@@ -393,7 +393,7 @@ public class ExpectedHighlightingData {
 
     for (LineMarkerInfo info : markerInfos) {
       if (!containsLineMarker(info, myLineMarkerInfos.values())) {
-        if (failMessage.length() > 0) failMessage.append('\n');
+        if (!failMessage.isEmpty()) failMessage.append('\n');
         failMessage.append(fileName).append("extra ")
           .append(rangeString(text, info.startOffset, info.endOffset))
           .append(": '").append(sanitizedLineMarkerTooltip(info)).append('\'');
@@ -406,7 +406,7 @@ public class ExpectedHighlightingData {
 
     for (LineMarkerInfo expectedLineMarker : myLineMarkerInfos.values()) {
       if (markerInfos.isEmpty() || !containsLineMarker(expectedLineMarker, markerInfos)) {
-        if (failMessage.length() > 0) failMessage.append('\n');
+        if (!failMessage.isEmpty()) failMessage.append('\n');
         failMessage.append(fileName).append("missing ")
           .append(rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset))
           .append(": '").append(sanitizedLineMarkerTooltip(expectedLineMarker)).append('\'');
@@ -417,7 +417,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    if (failMessage.length() > 0) {
+    if (!failMessage.isEmpty()) {
       String filePath = null;
       if (psiFile != null) {
         VirtualFile file = psiFile.getVirtualFile();
@@ -541,7 +541,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    if (failMessage.length() > 0) {
+    if (!failMessage.isEmpty()) {
       if (filePath == null && psiFile != null) {
         VirtualFile file = psiFile.getVirtualFile();
         if (file != null) {
@@ -581,7 +581,7 @@ public class ExpectedHighlightingData {
     String s = text.substring(startOffset, endOffset);
     String desc = info.getDescription();
 
-    if (failMessage.length() > 0) {
+    if (!failMessage.isEmpty()) {
       failMessage.append('\n');
     }
     failMessage.append(fileName).append(messageType)

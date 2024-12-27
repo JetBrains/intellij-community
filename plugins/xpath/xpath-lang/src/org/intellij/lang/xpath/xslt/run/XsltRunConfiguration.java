@@ -206,7 +206,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     static boolean isEmpty(String file) {
-        return file == null || file.length() == 0;
+        return file == null || file.isEmpty();
     }
 
     // return modules to compile before run. Null or empty list to build project

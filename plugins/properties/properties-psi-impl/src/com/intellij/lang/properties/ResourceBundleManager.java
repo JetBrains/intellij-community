@@ -160,7 +160,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         return null;
       }
       final StringBuilder qName = new StringBuilder(packageQualifiedName);
-      if (qName.length() > 0) {
+      if (!qName.isEmpty()) {
         qName.append(".");
       }
       qName.append(getBaseName(propertiesFile.getContainingFile()));

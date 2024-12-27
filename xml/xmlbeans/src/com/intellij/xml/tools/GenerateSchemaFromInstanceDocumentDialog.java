@@ -204,7 +204,7 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
       return XmlBundle.message("invalid.number.validation.problem");
     }
 
-    if (getTargetSchemaName() == null || getTargetSchemaName().length() == 0) {
+    if (getTargetSchemaName() == null || getTargetSchemaName().isEmpty()) {
       return XmlBundle.message("result.schema.file.name.is.empty.validation.problem");
     }
     return null;

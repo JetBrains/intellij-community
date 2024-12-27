@@ -179,7 +179,7 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
         progress.setText2(PropertiesBundle.message("duplicate.property.value.progress.indicator.text", value));
         progress.checkCanceled();
       }
-      if (value.length() == 0) continue;
+      if (value.isEmpty()) continue;
       StringSearcher searcher = new StringSearcher(value, true, true);
       @Nls StringBuilder message = new StringBuilder();
       final int[] duplicatesCount = {0};

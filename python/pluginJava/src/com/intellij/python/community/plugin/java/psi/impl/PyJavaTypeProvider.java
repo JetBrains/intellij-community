@@ -75,7 +75,7 @@ public final class PyJavaTypeProvider extends PyTypeProviderBase {
       }
       return true;
     });
-    if (superMethodParameterTypes.size() > 0) {
+    if (!superMethodParameterTypes.isEmpty()) {
       final PyType type = superMethodParameterTypes.get(0);
       if (type != null) {
         return Ref.create(type);

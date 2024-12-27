@@ -420,7 +420,7 @@ public class BindingFactory {
 
     @Override
     public boolean nonEmpty() {
-      return myBindings.size() > 0;
+      return !myBindings.isEmpty();
     }
 
     @Override

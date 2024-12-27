@@ -299,21 +299,21 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       }
 
       if (afterDate != null) {
-        if (args.length() > 0) {
+        if (!args.isEmpty()) {
           args.append(" and ");
         }
         args.append("date('>").append(dateFormatter.format(afterDate)).append("')");
       }
 
       if (beforeDate != null) {
-        if (args.length() > 0) {
+        if (!args.isEmpty()) {
           args.append(" and ");
         }
 
         args.append("date('<").append(dateFormatter.format(beforeDate)).append("')");
       }
 
-      if (args.length() > 0) {
+      if (!args.isEmpty()) {
         List<String> logArgs = new ArrayList<>();
         logArgs.add("-r");
         logArgs.add(args.toString());

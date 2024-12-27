@@ -278,7 +278,7 @@ public class MoveInnerDialog extends MoveDialogBase {
 
         if (message == null) {
           final String packageName = getPackageName();
-          if (packageName.length() > 0 && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
+          if (!packageName.isEmpty() && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
             message = RefactoringMessageUtil.getIncorrectIdentifierMessage(packageName);
           }
         }

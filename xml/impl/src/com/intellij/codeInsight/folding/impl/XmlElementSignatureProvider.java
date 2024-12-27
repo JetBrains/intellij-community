@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,7 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
       StringBuilder buffer = new StringBuilder();
       buffer.append("tag").append(ELEMENT_TOKENS_SEPARATOR);
       String name = tag.getName();
-      buffer.append(name.length() == 0 ? "<unnamed>" : escape(name));
+      buffer.append(name.isEmpty() ? "<unnamed>" : escape(name));
 
       buffer.append(ELEMENT_TOKENS_SEPARATOR);
       int childIndex = getChildIndex(tag, parent, name, XmlTag.class);

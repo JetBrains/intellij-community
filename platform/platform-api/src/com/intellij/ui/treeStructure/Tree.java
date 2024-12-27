@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.ActivityTracker;
@@ -1079,14 +1079,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         getCellRenderer().getTreeCellRendererComponent(this, eachNode, false, false, false, getRowForPath(eachPath), false);
 
       if (c != null) {
-        if (nodesText.length() > 0) {
+        if (!nodesText.isEmpty()) {
           nodesText.append(";");
         }
         nodesText.append(c);
       }
     }
 
-    if (nodesText.length() > 0) {
+    if (!nodesText.isEmpty()) {
       info.put("selectedNodes", nodesText.toString());
     }
   }

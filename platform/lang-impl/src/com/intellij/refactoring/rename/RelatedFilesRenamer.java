@@ -34,7 +34,7 @@ public class RelatedFilesRenamer extends AutomaticRenamer {
                      psiFile.getName() + "," + relatedPsiFile.getName() + "," + info.namePartCommonWithParentFile());
 
       final String suffix = psiFile.getName().substring(info.namePartCommonWithParentFile().length());
-      LOG.assertTrue(suffix.length() > 0, psiFile.getName() + "," + info.namePartCommonWithParentFile());
+      LOG.assertTrue(!suffix.isEmpty(), psiFile.getName() + "," + info.namePartCommonWithParentFile());
 
       if (!newName.endsWith(suffix)) {
         // if suffix touched we can't suggest any reasonable new name for the related file

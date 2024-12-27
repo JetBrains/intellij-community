@@ -203,13 +203,13 @@ final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
           return false;
         }
 
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
           hashToElement.remove(hash);
         }
       }
     }
 
-    return hashToElement.size() == 0;
+    return hashToElement.isEmpty();
   }
 
   @Override

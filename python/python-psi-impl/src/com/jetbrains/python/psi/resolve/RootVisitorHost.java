@@ -85,7 +85,7 @@ public final class RootVisitorHost {
     if (elt_vfile != null) { // reality TODO: check this reality
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
       orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
-      if (orderEntries.size() > 0) {
+      if (!orderEntries.isEmpty()) {
         for (OrderEntry entry : orderEntries) {
           if (!visitOrderEntryRoots(visitor, entry)) break;
         }

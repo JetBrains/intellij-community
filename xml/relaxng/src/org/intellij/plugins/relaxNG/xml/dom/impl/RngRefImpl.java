@@ -48,7 +48,7 @@ public abstract class RngRefImpl extends RngDomElementBase implements RngRef {
     final Set<Define> defines = DefinitionResolver.resolve(scope, name);
 
     // TODO: honor combine & return virtual element if defines.size() > 1
-    return defines != null && defines.size() > 0 ? defines.iterator().next() : null;
+    return defines != null && !defines.isEmpty() ? defines.iterator().next() : null;
   }
 
   protected RngGrammar getScope() {

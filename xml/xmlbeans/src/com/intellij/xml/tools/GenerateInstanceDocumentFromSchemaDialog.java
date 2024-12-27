@@ -167,7 +167,7 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
       rootElementChooser.setSelectedItem(selectedItem);
     }
     else {
-      rootElementChooser.setSelectedIndex(myRootValues.size() > 0 ? 0 : -1);
+      rootElementChooser.setSelectedIndex(!myRootValues.isEmpty() ? 0 : -1);
     }
     previousUri = uri;
   }

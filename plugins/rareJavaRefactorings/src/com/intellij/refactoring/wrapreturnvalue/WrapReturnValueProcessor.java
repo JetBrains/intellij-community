@@ -243,7 +243,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
                              JavaBundle.message("wrap.return.value.existing.class.does.not.have.appropriate.constructor.conflict"));
         }
       }
-      if (myUnwrapMethodName.length() == 0) {
+      if (myUnwrapMethodName.isEmpty()) {
         conflicts.putValue(existingClass,
                            JavaBundle.message("wrap.return.value.existing.class.does.not.have.getter.conflict"));
       }

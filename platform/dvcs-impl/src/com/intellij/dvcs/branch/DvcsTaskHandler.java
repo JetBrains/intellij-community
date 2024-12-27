@@ -101,7 +101,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
         tasks.get(branch).getRepositories().add(repository.getPresentableUrl());
       }
     }
-    if (tasks.size() == 0) return new TaskInfo[0];
+    if (tasks.isEmpty()) return new TaskInfo[0];
     if (isSyncEnabled()) {
       return new TaskInfo[]{tasks.values().iterator().next()};
     }

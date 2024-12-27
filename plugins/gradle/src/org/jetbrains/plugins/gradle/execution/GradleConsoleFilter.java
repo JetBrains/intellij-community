@@ -77,7 +77,7 @@ public class GradleConsoleFilter implements Filter {
       }
     }
 
-    if (lineNumberStr.length() < 1) {
+    if (lineNumberStr.isEmpty()) {
       return null;
     }
 

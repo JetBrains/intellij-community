@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -325,7 +325,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   @Override
   public @Nullable JsonSchemaObject getSchemaObject(final @NotNull VirtualFile file) {
     Collection<VirtualFile> schemas = getSchemasForFile(file, true, false);
-    if (schemas.size() == 0) return null;
+    if (schemas.isEmpty()) return null;
     assert schemas.size() == 1;
     VirtualFile schemaFile = schemas.iterator().next();
     return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);

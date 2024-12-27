@@ -21,7 +21,7 @@ public final class RefactoringListeners {
     final StringBuilder path = new StringBuilder();
     for (PsiPackage parent = accessor.getPsiElement(); parent != null; parent = parent.getParentPackage()) {
       if (parent.equals(psiPackage)) return new RefactorPackage(accessor, path.toString());
-      if (path.length() > 0) path.insert(0, '.');
+      if (!path.isEmpty()) path.insert(0, '.');
       path.insert(0, parent.getName());
     }
     return null;
@@ -33,7 +33,7 @@ public final class RefactoringListeners {
     final StringBuilder path = new StringBuilder();
     for (PsiClass parent = aClass; parent != null; parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class, true)) {
       if (parent.equals(psiClass)) return new RefactorClass(accessor, path.toString());
-      if (path.length() > 0) path.insert(0, '$');
+      if (!path.isEmpty()) path.insert(0, '$');
       path.insert(0, parent.getName());
     }
     return null;
@@ -104,7 +104,7 @@ public final class RefactoringListeners {
       T newElement1 = convertNewElement(newElement);
       if (newElement1 == null) return;
       String qualifiedName = getQualifiedName(newElement1);
-      if (myPath.length() > 0) {
+      if (!myPath.isEmpty()) {
         qualifiedName = qualifiedName + "." + myPath;
         newElement1 = findNewElement(newElement1, qualifiedName);
       }
@@ -258,7 +258,7 @@ public final class RefactoringListeners {
     }
 
     private String getClassQName(final String packageQName) {
-      if (packageQName.length() > 0) {
+      if (!packageQName.isEmpty()) {
         return packageQName + '.' + myInpackageName;
       }
       else {

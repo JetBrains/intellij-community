@@ -85,7 +85,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             final QName mode = myTemplate.getMode();
 
             if (mode != null) {
-                if (sb.length() > 0) sb.append(", ");
+                if (!sb.isEmpty()) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
             return XPathBundle.message("list.item.template", sb);

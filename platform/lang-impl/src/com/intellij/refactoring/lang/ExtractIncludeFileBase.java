@@ -95,7 +95,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
                                    final List<IncludeDuplicate<T>> duplicates,
                                    final Editor editor,
                                    final Project project) {
-    if (duplicates.size() > 0) {
+    if (!duplicates.isEmpty()) {
       final String message = RefactoringBundle.message("idea.has.found.fragments.that.can.be.replaced.with.include.directive",
                                                   ApplicationNamesInfo.getInstance().getProductName());
       final int exitCode = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getInformationIcon());

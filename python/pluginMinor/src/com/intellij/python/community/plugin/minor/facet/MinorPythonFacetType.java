@@ -35,7 +35,7 @@ public final class MinorPythonFacetType extends FacetType<MinorPythonFacet, Pyth
   public PythonFacetConfiguration createDefaultConfiguration() {
     PythonFacetConfiguration result = new PythonFacetConfiguration();
     List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
-    if (sdks.size() > 0) {
+    if (!sdks.isEmpty()) {
       result.setSdk(sdks.get(0));
     }
     return result;

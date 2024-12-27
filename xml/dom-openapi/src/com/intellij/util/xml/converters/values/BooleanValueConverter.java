@@ -54,7 +54,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
 
   @Override
   public String fromString(final @Nullable @NonNls String stringValue, final @NotNull ConvertContext context) {
-    if (stringValue != null && ((myAllowEmpty && stringValue.trim().length() == 0) || Arrays.binarySearch(getAllValues(), stringValue) >= 0)) {
+    if (stringValue != null && ((myAllowEmpty && stringValue.trim().isEmpty()) || Arrays.binarySearch(getAllValues(), stringValue) >= 0)) {
       return stringValue;
     }
     return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ class BufferingTextSplitter {
       boolean isCrLf = isCr && input[nextLine + 1] == '\n';
       boolean isCrLine = isCr && !isCrLf;
 
-      if (myLineBuffer.length() == 0) {
+      if (myLineBuffer.isEmpty()) {
         String text = new String(input, offset, nextLine - offset);
         myLineConsumer.consume(text, isCrLine);
       }
@@ -79,7 +79,7 @@ class BufferingTextSplitter {
    * Flush incomplete lines buffer to consumer
    */
   public void flush() {
-    if (myLineBuffer.length() > 0 || myBufferedCr) {
+    if (!myLineBuffer.isEmpty() || myBufferedCr) {
       sendBufferLine();
     }
   }

@@ -99,7 +99,7 @@ public final class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   public static boolean isPluginModuleOrDependency(@Nullable Module module) {
     if (module == null) return false;
     if (isOfType(module)) return true;
-    return getCandidateModules(module).size() > 0;
+    return !getCandidateModules(module).isEmpty();
   }
 
   public static List<Module> getCandidateModules(Module module) {

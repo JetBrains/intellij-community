@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +102,7 @@ public class GitTagDialog extends DialogWrapper {
 
   public void runAction() {
     final String message = myMessageTextArea.getText();
-    final boolean hasMessage = message.trim().length() != 0;
+    final boolean hasMessage = !message.trim().isEmpty();
     final File messageFile;
     if (hasMessage) {
       try {
@@ -137,7 +137,7 @@ public class GitTagDialog extends DialogWrapper {
       }
       h.addParameters(myTagNameTextField.getText());
       String object = myCommitTextField.getText().trim();
-      if (object.length() != 0) {
+      if (!object.isEmpty()) {
         h.addParameters(object);
       }
 
@@ -190,7 +190,7 @@ public class GitTagDialog extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    if (text.length() == 0) {
+    if (text.isEmpty()) {
       setErrorText(null);
       setOKActionEnabled(false);
       return;

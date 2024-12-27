@@ -168,7 +168,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       buffer.append("    region #").append(i).append(": ").append(start).append('-').append(end).append(", text at range ")
         .append(lineStart).append('-').append(lineEnd).append(": \n'").append(text.subSequence(lineStart, lineEnd)).append("'\n");
     }
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     LOG.debug(String.format(

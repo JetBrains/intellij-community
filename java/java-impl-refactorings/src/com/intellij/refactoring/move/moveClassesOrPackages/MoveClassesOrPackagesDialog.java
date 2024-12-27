@@ -128,7 +128,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
     myTargetDirectoryFixed = initialTargetDirectory == null;
     mySuggestToMoveToAnotherRoot = initialTargetElement == null;
-    if (targetPackageName.length() != 0) {
+    if (!targetPackageName.isEmpty()) {
       myWithBrowseButtonReference.prependItem(targetPackageName);
       myClassPackageChooser.prependItem(targetPackageName);
     }
@@ -316,7 +316,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   protected void canRun() throws ConfigurationException {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
-      if (name.length() != 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name)) {
+      if (!name.isEmpty() && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(name)) {
         throw new ConfigurationException(JavaBundle.message("move.classes.invalid.destination.package.name.message", name));
       }
     }
@@ -472,7 +472,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
   private @Nullable MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
-    if (packageName.length() > 0 && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(packageName)) {
+    if (!packageName.isEmpty() && !PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(packageName)) {
       Messages.showErrorDialog(myProject, JavaRefactoringBundle.message("please.enter.a.valid.target.package.name"),
                                RefactoringBundle.message("move.title"));
       return null;

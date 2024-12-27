@@ -601,7 +601,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     final int declarationOffset = buffer.length();
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     buffer.append(visibilityString);
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.append(" ");
     }
     if (isMakeStatic() && !isChainedConstructor()) {

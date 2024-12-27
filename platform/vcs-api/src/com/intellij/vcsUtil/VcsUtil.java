@@ -370,7 +370,7 @@ public final class VcsUtil {
     StringBuilder sb = new StringBuilder(source);
     while (true) {
       boolean atLeastOneCharWasChopped = false;
-      for (int i = 0; i < chars.length && sb.length() > 0; i++) {
+      for (int i = 0; i < chars.length && !sb.isEmpty(); i++) {
         if (sb.charAt(sb.length() - 1) == chars[i]) {
           sb.deleteCharAt(sb.length() - 1);
           atLeastOneCharWasChopped = true;

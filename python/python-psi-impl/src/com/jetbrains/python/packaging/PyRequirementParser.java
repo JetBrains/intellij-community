@@ -383,7 +383,7 @@ public final class PyRequirementParser {
         sb.append(line, 0, line.length() - 1);
       }
       else {
-        if (sb.length() == 0) {
+        if (sb.isEmpty()) {
           result.add(line);
         }
         else {

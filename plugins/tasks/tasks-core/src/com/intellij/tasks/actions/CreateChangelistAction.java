@@ -36,7 +36,7 @@ public class CreateChangelistAction extends BaseTaskAction {
       }
       else {
         presentation.setEnabled(true);
-        if (manager.getActiveTask().getChangeLists().size() == 0) {
+        if (manager.getActiveTask().getChangeLists().isEmpty()) {
           presentation.setText(TaskBundle.message("action.create.changelist.for.text", TaskUtil.getTrimmedSummary(manager.getActiveTask())));
         }
         else {

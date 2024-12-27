@@ -30,7 +30,7 @@ public class GetVariableCommand extends GetFrameCommand {
     PyDebugValue p = var;
 
     while (p != null) {
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.insert(0, '\t');
       }
       if (p.getId() != null) {

@@ -33,7 +33,7 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
 
   @Override
   public void update(final @NotNull AnActionEvent event) {
-    if (TypeDeclarationProvider.EP_NAME.getExtensionList().size() == 0) {
+    if (TypeDeclarationProvider.EP_NAME.getExtensionList().isEmpty()) {
       event.getPresentation().setVisible(false);
       return;
     }

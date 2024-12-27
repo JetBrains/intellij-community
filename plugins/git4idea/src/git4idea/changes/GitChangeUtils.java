@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -251,7 +251,7 @@ public final class GitChangeUtils {
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
     final String revisionNumber = s.line();
     final String parentsLine = s.line();
-    final String[] parents = parentsLine.length() == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : parentsLine.split(" ");
+    final String[] parents = parentsLine.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : parentsLine.split(" ");
     String authorName = s.line();
     String committerName = s.line();
     committerName = GitUtil.adjustAuthorName(authorName, committerName);
@@ -260,10 +260,10 @@ public final class GitChangeUtils {
     String commentBody = s.boundedToken('\u0003', true);
     // construct full comment
     String fullComment;
-    if (commentSubject.length() == 0) {
+    if (commentSubject.isEmpty()) {
       fullComment = commentBody;
     }
-    else if (commentBody.length() == 0) {
+    else if (commentBody.isEmpty()) {
       fullComment = commentSubject;
     }
     else {
@@ -290,7 +290,7 @@ public final class GitChangeUtils {
         String diff = Git.getInstance().runCommand(diffHandler).getOutputOrThrow();
         parseChanges(project, root, thisRevision, parentRevision, diff, changes);
 
-        if (changes.size() > 0) {
+        if (!changes.isEmpty()) {
           break;
         }
       }

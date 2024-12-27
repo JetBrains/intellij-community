@@ -71,7 +71,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
           grammar.acceptChildren(searcher);
         }
 
-        if (result.size() > 0) {
+        if (!result.isEmpty()) {
           OverridingDefineRenderer.doClickAction(e, result, RelaxngBundle.message("relaxng.gutter.go-to-overriding-defines"));
         }
       }

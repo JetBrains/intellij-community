@@ -72,7 +72,7 @@ public final class PyDebugValueExecutionService {
       myFrameAccessors.remove(i);
       mySubmittedTasks.remove(i);
     }
-    if (myFrameAccessors.size() == 0 && myAsyncValuesExecutorService != null) {
+    if (myFrameAccessors.isEmpty() && myAsyncValuesExecutorService != null) {
       myAsyncValuesExecutorService.shutdownNow();
       myAsyncValuesExecutorService = null;
     }

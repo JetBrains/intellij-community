@@ -83,7 +83,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     }
 
     final Set<Define> set = DefinitionResolver.resolve(scope, getCanonicalText());
-    if (set == null || set.size() == 0) return ResolveResult.EMPTY_ARRAY;
+    if (set == null || set.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
     return ContainerUtil.map2Array(set, ResolveResult.class, this);
   }
@@ -126,9 +126,10 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     }
 
     final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(scope);
-    if (map == null || map.size() == 0) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    if (map == null || map.isEmpty()) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
-    return ContainerUtil.mapNotNull(map.values(), (Function<Set<Define>, Object>)defines -> defines.size() == 0 ? null : defines.iterator().next().getPsiElement()).toArray();
+    return ContainerUtil.mapNotNull(map.values(), (Function<Set<Define>, Object>)defines -> defines.isEmpty()
+                                                                                            ? null : defines.iterator().next().getPsiElement()).toArray();
   }
 
   @Override

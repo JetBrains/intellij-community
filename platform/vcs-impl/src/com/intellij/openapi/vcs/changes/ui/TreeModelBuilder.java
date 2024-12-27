@@ -376,7 +376,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     ChangesBrowserNode<?> subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
     for (@Nls String branchName : switchedFiles.keySet()) {
       List<VirtualFile> switchedFileList = sorted(switchedFiles.get(branchName), FILE_COMPARATOR);
-      if (switchedFileList.size() > 0) {
+      if (!switchedFileList.isEmpty()) {
         ChangesBrowserNode<?> branchNode = new ChangesBrowserStringNode(branchName);
         branchNode.markAsHelperNode();
 

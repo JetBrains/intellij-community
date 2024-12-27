@@ -23,7 +23,7 @@ public final class Strings {
   public static String detokenize(final Collection<String> list, final char delim) {
     final StringBuilder buffer = new StringBuilder();
     for (String goal : list) {
-      if (buffer.length() != 0) {
+      if (!buffer.isEmpty()) {
         buffer.append(delim);
       }
       buffer.append(goal);
@@ -34,7 +34,7 @@ public final class Strings {
   public static String translateMasks(final Collection<String> masks) {
     final StringBuilder patterns = new StringBuilder();
     for (String mask : masks) {
-      if (patterns.length() != 0) {
+      if (!patterns.isEmpty()) {
         patterns.append('|');
       }
       patterns.append(PatternUtil.convertToRegex(mask));

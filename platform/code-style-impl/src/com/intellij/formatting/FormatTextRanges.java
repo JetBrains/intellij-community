@@ -108,7 +108,7 @@ public final class FormatTextRanges implements FormattingRangesInfo {
   @Override
   public @Nullable TextRange getBoundRange() {
     List<TextRange> ranges = getTextRanges();
-    return ranges.size() > 0 ?
+    return !ranges.isEmpty() ?
            new TextRange(ranges.get(0).getStartOffset(), ranges.get(ranges.size() - 1).getEndOffset()) :
            null;
   }

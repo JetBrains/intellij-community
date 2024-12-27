@@ -145,7 +145,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       }
       cmdLine.setExePath(tool.getPath());
 
-      if (myConfiguration.HEAP_SIZE != null && myConfiguration.HEAP_SIZE.trim().length() != 0) {
+      if (myConfiguration.HEAP_SIZE != null && !myConfiguration.HEAP_SIZE.trim().isEmpty()) {
         String param = JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_2) ? "-J-Xmx" : "-J-mx";
         cmdLine.getParametersList().prepend(param + myConfiguration.HEAP_SIZE + "m");
       }
@@ -155,7 +155,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private void setParameters(Sdk jdk, GeneralCommandLine cmdLine) throws CantRunException {
       ParametersList parameters = cmdLine.getParametersList();
 
-      if (myConfiguration.LOCALE != null && myConfiguration.LOCALE.length() > 0) {
+      if (myConfiguration.LOCALE != null && !myConfiguration.LOCALE.isEmpty()) {
         parameters.add("-locale");
         parameters.add(myConfiguration.LOCALE);
       }

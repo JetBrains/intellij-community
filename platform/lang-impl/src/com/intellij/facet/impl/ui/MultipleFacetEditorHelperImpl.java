@@ -155,7 +155,7 @@ public final class MultipleFacetEditorHelperImpl implements MultipleFacetEditorH
     private void textChanged() {
       String value = myCommon.getText();
       for (int i = 0; i < myTextFields.size(); i++) {
-        myTextFields.get(i).setText(value.length() == 0 ? myInitialValues.get(i) : value);
+        myTextFields.get(i).setText(value.isEmpty() ? myInitialValues.get(i) : value);
       }
     }
 

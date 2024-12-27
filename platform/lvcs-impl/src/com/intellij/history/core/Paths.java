@@ -56,7 +56,7 @@ public final class Paths {
     if (!isParent(root, path)) return null;
 
     path = path.substring(root.length());
-    if (path.length() == 0) return "";
+    if (path.isEmpty()) return "";
 
     if (path.charAt(0) != DELIM) return null;
     return path.substring(1);

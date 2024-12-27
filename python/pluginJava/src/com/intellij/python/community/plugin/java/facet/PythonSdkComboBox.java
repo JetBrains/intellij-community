@@ -43,7 +43,7 @@ class PythonSdkComboBox extends ComboboxWithBrowseButton {
 
   public void updateSdkList(Sdk sdkToSelect, boolean selectAnySdk) {
     final List<Sdk> sdkList = new ArrayList<>(ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance()));
-    if (selectAnySdk && sdkList.size() > 0) {
+    if (selectAnySdk && !sdkList.isEmpty()) {
       sdkToSelect = sdkList.get(0);
     }
     sdkList.add(0, null);

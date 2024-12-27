@@ -304,7 +304,7 @@ public final class ParametersList implements Cloneable {
   }
 
   public @Nullable String getLast() {
-    return myParameters.size() > 0 ? myParameters.get(myParameters.size() - 1).getLocalValue() : null;
+    return !myParameters.isEmpty() ? myParameters.get(myParameters.size() - 1).getLocalValue() : null;
   }
 
   public void add(@NotNull @NonNls String name, @NotNull @NonNls String value) {

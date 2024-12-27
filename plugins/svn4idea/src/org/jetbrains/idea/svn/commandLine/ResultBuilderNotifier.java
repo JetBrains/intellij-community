@@ -37,10 +37,10 @@ public class ResultBuilderNotifier extends ProcessAdapter {
   }
 
   private void forceNewLine() {
-    if (myStdoutLine.length() != 0) {
+    if (!myStdoutLine.isEmpty()) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
     }
-    else if (myStderrLine.length() != 0) {
+    else if (!myStderrLine.isEmpty()) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
     }
   }
@@ -62,7 +62,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
 
   private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
     if (!lines.hasNext()) return;
-    if (lineBuilder.length() > 0) {
+    if (!lineBuilder.isEmpty()) {
       lineBuilder.append(lines.next());
       if (lines.hasNext()) {
         // line is complete
@@ -81,7 +81,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
         notifyLine(line, outputType);
       }
       else {
-        if (line != null && line.length() > 0) {
+        if (line != null && !line.isEmpty()) {
           lineBuilder.append(line);
         }
         break;

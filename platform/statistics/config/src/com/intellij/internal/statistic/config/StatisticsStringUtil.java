@@ -49,7 +49,7 @@ public final class StatisticsStringUtil {
     while (index >= 0) {
       final int nextPos = index + 1;
       String token = text.substring(pos, index);
-      if (token.length() != 0) {
+      if (!token.isEmpty()) {
         result.add(token);
       }
       pos = nextPos;

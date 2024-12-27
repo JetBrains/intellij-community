@@ -346,7 +346,7 @@ public class MavenResumeAction extends AnAction {
       myContext.getStartedProjects();
 
       if (event.getExitCode() == 0 &&
-          myContext.getStartedProjects().size() != 0 &&
+          !myContext.getStartedProjects().isEmpty() &&
           myContext.getProjectsInReactor().size() != myContext.getStartedProjects().size()) {
         log(String.format("Build was success, but not all project was build. Project build order: %s, built projects: %s",
                           myContext.getProjectsInReactor(),

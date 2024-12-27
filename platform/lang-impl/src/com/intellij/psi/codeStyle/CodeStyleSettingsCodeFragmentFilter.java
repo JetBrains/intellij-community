@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -277,7 +277,7 @@ final class CompositeSequentialTask implements SequentialTask {
 
   @Override
   public boolean isDone() {
-    return myCurrentTask == null && myUnfinishedTasks.size() == 0;
+    return myCurrentTask == null && myUnfinishedTasks.isEmpty();
   }
 
   @Override
@@ -306,7 +306,7 @@ final class CompositeSequentialTask implements SequentialTask {
       popUntilCurrentTaskUnfinishedOrNull();
     }
     else {
-      if (myUnfinishedTasks.size() > 0) {
+      if (!myUnfinishedTasks.isEmpty()) {
         myCurrentTask = myUnfinishedTasks.get(0);
         myUnfinishedTasks.remove(0);
         popUntilCurrentTaskUnfinishedOrNull();

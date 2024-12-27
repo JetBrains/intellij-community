@@ -241,7 +241,7 @@ public final class JShellHandler {
     if (protocolJar != null) {
       launchCp.append(File.pathSeparator).append(protocolJar);
     }
-    if (launchCp.length() > 0) {
+    if (!launchCp.isEmpty()) {
       cmdLine.addParameter("-classpath");
       cmdLine.addParameter(launchCp.toString());
     }

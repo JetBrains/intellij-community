@@ -1011,7 +1011,7 @@ public final class PyCallExpressionHelper {
           if (variadicPositionalArguments.size() == 1) {
             mappedParameters.put(variadicPositionalArguments.get(0), parameter);
           }
-          if (variadicPositionalArguments.size() != 1 && allPositionalArguments.size() == 0) {
+          if (variadicPositionalArguments.size() != 1 && allPositionalArguments.isEmpty()) {
             unmappedContainerParameters.add(parameter);
           }
           allPositionalArguments.clear();

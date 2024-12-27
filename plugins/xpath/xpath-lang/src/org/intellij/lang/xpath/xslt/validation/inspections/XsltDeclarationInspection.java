@@ -57,7 +57,7 @@ public class XsltDeclarationInspection extends XsltInspection {
                 final XmlTag tag = element.getTag();
 
                 final PsiElement token = element.getNameIdentifier();
-                if (name == null || name.length() == 0) {
+                if (name == null || name.isEmpty()) {
                     if (token != null) {
                         holder.registerProblem(token, XPathBundle.message("inspection.message.empty.name.not.permitted"));
                     } else {

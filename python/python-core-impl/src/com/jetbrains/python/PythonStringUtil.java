@@ -108,7 +108,7 @@ public final class PythonStringUtil {
     }
 
     s = removeLastSuffix(s, separator);
-    if (s.length() > 0) {
+    if (!s.isEmpty()) {
       s += separator;
     }
     s += newElementName;

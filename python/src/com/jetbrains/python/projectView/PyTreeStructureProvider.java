@@ -164,7 +164,7 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
         return parent;     // we don't display any nodes under functions
       }
     }
-    if (parents.size() > 0) {
+    if (!parents.isEmpty()) {
       return parents.get(parents.size() - 1);
     }
     return element.getContainingFile();

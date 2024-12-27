@@ -116,7 +116,7 @@ public class SubstitutedExpressionEvaluationHelper {
             public void visitElement(@NotNull PsiElement element) {
               if (element instanceof PsiExpressionList) return;
               if (element instanceof PsiIdentifier) {
-                if (sb.length() > 0) sb.append(".");
+                if (!sb.isEmpty()) sb.append(".");
                 sb.append(element.getText());
               }
               super.visitElement(element);

@@ -61,7 +61,7 @@ final class InputFileObject extends JpsFileObject {
     final String fPath = myFile.getPath();
     for (File dir: path) {
       String dirPath = dir.getPath();
-      if (dirPath.length() == 0) {
+      if (dirPath.isEmpty()) {
         dirPath = System.getProperty("user.dir");
       }
       if (!fPath.regionMatches(!caseSensitiveFS, 0, dirPath, 0, dirPath.length())) {

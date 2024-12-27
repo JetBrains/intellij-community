@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -72,7 +72,7 @@ public final class PatternPackageSetParserExtension implements PackageSetParserE
       lexer.advance();
     }
 
-    if (pattern.length() == 0) {
+    if (pattern.isEmpty()) {
       error(CodeInsightBundle.message("error.package.set.pattern.expectations"), lexer);
     }
 

@@ -48,7 +48,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
   private class ShelveChangesCommitSession implements CommitSession {
     @Override
     public void execute(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
-      if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
+      if (!changes.isEmpty() && !ChangesUtil.hasFileChanges(changes)) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
           .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action")), null, myProject);
         return;

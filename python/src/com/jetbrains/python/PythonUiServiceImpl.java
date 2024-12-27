@@ -151,7 +151,7 @@ public final class PythonUiServiceImpl extends PythonUiService {
                                List<? extends Pair<PsiElement, PsiElement>> conflicts,
                                String obscured,
                                @Nullable String name) {
-    if (conflicts.size() > 0) {
+    if (!conflicts.isEmpty()) {
       Usage[] usages = new Usage[conflicts.size()];
       int i = 0;
       for (Pair<PsiElement, PsiElement> pair : conflicts) {

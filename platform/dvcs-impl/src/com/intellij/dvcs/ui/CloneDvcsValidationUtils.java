@@ -57,7 +57,7 @@ public final class CloneDvcsValidationUtils {
    * @return null if destination directory is OK.
    */
   public static @Nullable ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JComponent component) {
-    if (directoryPath.length() == 0) {
+    if (directoryPath.isEmpty()) {
       return new ValidationInfo("");
     }
 
@@ -98,7 +98,7 @@ public final class CloneDvcsValidationUtils {
    * @return null if repository URL is OK.
    */
   public static @Nullable ValidationInfo checkRepositoryURL(JComponent component, String repository) {
-    if (repository.length() == 0) {
+    if (repository.isEmpty()) {
       return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.empty"), component);
     }
 

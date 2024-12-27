@@ -389,7 +389,7 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
           final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
           return Pair.create(expression, false);
         }
-        return Pair.create(null, candidates.size() > 0);
+        return Pair.create(null, !candidates.isEmpty());
       }
       catch (PyDefUseUtil.InstructionNotFoundException ignored) {
       }

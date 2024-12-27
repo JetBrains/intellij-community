@@ -163,7 +163,7 @@ public final class FunctionDeclarationParsing {
     final Pair<String, ? extends Function> pair = parseFuntionDeclaration(s);
     final Function func = pair.second;
 
-    final boolean fn = pair.first.equals("fn") || pair.first.length() == 0;
+    final boolean fn = pair.first.equals("fn") || pair.first.isEmpty();
     final boolean xs = pair.first.equals("xs");
     final Pair<QName, Integer> key = Pair.create(new QName(fn ? FUNCTION_NAMESPACE : (xs ? XPath2Type.XMLSCHEMA_NS : null), func.getName()), func.getParameters().length);
     assert !decls.containsKey(key) : key;

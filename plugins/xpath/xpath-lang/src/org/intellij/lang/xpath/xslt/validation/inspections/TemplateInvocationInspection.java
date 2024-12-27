@@ -93,7 +93,7 @@ public class TemplateInvocationInspection extends XsltInspection {
 
                     final XmlAttributeValue valueElement = argAttribute.getValueElement();
                     final PsiElement valueToken = XsltSupport.getAttValueToken(argAttribute);
-                    if (valueToken != null && s.trim().length() > 0) {
+                    if (valueToken != null && !s.trim().isEmpty()) {
                         if (template.getParameter(s) == null) {
                             final LocalQuickFix fix1 = new AddParameterFix(s, template).createQuickFix(onTheFly);
                             final LocalQuickFix fix2 = new RemoveParamFix(argNames.get(s).getTag(), s).createQuickFix(onTheFly);

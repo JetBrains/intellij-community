@@ -49,7 +49,7 @@ public class ProjectId implements ProjectCoordinate, Serializable {
   }
 
   public static void append(StringBuilder builder, String part) {
-    if (builder.length() != 0) builder.append(':');
+    if (!builder.isEmpty()) builder.append(':');
     builder.append(part == null ? "<unknown>" : part);
   }
 

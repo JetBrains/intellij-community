@@ -167,7 +167,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   static @NotNull String convertTypeStringToRegExp(@NotNull String typeString) {
     final StringBuilder result = new StringBuilder();
     for (String type : StringUtil.split(typeString, "|")) {
-      if (result.length() > 0) {
+      if (!result.isEmpty()) {
         result.append('|');
       }
       MatchUtil.shieldRegExpMetaChars(type.trim(), result);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -541,7 +541,8 @@ public final class FormatterImpl extends FormatterEx
 
       if (text.charAt(lineStartOffset) == '\n'
           && wsStart <= (prevEnd = documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) &&
-          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim().length() == 0 // ws consists of space only, it is not true for <![CDATA[
+          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim()
+            .isEmpty() // ws consists of space only, it is not true for <![CDATA[
          ) {
         lineStartOffset--;
       }

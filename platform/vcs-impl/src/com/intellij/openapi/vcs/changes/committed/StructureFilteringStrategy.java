@@ -95,7 +95,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
-    if (mySelection.size() == 0) {
+    if (mySelection.isEmpty()) {
       return new ArrayList<>(changeLists);
     }
     final ArrayList<CommittedChangeList> result = new ArrayList<>();

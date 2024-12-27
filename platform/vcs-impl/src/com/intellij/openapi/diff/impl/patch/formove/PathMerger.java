@@ -175,7 +175,7 @@ public final class PathMerger {
     public File getResult() {
       final StringBuilder sb = new StringBuilder();
       for (String element : myChildPathElements) {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append(File.separatorChar);
         }
         sb.append(element);

@@ -138,7 +138,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
   }
 
   private static void addPropertyPresentation(@NotNull PropertyData property, @NotNull StringBuilder sb) {
-    if (sb.length() != 0) {
+    if (!sb.isEmpty()) {
       sb.append(ourPropertiesDelimiter);
     }
     sb.append(property.getName()).append("=").append(property.getValue());

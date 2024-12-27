@@ -143,7 +143,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   private static boolean isIgnoredNamespace(String prefix, String namespace) {
-    return IGNORED_URIS.contains(namespace) || prefix.length() == 0 || "xmlns".equals(prefix);
+    return IGNORED_URIS.contains(namespace) || prefix.isEmpty() || "xmlns".equals(prefix);
   }
 
   private static class StopProcessingException extends Exception {

@@ -30,7 +30,7 @@ public final class PsiPackageRenameValidator implements RenameInputValidatorEx {
       return JavaBundle.message("rename.package.ignored.name.warning");
     }
 
-    if (newName.length() > 0) {
+    if (!newName.isEmpty()) {
       if (!PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
         return JavaBundle.message("rename.package.invalid.name.error");
       }

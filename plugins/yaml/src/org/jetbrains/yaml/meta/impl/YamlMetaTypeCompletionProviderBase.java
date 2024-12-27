@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.meta.model.CompletionContext;
 import org.jetbrains.yaml.meta.model.*;
+import org.jetbrains.yaml.meta.model.CompletionContext;
 import org.jetbrains.yaml.psi.*;
 
 import java.util.*;
@@ -174,7 +174,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       final int caretPos = text.indexOf(DUMMY_IDENTIFIER_TRIMMED);
       String pattern = StringUtil.toLowerCase((caretPos >= 0 ? text.substring(0, caretPos) : text));
 
-      final Collection<List<Field>> paths = collectPaths(filteredList, pattern.length() > 0 ? 10 : 1);
+      final Collection<List<Field>> paths = collectPaths(filteredList, !pattern.isEmpty() ? 10 : 1);
 
       for (List<Field> pathToInsert : paths) {
         final Field lastField = pathToInsert.get(pathToInsert.size() - 1);

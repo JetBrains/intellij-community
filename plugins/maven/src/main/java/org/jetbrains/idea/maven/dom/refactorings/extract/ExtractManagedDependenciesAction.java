@@ -171,11 +171,11 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
                                                         @NotNull Set<MavenDomProjectModel> models,
                                                         @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
                                                         boolean hasExclusions) {
-      if (models.size() == 0) return null;
+      if (models.isEmpty()) return null;
 
       if (models.size() == 1 && !hasExclusions) {
         MavenDomProjectModel model = models.iterator().next();
-        if (funOccurrences.fun(model).size() == 0) {
+        if (funOccurrences.fun(model).isEmpty()) {
           return new ProcessData(model, Collections.emptySet(), false);
         }
       }

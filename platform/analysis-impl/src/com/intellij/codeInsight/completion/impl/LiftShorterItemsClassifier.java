@@ -37,7 +37,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
       myCount++;
 
       for (String string : CompletionUtil.iterateLookupStrings(added)) {
-        if (string.length() == 0) continue;
+        if (string.isEmpty()) continue;
 
         myElements.putValue(string, added);
         mySortedStrings.add(string);

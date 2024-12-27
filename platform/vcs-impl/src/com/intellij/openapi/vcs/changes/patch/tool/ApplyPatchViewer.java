@@ -327,7 +327,7 @@ class ApplyPatchViewer implements Disposable {
     myPatchEditor.getGutterComponentEx().revalidateMarkup();
 
 
-    if (myResultChanges.size() > 0) {
+    if (!myResultChanges.isEmpty()) {
       scrollToChange(myResultChanges.get(0), Side.LEFT, true);
     }
   }

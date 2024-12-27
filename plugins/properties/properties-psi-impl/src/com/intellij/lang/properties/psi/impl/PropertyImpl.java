@@ -358,7 +358,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
         text.append("\n");
       }
     }
-    if (text.length() == 0) return null;
+    if (text.isEmpty()) return null;
     return text.toString();
   }
 

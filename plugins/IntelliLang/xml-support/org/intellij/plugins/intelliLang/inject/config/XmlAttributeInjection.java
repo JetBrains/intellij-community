@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static org.intellij.plugins.intelliLang.inject.InjectorUtils.appendStringPattern;
@@ -56,11 +55,11 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     final String tag = getTagName();
     final String attributeName = getAttributeName();
     if (!attributeName.equals(StringMatcher.NONE.getPattern())) {
-      if (tag.length() > 0) {
-        return tag + "/@" + (attributeName.length() > 0 ? attributeName : "*");
+      if (!tag.isEmpty()) {
+        return tag + "/@" + (!attributeName.isEmpty() ? attributeName : "*");
       }
       else {
-        return "*/@" + (attributeName.length() > 0 ? attributeName : "*");
+        return "*/@" + (!attributeName.isEmpty() ? attributeName : "*");
       }
     }
     return attributeName;

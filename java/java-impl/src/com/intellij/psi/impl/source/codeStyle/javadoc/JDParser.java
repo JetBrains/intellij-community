@@ -255,14 +255,14 @@ public class JDParser {
           }
         }
         else {
-          if (sb.length() > 0) {
+          if (!sb.isEmpty()) {
             sb.append('\n');
           }
           sb.append(line);
         }
       }
       else {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append('\n');
         }
       }
@@ -606,7 +606,7 @@ public class JDParser {
             endParagraph(result, sb);
           }
 
-          if (sb.length() != 0) sb.append(' ');
+          if (!sb.isEmpty()) sb.append(' ');
           if (markdownComment && !sb.isEmpty()) {
             // When fusing lines together, horizontal spacing loses its meaning
             sb.append(s1.trim());
@@ -617,7 +617,7 @@ public class JDParser {
         }
       }
     }
-    if (!mySettings.JD_PRESERVE_LINE_FEEDS && sb.length() != 0) {
+    if (!mySettings.JD_PRESERVE_LINE_FEEDS && !sb.isEmpty()) {
       result.add(new Pair<>(sb.toString(), false));
     }
     return result;
@@ -656,7 +656,7 @@ public class JDParser {
   }
 
   private static void endParagraph(@NotNull List<? super Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       result.add(new Pair<>(sb.toString(), false));
       sb.setLength(0);
     }

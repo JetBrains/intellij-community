@@ -31,7 +31,7 @@ public final class CodeStylePropertiesUtil {
   public static <T> String toCommaSeparatedString(@NotNull List<T> list) {
     StringBuilder builder = new StringBuilder();
     for (T value : list) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append(",");
       }
       builder.append(value);

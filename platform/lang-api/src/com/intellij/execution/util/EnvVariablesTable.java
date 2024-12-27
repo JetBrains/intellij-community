@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
@@ -215,7 +215,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       List<EnvironmentVariable> variables = getSelection();
       for (EnvironmentVariable environmentVariable : variables) {
         if (isEmpty(environmentVariable)) continue;
-        if (sb.length() > 0) sb.append(';');
+        if (!sb.isEmpty()) sb.append(';');
         sb.append(StringUtil.escapeChars(environmentVariable.getName(), '=', ';')).append('=')
           .append(StringUtil.escapeChars(environmentVariable.getValue(), '=', ';'));
       }

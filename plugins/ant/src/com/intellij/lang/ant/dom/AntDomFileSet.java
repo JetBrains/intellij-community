@@ -80,7 +80,7 @@ public abstract class AntDomFileSet extends AntDomFilesProviderImpl{
     }
 
     private static String makePath(final String parentPath, final String name) {
-      if (parentPath.length() == 0) {
+      if (parentPath.isEmpty()) {
         return name;
       }
       return parentPath + "/" + name;

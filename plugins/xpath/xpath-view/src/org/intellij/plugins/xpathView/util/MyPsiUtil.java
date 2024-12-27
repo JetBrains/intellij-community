@@ -129,7 +129,7 @@ public final class MyPsiUtil {
      */
     public static boolean isInDeclaredNamespace(XmlTag context, String nsUri, String nsPrefix) {
 
-        if (nsUri == null || nsUri.length() == 0 || nsPrefix != null && nsPrefix.length() > 0) {
+        if (nsUri == null || nsUri.isEmpty() || nsPrefix != null && !nsPrefix.isEmpty()) {
             return true;
         }
 

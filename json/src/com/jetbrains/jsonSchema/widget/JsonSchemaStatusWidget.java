@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -213,7 +213,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return getNoSchemaState();
     }
     Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);
-    if (schemaFiles.size() == 0) {
+    if (schemaFiles.isEmpty()) {
       return getNoSchemaState();
     }
 
@@ -230,7 +230,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         return state;
       }
       schemaFiles = userSchemas;
-      if (schemaFiles.size() == 0) {
+      if (schemaFiles.isEmpty()) {
         return getNoSchemaState();
       }
     }

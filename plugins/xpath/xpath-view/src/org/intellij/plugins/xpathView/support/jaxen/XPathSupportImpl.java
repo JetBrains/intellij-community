@@ -76,7 +76,7 @@ class XPathSupportImpl extends XPathSupport {
         public String translateNamespacePrefixToUri(String prefix) {
             final String uri = super.translateNamespacePrefixToUri(prefix);
             // avoid matching of undefined prefixes on default namespace
-            if (prefix != null && prefix.length() > 0) {
+            if (prefix != null && !prefix.isEmpty()) {
                 if (uri == null) {
                     LOG.debug("Undefined prefix: " + prefix);
                     return "urn:xpathview:undefined-namespace";

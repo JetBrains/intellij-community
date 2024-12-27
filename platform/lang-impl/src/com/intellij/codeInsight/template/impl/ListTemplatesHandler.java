@@ -178,7 +178,7 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
     if (argument == null) {
       return key;
     }
-    if (key.length() > 0 && Character.isJavaIdentifierPart(key.charAt(key.length() - 1))) {
+    if (!key.isEmpty() && Character.isJavaIdentifierPart(key.charAt(key.length() - 1))) {
       return key + ' ' + argument;
     }
     return key + argument;

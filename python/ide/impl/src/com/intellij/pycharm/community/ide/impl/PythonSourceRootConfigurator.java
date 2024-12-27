@@ -78,7 +78,7 @@ final class PythonSourceRootConfigurator implements DirectoryProjectConfigurator
               if (keyExpr instanceof PyStringLiteralExpression && valueExpr instanceof PyStringLiteralExpression) {
                 String key = ((PyStringLiteralExpression) keyExpr).getStringValue();
                 String value = ((PyStringLiteralExpression)valueExpr).getStringValue();
-                if (key.length() == 0) {
+                if (key.isEmpty()) {
                   myRootPackageDir = value;
                 }
               }

@@ -50,7 +50,7 @@ public final class ContinueStatementWithLabelInspection extends BaseInspection {
       if (labelText == null) {
         return;
       }
-      if (labelText.length() == 0) {
+      if (labelText.isEmpty()) {
         return;
       }
       registerStatementError(statement);

@@ -198,7 +198,7 @@ public final class LiveTemplateBuilder {
   }
 
   public int insertTemplate(int offset, TemplateImpl template, Map<String, String> predefinedVarValues) {
-    myIsToReformat = myText.length() > 0 || template.isToReformat();
+    myIsToReformat = !myText.isEmpty() || template.isToReformat();
     removeEndVarAtOffset(offset);
 
     String text = template.getTemplateText();

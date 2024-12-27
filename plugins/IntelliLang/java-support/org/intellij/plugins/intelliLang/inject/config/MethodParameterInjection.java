@@ -334,7 +334,7 @@ public final class MethodParameterInjection extends BaseInjection {
 
     private static @NonNls String calcMethodName(final String methodSignature) {
       final String s = StringUtil.split(methodSignature, "(").get(0);
-      return s.length() == 0 ? "<none>" : s;
+      return s.isEmpty() ? "<none>" : s;
     }
 
     public String getFlagsString() {

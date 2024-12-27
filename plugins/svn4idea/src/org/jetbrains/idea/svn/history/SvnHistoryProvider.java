@@ -517,7 +517,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private boolean checkForParentChanges(LogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       String path = Url.removeTail(lastPathBefore);
-      while (path.length() > 0) {
+      while (!path.isEmpty()) {
         final LogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
         // TODO: seems that R (replaced) should also be checked here
@@ -777,7 +777,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                            final boolean hasFocus,
                                            final int row,
                                            final int column) {
-        if (value instanceof String && ((String)value).length() > 0) {
+        if (value instanceof String && !((String)value).isEmpty()) {
           setIcon(myIcon);
           setToolTipText(message("copy.column.tooltip", value));
         }

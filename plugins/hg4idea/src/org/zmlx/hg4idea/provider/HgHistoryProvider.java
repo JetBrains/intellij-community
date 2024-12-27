@@ -94,7 +94,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final VirtualFile vcsRoot = HgUtil.getHgRootOrThrow(myProject, filePath);
 
     final List<HgFileRevision> history = getHistory(filePath, vcsRoot, myProject);
-    if (history.size() == 0) return;
+    if (history.isEmpty()) return;
 
     final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, filePath, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);

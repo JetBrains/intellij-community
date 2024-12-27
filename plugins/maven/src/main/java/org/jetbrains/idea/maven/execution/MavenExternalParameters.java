@@ -389,7 +389,7 @@ public final class MavenExternalParameters {
     }
 
     for (Map.Entry<String, String> entry : runnerSettings.getMavenProperties().entrySet()) {
-      if (entry.getKey().length() > 0) {
+      if (!entry.getKey().isEmpty()) {
         parametersList.addProperty(entry.getKey(), entry.getValue());
       }
     }
@@ -552,7 +552,7 @@ public final class MavenExternalParameters {
   public static String encodeProfiles(Map<String, Boolean> profiles) {
     StringBuilder stringBuilder = new StringBuilder();
     for (Map.Entry<String, Boolean> entry : profiles.entrySet()) {
-      if (stringBuilder.length() != 0) {
+      if (!stringBuilder.isEmpty()) {
         stringBuilder.append(",");
       }
       if (!entry.getValue()) {

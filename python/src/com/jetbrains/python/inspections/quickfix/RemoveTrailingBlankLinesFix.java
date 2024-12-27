@@ -36,7 +36,7 @@ public class RemoveTrailingBlankLinesFix implements ModCommandAction {
     for (int i = document.getLineCount() - 1; i >= 0; i--) {
       int lineStart = document.getLineStartOffset(i);
       String trimmed = document.getCharsSequence().subSequence(lineStart, document.getLineEndOffset(i)).toString().trim();
-      if (trimmed.length() > 0) {
+      if (!trimmed.isEmpty()) {
         break;
       }
       lastBlankLineOffset = lineStart;

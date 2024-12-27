@@ -579,7 +579,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
         JavaDocumentationProvider.createTypeParamsListComment(builder, commenter, typeParameterList);
       }
     }
-    return builder.length() > 0 ? builder.toString() : null;
+    return !builder.isEmpty() ? builder.toString() : null;
   }
 
   @Override

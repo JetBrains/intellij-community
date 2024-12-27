@@ -86,7 +86,7 @@ public class ManifestBuilder {
 
   public static @NotNull String getClasspathPrefix(@Nullable Element manifestConfiguration) {
     String classpathPrefix = MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "classpathPrefix", "").replaceAll("\\\\", "/");
-    if (classpathPrefix.length() != 0 && !classpathPrefix.endsWith("/")) {
+    if (!classpathPrefix.isEmpty() && !classpathPrefix.endsWith("/")) {
       classpathPrefix += "/";
     }
     return classpathPrefix;

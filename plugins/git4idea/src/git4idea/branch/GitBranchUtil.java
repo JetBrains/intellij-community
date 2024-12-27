@@ -91,7 +91,7 @@ public final class GitBranchUtil {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
-        if (line.length() != 0) tags.add(line);
+        if (!line.isEmpty()) tags.add(line);
       }
     });
 
@@ -329,7 +329,7 @@ public final class GitBranchUtil {
     }
     final String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
-    if (output.trim().length() == 0) {
+    if (output.trim().isEmpty()) {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {

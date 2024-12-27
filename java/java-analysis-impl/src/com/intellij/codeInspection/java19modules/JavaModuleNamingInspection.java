@@ -25,7 +25,7 @@ public final class JavaModuleNamingInspection extends AbstractBaseJavaLocalInspe
         Ref<String> newName = Ref.create();
         psiTraverser().children(name).filter(PsiIdentifier.class).forEach(id -> {
           String text = id.getText();
-          if (text.length() > 0 && Character.isDigit(text.charAt(text.length() - 1))) {
+          if (!text.isEmpty() && Character.isDigit(text.charAt(text.length() - 1))) {
             String message = JavaAnalysisBundle.message("inspection.java.module.naming.terminal.digits", text);
             if (newName.isNull()) {
               newName.set(StringUtil.join(psiTraverser().children(name).filter(PsiIdentifier.class).map(i -> trimDigits(i.getText())), "."));

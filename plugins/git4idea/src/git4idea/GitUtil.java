@@ -484,7 +484,7 @@ public final class GitUtil {
       sb.append(lineIsAStart ? line.substring(2) : line).append('\n');
       firstStep = false;
     }
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       final StringScanner innerScanner = new StringScanner(sb.toString());
       sb.setLength(0);
       consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h, false, false));

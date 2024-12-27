@@ -85,7 +85,7 @@ public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements Lo
     for (int i = 0, length = text.length(); i < length; i++) {
       char c = text.charAt(i);
       if (c <= ' ' || Character.isSpaceChar(c)) {
-        if (buf.length() == 0 || buf.charAt(buf.length() - 1) != ' ') {
+        if (buf.isEmpty() || buf.charAt(buf.length() - 1) != ' ') {
           buf.append(' ');
         }
       }

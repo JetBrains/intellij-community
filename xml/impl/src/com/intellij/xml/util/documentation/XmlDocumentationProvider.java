@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.documentation.mdn.MdnDocumentationKt;
@@ -346,9 +346,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());
         String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 
-        if (namespace.length() > 0) {
+        if (!namespace.isEmpty()) {
           tagText.append(" xmlns");
-          if (namespacePrefix.length() > 0) tagText.append(":").append(namespacePrefix);
+          if (!namespacePrefix.isEmpty()) tagText.append(":").append(namespacePrefix);
           tagText.append("=\"").append(namespace).append("\"");
         }
 

@@ -282,7 +282,7 @@ public final class HardwareCollector implements TroubleInfoCollector {
       long total = fs.getTotalSpace();
       info.add(String.format(
         " %s (%s) [%s] %s of %s free (%.1f%%), %s of %s files free (%.1f%%) is %s "
-        + (fs.getLogicalVolume() != null && fs.getLogicalVolume().length() > 0 ? "[%s]" : "%s")
+        + (fs.getLogicalVolume() != null && !fs.getLogicalVolume().isEmpty() ? "[%s]" : "%s")
         + " and is mounted at %s",
         fs.getName(), fs.getDescription().isEmpty() ? "file system" : fs.getDescription(), fs.getType(),
         FormatUtil.formatBytes(usable), FormatUtil.formatBytes(fs.getTotalSpace()), 100d * usable / total,

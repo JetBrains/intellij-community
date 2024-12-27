@@ -125,7 +125,7 @@ public final class RenameUtil {
 
     if (searchInStringsAndComments && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-      if (stringToSearch.length() > 0) {
+      if (!stringToSearch.isEmpty()) {
         final String stringToReplace = getStringToReplace(element, newName, false, elementProcessor);
         UsageInfoFactory factory = new NonCodeUsageInfoFactory(searchForInComments, stringToReplace);
         if (!TextOccurrencesUtilBase.processUsagesInStringsAndComments(processor, searchForInComments,
@@ -135,13 +135,13 @@ public final class RenameUtil {
 
     if (searchForTextOccurrences && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
-      if (stringToSearch.length() > 0) {
+      if (!stringToSearch.isEmpty()) {
         final String stringToReplace = getStringToReplace(element, newName, true, elementProcessor);
         if (!processTextOccurrences(searchForInComments, searchScope, stringToSearch, stringToReplace, processor)) return false;
       }
 
       final Pair<String, String> additionalStringToSearch = elementProcessor.getTextOccurrenceSearchStrings(searchForInComments, newName);
-      if (additionalStringToSearch != null && additionalStringToSearch.first.length() > 0) {
+      if (additionalStringToSearch != null && !additionalStringToSearch.first.isEmpty()) {
         if (!processTextOccurrences(searchForInComments, searchScope, additionalStringToSearch.first, additionalStringToSearch.second,
                                     processor
         )) return false;

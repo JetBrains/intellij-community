@@ -32,7 +32,7 @@ public final class NamedScopeToGlobConverter {
         }
       }
     }
-    if (globPatterns.size() == 0) {
+    if (globPatterns.isEmpty()) {
       return null;
     }
     if (globPatterns.size() == 1) {

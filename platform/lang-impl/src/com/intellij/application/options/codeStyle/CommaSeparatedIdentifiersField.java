@@ -46,7 +46,7 @@ public final class CommaSeparatedIdentifiersField extends ExpandableTextField {
         String identifier = chunk.trim();
         if (!StringUtil.isEmpty(identifier)) {
           if (StringUtil.isJavaIdentifier(identifier)) {
-            if (result.length() > 0) {
+            if (!result.isEmpty()) {
               result.append(',');
             }
             result.append(identifier);

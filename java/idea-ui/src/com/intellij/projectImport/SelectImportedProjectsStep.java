@@ -104,7 +104,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   @Override
   public boolean validate() throws ConfigurationException {
     getContext().setList(fileChooser.getMarkedElements());
-    if (fileChooser.getMarkedElements().size() == 0) {
+    if (fileChooser.getMarkedElements().isEmpty()) {
       throw new ConfigurationException(JavaUiBundle.message("select.imported.projects.dialog.message.nothing.found"),
                                        JavaUiBundle.message("select.imported.projects.dialog.title.unable.to.proceed"));
     }

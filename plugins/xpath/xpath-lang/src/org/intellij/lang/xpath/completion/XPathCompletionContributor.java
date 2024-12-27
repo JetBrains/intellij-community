@@ -109,7 +109,7 @@ public class XPathCompletionContributor extends CompletionContributor {
                if (namespaceContext != null) {
                  final String prefixForURI =
                    namespaceContext.getPrefixForURI(XPath2Type.XMLSCHEMA_NS, parent.getXPathContext().getContextElement());
-                 if (prefixForURI != null && prefixForURI.length() > 0) {
+                 if (prefixForURI != null && !prefixForURI.isEmpty()) {
                    addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(),
                                                        type -> new MyLookup(prefixForURI + ":" + type.getQName().getLocalPart())),
                              parameters);

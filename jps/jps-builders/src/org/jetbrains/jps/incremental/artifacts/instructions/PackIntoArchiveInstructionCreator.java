@@ -38,7 +38,7 @@ public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerIns
   }
 
   private String childPathInJar(String fileName) {
-    return myPathInJar.length() == 0 ? fileName : myPathInJar + "/" + fileName;
+    return myPathInJar.isEmpty() ? fileName : myPathInJar + "/" + fileName;
   }
 
   @Override

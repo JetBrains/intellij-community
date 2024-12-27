@@ -664,7 +664,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      if ((selectedChanges.size() >= 1) && (sameBase(selectedChanges))) {
+      if ((!selectedChanges.isEmpty()) && (sameBase(selectedChanges))) {
         final AbstractFilePatchInProgress.PatchChange patchChange = selectedChanges.get(0);
         final AbstractFilePatchInProgress patch = patchChange.getPatchInProgress();
         final List<VirtualFile> autoBases = patch.getAutoBasesCopy();
@@ -687,7 +687,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     public void update(@NotNull AnActionEvent e) {
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      e.getPresentation().setEnabled((selectedChanges.size() >= 1) && (sameBase(selectedChanges)));
+      e.getPresentation().setEnabled((!selectedChanges.isEmpty()) && (sameBase(selectedChanges)));
     }
   }
 
@@ -818,7 +818,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
 
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      if (selectedChanges.size() >= 1) {
+      if (!selectedChanges.isEmpty()) {
         for (AbstractFilePatchInProgress.PatchChange patchChange : selectedChanges) {
           final AbstractFilePatchInProgress patch = patchChange.getPatchInProgress();
           if (myDirectorySelector) {

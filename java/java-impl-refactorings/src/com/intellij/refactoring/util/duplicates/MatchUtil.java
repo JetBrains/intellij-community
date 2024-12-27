@@ -20,7 +20,7 @@ public final class MatchUtil {
     if (!match.myChangedParams.isEmpty() || returnType != null) {
       @NonNls StringBuilder buffer = new StringBuilder();
       buffer.append(visibility);
-      if (buffer.length() > 0) {
+      if (!buffer.isEmpty()) {
         buffer.append(" ");
       }
       if (shouldBeStatic) {

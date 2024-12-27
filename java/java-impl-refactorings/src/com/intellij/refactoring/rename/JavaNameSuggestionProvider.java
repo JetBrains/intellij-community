@@ -104,7 +104,7 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
     StringBuilder buffer = new StringBuilder(prefix);
     for (int i = 0; i < words.length; i++) {
       String word = words[i];
-      final boolean prefixRequiresCapitalization = prefix.length() > 0 && !StringUtil.endsWithChar(prefix, '_');
+      final boolean prefixRequiresCapitalization = !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_');
       if (i > 0 || prefixRequiresCapitalization) {
         buffer.append(StringUtil.capitalize(word));
       }

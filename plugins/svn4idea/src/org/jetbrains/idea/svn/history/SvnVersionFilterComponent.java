@@ -62,7 +62,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   }
 
   public @Nullable String getAuthorFilter() {
-    if (myUseAuthorFilter.isSelected() && myAuthorField.getText().length() > 0) {
+    if (myUseAuthorFilter.isSelected() && !myAuthorField.getText().isEmpty()) {
       return myAuthorField.getText();
     }
     else {

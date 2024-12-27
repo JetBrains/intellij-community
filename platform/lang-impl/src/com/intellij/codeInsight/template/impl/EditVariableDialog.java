@@ -24,8 +24,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -89,7 +89,7 @@ final class EditVariableDialog extends DialogWrapper {
     myTable.getColumn(names[1]).setPreferredWidth(300);
     myTable.getColumn(names[2]).setPreferredWidth(100);
     myTable.getColumn(names[3]).setPreferredWidth(100);
-    if (myVariables.size() > 0) {
+    if (!myVariables.isEmpty()) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 

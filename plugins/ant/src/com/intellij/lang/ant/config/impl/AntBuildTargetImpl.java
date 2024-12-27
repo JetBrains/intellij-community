@@ -62,7 +62,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     }
 
     final String desc = target.getDescription().getRawText();
-    myDescription = (desc != null && desc.trim().length() > 0) ? desc : null;
+    myDescription = (desc != null && !desc.trim().isEmpty()) ? desc : null;
   }
 
   @Override

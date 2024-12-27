@@ -54,7 +54,7 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
     if (!relativeOutputPath.isEmpty()) {
       buffer.append(" (").append(relativeOutputPath).append(")");
     }
-    return buffer.length() > 0 ? buffer.toString() : null;
+    return !buffer.isEmpty() ? buffer.toString() : null;
   }
 
   @Override

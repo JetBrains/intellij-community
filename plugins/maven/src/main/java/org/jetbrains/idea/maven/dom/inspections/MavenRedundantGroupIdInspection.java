@@ -37,7 +37,7 @@ public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspec
         MavenDomProjectModel projectModel = model.getRootElement();
 
         String groupId = projectModel.getGroupId().getStringValue();
-        if (groupId != null && groupId.length() > 0) {
+        if (groupId != null && !groupId.isEmpty()) {
           MavenDomParent parent = projectModel.getMavenParent();
 
           String parentGroupId = parent.getGroupId().getStringValue();

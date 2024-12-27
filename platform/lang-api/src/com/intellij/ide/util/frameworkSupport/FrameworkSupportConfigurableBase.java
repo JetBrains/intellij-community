@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.frameworkSupport;
 
@@ -50,7 +50,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   }
 
   protected void updateAvailableVersions(List<? extends FrameworkVersion> versions) {
-    if (versions.size() > 0) {
+    if (!versions.isEmpty()) {
       String maxValue = "";
       ((DefaultComboBoxModel<?>)myVersionComboBox.getModel()).removeAllElements();
       FrameworkVersion defaultVersion = versions.get(versions.size() - 1);

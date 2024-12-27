@@ -267,15 +267,15 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   }
 
   private boolean isActionIdValid() {
-    return myActionIdEdit.getText().length() > 0;
+    return !myActionIdEdit.getText().isEmpty();
   }
 
   private boolean isActionNameValid() {
-    return myActionNameEdit.getText().length() > 0;
+    return !myActionNameEdit.getText().isEmpty();
   }
 
   private boolean isActionClassNameValid() {
-    return myActionClassNameEdit.getText().length() > 0 &&
+    return !myActionClassNameEdit.getText().isEmpty() &&
            (!myActionClassNameEdit.isEditable() || PsiNameHelper.getInstance(myProject).isQualifiedName(myActionClassNameEdit.getText()));
   }
 

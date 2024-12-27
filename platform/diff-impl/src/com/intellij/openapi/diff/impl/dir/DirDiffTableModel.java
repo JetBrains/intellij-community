@@ -138,7 +138,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void selectFirstRow() {
-    if (myElements.size() > 0) {
+    if (!myElements.isEmpty()) {
       int row = myElements.get(0).isSeparator() ? 1 : 0;
       if (row < myTable.getRowCount()) {
         myTable.getSelectionModel().setSelectionInterval(row, row);

@@ -351,7 +351,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean shouldTryExpressionPattern(@NotNull List<? extends PsiElement> elements) {
-    if (elements.size() >= 1 && elements.size() <= 3) {
+    if (!elements.isEmpty() && elements.size() <= 3) {
       final PsiElement firstElement = elements.get(0);
       if (firstElement instanceof PsiDeclarationStatement) {
         final PsiElement lastChild = firstElement.getLastChild();

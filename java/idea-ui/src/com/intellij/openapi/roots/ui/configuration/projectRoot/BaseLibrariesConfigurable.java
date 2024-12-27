@@ -265,7 +265,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
           final LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
           final Collection<ProjectStructureElementUsage> usages =
             new ArrayList<>(myContext.getDaemonAnalyzer().getUsages(libraryElement));
-          if (usages.size() > 0) {
+          if (!usages.isEmpty()) {
             if (librariesWithUsages == 0) {
               final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<>();
               for (final ProjectStructureElementUsage usage : usages) {

@@ -22,7 +22,7 @@ public class CharacterValueConverter extends Converter<String> {
   public String fromString(@Nullable @NonNls String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
 
-    if (myAllowEmpty && s.trim().length() == 0) return s;
+    if (myAllowEmpty && s.trim().isEmpty()) return s;
 
     if (s.trim().length() == 1) return s;
 

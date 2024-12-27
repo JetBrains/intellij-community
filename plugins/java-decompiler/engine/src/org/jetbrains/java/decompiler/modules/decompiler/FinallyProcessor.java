@@ -578,7 +578,7 @@ public class FinallyProcessor {
               if (catchBlocks.contains(sucCatch) && !setSample.contains(sucSample)) {
                 List<int[]> lst = entry.lstStoreVars;
 
-                if (sucCatch.getSeq().length() > 0 && sucSample.getSeq().length() > 0) {
+                if (!sucCatch.getSeq().isEmpty() && !sucSample.getSeq().isEmpty()) {
                   Instruction instrCatch = sucCatch.getSeq().getInstr(0);
                   Instruction instrSample = sucSample.getSeq().getInstr(0);
 

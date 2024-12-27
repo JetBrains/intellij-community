@@ -279,7 +279,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                                       @NotNull ComparisonPolicy policy,
                                                                       @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy, indicator);
-    assert lineBlocks.size() != 0;
+    assert !lineBlocks.isEmpty();
 
     int startOffset1 = fragment.getStartOffset1();
     int startOffset2 = fragment.getStartOffset2();

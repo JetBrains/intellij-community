@@ -131,7 +131,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     final boolean topicPresent = !StringUtil.isEmptyOrSpaces(topic);
     final List<LoggerInitializerParameter> loggerInitializerParameters = getLoggerInitializerParameters(psiClass, topicPresent);
     for (LoggerInitializerParameter loggerInitializerParameter : loggerInitializerParameters) {
-      if (parametersBuilder.length() > 0) {
+      if (!parametersBuilder.isEmpty()) {
         parametersBuilder.append(", ");
       }
       switch (loggerInitializerParameter) {

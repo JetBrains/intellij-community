@@ -297,7 +297,7 @@ public final class ThreadDumpParser {
       first = false;
       int i = builder.lastIndexOf("\n");
       CharSequence lastLine = i == -1 ? builder : builder.subSequence(i + 1, builder.length());
-      if (!line.matches("\\s+.*") && lastLine.length() > 0) {
+      if (!line.matches("\\s+.*") && !lastLine.isEmpty()) {
         if (lastLine.toString().matches("\\s*at") //separate 'at' from filename
             || ContainerUtil.or(IMPORTANT_THREAD_DUMP_WORDS, word -> line.startsWith(word))) {
           builder.append(" ");

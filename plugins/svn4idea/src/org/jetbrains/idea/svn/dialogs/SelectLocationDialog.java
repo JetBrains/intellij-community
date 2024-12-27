@@ -249,7 +249,7 @@ public final class SelectLocationDialog extends DialogWrapper {
   public boolean isOKActionEnabled() {
     boolean ok = myRepositoryBrowser.getSelectedURL() != null;
     if (ok && myDstText != null) {
-      return myDstText.getText().trim().length() > 0;
+      return !myDstText.getText().trim().isEmpty();
     }
     return ok;
   }

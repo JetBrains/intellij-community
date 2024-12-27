@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.json.JsonFileType;
@@ -118,7 +118,7 @@ public final class JsonSchemaRemoteContentProvider extends DefaultRemoteContentP
   private boolean isUpToDate(@NotNull Url url, @NotNull File file, @NotNull String header) throws IOException {
     List<String> strings = file.exists() ? Files.readAllLines(file.toPath()) : ContainerUtil.emptyList();
 
-    String currentTag = strings.size() > 0 ? strings.get(0) : null;
+    String currentTag = !strings.isEmpty() ? strings.get(0) : null;
     if (currentTag == null) return false;
 
     String remoteTag = connect(url, HttpRequests.head(url.toExternalForm()),

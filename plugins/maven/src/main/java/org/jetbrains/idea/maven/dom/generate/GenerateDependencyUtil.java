@@ -83,7 +83,7 @@ public final class GenerateDependencyUtil {
 
     private static void append(StringBuffer sb, String str) {
       if (!StringUtil.isEmptyOrSpaces(str)) {
-        if (sb.length() > 0) sb.append(": ");
+        if (!sb.isEmpty()) sb.append(": ");
         sb.append(str);
       }
     }

@@ -263,7 +263,7 @@ public class FoldingModelSupport {
         ContainerUtil.addIfNotNull(result, createBlock(rangeStarts, rangeEnds));
       }
 
-      if (result.size() > 0) {
+      if (!result.isEmpty()) {
         myGroups.add(new Data.Group(result));
       }
     }
@@ -366,7 +366,7 @@ public class FoldingModelSupport {
           ContainerUtil.addIfNotNull(blocks, createBlock(data, block, myExpandSuggester.isExpanded(block)));
         }
 
-        if (blocks.size() > 0) {
+        if (!blocks.isEmpty()) {
           FoldedGroup foldedGroup = new FoldedGroup(blocks);
           for (FoldedBlock folding : foldedGroup.blocks) {
             folding.installHighlighter(foldedGroup);

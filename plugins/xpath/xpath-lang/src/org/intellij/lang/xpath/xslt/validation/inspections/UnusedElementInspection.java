@@ -60,7 +60,7 @@ public class UnusedElementInspection extends XsltInspection {
             }
             final XsltVariable variable = XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class);
             final String name = variable.getName();
-            if (name == null || name.length() == 0) {
+            if (name == null || name.isEmpty()) {
                 return;
             }
 

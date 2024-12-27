@@ -222,7 +222,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       if (stringLiteralExpression.isDocString()) {
         final String stringValue = stringLiteralExpression.getStringValue().trim();
         final String[] lines = LineTokenizer.tokenize(stringValue, true);
-        if (lines.length > 2 && lines[1].trim().length() == 0) {
+        if (lines.length > 2 && lines[1].trim().isEmpty()) {
           return prefix + "\"\"\"" + lines[0].trim() + "...\"\"\"";
         }
         return prefix + "\"\"\"...\"\"\"";

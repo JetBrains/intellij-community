@@ -461,9 +461,9 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             for (Iterator<QName> it = set.iterator(); it.hasNext();) {
                 final QName name = it.next();
                 final String prefix = name.getPrefix();
-                if (prefix == null || prefix.length() == 0) {
+                if (prefix == null || prefix.isEmpty()) {
                     final String uri = name.getNamespaceURI();
-                    if (uri != null && uri.length() > 0) {
+                    if (uri != null && !uri.isEmpty()) {
                         final String assignedPrefix = myNamespaceContext.getPrefixForURI(uri, null);
                         if (assignedPrefix == null) {
                             it.remove();
@@ -486,7 +486,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         @Override
         public @Nullable String getNamespaceURI(String prefix, XmlElement context) {
             final String s = myMap.get(prefix);
-            if (s == null && prefix.length() == 0) {
+            if (s == null && prefix.isEmpty()) {
                 return "";
             }
             return s;

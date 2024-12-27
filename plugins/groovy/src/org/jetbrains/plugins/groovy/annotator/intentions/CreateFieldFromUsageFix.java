@@ -28,7 +28,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     final List<PsiClass> classes = getTargetClasses();
-    if (classes.size() == 0) {
+    if (classes.isEmpty()) {
       return IntentionPreviewInfo.EMPTY;
     }
     PsiClass targetClass = classes.get(0);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -121,7 +121,7 @@ public class GitSimpleHandler extends GitTextHandler {
     if (suppressed && !LOG.isDebugEnabled()) {
       return;
     }
-    int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
+    int last = !lineRest.isEmpty() ? lineRest.charAt(lineRest.length() - 1) : -1;
     int start = 0;
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
@@ -135,7 +135,7 @@ public class GitSimpleHandler extends GitTextHandler {
         }
         if (last != '\r' || savedPos != i) {
           String line;
-          if (lineRest.length() == 0) {
+          if (lineRest.isEmpty()) {
             line = lineRest.append(text, start, savedPos).toString();
             lineRest.setLength(0);
           }
@@ -192,10 +192,10 @@ public class GitSimpleHandler extends GitTextHandler {
           }
           else {
             String msg = getStderr();
-            if (msg.length() == 0) {
+            if (msg.isEmpty()) {
               msg = getStdout();
             }
-            if (msg.length() == 0) {
+            if (msg.isEmpty()) {
               msg = GitBundle.message("git.error.exit", exitCode);
             }
             exRef.set(new VcsException(msg));

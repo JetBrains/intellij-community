@@ -238,7 +238,7 @@ final class MoverWrapper {
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
-    return text.trim().length() != 0;
+    return !text.trim().isEmpty();
   }
 
   private static void restoreSelection(Editor editor,

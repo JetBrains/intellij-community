@@ -54,7 +54,7 @@ public class CompletionTester {
     final List<String> variants = new ArrayList<>();
     while (in.hasNext()) {
       final String variant = in.next().trim();
-      if (variant.length() > 0) {
+      if (!variant.isEmpty()) {
         variants.add(variant);
       }
     }

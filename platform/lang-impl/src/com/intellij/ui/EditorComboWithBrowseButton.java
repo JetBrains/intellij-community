@@ -24,7 +24,7 @@ public class EditorComboWithBrowseButton extends ComponentWithBrowseButton<Edito
     if (recentEntries != null) {
       setHistory(ArrayUtilRt.toStringArray(recentEntries));
     }
-    if (text != null && text.length() > 0) {
+    if (text != null && !text.isEmpty()) {
       prependItem(text);
     }
   }

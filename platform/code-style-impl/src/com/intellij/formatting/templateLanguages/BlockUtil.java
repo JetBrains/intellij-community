@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.Block;
@@ -20,7 +20,7 @@ final class BlockUtil {
   public static List<DataLanguageBlockWrapper> buildChildWrappers(final @NotNull Block parent) {
     assert !(parent instanceof DataLanguageBlockWrapper) : parent.getClass();
     List<Block> children = parent.getSubBlocks();
-    if (children.size() == 0) return Collections.emptyList();
+    if (children.isEmpty()) return Collections.emptyList();
     ArrayList<DataLanguageBlockWrapper> result = new ArrayList<>(children.size());
     DataLanguageBlockWrapper prevWrapper = null;
     for (Block child : children) {
@@ -36,7 +36,7 @@ final class BlockUtil {
 
   public static Pair<List<DataLanguageBlockWrapper>, List<DataLanguageBlockWrapper>> splitBlocksByRightBound(@NotNull Block parent, @NotNull TextRange bounds) {
     final List<Block> subBlocks = parent.getSubBlocks();
-    if (subBlocks.size() == 0) return Pair
+    if (subBlocks.isEmpty()) return Pair
       .create(Collections.emptyList(), Collections.emptyList());
     final ArrayList<DataLanguageBlockWrapper> before = new ArrayList<>(subBlocks.size() / 2);
     final ArrayList<DataLanguageBlockWrapper> after = new ArrayList<>(subBlocks.size() / 2);
@@ -104,7 +104,7 @@ final class BlockUtil {
             Pair<List<DataLanguageBlockWrapper>, List<DataLanguageBlockWrapper>> splitBlocks = splitBlocksByRightBound(notContainedF.getOriginal(), vRange);
             v.addForeignChildren(splitBlocks.getFirst());
             foreignBlocks.remove(fInd);
-            if (splitBlocks.getSecond().size() > 0) {
+            if (!splitBlocks.getSecond().isEmpty()) {
               foreignBlocks.addAll(fInd, splitBlocks.getSecond());
             }
           }

@@ -28,7 +28,7 @@ public class PyThreadInfo {
                       String message) {
     myId = id;
     myName = name;
-    myFrames = (frames != null && frames.size() > 0 ? Collections.unmodifiableList(frames) : null);
+    myFrames = (frames != null && !frames.isEmpty() ? Collections.unmodifiableList(frames) : null);
     myStopReason = stopReason;
     myMessage = message;
   }
@@ -63,7 +63,7 @@ public class PyThreadInfo {
 
   public synchronized void updateState(final State state, final List<PyStackFrameInfo> frames) {
     myState = state;
-    myFrames = (frames != null && frames.size() > 0 ? Collections.unmodifiableList(frames) : null);
+    myFrames = (frames != null && !frames.isEmpty() ? Collections.unmodifiableList(frames) : null);
   }
 
 

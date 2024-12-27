@@ -139,7 +139,7 @@ public class ScopePanel extends JPanel implements Disposable{
 
     private @Nullable String getDirectoryName() {
         final String s = myDirectory.getText();
-        return s.length() > 0 ? s : null;
+        return !s.isEmpty() ? s : null;
     }
 
     private @Nullable String getModuleName() {

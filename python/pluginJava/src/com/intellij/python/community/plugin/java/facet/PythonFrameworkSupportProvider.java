@@ -35,6 +35,6 @@ final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
 
   @Override
   public boolean isSupportAlreadyAdded(@NotNull Module module) {
-    return FacetManager.getInstance(module).getFacetsByType(JavaPythonFacetType.getInstance().getId()).size() > 0;
+    return !FacetManager.getInstance(module).getFacetsByType(JavaPythonFacetType.getInstance().getId()).isEmpty();
   }
 }

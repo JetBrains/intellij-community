@@ -75,7 +75,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
             Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS,curParentTag.getNamespace()) >= 0) {
           final String attributeValue = curParentTag.getAttributeValue(PREFIX_ATTR_NAME);
 
-          if (attributeValue != null && attributeValue.length() > 0) {
+          if (attributeValue != null && !attributeValue.isEmpty()) {
             final XmlAttributeValue valueElement = curParentTag.getAttribute(PREFIX_ATTR_NAME, null).getValueElement();
             if (PropertiesReferenceProvider.isNonDynamicAttribute(valueElement)) {
               myKeyPrefix = attributeValue;

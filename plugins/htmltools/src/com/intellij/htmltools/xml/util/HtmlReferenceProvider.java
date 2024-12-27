@@ -123,7 +123,7 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
           attrName.equalsIgnoreCase(HtmlUtil.ID_ATTRIBUTE_NAME) ||
           attrName.equalsIgnoreCase(HtmlUtil.CLASS_ATTRIBUTE_NAME)
          ) &&
-         tag.getNamespacePrefix().length() == 0
+               tag.getNamespacePrefix().isEmpty()
         ) ||
                ( (attrName.equalsIgnoreCase(SizeReference.WIDTH_ATTR_NAME) ||
           attrName.equalsIgnoreCase(SizeReference.HEIGHT_ATTR_NAME)

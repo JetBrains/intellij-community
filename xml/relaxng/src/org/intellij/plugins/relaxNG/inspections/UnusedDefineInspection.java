@@ -131,7 +131,7 @@ public class UnusedDefineInspection extends BaseInspection {
       if (value == null) return;
 
       final String s = value.getValue();
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         return;
       }
       final PsiElement parent = value.getParent();

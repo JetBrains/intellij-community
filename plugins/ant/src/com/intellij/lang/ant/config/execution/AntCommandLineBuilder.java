@@ -68,7 +68,7 @@ public class AntCommandLineBuilder {
     Sdk jdk;
     if (jdkName == null || jdkName.length() <= 0) {
       jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(container);
-      if (jdkName == null || jdkName.length() == 0) {
+      if (jdkName == null || jdkName.isEmpty()) {
         throw new CantRunException(AntBundle.message("project.jdk.not.specified.error.message"));
       }
     }
@@ -127,7 +127,7 @@ public class AntCommandLineBuilder {
       for (String param : ParametersList.parse(additionalParams)) {
         if (param.startsWith("-J")) {
           final String cutParam = param.substring("-J".length());
-          if (cutParam.length() > 0) {
+          if (!cutParam.isEmpty()) {
             vmParametersList.add(cutParam);
           }
         }

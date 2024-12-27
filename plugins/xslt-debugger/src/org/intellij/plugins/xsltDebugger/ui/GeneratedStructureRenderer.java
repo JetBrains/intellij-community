@@ -50,7 +50,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
         case OutputEventQueue.START_ELEMENT -> {
           setIcon(PlatformIcons.XML_TAG_ICON);
           append(qname.getQName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES); //NON-NLS
-          if (qname.myURI != null && qname.myURI.length() > 0) {
+          if (qname.myURI != null && !qname.myURI.isEmpty()) {
             append(" {", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             append(qname.myURI, SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
             append("}", SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -59,7 +59,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
         case OutputEventQueue.ATTRIBUTE -> {
           setIcon(PlatformIcons.ANNOTATION_TYPE_ICON);
           append(qname.getQName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES); //NON-NLS
-          if (qname.myURI != null && qname.myURI.length() > 0) {
+          if (qname.myURI != null && !qname.myURI.isEmpty()) {
             append(" {" + qname.myURI + "}", SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
           }
           append(" = \"", SimpleTextAttributes.REGULAR_ATTRIBUTES);

@@ -114,7 +114,7 @@ public final class PlatformPackageUtil {
         int beginIndex = rootPackage.length() + 1;
         packageName = beginIndex < packageName.length() ? packageName.substring(beginIndex) : "";
         String postfixToShow = packageName.replace('.', File.separatorChar);
-        if (packageName.length() > 0) {
+        if (!packageName.isEmpty()) {
           postfixToShow = File.separatorChar + postfixToShow;
         }
         psiDirectory =
@@ -145,7 +145,7 @@ public final class PlatformPackageUtil {
 
     String restOfName = packageName;
     boolean askedToCreate = false;
-    while (restOfName.length() > 0) {
+    while (!restOfName.isEmpty()) {
       final String name = getLeftPart(restOfName);
       PsiDirectory foundExistingDirectory = psiDirectory != null ? psiDirectory.findSubdirectory(name) : null;
       if (foundExistingDirectory == null) {

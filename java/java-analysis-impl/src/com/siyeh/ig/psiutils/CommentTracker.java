@@ -152,7 +152,7 @@ public final class CommentTracker {
     StringBuilder sb = new StringBuilder();
     for (PsiElement comment : comments) {
       PsiElement prev = comment.getPrevSibling();
-      if (sb.length() == 0 && prev instanceof PsiWhiteSpace) {
+      if (sb.isEmpty() && prev instanceof PsiWhiteSpace) {
         sb.append(prev.getText());
       }
       sb.append(comment.getText());

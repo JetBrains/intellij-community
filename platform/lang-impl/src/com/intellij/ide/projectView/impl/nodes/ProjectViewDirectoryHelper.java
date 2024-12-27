@@ -83,11 +83,11 @@ public class ProjectViewDirectoryHelper {
     }
 
     if (includeUrl) {
-      if (result.length() > 0) result.append(",").append(FontUtil.spaceAndThinSpace());
+      if (!result.isEmpty()) result.append(",").append(FontUtil.spaceAndThinSpace());
       result.append(FileUtil.getLocationRelativeToUserHome(directory.getPresentableUrl()));
     }
 
-    return result.length() == 0 ? null : result.toString();
+    return result.isEmpty() ? null : result.toString();
   }
 
 

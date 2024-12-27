@@ -321,7 +321,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         insertDotBeforeNextWord = true;
       }
       else {
-        if (result.length() > 0) {
+        if (!result.isEmpty()) {
           insertDotBeforeNextWord = true;
         }
       }

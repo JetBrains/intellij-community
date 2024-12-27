@@ -39,7 +39,7 @@ public class DetailController {
 
   private static @Nls String getTitle2Text(@Nullable @Nls String fullText, @NotNull JLabel label) {
     int labelWidth = label.getWidth();
-    if (fullText == null || fullText.length() == 0) return " ";
+    if (fullText == null || fullText.isEmpty()) return " ";
     while (label.getFontMetrics(label.getFont()).stringWidth(fullText) > labelWidth) {
       int sep = fullText.indexOf(File.separatorChar, 4);
       if (sep < 0) return fullText;

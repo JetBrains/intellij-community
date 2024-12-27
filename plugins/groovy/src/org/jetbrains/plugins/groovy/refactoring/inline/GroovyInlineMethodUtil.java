@@ -512,14 +512,14 @@ public final class GroovyInlineMethodUtil {
     StringBuilder buffer = new StringBuilder();
     final PsiModifierList modifierList = parameter.getModifierList();
     buffer.append(modifierList.getText().trim());
-    if (buffer.length() > 0) buffer.append(' ');
+    if (!buffer.isEmpty()) buffer.append(' ');
 
     final GrTypeElement typeElement = parameter.getTypeElementGroovy();
     if (typeElement != null) {
       buffer.append(typeElement.getText()).append(' ');
     }
 
-    if (buffer.length() == 0) {
+    if (buffer.isEmpty()) {
       buffer.append("def ");
     }
     buffer.append(varName).append(" = ").append(expression.getText());

@@ -217,7 +217,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     String packageName = buffer.toString();
-    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
+    if (packageName.isEmpty() || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
       return null;
     }
     return packageName;

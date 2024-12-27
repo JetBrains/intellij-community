@@ -46,7 +46,7 @@ public final class EditScopesDialog extends SettingsDialog {
                                                           mySelectedScope.getScopeId(), new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {
-              return inputString != null && inputString.length() > 0 && manager.getScope(inputString) == null;
+              return inputString != null && !inputString.isEmpty() && manager.getScope(inputString) == null;
             }
 
             @Override

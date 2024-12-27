@@ -72,7 +72,7 @@ public final class DirectoryUtil {
   private static @Nullable Pair<PsiDirectory, String> findLongestExistingDirectoryAndItsPath(@NotNull PsiManager manager, @NotNull String path) {
     PsiDirectory directory = null;
     // find longest existing path
-    while (path.length() > 0) {
+    while (!path.isEmpty()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
       if (file != null) {
         directory = manager.findDirectory(file);

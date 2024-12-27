@@ -273,7 +273,7 @@ public class ReductionSystem {
 
             frontier.addFirst(n);
 
-            while (frontier.size() > 0) {
+            while (!frontier.isEmpty()) {
               final Node curr = frontier.removeFirst();
 
               curr.myComponent = component;

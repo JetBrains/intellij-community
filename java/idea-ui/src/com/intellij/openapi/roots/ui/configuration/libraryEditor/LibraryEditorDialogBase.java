@@ -51,7 +51,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
 
   protected boolean validateAndApply() {
     String newName = myNameField.getText().trim();
-    if (newName.length() == 0) {
+    if (newName.isEmpty()) {
       newName = null;
     }
     if (shouldCheckName(newName)) {

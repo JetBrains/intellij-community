@@ -160,7 +160,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     }
 
     final String className = getClassName();
-    if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
+    if (className.isEmpty() || !nameHelper.isIdentifier(className)) {
       throw new ConfigurationException(JavaBundle.message("invalid.extracted.class.name", className));
     }
 

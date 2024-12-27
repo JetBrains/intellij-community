@@ -33,7 +33,7 @@ public final class AllOfOperation extends Operation {
   }
 
   private static <T> int maxSize(List<List<T>> items) {
-    if (items.size() == 0) return 0;
+    if (items.isEmpty()) return 0;
     int maxsize = -1;
     for (List<T> item : items) {
       int size = item.size();

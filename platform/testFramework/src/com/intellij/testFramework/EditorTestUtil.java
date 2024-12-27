@@ -588,7 +588,7 @@ public final class EditorTestUtil {
     while ((tokenType = highlightingLexer.getTokenType()) != null) {
       final TextAttributesKey[] highlights = syntaxHighlighter.getTokenHighlights(tokenType);
       if (highlights.length > 0) {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append("\n");
         }
         String token = fileText.substring(highlightingLexer.getTokenStart(), highlightingLexer.getTokenEnd());

@@ -368,7 +368,7 @@ public final class MethodUtils {
     } else {
       expressions = List.of(bodyExpression);
     }
-    if (expressions.size() == 0) return true;
+    if (expressions.isEmpty()) return true;
     for (UExpression expression : expressions) {
       ProgressManager.checkCanceled();
       if (expression instanceof UastEmptyExpression || trivialPredicate != null && trivialPredicate.test(expression)) continue;

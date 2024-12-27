@@ -43,7 +43,7 @@ final class RegExpEnumReference extends StringLiteralReference {
   @Override
   public Object @NotNull [] getVariants() {
     final Set<String> values = getEnumValues();
-    if (values == null || values.size() == 0) {
+    if (values == null || values.isEmpty()) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
     return ContainerUtil.map2Array(values, s -> LookupElementBuilder.create(s).withIcon(PlatformIcons.ENUM_ICON));

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +53,7 @@ final class CurrentRevisionAnnotationFieldGutter extends AspectAnnotationFieldGu
       return aspectTooltip;
     }
     final String text = getLineText(line, editor);
-    return ((text == null) || (text.length() == 0)) ? "" : VcsBundle.message("annotation.original.revision.text", text);
+    return ((text == null) || (text.isEmpty())) ? "" : VcsBundle.message("annotation.original.revision.text", text);
   }
 
   @Override

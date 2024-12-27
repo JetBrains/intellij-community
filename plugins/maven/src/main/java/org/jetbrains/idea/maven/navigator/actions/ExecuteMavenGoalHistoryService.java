@@ -39,7 +39,7 @@ public final class ExecuteMavenGoalHistoryService implements PersistentStateComp
 
     command = command.trim();
 
-    if (command.length() == 0) return;
+    if (command.isEmpty()) return;
 
     myHistory.remove(command);
     myHistory.addFirst(command);

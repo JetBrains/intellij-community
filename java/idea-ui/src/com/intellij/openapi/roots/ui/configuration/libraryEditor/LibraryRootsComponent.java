@@ -125,7 +125,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       type != null ? Collections.singleton(type.getKind()) : Collections.emptySet();
     for (@Nls String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
                                                                                             excluded)) {
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append("\n");
       }
       sb.append(description);

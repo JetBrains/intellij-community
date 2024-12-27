@@ -236,7 +236,7 @@ public final class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       final PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(type);
       final String typeText = getTypeText(unboxed);
       text.append(typeText).append(" ");
-    } else if (text.length() == 0) {
+    } else if (text.isEmpty()) {
       text.insert(0, "def ");
     }
 

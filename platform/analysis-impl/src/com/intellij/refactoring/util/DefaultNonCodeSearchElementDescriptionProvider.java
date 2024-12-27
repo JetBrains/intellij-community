@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
@@ -18,7 +18,7 @@ class DefaultNonCodeSearchElementDescriptionProvider implements ElementDescripti
     if (element instanceof PsiDirectory) {
       if (ncdLocation.isNonJava()) {
         final String qName = PsiDirectoryFactory.getInstance(element.getProject()).getQualifiedName((PsiDirectory)element, false);
-        if (qName.length() > 0) return qName;
+        if (!qName.isEmpty()) return qName;
         return null;
       }
       return ((PsiDirectory) element).getName();

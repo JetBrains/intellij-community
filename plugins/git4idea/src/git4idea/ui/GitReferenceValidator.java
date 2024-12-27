@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -57,7 +57,7 @@ public class GitReferenceValidator {
       @Override
       protected void textChanged(final @NotNull DocumentEvent e) {
         // note that checkOkButton is called in other listener
-        myButton.setEnabled(myTextField.getText().trim().length() != 0);
+        myButton.setEnabled(!myTextField.getText().trim().isEmpty());
       }
     });
     myButton.addActionListener(new ActionListener() {
@@ -81,7 +81,7 @@ public class GitReferenceValidator {
         }
       }
     });
-    myButton.setEnabled(myTextField.getText().length() != 0);
+    myButton.setEnabled(!myTextField.getText().isEmpty());
   }
 
   public boolean isInvalid() {

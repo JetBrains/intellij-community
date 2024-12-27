@@ -126,7 +126,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       // set the output path first so that handlers of RootsChanged event sent after JDK is set
       // would see the updated path
       String canonicalPath = myUi.getProjectCompilerOutput();
-      if (canonicalPath.length() > 0) {
+      if (!canonicalPath.isEmpty()) {
         try {
           canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
         }

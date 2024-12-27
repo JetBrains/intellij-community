@@ -59,7 +59,7 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
     id = toCanonicalForm(id);
 
     for (XmlAttribute attribute : element.getAttributes()) {
-      if (buffer.length() != 0) {
+      if (!buffer.isEmpty()) {
         buffer.append(' ');
       }
 

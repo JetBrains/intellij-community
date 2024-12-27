@@ -76,11 +76,11 @@ public final class TestClientRunner {
     if (myTraceClient || result.isTimeout()) {
       LOG.debug("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
-      if (out.length() > 0) {
+      if (!out.isEmpty()) {
         LOG.debug("*** output:\n" + out);
       }
       final String err = result.getStderr().trim();
-      if (err.length() > 0) {
+      if (!err.isEmpty()) {
         LOG.debug("*** error:\n" + err);
       }
     }

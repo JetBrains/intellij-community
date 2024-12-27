@@ -39,7 +39,7 @@ public final class CustomRegionStructureUtil {
       return value instanceof PsiElement ? getTextRange((PsiElement)value) : null;
     });
     Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
-    if (customRegions.size() > 0) {
+    if (!customRegions.isEmpty()) {
       List<StructureViewTreeElement> result = new ArrayList<>(customRegions);
       for (StructureViewTreeElement element : physicalElements) {
         ProgressManager.checkCanceled();

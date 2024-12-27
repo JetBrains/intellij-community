@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.testFrameworks;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -30,7 +30,7 @@ public abstract class ForkedSplitter<T> extends ForkedByModuleSplitter {
       final String classpath = System.getProperty("java.class.path");
       final String modulePath = System.getProperty("jdk.module.path");
       final List<String> moduleOptions = new ArrayList<>();
-      if (modulePath != null && modulePath.length() > 0) {
+      if (modulePath != null && !modulePath.isEmpty()) {
         moduleOptions.add("-p");
         moduleOptions.add(modulePath);
       }

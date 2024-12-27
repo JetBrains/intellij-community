@@ -79,7 +79,7 @@ public final class PropertiesReferenceManager {
 
     // fallback to default locale
     for(PropertiesFile propFile: propFiles) {
-      if (propFile.getLocale().getLanguage().length() == 0 || propFile.getLocale().equals(Locale.getDefault())) {
+      if (propFile.getLocale().getLanguage().isEmpty() || propFile.getLocale().equals(Locale.getDefault())) {
         return propFile;
       }
     }

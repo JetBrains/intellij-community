@@ -145,7 +145,7 @@ final class JavaLangReflectHandleInvocationChecker {
     final List<Supplier<ReflectiveType>> lazyMethodSignature = getLazyMethodSignature(signatureExpression);
     if (lazyMethodSignature == null) return true;
 
-    if (!isConstructor && lazyMethodSignature.size() != 0) {
+    if (!isConstructor && !lazyMethodSignature.isEmpty()) {
       final ReflectiveType returnType = lazyMethodSignature.get(0).get();
       checkReturnType(invokeCall, returnType, isExact, holder);
     }

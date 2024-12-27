@@ -62,7 +62,7 @@ public final class VcsDirectoryMapping {
    * @return if this mapping denotes "default mapping" aka "&lt;Project&gt;".
    */
   public boolean isDefaultMapping() {
-    return myDirectory.length() == 0;
+    return myDirectory.isEmpty();
   }
 
   /**

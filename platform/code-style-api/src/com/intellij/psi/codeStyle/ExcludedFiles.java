@@ -22,7 +22,7 @@ public class ExcludedFiles {
   private final State myState = new State();
 
   public void serializeInto(@NotNull Element element) {
-    if (myDescriptors.size() > 0) {
+    if (!myDescriptors.isEmpty()) {
       XmlSerializer.serializeInto(myState, element);
     }
   }

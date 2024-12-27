@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -66,7 +66,7 @@ public class LambdaProcessor {
       mt.expandData(cl);
 
       InstructionSequence seq = mt.getInstructionSequence();
-      if (seq != null && seq.length() > 0) {
+      if (seq != null && !seq.isEmpty()) {
         int len = seq.length();
 
         for (int i = 0; i < len; ++i) {

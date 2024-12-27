@@ -73,7 +73,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
     final AntDomElement antElement = AntSupport.getAntDomElement(xmlTag);
     if (antElement instanceof AntFilesProvider) {
       final List<File> list = ((AntFilesProvider)antElement).getFiles(new HashSet<>());
-      if (list.size() > 0) {
+      if (!list.isEmpty()) {
         final @NonNls StringBuilder builder = new StringBuilder();
         final XmlTag tag = antElement.getXmlTag();
         if (tag != null) {
@@ -82,7 +82,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
           builder.append(":</b>");
         }
         for (File file : list) {
-          if (builder.length() > 0) {
+          if (!builder.isEmpty()) {
             builder.append("<br>");
           }
           builder.append(file.getPath());
@@ -175,7 +175,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
         final DomElement domElement = ((DomTarget)pomTarget).getDomElement();
         if (domElement instanceof AntDomTarget antTarget) {
           final String description = antTarget.getDescription().getRawText();
-          if (description != null && description.length() > 0) {
+          if (description != null && !description.isEmpty()) {
             final String targetName = antTarget.getName().getRawText();
             final StringBuilder builder = new StringBuilder();
             builder.append("Target");

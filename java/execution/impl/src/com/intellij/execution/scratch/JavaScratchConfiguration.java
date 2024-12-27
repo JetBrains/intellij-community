@@ -48,7 +48,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final String className = getMainClassName();
-    if (className == null || className.length() == 0) {
+    if (className == null || className.isEmpty()) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("no.main.class.specified.error.text"));
     }
     if (getScratchFileUrl() == null) {

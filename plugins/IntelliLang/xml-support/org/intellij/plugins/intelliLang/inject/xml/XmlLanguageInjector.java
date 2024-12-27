@@ -251,9 +251,9 @@ final class XmlLanguageInjector implements MultiHostInjector {
     final StringBuilder sb = new StringBuilder();
     for (String s : stringSet) {
       if (!InjectorUtils.isRegexp(s)) continue;
-      if (sb.length() > 0) sb.append('|');
+      if (!sb.isEmpty()) sb.append('|');
       sb.append("(?:").append(s).append(")");
     }
-    return sb.length() == 0 ? null : Pattern.compile(sb.toString());
+    return sb.isEmpty() ? null : Pattern.compile(sb.toString());
   }
 }

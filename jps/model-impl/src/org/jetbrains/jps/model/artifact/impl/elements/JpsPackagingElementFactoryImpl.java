@@ -21,7 +21,7 @@ public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
   @Override
   public JpsPackagingElement createParentDirectories(String relativeOutputPath, JpsPackagingElement element) {
     relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
-    if (relativeOutputPath.length() == 0) {
+    if (relativeOutputPath.isEmpty()) {
       return element;
     }
     int slash = relativeOutputPath.indexOf('/');
@@ -47,7 +47,7 @@ public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
   private @NotNull JpsCompositePackagingElement getOrCreateDirectoryOrArchive(@NotNull JpsCompositePackagingElement root,
                                                                               @NotNull @NonNls String path, final boolean directory) {
     path = StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
-    if (path.length() == 0) {
+    if (path.isEmpty()) {
       return root;
     }
     int index = path.lastIndexOf('/');

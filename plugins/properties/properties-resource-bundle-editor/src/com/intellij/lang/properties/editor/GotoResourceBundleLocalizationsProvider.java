@@ -36,7 +36,7 @@ public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider
     }
     final ResourceBundle resourceBundle = ((PropertiesFile)psiFile).getResourceBundle();
     final List<PropertiesFile> bundlePropertiesFiles = resourceBundle.getPropertiesFiles();
-    assert bundlePropertiesFiles.size() != 0;
+    assert !bundlePropertiesFiles.isEmpty();
     if (bundlePropertiesFiles.size() != 1) {
       final ArrayList<PropertiesFile> propertiesFilesWithoutCurrent = new ArrayList<>(bundlePropertiesFiles);
       propertiesFilesWithoutCurrent.remove(psiFile);

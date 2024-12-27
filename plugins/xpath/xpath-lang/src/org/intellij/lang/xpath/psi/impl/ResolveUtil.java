@@ -134,7 +134,7 @@ public final class ResolveUtil {
   public static @Nullable PsiElement resolve(final Matcher matcher) {
     if (matcher == null) return null;
     final List<PsiElement> found = process(matcher, true);
-    return found.size() > 0 ? found.get(0) : null;
+    return !found.isEmpty() ? found.get(0) : null;
   }
 
   public static PsiElement[] collect(final Matcher matcher) {

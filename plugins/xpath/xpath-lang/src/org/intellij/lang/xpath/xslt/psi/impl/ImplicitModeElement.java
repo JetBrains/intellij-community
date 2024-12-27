@@ -41,9 +41,9 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
 
     public @Nullable QName getQName() {
         final String prefix = getPrefix();
-        if (prefix != null && prefix.length() > 0) {
+        if (prefix != null && !prefix.isEmpty()) {
             final String uri = XsltNamespaceContext.getNamespaceUriStatic(prefix, myAttribute);
-            return uri != null && uri.length() > 0 ? new QName(uri, getName(), prefix) : QNameUtil.UNRESOLVED;
+            return uri != null && !uri.isEmpty() ? new QName(uri, getName(), prefix) : QNameUtil.UNRESOLVED;
         } else {
             return new QName(getName());
         }

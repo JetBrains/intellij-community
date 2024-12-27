@@ -199,7 +199,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   private static boolean isEmpty(final GenericDomValue child, final String stringValue) {
-    if (stringValue.trim().length() != 0) {
+    if (!stringValue.trim().isEmpty()) {
       return false;
     }
     if (child instanceof GenericAttributeValue) {

@@ -84,7 +84,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
       append(text != null ? text : "", attributes);
     }
 
-    if (locationString != null && locationString.length() > 0) {
+    if (locationString != null && !locationString.isEmpty()) {
       append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }

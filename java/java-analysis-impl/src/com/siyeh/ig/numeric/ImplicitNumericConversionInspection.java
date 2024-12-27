@@ -224,7 +224,7 @@ public final class ImplicitNumericConversionInspection extends BaseInspection {
 
     private static boolean isDecimalLiteral(String text) {
       // should not be binary, octal or hexadecimal: 0b101, 077, 0xFF
-      return text.length() > 0 && text.charAt(0) != '0';
+      return !text.isEmpty() && text.charAt(0) != '0';
     }
 
     private static boolean isNegatedLiteral(PsiExpression expression) {

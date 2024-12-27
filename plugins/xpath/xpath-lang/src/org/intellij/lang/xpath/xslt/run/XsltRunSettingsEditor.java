@@ -138,7 +138,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         public String getText(JTextField component) {
           final String text = component.getText();
           final VirtualFile baseDir = project.getBaseDir();
-          return text.length() > 0 ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
+          return !text.isEmpty() ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
         }
 
         @Override
@@ -156,7 +156,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           final String text = myXsltFile.getText();
           final JComboBox comboBox = myXmlInputFile.getComboBox();
           final Object oldXml = getXmlInputFile(); //NON-NLS
-          if (text.length() != 0) {
+          if (!text.isEmpty()) {
             final ComboBoxModel model = comboBox.getModel();
 
             boolean found = false;
@@ -197,7 +197,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         @Override
         public String getText(JComboBox comboBox) {
           Object item = comboBox.getEditor().getItem();
-          if (item.toString().length() == 0) {
+          if (item.toString().isEmpty()) {
             final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
             final VirtualFile file =
               VirtualFileManager.getInstance()

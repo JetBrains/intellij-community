@@ -200,7 +200,7 @@ public final class JavacOutputParser implements BuildOutputParser {
 
   @Contract("null -> false")
   private static boolean isMessageEnd(@Nullable String line) {
-    return line != null && line.length() > 0 && Character.isWhitespace(line.charAt(0));
+    return line != null && !line.isEmpty() && Character.isWhitespace(line.charAt(0));
   }
 
   private static @NotNull List<String> convertMessages(@NotNull List<String> messages) {

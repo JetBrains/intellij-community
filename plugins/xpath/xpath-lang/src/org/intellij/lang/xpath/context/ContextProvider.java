@@ -154,7 +154,7 @@ public abstract class ContextProvider {
             if (prefix != null) {
                 final XmlElement element = PsiTreeUtil.getContextOfType(context, XmlElement.class, true);
                 final String namespaceURI = namespaceContext.getNamespaceURI(prefix, element);
-                return namespaceURI != null && namespaceURI.length() > 0 ? new QName(namespaceURI, qName.getLocalName(), prefix) : null;
+                return namespaceURI != null && !namespaceURI.isEmpty() ? new QName(namespaceURI, qName.getLocalName(), prefix) : null;
             } else if (context.getXPathVersion() == XPathVersion.V2){
               if (isDefaultCapableElement(context)) {
                 final String namespace = namespaceContext.getDefaultNamespace(getContextElement());

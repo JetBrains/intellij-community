@@ -165,7 +165,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public @Nullable VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
-    if (revision == null || revision.length() == 0) return null;
+    if (revision == null || revision.isEmpty()) return null;
     if (revision.length() > 40) {    // date & revision-id encoded string
       String dateString = revision.substring(0, revision.indexOf("["));
       String rev = revision.substring(revision.indexOf("[") + 1, 40);
@@ -237,7 +237,7 @@ public final class GitVcs extends AbstractVcs {
    * @param action an action
    */
   public void showErrors(@NotNull List<? extends VcsException> list, @NotNull @Nls String action) {
-    if (list.size() > 0) {
+    if (!list.isEmpty()) {
       @Nls StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
       buffer.append(GitBundle.message("error.list.title", action));

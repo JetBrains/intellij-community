@@ -66,7 +66,7 @@ class ParameterObjectBuilder {
     boolean recordsAvailable = PsiUtil.isAvailable(JavaFeature.RECORDS, myFile) &&
                                !ContainerUtil.exists(fields, ParameterSpec::isSetterRequired);
     final @NonNls StringBuilder out = new StringBuilder(1024);
-    if (packageName.length() > 0) out.append("package ").append(packageName).append(';');
+    if (!packageName.isEmpty()) out.append("package ").append(packageName).append(';');
     out.append('\n');
     out.append(myVisibility).append(" ");
     out.append(recordsAvailable ? PsiKeyword.RECORD : PsiKeyword.CLASS);

@@ -653,7 +653,7 @@ public final class PyExtractMethodUtil {
         }
         for (AbstractVariableData variableData : settings.getAbstractVariableData()) {
           if (variableData.passAsParameter) {
-            if (builder.length() != 0) {
+            if (!builder.isEmpty()) {
               builder.append(", ");
             }
             builder.append(variableData.name);

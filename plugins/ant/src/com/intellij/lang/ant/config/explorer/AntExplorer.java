@@ -271,7 +271,7 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
           ignoredFiles.add(e.getFile());
         }
       }
-      if (ignoredFiles.size() != 0) {
+      if (!ignoredFiles.isEmpty()) {
         String messageText;
         final @NlsSafe StringBuilder message = new StringBuilder();
         String separator = "";

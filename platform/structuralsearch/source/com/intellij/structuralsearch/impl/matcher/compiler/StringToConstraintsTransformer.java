@@ -336,12 +336,12 @@ public final class StringToConstraintsTransformer {
     for (int i = 0; i < length; i++) {
       char c = condition.charAt(i);
       if (Character.isWhitespace(c)) {
-        if (text.length() == 0) continue;
+        if (text.isEmpty()) continue;
         handleOption(constraint, text.toString(), "", invert);
         optionExpected = false;
       }
       else if (c == '(') {
-        if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.expected.condition.name"));
+        if (text.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.expected.condition.name"));
         final String option = text.toString();
         if (!option.startsWith("_") && !knownOptions.contains(option)) {
           throw new MalformedPatternException(SSRBundle.message("option.is.not.recognized.error.message", option));
@@ -369,7 +369,7 @@ public final class StringToConstraintsTransformer {
           }
           text.append(c);
         }
-        if (text.length() == 0) throw new MalformedPatternException(SSRBundle.message("error.argument.expected", option));
+        if (text.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.argument.expected", option));
         if (quoted) throw new MalformedPatternException(SSRBundle.message("error.expected.value", "\""));
         if (!closed) throw new MalformedPatternException(SSRBundle.message("error.expected.value", " ".repeat(spaces) + ")"));
         handleOption(constraint, option, text.toString(), invert);
@@ -378,7 +378,7 @@ public final class StringToConstraintsTransformer {
         optionExpected = false;
       }
       else if (c == '&') {
-        if (text.length() != 0) {
+        if (!text.isEmpty()) {
           handleOption(constraint, text.toString(), "", invert);
           optionExpected = false;
         }
@@ -393,14 +393,14 @@ public final class StringToConstraintsTransformer {
         throw new MalformedPatternException(SSRBundle.message("error.expected.value", "&&"));
       }
       else if (c == '!') {
-        if (text.length() != 0) throw new MalformedPatternException(SSRBundle.message("error.unexpected.value", "!"));
+        if (!text.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.unexpected.value", "!"));
         invert = !invert;
       }
       else {
         text.append(c);
       }
     }
-    if (text.length() != 0) {
+    if (!text.isEmpty()) {
       handleOption(constraint, text.toString(), "", invert);
     }
     else if (invert) {

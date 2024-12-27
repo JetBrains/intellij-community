@@ -90,7 +90,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
   }
 
   private static void append(StringBuilder builder, String part) {
-    if (builder.length() != 0) builder.append(':');
+    if (!builder.isEmpty()) builder.append(':');
     builder.append(part == null ? "" : part);
   }
 }

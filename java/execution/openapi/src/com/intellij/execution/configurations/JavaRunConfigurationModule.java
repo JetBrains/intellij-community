@@ -120,7 +120,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
   }
 
   public PsiClass checkClassName(final String className, final @NlsContexts.DialogMessage String errorMessage) throws RuntimeConfigurationException {
-    if (className == null || className.length() == 0) {
+    if (className == null || className.isEmpty()) {
       throw new RuntimeConfigurationError(errorMessage);
     }
     return findNotNullClass(className);

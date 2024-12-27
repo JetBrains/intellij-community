@@ -27,7 +27,7 @@ public abstract class PutIntoDefaultLocationActionBase extends AnAction {
     String target;
     if (paths.size() == 1) {
       final String path = StringUtil.trimStart(StringUtil.trimEnd(paths.iterator().next(), "/"), "/");
-      if (path.length() > 0) {
+      if (!path.isEmpty()) {
         target = "/" + path;
       }
       else {

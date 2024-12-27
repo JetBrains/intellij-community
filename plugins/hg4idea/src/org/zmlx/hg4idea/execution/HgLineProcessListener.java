@@ -32,7 +32,7 @@ public abstract class HgLineProcessListener {
   }
 
   public void finish() throws VcsException {
-    if (myExitCode != 0 && myErrorOutput.length() != 0) {
+    if (myExitCode != 0 && !myErrorOutput.isEmpty()) {
       @NlsSafe String message = myErrorOutput.toString();
       throw new VcsException(message);
     }

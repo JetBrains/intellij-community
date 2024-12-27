@@ -131,7 +131,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
       getOKAction().setEnabled(false);
       return;
     }
-    if (myUnifiedDiffButton.isSelected() && (myFileBrowser.getText().length() == 0 || getTargetFile().getParentFile() == null)) {
+    if (myUnifiedDiffButton.isSelected() && (myFileBrowser.getText().isEmpty() || getTargetFile().getParentFile() == null)) {
       myErrorLabel.setText(message("diff.options.no.patch.file.error"));
       getOKAction().setEnabled(false);
       return;

@@ -165,7 +165,7 @@ public class HgCommandExecutor {
       cmdLine.addAll(DEFAULT_OPTIONS);
     }
     cmdLine.add(operation);
-    if (arguments != null && arguments.size() != 0) {
+    if (arguments != null && !arguments.isEmpty()) {
       cmdLine.addAll(arguments);
     }
     if (HgVcs.HGENCODING == null) {

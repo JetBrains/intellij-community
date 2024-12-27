@@ -280,7 +280,7 @@ public class LocalDebugger implements Debugger {
   }
 
   private boolean evalCondition(String condition) throws EvaluationException {
-    if (condition != null && condition.length() > 0) {
+    if (condition != null && !condition.isEmpty()) {
       if (!"true".equals(eval("boolean(" + condition + ")").getValue().toString())) {
         return false;
       }
@@ -292,7 +292,7 @@ public class LocalDebugger implements Debugger {
     if (logMessage != null) {
       final String uri = frame.getURI();
       final String pos = uri.substring(uri.lastIndexOf('/') + 1) + ":" + frame.getLineNumber();
-      System.out.println("[" + pos + "]: " + (logMessage.length() > 0 ? eval(logMessage).getValue().toString() : "<no message>"));
+      System.out.println("[" + pos + "]: " + (!logMessage.isEmpty() ? eval(logMessage).getValue().toString() : "<no message>"));
 
       if (traceMessage != null) {
         myEventQueue.trace(makeTraceMessage(traceMessage));
@@ -306,7 +306,7 @@ public class LocalDebugger implements Debugger {
   }
 
   private String makeTraceMessage(String traceMessage) throws EvaluationException {
-    if (traceMessage.length() > 0) {
+    if (!traceMessage.isEmpty()) {
       return eval(traceMessage).getValue().toString();
     } else {
       return null;
@@ -356,12 +356,12 @@ public class LocalDebugger implements Debugger {
 
   @Override
   public StyleFrame getCurrentFrame() {
-    return myFrames.size() > 0 ? myFrames.getFirst() : null;
+    return !myFrames.isEmpty() ? myFrames.getFirst() : null;
   }
 
   @Override
   public SourceFrame getSourceFrame() {
-    return mySourceFrames.size() > 0 ? mySourceFrames.getFirst() : null;
+    return !mySourceFrames.isEmpty() ? mySourceFrames.getFirst() : null;
   }
 
   @Override

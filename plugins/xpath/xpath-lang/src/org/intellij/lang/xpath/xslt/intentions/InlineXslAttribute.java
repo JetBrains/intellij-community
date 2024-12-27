@@ -77,7 +77,7 @@ public class InlineXslAttribute implements IntentionAction {
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
             if (child instanceof XmlText text) {
-              if (text.getText().trim().length() == 0) {
+              if (text.getText().trim().isEmpty()) {
                     if (texts.length == 0 && exprs.length == 0) {
                         return false;
                     }
@@ -112,7 +112,7 @@ public class InlineXslAttribute implements IntentionAction {
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
             if (child instanceof XmlText text) {
-              if (text.getText().trim().length() > 0) {
+              if (!text.getText().trim().isEmpty()) {
                     sb.append(text.getText().replaceAll("\"", "&quot;"));
                 }
             } else if (child instanceof XmlTag t) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -51,7 +51,7 @@ public final class JavaFxEventHandlerInspection extends XmlSuppressableInspectio
         if (!(valueParent instanceof XmlAttribute attribute)) return;
 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
-        if (eventHandlerMethods.size() == 0) return;
+        if (eventHandlerMethods.isEmpty()) return;
         if (eventHandlerMethods.size() != 1) {
           holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.ambiguous.problem"));
         }

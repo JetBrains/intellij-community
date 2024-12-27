@@ -104,7 +104,7 @@ public final class ReplaceFontTagAction implements LocalQuickFix {
       }
     }
 
-    if (style.length() != 0) {
+    if (!style.isEmpty()) {
       boolean found = false;
       for (XmlAttribute attribute : tag.getAttributes()) {
         if (HtmlUtil.STYLE_ATTRIBUTE_NAME.equals(attribute.getName())) {

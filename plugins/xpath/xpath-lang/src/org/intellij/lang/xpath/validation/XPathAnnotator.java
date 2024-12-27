@@ -294,7 +294,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   private static void markUnresolvedVariable(XPathVariableReference reference, AnnotationHolder holder) {
     final String referencedName = reference.getReferencedName();
     // missing name is already flagged by parser
-    if (referencedName.length() > 0) {
+    if (!referencedName.isEmpty()) {
       final TextRange range = reference.getTextRange().shiftRight(1).grown(-1);
       AnnotationBuilder builder =
         holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.unresolved.variable", referencedName))

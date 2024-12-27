@@ -40,7 +40,7 @@ public class DissociateResourceBundleAction extends AnAction {
       return;
     }
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
-    assert resourceBundles.size() > 0;
+    assert !resourceBundles.isEmpty();
     dissociate(resourceBundles, project);
   }
 

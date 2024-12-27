@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -149,7 +149,7 @@ public class CompletionData {
 
   private static String findPrefixDefault(final PsiElement insertedElement, final int offset, final @NotNull ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
-    if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
+    if (substr.isEmpty() || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
 
     substr = substr.trim();
 

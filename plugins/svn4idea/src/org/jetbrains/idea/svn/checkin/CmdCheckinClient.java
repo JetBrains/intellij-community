@@ -208,7 +208,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
           num.append(substring.charAt(cnt));
           ++ cnt;
         }
-        if (num.length() > 0) {
+        if (!num.isEmpty()) {
           try {
             myCommittedRevision = Long.parseLong(num.toString());
             if (myHandler != null) {

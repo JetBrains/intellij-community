@@ -123,7 +123,7 @@ public class Merger implements IMerger {
   }
 
   private void appendComment() {
-    if (myCommitMessage.length() == 0) {
+    if (myCommitMessage.isEmpty()) {
       myCommitMessage.append(message("label.merged.from.branch", myBranchName));
     }
     for (CommittedChangeList list : myMergeChunk.changeLists()) {

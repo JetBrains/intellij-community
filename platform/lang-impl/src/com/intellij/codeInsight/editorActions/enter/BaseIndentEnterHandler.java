@@ -163,7 +163,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     CharSequence nonEmptyIndent = oldIndent;
     final CharSequence editorCharSequence = document.getCharsSequence();
     final int nLines = document.getLineCount();
-    for (int line = 0; line < nLines && nonEmptyIndent.length() == 0; ++line) {
+    for (int line = 0; line < nLines && nonEmptyIndent.isEmpty(); ++line) {
       final int lineStart = document.getLineStartOffset(line);
       final int indentEnd = EditorActionUtil.findFirstNonSpaceOffsetOnTheLine(document, line);
       if (lineStart < indentEnd) {
@@ -171,8 +171,8 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
 
-    final boolean usesSpacesForIndentation = nonEmptyIndent.length() > 0 && nonEmptyIndent.charAt(nonEmptyIndent.length() - 1) == ' ';
-    final boolean firstIndent = nonEmptyIndent.length() == 0;
+    final boolean usesSpacesForIndentation = !nonEmptyIndent.isEmpty() && nonEmptyIndent.charAt(nonEmptyIndent.length() - 1) == ' ';
+    final boolean firstIndent = nonEmptyIndent.isEmpty();
 
     final CodeStyleSettings currentSettings = CodeStyle.getSettings(file);
     final CommonCodeStyleSettings.IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());

@@ -79,7 +79,7 @@ public final class JavaSourceRootDetectionUtil {
       skipWhiteSpaceAndComments(lexer);
     }
     String packageName = buffer.toString();
-    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
+    if (packageName.isEmpty() || StringUtil.endsWithChar(packageName, '.')) return null;
     return packageName;
   }
 

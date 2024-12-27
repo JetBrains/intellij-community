@@ -53,7 +53,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
   }
 
   public boolean hasIncludePatterns() {
-    return myIncludePatterns.size() > 0;
+    return !myIncludePatterns.isEmpty();
   }
 
   @Override
@@ -124,7 +124,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
 
   public boolean acceptPath(final String relativePath) {
     final String path = relativePath.replace('\\', '/');
-    boolean accepted = myIncludePatterns.size() == 0;
+    boolean accepted = myIncludePatterns.isEmpty();
     for (Pattern includePattern : myIncludePatterns) {
       if (includePattern.matcher(path).matches()) {
         accepted = true;
@@ -158,7 +158,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     final StringTokenizer tokenizer = new StringTokenizer(patternString, ", \t", false);
     while (tokenizer.hasMoreTokens()) {
       final String pattern = tokenizer.nextToken();
-      if (pattern.length() > 0) {
+      if (!pattern.isEmpty()) {
         if (addToIncludes) {
           addIncludePattern(pattern);
         }
@@ -220,7 +220,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
   }
 
   public boolean couldBeIncluded(String relativePath) {
-    if (myIncludePatterns.size() == 0) {
+    if (myIncludePatterns.isEmpty()) {
       return true;
     }
     return myCouldBeIncludedPatterns.stream().anyMatch(couldBeIncludedPattern -> matchPatternStart(couldBeIncludedPattern, relativePath));

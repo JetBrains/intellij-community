@@ -55,7 +55,7 @@ public interface PyPsiFindUsagesHandlerFactory {
       if (!forHighlightUsages) {
         TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
         final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
-        if (superMethods.size() > 0) {
+        if (!superMethods.isEmpty()) {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too
           if (next instanceof PyFunction && !isInObject((PyFunction)next)) {

@@ -316,14 +316,14 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       }
     }
 
-    if (shortcutDescription.length() == 0) {
+    if (shortcutDescription.isEmpty()) {
       String shortcutToToggle = KeymapUtil.getFirstKeyboardShortcutText("ToggleBookmark");
-      if (shortcutToToggle.length() > 0) {
+      if (!shortcutToToggle.isEmpty()) {
         shortcutDescription.append(BookmarkBundle.message("bookmark.shortcut.to.toggle", shortcutToToggle));
       }
     }
 
-    if (shortcutDescription.length() > 0) {
+    if (!shortcutDescription.isEmpty()) {
       result.append(" (").append(shortcutDescription).append(")");
     }
 

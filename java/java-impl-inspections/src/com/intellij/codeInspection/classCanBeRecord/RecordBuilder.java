@@ -169,7 +169,7 @@ class RecordBuilder {
   }
 
   private void trimEndingWhiteSpaces() {
-    if (myRecordText.length() == 0) return;
+    if (myRecordText.isEmpty()) return;
     int endIndex = myRecordText.length() - 1;
     if (myRecordText.charAt(endIndex) != ' ') return;
 

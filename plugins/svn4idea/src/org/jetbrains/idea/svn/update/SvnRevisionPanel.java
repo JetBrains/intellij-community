@@ -47,7 +47,7 @@ public class SvnRevisionPanel extends JPanel {
 
     mySpecified.addActionListener(e -> {
       if (mySpecified.isSelected()) {
-        if (myRevisionField.getText().trim().length() == 0) {
+        if (myRevisionField.getText().trim().isEmpty()) {
           myRevisionField.setText("HEAD");
         }
         myRevisionField.setEnabled(true);

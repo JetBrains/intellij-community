@@ -105,7 +105,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
           if (element instanceof PsiDirectory) {
             if (!fromUpdate) {
               final String name = ((PsiDirectory)element).getName();
-              final String path = relativePath != null ? (relativePath.length() > 0 ? (relativePath + "/") : "") + name : null;
+              final String path = relativePath != null ? (!relativePath.isEmpty() ? (relativePath + "/") : "") + name : null;
               final Map<PsiFile, PsiClass[]> map = convertToTopLevelClasses(element.getChildren(), false, path, relativeMap);
               if (map == null) return null;
               for (Map.Entry<PsiFile, PsiClass[]> entry : map.entrySet()) {
@@ -212,7 +212,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
         openInEditor = dialog.isOpenInEditor();
         targetDirectory = dialog.getTargetDirectory();
         className = dialog.getClassName();
-        if (className == null || className.length() == 0) return;
+        if (className == null || className.isEmpty()) return;
       }
     }
     else {

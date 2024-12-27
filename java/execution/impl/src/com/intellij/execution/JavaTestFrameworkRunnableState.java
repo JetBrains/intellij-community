@@ -470,7 +470,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         }
       }
       if (enabled) {
-        if (buf.length() > 0) buf.append(delimiter);
+        if (!buf.isEmpty()) buf.append(delimiter);
         final Class<?> classListener = listener.getClass();
         buf.append(classListener.getName());
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));

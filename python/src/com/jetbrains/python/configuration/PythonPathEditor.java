@@ -36,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class PythonPathEditor extends SdkPathEditor {
   private final @NotNull PathListModel myPathListModel;
@@ -115,7 +115,7 @@ public class PythonPathEditor extends SdkPathEditor {
   protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList<VirtualFile> list) {
     return SimpleListCellRenderer.create("", value -> {
       String suffix = myPathListModel.getPresentationSuffix(value);
-      if (suffix.length() > 0) suffix = "  " + suffix;
+      if (!suffix.isEmpty()) suffix = "  " + suffix;
       return getPresentablePath(value) + suffix;
     });
   }

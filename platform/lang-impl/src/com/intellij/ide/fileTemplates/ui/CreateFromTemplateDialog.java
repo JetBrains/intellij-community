@@ -117,7 +117,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   @Override
   protected void doOKAction(){
     String fileName = myAttrPanel.getFileName();
-    if (fileName != null && fileName.length() == 0) {
+    if (fileName != null && fileName.isEmpty()) {
       Messages.showMessageDialog(myAttrComponent, IdeBundle.message("error.please.enter.a.file.name"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return;

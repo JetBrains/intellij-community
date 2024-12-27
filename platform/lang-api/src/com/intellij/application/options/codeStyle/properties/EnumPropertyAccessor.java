@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +48,7 @@ public class EnumPropertyAccessor extends ExternalStringAccessor<Enum<?>> implem
   @Override
   protected @NotNull String toExternal(@NotNull Enum<?> value) {
     List<String> names = myEnumMap.getKeysByValue(value);
-    assert names != null && names.size() > 0 : "Unexpected value " + value;
+    assert names != null && !names.isEmpty() : "Unexpected value " + value;
     return names.get(0);
   }
 }

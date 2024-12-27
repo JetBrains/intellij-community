@@ -155,7 +155,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
   public static @NotNull Pair<String, List<Couple<Integer>>> format(@NotNull UCallExpression methodCallExpression) {
     final List<UExpression> args = methodCallExpression.getValueArguments();
     PsiElement callSourcePsi = methodCallExpression.getSourcePsi();
-    if (args.size() > 0 && args.get(0) instanceof UInjectionHost injectionHost && isI18nProperty(injectionHost)) {
+    if (!args.isEmpty() && args.get(0) instanceof UInjectionHost injectionHost && isI18nProperty(injectionHost)) {
       final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args.get(0));
       if (args.size() == 1 + count) {
         String text = getI18nMessage((UInjectionHost)args.get(0));

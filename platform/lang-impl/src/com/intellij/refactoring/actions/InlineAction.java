@@ -80,7 +80,7 @@ public final class InlineAction extends BasePlatformRefactoringAction {
         return true;
       }
     }
-    return InlineHandlers.getInlineHandlers(language).size() > 0;
+    return !InlineHandlers.getInlineHandlers(language).isEmpty();
   }
 
   @Override

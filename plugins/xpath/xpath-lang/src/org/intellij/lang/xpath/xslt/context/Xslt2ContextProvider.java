@@ -173,7 +173,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
 
       final Collection<XmlFile> data = ResolveUtil.getDependencies(param);
       final Object[] dependencies;
-      if (data == null || data.size() == 0) {
+      if (data == null || data.isEmpty()) {
         dependencies = new Object[]{ param };
       } else {
         data.add(param);

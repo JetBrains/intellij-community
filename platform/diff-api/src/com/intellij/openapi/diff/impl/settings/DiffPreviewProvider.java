@@ -24,7 +24,7 @@ public abstract class DiffPreviewProvider {
   public static DiffContent @NotNull [] getContents() {
     // Assuming that standalone IDE should provide one provider
     final List<DiffPreviewProvider> providers = EP_NAME.getExtensionList();
-    if (providers.size() != 0) {
+    if (!providers.isEmpty()) {
       return providers.get(0).createContents();
     }
     return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, StdFileTypes.JAVA);

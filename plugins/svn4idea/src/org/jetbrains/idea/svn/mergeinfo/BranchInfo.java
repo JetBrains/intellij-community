@@ -161,7 +161,7 @@ public class BranchInfo {
     MergeCheckResult result;
     String newTrunkUrl = Url.removeTail(trunkUrl).trim();
 
-    if (newTrunkUrl.length() == 0 || "/".equals(newTrunkUrl)) {
+    if (newTrunkUrl.isEmpty() || "/".equals(newTrunkUrl)) {
       result = MergeCheckResult.NOT_MERGED;
     }
     else {

@@ -211,7 +211,7 @@ public abstract class StringMatcher<T> {
   public abstract String getPattern();
 
   public static StringMatcher create(String target) {
-    if (target.length() == 0) return ANY;
+    if (target.isEmpty()) return ANY;
     if (target.equals(".*")) return ANY_PATTERN;
     if (target.equals(NONE.getPattern())) return NONE;
 

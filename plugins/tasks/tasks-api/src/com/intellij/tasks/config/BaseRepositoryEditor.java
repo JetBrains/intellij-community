@@ -154,7 +154,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(myRepository);
       for (String placeholder : placeholders) {
-        if (comment.length() > 0) {
+        if (!comment.isEmpty()) {
           comment.append(", ");
         }
         comment.append("{").append(placeholder).append("}");

@@ -77,7 +77,7 @@ public enum ActionType {
       actionTag.setAttribute("class", klass.getQualifiedName());
       actionTag.setAttribute("text", StringUtil.escapeXmlEntities(dialog.getActionText()));
       String description = dialog.getActionDescription();
-      if (description != null && description.length() > 0) {
+      if (description != null && !description.isEmpty()) {
         actionTag.setAttribute("description", StringUtil.escapeXmlEntities(description));
       }
 
@@ -93,12 +93,12 @@ public enum ActionType {
       }
 
       String firstKeyStroke = dialog.getFirstKeyStroke();
-      if (firstKeyStroke != null && firstKeyStroke.length() > 0) {
+      if (firstKeyStroke != null && !firstKeyStroke.isEmpty()) {
         XmlTag keyTag = (XmlTag)actionTag.add(actionTag.createChildTag("keyboard-shortcut", actions.getNamespace(), null, false));
         keyTag.setAttribute("keymap", KeymapManager.DEFAULT_IDEA_KEYMAP);
         keyTag.setAttribute("first-keystroke", firstKeyStroke);
         final String secondKeyStroke = dialog.getSecondKeyStroke();
-        if (secondKeyStroke != null && secondKeyStroke.length() > 0) {
+        if (secondKeyStroke != null && !secondKeyStroke.isEmpty()) {
           keyTag.setAttribute("second-keystroke", secondKeyStroke);
         }
       }

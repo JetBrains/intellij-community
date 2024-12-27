@@ -182,7 +182,7 @@ public class EditContextDialog extends DialogWrapper {
       final String name = (String)myVariableTableModel.getValueAt(i, 0);
 
       final String expr = expression.getExpression();
-      if ((expr == null || expr.trim().length() == 0) && (name == null || name.trim().length() == 0)) {
+      if ((expr == null || expr.trim().isEmpty()) && (name == null || name.trim().isEmpty())) {
         continue;
       }
       final String error = getError(expression);
@@ -332,7 +332,7 @@ public class EditContextDialog extends DialogWrapper {
           setForeground(JBColor.RED);
           setToolTipText(XPathBundle.message("tooltip.duplicate.variable"));
         }
-        else if (variable.getExpression().length() == 0) {
+        else if (variable.getExpression().isEmpty()) {
           setForeground(PlatformColors.BLUE);
           setToolTipText(XPathBundle.message("tooltip.empty.expression.variable.will.evaluate.to.empty.nodeset"));
         }
@@ -417,7 +417,7 @@ public class EditContextDialog extends DialogWrapper {
       setForeground(table.getForeground());
 
       final String prefix = myNamespaces.get(row).getPrefix();
-      if (column == 1 && prefix == null || prefix.length() == 0) {
+      if (column == 1 && prefix == null || prefix.isEmpty()) {
         setForeground(PlatformColors.BLUE);
       }
       else if (column == 0) {
@@ -444,7 +444,7 @@ public class EditContextDialog extends DialogWrapper {
       final BidirectionalMap<String, String> bidiMap = new BidirectionalMap<>();
       bidiMap.putAll(Namespace.makeMap(myNamespaceTableModel.getNamespaces()));
       final List<String> list = bidiMap.getKeysByValue(uri);
-      return list != null && list.size() > 0 ? list.get(0) : null;
+      return list != null && !list.isEmpty() ? list.get(0) : null;
     }
 
     @Override

@@ -100,7 +100,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   @Override
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
-    if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
+    if (myText.isEmpty() || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
   }
 

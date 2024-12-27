@@ -85,7 +85,7 @@ class SoftMargins implements Cloneable {
   }
 
   public void serializeInto(@NotNull Element element) {
-    if (myValues != null && myValues.size() > 0) {
+    if (myValues != null && !myValues.isEmpty()) {
       XmlSerializer.serializeInto(this, element);
     }
   }

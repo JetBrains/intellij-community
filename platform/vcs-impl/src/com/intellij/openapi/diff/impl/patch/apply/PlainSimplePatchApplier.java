@@ -71,7 +71,7 @@ public final class PlainSimplePatchApplier {
 
     if (lastBaseLine != null) {
       boolean lastLineAlreadyApplied =
-        !lastBaseLine.isSuppressNewLine() && baseLine + 1 == myLineOffsets.getLineCount() && getLineContent(baseLine).length() == 0 ||
+        !lastBaseLine.isSuppressNewLine() && baseLine + 1 == myLineOffsets.getLineCount() && getLineContent(baseLine).isEmpty() ||
         lastBaseLine.isSuppressNewLine() && baseLine == myLineOffsets.getLineCount();
       if (lastLineAlreadyApplied) {
         boolean isNoNewlinePatched = lastPatchedLine != null ? lastPatchedLine.isSuppressNewLine() : lastBaseLine.isSuppressNewLine();
@@ -84,7 +84,7 @@ public final class PlainSimplePatchApplier {
     }
 
     // insertion into empty file - use "No newline at end of file" flag from patch
-    if (baseLine == 0 && myText.length() == 0) {
+    if (baseLine == 0 && myText.isEmpty()) {
       boolean isNoNewlinePatched = lastPatchedLine != null && lastPatchedLine.isSuppressNewLine();
       if (!isNoNewlinePatched) {
         if (patchedLine > 0) sb.append('\n');

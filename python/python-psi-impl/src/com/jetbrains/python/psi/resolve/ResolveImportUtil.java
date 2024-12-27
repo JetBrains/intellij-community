@@ -91,7 +91,7 @@ public final class ResolveImportUtil {
   @Deprecated
   public static @Nullable PsiElement resolveImportElement(PyImportElement importElement, final @NotNull QualifiedName qName) {
     final List<RatedResolveResult> resultList = RatedResolveResult.sorted(multiResolveImportElement(importElement, qName));
-    return resultList.size() > 0 ? resultList.get(0).getElement() : null;
+    return !resultList.isEmpty() ? resultList.get(0).getElement() : null;
   }
 
   public static @NotNull List<RatedResolveResult> multiResolveImportElement(PyImportElement importElement, final @NotNull QualifiedName qName) {

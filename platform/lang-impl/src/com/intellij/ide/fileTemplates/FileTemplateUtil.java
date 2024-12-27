@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.application.options.CodeStyle;
@@ -82,7 +82,7 @@ public final class FileTemplateUtil {
       if (apacheChild instanceof ASTReference) {
         String s = apacheChild.literal();
         s = referenceToAttribute(s, includeDummies);
-        if (s != null && s.length() > 0 && !propertiesNames.contains(s)) {
+        if (s != null && !s.isEmpty() && !propertiesNames.contains(s)) {
           referenced.add(s);
         }
       }

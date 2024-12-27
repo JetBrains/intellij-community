@@ -185,8 +185,8 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     final StringBuilder builder = new StringBuilder();
     for (FilterAction filter : myFilters) {
       final String text = filter.getShortText(variable);
-      if (text.length() > 0) {
-        if (builder.length() > 0) builder.append(", ");
+      if (!text.isEmpty()) {
+        if (!builder.isEmpty()) builder.append(", ");
         builder.append(text);
       }
     }

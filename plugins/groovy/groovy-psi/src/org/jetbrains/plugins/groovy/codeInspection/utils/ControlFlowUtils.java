@@ -827,7 +827,7 @@ public final class ControlFlowUtils {
 
       @Override
       public @NotNull BitSet join(@NotNull List<? extends BitSet> ins) {
-        if (ins.size() == 0) {
+        if (ins.isEmpty()) {
           return neutral;
         }
         if (ins.size() == 1) {

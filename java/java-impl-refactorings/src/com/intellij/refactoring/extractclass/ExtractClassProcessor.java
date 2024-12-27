@@ -220,7 +220,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final Project project = sourceClass.getProject();
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(sourceClass.getContainingFile());
 
-    final String baseName = settings.FIELD_NAME_PREFIX.length() == 0 ? StringUtil.decapitalize(newClassName) : newClassName;
+    final String baseName = settings.FIELD_NAME_PREFIX.isEmpty() ? StringUtil.decapitalize(newClassName) : newClassName;
     String name = settings.FIELD_NAME_PREFIX + baseName + settings.FIELD_NAME_SUFFIX;
     if (!existsFieldWithName(name) && !PsiNameHelper.getInstance(project).isKeyword(name)) {
       return name;
@@ -429,7 +429,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     final @NonNls StringBuilder fieldBuffer = new StringBuilder();
     final String delegateVisibility = calculateDelegateVisibility();
-    if (delegateVisibility.length() > 0) fieldBuffer.append(delegateVisibility).append(' ');
+    if (!delegateVisibility.isEmpty()) fieldBuffer.append(delegateVisibility).append(' ');
     fieldBuffer.append("final ");
     final String fullyQualifiedName = getQualifiedName();
     fieldBuffer.append(fullyQualifiedName);

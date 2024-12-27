@@ -35,7 +35,7 @@ public abstract class ManifestImporter {
     for (MavenArtifact mavenArtifact : mavenProject.getDependencies()) {
       final DependencyScope scope = MavenProjectImporterUtil.selectScope(mavenArtifact.getScope());
       if (scope.isForProductionCompile() || scope.isForProductionRuntime()) {
-        if (classpath.length() > 0) {
+        if (!classpath.isEmpty()) {
           classpath.append(" ");
         }
         classpath.append(classpathPrefix);

@@ -66,7 +66,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
       }
     }
 
-    if (startOffset == endOffset && atoms.size() > 0) {
+    if (startOffset == endOffset && !atoms.isEmpty()) {
       PsiElement[] elements = PsiUtilCore.toPsiElementArray(atoms);
       if ((atoms.size() == 1 || PsiTreeUtil.findCommonParent(elements) == elements[0].getParent())) {
         return elements;

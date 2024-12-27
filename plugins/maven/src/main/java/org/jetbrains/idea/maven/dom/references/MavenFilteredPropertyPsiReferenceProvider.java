@@ -86,7 +86,7 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
   }
   
   private static void appendDelimiter(StringBuilder pattern, String prefix, String suffix) {
-    if (pattern.length() > 0) {
+    if (!pattern.isEmpty()) {
       pattern.append('|');
     }
     pattern.append(Pattern.quote(prefix)).append("(.+?)").append(Pattern.quote(suffix));

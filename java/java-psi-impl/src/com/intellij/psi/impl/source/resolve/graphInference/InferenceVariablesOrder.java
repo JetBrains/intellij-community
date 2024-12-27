@@ -164,7 +164,7 @@ public final class InferenceVariablesOrder {
       boolean includeSelfDependency = false;
       for (Iterator<InferenceGraphNode<T>> iterator = myDependencies.iterator(); iterator.hasNext(); ) {
         InferenceGraphNode<T> d = iterator.next();
-        assert d.myValue.size() >= 1;
+        assert !d.myValue.isEmpty();
         final T initialNodeValue = d.myValue.get(0);
         if (myValue.contains(initialNodeValue)) {
           includeSelfDependency = true;

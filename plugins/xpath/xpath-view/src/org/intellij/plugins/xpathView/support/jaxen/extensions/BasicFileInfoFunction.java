@@ -40,7 +40,7 @@ public abstract class BasicFileInfoFunction extends FunctionImplementation imple
     @SuppressWarnings({"RawUseOfParameterizedType"})
     public @Nullable Object call(Context context, List list) throws FunctionCallException {
         final Object arg;
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             arg = context.getNodeSet().get(0);
         } else {
             final Object o = list.get(0);

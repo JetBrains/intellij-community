@@ -45,7 +45,7 @@ public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElemen
   public static PyFunction findDeepestSuperMethod(PyFunction function) {
     TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), null);
     List<PsiElement> superMethods = new ArrayList<>(search(function, true, context).findAll());
-    while (superMethods.size() > 0) {
+    while (!superMethods.isEmpty()) {
       function = getBaseMethod(superMethods, function.getContainingClass());
       superMethods = new ArrayList<>(search(function, true, context).findAll());
     }

@@ -158,7 +158,7 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
 
   @Override
   protected boolean areButtonsValid() {
-    return myTargetDirectoryField.getChildComponent().getText().length() > 0;
+    return !myTargetDirectoryField.getChildComponent().getText().isEmpty();
   }
 
   @Override
