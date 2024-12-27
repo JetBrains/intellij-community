@@ -10,6 +10,8 @@ class RecentFilesCompletionCommand : AbstractActionCompletionCommand("RecentFile
                                                                      JavaBundle.message("command.completion.recent.files.text"),
                                                                      null,
                                                                      -150) {
+  override fun supportNonWrittenFiles(): Boolean  = true
+
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if(!super.isApplicable(offset, psiFile, editor)) return false
     return isApplicableToProject(offset, psiFile)

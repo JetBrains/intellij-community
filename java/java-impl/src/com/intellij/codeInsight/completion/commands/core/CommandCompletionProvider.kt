@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -53,12 +54,24 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       resultSet.passResult(it)
     }
     val project = parameters.editor.project ?: return
-    if (parameters.originalFile.virtualFile is LightVirtualFile) {
-      val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(parameters.originalFile)
+    var editor = parameters.editor
+    var isNonWritten = false
+    var offset = parameters.offset
+    val targetEditor = editor.getUserData(ORIGINAL_EDITOR)
+    var originalFile = parameters.originalFile
+    if (targetEditor != null) {
+      isNonWritten = true
+      editor = targetEditor.first
+      offset = targetEditor.second
+      originalFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return
+    }
+    if (offset == 0 && !isNonWritten) return // we need some context to work with
+    if (originalFile.virtualFile is LightVirtualFile) {
+      val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(originalFile)
       if (topLevelFile?.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
         return
       }
-      val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(parameters.editor)
+      val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
       if (topLevelEditor is EditorWindow) {
         return
       }
@@ -67,20 +80,18 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     val commandCompletionService = project.getService(CommandCompletionService::class.java)
     if (commandCompletionService == null) return
     val dumbService = DumbService.getInstance(project)
-    val commandCompletionFactory = commandCompletionService.getFactory(parameters.position.language)
+    val commandCompletionFactory = commandCompletionService.getFactory(originalFile.language)
     if (commandCompletionFactory == null) return
     if (!dumbService.isUsableInCurrentContext(commandCompletionFactory)) return
-    val offset = parameters.offset
-    if (offset == 0) return // we need some context to work with
 
-    if (parameters.editor.document.textLength != offset &&
-        StringUtil.isJavaIdentifierPart(parameters.editor.document.immutableCharSequence[offset])) {
+    if (editor.document.textLength != offset &&
+        StringUtil.isJavaIdentifierPart(editor.document.immutableCharSequence[offset])) {
       return
     }
 
-    val commandCompletionType = findCommandCompletionType(commandCompletionFactory, parameters) ?: return
+    val commandCompletionType = findCommandCompletionType(commandCompletionFactory, isNonWritten, offset, parameters.editor) ?: return
     val adjustedParameters = try {
-      adjustParameters(parameters, commandCompletionType) ?: return
+      adjustParameters(commandCompletionType, editor, originalFile, offset, isNonWritten) ?: return
     }
     catch (_: Exception) {
       return
@@ -88,7 +99,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     if (!commandCompletionFactory.isApplicable(adjustedParameters.copyFile, adjustedParameters.offset)) return
 
-    val copyEditor = MyEditor(adjustedParameters.copyFile, parameters.editor.settings)
+    val copyEditor = MyEditor(adjustedParameters.copyFile, editor.settings)
     copyEditor.caretModel.moveToOffset(adjustedParameters.offset)
 
     val withPrefixMatcher = resultSet.withPrefixMatcher(CamelHumpMatcher(resultSet.prefixMatcher.prefix, false, true))
@@ -97,27 +108,30 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     withPrefixMatcher.restartCompletionOnPrefixChange(StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
       override fun accepts(t: String, context: ProcessingContext?): Boolean {
-        return commandCompletionType.suffix.toString() == t
+        return !isNonWritten && commandCompletionType.suffix.toString() + t ==
+          commandCompletionFactory.suffix() + commandCompletionFactory.filterSuffix().toString() ||
+               isNonWritten && commandCompletionType.suffix.toString() + t == commandCompletionFactory.filterSuffix().toString()
       }
     }))
 
     // Fetch commands applicable to the position
     processCommandsForContext(commandCompletionFactory,
-                              parameters.originalFile.project,
+                              originalFile.project,
                               copyEditor,
                               adjustedParameters.offset,
                               adjustedParameters.copyFile,
-                              parameters.editor,
+                              editor,
                               parameters.offset,
-                              parameters.originalFile) { commands ->
+                              originalFile,
+                              isNonWritten) { commands ->
       withPrefixMatcher.addAllElements(commands.map { command ->
         val i18nName = command.i18nName.replace("_", "").replace("...", "").replace("…", "")
         val additionalInfo = command.additionalInfo ?: ""
         var tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " $i18nName"
         if (additionalInfo.isNotEmpty()) {
-          tailText+= " ($additionalInfo)"
+          tailText += " ($additionalInfo)"
         }
-        var element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name)
+        val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name)
                                                                       .withLookupString(i18nName)
                                                                       .withTypeText(tailText)
                                                                       .withIcon(command.icon ?: Lightning)
@@ -154,12 +168,16 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
   private fun findCommandCompletionType(
     factory: CommandCompletionFactory,
-    parameters: CompletionParameters,
+    isNonWritten: Boolean,
+    offset: Int,
+    editor: Editor,
   ): InvocationCommandType? {
     val suffix = factory.suffix().toString() + (factory.filterSuffix() ?: "")
-    val offset = parameters.offset
-    val text = parameters.editor.document.immutableCharSequence
-    var indexOf = findActualIndex(suffix, text, offset)
+    val text = editor.document.immutableCharSequence
+    if (isNonWritten) {
+      return InvocationCommandType.FullSuffix("", editor.document.immutableCharSequence.substring(0, editor.caretModel.offset))
+    }
+    val indexOf = findActualIndex(suffix, text, offset)
     if (offset - indexOf < 0) return null
     if (indexOf == 1) {
       return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset), text.substring(offset - indexOf, offset - indexOf + 1))
@@ -182,14 +200,16 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
+    isNonWritten: Boolean,
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
     val element = copyFile.findElementAt(offset - 1)
     if (element == null) return
     for (provider in commandCompletionFactory.commandProviders(project)) {
       try {
+        if(isNonWritten && !provider.supportNonWrittenFiles()) continue
         //todo delete parameters
-        val commands = provider.getCommands(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile)
+        val commands = provider.getCommands(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile, isNonWritten)
         processor.process(commands)
       }
       catch (e: Exception) {
@@ -205,23 +225,35 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
   private data class AdjustedCompletionParameters(val copyFile: PsiFile, val offset: Int, val hostAdjustedOffset: Int)
 
-  private fun adjustParameters(parameters: CompletionParameters, commandCompletionType: InvocationCommandType): AdjustedCompletionParameters? {
-    val injectedLanguageManager = InjectedLanguageManager.getInstance(parameters.originalFile.project)
-    val originalFile = injectedLanguageManager.getTopLevelFile(parameters.originalFile)
-    val editor = InjectedLanguageEditorUtil.getTopLevelEditor(parameters.editor)
-    val originalDocument = editor.document
+  private fun adjustParameters(
+    commandCompletionType: InvocationCommandType,
+    editor: Editor,
+    originalFile: PsiFile,
+    offset: Int,
+    isNonWritten: Boolean,
+  ): AdjustedCompletionParameters? {
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(originalFile.project)
+    val topFile = injectedLanguageManager.getTopLevelFile(originalFile)
+    val topEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+    val originalDocument = topEditor.document
 
     // Get the document text up to the start of the command (before dots and command text)
-    val offset = injectedLanguageManager.injectedToHost(parameters.originalFile, parameters.offset)
-    var adjustedOffset = offset - commandCompletionType.suffix.length - commandCompletionType.pattern.length
+    val hostOffset = injectedLanguageManager.injectedToHost(originalFile, offset)
+    var adjustedOffset = hostOffset - commandCompletionType.suffix.length - commandCompletionType.pattern.length
     if (adjustedOffset <= 0) return null
     val hostAdjustedOffset = adjustedOffset
-    val adjustedText = originalDocument.getText(TextRange(0, adjustedOffset)) + originalDocument.getText(TextRange(offset, originalDocument.textLength))
+    val adjustedText = originalDocument.getText(TextRange(0, adjustedOffset)) + originalDocument.getText(TextRange(hostOffset, originalDocument.textLength))
 
-    var file = PsiFileFactory.getInstance(editor.project)
-      .createFileFromText(originalFile.getName(), originalFile.getLanguage(), adjustedText, true, true, false, originalFile.virtualFile)
+    var file =
+      if (isNonWritten) {
+        originalFile.copy() as PsiFile
+      }else{
+        PsiFileFactory.getInstance(topEditor.project)
+          .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
+      }
+
     if (file is PsiFileImpl) {
-      file.setOriginalFile(originalFile)
+      file.setOriginalFile(topFile)
     }
     val injectedElement = injectedLanguageManager.findInjectedElementAt(file, adjustedOffset)
     if (injectedElement != null) {

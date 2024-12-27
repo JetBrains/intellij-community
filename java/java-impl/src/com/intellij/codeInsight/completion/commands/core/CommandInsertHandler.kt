@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Disposer
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import org.jetbrains.annotations.ApiStatus
@@ -18,21 +20,34 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 internal class CommandInsertHandler(private val completionCommand: CompletionCommand) : InsertHandler<LookupElement?> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    // Remove the dots and command text from the document
-    var startOffset = removeCommandText(context)
+    var editor = context.editor
+    val originalEditor = editor.getUserData(ORIGINAL_EDITOR)
+    var startOffset = 0
+    var psiFile = context.file
+    if (originalEditor != null) {
+      startOffset = originalEditor.second
+      editor = originalEditor.first
+      psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.getDocument()) ?: return
+      val installedEditor = editor.getUserData(INSTALLED_EDITOR) ?: return
+      Disposer.dispose(installedEditor)
+    }
+    else {
+      // Remove the dots and command text from the document
+      startOffset = removeCommandText(context)
+    }
 
     // Execute the command
     val injectedLanguageManager = InjectedLanguageManager.getInstance(context.project)
-    val psiFile = context.file
 
     if (injectedLanguageManager.isInjectedFragment(psiFile)) {
       val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
       InjectedLanguageUtil.findInjectedPsiNoCommit(topLevelFile, startOffset)
       startOffset = (psiFile.fileDocument as? DocumentWindow)?.hostToInjected(startOffset) ?: 0
     }
+
     ApplicationManager.getApplication().invokeLater {
       CommandProcessor.getInstance().executeCommand(context.project, {
-        completionCommand.execute(startOffset, psiFile, context.editor)
+        completionCommand.execute(startOffset, psiFile, editor)
       }, completionCommand.name, completionCommand)
     }
   }

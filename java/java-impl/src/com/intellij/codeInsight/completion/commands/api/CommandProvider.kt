@@ -38,8 +38,9 @@ interface CommandProvider {
    */
   fun getCommands(
     project: Project, editor: Editor, offset: Int, psiFile: PsiFile,
-    originalEditor: Editor, originalOffset: Int, originalFile: PsiFile,
+    originalEditor: Editor, originalOffset: Int, originalFile: PsiFile, isNonWritten: Boolean,
   ): List<CompletionCommand>
 
   fun getId(): String
+  fun supportNonWrittenFiles() : Boolean = false
 }

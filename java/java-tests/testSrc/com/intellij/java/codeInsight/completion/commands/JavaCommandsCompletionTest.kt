@@ -1,15 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion.commands
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.replaceService
 import com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection
+import javax.swing.JComponent
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
 class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
+
+  fun testFormatNotCall() {
+    Registry.get("java.completion.command.enabled").setValue(false, getTestRootDisposable());
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          int y = 10;
+          int x =                           y.<caret>;
+        } 
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("format", ignoreCase = true) })
+  }
 
   fun testFormat() {
     Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
@@ -149,5 +171,57 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         } 
       }
       """.trimIndent())
+  }
+
+  fun testBinaryNotAllowed() {
+    Registry.get("java.completion.command.enabled").setValue(false, getTestRootDisposable());
+    val testDir = JavaTestUtil.getJavaTestDataPath()
+    val clsPath = "$testDir/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class"
+    val file = (if (clsPath.contains("!/")) StandardFileSystems.jar() else StandardFileSystems.local()).refreshAndFindFileByPath(clsPath)
+    assertNotNull(clsPath, file)
+    myFixture.openFileInEditor(file!!)
+    val text = myFixture.file.text
+    val pattern = " Serializable"
+    val index = text.indexOf(pattern)
+    assertTrue(index >= 0)
+    myFixture.editor.caretModel.moveToOffset(index + pattern.length)
+    val hintManager = createTestHintManager()
+    type(".")
+    assertTrue(hintManager.called)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    assertNull(lookup)
+  }
+
+  fun testBinaryNotAllowedCalledCompletion() {
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    val testDir = JavaTestUtil.getJavaTestDataPath()
+    val clsPath = "$testDir/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class"
+    val file = (if (clsPath.contains("!/")) StandardFileSystems.jar() else StandardFileSystems.local()).refreshAndFindFileByPath(clsPath)
+    assertNotNull(clsPath, file)
+    myFixture.openFileInEditor(file!!)
+    val text = myFixture.file.text
+    val pattern = " Serializable"
+    val index = text.indexOf(pattern)
+    assertTrue(index >= 0)
+    myFixture.editor.caretModel.moveToOffset(index + pattern.length)
+    val hintManager = createTestHintManager()
+    type(".")
+    assertTrue(!hintManager.called)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    assertNotNull(lookup.items.first { element -> element.lookupString.contains("Copy Refer", ignoreCase = true) })
+  }
+
+  private fun createTestHintManager(): TestHintManager {
+    val manager = TestHintManager()
+    ApplicationManager.getApplication().replaceService(HintManager::class.java, manager, testRootDisposable)
+    return manager
+  }
+
+  private class TestHintManager : HintManagerImpl() {
+    var called: Boolean = false
+    override fun showInformationHint(editor: Editor, component: JComponent, position: Short, onHintHidden: Runnable?) {
+      super.showInformationHint(editor, component, position, onHintHidden)
+      called = true
+    }
   }
 }

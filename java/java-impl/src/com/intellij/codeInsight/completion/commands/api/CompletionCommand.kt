@@ -100,6 +100,7 @@ abstract class ApplicableCompletionCommand : CompletionCommand() {
    */
   @RequiresReadLock
   abstract fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean
+  open fun supportNonWrittenFiles(): Boolean = false
 }
 
 /**

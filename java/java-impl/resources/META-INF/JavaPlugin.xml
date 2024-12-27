@@ -1499,6 +1499,8 @@
                             implementationClass="com.intellij.codeInsight.completion.JvmLoggerCompletionContributor"/>
     <completion.contributor language="JAVA" id="jigsaw"
                             implementationClass="com.intellij.codeInsight.completion.JigsawCompletionContributor"/>
+    <nonWriteAccessTypedHandler implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionNonWriteAccessTypedHandler" id="commandCompletion"/>
+
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.InlineVariableCompletionCommand" />
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.ExtensionPointCommandProvider" />
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.DirectIntentionCommandProvider" order="last"/>
@@ -2772,6 +2774,8 @@
 
     <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCommandCompletionFactory" />
     <completion.contributor language="JAVA" id="commands" order="first, after liveTemplates"
+                            implementationClass="com.intellij.codeInsight.completion.commands.core.CommandCompletionContributor"/>
+    <completion.contributor language="TEXT" id="commandsPlain" order="first, after liveTemplates"
                             implementationClass="com.intellij.codeInsight.completion.commands.core.CommandCompletionContributor"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionCharFilter" order="first" id="commandCompletion"/>
 

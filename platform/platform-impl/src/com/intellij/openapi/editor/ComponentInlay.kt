@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor
 
 import com.intellij.openapi.editor.impl.ComponentInlayManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 
@@ -26,3 +27,15 @@ fun <T : Component> Editor.addComponentInlay(offset: Int,
                                              properties: InlayProperties,
                                              renderer: ComponentInlayRenderer<T>): Inlay<ComponentInlayRenderer<T>>? =
   ComponentInlayManager.add(this, offset, properties, renderer)
+
+/**
+ * Adds inline inlay for custom [renderer].
+ * Please note that this is experimental and can be deleted in the future
+ * @see [Editor.addComponentInlay]
+ */
+@ApiStatus.Internal
+@Experimental
+fun <T : Component> Editor.addInlineComponentInlay(offset: Int,
+                                             properties: InlayProperties,
+                                             renderer: ComponentInlayRenderer<T>): Inlay<ComponentInlayRenderer<T>>? =
+  ComponentInlayManager.addInline(this, offset, properties, renderer)

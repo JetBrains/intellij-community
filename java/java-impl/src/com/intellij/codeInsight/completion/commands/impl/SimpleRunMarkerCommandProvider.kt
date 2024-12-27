@@ -41,6 +41,7 @@ class SimpleRunMarkerCommandProvider : CommandProvider {
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
+    isNonWritten: Boolean,
   ): List<CompletionCommand> {
     return runBlockingCancellable {
       var (currentElement, collectedActions) = collectActions(psiFile, offset, project)

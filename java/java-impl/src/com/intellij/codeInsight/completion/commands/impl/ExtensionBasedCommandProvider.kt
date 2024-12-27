@@ -12,14 +12,18 @@ import com.intellij.psi.PsiFile
 
 
 class ExtensionPointCommandProvider : CommandProvider, DumbAware {
-  override fun getCommands(project: Project, editor: Editor, offset: Int, psiFile: PsiFile, originalEditor: Editor, originalOffset: Int, originalFile: PsiFile): List<CompletionCommand> {
+  override fun getCommands(project: Project, editor: Editor, offset: Int, psiFile: PsiFile, originalEditor: Editor, originalOffset: Int, originalFile: PsiFile, isNonWritten: Boolean): List<CompletionCommand> {
     val completionCommands = DumbService.getDumbAwareExtensions(project, ApplicableCompletionCommand.EP_NAME)
     return completionCommands.filter {
-      it.isApplicable(offset, psiFile, editor)
+      !(isNonWritten && !it.supportNonWrittenFiles()) && it.isApplicable(offset, psiFile, editor)
     }
   }
 
   override fun getId(): String {
     return "ExtensionPointCommandProvider"
+  }
+
+  override fun supportNonWrittenFiles(): Boolean {
+    return true
   }
 }

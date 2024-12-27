@@ -17,6 +17,7 @@
     <extensionPoint name="extendWordSelectionHandler" interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
     <extensionPoint name="basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint name="typedHandler" interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="nonWriteAccessTypedHandler" interface="com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler" dynamic="true"/>
     <extensionPoint name="selectionUnquotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
     <extensionPoint name="joinLinesHandler" interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
     <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>

@@ -11,6 +11,8 @@ class ProjectViewCompletionCommand : AbstractActionCompletionCommand(Manager.get
                                                                      JavaBundle.message("command.completion.project.tool.text"),
                                                                      null,
                                                                      -150) {
+  override fun supportNonWrittenFiles(): Boolean  = true
+
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false
     return isApplicableToProject(offset, psiFile)
