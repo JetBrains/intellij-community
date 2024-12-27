@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpda
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -202,7 +203,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
     val actionManager = serviceAsync<ActionManager>()
-    if (runToCursorService.isAtExecution(editor.virtualFile ?: return, lineNumber)) {
+    val virtualFile = editor.virtualFile ?: return
+    val isAtExecution = readAction {
+      runToCursorService.isAtExecution(virtualFile, lineNumber)
+    }
+    if (isAtExecution) {
       showHint(editor, lineNumber, firstNonSpacePos, listOf(actionManager.getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
