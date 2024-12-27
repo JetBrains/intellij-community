@@ -15,6 +15,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -56,13 +57,18 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   );
   private static final String LOG4J_LOGGER = "org.apache.logging.log4j.Logger";
   private static final String LOG4J_BUILDER = "org.apache.logging.log4j.LogBuilder";
-  private static final String GET_LOGGER = "getLogger";
+  private static final CallMatcher GET_FORMATTER_LOGGER = staticCall("org.apache.logging.log4j.LogManager", "getFormatterLogger") ;
+  private static final CallMatcher GET_LOGGER =  staticCall("org.apache.logging.log4j.LogManager", "getLogger");
   private static final CallMatcher MESSAGE_FORMAT_FORMAT = anyOf(
     staticCall("java.text.MessageFormat", "format").parameterCount(2)
   );
   private static final String SLF4J_LOGGER = "org.slf4j.Logger";
 
   @SuppressWarnings("PublicField") public int warnLevel = 0;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean isLog4JParameterizedLogger = true;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
@@ -76,7 +82,10 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     return pane(
       dropdown("warnLevel", InspectionGadgetsBundle.message("warn.on.label"),
                EntryStream.of(options).mapKeyValue((idx, name) -> option(String.valueOf(idx), name))
-                 .toArray(OptDropdown.Option.class))
+                 .toArray(OptDropdown.Option.class)),
+               checkbox("isLog4JParameterizedLogger",
+                        InspectionGadgetsBundle.message("log4j.use.parameterized.logger"))
+                 .description(InspectionGadgetsBundle.message("log4j.use.parameterized.logger.description"))
     );
   }
 
@@ -89,6 +98,10 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (warnLevel != 0) {
       node.addContent(new Element("option").setAttribute("name", "warnLevel").setAttribute("value", String.valueOf(warnLevel)));
+    }
+    if (!isLog4JParameterizedLogger) {
+      node.addContent(new Element("option").setAttribute("name", "isLog4JParameterizedLogger")
+                        .setAttribute("value", "false"));
     }
   }
 
@@ -105,9 +118,9 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     if (!(infos[2] instanceof PsiExpression targetExpression)) {
       return null;
     }
-
-    if (isFormattedLog4J(logCall)) return null;
-
+    ThreeState formattedLog4J = isFormattedLog4J(logCall);
+    if (formattedLog4J == ThreeState.YES) return null;
+    if (!isLog4JParameterizedLogger && formattedLog4J == ThreeState.UNSURE) return null;
     return getQuickFix(problemType, targetExpression);
   }
 
@@ -120,10 +133,10 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     };
   }
 
-  private static boolean isFormattedLog4J(@NotNull PsiMethodCallExpression logCall) {
+  private static ThreeState isFormattedLog4J(@NotNull PsiMethodCallExpression logCall) {
     PsiExpression qualifierExpression = logCall.getMethodExpression().getQualifierExpression();
     if (qualifierExpression == null) {
-      return false;
+      return ThreeState.NO;
     }
 
     boolean isLogBuilder = InheritanceUtil.isInheritor(qualifierExpression.getType(), LOG4J_BUILDER);
@@ -142,7 +155,6 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       }
 
       if (qualifierExpression != null) {
-        boolean isFormatted = true;
         if (qualifierExpression instanceof PsiMethodCallExpression callExpression) {
           PsiMethod method = callExpression.resolveMethod();
           if (method != null &&
@@ -159,24 +171,28 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
         if (qualifierExpression instanceof PsiReferenceExpression referenceExpression &&
             referenceExpression.resolve() instanceof PsiVariable loggerVariable) {
-          if (!loggerVariable.isPhysical() ||
-              (loggerVariable.getInitializer() instanceof PsiMethodCallExpression callExpression &&
-               GET_LOGGER.equals(callExpression.getMethodExpression().getReferenceName()))) {
-            isFormatted = false;
+          if (loggerVariable.getInitializer() instanceof PsiMethodCallExpression callExpression) {
+            if (GET_FORMATTER_LOGGER.test(callExpression)) {
+              return ThreeState.YES;
+            }
+            if (GET_LOGGER.test(callExpression)) {
+              return ThreeState.NO;
+            }
           }
         }
 
-        if (qualifierExpression instanceof PsiMethodCallExpression callExpression &&
-            GET_LOGGER.equals(callExpression.getMethodExpression().getReferenceName())) {
-          isFormatted = false;
-        }
-
-        if (isFormatted) {
-          return true;
+        if (qualifierExpression instanceof PsiMethodCallExpression callExpression) {
+          if (GET_FORMATTER_LOGGER.test(callExpression)) {
+            return ThreeState.YES;
+          }
+          if (GET_LOGGER.test(callExpression)) {
+            return ThreeState.NO;
+          }
         }
       }
+      return ThreeState.UNSURE;
     }
-    return false;
+    return ThreeState.NO;
   }
 
   @Override

@@ -3,6 +3,7 @@ package com.siyeh.ig.fixes.logging;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection;
 
@@ -26,7 +27,7 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
                            public static Logger getLogger(Class clazz) {
                              return null;
                            }
-                           public static Logger getFormattedLogger(Class clazz) {
+                           public static Logger getFormatterLogger(Class clazz) {
                              return null;
                            }
                          }""");
@@ -38,7 +39,12 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
       }"""
     );
 
-    myFixture.enableInspections(new StringConcatenationArgumentToLogCallInspection());
+    StringConcatenationArgumentToLogCallInspection inspection = new StringConcatenationArgumentToLogCallInspection();
+    myFixture.enableInspections(inspection);
+    String name = getTestName(false);
+    if (name.endsWith("UnknownLogger")) {
+      inspection.isLog4JParameterizedLogger = false;
+    }
   }
 
   public void testUseOfConstant() { doTest(); }
@@ -47,6 +53,22 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testLog4jFormatted() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix"));
   }
+  public void testLog4jFormattedUnknownLogger() {
+    BaseInspection inspection = getInspection();
+    if (inspection instanceof StringConcatenationArgumentToLogCallInspection stringConcatenationArgumentToLogCallInspection) {
+      stringConcatenationArgumentToLogCallInspection.isLog4JParameterizedLogger = false;
+    }
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix"));
+  }
+
+  public void testLog4jAmbitiousDefaultLogger() {
+    doTest();
+  }
+
+  public void testLog4jAmbitiousUnknownLogger() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix"));
+  }
+
   public void testLog4JLogBuilder() { doTest(); }
   public void testTextBlocks() {
     doTest(
