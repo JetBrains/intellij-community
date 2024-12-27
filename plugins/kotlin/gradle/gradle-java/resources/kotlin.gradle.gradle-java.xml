@@ -41,8 +41,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <issueChecker implementation="org.jetbrains.kotlin.idea.gradleJava.issues.checkers.GradleToolchainDownloadingErrorIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.kotlin.idea.gradleJava.issues.checkers.GradleToolchainInstalledNotFoundMatchingCriteriaIssueChecker"/>
     <issueChecker implementation="org.jetbrains.kotlin.idea.gradleJava.issues.checkers.GradleUndefinedToolchainRepositoriesIssueChecker"/>
 
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinMPPSourceSetsFrameworkSupportProvider"/>

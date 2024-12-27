@@ -75,6 +75,8 @@
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleToolchainDownloadedMismatchCriteriaIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleUndefinedDaemonJvmCriteriaIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleInvalidDaemonJvmCriteriaIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleToolchainDownloadingErrorIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleToolchainInstalledNotFoundMatchingCriteriaIssueChecker"/>
     <executionHelperExtension implementation="org.jetbrains.plugins.gradle.service.execution.GradleTaskExecutionMeasuringExtension"/>
     <executionHelperExtension
       implementation="org.jetbrains.plugins.gradle.service.execution.telemetry.GradleTelemetryAgentProvidingExecutionHelperExtension"/>

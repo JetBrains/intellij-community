@@ -1,14 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.gradleJava.issues.checkers
+package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
-import org.jetbrains.kotlin.idea.gradleJava.issues.quickfix.GradleDownloadToolchainQuickFix
-import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
-import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
-import org.jetbrains.plugins.gradle.issue.GradleIssueData
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleDownloadToolchainQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleOpenDaemonJvmSettingsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -16,15 +13,15 @@ import java.util.function.Consumer
 
 /**
  * An [GradleIssueChecker] handling Daemon JVM criteria exceptions like:
- * "Unable to download toolchain matching the requirements ({languageVersion=1.1, vendor=any vendor, implementation=vendor-specific})
- * from '<URL>', due to: No defined toolchain download url for MAC_OS on aarch64 architecture."
+ * "Cannot find a Java installation on your machine (Mac OS X 14.7.1 aarch64) matching: Compatible with Java 20,
+ * vendor matching('dasdsada') (from gradle/gradle-daemon-jvm.properties)."
  */
-class GradleToolchainDownloadingErrorIssueChecker : GradleIssueChecker {
+class GradleToolchainInstalledNotFoundMatchingCriteriaIssueChecker : GradleIssueChecker {
 
     override fun check(issueData: GradleIssueData): BuildIssue? {
         val rootCause = getRootCauseAndLocation(issueData.error).first
-        if (rootCause.message?.startsWith("Unable to download toolchain matching the requirements") == true) {
-            return GradleToolchainDownloadingErrorBuildIssue(rootCause, issueData.projectPath)
+        if (rootCause.message?.startsWith("Cannot find a Java installation on your machine") == true) {
+            return GradleToolchainInstalledNotFoundMatchingCriteriaBuildIssue(rootCause, issueData.projectPath)
         }
         return null
     }
@@ -41,12 +38,12 @@ class GradleToolchainDownloadingErrorIssueChecker : GradleIssueChecker {
     }
 }
 
-private class GradleToolchainDownloadingErrorBuildIssue(
+private class GradleToolchainInstalledNotFoundMatchingCriteriaBuildIssue(
     cause: Throwable,
     externalProjectPath: String
 ) : ConfigurableGradleBuildIssue() {
     init {
-        setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.download.error.title"))
+        setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.not.found.title"))
         addDescription(cause.message ?: title)
         addQuickFixes(
             GradleDownloadToolchainQuickFix(externalProjectPath) to GradleBundle.message("gradle.build.quick.fix.install.missing.toolchain"),
