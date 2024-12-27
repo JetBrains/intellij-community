@@ -179,7 +179,7 @@ private fun headContentBytes(project: Project, root: VirtualFile, status: GitFil
 @Throws(VcsException::class)
 private fun stagedContentFile(project: Project, root: VirtualFile, status: GitFileStatus): VirtualFile {
   val filePath = status.path(ContentVersion.STAGED)
-  return GitIndexFileSystemRefresher.getInstance(project).getFile(root, filePath)
+  return GitIndexFileSystemRefresher.getInstance(project).createFile(root, filePath)
          ?: throw VcsException(GitBundle.message("stage.diff.staged.content.exception.message", status.path))
 }
 
