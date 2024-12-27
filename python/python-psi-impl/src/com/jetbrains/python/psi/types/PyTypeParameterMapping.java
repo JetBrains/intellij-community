@@ -113,8 +113,12 @@ public final class PyTypeParameterMapping {
     EnumSet<Option> optionSet = EnumSet.noneOf(Option.class);
     optionSet.addAll(Arrays.asList(options));
 
-    NullTolerantDeque<PyType> expectedTypesDeque = new NullTolerantDeque<>(flattenUnpackedTupleTypes(expectedTypes));
-    NullTolerantDeque<PyType> actualTypesDeque = new NullTolerantDeque<>(flattenUnpackedTupleTypes(actualTypes));
+    List<PyType> normalizedExpectedTypes = flattenUnpackedTupleTypes(expectedTypes);
+    List<PyType> normalizedActualTypes =
+      replaceExpectedTypesWithParameterList(normalizedExpectedTypes, flattenUnpackedTupleTypes(actualTypes));
+
+    NullTolerantDeque<PyType> expectedTypesDeque = new NullTolerantDeque<>(normalizedExpectedTypes);
+    NullTolerantDeque<PyType> actualTypesDeque = new NullTolerantDeque<>(normalizedActualTypes);
 
     List<Couple<PyType>> leftMappedTypes = new ArrayList<>();
     List<Couple<PyType>> centerMappedTypes = new ArrayList<>();
@@ -169,29 +173,6 @@ public final class PyTypeParameterMapping {
       else {
         actualTypesDeque.removeLast();
         rightMappedTypes.add(Couple.of(rightmostExpected, rightmostActual));
-      }
-    }
-    // [**P] <- [int, str, bool] is equal to [**P] <- [[int, str, bool]]
-    if (expectedTypesDeque.size() == 1 && actualTypesDeque.size() >= 1
-        && leftMappedTypes.isEmpty()
-        && expectedTypesDeque.peekFirst() instanceof PyParamSpecType
-        && !(actualTypesDeque.peekFirst() instanceof PyCallableParameterListType)) {
-      List<PyType> callableParamListTypes = new ArrayList<>();
-
-      while (actualTypesDeque.size() != 0) {
-        PyType actualType = actualTypesDeque.peekFirst();
-        if (actualType instanceof PyPositionalVariadicType) {
-          break;
-        }
-        callableParamListTypes.add(actualType);
-        actualTypesDeque.removeFirst();
-      }
-
-      if (actualTypesDeque.size() == 0) {
-        PyCallableParameterListType type =
-          new PyCallableParameterListTypeImpl(ContainerUtil.map(callableParamListTypes, PyCallableParameterImpl::nonPsi));
-        leftMappedTypes.add(Couple.of(expectedTypesDeque.peekFirst(), type));
-        expectedTypesDeque.removeFirst();
       }
     }
 
@@ -269,6 +250,19 @@ public final class PyTypeParameterMapping {
     Collections.reverse(rightMappedTypes);
     resultMapping.addAll(rightMappedTypes);
     return new PyTypeParameterMapping(resultMapping);
+  }
+
+  // [**P] <- [int, str, bool] is equivalent to [**P] <- [[int, str, bool]]
+  // See https://typing.readthedocs.io/en/latest/spec/generics.html#user-defined-generic-classes
+  private static @NotNull List<PyType> replaceExpectedTypesWithParameterList(@NotNull List<PyType> expectedTypes,
+                                                                             @NotNull List<PyType> actualTypes) {
+    if (ContainerUtil.getOnlyItem(expectedTypes) instanceof PyParamSpecType && 
+        !actualTypes.isEmpty() && !ContainerUtil.exists(actualTypes, o -> o instanceof PyVariadicType)) {
+      PyCallableParameterListType callableParameterListType =
+        new PyCallableParameterListTypeImpl(ContainerUtil.map(actualTypes, PyCallableParameterImpl::nonPsi));
+      return Collections.singletonList(callableParameterListType);
+    }
+    return actualTypes;
   }
 
   private static @Nullable Couple<PyType> mapToFallback(@Nullable PyType unmatchedExpectedType, @NotNull EnumSet<Option> optionSet) {
