@@ -2039,6 +2039,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testParameterizedImplicitTypeAlias() {
     doTestByText("""
                    from typing import TypeVar, Coroutine, Any
+                   T = TypeVar("T")
                    Co = Coroutine[Any, Any, T]
                    MyCo = Co[T]
                    """);
