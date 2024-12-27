@@ -13,7 +13,7 @@ import java.util.*;
 public final class ExceptionUtils {
   static final String WRAPPED_MARKER = " [wrapped] ";
 
-  protected static String[] CAUSE_METHOD_NAMES = {
+  private static String[] CAUSE_METHOD_NAMES = {
     "getCause",
     "getNextException",
     "getTargetException",
@@ -24,7 +24,7 @@ public final class ExceptionUtils {
     "getNested"
   };
 
-  protected ExceptionUtils() {}
+  private ExceptionUtils() {}
 
   public static void addCauseMethodName(String methodName) {
     if (methodName != null && methodName.length() > 0) {
