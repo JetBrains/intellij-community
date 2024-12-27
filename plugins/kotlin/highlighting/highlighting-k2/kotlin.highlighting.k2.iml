@@ -62,6 +62,7 @@
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
