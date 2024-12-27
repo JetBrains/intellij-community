@@ -2230,13 +2230,163 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  // TODO remove when PY-77059 is supported
-  public void testParameterizedImplicitTypeAlias() {
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersOneTypeVar() {
     doTestByText("""
-                   from typing import TypeVar, Coroutine, Any
+                   from typing import TypeAlias, TypeVar
+                   
                    T = TypeVar("T")
-                   Co = Coroutine[Any, Any, T]
-                   MyCo = Co[T]
+                   
+                   alias: TypeAlias = list[T]
+                   alias2: TypeAlias = list[T] | set[T] | T
+                   
+                   a1: alias[int]
+                   a2: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str</warning>]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   
+                   a21: alias[int]
+                   a22: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str</warning>]
+                   a23: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a24: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersTwoTypeVars() {
+    doTestByText("""
+                   from typing import TypeAlias, TypeVar
+                   
+                   T = TypeVar("T")
+                   U = TypeVar("U")
+                   
+                   alias: TypeAlias = dict[T, U]
+                   a1: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int</warning>]
+                   a2: alias[int, str]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersMultipleTypeVars() {
+    doTestByText("""
+                   from typing import TypeAlias, TypeVar, Generic
+                   
+                   T = TypeVar("T")
+                   T1 = TypeVar("T1")
+                   T2 = TypeVar("T2")
+                   T3 = TypeVar("T3")
+                   
+                   class Clazz(Generic[T3]): ...
+                   
+                   alias: TypeAlias = dict[T, list[T1]] | T2 | Clazz[T3]
+                   
+                   a1: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int</warning>]
+                   a2: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str</warning>]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[int, str, bool, int]
+                   a5: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int, float</warning>]
+                   a5: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int, float, str</warning>]
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersTwoTypeVarsOneHasDefault() {
+    doTestByText("""
+                   from typing import TypeAlias, TypeVar
+                   
+                   T = TypeVar("T")
+                   U = TypeVar("U", default=str)
+                   
+                   alias: TypeAlias = dict[T, U]
+                   a1: alias[int]
+                   a2: alias[int, str]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitTypeAliasParameterizationConformanceTests() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   from typing import TypeVar, Callable
+                   T = TypeVar("T")
+                   
+                   GoodTypeAlias2: TA = int | None
+                   GoodTypeAlias3: TA = list[GoodTypeAlias2]
+                   GoodTypeAlias4: TA = list[T]
+                   GoodTypeAlias8: TA = Callable[[int, T], T]
+                   
+                   p1: GoodTypeAlias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p2: GoodTypeAlias3[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p3: GoodTypeAlias4[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias4'">int, int</warning>]
+                   p4: GoodTypeAlias8[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias8'">int, int</warning>]
+                   
+                   ListAlias: TA = list
+                   ListOrSetAlias: TA = list | set
+                   
+                   x2: ListAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   x4: ListOrSetAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasAlreadyParameterized() {
+    doTestByText("""
+                   alias = list
+                   alias2 = list[int]
+                   a1: alias[int]  # OK
+                   a2: alias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76820
+  // The behaviour for the explicit type aliases differs, see the test above
+  public void testExplicitTypeAliasAlreadyParameterized() {
+    doTestByText("""
+                   from typing import TypeAlias
+                   
+                   alias: TypeAlias = list
+                   alias2: TypeAlias = list[int]
+                   a1: alias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   a2: alias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasParameterizationUnion() {
+    doTestByText("""
+                   ListOrSetAlias = list | set
+                   x: ListOrSetAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasParameterizationConformanceTests() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   from typing import TypeVar, Callable
+                   
+                   T = TypeVar("T")
+                   
+                   GoodTypeAlias2 = int | None
+                   GoodTypeAlias3 = list[GoodTypeAlias2]
+                   GoodTypeAlias4 = list[T]
+                   GoodTypeAlias8 = Callable[[int, T], T]
+                   
+                   p1: GoodTypeAlias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p2: GoodTypeAlias3[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p3: GoodTypeAlias4[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias4'">int, int</warning>]
+                   p4: GoodTypeAlias8[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias8'">int, int</warning>]
+                   
+                   ListAlias = list
+                   ListOrSetAlias = list | set
+                   x1: list[str] = ListAlias()
+                   x2 = ListAlias[int]()
+                   x4: ListOrSetAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
                    """);
   }
 
