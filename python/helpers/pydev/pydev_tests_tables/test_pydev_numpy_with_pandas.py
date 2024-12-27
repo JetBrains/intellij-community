@@ -205,6 +205,46 @@ def test_display_data_html_none_values(mocker, setup_np_array_with_nones):
     )
 
 
+#15 TODO: fix wrong float formatting
+# def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
+#     np_array = setup_np_array_with_floats
+#
+#     # Mock the CSV and display functions
+#     mock_print = mocker.patch('builtins.print')
+#
+#     actual = numpy_tables_helpers.display_data_csv(np_array, 0, 3)
+#
+#     called_args, called_kwargs = mock_print.call_args
+#     displayed_csv = called_args[0]
+#
+#     assert isinstance(displayed_csv, str)
+#
+#     __read_expected_from_file_and_compare_with_actual(
+#         actual=displayed_csv,
+#         expected_file='test_data/numpy_with_pandas/' + test_data_directory + '/display_data_csv_float_values.txt'
+#     )
+
+
+# 16
+def test_display_data_csv_none_values(mocker, setup_np_array_with_nones):
+    np_array = setup_np_array_with_nones
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    actual = numpy_tables_helpers.display_data_csv(np_array, 0, 3)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    assert isinstance(displayed_csv, str)
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_with_pandas/' + test_data_directory + '/display_data_csv_none_values.txt'
+    )
+
+
 def __check_info_np_array(arr, file):
     actual = [numpy_tables_helpers.get_type(arr),
               NEXT_VALUE_SEPARATOR,

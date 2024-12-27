@@ -343,9 +343,6 @@ def __set_pd_options(format):
     _jb_max_rows = pd.get_option('display.max_rows')
     if format is not None:
         _jb_float_options = pd.get_option('display.float_format')
-    format_function = __define_format_function(format)
-    if format_function is not None:
-        pd.set_option('display.float_format', format_function)
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
@@ -353,6 +350,10 @@ def __set_pd_options(format):
         pd.set_option('display.max_colwidth', max_colwidth)
     except ValueError:
         pd.set_option('display.max_colwidth', MAX_COLWIDTH)
+
+    format_function = __define_format_function(format)
+    if format_function is not None:
+        pd.set_option('display.float_format', format_function)
 
     return _jb_max_cols, _jb_max_colwidth, _jb_max_rows, _jb_float_options
 

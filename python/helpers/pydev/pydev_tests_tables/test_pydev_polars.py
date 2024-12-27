@@ -566,6 +566,21 @@ def test_display_data_html_df(capsys, setup_dataframe):
 
 
 # 34
+def test_display_data_csv_df(capsys, setup_dataframe):
+    _, df, _, _, _ = setup_dataframe
+
+    polars_tables_helpers.display_data_csv(df, 0, 3)
+
+    # Capture the output
+    captured = capsys.readouterr()
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=captured.out,
+        expected_file='test_data/polars/major_version_' + polars_version + '/display_data_csv_df.txt'
+    )
+
+
+# 35
 def test_display_data_html_df_with_float_values(capsys, setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
 
@@ -577,6 +592,21 @@ def test_display_data_html_df_with_float_values(capsys, setup_dataframe_with_flo
     __read_expected_from_file_and_compare_with_actual(
         actual=captured.out,
         expected_file='test_data/polars/major_version_' + polars_version + '/display_data_html_df_with_float_values.txt'
+    )
+
+
+# 36
+def test_display_data_html_df_with_float_values(capsys, setup_dataframe_with_float_values):
+    df = setup_dataframe_with_float_values
+
+    polars_tables_helpers.display_data_csv(df, 0, 3)
+
+    # Capture the output
+    captured = capsys.readouterr()
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=captured.out,
+        expected_file='test_data/polars/major_version_' + polars_version + '/display_data_csv_df_with_float_values.txt'
     )
 
 

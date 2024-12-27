@@ -149,6 +149,11 @@ DONT_TRACE = {
     'test_pydev_numpy_without_pandas.py': PYDEV_FILE,
     'test_pydev_pandas.py': PYDEV_FILE,
     'test_pydev_polars.py': PYDEV_FILE,
+    'test_pydev_tensorflow_with_pandas.py': PYDEV_FILE,
+    'test_pydev_torch_with_pandas.py': PYDEV_FILE,
+    'test_pydev_tensorflow_without_pandas.py': PYDEV_FILE,
+    'test_pydev_torch_without_pandas.py': PYDEV_FILE,
+    'test_pydev_dataset.py': PYDEV_FILE,
 }
 
 DONT_TRACE['pydev_jupyter_plugin.py'] = PYDEV_FILE

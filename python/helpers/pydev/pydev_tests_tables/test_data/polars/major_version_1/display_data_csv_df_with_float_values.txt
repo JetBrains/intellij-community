@@ -1,0 +1,4 @@
+int_col~float_col~struct_col
+1~1.0~{age: 30, height: 5.5}
+2~2.0~{age: 25, height: 6.1}
+3~null~{age: 35, height: null}

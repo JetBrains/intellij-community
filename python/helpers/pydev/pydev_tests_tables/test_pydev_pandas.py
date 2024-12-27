@@ -631,6 +631,7 @@ def test_get_data_float_values_d_garbage(setup_dataframe_with_float_values):
 def test_display_data_html_df(mocker, setup_dataframe):
     _, df, _, _, _ = setup_dataframe
     df = df.drop(columns=['dates'])
+
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
 
@@ -646,6 +647,25 @@ def test_display_data_html_df(mocker, setup_dataframe):
 
 
 # 34
+def test_display_data_csv_df(mocker, setup_dataframe):
+    _, df, _, _, _ = setup_dataframe
+    df = df.drop(columns=['dates'])
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    pandas_tables_helpers.display_data_csv(df, 0, 16)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/pandas/' + test_data_dir + '/display_data_csv_df.txt'
+    )
+
+
+# 35
 def test_display_data_html_df_with_float_values(mocker, setup_dataframe_with_float_values):
     df = setup_dataframe_with_float_values
 
@@ -660,6 +680,24 @@ def test_display_data_html_df_with_float_values(mocker, setup_dataframe_with_flo
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_html.data,
         expected_file='test_data/pandas/' + test_data_dir + '/display_data_html_df_with_float_values.txt'
+    )
+
+
+# 36
+def test_display_data_csv_df_with_float_values(mocker, setup_dataframe_with_float_values):
+    df = setup_dataframe_with_float_values
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    pandas_tables_helpers.display_data_csv(df, 0, 3)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/pandas/' + test_data_dir + '/display_data_csv_df_with_float_values.txt'
     )
 
 

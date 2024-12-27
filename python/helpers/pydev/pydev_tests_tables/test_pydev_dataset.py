@@ -242,10 +242,11 @@ def test_get_data_float_values_d_garbage(setup_dataset_with_float_values):
     )
 
 
-# 11 TODO fix
+# 11 TODO fix: html needed?
 # def test_display_data_html_dataset(mocker, setup_dataset):
 #     dataset = setup_dataset
 #     dataset = dataset.remove_columns(['dates'])
+#
 #     # Mock the HTML and display functions
 #     mock_display = mocker.patch('IPython.display.display')
 #
@@ -256,12 +257,31 @@ def test_get_data_float_values_d_garbage(setup_dataset_with_float_values):
 #
 #     print(displayed_html)
 #     __read_expected_from_file_and_compare_with_actual(
-#         actual=displayed_html,
+#         actual=displayed_html.data,
 #         expected_file='test_data/datasets/' + test_data_directory + '/display_data_html_dataset.txt'
 #     )
 
 
-# # 11 TODO fix
+# 12 TODO: add commas to nested structures
+# def test_display_data_csv_dataset(mocker, setup_dataset):
+#     dataset = setup_dataset
+#     dataset = dataset.remove_columns(['dates'])
+#
+#     # Mock the CSV and display functions
+#     mock_print = mocker.patch('builtins.print')
+#
+#     datasets_helpers.display_data_csv(dataset, 0, 16)
+#
+#     called_args, called_kwargs = mock_print.call_args
+#     displayed_csv = called_args[0]
+#
+#     __read_expected_from_file_and_compare_with_actual(
+#         actual=displayed_csv,
+#         expected_file='test_data/datasets/' + test_data_directory + '/display_data_csv_dataset.txt'
+#     )
+
+
+# # 13 TODO fix: html needed?
 # def test_display_data_html_dataset_with_float_values(mocker, setup_dataset_with_float_values):
 #     df = setup_dataset_with_float_values
 #
@@ -279,14 +299,29 @@ def test_get_data_float_values_d_garbage(setup_dataset_with_float_values):
 #     )
 
 
-# TODO add csv displaying tests
+# 14 TODO: add commas to nested structures
+# def test_display_data_csv_dataset_with_float_values(mocker, setup_dataset_with_float_values):
+#     df = setup_dataset_with_float_values
+#
+#     # Mock the CSV and display functions
+#     mock_print = mocker.patch('builtins.print')
+#
+#     datasets_helpers.display_data_csv(df, 0, 3)
+#
+#     called_args, called_kwargs = mock_print.call_args
+#     displayed_csv = called_args[0]
+#
+#     __read_expected_from_file_and_compare_with_actual(
+#         actual=displayed_csv,
+#         expected_file='test_data/datasets/' + test_data_directory + '/display_data_csv_dataset_with_float_values.txt'
+#     )
 
 
 def __read_expected_from_file_and_compare_with_actual(actual, expected_file):
     with open(expected_file, 'r') as in_f:
         expected = in_f.read()
 
-    print(actual)
+    # print(actual)
     # print(expected)
 
     assert len(expected) > 0
