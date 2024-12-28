@@ -11,7 +11,7 @@ import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import java.util.Collection;
 import java.util.Collections;
 
-public class RubyEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
+final class RubyEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
         return file.getFileType().equals(RubyFileType.RUBY);

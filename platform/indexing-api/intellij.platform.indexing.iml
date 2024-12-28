@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>

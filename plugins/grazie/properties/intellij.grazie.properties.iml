@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.grazie.core" />
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />

@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
-public class DockerfileKeyGotoHandler implements GotoDeclarationHandler {
+final class DockerfileKeyGotoHandler implements GotoDeclarationHandler {
 
     @Override
-    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public PsiElement @Nullable [] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
         if (psiElement == null || psiElement.getParent() == null) {
             return PsiElement.EMPTY_ARRAY;
         }

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 
 @Service
-class AEDatabaseLifetime(private val coroutineScope: CoroutineScope) : Disposable {
+internal class AEDatabaseLifetime(private val coroutineScope: CoroutineScope) : Disposable {
   companion object {
     fun getScope() = ApplicationManager.getApplication().service<AEDatabaseLifetime>().coroutineScope
     fun getDisposable(): Disposable = ApplicationManager.getApplication().service<AEDatabaseLifetime>()

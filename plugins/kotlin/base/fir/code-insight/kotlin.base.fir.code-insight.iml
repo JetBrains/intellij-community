@@ -31,6 +31,7 @@
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="module" module-name="kotlin.base.platforms" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />

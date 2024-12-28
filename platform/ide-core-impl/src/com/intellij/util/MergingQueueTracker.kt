@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 
-
 @ApiStatus.Internal
 class MergingUpdateQueueActivityTracker : ActivityTracker {
   override val presentableName: String
@@ -28,10 +27,8 @@ class MergingUpdateQueueActivityTracker : ActivityTracker {
   }
 }
 
-@ApiStatus.Internal
-class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
-
-  internal val counter = AtomicInteger(0)
+private class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
+  @JvmField val counter = AtomicInteger(0)
 
   override fun registerEnter() {
     counter.incrementAndGet()
@@ -40,5 +37,4 @@ class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
   override fun registerExit() {
     counter.decrementAndGet()
   }
-
 }

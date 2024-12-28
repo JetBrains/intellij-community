@@ -8,7 +8,7 @@ import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 
 import java.util.Set;
 
-class KotlinEnvironmentCallsVisitor extends KtTreeVisitor<Set<KeyUsagePsiElement>> {
+final class KotlinEnvironmentCallsVisitor extends KtTreeVisitor<Set<KeyUsagePsiElement>> {
     @Override
     public Void visitCallExpression(@NotNull KtCallExpression expression, Set<KeyUsagePsiElement> data) {
         KeyUsagePsiElement keyUsage = KotlinPsiHelper.getKeyUsageFromCall(expression);

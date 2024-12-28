@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PasswordMacro extends PromptingMacro{
+public final class PasswordMacro extends PromptingMacro{
   @Override
   public @NotNull String getName() {
     return "Password";

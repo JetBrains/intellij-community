@@ -36,6 +36,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />

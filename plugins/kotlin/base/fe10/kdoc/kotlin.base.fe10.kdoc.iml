@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />

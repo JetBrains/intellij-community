@@ -11,7 +11,7 @@ import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import java.util.Collection;
 import java.util.Collections;
 
-public class PythonEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
+final class PythonEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
         return file.getFileType().equals(PythonFileType.INSTANCE);

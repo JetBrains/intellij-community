@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 
@@ -13,13 +13,16 @@ import org.jetbrains.kotlin.descriptors.impl.ClassConstructorDescriptorImpl
 import org.jetbrains.kotlin.extensions.AnnotationBasedExtension
 import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.allConstructors
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
 
-class NoArgUltraLightClassModifierExtension(project: Project) :
+private class NoArgUltraLightClassModifierExtension(project: Project) :
     AnnotationBasedExtension,
     UltraLightClassModifierExtension {
 

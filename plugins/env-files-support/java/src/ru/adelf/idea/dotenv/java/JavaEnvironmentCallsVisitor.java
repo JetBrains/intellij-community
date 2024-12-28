@@ -10,7 +10,7 @@ import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import java.util.Collection;
 import java.util.HashSet;
 
-class JavaEnvironmentCallsVisitor extends JavaRecursiveElementWalkingVisitor {
+final class JavaEnvironmentCallsVisitor extends JavaRecursiveElementWalkingVisitor {
     private final Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
 
     @Override

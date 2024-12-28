@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />

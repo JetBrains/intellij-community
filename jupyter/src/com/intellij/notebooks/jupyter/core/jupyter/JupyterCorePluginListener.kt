@@ -28,8 +28,8 @@ class JupyterCorePluginListener : DynamicPluginListener {
   }
 
   companion object {
-    val filesToRestore = mutableListOf<Pair<Project, VirtualFile>>()
+    val filesToRestore: MutableList<Pair<Project, VirtualFile>> = mutableListOf<Pair<Project, VirtualFile>>()
 
-    const val JUPYTER_PLUGIN_ID = "intellij.jupyter"
+    const val JUPYTER_PLUGIN_ID: String = "intellij.jupyter"
   }
 }

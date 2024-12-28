@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve.static
 
 import com.android.tools.idea.gradle.dsl.api.ProjectBuildModel
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler
 
-class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
+private class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
   @Deprecated("Doesn't work for included builds of a composite build", replaceWith = ReplaceWith("getVersionCatalogFiles(module)"))
   override fun getExternallyHandledExtension(project: Project): Set<String> {
     // todo

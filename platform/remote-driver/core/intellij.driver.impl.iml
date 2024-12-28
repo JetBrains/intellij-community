@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />

@@ -17,8 +17,8 @@ import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
-public class PythonEnvCompletionProvider extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
-    public PythonEnvCompletionProvider() {
+final class PythonEnvCompletionProvider extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
+    PythonEnvCompletionProvider() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
             @Override
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {

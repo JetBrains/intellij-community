@@ -5,11 +5,10 @@ import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
- public class OsNameMacro extends Macro {
+public final class OsNameMacro extends Macro {
    @Override
    public @NotNull String getName() {
      return "OSName";
@@ -21,7 +20,7 @@ import java.util.Locale;
    }
 
    @Override
-   public @Nullable String expand(@NotNull DataContext dataContext) {
+   public @NotNull String expand(@NotNull DataContext dataContext) {
      String osName = SystemInfoRt.OS_NAME.toLowerCase(Locale.ENGLISH);
      int firstSpace = osName.indexOf(' ');
      return firstSpace < 0 ? osName : osName.substring(0, firstSpace);

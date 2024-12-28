@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.java.indexing" exported="" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />

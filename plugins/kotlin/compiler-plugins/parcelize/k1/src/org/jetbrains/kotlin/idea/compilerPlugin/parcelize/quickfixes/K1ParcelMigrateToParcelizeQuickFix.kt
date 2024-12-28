@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
@@ -12,19 +12,16 @@ import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.TypeUtils
-import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 
-class K1ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : KotlinQuickFixAction<KtClass>(clazz) {
+internal class K1ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : KotlinQuickFixAction<KtClass>(clazz) {
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.migrate.to.parceler.companion.object")
     override fun getFamilyName(): String = text
 

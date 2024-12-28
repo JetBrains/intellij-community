@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @JvmField
 @ApiStatus.Internal
-val PROJECT_ID = Key.create<ProjectId>("ProjectImpl.PROJECT_ID")
+val PROJECT_ID: Key<ProjectId> = Key.create<ProjectId>("ProjectImpl.PROJECT_ID")
 
 /**
  * Represents a unique identifier for a [Project].

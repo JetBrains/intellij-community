@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" scope="PROVIDED" />

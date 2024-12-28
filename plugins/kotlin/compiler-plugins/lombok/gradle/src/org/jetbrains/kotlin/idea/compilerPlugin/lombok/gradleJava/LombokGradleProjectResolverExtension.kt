@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava
 
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -8,7 +8,7 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleTooling.model.lombok.LombokModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
-class LombokGradleProjectResolverExtension : AbstractProjectResolverExtension() {
+internal class LombokGradleProjectResolverExtension : AbstractProjectResolverExtension() {
 
     private val modelClass: Class<LombokModel> = LombokModel::class.java
     private val userDataKey: Key<LombokModel> = KEY

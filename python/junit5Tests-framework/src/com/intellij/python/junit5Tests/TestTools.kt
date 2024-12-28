@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
@@ -22,7 +23,7 @@ val randomBinary: PythonBinary = Path(
 /**
  * Fails if [this] is not [Result.Failure]
  */
-fun Result<*, *>.assertFail() {
+internal fun Result<*, *>.assertFail() {
   when (this) {
     is Result.Failure -> Assertions.assertNotNull(this.error, "No error")
     is Result.Success -> Assertions.fail("Unexpected success: ${this.result}")

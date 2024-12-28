@@ -5,8 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
-
-public class SelectionStartColumnMacro extends EditorMacro {
+public final class SelectionStartColumnMacro extends EditorMacro {
   public SelectionStartColumnMacro() {
     super("SelectionStartColumn");
   }

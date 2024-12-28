@@ -447,7 +447,7 @@ c:com.intellij.diff.util.LineCol
 - s:toOffset(com.intellij.openapi.editor.Document,I,I):I
 - s:toOffset(com.intellij.openapi.editor.Document,com.intellij.diff.util.LineCol):I
 - toOffset(com.intellij.openapi.editor.Editor):I
-c:com.intellij.diff.util.LineRange
+f:com.intellij.diff.util.LineRange
 - f:end:I
 - f:start:I
 - <init>(I,I):V

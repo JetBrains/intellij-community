@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />

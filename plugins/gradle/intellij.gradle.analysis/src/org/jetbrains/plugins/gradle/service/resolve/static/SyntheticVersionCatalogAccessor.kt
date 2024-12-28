@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve.static
 
 import com.android.tools.idea.gradle.dsl.api.GradleVersionCatalogModel
@@ -18,7 +18,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 /**
  * Serves as a client for PSI infrastructure and as a layer over TOML version catalog files at the same time
  */
-class SyntheticVersionCatalogAccessor(
+internal class SyntheticVersionCatalogAccessor(
   project: Project,
   scope: GlobalSearchScope,
   model: GradleVersionCatalogModel,
