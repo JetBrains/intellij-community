@@ -36,7 +36,6 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
@@ -116,12 +115,14 @@ internal object TerminalUiUtils {
   }
 
   private fun concatGroups(vararg groups: ActionGroup?): ActionGroup {
-    val actionsPerGroup = groups.mapNotNull {
-      it?.getChildren(null).orEmpty().toList().nullize()
+    val separatedGroups = groups.filterNotNull().flatMapIndexed { index, group ->
+      if (index == 0) listOf(group) else listOf(Separator.create(), group)
     }
-    return DefaultActionGroup(actionsPerGroup.flatMapIndexed { index, actions ->
-      if (index > 0) listOf(Separator.create()) + actions else actions
-    })
+    // 1. Leading, trailing and duplicated separators are eliminated automatically (ActionUpdater.removeUnnecessarySeparators).
+    //    This can be the case when a group has no visible actions.
+    // 2. Whether a group's children are injected into the parent group or are shown as a submenu is controlled
+    //    by `ActionGroup.isPopup`.
+    return DefaultActionGroup(separatedGroups)
   }
 
   fun createSingleShortcutSet(@MagicConstant(flagsFromClass = KeyEvent::class) keyCode: Int,
