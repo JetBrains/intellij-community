@@ -36,6 +36,9 @@ interface EelSendChannel<out ERR : Any> {
  */
 @CheckReturnValue
 suspend fun <ERR : Any> EelSendChannel<ERR>.sendWholeBuffer(src: ByteBuffer): EelResult<Unit, ERR> {
+  if (this is EelSendChannelCustomSendWholeBuffer) {
+    return sendWholeBufferCustom(src)
+  }
   var result: EelResult<Unit, ERR>
   do {
     result = send(src).also { it.getOr { return it } }

@@ -215,11 +215,11 @@ class EelChannelToolsTest {
 
     // 8192
     launch {
-      pipe.sink.send(allocate(bytesCount)).getOrThrow()
+      pipe.sink.sendWholeBuffer(allocate(bytesCount)).getOrThrow()
     }
     // 8192 * 2
     launch {
-      pipe.sink.send(allocate(bytesCount)).getOrThrow()
+      pipe.sink.sendWholeBuffer(allocate(bytesCount)).getOrThrow()
     }
     awaitForCondition {
       Assertions.assertEquals(bytesCount * 2, input.available(), "Wrong number of bytes available")
@@ -228,7 +228,7 @@ class EelChannelToolsTest {
     pipe.source.receive(allocate(bytesCount)).getOrThrow()
     // 8193
     launch {
-      pipe.sink.send(allocate(1)).getOrThrow()
+      pipe.sink.sendWholeBuffer(allocate(1)).getOrThrow()
     }
     awaitForCondition {
       Assertions.assertEquals(bytesCount + 1, input.available(), "Wrong number of bytes available")
@@ -245,7 +245,7 @@ class EelChannelToolsTest {
       Assertions.assertEquals(0, input.available(), "After receiving there must be 0 bytes")
     }
     launch {
-      when (pipe.sink.send(allocate(bytesCount))) {
+      when (pipe.sink.sendWholeBuffer(allocate(bytesCount))) {
         is EelResult.Error -> Unit
         is EelResult.Ok -> fail("Writing to the closed channel must fail")
       }

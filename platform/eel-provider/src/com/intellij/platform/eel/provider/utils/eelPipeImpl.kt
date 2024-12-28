@@ -6,6 +6,8 @@ import com.intellij.platform.eel.ErrorString
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.channels.EelSendChannelCustomSendWholeBuffer
+import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
 import kotlinx.coroutines.CompletableDeferred
@@ -17,34 +19,44 @@ import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicInteger
 
-
-internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveChannel<ErrorString> {
+internal class EelPipeImpl() : EelPipe, EelReceiveChannel<ErrorString>, EelSendChannelCustomSendWholeBuffer<ErrorString> {
   private companion object {
     val OK_EOF = ResultOkImpl(ReadResult.EOF)
     val OK_NOT_EOF = ResultOkImpl(ReadResult.NOT_EOF)
   }
 
-  private val channel = Channel<Pair<ByteBuffer, CompletableDeferred<Unit>>>()
+  private val channel = Channel<Triple<ByteBuffer, CompletableDeferred<Unit>, Boolean>>()
 
   /**
    * Number of bytes currently waiting to be received by [source].
-   * This can be used as a hint for [java.io.InputStream.available]
+   * This can be used as a hint for [java.io.InputStream.available]/
+   * It only works when [sendWholeBufferCustom] is used, as it is the only way to become responsible for the whole buffer.
    */
   private val _bytesInQueue = AtomicInteger(0)
-  internal val bytesInQueue: Int get() = _bytesInQueue.get()
+  internal val bytesInQueue: Int get() = if (channel.isClosedForSend) 0 else _bytesInQueue.get()
 
   override val sink: EelSendChannel<ErrorString> = this
   override val source: EelReceiveChannel<ErrorString> = this
   private val sendLocks = ConcurrentLinkedDeque<CompletableDeferred<Unit>>()
 
+  override suspend fun sendWholeBufferCustom(src: ByteBuffer): EelResult<Unit, ErrorString> {
+    _bytesInQueue.addAndGet(src.remaining())
+    while (src.hasRemaining()) {
+      send(src, true).getOr { return it }
+    }
+    return OK_UNIT
+  }
+
   override suspend fun send(src: ByteBuffer): EelResult<Unit, ErrorString> {
-    val remaining = src.remaining()
+    return send(src, false)
+  }
+
+  private suspend fun send(src: ByteBuffer, decreaseQueueAfterReceive: Boolean): EelResult<Unit, ErrorString> {
     val sendLock = CompletableDeferred<Unit>()
     // `send` should return when buffer is read
     sendLocks.add(sendLock)
     try {
-      _bytesInQueue.addAndGet(remaining)
-      channel.send(Pair(src, sendLock))
+      channel.send(Triple(src, sendLock, decreaseQueueAfterReceive))
       return OK_UNIT
     }
     catch (_: ClosedSendChannelException) {
@@ -56,14 +68,13 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       return e.asErrorResult()
     }
     finally {
-      _bytesInQueue.addAndGet(-remaining)
       sendLock.await() //wait for buffer to read
       sendLocks.remove(sendLock)
     }
   }
 
   override suspend fun receive(dst: ByteBuffer): EelResult<ReadResult, ErrorString> {
-    val (src, sendLock) = try {
+    val (src, sendLock, decreaseQueueAfterReceive) = try {
       channel.receive()
     }
     catch (_: ClosedReceiveChannelException) {
@@ -74,6 +85,7 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       closePipe()
       return e.asErrorResult()
     }
+    val bytesBeforeRead = src.remaining()
     // Choose the best approach:
     if (src.remaining() <= dst.remaining()) {
       // Bulk put the whole buffer
@@ -84,6 +96,12 @@ internal class EelPipeImpl() : EelPipe, EelSendChannel<ErrorString>, EelReceiveC
       val l = src.limit()
       dst.put(src.limit(src.position() + dst.remaining()))
       src.limit(l)
+    }
+    // Decreasing the number of bytes should take place on the same thread `receive` is called, as receiver checks number after before
+    // sender gets the chance to fix it.
+    if (decreaseQueueAfterReceive) {
+      val bytesRead = bytesBeforeRead - src.remaining()
+      _bytesInQueue.addAndGet(-bytesRead)
     }
     sendLock.complete(Unit) //buffer read
     return OK_NOT_EOF
