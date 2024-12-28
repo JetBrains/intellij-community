@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.ErrorString
 import com.intellij.platform.eel.ReadResult
@@ -12,6 +11,7 @@ import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.Flushable
 import java.io.IOException
@@ -92,7 +92,7 @@ internal class InputStreamAdapterImpl(
   }
 
   override fun close() {
-    runBlockingMaybeCancellable {
+    runBlocking(blockingContext) {
       receiveChannel.close()
     }
   }
@@ -108,10 +108,8 @@ internal class InputStreamAdapterImpl(
   private fun read(dst: ByteBuffer, len: Int): Int {
     if (!dst.hasRemaining() || len == 0) return 0
     while (true) { // InputStream.read never returns 0 unless closed or dst has size 0
-      val r = runBlockingMaybeCancellable {
-        withContext(blockingContext) {
-          receiveChannel.receive(dst)
-        }
+      val r = runBlocking(blockingContext) {
+        receiveChannel.receive(dst)
       }
       when (r) {
         is EelResult.Error -> throw IOException(r.error)
@@ -149,10 +147,8 @@ internal class OutputStreamAdapterImpl(
 
   @Throws(IOException::class)
   private fun write(buffer: ByteBuffer) {
-    val result = runBlockingMaybeCancellable {
-      withContext(blockingContext) {
-        sendChannel.sendWholeBuffer(buffer)
-      }
+    val result = runBlocking(blockingContext) {
+      sendChannel.sendWholeBuffer(buffer)
     }
     when (result) {
       is EelResult.Ok -> Unit
@@ -161,7 +157,7 @@ internal class OutputStreamAdapterImpl(
   }
 
   override fun close() {
-    runBlockingMaybeCancellable {
+    runBlocking(blockingContext) {
       sendChannel.close()
     }
   }
