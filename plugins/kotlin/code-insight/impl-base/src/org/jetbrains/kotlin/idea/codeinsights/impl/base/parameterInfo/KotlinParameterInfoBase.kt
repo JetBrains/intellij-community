@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.codeInsight.ellipsis
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 
+@ApiStatus.Internal
 object KotlinParameterInfoBase {
     fun getDefaultValueStringRepresentation(defaultValue: KtExpression): String {
         var text = defaultValue.text

@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
@@ -88,9 +90,15 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderDefaultValue(analysisSession: KaSession, symbol: KaValueParameterSymbol, printer: PrettyPrinter) {
                 val defaultValue = with(analysisSession) { symbol.defaultValue }
                 if (defaultValue != null) {
+                    val text =
+                        KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue)
                     with(highlightingManager) {
                         val builder = StringBuilder()
-                        builder.appendCodeSnippetHighlightedByLexer(defaultValue.text)
+                        if (defaultValue is KtNameReferenceExpression) {
+                            builder.append(highlight(defaultValue.text) { asParameter })
+                            builder.append(highlight(" = ") { asOperationSign })
+                        }
+                        builder.appendCodeSnippetHighlightedByLexer(text)
                         printer.append(builder)
                     }
                 }

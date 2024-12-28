@@ -102,6 +102,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/AtVariableDeclaration.kt");
         }
 
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/ConstDefaultParameter.kt");
+        }
+
         @TestMetadata("ConstructorVarParameter.kt")
         public void testConstructorVarParameter() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/ConstructorVarParameter.kt");
