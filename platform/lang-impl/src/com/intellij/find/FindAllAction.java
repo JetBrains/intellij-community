@@ -74,7 +74,7 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
   private static @NotNull Icon getIcon(@Nullable Project project) {
     ToolWindowManager toolWindowManager = project != null ? ToolWindowManager.getInstance(project) : null;
     if (toolWindowManager != null) {
-      return toolWindowManager.getLocationIcon(ToolWindowId.FIND, getFindIcon());
+      return toolWindowManager.getShowInFindToolWindowIcon();
     }
     return getFindIcon();
   }

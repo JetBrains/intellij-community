@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -171,6 +172,8 @@ abstract class ToolWindowManager {
    * @see AllIcons.Actions#MoveToBottomLeft ... com.intellij.icons.AllIcons.Actions#MoveToWindow icon set
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
+
+  open fun getShowInFindToolWindowIcon(): Icon = AllIcons.General.OpenInToolWindow
 
   open fun isStripeButtonShow(toolWindow: ToolWindow): Boolean = false
 }

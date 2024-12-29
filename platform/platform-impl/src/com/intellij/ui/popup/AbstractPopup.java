@@ -5,7 +5,6 @@ import com.google.common.base.Predicate;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
@@ -36,7 +35,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -359,7 +361,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
       if (pinCallback != null) {
         Icon icon = ToolWindowManager.getInstance(myProject != null ? myProject : ProjectUtil.guessCurrentProject((JComponent)myOwner))
-          .getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
+          .getShowInFindToolWindowIcon();
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton(IdeBundle.message("show.in.find.window.button.name"), icon),
           e -> pinCallback.process(this)

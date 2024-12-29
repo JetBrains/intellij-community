@@ -5185,6 +5185,7 @@ a:com.intellij.openapi.wm.ToolWindowManager
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindowManager
 - a:getLastActiveToolWindowId():java.lang.String
 - getLocationIcon(java.lang.String,javax.swing.Icon):javax.swing.Icon
+- getShowInFindToolWindowIcon():javax.swing.Icon
 - a:getToolWindow(java.lang.String):com.intellij.openapi.wm.ToolWindow
 - a:getToolWindowBalloon(java.lang.String):com.intellij.openapi.ui.popup.Balloon
 - a:getToolWindowIdSet():java.util.Set

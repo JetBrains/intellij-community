@@ -62,6 +62,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.*
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -840,6 +841,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return idToEntry.values.asSequence()
       .map { it.readOnlyWindowInfo }
       .find { it.isVisible && it.isDocked && it.safeToolWindowPaneId == paneId && it.anchor == anchor && it.isSplit == side }
+  }
+
+  override fun getShowInFindToolWindowIcon(): Icon {
+    return if (isNewUI()) AllIcons.General.OpenInToolWindow else getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab)
   }
 
   override fun getLocationIcon(id: String, fallbackIcon: Icon): Icon {

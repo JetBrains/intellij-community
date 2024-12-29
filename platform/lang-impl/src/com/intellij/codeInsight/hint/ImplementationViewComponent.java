@@ -578,7 +578,7 @@ public final class ImplementationViewComponent extends JPanel {
   private class ShowInFindWindowAction extends AnAction {
     ShowInFindWindowAction() {
       super(() -> IdeBundle.message("show.in.find.window.button.name"),
-            ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab));
+            ToolWindowManager.getInstance(project).getShowInFindToolWindowIcon());
     }
 
     @Override

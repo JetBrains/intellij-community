@@ -58,7 +58,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -134,10 +133,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
-
-  private static Icon getShowInFindToolWindowIcon() {
-    return ExperimentalUI.isNewUI() ? AllIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
-  }
 
   private final SEResultsListFactory myListFactory;
   private SearchListModel myListModel;
@@ -1450,7 +1445,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     ShowInFindToolWindowAction() {
       super(IdeBundle.messagePointer("show.in.find.window.button.name"),
-            IdeBundle.messagePointer("show.in.find.window.button.description"), getShowInFindToolWindowIcon());
+            IdeBundle.messagePointer("show.in.find.window.button.description"));
     }
 
     @Override
@@ -1602,10 +1597,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       SETab selectedTab = myHeader != null ? myHeader.getSelectedTab() : null;
       boolean enabled = selectedTab == null || ContainerUtil.exists(selectedTab.getContributors(), c -> c.showInFindResults());
       e.getPresentation().setEnabled(enabled);
-      if (!ExperimentalUI.isNewUI()) {
-        e.getPresentation()
-          .setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, getShowInFindToolWindowIcon()));
-      }
+      e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getShowInFindToolWindowIcon());
     }
 
     @Override
