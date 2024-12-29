@@ -1074,6 +1074,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     int[] productions = myProduction.elements();
     for (int i = 1, size = myProduction.size(); i < size; i++) {
       int id = productions[i];
+      // id < 0 means "done" marker for marker with `-id` index.
       ProductionMarker item = id > 0 ? pool.get(id) : null;
 
       if (item instanceof StartMarker) {
@@ -1089,15 +1090,18 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       else if (item instanceof ErrorItem) {
         item.myParent = curNode;
         int curToken = item.myLexemeIndex;
-        if (curToken == lastErrorIndex) continue;
-        lastErrorIndex = curToken;
-        curNode.addChild(item);
+        if (curToken != lastErrorIndex) { // adding only the first (deepest) error from the same lexeme offset
+          lastErrorIndex = curToken;
+          curNode.addChild(item);
+        }
       }
       else {
+        // done marker, id < 0
+        assertMarkersBalanced(id < 0 && pool.get(-id) == curNode, item);
+
         if (isCollapsedChameleon(curNode)) {
           hasCollapsedChameleons = true;
         }
-        assertMarkersBalanced(id < 0 && pool.get(-id) == curNode, item);
         curNode = nodes.removeLast();
         curDepth--;
       }
