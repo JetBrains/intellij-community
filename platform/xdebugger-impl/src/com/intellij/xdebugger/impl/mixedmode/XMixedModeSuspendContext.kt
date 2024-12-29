@@ -28,7 +28,7 @@ class XMixedModeSuspendContext(
   val lowLevelDebugSuspendContext: XSuspendContext,
   val highLevelDebugSuspendContext: XSuspendContext,
   val highLevelDebugProcess: XMixedModeHighLevelDebugProcess,
-  val coroutineScope: CoroutineScope,
+  val mixedModeDebugCoroutineScope: CoroutineScope,
 ) : XSuspendContext() {
 
   private val stacksMap = ConcurrentHashMap<Long, XMixedModeExecutionStack>()
@@ -55,7 +55,7 @@ class XMixedModeSuspendContext(
   }
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
-    coroutineScope.launch(Dispatchers.Default) {
+    mixedModeDebugCoroutineScope.launch(Dispatchers.Default) {
       try {
         computeExecutionStacksInternal(container)
       }
@@ -85,7 +85,7 @@ class XMixedModeSuspendContext(
       threadIdToHighLevelStackMap,
       container,
       highLevelDebugProcess.getFramesMatcher(),
-      coroutineScope,
+      mixedModeDebugCoroutineScope,
       this@XMixedModeSuspendContext)
 
     lowLevelDebugSuspendContext.computeExecutionStacks(combinedContainer)
@@ -103,7 +103,7 @@ class XMixedModeSuspendContext(
       lowLevelExecutionStack,
       highLevelDebugSuspendContext.activeExecutionStack,
       highLevelDebugProcess.getFramesMatcher(),
-      coroutineScope)
+      mixedModeDebugCoroutineScope)
       .also {
         stacksMap[threadId] = it
       }
@@ -111,7 +111,7 @@ class XMixedModeSuspendContext(
 
   fun getComputeStacksDeferred(): Deferred<ConcurrentHashMap<Long, XMixedModeExecutionStack>> {
     val stacksMap = CompletableDeferred<ConcurrentHashMap<Long, XMixedModeExecutionStack>>()
-    coroutineScope.async(Dispatchers.Default) {
+    mixedModeDebugCoroutineScope.async(Dispatchers.Default) {
       isStacksComputed.await()
       stacksMap.complete(this@XMixedModeSuspendContext.stacksMap)
     }

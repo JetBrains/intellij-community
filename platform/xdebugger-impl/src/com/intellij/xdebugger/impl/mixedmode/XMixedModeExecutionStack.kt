@@ -10,7 +10,6 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -112,3 +111,9 @@ class XMixedModeExecutionStack(
     }
   }
 }
+
+val XDebugSession.mixedModeExecutionStack: XMixedModeExecutionStack?
+  get() = suspendContext?.activeExecutionStack as? XMixedModeExecutionStack
+
+val XDebugSession.mixedModeExecutionStackOrThrow: XMixedModeExecutionStack
+  get() = checkNotNull(mixedModeExecutionStack)
