@@ -240,6 +240,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     };
   }
 
+  /**
+   * Base interface for nodes in light tree
+   */
   private interface Node extends LighterASTNode {
     boolean tokenTextMatches(@NotNull CharSequence chars);
   }
@@ -473,6 +476,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return pre;
   }
 
+  /**
+   * Base class for leaf nodes in light tree
+   */
   private abstract static class Token implements Node {
     StartMarker myParentNode;
 
@@ -523,6 +529,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
+  /**
+   * Base class for chameleon tokens
+   */
   private abstract static class TokenRange extends Token {
     private int myTokenStart;
     private int myTokenEnd;
@@ -551,8 +560,16 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
+  /**
+   * A node in light tree
+   * Represents a chameleon consisting several lexemes which does not support light parsing
+   */
   private static class TokenRangeNode extends TokenRange implements LighterASTTokenNode { }
 
+  /**
+   * A node in light tree
+   * Represents a leaf node
+   */
   private static class SingleLexemeNode extends Token implements LighterASTTokenNode {
     private int myLexemeIndex;
 
@@ -572,6 +589,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
+  /**
+   * A node in light tree
+   * Represents a chameleon consisting of one or several lexemes and supporting light parsing
+   */
   private static class LazyParseableToken extends TokenRange implements LighterLazyParseableNode {
     private final MyTreeStructure myParentStructure;
     private final int myStartIndex;
