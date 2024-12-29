@@ -24,7 +24,7 @@ import static java.util.Optional.ofNullable;
 /**
  * @author Vladislav.Soroka
  */
-public class AddGradleDslDependencyAction extends CodeInsightAction {
+public final class AddGradleDslDependencyAction extends CodeInsightAction {
   static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<>();
 
   public AddGradleDslDependencyAction() {

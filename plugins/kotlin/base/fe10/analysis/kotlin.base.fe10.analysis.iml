@@ -35,6 +35,7 @@
     <orderEntry type="library" name="vavr" level="project" />
     <orderEntry type="library" name="javax-inject" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.indices" />

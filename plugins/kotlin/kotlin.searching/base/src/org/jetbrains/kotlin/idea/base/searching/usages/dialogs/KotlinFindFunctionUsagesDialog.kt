@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs
 
 import com.intellij.find.FindUsagesSettings
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import javax.swing.JPanel
 
-class KotlinFindFunctionUsagesDialog(
+internal class KotlinFindFunctionUsagesDialog(
     method: KtFunction,
     project: Project,
     findUsagesOptions: KotlinFunctionFindUsagesOptions,

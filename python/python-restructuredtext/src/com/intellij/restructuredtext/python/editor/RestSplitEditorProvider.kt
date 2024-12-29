@@ -9,8 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.restructuredtext.editor.RestEditorProvider
 
-
-class RestSplitEditorProvider : RestEditorProvider() {
+private class RestSplitEditorProvider : RestEditorProvider() {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val editor: TextEditor = getInstance().createEditor(project, file) as TextEditor
     return TextEditorWithPreview(editor, RestPreviewFileEditor(file, project))

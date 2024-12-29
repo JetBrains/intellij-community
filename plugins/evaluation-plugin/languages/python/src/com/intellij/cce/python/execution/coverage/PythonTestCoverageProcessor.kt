@@ -3,9 +3,8 @@ package com.intellij.cce.python.execution.coverage
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
 import java.io.File
-import kotlin.collections.get
 
-class PythonTestCoverageProcessor(
+internal class PythonTestCoverageProcessor(
   coverageFilePath: String,
 ) {
   private val coverageInfo: Map<String, Number>

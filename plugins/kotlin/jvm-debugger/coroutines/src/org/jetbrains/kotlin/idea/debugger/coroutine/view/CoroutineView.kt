@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
+internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     Disposable, XDebugSessionListenerProvider, CreateContentParamsProvider {
     companion object {
         private const val VIEW_CLEAR_DELAY_MS = 100

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 import javax.swing.JComponent
 
-class ModulesEditorToolbarDecorator(
+internal class ModulesEditorToolbarDecorator(
     private val tree: ModulesEditorTree,
     private val moduleCreator: NewModuleCreator,
     private val model: TargetsModel,

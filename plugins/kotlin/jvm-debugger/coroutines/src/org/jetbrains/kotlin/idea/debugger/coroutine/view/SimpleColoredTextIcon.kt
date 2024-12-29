@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import javax.swing.Icon
 
-class SimpleColoredTextIcon(val icon: Icon?, val hasChildren: Boolean) {
+internal class SimpleColoredTextIcon(val icon: Icon?, val hasChildren: Boolean) {
     private val texts = mutableListOf<String>()
     private val textKeyAttributes = mutableListOf<TextAttributesKey>()
 
@@ -91,7 +91,7 @@ interface CoroutineDebuggerColors {
     }
 }
 
-fun fromState(state: State, isCurrent: Boolean): Icon =
+internal fun fromState(state: State, isCurrent: Boolean): Icon =
     when (state) {
         State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
         State.RUNNING -> if (isCurrent) AllIcons.Debugger.ThreadCurrent else AllIcons.Debugger.ThreadRunning
@@ -99,7 +99,7 @@ fun fromState(state: State, isCurrent: Boolean): Icon =
         else -> AllIcons.Debugger.ThreadStates.Daemon_sign
     }
 
-class SimpleColoredTextIconPresentationRenderer {
+internal class SimpleColoredTextIconPresentationRenderer {
     companion object {
         val log by logger
     }

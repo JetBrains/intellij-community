@@ -13,8 +13,7 @@ import java.util.Collections;
 /**
  * @author Eugene Zhuravlev
  */
-public class TopLevelNode extends AbstractTreeNode {
-
+public final class TopLevelNode extends AbstractTreeNode {
   public TopLevelNode(Project project, @NotNull Object value) {
     super(project, value);
     myName = "[ .. ]";

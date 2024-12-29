@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config.wizard
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
@@ -37,7 +37,7 @@ import java.awt.KeyboardFocusManager
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
+private class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val name = INTELLIJ
 
