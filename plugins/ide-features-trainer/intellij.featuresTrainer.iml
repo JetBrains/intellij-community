@@ -52,6 +52,7 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.tips" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />

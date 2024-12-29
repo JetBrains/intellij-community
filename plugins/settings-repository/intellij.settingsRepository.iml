@@ -60,6 +60,7 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />

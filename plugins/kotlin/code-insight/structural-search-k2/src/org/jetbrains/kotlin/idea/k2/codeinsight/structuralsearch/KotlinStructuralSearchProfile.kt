@@ -364,8 +364,9 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
         return searchElements[0] is KtDeclaration
     }
 
-    override fun getReplaceHandler(project: Project, replaceOptions: ReplaceOptions): KotlinStructuralReplaceHandler =
-        KotlinStructuralReplaceHandler(project)
+    override fun getReplaceHandler(project: Project, replaceOptions: ReplaceOptions): StructuralReplaceHandler {
+        return KotlinStructuralReplaceHandler(project)
+    }
 
     override fun getPatternContexts(): MutableList<PatternContext> = PATTERN_CONTEXTS
 

@@ -3,10 +3,12 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentCategorizer
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import java.util.concurrent.ConcurrentHashMap
@@ -30,18 +32,18 @@ internal fun isSyncCategoryEnabled(fileSpec: String): Boolean {
 
 private fun removeOsPrefix(fileSpec: String): String {
   val osPrefix = getPerOsSettingsStorageFolderName() + "/"
-  return if (fileSpec.startsWith(osPrefix)) StringUtil.trimStart(fileSpec, osPrefix) else fileSpec
+  return if (fileSpec.startsWith(osPrefix)) fileSpec.removePrefix(osPrefix) else fileSpec
 }
 
 private fun getRoamableCategory(fileName: String, componentClasses: List<Class<PersistentStateComponent<Any>>>): Pair<SettingsCategory, String?> {
-  componentClasses.forEach {
-    val category = ComponentCategorizer.getCategory(it)
-    if (category == SettingsCategory.OTHER) return@forEach
+  for (componentClass in componentClasses) {
+    val category = ComponentCategorizer.getCategory(componentClass)
+    if (category == SettingsCategory.OTHER) continue
 
-    val state = it.getAnnotation(State::class.java)
+    val state = componentClass.getAnnotation(State::class.java)
     val storage = state.storages.find { it.value == fileName }
     if (storage == null || !storage.roamingType.isRoamable) {
-      return@forEach
+      continue
     }
 
     // Once found, ignore any other possibly conflicting definitions
@@ -87,7 +89,7 @@ private fun getSchemeCategory(fileSpec: String): Pair<SettingsCategory, String?>
     return null
   }
 
-  return settingsCategory!! to null
+  return settingsCategory to null
 }
 
 

@@ -28,10 +28,7 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author gregsh
- */
-public class ToggleHighlightingMarkupAction extends DumbAwareAction {
+final class ToggleHighlightingMarkupAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);

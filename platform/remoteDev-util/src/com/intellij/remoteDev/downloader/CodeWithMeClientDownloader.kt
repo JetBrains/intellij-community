@@ -110,7 +110,9 @@ object CodeWithMeClientDownloader {
   }
 
   private val minimumClientBuildWithBundledJre = BuildNumber("", 223, 4374)
-  fun isClientWithBundledJre(clientBuildNumber: BuildNumber) = clientBuildNumber.isSnapshot || clientBuildNumber > minimumClientBuildWithBundledJre
+  fun isClientWithBundledJre(clientBuildNumber: BuildNumber): Boolean {
+    return clientBuildNumber.isSnapshot || clientBuildNumber > minimumClientBuildWithBundledJre
+  }
 
   @ApiStatus.Internal
   class DownloadableFileData(
