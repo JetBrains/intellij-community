@@ -700,8 +700,11 @@
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>
 
-    <postStartupActivity implementation="com.intellij.javaee.PsiExternalResourceNotifier" />
-
     <xml.autoPopupEnabler implementation="com.intellij.xml.microservices.UrlReferencesXmlAutoPopupEnabler"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.xml.impl.PsiExternalResourceChangeListener"
+              topic="com.intellij.javaee.ExternalResourceListener"/>
+  </projectListeners>
 </idea-plugin>
