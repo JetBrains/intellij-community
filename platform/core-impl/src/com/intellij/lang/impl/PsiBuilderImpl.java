@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 
 import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
@@ -1045,12 +1044,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void nodeInserted(@NotNull ASTNode oldParent, @NotNull LighterASTNode newNode, int pos) {
-      myDelegate.nodeInserted(oldParent, myConverter.apply((Node)newNode), pos);
+      myDelegate.nodeInserted(oldParent, myConverter.convert((Node)newNode), pos);
     }
 
     @Override
     public void nodeReplaced(@NotNull ASTNode oldChild, @NotNull LighterASTNode newChild) {
-      ASTNode converted = myConverter.apply((Node)newChild);
+      ASTNode converted = myConverter.convert((Node)newChild);
       myDelegate.nodeReplaced(oldChild, converted);
     }
   }
@@ -1732,15 +1731,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  private static final class ASTConverter implements Function<Node, ASTNode> {
+  private static final class ASTConverter {
     private final StartMarker myRoot;
 
     private ASTConverter(@NotNull StartMarker root) {
       myRoot = root;
     }
 
-    @Override
-    public ASTNode apply(Node n) {
+    private @NotNull ASTNode convert(@NotNull Node n) {
       if (n instanceof Token) {
         Token token = (Token)n;
         return token.getBuilder().createLeaf(token.getTokenType(), token.getStartOffsetInBuilder(), token.getEndOffsetInBuilder());
